@@ -3,7 +3,9 @@ IMPLICIT NONE
 INTEGER, PARAMETER :: vecsize = 1024576
 REAL(kind=8), DIMENSION(vecsize,3,10), TARGET :: glo1
 REAL(kind=8), DIMENSION(vecsize) :: glo3
-REAL(kind=8) :: px1(vecsize), px2(vecsize), px3(vecsize), px4(vecsize), px5(vecsize), px6(vecsize), px7(vecsize), px8(vecsize), py1(vecsize), py2(vecsize), py3(vecsize), py4(vecsize), py5(vecsize), py6(vecsize), py7(vecsize), py8(vecsize), pz1(vecsize), pz2(vecsize), pz3(vecsize), pz4(vecsize), pz5(vecsize), pz6(vecsize), pz7(vecsize), pz8(vecsize)
+REAL(kind=8) :: px1(vecsize), px2(vecsize), px3(vecsize), px4(vecsize), px5(vecsize), px6(vecsize), px7(vecsize), px8(vecsize), py1(&
+vecsize), py2(vecsize), py3(vecsize), py4(vecsize), py5(vecsize), py6(vecsize), py7(vecsize), py8(vecsize), pz1(vecsize), pz2(&
+vecsize), pz3(vecsize), pz4(vecsize), pz5(vecsize), pz6(vecsize), pz7(vecsize), pz8(vecsize)
 REAL(kind=8), DIMENSION(vecsize,3,10) :: glo2
 REAL(kind=8), DIMENSION(vecsize) :: glo4
 REAL(kind=8), DIMENSION(vecsize,3,10) :: glo6
@@ -16,7 +18,10 @@ REAL(kind=8), DIMENSION(12,vecsize) :: fff
 INTEGER :: i, j, k
 REAL(kind=8) :: scal1, scal2, scal3, scal4
 !$rose scalarization
-REAL(kind=8) :: fac, sv11, sv21, sv31, sv41, sv51, sv61, sv71, sv81, sv12, sv22, sv32, sv42, sv52, sv62, sv72, sv82, sv13, sv23, sv33, sv43, sv53, sv63, sv73, sv83, sv14, sv24, sv34, sv44, sv54, sv64, sv74, sv84, qqx1, qqx2, qqx3, qqx4, qqy1, qqy2, qqy3, qqy4, qqz1, qqz2, qqz3, qqz4, hx1, hx2, hx3, hx4, hy1, hy2, hy3, hy4, hz1, hz2, hz3, hz4, hx1v, hx2v, hx3v, hx4v, hy1v, hy2v, hy3v, hy4v, hz1v, hz2v, hz3v, hz4v, qqwk
+REAL(kind=8) :: fac, sv11, sv21, sv31, sv41, sv51, sv61, sv71, sv81, sv12, sv22, sv32, sv42, sv52, sv62, sv72, sv82, sv13, sv23, &
+sv33, sv43, sv53, sv63, sv73, sv83, sv14, sv24, sv34, sv44, sv54, sv64, sv74, sv84, qqx1, qqx2, qqx3, qqx4, qqy1, qqy2, qqy3, qqy4, &
+qqz1, qqz2, qqz3, qqz4, hx1, hx2, hx3, hx4, hy1, hy2, hy3, hy4, hz1, hz2, hz3, hz4, hx1v, hx2v, hx3v, hx4v, hy1v, hy2v, hy3v, hy4v, &
+hz1v, hz2v, hz3v, hz4v, qqwk
 IF (var1 <= 0.0d0 .AND. var2 <= 0.0d0) THEN
 DO k = 1, 8
 DO j = 1, 3
@@ -86,23 +91,37 @@ sv54 = - 1.0d0 - qqx4 * px5(i) - qqy4 * py5(i) - qqz4 * pz5(i)
 sv64 = 1.0d0 - qqx4 * px6(i) - qqy4 * py6(i) - qqz4 * pz6(i)
 sv74 = - 1.0d0 - qqx4 * px7(i) - qqy4 * py7(i) - qqz4 * pz7(i)
 sv84 = 1.0d0 - qqx4 * px8(i) - qqy4 * py8(i) - qqz4 * pz8(i)
-hx1v = glo2(i,1,1) * sv11 + glo2(i,1,2) * sv21 + glo2(i,1,3) * sv31 + glo2(i,1,4) * sv41 + glo2(i,1,5) * sv51 + glo2(i,1,6) * sv61 + glo2(i,1,7) * sv71 + glo2(i,1,8) * sv81
-hx2v = glo2(i,1,1) * sv12 + glo2(i,1,2) * sv22 + glo2(i,1,3) * sv32 + glo2(i,1,4) * sv42 + glo2(i,1,5) * sv52 + glo2(i,1,6) * sv62 + glo2(i,1,7) * sv72 + glo2(i,1,8) * sv82
-hx3v = glo2(i,1,1) * sv13 + glo2(i,1,2) * sv23 + glo2(i,1,3) * sv33 + glo2(i,1,4) * sv43 + glo2(i,1,5) * sv53 + glo2(i,1,6) * sv63 + glo2(i,1,7) * sv73 + glo2(i,1,8) * sv83
-hx4v = glo2(i,1,1) * sv14 + glo2(i,1,2) * sv24 + glo2(i,1,3) * sv34 + glo2(i,1,4) * sv44 + glo2(i,1,5) * sv54 + glo2(i,1,6) * sv64 + glo2(i,1,7) * sv74 + glo2(i,1,8) * sv84
-hy1v = glo2(i,2,1) * sv11 + glo2(i,2,2) * sv21 + glo2(i,2,3) * sv31 + glo2(i,2,4) * sv41 + glo2(i,2,5) * sv51 + glo2(i,2,6) * sv61 + glo2(i,2,7) * sv71 + glo2(i,2,8) * sv81
-hy2v = glo2(i,2,1) * sv12 + glo2(i,2,2) * sv22 + glo2(i,2,3) * sv32 + glo2(i,2,4) * sv42 + glo2(i,2,5) * sv52 + glo2(i,2,6) * sv62 + glo2(i,2,7) * sv72 + glo2(i,2,8) * sv82
-hy3v = glo2(i,2,1) * sv13 + glo2(i,2,2) * sv23 + glo2(i,2,3) * sv33 + glo2(i,2,4) * sv43 + glo2(i,2,5) * sv53 + glo2(i,2,6) * sv63 + glo2(i,2,7) * sv73 + glo2(i,2,8) * sv83
-hy4v = glo2(i,2,1) * sv14 + glo2(i,2,2) * sv24 + glo2(i,2,3) * sv34 + glo2(i,2,4) * sv44 + glo2(i,2,5) * sv54 + glo2(i,2,6) * sv64 + glo2(i,2,7) * sv74 + glo2(i,2,8) * sv84
-hz1v = glo2(i,3,1) * sv11 + glo2(i,3,2) * sv21 + glo2(i,3,3) * sv31 + glo2(i,3,4) * sv41 + glo2(i,3,5) * sv51 + glo2(i,3,6) * sv61 + glo2(i,3,7) * sv71 + glo2(i,3,8) * sv81
-hz2v = glo2(i,3,1) * sv12 + glo2(i,3,2) * sv22 + glo2(i,3,3) * sv32 + glo2(i,3,4) * sv42 + glo2(i,3,5) * sv52 + glo2(i,3,6) * sv62 + glo2(i,3,7) * sv72 + glo2(i,3,8) * sv82
-hz3v = glo2(i,3,1) * sv13 + glo2(i,3,2) * sv23 + glo2(i,3,3) * sv33 + glo2(i,3,4) * sv43 + glo2(i,3,5) * sv53 + glo2(i,3,6) * sv63 + glo2(i,3,7) * sv73 + glo2(i,3,8) * sv83
-hz4v = glo2(i,3,1) * sv14 + glo2(i,3,2) * sv24 + glo2(i,3,3) * sv34 + glo2(i,3,4) * sv44 + glo2(i,3,5) * sv54 + glo2(i,3,6) * sv64 + glo2(i,3,7) * sv74 + glo2(i,3,8) * sv84
+hx1v = glo2(i,1,1) * sv11 + glo2(i,1,2) * sv21 + glo2(i,1,3) * sv31 + glo2(i,1,4) * sv41 + glo2(i,1,5) * sv51 + glo2(i,1,6) * sv61&
+ + glo2(i,1,7) * sv71 + glo2(i,1,8) * sv81
+hx2v = glo2(i,1,1) * sv12 + glo2(i,1,2) * sv22 + glo2(i,1,3) * sv32 + glo2(i,1,4) * sv42 + glo2(i,1,5) * sv52 + glo2(i,1,6) * sv62&
+ + glo2(i,1,7) * sv72 + glo2(i,1,8) * sv82
+hx3v = glo2(i,1,1) * sv13 + glo2(i,1,2) * sv23 + glo2(i,1,3) * sv33 + glo2(i,1,4) * sv43 + glo2(i,1,5) * sv53 + glo2(i,1,6) * sv63&
+ + glo2(i,1,7) * sv73 + glo2(i,1,8) * sv83
+hx4v = glo2(i,1,1) * sv14 + glo2(i,1,2) * sv24 + glo2(i,1,3) * sv34 + glo2(i,1,4) * sv44 + glo2(i,1,5) * sv54 + glo2(i,1,6) * sv64&
+ + glo2(i,1,7) * sv74 + glo2(i,1,8) * sv84
+hy1v = glo2(i,2,1) * sv11 + glo2(i,2,2) * sv21 + glo2(i,2,3) * sv31 + glo2(i,2,4) * sv41 + glo2(i,2,5) * sv51 + glo2(i,2,6) * sv61&
+ + glo2(i,2,7) * sv71 + glo2(i,2,8) * sv81
+hy2v = glo2(i,2,1) * sv12 + glo2(i,2,2) * sv22 + glo2(i,2,3) * sv32 + glo2(i,2,4) * sv42 + glo2(i,2,5) * sv52 + glo2(i,2,6) * sv62&
+ + glo2(i,2,7) * sv72 + glo2(i,2,8) * sv82
+hy3v = glo2(i,2,1) * sv13 + glo2(i,2,2) * sv23 + glo2(i,2,3) * sv33 + glo2(i,2,4) * sv43 + glo2(i,2,5) * sv53 + glo2(i,2,6) * sv63&
+ + glo2(i,2,7) * sv73 + glo2(i,2,8) * sv83
+hy4v = glo2(i,2,1) * sv14 + glo2(i,2,2) * sv24 + glo2(i,2,3) * sv34 + glo2(i,2,4) * sv44 + glo2(i,2,5) * sv54 + glo2(i,2,6) * sv64&
+ + glo2(i,2,7) * sv74 + glo2(i,2,8) * sv84
+hz1v = glo2(i,3,1) * sv11 + glo2(i,3,2) * sv21 + glo2(i,3,3) * sv31 + glo2(i,3,4) * sv41 + glo2(i,3,5) * sv51 + glo2(i,3,6) * sv61&
+ + glo2(i,3,7) * sv71 + glo2(i,3,8) * sv81
+hz2v = glo2(i,3,1) * sv12 + glo2(i,3,2) * sv22 + glo2(i,3,3) * sv32 + glo2(i,3,4) * sv42 + glo2(i,3,5) * sv52 + glo2(i,3,6) * sv62&
+ + glo2(i,3,7) * sv72 + glo2(i,3,8) * sv82
+hz3v = glo2(i,3,1) * sv13 + glo2(i,3,2) * sv23 + glo2(i,3,3) * sv33 + glo2(i,3,4) * sv43 + glo2(i,3,5) * sv53 + glo2(i,3,6) * sv63&
+ + glo2(i,3,7) * sv73 + glo2(i,3,8) * sv83
+hz4v = glo2(i,3,1) * sv14 + glo2(i,3,2) * sv24 + glo2(i,3,3) * sv34 + glo2(i,3,4) * sv44 + glo2(i,3,5) * sv54 + glo2(i,3,6) * sv64&
+ + glo2(i,3,7) * sv74 + glo2(i,3,8) * sv84
 END DO
 IF (var1 > 0.0d0) THEN
 scal1 = .25d0 * var1 * gs2 * var3
 DO i = 1, vecn
-scal2 = px1(i) ** 2 + px2(i) ** 2 + px3(i) ** 2 + px4(i) ** 2 + py1(i) ** 2 + py2(i) ** 2 + py3(i) ** 2 + py4(i) ** 2 + pz1(i) ** 2 + pz2(i) ** 2 + pz3(i) ** 2 + pz4(i) ** 2 + px5(i) ** 2 + px6(i) ** 2 + px7(i) ** 2 + px8(i) ** 2 + py5(i) ** 2 + py6(i) ** 2 + py7(i) ** 2 + py8(i) ** 2 + pz5(i) ** 2 + pz6(i) ** 2 + pz7(i) ** 2 + pz8(i) ** 2
+scal2 = px1(i) ** 2 + px2(i) ** 2 + px3(i) ** 2 + px4(i) ** 2 + py1(i) ** 2 + py2(i) ** 2 + py3(i) ** 2 + py4(i) ** 2 + pz1(i) ** 2&
+ + pz2(i) ** 2 + pz3(i) ** 2 + pz4(i) ** 2 + px5(i) ** 2 + px6(i) ** 2 + px7(i) ** 2 + px8(i) ** 2 + py5(i) ** 2 + py6(i) ** 2 + py7&
+(i) ** 2 + py8(i) ** 2 + pz5(i) ** 2 + pz6(i) ** 2 + pz7(i) ** 2 + pz8(i) ** 2
 fac = scal1 * scal2 / glo4(i)
 fff(1,i) = fff(1,i) + fac * hx1v
 fff(2,i) = fff(2,i) + fac * hx2v
@@ -193,7 +212,8 @@ glo6(i,3,5) = -hz1 * sv51 - hz2 * sv52 - hz3 * sv53 - hz4 * sv54
 glo6(i,3,6) = -hz1 * sv61 - hz2 * sv62 - hz3 * sv63 - hz4 * sv64
 glo6(i,3,7) = -hz1 * sv71 - hz2 * sv72 - hz3 * sv73 - hz4 * sv74
 glo6(i,3,8) = -hz1 * sv81 - hz2 * sv82 - hz3 * sv83 - hz4 * sv84
-qqwk = hx1 * hx1v + hx2 * hx2v + hx3 * hx3v + hx4 * hx4v + hy1 * hy1v + hy2 * hy2v + hy3 * hy3v + hy4 * hy4v + hz1 * hz1v + hz2 * hz2v + hz3 * hz3v + hz4 * hz4v
+qqwk = hx1 * hx1v + hx2 * hx2v + hx3 * hx3v + hx4 * hx4v + hy1 * hy1v + hy2 * hy2v + hy3 * hy3v + hy4 * hy4v + hz1 * hz1v + hz2 * &
+hz2v + hz3 * hz3v + hz4 * hz4v
 scal4 = scal4 + qqwk
 END DO
 e_s = e_s - gs2 * scal4

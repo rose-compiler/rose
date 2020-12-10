@@ -176,31 +176,6 @@ test_simple_int.C \
 test_wchars.C \
 X.C 
 
-if ROSE_USE_EDG_VERSION_4_9
-
-TESTCODES_REQUIRED_TO_PASS += \
-   test2004_19.C \
-   test2005_125.C \
-   test2006_111.C 
-
-if USING_GNU_COMPILER
-if ROSE_USING_GCC_VERSION_LATER_6_1
-TESTCODES_REQUIRED_TO_PASS += \
-   test2005_165.C \
-   test2006_88.C 
-else
-if !ROSE_USING_GCC_VERSION_LATER_4_8
-TESTCODES_REQUIRED_TO_PASS += \
-   test2005_165.C \
-   test2006_88.C 
-else
-# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
-endif
-endif
-endif
-
-else
-
 if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_6_1
 TESTCODES_REQUIRED_TO_PASS += \
@@ -221,8 +196,6 @@ else
 # GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
 endif
 endif
-endif
-
 endif
 
 # DQ (3/1/2017): These are failing tests for newer versions of GNU compiler (e.g. GNU 4.8), but work fine on the GNU 6.1 compiler.

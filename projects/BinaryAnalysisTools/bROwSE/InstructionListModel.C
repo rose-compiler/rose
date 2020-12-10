@@ -2,6 +2,7 @@
 #include <bROwSE/InstructionListModel.h>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 

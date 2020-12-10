@@ -1,0 +1,8 @@
+START
+
+COMPOOL DEF'ITEM;
+
+DEF ITEM def'var U;
+REF ITEM ref'var U;
+
+TERM

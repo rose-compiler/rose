@@ -26,16 +26,34 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 */
 
 #include <poet_ASTeval.h>
+#include <string>
+#include <list>
 
 extern bool debug_time;
+std::vector<std::string> poet_files, extra_input;
+
 
 int main(int argc, char** argv)
 {
   int index = initialize(argc, argv);
   EvaluatePOET::startup();
   try {
+  std::cerr << "POET files: " ;
   for ( ; index < argc; ++index) {
      const char* fname = argv[index];
+     if (*fname == '-')  break; //* stop processing POET files
+     std::cerr << argv[index] << " ";
+     poet_files.push_back(fname);
+  }
+  std::cerr << "\n";
+  if (index < argc) std::cerr << "extra parameters: ";
+  for ( ; index < argc; ++index) {
+      std::cerr << argv[index] << " ";
+      extra_input.push_back(argv[index]);
+  }
+  std::cerr << "\n";
+  for (int i = 0; i < poet_files.size(); i++){
+     const char* fname = poet_files[i].c_str();
      EvaluatePOET::eval_program(process_file(fname));
   }
   }

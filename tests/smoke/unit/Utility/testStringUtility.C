@@ -189,14 +189,51 @@ test_escapes() {
     check(cEscape("\v") == "\\v");
     check(cEscape("\f") == "\\f");
     check(cEscape("\r") == "\\r");
-    check(cEscape("\"") == "\\\"");
     check(cEscape("\\") == "\\\\");
+
+    // cEscape quote escapes
+    check(cEscape("\"") == "\\\"");
+    check(cEscape("'") == "'");
+    check(cEscape('"') == "\"");
+    check(cEscape('\'') == "\\'");
+
+    check(cEscape("\"", '\'') == "\"");
+    check(cEscape("'", '\'') == "\\'");
+    check(cEscape('"', '"') == "\\\"");
+    check(cEscape('\'', '"') == "'");
+
     check(cEscape("\377") == "\\377");
 
     check(cEscape("-\t") == "-\\t");
     check(cEscape("\t-") == "\\t-");
     check(cEscape("\t\t") == "\\t\\t");
     check(cEscape("-\t-") == "-\\t-");
+
+    // C++ unescape
+    check(cUnescape("") == "");
+    check(cUnescape("a") == "a");
+    check(cUnescape("a\\0") == std::string("a") + '\0');
+    check(cUnescape("a\\0b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\00b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\000b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\0000b") == std::string("a") + '\0' + "0b");
+    check(cUnescape("a\\'b") == "a'b");
+    check(cUnescape("a\\\"b") == "a\"b");
+    check(cUnescape("a\\?b") == "a?b");
+    check(cUnescape("a\\ab") == "a\ab");
+    check(cUnescape("a\\bb") == "a\bb");
+    check(cUnescape("a\\fb") == "a\fb");
+    check(cUnescape("a\\nb") == "a\nb");
+    check(cUnescape("a\\rb") == "a\rb");
+    check(cUnescape("a\\tb") == "a\tb");
+    check(cUnescape("a\\vb") == "a\vb");
+    check(cUnescape("a\\x1b") == "a\033");
+    check(cUnescape("a\\x01b") == "a\033");
+    check(cUnescape("a\\x00000000001b") == "a\033");
+    check(cUnescape("a\\x00000000001B") == "a\033");
+    check(cUnescape("a\\x00000000000g") == std::string("a") + '\0' + "g");
+    check(cUnescape("a\\u1234b") == "a\\u1234b");         // unicode not implemented
+    check(cUnescape("a\\U12345678b") == "a\\U12345678b"); // unicode not implemented
 }
 
 static void
@@ -533,18 +570,6 @@ stringTest(std::string s)
     return true;
 }
 
-// WARNING: This "test" doesn't really test anything. It just calls the functions and spits out results without checking that
-//          the results are valid.
-static bool
-test_removePseudoRedundentSubstrings() // sic
-{
-    std::string X = "ARRAY_OPERAND_UNIFORM_SIZE_INITIALIZATION_MACRO_D6(A);";
-    printf("X = \n%s\n",X.c_str());
-    std::string Y = StringUtility::removePseudoRedundentSubstrings ( X );
-    printf("Y = \n%s\n",Y.c_str());
-    return true;
-}
-
 // Here's another implementation of Damerau-Levenshtein edit distance which we can use to test the one in ROSE.
 // https://github.com/ugexe/Text--Levenshtein--Damerau--XS/blob/master/damerau-int.c
 namespace DamerauLevenshtein2 {
@@ -596,13 +621,20 @@ static void dict_free(item* head) {
     head = NULL;
 }
 
-static int distance(const unsigned int *src, const unsigned int *tgt, unsigned int x, unsigned int y)
+static int distance(const unsigned int *src, const unsigned int *tgt, unsigned int x, unsigned int y, unsigned int maxDistance)
 {
     item *head = NULL;
     unsigned int swapCount, swapScore, targetCharCount, i, j;
     unsigned int *scores = new unsigned int[(x+2)*(y+2)];
     unsigned int score_ceil = x + y;
- 
+    unsigned int curr_score = 0;
+    unsigned int diff = x > y ? x - y : y - x;
+
+    if (maxDistance != 0 && diff > maxDistance) {
+        delete[] scores;
+        return -1;
+    }
+    
     /* intialize matrix start values */
     scores[0] = score_ceil;
     scores[1 * (y + 2) + 0] = score_ceil;
@@ -614,17 +646,20 @@ static int distance(const unsigned int *src, const unsigned int *tgt, unsigned i
     /* i = src index */
     /* j = tgt index */
     for (i=1;i<=x;i++) {
-        head = uniquePush(head,src[i]);
+        if (i < x)
+            head = uniquePush(head,src[i]);
         scores[(i+1) * (y + 2) + 1] = i;
         scores[(i+1) * (y + 2) + 0] = score_ceil;
         swapCount = 0;
 
         for (j=1;j<=y;j++) {
             if (i == 1) {
-                head = uniquePush(head,tgt[j]);
+                if (j < y)
+                    head = uniquePush(head,tgt[j]);
                 scores[1 * (y + 2) + (j + 1)] = j;
                 scores[0 * (y + 2) + (j + 1)] = score_ceil;
             }
+            curr_score = 0;
 
             targetCharCount = find(head,tgt[j-1])->value;
             swapScore = scores[targetCharCount * (y + 2) + swapCount] + i - targetCharCount - 1 + j - swapCount;
@@ -638,14 +673,23 @@ static int distance(const unsigned int *src, const unsigned int *tgt, unsigned i
                 swapCount = j;
                 scores[(i+1) * (y + 2) + (j + 1)] = std::min(scores[i * (y + 2) + j], swapScore);
             }
+
+            curr_score = std::min(curr_score, scores[(i+1) * (y+2) + (j+1)]);
         }
+
+        if (maxDistance != 0 && curr_score > maxDistance) {
+            dict_free(head);
+            delete[] scores;
+            return -1;
+        }
+
         find(head,src[i-1])->value = i;
     }
 
     unsigned int score = scores[(x+1) * (y + 2) + (y + 1)];
     dict_free(head);
     delete[] scores;
-    return score;
+    return (maxDistance != 0 && maxDistance < score) ? -1 : score;
 }
 } // namespace
 
@@ -724,7 +768,7 @@ test_edit_distance()
                             v1.push_back(911); // we need a pointer, and &v1[0] won't cut it if v1 is empty
                         if (v2.empty())
                             v2.push_back(911);
-                        d2 = DamerauLevenshtein2::distance(&v1[0], &v2[0], sz1, sz2);
+                        d2 = DamerauLevenshtein2::distance(&v1[0], &v2[0], sz1, sz2, 0);
                         v1.resize(sz1);
                         v2.resize(sz2);
                         break;
@@ -776,8 +820,6 @@ main()
     test_fixLineTermination();
 
     size_t nfailures = 0;
-
-    nfailures += test_removePseudoRedundentSubstrings() ? 0 : 1;
 
     nfailures += stringTest("foo.h") ? 0 : 1;
     nfailures += stringTest("/foo.h") ? 0 : 1;

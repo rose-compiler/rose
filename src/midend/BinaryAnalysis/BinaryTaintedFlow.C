@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "BinaryTaintedFlow.h"
+
 #include "stringify.h"
 #include <sstream>
 
@@ -159,7 +162,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
 }
 
 std::string
-TaintedFlow::TransferFunction::printState(const StatePtr &state) {
+TaintedFlow::TransferFunction::toString(const StatePtr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;
@@ -175,3 +178,5 @@ operator<<(std::ostream &out, const TaintedFlow::State &state) {
 
 } // namespace
 } // namespace
+
+#endif

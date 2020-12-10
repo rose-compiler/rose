@@ -81,7 +81,7 @@ main(int argc, char *argv[]) {
             BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
                     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                        std::cout <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+                        std::cout <<"    " <<partitioner.unparse(insn) <<"\n";
                     }
                 }
             }

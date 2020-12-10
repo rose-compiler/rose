@@ -26,6 +26,28 @@ print(const Trace<T, IndexTag> &trace) {
 #endif
 }
 
+template<class Trace>
+struct Visitor {
+    typename Trace::ConstIterator iter;
+
+    Visitor(const typename Trace::ConstIterator &iter)
+        : iter(iter) {}
+
+    bool operator()(const typename Trace::Label &label) {
+        require(label == *iter);
+        ++iter;
+        return true;
+    }
+};
+
+// Test iteration and traversal by comparing them.
+template<class Trace>
+static void testIterationTraversal(const Trace &trace) {
+    Visitor<Trace> visitor(trace.begin());
+    trace.traverse(visitor);
+    require(visitor.iter == trace.end());
+}
+
 template<class T>
 static void
 test_empty() {
@@ -37,6 +59,7 @@ test_empty() {
     require(trace.burstiness() == 0.0);
     std::vector<T> vector = trace.toVector();
     require(vector.empty());
+    testIterationTraversal(trace);
 }
 
 template<class IndexType, class IndexTag>
@@ -49,6 +72,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 1);
+    require(trace.front() == 5);
+    require(trace.back() == 5);
     require(trace.exists(5));
     require(!trace.exists(4));
     require(trace.nLabels() == 1);
@@ -63,6 +88,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 2);
+    require(trace.front() == 5);
+    require(trace.back() == 5);
     require(trace.exists(5));
     require(!trace.exists(4));
     require(trace.nLabels() == 1);
@@ -77,6 +104,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 3);
+    require(trace.front() == 5);
+    require(trace.back() == 4);
     require(trace.exists(5));
     require(trace.exists(4));
     require(trace.nLabels() == 2);
@@ -93,6 +122,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 4);
+    require(trace.front() == 5);
+    require(trace.back() == 6);
     require(trace.exists(5));
     require(trace.exists(4));
     require(trace.exists(6));
@@ -111,6 +142,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 5);
+    require(trace.front() == 5);
+    require(trace.back() == 5);
     require(trace.exists(5));
     require(trace.exists(4));
     require(trace.exists(6));
@@ -131,6 +164,8 @@ test_append_integers() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 6);
+    require(trace.front() == 5);
+    require(trace.back() == 5);
     require(trace.exists(5));
     require(trace.exists(4));
     require(trace.exists(6));
@@ -147,6 +182,8 @@ test_append_integers() {
     require(trace.burstiness(4) == 1.0);
     require(trace.burstiness(6) == 1.0);
     require(trace.burstiness() == 8.0/9);
+
+    testIterationTraversal(trace);
 }
 
 template<class LabelType>
@@ -159,6 +196,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 1);
+    require(trace.front() == "e");
+    require(trace.back() == "e");
     require(trace.exists("e"));
     require(!trace.exists("d"));
     require(trace.nLabels() == 1);
@@ -173,6 +212,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 2);
+    require(trace.front() == "e");
+    require(trace.back() == "e");
     require(trace.exists("e"));
     require(!trace.exists("d"));
     require(trace.nLabels() == 1);
@@ -187,6 +228,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 3);
+    require(trace.front() == "e");
+    require(trace.back() == "d");
     require(trace.exists("e"));
     require(trace.exists("d"));
     require(trace.nLabels() == 2);
@@ -203,6 +246,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 4);
+    require(trace.front() == "e");
+    require(trace.back() == "f");
     require(trace.exists("e"));
     require(trace.exists("d"));
     require(trace.exists("f"));
@@ -221,6 +266,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 5);
+    require(trace.front() == "e");
+    require(trace.back() == "e");
     require(trace.exists("e"));
     require(trace.exists("d"));
     require(trace.exists("f"));
@@ -241,6 +288,8 @@ test_append_strings() {
     print(trace);
     require(!trace.isEmpty());
     require(trace.size() == 6);
+    require(trace.front() == "e");
+    require(trace.back() == "e");
     require(trace.exists("e"));
     require(trace.exists("d"));
     require(trace.exists("f"));
@@ -257,6 +306,8 @@ test_append_strings() {
     require(trace.burstiness("d") == 1.0);
     require(trace.burstiness("f") == 1.0);
     require(trace.burstiness() == 8.0/9);
+
+    testIterationTraversal(trace);
 }
 
 // User-defined class

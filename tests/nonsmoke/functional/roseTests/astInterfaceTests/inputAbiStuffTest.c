@@ -54,7 +54,11 @@ struct D {
   union {
     short y[2];
     int z;
-  };
+// DQ (7/8/2019): Old code, added name to union to avoid floating point exception.
+// un-named unions for C were previously dropped (not present in the AST). This is
+// the recent fix (which may be leading to this error).
+//};
+  } XYZ;
   U v[5];
   short u[5];
   char w[7];

@@ -1,0 +1,106 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+[ "$dir0" = "${dir0#/}" ] && dir0="$(pwd)/$dir0"
+
+LIBDIR="$dir0/../lib/matrix"
+VARDIR="$dir0/../var/matrix"
+ETCDIR="$dir0/../etc/matrix"
+
+########################################################################################################################
+help() {
+    echo "usage: $arg0 [SWITCHES]"
+    echo
+    echo "Switches"
+    echo "    --var=DIRECTORY"
+    echo "        Name of directory that contains run-time information for testing."
+    echo "        The directory need not exist; it will be created. The default is to"
+    echo "        use \$PREFIX/var/matrix where \$PREFIX is the installation root"
+    echo "        directory for the matrix testing tools."
+}
+
+
+########################################################################################################################
+# Die with an error message
+die() {
+    echo "$arg0:" "error:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+# Return the name of the latest test's rundir if any
+get-latest-rundir() {
+    ls -t "${VARDIR}/running/" 2>/dev/null |\
+	while read; do
+	    local name="$REPLY"
+	    local dir="${VARDIR}/running/${name}"
+	    if [ -d "$dir" ]; then
+		echo "$dir"
+		return 0
+	    fi
+	done
+    return 0
+}
+
+########################################################################################################################
+# Return the name of the step if possible
+step-name() {
+    local rundir="$1"
+    (sed -n 's/^=================-================= \(.*\) =================-=================/\1/p' \
+	 <"${rundir}/output.step") 2>/dev/null
+}
+
+########################################################################################################################
+# Show the last few lines of the output step
+show-output-step() {
+    local rundir="$1"
+
+    local nlines=
+    if [ "$LINES" = "" ]; then
+	nlines=20
+    elif [ "$LINES" -gt 5 ]; then
+	nlines=$[LINES - 5]
+    else
+	nlines=20
+    fi
+
+    # All this is to remove ANSI escapes from the output and replace them with simplified
+    # escapes that the "watch -c" tool is able to handle.
+    tail -n$nlines "${rundir}/output.step"  2>/dev/null |\
+	iconv -c -f UTF8 -t ASCII |\
+	sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mKG]//g' |\
+	rose-matrix-count-warnings --classify |\
+	sed 's/^W|\(.*\)/W|\x1B[31m\1\x1B[0m/; s/^..//'
+
+}
+
+########################################################################################################################
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--var=*)
+	    VARDIR="${1#--var=}"
+	    shift
+	    ;;
+
+	-*)
+	    die "unrecognized command-line switch \"$1\"; see --help"
+	    ;;
+
+	*)
+	    die "incorrect usage; see --help"
+	    ;;
+    esac
+done
+
+rundir=$(get-latest-rundir)
+if [ "$rundir" = "" ]; then
+    echo "No runtime info yet"
+    echo
+    echo "Using --var=$VARDIR"
+    exit 0
+fi
+
+echo "Output from container ${rundir##*/} running \"$(step-name "$rundir")\" step"
+echo
+show-output-step "$rundir"

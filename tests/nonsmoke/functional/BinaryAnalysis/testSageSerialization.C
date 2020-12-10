@@ -10,11 +10,13 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 #include <AstSerialization.h>                           // needed for Rose::saveAst and Rose::restoreAst
-#include <sageBuilderAsm.h>                             // used to build some IR nodes for testing
+#include <SageBuilderAsm.h>                             // used to build some IR nodes for testing
 
 // binary archives should work equally well, but we use text here to aid in debugging.
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+
+using namespace Rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Testing support
@@ -134,11 +136,9 @@ static void
 testSgAsmDirectRegisterExpression() {
     std::cerr <<"SgAsmDirectRegisterExpression\n";
     SgAsmDirectRegisterExpression *out = new SgAsmDirectRegisterExpression(RegisterDescriptor(1, 2, 3, 4));
-    out->set_psr_mask(1);
     out->set_adjustment(2);
     SgAsmDirectRegisterExpression *in = NULL;
     serunser(out, in);
-    equal(in, out, get_psr_mask());
     equal(in, out, get_descriptor());
     equal(in, out, get_adjustment());
 }

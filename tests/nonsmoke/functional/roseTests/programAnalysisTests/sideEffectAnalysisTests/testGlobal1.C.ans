@@ -1,7 +1,0 @@
-Call side effects on project: 
-Function  Side Effects main: ::x 
-Statement Side Effects testGlobal1.C-4-5-SgAssignOp: ::x 
-Call side effects on file: 
-Function  Side Effects main: ::x 
-Statement Side Effects testGlobal1.C-4-5-SgAssignOp: ::x 
-Call side effects within for loop: 

@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellMap_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellMap_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <boost/foreach.hpp>
@@ -130,4 +132,5 @@ public:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
 #endif
 
+#endif
 #endif

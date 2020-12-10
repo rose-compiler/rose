@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "SymbolicMemory2.h"
+
 #include "SymbolicSemantics2.h"
 
 namespace Rose {
@@ -17,9 +20,9 @@ SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
 void
 SymbolicMemory::clear() {
     if (mem_) {
-        mem_ = SymbolicExpr::makeMemory(mem_->domainWidth(), mem_->nBits());
+        mem_ = SymbolicExpr::makeMemoryVariable(mem_->domainWidth(), mem_->nBits());
     } else {
-        mem_ = SymbolicExpr::makeMemory(32, 8);         // can be adjusted later
+        mem_ = SymbolicExpr::makeMemoryVariable(32, 8); // can be adjusted later
     }
 }
 
@@ -27,13 +30,13 @@ SValuePtr
 SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->nBits()) {
-        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->isMemory(),
+        ASSERT_require2(mem_->isMemoryVariable(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
+        mem_ = SymbolicExpr::makeMemoryVariable(address->get_width(), dflt->get_width());
     }
     SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression(), valOps->solver());
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
@@ -51,13 +54,13 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
     if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->nBits()) {
-        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->isMemory(),
+        ASSERT_require2(mem_->isMemoryVariable(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::makeMemory(address->get_width(), value->get_width());
+        mem_ = SymbolicExpr::makeMemoryVariable(address->get_width(), value->get_width());
     }
 
     mem_ = SymbolicExpr::makeWrite(mem_, address->get_expression(), value->get_expression(), valOps->solver());
@@ -83,3 +86,5 @@ SymbolicMemory::print(std::ostream &out, Formatter &formatter_) const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

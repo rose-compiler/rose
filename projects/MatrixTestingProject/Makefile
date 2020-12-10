@@ -8,37 +8,26 @@ CXX           = $(ROSE_CXX)
 CPPFLAGS      = $(ROSE_CPPFLAGS) -I$(ROSE_PREFIX)/include
 CFLAGS        = $(ROSE_CFLAGS)
 CXXFLAGS      = $(ROSE_CXXFLAGS)
-LDFLAGS       = $(ROSE_LINK_RPATHS) $(ROSE_LDFLAGS) $(ROSE_RPATHS)
+LDFLAGS       = $(ROSE_LDFLAGS)
 ROSE_LIBTOOL  = $(ROSE_PREFIX)/bin/libtool
 
 # Handle broken ROSE header files that don't use "#include <rose/...>"
 CPPFLAGS += -I$(ROSE_PREFIX)/include/rose
 
-COMPILE = $(ROSE_LIBTOOL) --mode=compile --tag=CXX  $(CXX)
-LINK    = $(ROSE_LIBTOOL) --mode=link    --tag=CXX  $(CXX)
-
-tools = disassemble
-all: $(tools)
-
 ################################################################################
 # Rules to build the main artifacts
 ################################################################################
 
-# Libtool is used for compiling and linking this project, providing platform independence.
-# This requires the use of libtool's naming convention for object files (*.lo).
-$(addsuffix .lo, $(tools)): %.lo: %.C
-	$(COMPILE) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
-
-$(tools): %: %.lo
-	$(LINK) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+test-rose: test-rose.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 ################################################################################
 # Scripts for testing the project
 ################################################################################
 
 .PHONY: check
-check: disassemble
-	./disassemble binary_specimen
+check: test-rose
+	./test-rose --help |cat; exit ${PIPESTATUS[0]}
 
 ################################################################################
 # Scripts to install the software
@@ -46,8 +35,8 @@ check: disassemble
 
 # Install this project's user-level artifacts into the ROSE prefix
 .PHONY: install
-install: $(tools)
-	cp $(tools) $(ROSE_PREFIX)/bin
+install: test-rose
+	cp $^ $(ROSE_PREFIX)/bin
 
 ################################################################################
 # Prerequisites

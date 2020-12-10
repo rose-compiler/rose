@@ -31,8 +31,8 @@
 #endif
 #include <inttypes.h>
 
-#include "rose_override.h"                              // defines ROSE_OVERRIDE as "override" if C++11 is present
-
+#include "rose_override.h"                              // defines ROSE_OVERRIDE, ROSE_FINAL, etc for C++11 or later
+#include "rose_constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
 
 #include <semaphore.h>
 #include "fileoffsetbits.h"
@@ -43,6 +43,27 @@
   #define snprintf _snprintf
 # endif
 #endif
+
+// The boost::filesystem::path class has no serialization function, and boost::serialization doesn't provide a non-intrusive
+// implementation. Therefore ROSE needs to define one. This code must occur before including any headers that serialize
+// boost::filesystem::path, and specifically before Cxx_Grammar.h.
+#include <boost/filesystem.hpp>
+#include <boost/serialization/nvp.hpp>
+namespace boost {
+    namespace serialization {
+        template<class Archive>
+        void serialize(Archive &ar, boost::filesystem::path &path, const unsigned version) {
+            if (Archive::is_saving::value) {
+                std::string nativePath = path.string();
+                ar & BOOST_SERIALIZATION_NVP(nativePath);
+            } else {
+                std::string nativePath;
+                ar & BOOST_SERIALIZATION_NVP(nativePath);
+                path = nativePath;
+            }
+        }
+    }
+}
 
 // George Vulov (Aug. 23, 2010): This macro is not available in OS X by default
 #ifndef TEMP_FAILURE_RETRY
@@ -121,7 +142,9 @@
 // whenever a use of that function or variable occurs.  Do not disable this macro; see ROSE_DEPRECATED_FUNCTION instead.
 // If you mark a function or variable as deprecated, then BE SURE TO FIX PLACES WHERE IT IS USED IN ROSE!!!  The WHY argument
 // should be a string literal (unevaluated) describing why it's deprecated or what to use instead.
-#if defined(__GNUC__)
+#if defined(__clang__)
+# define ROSE_DEPRECATED(WHY) __attribute__((deprecated(WHY)))
+#elif defined(__GNUC__)
 #   define ROSE_DEPRECATED(WHY) __attribute__((deprecated))
 #elif defined(_MSC_VER)
 #   define ROSE_DEPRECATED(WHY) /*deprecated*/
@@ -357,11 +380,15 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // rosePublicConfig.h file (in the script scripts/publicConfiguration.pl).
 // #include "rose_config.h"
 #include "rosePublicConfig.h"
+#include "featureTests.h"
 
 // DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
 // I think we need a specific macro to be defined for when ATerms are being used.
 // Also I want to initially seperate this from Windows support.
 #ifndef _MSC_VER
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated for to and from
+// Sage node support but is likely needed here for using ATerms to construct
+// Sage nodes from ATerms (e.g. Jovial)
   #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
  // DQ (9/27/2013): This is required to be defined for the 64bit ATerm support.
     #if (__x86_64__ == 1)
@@ -394,10 +421,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
 // I think we need a specific macro to be defined for when ATerms are being used.
 // Also I want to initially seperate this from Windows support.
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated.
 #ifndef _MSC_VER
-//  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
-    #include "atermSupport.h"
-//  #endif
+//  #include "atermSupport.h"
 #endif
 
 // Disable CC++ extensions (we want to support only the C++ Standard)

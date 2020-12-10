@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -12,13 +10,12 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "LanguageRestrictor.h"
-#include "Timer.h"
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include "SgTypeSizeMapping.h"
+#include "TypeSizeMapping.h"
 
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
@@ -46,9 +43,35 @@ void check(string checkIdentifier, bool checkResult, bool check);
 // intentionally global
 extern bool checkresult;
 
+
+void checkLanguageRestrictor(int argc, char *argv[]) {
+  // Build the AST used by ROSE
+  SgProject* sageProject = frontend(argc,argv);
+  LanguageRestrictor lr;
+  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+  cout <<endl;
+  lr.allowAstNodesRequiredForEmptyProgram();
+  vs=lr.getAllowedAstNodeVariantSet();
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+}
+
+void checkLargeSets() {
+  VariableIdMappingExtended variableIdMapping;
+  AbstractValue i;
+  set<AbstractValue> cilSet;
+  cilSet.insert(AbstractValue(Bot()));
+  cilSet.insert(AbstractValue(Top()));
+  for(int i=-10;i<10;i++) {
+    cilSet.insert(AbstractValue(i));
+  }
+  check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
+}
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
-  SgTypeSizeMapping* typeSizeMapping=new SgTypeSizeMapping();
-  AbstractValue::setTypeSizeMapping(typeSizeMapping);
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -71,8 +94,6 @@ bool CodeThorn::internalChecks(int argc, char *argv[]) {
   cout << color("white")<<"-------------------------"<<endl;
   cout << color("default-bg-color");
   cout << color("normal");
-  AbstractValue::setTypeSizeMapping(nullptr);
-  delete typeSizeMapping;
   return checkresult;
 }
 
@@ -111,7 +132,9 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
 #endif
 
 void checkTypes() {
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
+  AbstractValue::setVariableIdMapping(&variableIdMapping);
+  
   PState s1;
   cout << "RUNNING CHECKS:"<<endl;
   {
@@ -483,11 +506,11 @@ void checkTypes() {
 
     stringstream ss2;
     ss2<<"test1";
-    check("Parse: Testing test2 on test1.",!SPRAY::Parse::checkWord("test2",ss2));
+    check("Parse: Testing test2 on test1.",!CodeThorn::Parse::checkWord("test2",ss2));
     //cout << "Remaing stream: "<<ss2.str()<<endl;
     stringstream ss3;
     ss3<<"test1";
-    check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
+    check("Parse: Testing test1 on test1.",CodeThorn::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
     {
@@ -495,7 +518,7 @@ void checkTypes() {
       string s="aaabbb";
       ss<<s;
       string parseString="aaa";
-      SPRAY::Parse::parseString(parseString,ss); // throws exception if it fails
+      CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
@@ -526,33 +549,4 @@ void checkTypes() {
     CallString s2;
     check("callstrings: "+s1.toString()+" == "+s2.toString()+" (true)",s1==s2);
   }
-
-}
-
-void checkLanguageRestrictor(int argc, char *argv[]) {
-  // Build the AST used by ROSE
-  SgProject* sageProject = frontend(argc,argv);
-  LanguageRestrictor lr;
-  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
-  cout <<endl;
-  lr.allowAstNodesRequiredForEmptyProgram();
-  vs=lr.getAllowedAstNodeVariantSet();
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
-}
-
-void checkLargeSets() {
-  VariableIdMapping variableIdMapping;
-  AbstractValue i;
-  set<AbstractValue> cilSet;
-  cilSet.insert(AbstractValue(Bot()));
-  cilSet.insert(AbstractValue(Top()));
-  for(int i=-10;i<10;i++) {
-    cilSet.insert(AbstractValue(i));
-  }
-  check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }

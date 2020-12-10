@@ -263,7 +263,8 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
     SgDeclarationStatement *decl = classtype->get_declaration();
-    if (decl->variantT() == V_SgClassDeclaration || V_SgTemplateClassDeclaration) 
+    if (decl->variantT() == V_SgClassDeclaration || 
+        decl->variantT() == V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
@@ -1012,10 +1013,10 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();
   Sg_File_Info *f =n->get_file_info(); 
-  if (fname == 0) {
+  if (fname != NULL) {
      *fname = f->get_filename();
   }
-  if (lineno != 0) 
+  if (lineno != NULL) 
      *lineno = f->get_line();
   return true;
 }
@@ -1229,11 +1230,11 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
     break;
   case V_SgReturnStmt: 
     if (dest != 0) {
-      SgNode *scope = 0;
+      SgNode *scope = NULL;
       for (scope = s->get_parent(); 
-           scope->variantT() != V_SgFunctionDefinition;
+           ((scope != NULL) && (scope->variantT() != V_SgFunctionDefinition));
            scope = scope->get_parent()){
-        assert(scope != 0);
+        assert(scope != NULL);
       }
       *dest = AstNodePtrImpl(scope);
     }
@@ -1846,8 +1847,10 @@ NewVar( const AstNodeType& _type, const string& name, bool makeunique,
   SgExpression* e = 0;
   if (_init != AST_NULL) e = ToExpression( *impl, (SgNode*)_init.get_ptr());
   SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, delayInsert, e, scope);
+#ifndef NDEBUG
   SgInitializedName* def = sb->get_declaration();
   assert(def != 0 && !HasNullParent(def));
+#endif
 
   if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   SgName n =  sb->get_name();
@@ -2377,6 +2380,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         assert(false);
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
+     ROSE_ASSERT(t != NULL);
      if (t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
      SgFunctionType* ftype = isSgFunctionType(t);
@@ -2502,8 +2506,8 @@ AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
   if (__dim)
     (*__dim) = t->get_rank();
   if (annotation != 0) {
-    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
 /*
+    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
     if (p != NULL) {
       *annotation = p->getString();
 std::cerr << "ANNOTATION:" << *annotation << "\n";
@@ -2652,7 +2656,6 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
     break;
 
   case V_SgFortranDo:
-    // jichi (9/11/2009): Add in fortran loop recognition support
     // FIXME: increment/bound in fortran are not equivalent to incr/cond in Cxx.
     {
       SgFortranDo *f = isSgFortranDo(s.get_ptr());
@@ -2674,7 +2677,6 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 }
 
 // The loop must be in the format: for (ivar=lb; ivar <= ub; ivar += step)
-// jichi (9/11/2009): Add in fortran loop recognition support.
 bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** lb , SgNode** ub, SgNode** step, SgNode** body)
 { 
   switch (s->variantT()) {

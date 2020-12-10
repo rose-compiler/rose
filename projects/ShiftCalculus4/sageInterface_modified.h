@@ -143,18 +143,6 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
      std::string get_name () {return name;};
   };
 
-// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined
-// function into the list used to edit the outlined code subtree to fixup references (from symbols
-// in the original file to the symbols in the newer separate file).
-// typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
-// void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
-
-// CH (4/9/2010): Use boost::hash instead
-//#ifdef _MSC_VER
-#if 0
-inline size_t hash_value(SgNode* t) {return (size_t)t;}
-#endif
-
 struct hash_nodeptr
    {
 // CH (4/9/2010): Use boost::hash instead

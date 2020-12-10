@@ -1,0 +1,21 @@
+START
+PROGRAM testLogicalContinuation ;
+BEGIN
+
+  TYPE my'bool B;
+
+  ITEM bool'1 my'bool;
+  ITEM bool'2 my'bool;
+
+  bool'2 = TRUE;
+
+  bool'1 = (TRUE AND TRUE) AND TRUE;
+  bool'1 = TRUE AND (TRUE OR TRUE);
+  bool'1 = bool'2 AND FALSE;
+  bool'1 = FALSE XOR bool'2;
+
+  bool'1 = NOT bool'2;
+  bool'1 = bool'2;
+
+END
+TERM

@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_UnparserBase_H
 #define ROSE_BinaryAnalysis_UnparserBase_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryEdgeArrows.h>
 #include <BinaryReachability.h>
 #include <BinaryUnparser.h>
@@ -76,6 +79,104 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Output style
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Stack of styles. */
+class StyleStack {
+    std::vector<Style> stack_;
+    Style current_;
+    Color::Colorization colorization_;
+
+public:
+    StyleStack() {}
+
+    /** Property: Colorization settings.
+     *
+     * @{ */
+    Color::Colorization colorization() const { return colorization_; }
+    void colorization(const Color::Colorization c) { colorization_ = c; }
+    /** @} */
+
+    /** Push style onto stack.
+     *
+     *  Returns the old size of the stack that can be passed to popTo. */
+    size_t push(const Style&);
+
+    /** Pop top style from stack.
+     *
+     *  The stack must not be empty. */
+    void pop();
+
+    /** Pop until stack is a certain size. */
+    void popTo(size_t);
+
+    /** Clear the stack. */
+    void reset();
+
+    /** Number of styles on the stack. */
+    size_t size() const;
+
+    /** Merged style.
+     *
+     *  This returns a style with as many data members filled in as possible by looking at the top item and subsequent items
+     *  as necessary.  For instance, if the top style specifies a foreground color but no background color, then we look at
+     *  the next style (or deeper) to get a background color. */
+    const Style& current() const;
+
+private:
+    void merge(const Style &style);                     // merge style into current_
+    void mergeAll();                                    // recalculate current_ based on stack_
+};
+
+/** Pushes a style and arranges for it to be popped later. */
+class StyleGuard {
+    StyleStack &stack_;
+    size_t n_;
+    Style current_;
+    Style previous_;
+public:
+    /** Push style onto stack.
+     *
+     *  The destructor will pop the stack back to its current size, removing the pushed style along with everything that
+     *  was pushed after it. */
+    StyleGuard(StyleStack &stack, const Style &style)
+        : stack_(stack) {
+        previous_ = stack_.current();
+        n_ = stack_.push(style);
+        current_ = stack_.current();
+    }
+
+    StyleGuard(StyleStack &stack, const Style &first, const Style &second)
+        : stack_(stack) {
+        previous_ = stack_.current();
+        n_ = stack_.push(first);
+        stack_.push(second);
+        current_ = stack_.current();
+    }
+
+    ~StyleGuard() {
+        stack_.popTo(n_);
+    }
+
+    /** Render style entry. */
+    std::string render() const;
+
+    /** Render style exit. */
+    std::string restore() const;
+
+    /** Current merged style. */
+    const Style& current() const {
+        return current_;
+    }
+
+    /** Style before pushing. */
+    const Style& previous() const {
+        return previous_;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // State of the unparser (the unparser itself is const during unparsing)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -103,9 +204,11 @@ private:
     ArrowMargin intraFunctionBlockArrows_;                            // user-defined intra-function arrows to/from blocks
     ArrowMargin globalBlockArrows_;                                   // user-defined global arrows to/from blocks
     bool cfgArrowsPointToInsns_;                                      // arrows point to insns? else predecessor/successor lines
+    StyleStack styleStack_;                                           // styles
 
 public:
     State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::Partitioner&, const RegisterDictionary*, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
     const Partitioner2::Partitioner& partitioner() const;
@@ -190,7 +293,7 @@ public:
     void currentPredSuccId(Sawyer::Optional<EdgeArrows::VertexId> id) { currentPredSuccId_ = id; }
     /** @} */
 
-    /** Proerty: Whether CFG margin arrows point to instructions.
+    /** Property: Whether CFG margin arrows point to instructions.
      *
      *  If set, then the CFG arrows in the left margin origin from and point to instructions of basic blocks. If false, they
      *  originate from "successor:" lines and point to "predecessor:" lines.  If there are no CFG margin arrows then the
@@ -200,7 +303,14 @@ public:
     bool cfgArrowsPointToInsns() const { return cfgArrowsPointToInsns_; }
     void cfgArrowsPointToInsns(bool b) { cfgArrowsPointToInsns_ = b; }
     /** @} */
-    
+
+    /** Property: Stack of styles.
+     *
+     * @{ */
+    const StyleStack& styleStack() const { return styleStack_; }
+    StyleStack& styleStack() { return styleStack_; }
+    /** @} */
+
     /** Assign a reachability name to a reachability value.
      *
      *  The two-argument version of this function associates a name with a value. An empty name clears the association.
@@ -267,10 +377,10 @@ public:
  *          : BinaryAnalysis::Unparser::Base(next) {
  *          ASSERT_not_null(next);
  *      }
- *  
+ *
  *  public:
  *      typedef Sawyer::SharedPointer<MyUnparser> Ptr;
- *  
+ *
  *      static Ptr instance(const BinaryAnalysis::Unparser::Base::Ptr &next) { return Ptr(new MyUnparser(next)); }
  *      virtual BinaryAnalysis::Unparser::Base::Ptr copy() const ROSE_OVERRIDE { return Ptr(new MyUnparser(nextUnparser()->copy())); }
  *      virtual const BinaryAnalysis::Unparser::Settings& settings() const ROSE_OVERRIDE { return nextUnparser()->settings(); }
@@ -308,9 +418,14 @@ public:
      *  directly without the programmer having to invervene by creating a subclss or chaining a new parser. Most of
      *  the switches simply turn things on and off.
      *
+     *  Copying an unparser also copies its settings.
+     *
      * @{ */
     virtual const Settings& settings() const = 0;
     virtual Settings& settings() = 0;
+    void settings(const Settings &s) {
+        settings() = s;
+    }
     /** @} */
 
     /** Property: Next parser in chain.
@@ -424,6 +539,7 @@ public:
     virtual void emitFunctionBody(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionEpilogue(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
 
+    virtual void emitFunctionSourceLocation(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionReasons(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionCallers(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionCallees(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
@@ -433,6 +549,7 @@ public:
     virtual void emitFunctionNoopAnalysis(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
     virtual void emitFunctionMayReturn(std::ostream&, const Partitioner2::FunctionPtr&, State&) const;
 
+    virtual void emitDataBlockSourceLocation(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
     virtual void emitDataBlock(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
     virtual void emitDataBlockPrologue(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
     virtual void emitDataBlockBody(std::ostream&, const Partitioner2::DataBlockPtr&, State&) const;
@@ -443,6 +560,7 @@ public:
     virtual void emitBasicBlockBody(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockEpilogue(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
 
+    virtual void emitBasicBlockSourceLocation(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockComment(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockSharing(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockPredecessors(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
@@ -496,7 +614,7 @@ public:
      *  of the output. This function is invoked by the base parser after emitting the function prologue and after possibly
      *  calculating CFG intra-function arrows but before emitting any basic blocks or data blocks for the function. */
     virtual void updateIntraFunctionArrows(State&) const;
-    
+
     //-----  Utility functions -----
 public:
     /** Render a string left justified. */
@@ -504,9 +622,11 @@ public:
 
     /** Render a table row.
      *
-     *  Given a row of table data as a vector of cell contents, each of which could be multiple lines, return a
-     *  string, also possibly multiple lines, that renders the row into columns. */
+     *  Given a row of table data as a vector of cell contents, each of which could be multiple lines, return a string, also
+     *  possibly multiple lines, that renders the row into columns. The @p colorEscapes are the pair of strings that should be
+     *  emitted before and after each column and do not contribute to the width of the column. */
     static std::string juxtaposeColumns(const std::vector<std::string> &content, const std::vector<size_t> &minWidths,
+                                        const std::vector<std::pair<std::string, std::string> > &colorEscapes,
                                         const std::string &columnSeparator = " ");
 
     /** Return true if edges are in order by source address.
@@ -571,4 +691,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

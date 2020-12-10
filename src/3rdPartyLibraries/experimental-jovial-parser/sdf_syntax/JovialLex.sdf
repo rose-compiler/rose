@@ -8,12 +8,14 @@ exports
     CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
+    IfKeyword                                %% Added to ensure 'IF...' can be an identifier/name
     BeadSize Bead              %% 8.3.2
 
     SignedTypeDesc             %% 2.1.1.1
     UnsignedTypeDesc           %% 2.1.1.1
     BitTypeDesc                %% 2.1.1.5
     PointerTypeDesc            %% 2.1.1.7
+    StrucSpecT                 %% 2.1.2.2
     DefString                  %% 2.4
 
   lexical syntax
@@ -36,12 +38,16 @@ exports
 %%
   'P'                       -> PointerTypeDesc
 
+%% 2.1.2.2
+%%
+  'T'                       -> StrucSpecT
+
 
 %%%%%%%%%%
 %% 2.4 DEFINE DECLARATIONS
 %%%%%%%%%%
 
-  [\?] (Mark | Digit | Letter)*  [\?]  -> DefString
+  [\?] (Mark | Digit | Letter | [\n\r])*  [\?]  -> DefString
 
 
 %%%%%%%%%%
@@ -112,6 +118,10 @@ exports
 
 %% 8.2.2 RESERVED WORDS
 %%
+
+%% IfKeyword is needed so that 'ifvar' is not split into 'if' 'var'
+  'IF'                      -> IfKeyword
+
   'ABORT'                   -> ReservedWord
   'ABS'                     -> ReservedWord
   'AND'                     -> ReservedWord
@@ -154,7 +164,7 @@ exports
 
   'HANDLER*'                -> ReservedWord
 
-  'IF'                      -> ReservedWord
+  IfKeyword                 -> ReservedWord
   'IN*'                     -> ReservedWord
   'INLINE'                  -> ReservedWord
   'INSTANCE'                -> ReservedWord
@@ -249,6 +259,10 @@ exports
     BitTypeDesc      -/- [A-Za-z0-9]
 
     PointerTypeDesc  -/- [A-Za-z0-9]
+    StrucSpecT       -/- [A-Za-z0-9]
+
+    IfKeyword        -/- [A-Za-z0-9]
+    ReservedWord     -/- [A-Za-z0-9]
 
   context-free restrictions
 

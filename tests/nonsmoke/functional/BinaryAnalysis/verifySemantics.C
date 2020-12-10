@@ -96,14 +96,14 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // A concrete semantics that reads registers and memory from a subordinate process.
 class RiscOperators: public ConcreteSemantics::RiscOperators {
-    BinaryDebugger &subordinate_;
+    Debugger::Ptr subordinate_;
 protected:
-    RiscOperators(const BaseSemantics::StatePtr &state, BinaryDebugger &subordinate)
+    RiscOperators(const BaseSemantics::StatePtr &state, const Debugger::Ptr &subordinate)
         : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:
-    static RiscOperatorsPtr instance(BinaryDebugger &subordinate, const RegisterDictionary *regdict) {
+    static RiscOperatorsPtr instance(const Debugger::Ptr &subordinate, const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = ConcreteSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
@@ -119,7 +119,7 @@ public:
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            return svalue_number(subordinate_.readRegister(reg));
+            return svalue_number(subordinate_->readRegister(reg));
         } catch (const std::runtime_error &e) {
             RegisterNames rname(currentState()->registerState()->get_register_dictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
@@ -142,7 +142,7 @@ public:
         
         ASSERT_require(dflt->get_width() % 8 == 0);
         size_t nBytes = dflt->get_width() / 8;
-        size_t nRead = subordinate_.readMemory(addr->get_number(), nBytes, buf);
+        size_t nRead = subordinate_->readMemory(addr->get_number(), nBytes, buf);
         if (nRead < nBytes)
             throw BaseSemantics::Exception("error reading subordinate memory", currentInstruction());
 
@@ -163,7 +163,7 @@ public:
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
             Sawyer::Container::BitVector nativeValue;
             try {
-                nativeValue = subordinate_.readRegister(cell.desc);
+                nativeValue = subordinate_->readRegister(cell.desc);
             } catch (const std::runtime_error &e) {
                 ::mlog[ERROR] <<"cannot read register " <<rname(cell.desc) <<" from subordinate process: " <<e.what() <<"\n";
                 continue;
@@ -266,22 +266,22 @@ main(int argc, char *argv[]) {
     // Parse command-line
     P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
-    if (specimen.empty())
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    if (args.empty())
         throw std::runtime_error("no specimen name specified; see --help");
 
     // Obtain info about the specimen, including a disassembler.
-    engine.parseContainers(specimen.front());
+    engine.parseContainers(args.front());
     Disassembler *disassembler = engine.obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
-    size_t addrWidth = disassembler->stackPointerRegister().get_nbits();
+    size_t addrWidth = disassembler->stackPointerRegister().nBits();
     const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
     InstructionMap insns;
 
     // Build instruction semantics framework
-    BinaryDebugger debugger(specimen);
+    Debugger::Ptr debugger = Debugger::instance(args);
     RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
     BaseSemantics::DispatcherPtr cpu;
     std::ostringstream trace;
@@ -297,16 +297,16 @@ main(int argc, char *argv[]) {
 
     // Run the specimen natively and single step through it.
     Sawyer::ProgressBar<size_t> progress(::mlog[MARCH], "executed");
-    while (!debugger.isTerminated()) {
+    while (!debugger->isTerminated()) {
         ++progress;
-        rose_addr_t ip = debugger.executionAddress();
+        rose_addr_t ip = debugger->executionAddress();
 
         // Disassemble (and save) the instruction
         SgAsmInstruction *insn = NULL;
         if (!insns.getOptional(ip).assignTo(insn)) {
             try {
                 uint8_t buf[16];
-                size_t nAvail = debugger.readMemory(ip, sizeof buf, buf);
+                size_t nAvail = debugger->readMemory(ip, sizeof buf, buf);
                 if (0 == nAvail) {
                     ::mlog[WARN] <<"unable to read specimen memory at " <<StringUtility::addrToString(ip) <<"\n";
                 } else if (NULL == (insn = disassembler->disassembleOne(buf, ip, nAvail, ip))) {
@@ -336,7 +336,7 @@ main(int argc, char *argv[]) {
 
         // Single-step the native execution and then compare written-to registers and memory for the simulated execution with
         // those same registers and memory in the native execution.
-        debugger.singleStep();
+        debugger->singleStep();
         if (insn && !checkOps->checkRegisters(insn))
             std::cerr <<trace.str();
     }

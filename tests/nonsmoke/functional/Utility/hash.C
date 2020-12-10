@@ -7,7 +7,6 @@
 #include <iostream>
 
 using namespace Rose;
-using namespace Rose::BinaryAnalysis;
 
 // Hash one single datum
 template<class Hasher, class Data>
@@ -126,6 +125,7 @@ static void
 testMemoryMap() {
     std::cout <<"MemoryMap hashing\n";
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+    using namespace Rose::BinaryAnalysis;
     typedef Combinatorics::HasherFnv Hasher;              // this one doesn't depend on libgcrypt
 
     static const size_t dataSize = 3;

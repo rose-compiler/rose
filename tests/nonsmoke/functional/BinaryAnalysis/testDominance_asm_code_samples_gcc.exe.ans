@@ -1,4 +1,4 @@
-CFG dominators for function 0x00401000 "_start":
+CFG dominators for function 0x00401000:
   function 0x00401000 dominator of 0x00401012<0> is 0x00401000<3>
   function 0x00401000 dominator of 0x00401013<1> is 0x00401000<3>
   function 0x00401000 dominator of 0x0040103f<2> is 0x00401013<1>
@@ -178,21 +178,21 @@ CFG dominators for function 0x00401840:
   function 0x00401840 dominator of 0x00401840<0> is none
 CFG dominators for function 0x00401850:
   function 0x00401850 dominator of 0x00401850<0> is none
-CFG dominators for function 0x004040a4 "__main@cygwin1.dll":
+CFG dominators for function 0x004040a4:
   function 0x004040a4 dominator of 0x004040a4<0,X> is none
-CFG dominators for function 0x004040b0 "_impure_ptr@cygwin1.dll":
+CFG dominators for function 0x004040b0:
   function 0x004040b0 dominator of 0x004040b0<0,X> is none
-CFG dominators for function 0x004040c0 "calloc@cygwin1.dll":
+CFG dominators for function 0x004040c0:
   function 0x004040c0 dominator of 0x004040c0<0,X> is none
-CFG dominators for function 0x004040cc "cygwin_internal@cygwin1.dll":
+CFG dominators for function 0x004040cc:
   function 0x004040cc dominator of 0x004040cc<0,X> is none
-CFG dominators for function 0x004040e0 "dll_crt0(per_process *)@cygwin1.dll":
+CFG dominators for function 0x004040e0:
   function 0x004040e0 dominator of 0x004040e0<0,X> is none
-CFG dominators for function 0x004040fc "free@cygwin1.dll":
+CFG dominators for function 0x004040fc:
   function 0x004040fc dominator of 0x004040fc<0,X> is none
-CFG dominators for function 0x00404104 "malloc@cygwin1.dll":
+CFG dominators for function 0x00404104:
   function 0x00404104 dominator of 0x00404104<0,X> is none
-CFG dominators for function 0x00404110 "realloc@cygwin1.dll":
+CFG dominators for function 0x00404110:
   function 0x00404110 dominator of 0x00404110<0,X> is none
-CFG dominators for function 0x0040411c "GetModuleHandleA@KERNEL32.dll":
+CFG dominators for function 0x0040411c:
   function 0x0040411c dominator of 0x0040411c<0,X> is none

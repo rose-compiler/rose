@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/Function.h>
 
@@ -26,15 +28,41 @@ Function::insertDataBlock(const DataBlock::Ptr &dblock) {
     return retval;
 }
 
-void
+DataBlock::Ptr
 Function::eraseDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_forbid2(isFrozen(), "function must be modifiable to erase data block");
+    DataBlock::Ptr retval;
     if (dblock) {
         std::vector<DataBlock::Ptr>::iterator lb = std::lower_bound(dblocks_.begin(), dblocks_.end(), dblock, sortDataBlocks);
-        if (lb!=dblocks_.end() && (*lb)==dblock) {
+        if (lb!=dblocks_.end() && (*lb)->extent() == dblock->extent()) {
+            retval = *lb;
             dblocks_.erase(lb);
             clearCache();
         }
     }
+    return retval;
+}
+
+DataBlock::Ptr
+Function::dataBlockExists(const DataBlock::Ptr &dblock) const {
+    Sawyer::Optional<DataBlock::Ptr> found;
+    if (dblock)
+        found = getUnique(dblocks_, dblock, sortDataBlocks);
+    return found ? *found : DataBlock::Ptr();
+}
+
+AddressIntervalSet
+Function::dataAddresses() const {
+    AddressIntervalSet retval;
+    BOOST_FOREACH (const DataBlock::Ptr &db, dblocks_)
+        retval.insert(db->extent());
+    return retval;
+}
+
+void
+Function::replaceOrInsertDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_not_null(dblock);
+    replaceOrInsert(dblocks_, dblock, sortDataBlocks);
 }
 
 std::string
@@ -83,3 +111,5 @@ Function::stackDeltaConcrete() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

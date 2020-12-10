@@ -1,9 +1,13 @@
 #ifndef ROSE_Partitioner2_Exception_H
 #define ROSE_Partitioner2_Exception_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
+#include <RoseException.h>
 
 #include <stdexcept>
 #include <string>
@@ -12,9 +16,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    Exception(const std::string &mesg): Rose::Exception(mesg) {}
     ~Exception() throw() {}
 };
 
@@ -65,4 +69,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

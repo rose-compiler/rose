@@ -1,4 +1,11 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+#include <RegisterDescriptor.h>
+#include <sstream>
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 void
 RegisterDescriptor::majorNumber(unsigned majr) {
@@ -46,8 +53,20 @@ RegisterDescriptor::nBits(size_t width) {
     setOffsetWidth(offset(), width);
 }
 
+std::string
+RegisterDescriptor::toString() const {
+    std::ostringstream ss;
+    ss <<*this;
+    return ss.str();
+}
+
 std::ostream&
 operator<<(std::ostream &o, RegisterDescriptor reg) {
     reg.print(o);
     return o;
 }
+
+} // namespace
+} // namespace
+
+#endif

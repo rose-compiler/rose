@@ -3,6 +3,8 @@
 
 #ifndef ROSE_BinaryAnalysisUtils_H
 #define ROSE_BinaryAnalysisUtils_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "AsmUnparser_compat.h"
 
@@ -33,4 +35,5 @@ struct InsnCFGVertexWriter {
 } // namespace
 } // namespace
 
+#endif
 #endif

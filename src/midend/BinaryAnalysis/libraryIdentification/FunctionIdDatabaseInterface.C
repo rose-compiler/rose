@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include "FunctionIdDatabaseInterface.h"
@@ -25,7 +27,7 @@ enum DUPLICATE_OPTION LibraryIdentification::duplicateOptionFromString(std::stri
 
 
 
-FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(std::string dbName) 
+FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbName) 
 {
     database_name = dbName;
     //open the database
@@ -268,4 +270,4 @@ bool FunctionIdDatabaseInterface::matchLibrary(LibraryInfo& lInfo)
     return false;
 }
 
-
+#endif

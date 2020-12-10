@@ -60,7 +60,7 @@ include OptHighLevel.pi
      <* current dimension information *>
      i = car(p);
      <*replace global loop with local loop *>
-     foreach n=Nest#((ctrl=Loop#(i,lo=_,hi=_,dist=_)|CODE.For#(TypeInfo#(_,i,lo=_)|Assign#(i,lo=_),Bop#("<",i,hi=_)|Bop#("!=",i,hi=_),incr=(Uop#("++",i)|VarRef#(i,"++")|Assign#(i,Bop#("+",i,dist=_))|FunctionCall#("++",i)))),b1=_) \in body do 
+     foreach n=Nest#((ctrl=Loop#(i,lo=_,hi=_,dist=_)|CODE.For#(TypeInfo#(_,i,CODE.VarInit#lo=_)|Assign#(i,lo=_),Bop#("<",i,hi=_)|Bop#("!=",i,hi=_),incr=(Uop#("++",i)|VarRef#(i,"++")|Assign#(i,Bop#("+",i,dist=_))|FunctionCall#("++",i)))),b1=_) \in body do 
        assert(lo : INT);
        dist = lo;  lo=0;
        body = REPLACE( n,CODE.LocalStencil#(StencilDim#(i,lo,hi,dist,len), len-index-1,b1), body);
@@ -205,7 +205,7 @@ include OptHighLevel.pi
   assert(body!="" && d !="");
 
    <* Translate st_local index variable to boundary value  *>
-  assert(dist>0); body1 = body; nbody = NULL;
+  assert(!(dist<=0)); body1 = body; nbody = NULL;
   <<*assert(ivar!="");
   switch (loc) {
   case "left": 
@@ -294,7 +294,7 @@ include OptHighLevel.pi
  for (index=0; index<dim; index=index+1) permute=(index+1)::permute;
 
  arr_name=InnerName(GLOBAL.STENCIL_array);
- foreach ref = CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,CLEAR loc), CLEAR sub) \in cp_res do 
+ foreach ref = CODE.manycore_stencil_remote_arr_access#(CODE.manycore_stencil_remote_arr#(arr_name,CLEAR loc), CLEAR sub) \in input do 
    if (done[loc] == 1) continue; 
    nref = ref; dims=NULL; tocopy = TRUE;
    for ((index=dim-1;p1 = sub;p2=ivars;p3=ReverseList(loc)); p1 != NULL; (p1 = cdr(p1);p2=cdr(p2);p3=cdr(p3);index=index-1)) {
@@ -313,10 +313,10 @@ include OptHighLevel.pi
      }
      else  { dims = CopyDim#(i,ivar,1, 1)::dims; }
    }
-  if (tocopy) {
+   if (tocopy) {
    <<* print (nref ":" dims);
-    done[loc]=1;
-    TRACE(init_res cp_res,CopyRepl[init=1;trace_init=init_res;trace_decl=init_res;save=0;prefix=(loc"_cp");data_type=stencil_type;arr_ref_type=CODE.manycore_stencil_remote_arr_access;permute=(3 2 1)](nref, dims, cp_res));
+     done[loc]=1;
+     TRACE(init_res cp_res,CopyRepl[init=1;trace_init=init_res;trace_decl=init_res;trace=cp_res;save=0;prefix=(loc"_cp");data_type=stencil_type;arr_ref_type=CODE.manycore_stencil_remote_arr_access;permute=(3 2 1)](nref, dims, ERASE(cp_res)));
     GLOBAL.REMOTE_COPY_NUM = GLOBAL.REMOTE_COPY_NUM +1;
     if (GLOBAL.REMOTE_COPY_NUM >= how_much_to_copy) break;
   }

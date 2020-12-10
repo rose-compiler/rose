@@ -1,0 +1,12 @@
+START
+
+COMPOOL COMPOOL'1;
+
+TYPE STATUS'TYPE'1 STATUS
+(
+  V(UNDEFINED)
+);
+
+" comment "
+
+TERM

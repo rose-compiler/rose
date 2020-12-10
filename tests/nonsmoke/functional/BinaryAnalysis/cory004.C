@@ -8,6 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <DispatcherX86.h>
 #include <SymbolicSemantics2.h>
 
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 typedef SymbolicSemantics::SValue SymbolicValue;

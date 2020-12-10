@@ -90,23 +90,18 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
      const int max_value = 9999999;
 
      SgLocatedNode* this_locatedNode = isSgLocatedNode(n);
-
+     if (this_locatedNode == NULL) {
+          return SynthesizedAttribute(n,max_value,max_value,0,0);
+     }
      bool isInSameFile = this_locatedNode->get_startOfConstruct()->isSameFile(inheritedAttribute.sourceFile);
-
 #if DEBUG_evaluateSynthesizedAttribute
      printf ("isInSameFile = %s \n",isInSameFile ? "true" : "false");
 #endif
 #if 0
-     if (isInSameFile == false)
-        {
+     if (isInSameFile == false) {
           printf ("Warning: SourceExtentsTraversal::evaluateSynthesizedAttribute(): skipping processing: (isInSameFile == false) \n");
-        }
+     }
 #endif
-
-     if (this_locatedNode == NULL)
-        {
-          return SynthesizedAttribute(n,max_value,max_value,0,0);
-        }
 
      bool isCompilerGenerated = this_locatedNode->isCompilerGenerated();
 

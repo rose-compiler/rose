@@ -557,21 +557,6 @@ TESTCODES_REQUIRED_TO_PASS += \
    test2006_37.C 
 endif
 
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-#	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-# Exclude these tests on GNU 4.9 and later compilers).
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
 TESTCODES_REQUIRED_TO_PASS += \
    test2004_77.C \
    test2004_143.C \
@@ -591,86 +576,7 @@ TESTCODES_REQUIRED_TO_PASS += \
    test2006_20.C \
    test2006_79.C \
    test2006_124.C 
-endif # ROSE_USING_GCC_VERSION_LATER_4_9
-else  # NOT USING_GNU_COMPILER
-#	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-#	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-#	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-#	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-#	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
-TESTCODES_REQUIRED_TO_PASS += \
-   test2004_77.C \
-   test2004_143.C \
-   test2004_149.C \
-   test2005_28.C \
-   test2005_35.C \
-   test2005_39.C \
-   test2005_42.C \
-   test2005_98.C \
-   test2005_129.C \
-   test2005_130.C \
-   test2005_131.C \
-   test2005_132.C \
-   test2005_133.C \
-   test2005_142.C \
-   test2005_181.C \
-   test2006_20.C \
-   test2006_79.C \
-   test2006_124.C 
-endif # ROSE_USE_EDG_VERSION_4_9
 
-# DQ (2/19/2017): OLD VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-if ROSE_USE_EDG_VERSION_4_9
-if !ROSE_USING_GCC_VERSION_LATER_4_9
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-else
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-else
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-OLD_TESTCODES_REQUIRED_TO_PASS = \
-   test2004_77.C \
-   test2004_143.C \
-   test2004_149.C \
-   test2005_28.C \
-   test2005_35.C \
-   test2005_39.C \
-   test2005_42.C \
-   test2005_98.C \
-   test2005_129.C \
-   test2005_130.C \
-   test2005_131.C \
-   test2005_132.C \
-   test2005_133.C \
-   test2005_142.C \
-   test2005_181.C \
-   test2006_20.C \
-   test2006_79.C \
-   test2006_124.C 
-else
-# This is the GNU 6.1 or later compiler (so skip this list of files).
-endif
-
-endif
-
-endif
-
-else
 # Using EDG 4.12 or later (independent of the compiler).
 OLD_TESTCODES_REQUIRED_TO_PASS = \
    test2004_77.C \
@@ -691,8 +597,6 @@ OLD_TESTCODES_REQUIRED_TO_PASS = \
    test2006_20.C \
    test2006_79.C \
    test2006_124.C 
-endif
-
 
 else
 
@@ -800,42 +704,6 @@ $(TEST_Objects): statements
 
 check-local:
 	@echo "Tests the source position information held within the AST."
-#	@$(MAKE) $(PASSING_TEST_Objects)
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
-	@echo "source position tests using GNU version 4.8 and earlier backend compiler."
-	@$(MAKE) $(PASSING_TEST_Objects)
-endif # ROSE_USING_GCC_VERSION_LATER_4_8
-else  # NOT USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
 if USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == true"
 	@echo "source position tests using GNU version 4.8 backend compiler."
@@ -858,7 +726,6 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "******************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/sourcePosition_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************************************"

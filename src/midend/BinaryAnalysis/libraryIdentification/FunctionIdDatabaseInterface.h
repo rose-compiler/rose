@@ -1,5 +1,7 @@
 #ifndef FUNCTION_ID_DATABASE_INTERFACE_H
 #define FUNCTION_ID_DATABASE_INTERFACE_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "sqlite3x.h"
 #include "LibraryInfo.h"
@@ -54,7 +56,7 @@ namespace LibraryIdentification
          *
          * @param[in] dbName  Name of the database to open
          **/
-        FunctionIdDatabaseInterface(std::string dbName);
+        FunctionIdDatabaseInterface(const std::string& dbName);
         
 
          /** 
@@ -116,16 +118,15 @@ namespace LibraryIdentification
           **/
          bool matchLibrary(LibraryInfo& fInfo);
 
-
  private:
      // @brief The name of the database
      std::string database_name;
      
      // @brief SQLite database handle
      sqlite3x::sqlite3_connection sqConnection;
+
     };   
 }
 
-
 #endif
-
+#endif

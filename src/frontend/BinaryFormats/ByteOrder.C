@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "ByteOrder.h"
 
@@ -426,5 +428,6 @@ host_to_disk(Endianness sex, int64_t h, int64_t *np)
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
 
-
 } // namespace
+
+#endif

@@ -505,6 +505,22 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgTemplateTypedefDeclaration:
+                  {
+                    const SgTemplateTypedefDeclaration* decl = isSgTemplateTypedefDeclaration(statement);
+                    key = decl->get_mangled_name();
+                    additionalSuffix = "__template_typedef_declaration";
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationTypedefDeclaration:
+                  {
+                    const SgTemplateInstantiationTypedefDeclaration* decl = isSgTemplateInstantiationTypedefDeclaration(statement);
+                    key = decl->get_mangled_name();
+                    additionalSuffix = "__template_typedef_instantiation";
+                    break;
+                  }
+
                case V_SgEnumDeclaration:
                   {
                  // additionalSuffix = "__enum_declaration";
@@ -1035,6 +1051,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgContinueStmt:
                case V_SgBasicBlock:
                case V_SgForStatement:
+               case V_SgRangeBasedForStatement:
                case V_SgForInitStatement:
                case V_SgIfStmt:
                case V_SgWhileStmt:
@@ -1053,6 +1070,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = key + generateUniqueName(pragmaDeclaration->get_pragma(),ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
                     break;
                   }
+
+               case V_SgStaticAssertionDeclaration:
+                  {
+                    key = "__static_assert_declaration_";
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
 #if 0
                case V_SgDefaultOptionStmt:
                   {
@@ -1105,14 +1130,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          accessString = "__public_access_";
                          break;
                        }
-#if 0
+
+                 // DQ (8/17/2020): Uncommented this code, now that e_default != e_public.
                  // This case is equal to SgAccessModifier::e_public (so it is redundant to list it here)
                     case SgAccessModifier::e_default: 
                        {
                          accessString = "__default_access_";
                          break;
                        }
-#endif
+
                     default:
                        {
                          printf ("Error: default reached in SageInterface::generateUniqueName (declaration prefix) \n");
@@ -1455,7 +1481,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                   {
                     key = "__sourceFile_file_id_";
 
@@ -1666,17 +1694,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                       // DQ (7/11/2010): In astFileIO test test-read-large we demonstrate an example of this case.
                          case SgTemplateArgument::template_template_argument:
+                         case SgTemplateArgument::start_of_pack_expansion_argument:
                             {
                            // This will make sure the IR node is unshared
                               key += StringUtility::numberToString(node);
 #if 1
-                              printf ("Warning: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
-#else
-                              printf ("Error: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
-                              ROSE_ASSERT(false);
+                              printf ("[SageInterface::generateUniqueName] Warning: SgTemplateArgument::template_template_argument or SgTemplateArgument::start_of_pack_expansion_argument reached (not implemented yet)\n");
 #endif
                               break;
                             }
+
 
                          default:
                             {

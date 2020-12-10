@@ -1,9 +1,15 @@
 /* Enum constants for Intel x86 architectures */
 
-#ifndef ROSE_ENUMS_X86
-#define ROSE_ENUMS_X86
+#ifndef ROSE_BinaryAnalysis_InstructionEnumsX86_H
+#define ROSE_BinaryAnalysis_InstructionEnumsX86_H
+
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "AssemblerX86Init.h"   /* A big enum whose members are all possible x86 instructions. */
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Intel x86 instruction size constants. */
 enum X86InstructionSize {
@@ -147,4 +153,8 @@ enum X86Exception {
                                                          *   instructions. */
 };
 
+} // namespace
+} // namespace
+
+#endif
 #endif

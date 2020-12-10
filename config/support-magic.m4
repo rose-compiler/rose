@@ -2,32 +2,33 @@ dnl Tests for magic.h and libmagic
 AC_DEFUN([ROSE_SUPPORT_LIBMAGIC],[
 
     dnl Parse configure command-line switches for libmagic and/or obtain the value from the cache.
-    AC_ARG_WITH([magic],
-                [AC_HELP_STRING([[[[--with-magic[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-		                [Use libmagic available from http://sourceforge.net/projects/libmagic for free.
-                                 On Debian-based systems it's available with the apt tools. The PREFIX, if specified,
-				 should be the prefix used to install libmagic, such as "/usr/local".  The default
-				 is the empty prefix, in which case the headers and library must be installed in a
-				 place where they will be found. Saying "no" for the prefix is the same as saying
-				 "--without-magic".])],
-                [ac_cv_use_magic=$withval],
-		[ac_cv_use_magic=no])
+    AC_ARG_WITH(
+        [magic],
+        AS_HELP_STRING(
+            [--with-magic=PREFIX],
+            [Use libmagic available from http://sourceforge.net/projects/libmagic for free.
+             The PREFIX, if specified, should be the prefix used to install libmagic, such as "/usr/local".
+             The default is the empty prefix, in which case the headers and library must be installed in a
+             place where they will be found. Saying "no" for the prefix is the same as saying
+             "--without-magic".]),
+            [ac_cv_use_magic=$withval],
+            [ac_cv_use_magic=no])
     AC_CACHE_CHECK([whether to use magic], [ac_cv_use_magic], [ac_cv_use_magic=no])
 
     dnl Find the magic library
     ROSE_HAVE_LIBMAGIC=
     if test $ac_cv_use_magic = yes; then
         ROSE_LIBMAGIC_PREFIX=
-	AC_CHECK_LIB(magic, magic_open,
-		     [AC_DEFINE(ROSE_HAVE_LIBMAGIC, [], [Defined when libmagic is available.])
-		     ROSE_HAVE_LIBMAGIC=yes])
+        AC_CHECK_LIB(magic, magic_open,
+                     [AC_DEFINE(ROSE_HAVE_LIBMAGIC, [], [Defined when libmagic is available.])
+                     ROSE_HAVE_LIBMAGIC=yes])
     elif test -n "$ac_cv_use_magic" -a "$ac_cv_use_magic" != no; then
         ROSE_LIBMAGIC_PREFIX="$ac_cv_use_magic"
-	old_LDFLAGS="$LDFLAGS"
-	LDFLAGS="$LDFLAGS -L$ROSE_LIBMAGIC_PREFIX/lib"
-	AC_CHECK_LIB(magic, magic_open,
-	             [AC_DEFINE(ROSE_HAVE_LIBMAGIC, [], [Defined when libmagic is available.])
-		      ROSE_HAVE_LIBMAGIC=yes])
+        old_LDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS -L$ROSE_LIBMAGIC_PREFIX/lib"
+        AC_CHECK_LIB(magic, magic_open,
+                     [AC_DEFINE(ROSE_HAVE_LIBMAGIC, [], [Defined when libmagic is available.])
+                      ROSE_HAVE_LIBMAGIC=yes])
         LDFLAGS="$old_LDFLAGS"
     fi
 

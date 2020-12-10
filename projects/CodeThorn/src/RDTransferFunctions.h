@@ -4,16 +4,24 @@
 #include "DFTransferFunctions.h"
 #include "RDLattice.h"
 
-class RDTransferFunctions : public SPRAY::DFTransferFunctions {
+namespace CodeThorn
+{
+
+class RDTransferFunctions : public DFTransferFunctions {
 public:
   RDTransferFunctions();
-  void transferExpression(SPRAY::Label label, SgExpression* expr, SPRAY::Lattice& element);
-  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, SPRAY::Lattice& element);
-  void transferReturnStmtExpr(SPRAY::Label label, SgExpression* expr, SPRAY::Lattice& element);
-  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, SPRAY::Lattice& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, SPRAY::Lattice& element);
-  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, SPRAY::Lattice& element);
-  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, SPRAY::VariableIdSet& localVariablesInFunction, SPRAY::Lattice& element);
+  void transferExpression(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
+  void transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) ROSE_OVERRIDE;
+  void transferReturnStmtExpr(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) ROSE_OVERRIDE;
+  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) ROSE_OVERRIDE;
+  void initializeExtremalValue(Lattice& element) ROSE_OVERRIDE;
 };
+
+}
+
+//~ using RDTransferFunctions;
 
 #endif

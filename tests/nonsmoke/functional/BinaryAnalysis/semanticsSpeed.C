@@ -22,6 +22,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define NEW_API 2
 
 #include "DispatcherX86.h"
+
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
@@ -124,6 +126,7 @@ main(int argc, char *argv[])
 
     BaseSemantics::RiscOperatorsPtr operators = make_ops();
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators, 32);
+    ASSERT_always_not_null(dispatcher);
 
     struct sigaction sa;
     sa.sa_handler = alarm_handler;

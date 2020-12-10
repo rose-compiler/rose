@@ -1,6 +1,11 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
+// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
+// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 
 // DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
 // #include "ExecLE.h"
@@ -1125,3 +1130,5 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
 // }; //namespace LE
 // }; //namespace Exec
+
+#endif

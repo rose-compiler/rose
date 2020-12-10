@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BinaryNoOperation.h>
 #include <CommandLine.h>
@@ -40,8 +43,10 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     if (rstate)
         rstate->initialize_large();
 
+    cpu->initializeState(state);
+
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    state->writeRegister(IP, cpu->number_(IP.get_nbits(), insn->get_address()), cpu->get_operators().get());
+    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->operators().get());
 
     return state;
 }
@@ -78,7 +83,7 @@ public:
 std::string
 NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, const BaseSemantics::StatePtr &state_) {
     BaseSemantics::StatePtr state = state_;
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     if (!state)
         return "";
     bool isCloned = false;                              // do we have our own copy of the state?
@@ -130,7 +135,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -164,14 +169,14 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
         state = cpu_->currentState()->clone();
         state->clear();
         RegisterDescriptor IP = cpu_->instructionPointerRegister();
-        state->writeRegister(IP, cpu_->number_(IP.get_nbits(), insn->get_address()), cpu_->get_operators().get());
+        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->operators().get());
     }
 
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
-        BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-        state->writeRegister(regSp, ops->number_(regSp.get_nbits(), *initialSp_), ops.get());
+        BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
+        state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 
     return state;
@@ -193,7 +198,7 @@ NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
     if (insns.empty())
         return true;
 
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->currentState());
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
@@ -230,11 +235,11 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // for now. FIXME[Robb P. Matzke 2015-05-11]
     std::vector<std::string> states;
     bool hadError = false;
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.get_nbits(), insn->get_address()));
+            cpu_->operators()->writeRegister(regIP, cpu_->operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");
@@ -266,10 +271,10 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // after each instruction.
     if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size() + 1) {
         bool isComplete = true;
-        std::set<rose_addr_t> succs = insns.back()->getSuccessors(&isComplete);
+        AddressSet succs = insns.back()->getSuccessors(isComplete/*out*/);
         if (succs.size() > 1 || !isComplete) {
             states.pop_back();
-        } else if (succs.size() == 1 && *succs.begin() != insns.back()->get_address() + insns.back()->get_size()) {
+        } else if (succs.size() == 1 && succs.least() != insns.back()->get_address() + insns.back()->get_size()) {
             states.pop_back();
         }
     }
@@ -326,3 +331,5 @@ NoOperation::toVector(const IndexIntervals &in, size_t size) {
 
 } // namespace
 } // namespace
+
+#endif

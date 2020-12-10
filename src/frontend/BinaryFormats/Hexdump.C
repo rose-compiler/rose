@@ -1,6 +1,8 @@
 /* Functions that produce output reminiscent of the Unix "hexdump" command. */
-// tps (01/14/2010) : Switching from rose.h to sage3.
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include <boost/format.hpp>
 #include <stdarg.h>
 
@@ -44,6 +46,7 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                         try {
                             f <<boost::format(special->second) % (unsigned)(special->first);
                         } catch (...) {
+                            f <<special->second;
                         }
                     }
                 } else if (fmt.pad_numeric) {
@@ -172,3 +175,5 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, rose_addr_t base_addr, const std::st
     if (f)
         fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
 }
+
+#endif

@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "BinaryLoaderElfObj.h"
 #include "MemoryMap.h"
 
@@ -65,7 +68,7 @@ BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::P
                                             offset_p, file_size_p, map_private_p, va_offset_p, anon_lo_p, anon_hi_p,
                                             resolve_p);
 
-    if (section->get_contains_code()) {
+    if (section->get_contains_code() && section->get_size() > 0) {
         SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(section);
         rose_addr_t baseVa = header ? header->get_base_va() : 0;
 
@@ -93,3 +96,5 @@ BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::P
 
 } // namespace
 } // namespace
+
+#endif

@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/Utility.h>
 
@@ -69,28 +71,6 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
 }
 
 bool
-sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
-                      const ControlFlowGraph::ConstVertexIterator &b) {
-    const CfgVertex &av = a->value();
-    const CfgVertex &bv = b->value();
-    if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
-        return av.type() < bv.type();
-    return av.address() < bv.address();
-}
-
-bool
-sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->source(), b->source());
-}
-
-bool
-sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->target(), b->target());
-}
-
-bool
 sortBlocksForAst(SgAsmBlock *a, SgAsmBlock *b) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
@@ -124,9 +104,9 @@ std::string
 AddressIntervalParser::docString() {
     return ("An address interval can be specified as a single address, or a first and inclusive last address separated by a "
             "comma, or a begin and exclusive end address separated by a hyphen, or a begin address and size in bytes "
-            "separated by a plus sign, or an empty string to indicate an empty interval.  The upper address must always be "
-            "greater than or equal to the lower address. Addresses and sizes can be specified in decimal, hexadecimal "
-            "(leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
+            "separated by a plus sign, or the word \"all\" for all addresses, or an empty string to indicate an empty interval. "
+            "The upper address must always be greater than or equal to the lower address. Addresses and sizes can be specified "
+            "in decimal, hexadecimal (leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
 }
 
 Sawyer::CommandLine::ParsedValue
@@ -142,6 +122,11 @@ AddressIntervalParser::parse(const char *input, const char **rest) {
     char *r = NULL;
     bool hadRangeError = false, isEmpty = false;
     while (isspace(*s)) ++s;
+
+    if (!strcmp(s, "all")) {
+        *rest = s + 3;
+        return AddressInterval::whole();
+    }
 
     // Minimum
     errno = 0;
@@ -231,6 +216,11 @@ addressIntervalParser(std::vector<AddressInterval> &storage) {
 }
 
 AddressIntervalParser::Ptr
+addressIntervalParser(AddressIntervalSet &storage) {
+    return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<AddressIntervalSet>::instance(storage));
+}
+
+AddressIntervalParser::Ptr
 addressIntervalParser() {
     return AddressIntervalParser::instance();
 }
@@ -265,18 +255,6 @@ Trigger::docString() {
 }
 
 std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
-    out <<Partitioner::vertexName(x);
-    return out;
-}
-
-std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
-    out <<Partitioner::edgeName(x);
-    return out;
-}
-
-std::ostream&
 operator<<(std::ostream &out, const AddressUser &x) {
     x.print(out);
     return out;
@@ -298,3 +276,5 @@ operator<<(std::ostream &out, const AddressUsageMap &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

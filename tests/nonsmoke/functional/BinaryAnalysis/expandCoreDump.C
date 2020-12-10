@@ -274,6 +274,7 @@ int main(int argc, char *argv[]) {
 
     /* Fix up arguments before calling the front end. */
     char **tmp_argv = (char**)calloc(argc+2, sizeof(*argv));
+    ASSERT_always_not_null(tmp_argv);
     memcpy(tmp_argv+1, argv, argc*sizeof(*argv));
     tmp_argv[0] = argv[0];
     tmp_argv[1] = strdup("-rose:read_executable_file_format_only");

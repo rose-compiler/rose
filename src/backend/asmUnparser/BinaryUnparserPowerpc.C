@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryUnparserPowerpc.h>
 
@@ -18,8 +20,13 @@ Powerpc::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
 
     if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(expr)) {
         outputExpr(out, add->get_lhs(), state);
-        out <<" + ";
-        outputExpr(out, add->get_rhs(), state);
+
+        // Print the "+" and RHS only if RHS is non-zero
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        if (!ival || !ival->get_bitVector().isAllClear()) {
+            out <<" + ";
+            outputExpr(out, add->get_rhs(), state);
+        }
 
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr)) {
         state.frontUnparser().emitTypeName(out, mre->get_type(), state);
@@ -50,3 +57,5 @@ Powerpc::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state)
 } // namespace
 } // namespace
 } // namespace
+
+#endif

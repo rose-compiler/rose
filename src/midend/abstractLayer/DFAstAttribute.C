@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "DFAstAttribute.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // default behavior
 string DFAstAttribute::toString() { return "undefined";}

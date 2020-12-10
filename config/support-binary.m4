@@ -115,13 +115,16 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 ROSE_SUPPORT_LIBGCRYPT
 
 dnl http://dlib.net
-AC_ARG_WITH(dlib,
-        [  --with-dlib=PATH Installation prefix for optional dlib (http://dlib.net) library.
-                            Dlib requires no installation; just untar its source and specify
-                            the name of the directory that was created (e.g., "dlib-18.17") and
-                            which contains the "dlib" subdirectory.],
+AC_ARG_WITH(
+    [dlib],
+    AS_HELP_STRING(
+        [--with-dlib=PREFIX],
+        [Use the optional dlib support library available from http://dlib.net. The PREFIX, if specified, should be the
+         prefix used to install dlib, such as "/usr/local".  The default is the empty prefix, in which case the headers
+         and library must be installed in a place where they will be found. Saying "no" for the prefix is the same as
+         saying "--without-dlib".]),
         [],
-	[with_dlib=no])
+        [with_dlib=no])
 AS_IF([test "$with_dlib" != "no"],
         [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
          if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi])
@@ -138,7 +141,7 @@ AC_MSG_CHECKING([for thread local storage type qualifier])
 # These headers and types are needed by projects/simulator2
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
-AC_CHECK_HEADERS([termios.h grp.h syscall.h])
+AC_CHECK_HEADERS([termios.h grp.h syscall.h sys/personality.h])
 AC_CHECK_FUNCS(pipe2)
 AC_CHECK_TYPE(user_desc,
               AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
@@ -162,6 +165,9 @@ fi,
 
 AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
 AC_SUBST(TEST_SMT_SOLVER)
+
+# Whether the Capstone disassembler is available
+ROSE_SUPPORT_CAPSTONE
 
 dnl A blank line to separate binary analysis from some miscellaneous tests in support-rose.m4 that don't have a heading.
 AC_MSG_NOTICE([all seems good for binary analysis if it's enabled.

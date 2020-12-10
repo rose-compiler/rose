@@ -1,0 +1,32 @@
+class InternalIndex { has_value { stride = this.stride; base = this.base; length = this.length; } }
+class Index { has_value { stride = this.stride; base = this.base; length = this.length; } }
+class Range { has_value { stride = this.stride; base = this.base; length = this.length; } }
+
+operator Index::Index( int lb, int l, int step) 
+      {
+       modify none; read {lb, l, step}; alias none; 
+       restrict_value { result = { base = lb; length = l; stride = step; } };
+      }
+operator Range::Range( int lb, int ub, int step) 
+      {
+       modify none; read {lb, ub, step}; alias none;
+       restrict_value { result = { base = lb; length = (ub-lb+1)/step; stride = step; } };
+      }
+operator InternalIndex::InternalIndex( int lb, int l, int step) 
+      {
+       modify none; read {lb, l, step}; alias none; 
+       restrict_value { result = { base = lb; length = l; stride = step; } };
+      }
+
+operator operator+ ( const InternalIndex & lhs, int x ) 
+      {
+       modify none; read {lhs, x}; alias none; 
+    restrict_value { result = {stride = lhs.stride; base = lhs.base + x; 
+                               length = lhs.length}; };
+      }
+operator operator- ( const InternalIndex & lhs, int x ) 
+      {
+       modify none; read {lhs, x}; alias none; 
+    restrict_value { result = {stride = lhs.stride; base = lhs.base - x; 
+                               length = lhs.length}; };
+      }

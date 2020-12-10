@@ -1,0 +1,10 @@
+START
+PROGRAM item'desc'conversion ;
+BEGIN
+  ITEM float'var'1 F, R 10;
+  ITEM float'var'2 F;
+
+  float'var'1 = (* F, R 10 *)(1);
+  float'var'2 = F(5);
+END
+TERM

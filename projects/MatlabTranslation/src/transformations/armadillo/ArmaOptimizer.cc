@@ -18,7 +18,7 @@ namespace ArmaOpt
   static
   ExprPair makeMemberCall(SgFunctionCallExp& parent, std::string armaname)
   {
-    SgExpression*        receiver = si::deepCopy(&ru::argN(parent, 0));
+    SgExpression*        receiver = ru::deepCopy(&ru::argN(parent, 0));
     SgFunctionCallExp*   memcall  =
              ru::createMemberFunctionCall( "Matrix",  // \todo replace with type
                                            receiver,
@@ -34,8 +34,8 @@ namespace ArmaOpt
   static
   ExprPair makeBinaryExpr(SgFunctionCallExp& parent, Builder builder)
   {
-    SgExpression* lhs = si::deepCopy(&ru::argN(parent, 0));
-    SgExpression* rhs = si::deepCopy(&ru::argN(parent, 1));
+    SgExpression* lhs = ru::deepCopy(&ru::argN(parent, 0));
+    SgExpression* rhs = ru::deepCopy(&ru::argN(parent, 1));
 
     return ExprPair(&parent, builder(lhs, rhs));
   }
@@ -62,7 +62,7 @@ namespace ArmaOpt
         ROSE_ASSERT(ru::arglist(parent).size() == 1);
 
         SgScopeStatement* scope   = &sg::ancestor<SgScopeStatement>(n);
-        SgExpression*     arg     = si::deepCopy(&ru::argN(parent, 0));
+        SgExpression*     arg     = ru::deepCopy(&ru::argN(parent, 0));
         SgExprListExp*    args    = sb::buildExprListExp(arg);
         SgExpression*     newcall = ru::createFunctionCall("diagmat", scope, args);
 

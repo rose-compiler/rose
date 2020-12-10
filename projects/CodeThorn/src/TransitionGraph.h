@@ -15,7 +15,7 @@ namespace CodeThorn {
     const EState* source; // source node
     Edge edge;
     const EState* target; // target node
-    string toString() const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
     size_t memorySize() const;
   private:
   };
@@ -42,17 +42,17 @@ namespace CodeThorn {
   bool operator!=(const Transition& t1, const Transition& t2);
   bool operator<(const Transition& t1, const Transition& t2);
   
-  typedef set<const Transition*> TransitionPtrSet;
-  typedef set<const EState*> EStatePtrSet;
+  typedef std::set<const Transition*> TransitionPtrSet;
+  typedef std::set<const EState*> EStatePtrSet;
   
   /*! 
    * \author Markus Schordan
    * \date 2012.
    */
-  class Analyzer;
+  class CTAnalysis;
   class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
   public:
-    typedef set<const Transition*> TransitionPtrSet;
+    typedef std::set<const Transition*> TransitionPtrSet;
     TransitionGraph();
     void setModeLTLDriven(bool mode) { _modeLTLDriven=mode; }
     bool getModeLTLDriven() { return _modeLTLDriven; }
@@ -60,7 +60,7 @@ namespace CodeThorn {
     EStatePtrSet estateSet();
     long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
     void add(Transition trans);
-    string toString() const;
+    string toString(VariableIdMapping* variableIdMapping=0) const;
     LabelSet labelSetOfIoOperations(InputOutput::OpType op);
     Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
     void setStartLabel(Label lab) { _startLabel=lab; }
@@ -73,12 +73,10 @@ namespace CodeThorn {
     void erase(const Transition trans);
 
     //! deprecated
-    void reduceEStates(set<const EState*> toReduce);
+    void reduceEStates(std::set<const EState*> toReduce);
     void reduceEState(const EState* estate);
-    //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
-    void reduceEStates2(set<const EState*> toReduce);
     void reduceEState2(const EState* estate); // used for semantic folding
-    void reduceEStates3(function<bool(const EState*)> predicate); // used for semantic folding
+    void reduceEStates3(std::function<bool(const EState*)> predicate); // used for semantic folding
     TransitionPtrSet inEdges(const EState* estate);
     TransitionPtrSet outEdges(const EState* estate);
     EStatePtrSet pred(const EState* estate);
@@ -88,32 +86,36 @@ namespace CodeThorn {
     // deletes EState and *deletes* all ingoing and outgoing transitions
     void eliminateEState(const EState* estate);
     int eliminateBackEdges();
-    void determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet);
+    void determineBackEdges(const EState* state, std::set<const EState*>& visited, TransitionPtrSet& tpSet);
     void setIsPrecise(bool v);
     void setIsComplete(bool v);
     bool isPrecise();
     bool isComplete();
     void setForceQuitExploration(bool v);
     size_t memorySize() const;
-    void setAnalyzer(Analyzer* analyzer) {
+    void setAnalyzer(CTAnalysis* analyzer) {
       _analyzer=analyzer;
     }
-    Analyzer* getAnalyzer() {
+    CTAnalysis* getAnalyzer() {
       return _analyzer;
     }
- private:
+    // prints #transitions and details about states on stdout
+    void printStgSize(std::string optionalComment);
+    // generates info about #transitions and details about states in CSV format
+    void csvToStream(std::stringstream& csvStream);
+  private:
     Label _startLabel;
     int _numberOfNodes; // not used yet
-    map<const EState*,TransitionPtrSet > _inEdges;
-    map<const EState*,TransitionPtrSet > _outEdges;
-    set<const EState*> _recomputedestateSet;
+    std::map<const EState*,TransitionPtrSet > _inEdges;
+    std::map<const EState*,TransitionPtrSet > _outEdges;
+    std::set<const EState*> _recomputedestateSet;
     bool _preciseSTG;
     bool _completeSTG;
     bool _modeLTLDriven;
     bool _forceQuitExploration;
 
     // only used by ltl-driven mode in function succ
-    Analyzer* _analyzer = nullptr;
+    CTAnalysis* _analyzer = nullptr;
     // only used by ltl-driven mode in function succ
     const EState* _startEState = nullptr;
   };

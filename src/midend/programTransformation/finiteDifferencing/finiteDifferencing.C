@@ -17,7 +17,7 @@
 
 #undef FD_DEBUG
 
-// DQ (8/1/2005): test use of new static function to create 
+// DQ (8/1/2005): test use of new static function to create
 // Sg_File_Info object that are marked as transformations
 #undef SgNULL_FILE
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
@@ -51,7 +51,7 @@ class FdFindCopiesVisitor: public AstSimpleProcessing {
   }
 };
 
-void replaceCopiesOfExpression(SgExpression* src, SgExpression* tgt, 
+void replaceCopiesOfExpression(SgExpression* src, SgExpression* tgt,
                                SgNode* root) {
 #ifdef FD_DEBUG
   cout << "replaceCopiesOfExpression: src = " << src->unparseToString() << ", tgt = " << tgt->unparseToString() << ", root = " << root->unparseToString() << endl;
@@ -114,13 +114,13 @@ class FdFindModifyingStatementsVisitor
       case V_SgXorAssignOp:
       case V_SgLshiftAssignOp:
       case V_SgRshiftAssignOp:
-      if (anyOfListPotentiallyModifiedIn(syms, n))
+      if (legacy::anyOfListPotentiallyModifiedIn(syms, n))
         mods.push_back(isSgExpression(n));
       break;
 
       case V_SgPlusPlusOp:
       case V_SgMinusMinusOp:
-      if (anyOfListPotentiallyModifiedIn(syms, n))
+      if (legacy::anyOfListPotentiallyModifiedIn(syms, n))
         mods.push_back(isSgExpression(n));
       break;
 
@@ -208,7 +208,7 @@ SgExpression* doFdVariableUpdate(
 // new_value)) is created and rewritten.  The rewrite rules may either produce
 // an arbitrary expression (which will be used as-is) or one of the form (var,
 // (something, value)) (which will be changed to (var = value)).
-void doFiniteDifferencingOne(SgExpression* e, 
+void doFiniteDifferencingOne(SgExpression* e,
                              SgBasicBlock* root,
                              RewriteRule* rules)
    {
@@ -216,7 +216,7 @@ void doFiniteDifferencingOne(SgExpression* e,
      SgStatementPtrList::iterator i;
      for (i = root_stmts.begin(); i != root_stmts.end(); ++i)
         {
-          if (expressionComputedIn(e, *i))
+          if (legacy::expressionComputedIn(e, *i))
                break;
         }
      if (i == root_stmts.end())
@@ -239,9 +239,9 @@ void doFiniteDifferencingOne(SgExpression* e,
      vector<SgExpression*> modifications_to_used_symbols;
      FdFindModifyingStatementsVisitor(used_symbols, modifications_to_used_symbols).go(root);
 
-     cachedecl->addToAttachedPreprocessingInfo( 
-          new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,(string("// Finite differencing: ") + 
-               cachename.str() + " is a cache of " + 
+     cachedecl->addToAttachedPreprocessingInfo(
+          new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,(string("// Finite differencing: ") +
+               cachename.str() + " is a cache of " +
                e->unparseToString()).c_str(),"Compiler-Generated in Finite Differencing",0, 0, 0, PreprocessingInfo::before));
 
      if (modifications_to_used_symbols.size() == 0)
@@ -729,12 +729,12 @@ class IsModifiedBadlyVisitor: public AstSimpleProcessing {
                        isSgValueExp(isSgCastExp(binop->get_rhs_operand())
                         ->get_operand())) {
               // Safe
-            } else if (isSgAssignOp(binop) && 
+            } else if (isSgAssignOp(binop) &&
                        rhs_a &&
-                       ((isSgVarRefExp(rhs_a_lhs) && 
+                       ((isSgVarRefExp(rhs_a_lhs) &&
                           isSgVarRefExp(rhs_a_lhs)->get_symbol()
                              ->get_declaration() == initname) ||
-                        (isSgVarRefExp(rhs_a_rhs) && 
+                        (isSgVarRefExp(rhs_a_rhs) &&
                           isSgVarRefExp(rhs_a_rhs)->get_symbol()
                              ->get_declaration() == initname))) {
               // Safe
@@ -817,13 +817,13 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
       SgExpression* expr1 = fmv.exprs[i]->get_lhs_operand();
       SgExpression* expr2 = fmv.exprs[i]->get_rhs_operand();
       bool isConst1 = isSgValueExp(expr1);
-      bool isSafeVar1 = isSgVarRefExp(expr1) && 
+      bool isSafeVar1 = isSgVarRefExp(expr1) &&
                         safe_vars.find(isSgVarRefExp(expr1)->get_symbol()
                                         ->get_declaration())
                           != safe_vars.end();
       bool isGood1 = isConst1 || isSafeVar1;
       bool isConst2 = isSgValueExp(expr2);
-      bool isSafeVar2 = isSgVarRefExp(expr2) && 
+      bool isSafeVar2 = isSgVarRefExp(expr2) &&
                         safe_vars.find(isSgVarRefExp(expr2)->get_symbol()
                                         ->get_declaration())
                           != safe_vars.end();
@@ -843,7 +843,7 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
       }
     }
     for (int i = mult_exprs.size() - 1; i >= 0; --i)
-      doFiniteDifferencingOne(mult_exprs[i], body, 
+      doFiniteDifferencingOne(mult_exprs[i], body,
                               getFiniteDifferencingRules());
 
     SgNode* bodyCopyForRewrite = body;

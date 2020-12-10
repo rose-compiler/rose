@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+find-libdirs() {
+    rmc -C ~/rose/_build bash -c 'echo $ALL_LIBDIRS' |tr : '\n' |sort -u
+}
+
+release_name="$HOME/run/artifacts/binary-release"
+rose_version="$(head -n1 "$HOME/rose/ROSE_VERSION")"
+
+build_type="$(./container-scripts/scan-config rose/_build/.rmc-main.cfg build autoconf)"
+case "$build_type" in
+    autoconf)
+	(
+	    set -ex
+	    rmc -C rose/_build make rose-installer-rmc2
+	    cp rose/_build/rose-installer-rmc2 "$release_name"
+	)
+	;;
+
+    tup)
+	libdirs="$(find-libdirs)"
+	(
+	    set -ex
+	    rmc -C rose/_build \
+		../scripts/mkinstaller \
+		    --create=binary-release \
+		    --project-name=ROSE \
+		    --project-version="$rose_version" \
+		    --postinstall-bin="$HOME/container-scripts/post-install-script" \
+		    --CC=cc --CXX=c++ \
+		    $HOME/rose-installed/latest/* \
+		    $libdirs
+	    cp rose/_build/binary-release "$release_name"
+	)
+	;;
+	    
+    *)
+	echo "$0: building a binary release with $build_type is not supported" >&2
+	exit 1
+	;;
+esac

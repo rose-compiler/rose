@@ -1,5 +1,9 @@
 #include <sage3basic.h>
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "astGraph.h"
 #include <list>
 #include <analysisUtils.h>
@@ -534,8 +538,12 @@ SgMemberFunctionRefExp *buildDtorRefExpr(SgClassDeclaration *decl)
      if (!dtor)
         {
           cout << "Class has no dtor!" << endl;
+#if ROSE_WITH_LIBHARU
           AstPDFGeneration pdf;
           pdf.generate("noDtor", decl);
+#else
+          cout << "Warning: libharu support is not enabled" << endl;
+#endif
           ROSE_ASSERT(false);
         }
      SgMemberFunctionRefExp *ref = new SgMemberFunctionRefExp(SgNULL_FILE, dtor, false, dtor->get_declaration()->get_type(), false);

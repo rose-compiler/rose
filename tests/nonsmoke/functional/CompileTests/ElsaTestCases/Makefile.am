@@ -59,15 +59,6 @@ t0066.cc\
 t0067.cc\
 t0070.cc
 
-# DQ (1/28/2017): This test code (testing __builtin_next_arg()) is failing for GNU 4.8 (so backup the exclusion of this test to GNU 4.8).
-# DQ (1/19/2017): This test code (testing __builtin_next_arg()) is failing for GNU 5.1
-# if !ROSE_USING_GCC_VERSION_LATER_5_1
-# if !ROSE_USING_GCC_VERSION_LATER_4_9
-if ROSE_USE_EDG_VERSION_4_9
-TESTCODES += \
-t0061.cc
-endif
-
 # Will it never end!  g++ version 4.0.2 fails to pass
 # this test with the ROSE generated code. They to pass 
 # with g++ version 3.3.2.
@@ -79,6 +70,7 @@ t0077.cc
 
 
 START_OF_FAILED_TESTS_USING_ROSE = \
+t0061.cc\
 t0080.cc\
 t0081.cc\
 t0083.cc\

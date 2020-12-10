@@ -1,9 +1,9 @@
 #define BOOST_FILESYSTEM_VERSION 3
 
-#include "rose.h"
+#include <rose.h>
 
-#include "SRecord.h"
-
+#include <SRecord.h>
+#include <BinaryVxcoreParser.h>
 #include <Partitioner2/Engine.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -21,13 +21,14 @@ static Diagnostics::Facility mlog;                      // further initializatio
 
 struct Settings {
     bool showAsHex;                                     // show memory in hexdump format
-    bool showAsSRecords;                                // show memory in Motorola S-Record format
+    Sawyer::Optional<SRecord::Syntax> showAsSRecords;   // show memory in Motorola S-Record format
     bool showAsBinary;                                  // show memory as raw bytes (output prefix required)
+    bool showAsVxcore;                                  // Jim Leek's vxcore format
     bool showMap;                                       // show memory mapping information
     std::string outputPrefix;                           // file name prefix for output, or send it to standard output
     std::vector<AddressInterval> where;                 // addresses that should be dumped
     Settings()
-        : showAsHex(false), showAsSRecords(false), showAsBinary(false), showMap(false) {}
+        : showAsHex(false), showAsBinary(false), showAsVxcore(false), showMap(false) {}
 };
 
 static std::vector<std::string>
@@ -62,8 +63,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}{1} command."));
 
     fmt.insert(Switch("srecords")
-               .intrinsicValue(true, settings.showAsSRecords)
-               .doc("Dump the specimen memory as Motorola S-Records."));
+               .argument("syntax", enumParser<SRecord::Syntax>(settings.showAsSRecords)
+                         ->with("motorola", SRecord::SREC_MOTOROLA)
+                         ->with("intel", SRecord::SREC_INTEL),
+                         "motorola")
+               .doc("Dump the specimen memory as Motorola S-Records. The optional @v{syntax} argument specifies which syntax "
+                    "to use for the output. The choices are:"
+                    "@named{motorola}{Motorola S-Record syntax, the default.}"
+                    "@named{intel}{Intel HEX syntax.}"));
 
     fmt.insert(Switch("binary")
                .intrinsicValue(true, settings.showAsBinary)
@@ -74,6 +81,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "\"<@v{prefix}>.load\" file is created that can be used to load the raw files back into another ROSE "
                     "command, usualyl by specifying \"@v{prefix}.load\" at the end of its command-line."));
 
+    fmt.insert(Switch("vxcore")
+               .intrinsicValue(true, settings.showAsVxcore)
+               .doc("Dump the specimen memory using a ROSE-specific format. The output name is specified with the @s{prefix} "
+                    "switch."));
+
     SwitchGroup out("Output switches");
     out.name("out");
 
@@ -82,7 +94,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                .doc("Show information about the memory map on standard output.  If no output formats are specified then the "
                     "memory map is displayed regardless of whether the @s{map} switch is present."));
 
-    out.insert(Switch("prefix")
+    out.insert(Switch("prefix", 'o')
                .argument("string", anyParser(settings.outputPrefix))
                .doc("Causes output to be emitted to a set of files whose names all begin with the specified @v{string}. "
                     "When this switch is absent or the @v{string} is empty then output will be sent to standard output, but "
@@ -98,7 +110,10 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                      P2::AddressIntervalParser::docString() + "  The specified interval may include addresses "
                      "that aren't mapped and which are silently ignored. This switch may appear more than once."));
 
-    return parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
+    std::vector<std::string> args = parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
+    if (settings.where.empty())
+        settings.where.push_back(AddressInterval::whole());
+    return args;
 }
 
 class Dumper {
@@ -151,12 +166,19 @@ public:
 };
 
 class SRecordDumper: public Dumper {
+    SRecord::Syntax syntax_;
+
 public:
+    explicit SRecordDumper(SRecord::Syntax syntax)
+        : syntax_(syntax) {}
+
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
                             const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
-        SRecord::dump(map, stream, 4);
+        std::vector<SRecord> srecs = SRecord::create(map, syntax_);
+        BOOST_FOREACH (const SRecord &srec, srecs)
+            stream <<srec <<"\n";
     }
 };
 
@@ -174,6 +196,29 @@ public:
     }
 };
 
+class VxcoreDumper: public Dumper {
+public:
+    virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
+                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+        std::string perms = "=";
+        if (0 != (segment.accessibility() & MemoryMap::READABLE))
+            perms += "r";
+        if (0 != (segment.accessibility() & MemoryMap::WRITABLE))
+            perms += "w";
+        if (0 != (segment.accessibility() & MemoryMap::EXECUTABLE))
+            perms += "x";
+
+        stream <<(boost::format("%x %x %s:\n") % dataInterval.least() % dataInterval.size());
+        stream.write((const char*)data, dataInterval.size());
+        if (!stream.good()) {
+            std::ostringstream mesg;
+            mesg <<"write failed for virtual address " <<dataInterval <<" in segment " <<segmentInterval
+                 <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"";
+            throw std::runtime_error(mesg.str());
+        }
+    }
+};
+
 int
 main(int argc, char *argv[]) {
     // Initialization
@@ -184,7 +229,7 @@ main(int argc, char *argv[]) {
     P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
-    if (!settings.showAsHex && !settings.showAsSRecords && !settings.showAsBinary) {
+    if (!settings.showAsHex && !settings.showAsSRecords && !settings.showAsBinary && !settings.showAsVxcore) {
         mlog[WARN] <<"no output format selected; see --help\n";
         settings.showMap = true;
     }
@@ -205,9 +250,22 @@ main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.showAsVxcore) {
+        if (settings.outputPrefix.empty()) {
+            mlog[FATAL] <<"an output file must be specified for binary output formats\n";
+            exit(1);
+        }
+        std::string outputName = settings.outputPrefix;
+        std::ofstream output(outputName.c_str(), std::ios_base::binary);
+        if (!output.good())
+            throw std::runtime_error("cannot create \"" + outputName);
+        VxcoreParser parser;
+        BOOST_FOREACH (AddressInterval where, settings.where)
+            parser.unparse(output, map, where, "output");
+        exit(0);
+    }
+
     // Dump the output
-    if (settings.where.empty())
-        settings.where.push_back(AddressInterval::whole());
     BOOST_FOREACH (AddressInterval where, settings.where) {
         rose_addr_t va = where.least();
         while (AddressInterval interval = map->atOrAfter(va).singleSegment().available()) {
@@ -221,9 +279,15 @@ main(int argc, char *argv[]) {
             if (settings.outputPrefix.empty()) {
                 if (settings.showAsHex)
                     HexDumper()(settings, map, interval, std::cout);
-                if (settings.showAsSRecords)
-                    SRecordDumper()(settings, map, interval, std::cout);
-                ASSERT_forbid2(settings.showAsBinary, "binary output is never emitted to standard output");
+                if (settings.showAsSRecords) {
+                    SRecordDumper(*settings.showAsSRecords)(settings, map, interval, std::cout);
+                    if (SRecord::SREC_INTEL == *settings.showAsSRecords)
+                        std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
+                }
+                if (settings.showAsBinary || settings.showAsVxcore) {
+                    mlog[FATAL] <<"an output file name must be specified for binary output formats\n";
+                    exit(1);
+                }
             } else {
                 std::string outputName = settings.outputPrefix + StringUtility::addrToString(interval.least()).substr(2);
                 if (settings.showAsHex) {
@@ -236,7 +300,15 @@ main(int argc, char *argv[]) {
                     std::ofstream output((outputName+".srec").c_str());
                     if (!output.good())
                         throw std::runtime_error("cannot create \"" + outputName + ".srec\"");
-                    SRecordDumper()(settings, map, interval, output);
+                    SRecordDumper(*settings.showAsSRecords)(settings, map, interval, output);
+                    if (SRecord::SREC_INTEL == *settings.showAsSRecords)
+                        std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
+                }
+                if (settings.showAsVxcore) {
+                    std::ofstream output(outputName.c_str());
+                    if (!output.good())
+                        throw std::runtime_error("cannot create \"" + outputName);
+                    VxcoreDumper()(settings, map, interval, output);
                 }
                 if (settings.showAsBinary) {
                     std::ofstream output((outputName+".raw").c_str());

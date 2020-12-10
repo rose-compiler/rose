@@ -1,0 +1,23 @@
+START
+PROGRAM status'enumval;
+BEGIN
+
+TYPE STATUS'1 STATUS
+(
+  V(LOW),
+  V(MED),
+  V(HIGH)
+);
+
+TYPE STATUS'2 STATUS
+(
+  1V(LOW),
+  3V(MED),
+  5V(HIGH)
+);
+
+ITEM s'var'1 STATUS'2;
+s'var'1 = V(HIGH);
+
+END
+TERM

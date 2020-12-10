@@ -1,0 +1,145 @@
+#include <sage3basic.h>
+#include <Concolic/TestCase.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
+#include <Concolic/Database.h>
+#include <Concolic/Specimen.h>
+#include <boost/lexical_cast.hpp>
+
+namespace Rose {
+namespace BinaryAnalysis {
+namespace Concolic {
+
+TestCase::TestCase()
+    : concreteIsInteresting_(false) {}
+
+TestCase::~TestCase() {}
+
+TestCase::Ptr
+TestCase::instance(const Specimen::Ptr& specimen) {
+  Ptr res(new TestCase);
+
+  res->specimen(specimen);
+  return res;
+}
+
+std::string
+TestCase::name() const {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  return name_;
+}
+
+void
+TestCase::name(const std::string& tcname) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  name_ = tcname;
+}
+
+std::string
+TestCase::printableName(const Database::Ptr &db) {
+    std::string retval = "testcase";                    // no white space
+    if (db) {
+        if (TestCaseId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    if (!name().empty())
+        retval += " \"" + StringUtility::cEscape(name()) + "\"";
+    return retval;
+}
+
+std::string
+TestCase::timestamp() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return timestamp_;
+}
+
+void
+TestCase::timestamp(const std::string &s) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    timestamp_ = s;
+}
+
+Specimen::Ptr
+TestCase::specimen() const {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  return specimen_;
+}
+
+void
+TestCase::specimen(const Specimen::Ptr& tcspecimen) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  specimen_ = tcspecimen;
+}
+
+std::vector<EnvValue>
+TestCase::env() const {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  return env_;
+}
+
+void
+TestCase::env(std::vector<EnvValue> envvars) {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  envvars.swap(env_);
+}
+
+std::vector<std::string>
+TestCase::args() const {
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  return args_;
+}
+
+void
+TestCase::args(std::vector<std::string> cmdlineargs)
+{
+  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+
+  cmdlineargs.swap(args_);
+}
+
+bool 
+TestCase::hasConcolicTest() const { 
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concolicResult_;
+}
+
+bool 
+TestCase::hasConcreteTest() const
+{
+  return concreteRank();
+}
+
+Sawyer::Optional<double> 
+TestCase::concreteRank() const {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concreteRank_;
+}
+
+void
+TestCase::concreteRank(Sawyer::Optional<double> val) {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    concreteRank_ = val;
+}
+
+bool
+TestCase::concreteIsInteresting() const {
+    return concreteIsInteresting_;
+}
+
+void
+TestCase::concreteIsInteresting(bool b) {
+    concreteIsInteresting_ = b;
+}
+
+} // namespace
+} // namespace
+} // namespace
+
+#endif

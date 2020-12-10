@@ -286,8 +286,6 @@ $REPLACE_COMPRESSASTINMEMEORYPOOL
 void
 AST_FILE_IO :: resetValidAstAfterWriting ( )
    {
-     printf ("Inside of AST_FILE_IO::resetValidAstAfterWriting() \n");
-
 // DQ (2/26/2010): Test this uncommented.
 #if 1
 $REPLACE_RESETVALIDASTAFTERWRITING

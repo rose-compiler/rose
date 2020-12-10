@@ -1,10 +1,13 @@
 #ifndef ROSE_BinaryAnalysis_FeasiblePath_H
 #define ROSE_BinaryAnalysis_FeasiblePath_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
 #include <BinarySymbolicExprParser.h>
 #include <Partitioner2/CfgPath.h>
+#include <RoseException.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
@@ -20,6 +23,14 @@ class FeasiblePath {
     //                                  Types and public data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Exception for errors specific to feasible path analysis. */
+    class Exception: public Rose::Exception {
+    public:
+        Exception(const std::string &what)
+            : Rose::Exception(what) {}
+        ~Exception() throw () {}
+    };
+
     /** How to search for paths. */
     enum SearchMode {
         SEARCH_SINGLE_DFS,                              /**< Perform a depth first search. */
@@ -45,6 +56,9 @@ public:
 
     /** Types of comparisons. */
     enum MayOrMust { MAY, MUST };
+
+    /** Set of basic block addresses. */
+    typedef std::set<rose_addr_t> AddressSet;
 
     /** Expression to be evaluated.
      *
@@ -83,15 +97,21 @@ public:
         bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
+        bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
+        std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
+        Sawyer::Optional<boost::chrono::duration<double> > smtTimeout; /**< Max seconds allowed per SMT solve call. */
+        size_t maxExprSize;                             /**< Maximum symbolic expression size before replacement. */
+        bool traceSemantics;                            /**< Trace all instruction semantics operations. */
 
         // Null dereferences
         struct NullDeref {
             bool check;                                 /**< If true, look for null dereferences along the paths. */
             MayOrMust mode;                             /**< Check for addrs that may or must be null. */
             bool constOnly;                             /**< If true, check only constants or sets of constants. */
+            rose_addr_t minValid;                       /**< Minnimum address that is not treated as a null dereference */
 
             NullDeref()
-                : check(false), mode(MUST), constOnly(false) {}
+                : check(false), mode(MUST), constOnly(false), minValid(1024) {}
         } nullDeref;                                    /**< Settings for null-dereference analysis. */
 
         std::string exprParserDoc;                      /**< String documenting how expressions are parsed, empty for default. */
@@ -101,7 +121,22 @@ public:
             : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
-              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL) {}
+              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true), maxExprSize(UNLIMITED),
+              traceSemantics(false) {}
+    };
+
+    /** Statistics from path searching. */
+    struct Statistics {
+        size_t maxVertexVisitHits;                      /**< Number of times settings.maxVertexVisit was hit. */
+        size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
+        size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
+        size_t maxRecursionDepthHits;                   /**< Number of times settings.maxRecursionDepth was hit. */
+        Sawyer::Container::Map<rose_addr_t, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
+
+        Statistics()
+            : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
+
+        Statistics& operator+=(const Statistics&);
     };
 
     /** Diagnostic output. */
@@ -140,8 +175,8 @@ public:
     class PathProcessor {
     public:
         enum Action {
-            BREAK,                                      /**< Do not look for more paths. */
-            CONTINUE                                    /**< Look for more paths. */
+            BREAK,                                      /**< Do not continue along this path. */
+            CONTINUE                                    /**< Continue along this path. */
         };
 
         virtual ~PathProcessor() {}
@@ -159,33 +194,99 @@ public:
          *  multiple levels: an initial level that's probably empty (trivially satisfiable), followed by an additional level
          *  pushed for each edge of the path.
          *
-         *  The return value from this callback determines whether the analysis will search for additional paths. */
+         *  The return value from this callback determines whether the analysis will search for additional paths. A return
+         *  value of @ref Action::CONTINUE means the model checker will try other paths, and a return value of @ref
+         *  Action::BREAK means no more paths will be tested. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
-                             const SmtSolverPtr &solver) { return CONTINUE; }
+                             const SmtSolverPtr &solver) {
+            return CONTINUE;
+        }
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
-         *  The @p ioMode indicates whether the null address was read or written, and the @p addr is the address that was
-         *  accessed. The address might not be the constant zero depending on other settings (for example, it could be an
-         *  unknown value represented as a variable if "may" analysis is used and the comparison is not limited to only
-         *  constant expressions).
+         *  The following parameters are passed to this callback:
          *
-         *  The instruction during which the null dereference occurred is also passed as an argument, but it may be a null
-         *  pointer in some situations. For instance, the instruction will be null if the dereference occurs when popping the
-         *  return address from the stack for a function that was called but whose implementation is not present (such as when
-         *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
-        virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+         *  The @p analyzer is the state of the analysis at the time that the null dereference is detected. Additional
+         *  information such as the @ref Partitioner2::Partitioner "partitioner" is available through this object.
+         *
+         *  The @p path is the execution path from a starting vertex to the vertex in which the null dereference occurs.  Each
+         *  vertex of the path is a basic block or function summary. All but the last vertex will have a corresponding symbolic
+         *  state of the model checker as it existed at the end of processing the vertex. These states should not be modified
+         *  by this callback.
+         *
+         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.)
+         *
+         *  The @p cpu is the model checker's state immediately prior to the null dereference. This callback must not modify
+         *  the state.
+         *
+         *  The @p solver is the optional SMT solver used to conclude that the execution path is feasible and that a null
+         *  dereference occurs. This callback can query the SMT solver to obtain information about the evidence of
+         *  satisfiability.  This callback may use the solver for additional work either in its current transaction or by
+         *  pushing additional transactions; this callback should not pop the current transaction.
+         *
+         *  The @p ioMode indicates whether the null address was read or written.
+         *
+         *  The @p addr is the address that was accessed.  Depending on the model checker's settings, this is either a constant
+         *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero.
+         *
+         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
+         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
+        virtual Action nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
+                                 const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                                 IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr) {
+            return CONTINUE;
+        }
 
         /** Function invoked every time a memory reference occurs.
          *
-         *  The @p ioMode indicates whether the memory location was read or written, and the @p value is the value read or
-         *  written. */
-        virtual void memoryIo(const FeasiblePath &analyzer, IoMode ioMode,
-                              const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                              const InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                              const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {}
+         *  The following parameters are passed to this callback:
+         *
+         *  The @p analyzer is the state of the analysis at the time that the memory I/O is detected. Additional information
+         *  such as the @ref Partitioner2::Partitioner "partitioner" is available through this object.
+         *
+         *  The @p path is the execution path from a starting vertex to the vertex in which the memory I/O occurs.  Each vertex
+         *  of the path is a basic block or function summary. All but the last vertex will have a corresponding symbolic state
+         *  of the model checker as it existed at the end of processing the vertex. These states should not be modified by this
+         *  callback.
+         *
+         *  The @p insn is the instruction during which the memoryIo occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the I/O occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.)
+         *
+         *  The @p cpu is the model checker's state immediately prior to the memory I/O. This callback must not modify the
+         *  state.
+         *
+         *  The @p solver is the optional SMT solver used to conclude that the execution path is feasible.  This callback can
+         *  query the SMT solver to obtain information about the evidence of satisfiability.  This callback may use the solver
+         *  for additional work either in its current transaction or by pushing additional transactions; this callback should
+         *  not pop the current transaction.
+         *
+         *  The @p ioMode indicates whether the memory address was read or written.
+         *
+         *  The @p addr is the address that was accessed.
+         *
+         *  The @p value is the value read or written.
+         *
+         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.).
+         *
+         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
+         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
+        virtual Action memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
+                                const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                                IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                                const InstructionSemantics2::BaseSemantics::SValuePtr &value) {
+            return CONTINUE;
+        }
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -250,9 +351,12 @@ private:
     Partitioner2::ControlFlowGraph paths_;              // all possible paths, feasible or otherwise
     Partitioner2::CfgConstVertexSet pathsBeginVertices_;// vertices of paths_ where searching starts
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
+    bool isDirectedSearch_;                             // use pathsEndVertices_?
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
+    InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
+    Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -264,7 +368,7 @@ private:
 public:
     /** Constructs a new feasible path analyzer. */
     FeasiblePath()
-        : registers_(NULL) {}
+        : registers_(NULL), isDirectedSearch_(true) {}
 
     virtual ~FeasiblePath() {}
 
@@ -278,8 +382,15 @@ public:
         paths_.clear();
         pathsBeginVertices_.clear();
         pathsEndVertices_.clear();
+        isDirectedSearch_ = true;
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
+        resetStatistics();
+    }
+
+    /** Reset only statistics. */
+    void resetStatistics() {
+        stats_ = Statistics();
     }
 
     /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
@@ -396,6 +507,12 @@ public:
     Partitioner2::CfgConstVertexSet
     cfgToPaths(const Partitioner2::CfgConstVertexSet&) const;
 
+    /** Convert CFG edges to path edges.
+     *
+     *  Any edges that don't exist in the paths graph are ignored and not returned. */
+    Partitioner2::CfgConstEdgeSet
+    cfgToPaths(const Partitioner2::CfgConstEdgeSet&) const;
+
     /** True if path ends with a function call. */
     bool pathEndsWithFunctionCall(const Partitioner2::CfgPath&) const;
 
@@ -413,10 +530,11 @@ public:
 
     /** Determine whether any ending vertex is reachable.
      *
-     *  Returns true if any of the @p endVertices can be reached from the @p beginVertex by following the edges of the graph. */
-    static bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
-                                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
-                                       const Partitioner2::CfgConstVertexSet &endVertices);
+     *  Returns true if any of the @p endVertices can be reached from the @p beginVertex by following the edges of the graph.
+     *  However, if @ref isDirectedSearch is false, then the end vertices are ignored and this function always returns true. */
+    bool isAnyEndpointReachable(const Partitioner2::ControlFlowGraph &cfg,
+                                const Partitioner2::ControlFlowGraph::ConstVertexIterator &beginVertex,
+                                const Partitioner2::CfgConstVertexSet &endVertices);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for describing the search space
@@ -426,7 +544,9 @@ public:
     /** Specify search boundary.
      *
      *  This function initializes the analysis by specifying starting and ending CFG vertices and the vertices and edges that
-     *  should be avoided.
+     *  should be avoided.  If the @p cfgEndVertices is supplied (even if empty) then the search is directed. A directed search
+     *  considers only the subset of the CFG that consists of vertices and edges that appear on some path from any of the @p
+     *  cfgBeginVertices to any of the @p cfgEndVertices.
      *
      * @{ */
     void
@@ -441,8 +561,26 @@ public:
                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgEndVertex,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
+    void
+    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+                      const Partitioner2::CfgConstVertexSet &cfgBeginVertices,
+                      const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
+                      const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
+    void
+    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+                      const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                      const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
+                      const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     /** @} */
 
+    /** Property: Whether search is directed or not.
+     *
+     *  A directed search attempts to find a path that reaches one of a set of goal vertices, set by the @p setSearchBoundary
+     *  functions that take a @c cfgEndVertex or @c cfgEndVertices argument.  On the other hand, an undirected search just
+     *  keeps following paths to explore the entire execution space. */
+    bool isDirectedSearch() const {
+        return isDirectedSearch_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for searching for paths
@@ -484,6 +622,9 @@ public:
     /** Details about all variables by name. */
     const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 
+    /** Get the initial state before the first path vertex. */
+    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+
     /** Get the state at the end of the specified vertex. */
     static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
 
@@ -502,10 +643,20 @@ public:
      *  model checking. */
     static size_t pathLength(const Partitioner2::CfgPath&);
 
+    /** Cumulative statistics about prior analyses.
+     *
+     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics. */
+    Statistics statistics() const {
+        return stats_;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private supporting functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Check that analysis settings are valid, or throw an exception.
+    void checkSettings() const;
+
     static rose_addr_t virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
 
     void insertCallSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,
@@ -545,6 +696,9 @@ private:
     SmtSolver::Satisfiable
     solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
                          const std::vector<Expression> &userAssertions, bool atEndOfPath, SymbolicExprParser&);
+
+    // Mark vertex as being reached
+    void markAsReached(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 };
 
 } // namespace
@@ -564,4 +718,5 @@ namespace Sawyer {
     }
 }
 
+#endif
 #endif

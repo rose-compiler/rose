@@ -2,15 +2,17 @@
 AC_DEFUN([ROSE_SUPPORT_YAML],[
 
     dnl Parse configure command-line switches for YAML and/or obtain the value from the cache.
-    AC_ARG_WITH([yaml],
-                [AC_HELP_STRING([[[[--with-yaml[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-                                [Use libyaml-cpp available from https://code.google.com/p/yaml-cpp for free.
-                                 The PREFIX, if specified, should be the prefix used to install libyaml-cpp,
-                                 such as "/usr/local".  The default is the empty prefix, in which case the
-                                 headers and library must be installed in a place where they will be found.
-                                 Saying "no" for the prefix is the same as saying "--without-yaml".])],
-                [ac_cv_use_yaml=$withval],
-                [ac_cv_use_yaml=no])
+    AC_ARG_WITH(
+        [yaml],
+        AS_HELP_STRING(
+            [--with-yaml=PREFIX],
+            [Use libyaml-cpp available from https://code.google.com/p/yaml-cpp for free.
+             The PREFIX, if specified, should be the prefix used to install libyaml-cpp,
+             such as "/usr/local".  The default is the empty prefix, in which case the
+             headers and library must be installed in a place where they will be found.
+             Saying "no" for the prefix is the same as saying "--without-yaml".]),
+            [ac_cv_use_yaml=$withval],
+            [ac_cv_use_yaml=no])
     AC_CACHE_CHECK([whether to use yaml], [ac_cv_use_yaml], [ac_cv_use_yaml=no])
 
     dnl YAML root directory

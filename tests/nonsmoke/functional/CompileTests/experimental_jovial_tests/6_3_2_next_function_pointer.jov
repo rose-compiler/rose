@@ -1,0 +1,17 @@
+START
+PROGRAM nextFunction;
+BEGIN
+% example is from documentation %
+% perhaps will need to add to it to make a complete test %
+
+TYPE FORM
+   TABLE (100);
+     ITEM CODE U;
+
+TABLE CIPHER FORM;
+
+FOR I:LOC(CIPHER) THEN NEXT(I,5) WHILE CODE@I<> 0;
+   ACTION(CODE@I);
+END
+
+TERM

@@ -48,8 +48,8 @@ void StressStrainHeat(const real8 *deltz,real8 *deltzh,real8 *deltrh,const real8
   real8 avgMod;
   int nz;
   int i;
-/* Quiet the compiler - unused argument */
   deltaTime = deltaTime;
+/* Quiet the compiler - unused argument */
   
 #pragma omp parallel for private (shearr,sheari,avgMod,nz,i) firstprivate (length)
   for (i = 0; i <= length - 1; i += 1) {

@@ -1,0 +1,8 @@
+START
+
+COMPOOL simple'table'type;
+
+TYPE a'table'type TABLE ;
+     ITEM avar F;
+  
+TERM

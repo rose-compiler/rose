@@ -1,6 +1,9 @@
 #ifndef Rose_BinaryAnalysis_Unparser_EdgeArrows_H
 #define Rose_BinaryAnalysis_Unparser_EdgeArrows_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Interval.h>
@@ -241,4 +244,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

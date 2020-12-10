@@ -1,10 +1,13 @@
 #ifndef Rose_BinaryAnalysis_RegisterDescriptor_H
 #define Rose_BinaryAnalysis_RegisterDescriptor_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <boost/serialization/access.hpp>
 
-// FIXME[Robb Matzke 2017-08-04]: Not in Rose::BinaryAnalysis yet (for backward compatibility), but should be.
-
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Describes (part of) a physical CPU register.
  *
@@ -157,6 +160,22 @@ public:
         return 0 == nBits();
     }
 
+    /** Predicate returns true if width is non-zero.
+     *
+     *  Default-constructed register descriptors have an initial width of zero. */
+    bool isValid() const {
+        return nBits() != 0;
+    }
+
+    // The following trickery is to have something like "explicit operator bool" before C++11
+private:
+    typedef void(RegisterDescriptor::*unspecified_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
+public:
+    operator unspecified_bool() const {
+        return isEmpty() ? 0 : &RegisterDescriptor::this_type_does_not_support_comparisons;
+    }
+
     /** Compare two descriptors.
      *
      *  Descriptors are sorted by major and minor numbers. If two descriptors have the same major and minor numbers then this
@@ -194,12 +213,15 @@ public:
         o <<"{" <<majorNumber() <<"," <<minorNumber() <<"," <<offset() <<"," <<nBits() <<"}";
     }
 
+    /** Show the properties as a string. */
+    std::string toString() const;
+
     friend std::ostream& operator<<(std::ostream&, RegisterDescriptor);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Old interface  (not deprecated yet, just implemented in terms of the new interface)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     unsigned get_major() const {
         return majorNumber();
     }
@@ -233,4 +255,8 @@ public:
     }
 };
 
+} // namespace
+} // namespace
+
+#endif
 #endif

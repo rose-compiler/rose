@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Demangler_H
 #define ROSE_BinaryAnalysis_Demangler_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -79,4 +82,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

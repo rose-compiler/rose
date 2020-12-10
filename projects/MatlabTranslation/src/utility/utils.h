@@ -4,9 +4,20 @@
 #include <string>
 
 #include "rose.h"
+#include "sageInterface.h"
 
 namespace RoseUtils
 {
+  template <class T>
+  static inline
+  T* deepCopy(T* orig)
+  {
+    T* res = SageInterface::deepCopy(orig);
+
+    //~ std::cerr << "clone " << orig << " -> " << res;
+    return res;
+  }
+
   /*
     Build Empty parameters
    */

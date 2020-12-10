@@ -6,6 +6,7 @@
 #ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
+#include <CommandLine.h>
 #include <Diagnostics.h>
 #include <Sawyer/Synchronization.h>
 #include <boost/lexical_cast.hpp>
@@ -48,6 +49,12 @@ public:
         //---------------------------
 
         Diagnostics::initialize();
+
+#if defined(ROSE_PACKAGE_VERSION)
+        Rose::CommandLine::versionString = "ROSE-" ROSE_PACKAGE_VERSION;
+#elif defined(PACKAGE_VERSION)
+        Rose::CommandLine::versionString = "ROSE-" PACKAGE_VERSION;
+#endif
 
         isInitialized_ = true;
     }

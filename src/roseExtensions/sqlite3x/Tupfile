@@ -5,7 +5,7 @@ ifneq (@(WITH_SQLITE),no)
 # We need to create an sqlite3x.so library, but we also want its objects linked into librose.so.
 run $(support_compile_linklib) -o sqlite3x sqlite3x_command.C sqlite3x_exception.C sqlite3x_transaction.C \
     sqlite3x_connection.C sqlite3x_reader.C
-: {sqlite3x_OBJECTS} |> !for_librose |>
+: {libsqlite3x_OBJECTS} |> !for_librose |>
 
 run $(public_header) sqlite3x.h
 

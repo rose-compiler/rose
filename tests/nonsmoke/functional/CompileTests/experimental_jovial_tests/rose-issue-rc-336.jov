@@ -1,0 +1,34 @@
+START
+TYPE an'image TABLE W 1;
+BEGIN
+     ITEM red   U 8 POS(0,0);
+     ITEM green U 8 POS(12,0);
+     ITEM blue  U 8 POS(24,0);
+END
+
+TYPE a'filter TABLE; % TODO fixed point no integer portion (by construction filters weight must be in [0,1] ) "F 0" %
+BEGIN
+     ITEM w'r A 10;
+     ITEM w'g A 10;
+     ITEM w'b A 10;
+END
+
+REF PROC convolution (image , filter , o'x );
+BEGIN
+    TABLE image  (*,*) an'image;
+    TABLE filter (*,*) a'filter;
+    ITEM o'x U;
+END
+
+DEF PROC convolution (image , filter , o'x );
+BEGIN
+    TABLE image  (*,*) an'image;
+    TABLE filter (*,*) a'filter;
+    ITEM o'x U;
+    ITEM acc A 10;
+    FOR I : LBOUND(image, 0) + o'x BY 1 WHILE I <= UBOUND(image, 0) - UBOUND(filter, 0);
+    BEGIN
+        acc = 0.;
+    END
+END
+TERM

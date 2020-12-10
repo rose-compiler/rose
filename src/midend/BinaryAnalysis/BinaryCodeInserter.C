@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BinaryCodeInserter.h>
 #include <BinaryUnparserBase.h>
@@ -169,7 +172,7 @@ CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, cons
         debug <<"replaceInsns:\n";
         debug <<"  instructions to replace:\n";
         BOOST_FOREACH (SgAsmInstruction *insn, toReplace)
-            debug <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+            debug <<"    " <<partitioner_.unparse(insn) <<"\n";
         debug <<"  replacement = [";
         BOOST_FOREACH (uint8_t byte, replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
@@ -602,7 +605,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
               <<", " <<StringUtility::plural(entryInterval.size(), "bytes") <<"\n";
         debug <<"  instructions to be moved:\n";
         BOOST_FOREACH (SgAsmInstruction *insn, toReplace)
-            debug <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+            debug <<"    " <<partitioner_.unparse(insn) <<"\n";
         debug <<"  replacement = [";
         BOOST_FOREACH (uint8_t byte, replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
@@ -672,3 +675,5 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
 
 } // namespace
 } // namespace
+
+#endif

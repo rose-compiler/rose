@@ -1,6 +1,7 @@
 // Functionality for determining whether a function is a no-op. This is all part of Partitioner2::Partitioner, just separated
 // from the main Partitioner.C file so that file isn't so big.
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 
 #include <BinaryNoOperation.h>
@@ -156,3 +157,4 @@ Partitioner::forgetFunctionIsNoop(const Function::Ptr &function) const {
 } // namespace
 } // namespace
 
+#endif

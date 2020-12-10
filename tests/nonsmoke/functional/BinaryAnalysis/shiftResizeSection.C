@@ -42,6 +42,7 @@ main(int argc, char *argv[])
      * FIXME: There's surely a better way to process argv before calling frontend() (RPM 2008-09-29) */
     int new_argc = 1;
     char **new_argv = (char**)malloc((argc+1)*sizeof(char*));
+    ASSERT_always_not_null(new_argv);
     new_argv[0] = argv[0];
     for (int i=1, nfiles=0; i<argc; i++) {
         new_argv[new_argc++] = argv[i];

@@ -1,5 +1,6 @@
 /* ELF Note Sections (SgAsmElfNoteSection and related classes) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 void
@@ -73,7 +74,8 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
 
     /* NUL-terminated name */
     std::string note_name = notes->read_content_local_str(at);
-    ROSE_ASSERT(note_name.size()+1 == name_size);
+    if (note_name.size() + 1 > name_size && name_size > 0)
+        note_name = note_name.substr(0, name_size-1);
     at += name_size;
     at = (at+3) & ~0x3; /* payload is aligned on a four-byte offset */
 
@@ -233,3 +235,5 @@ SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         ent->dump(f, p, i);
     }
 }
+
+#endif

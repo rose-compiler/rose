@@ -1,8 +1,9 @@
 // Symbolic memory -- a memory state where memory is represented by an SMT function whose domain is the address space and whose
 // range are the bytes stored at those addresses.
-
 #ifndef Rose_SymbolicMemory_H
 #define Rose_SymbolicMemory_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 
@@ -26,7 +27,7 @@ protected:
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval) {
         // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
-        mem_ = SymbolicExpr::makeMemory(32, 8);
+        mem_ = SymbolicExpr::makeMemoryVariable(32, 8);
     }
 
 public:
@@ -88,4 +89,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

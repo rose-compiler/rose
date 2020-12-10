@@ -14,9 +14,10 @@ TESTCODES_PASSING = \
    kripke-tpl-006.cxx
 
 TESTCODES_FAILING = \
-   kripke-tpl-007.cxx
+   kripke-tpl-007.cxx \
+   doxygen-000.cxx \
+   doxygen-001.cxx
    
-
 TESTCODES = $(TESTCODES_PASSING) $(TESTCODES_FAILING)
 
 PASSED_TESTCODES_PASSING = ${TESTCODES_PASSING:.cxx=.cxx.passed}

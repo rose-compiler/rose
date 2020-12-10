@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_AstHash_H
 #define ROSE_BinaryAnalysis_AstHash_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <MemoryMap.h>
 #include <Partitioner2/BasicBlock.h>
@@ -30,7 +32,7 @@ namespace BinaryAnalysis {
         {
           public:
             // @brief Constructor just initializes output buffer  
-            AstHash(Rose::Combinatorics::Hasher& in_hasher, bool includeConstants = false, bool includeAddresses = false) : 
+        AstHash(boost::shared_ptr<Rose::Combinatorics::Hasher> in_hasher, bool includeConstants = false, bool includeAddresses = false) : 
                 hasher_(in_hasher), includeConstants(includeConstants), includeAddresses(includeAddresses){}
                
             // @brief Generates the hash. Called by traverse
@@ -40,12 +42,12 @@ namespace BinaryAnalysis {
             void appendBasicBlock(Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr bb );
 
             // @brief Gets the Rose::Combinatorics::Hasher
-            const Rose::Combinatorics::Hasher& hasher() const { return hasher_; }; 
+            const boost::shared_ptr<Rose::Combinatorics::Hasher> hasher() const { return hasher_; }; 
 
         private:
             // @brief The reference used to the output data buffer,
             // get the opcodes
-            Rose::Combinatorics::Hasher& hasher_;
+            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher_;
 
             // @brief Include constant values in the hash, usually
             // false to avoid linking changing pointers, and therefore
@@ -61,4 +63,5 @@ namespace BinaryAnalysis {
 } // namespace
 } // namespace
 
+#endif
 #endif

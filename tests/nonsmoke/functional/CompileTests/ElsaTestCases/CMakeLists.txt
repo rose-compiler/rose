@@ -10,7 +10,7 @@ set(TESTCODES
   t0028.cc t0029.cc t0030a.cc t0030b.cc t0034.cc t0035.cc t0037.cc t0038.cc
   t0039.cc t0043.cc t0044.cc t0045.cc t0046.cc t0047.cc t0048.cc t0049.cc
   t0050.cc t0051.cc t0052.cc t0053.cc t0056.cc t0057.cc t0058.cc t0059.cc
-  t0060.cc t0061.cc t0064.cc t0065.cc t0066.cc t0067.cc t0070.cc)
+  t0060.cc t0064.cc t0065.cc t0066.cc t0067.cc t0070.cc)
 
 set(ROSE_FLAGS --edg:no_warnings -w)
 

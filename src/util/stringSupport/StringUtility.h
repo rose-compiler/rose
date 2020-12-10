@@ -3,11 +3,13 @@
 
 #include "commandline_processing.h"
 
+#include <BitOps.h>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <limits.h>
 #include <map>
+#include <rose_constants.h>
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -41,10 +43,29 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
 
 /** Escapes characters that are special to C/C++.
  *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal (if @p context is a
+ *  double quote character) or the contents of a C character constant (if @p context is a single quote). That is, things
  *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
+ *  resulting string.
+ *
+ *  Note that if the first argument is a string then the context defaults to string literals, and if the first argument is a
+ *  single character then the context defaults to character literals. Although this is usually what one wants, it's possible to
+ *  change the context in both situations.
+ *
+ * @{ */
+ROSE_UTIL_API std::string cEscape(const std::string&, char context = '"');
+ROSE_UTIL_API std::string cEscape(char, char context = '\'');
+/** @} */
+
+/** Unescapes C++ string literals.
+ *
+ *  When given a C++ string literals content, the part between the enclosing quotes, this function will look for escape sequences,
+ *  parse them, and replace them in the return value with the actual characters they represent.  For instance, passing in
+ *  <code>std::string{"hello\\nworld\\00hidden"}</code> that contains 20 characters including two backslashes, the function replaces
+ *  the first backslash+"n" pair with a line feed, and the second backslash+"0"+"0" with a NUL to result in
+ *  <code>std::string{"hello\nworld\0hidden"}</code> (18 characters including the LF and NUL). Unicode escapes are not supported
+ *  and will be left escaped in the return value. */
+ROSE_UTIL_API std::string cUnescape(const std::string&);
 
 /**  Escapes characters that are special to the Bourne shell.
  *
@@ -88,10 +109,10 @@ ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::strin
  *  Perl's "split" operator.
  *
  * @{ */
-ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
-ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
+ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
+ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
 /** @} */
 
 /** Split a string into a list based on a separator character.
@@ -120,8 +141,16 @@ std::string join(const std::string &separator, const Container &container) {
     return join_range(separator, container.begin(), container.end());
 }
 
+template<class Container>
+std::string join(char separator, const Container &container) {
+    return join_range(std::string(1, separator), container.begin(), container.end());
+}
+
 ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
 ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nstrings);
+
 /** @} */
 
 /** Join strings as if they were English prose.
@@ -270,7 +299,19 @@ ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawy
                                        size_t nbits = 0);
 
 
-
+/** Convert a number to a binary string. */
+template<typename Unsigned>
+std::string toBinary(Unsigned value, size_t nBits = 0, size_t groupSize = 4, const std::string groupSeparator = "_") {
+    if (0 == nBits)
+        nBits = BitOps::nBits(value);
+    std::string retval;
+    for (size_t i = nBits; i > 0; --i) {
+        retval += BitOps::bit(value, i-1) ? '1' : '0';
+        if (groupSize > 0 && i > 1 && (i-1) % groupSize == 0)
+            retval += groupSeparator;
+    }
+    return retval;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Number parsing
@@ -385,17 +426,11 @@ ROSE_UTIL_API std::string untab(const std::string &str, size_t tabstops=8, size_
  *  if it was non-empty and unique. This happened when it was not followed by a line-feed. */
 ROSE_UTIL_API std::string removeRedundantSubstrings(const std::string&);
 
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removeRedundentSubstrings(std::string);
-
-/** Remove redundant lines containing special substrings of form string#. */
-ROSE_UTIL_API std::string removePseudoRedundantSubstrings(const std::string&);
-
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removePseudoRedundentSubstrings(std::string);
-
-
-
+/** Remove ANSI escape characters.
+ *
+ *  Currently handles only the "Control Sequence Introducer" commands, but these are the most common and most useful commands
+ *  anyway since they include such things as cursor movement, erasing, scrolling, colors, and other graphic renditions. */
+ROSE_UTIL_API std::string removeAnsiEscapes(const std::string&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions for string encoding/decoding/hashing
@@ -488,34 +523,39 @@ ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::stri
  *  received 2 values
  * @endcode
  *
- * This function uses a handful of grade-school rules for converting the supplied plural word to a singular word when
- * necessary.  If these are not enough, then the singular form can be supplied as the third argument.
+ * This function uses a handful of grade-school rules and common exceptions for converting the supplied plural word to a
+ * singular word when necessary.  If these are not enough, then the singular form can be supplied as the third argument.
  *
  * @code
  *  std::cout <<"graph contains " <<plural(nverts, "vertices", "vertex") <<"\n";
  * @endcode
  */
 template<typename T>
-std::string plural(T n, const std::string &plural_word, const std::string &singular_word="") {
-    assert(!plural_word.empty());
+std::string plural(T n, const std::string &plural_phrase, const std::string &singular_phrase="") {
+    assert(!plural_phrase.empty());
     std::string retval = numberToString(n) + " ";
     if (1==n) {
-        if (!singular_word.empty()) {
-            retval += singular_word;
-        } else if (boost::ends_with(plural_word, "vertices")) {
-            retval += boost::replace_tail_copy(plural_word, 8, "vertex");
-        } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
+        if (!singular_phrase.empty()) {
+            retval += singular_phrase;
+        } else if (boost::ends_with(plural_phrase, "vertices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 8, "vertex");
+        } else if (boost::ends_with(plural_phrase, "indices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 7, "index");
+        } else if (boost::ends_with(plural_phrase, "ies") && plural_phrase.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
-            retval += boost::replace_tail_copy(plural_word, 3, "y");
-        } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
+            retval += boost::replace_tail_copy(plural_phrase, 3, "y");
+        } else if (boost::ends_with(plural_phrase, "sses") || boost::ends_with(plural_phrase, "indexes")) {
+            // Sometimes we need to drop an "es" rather than just the "s"
+            retval += boost::erase_tail_copy(plural_phrase, 2);
+        } else if (boost::ends_with(plural_phrase, "s") && plural_phrase.size() > 1) {
             // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
-            retval += boost::erase_tail_copy(plural_word, 1);
+            retval += boost::erase_tail_copy(plural_phrase, 1);
         } else {
             // I give up.  Use the plural and risk being grammatically incorrect.
-            retval += plural_word;
+            retval += plural_phrase;
         }
     } else {
-        retval += plural_word;
+        retval += plural_phrase;
     }
     return retval;
 }

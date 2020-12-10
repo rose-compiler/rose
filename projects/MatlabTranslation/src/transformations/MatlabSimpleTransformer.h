@@ -2,6 +2,7 @@
 #define _MATLAB_SIMPLE_TRANSFORMER_H 1
 
 class SgProject;
+class SgVarRefExp;
 
 namespace MatlabToCpp
 {
@@ -67,6 +68,18 @@ namespace MatlabToCpp
    * Adds a function return attribute for each function that returns something.
    */
   void transformReturnListAttribute(SgProject* project);
+  
+  /**
+   * tests if varref is defined in a MatlabForLoop
+   */
+  bool forLoopIterationVariable(SgVarRefExp* varref, std::string ident);
+  
+  /**
+   * tests if varref is defined in a MatlabForLoop
+   * 
+   * \detail convenience function
+   */
+  bool forLoopIterationVariable(SgVarRefExp* varref);
 }
 
 #endif /* _MATLAB_SIMPLE_TRANSFORMER_H */

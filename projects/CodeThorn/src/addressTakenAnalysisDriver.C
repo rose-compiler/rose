@@ -2,19 +2,18 @@
 
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
-#include "Timer.h"
-#include "AnalysisAbstractionLayer.h"
-
+#include "TimeMeasurement.h"
+#include "AstUtility.h"
+//#include "CommandLineOptions.h"
 
 /*************************************************************
- * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
  * Author   : Sriram Aananthakrishnan                        *
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
 using namespace CodeThorn;
-using namespace AnalysisAbstractionLayer;
-using namespace SPRAY;
+using namespace AstUtility;
+using namespace CodeThorn;
 
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
@@ -88,7 +87,7 @@ int main(int argc, char* argv[])
 
   RoseAst ast(root);
 
-  Timer timer;
+  TimeMeasurement timer;
 
   timer.start();
 
@@ -111,7 +110,7 @@ int main(int argc, char* argv[])
   fipi.printInfoSets();
 
   timer.stop();
-  double fipaMeasuredTime=timer.getElapsedTimeInMilliSec();
+  double fipaMeasuredTime=timer.getTimeDurationAndStop().milliSeconds();
 
   TestDefUseVarsInfoTraversal tt(vidm);
   // change to traverse for entire project
@@ -119,7 +118,7 @@ int main(int argc, char* argv[])
   tt.traverse(project, preorder);
   timer.stop();
 
-  double duMeasuredTime = timer.getElapsedTimeInMilliSec();
+  double duMeasuredTime = timer.getTimeDurationAndStop().milliSeconds();
 
   std::cout << "fipa : " << fipaMeasuredTime << "\n";
   std::cout << "du : " << duMeasuredTime << "\n";

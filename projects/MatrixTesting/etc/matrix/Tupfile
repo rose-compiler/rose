@@ -1,0 +1,11 @@
+include_rules
+
+run $(public_file) --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt --language=shell -o etc/matrix \
+    general-reject.sh \
+    centos7-reject.sh \
+    debian8-reject.sh \
+    debian9-reject.sh \
+    ubuntu1604-reject.sh \
+    ubuntu1804-reject.sh \
+    ubuntu1810-reject.sh \
+    ubuntu1904-reject.sh

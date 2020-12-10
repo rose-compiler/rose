@@ -1,9 +1,9 @@
 #include "AliasAnalysis.h"
 
-bool SPRAY::AliasAnalysis::isMayAlias(SgExpression* e1, SgExpression* e2) {
+bool CodeThorn::AliasAnalysis::isMayAlias(SgExpression* e1, SgExpression* e2) {
   return true;
 }
 
-bool SPRAY::AliasAnalysis::isMustAlias(SgExpression* e1, SgExpression* e2) {
+bool CodeThorn::AliasAnalysis::isMustAlias(SgExpression* e1, SgExpression* e2) {
   return false;
 }

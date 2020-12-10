@@ -7,10 +7,11 @@
 #include <LoopTreeDummyNode.h>
 #include <ProcessAstTree.h>
 #include <StmtInfoCollect.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 LoopTreeRestrLoopRange::  LoopTreeRestrLoopRange(  LoopTreeNode *l, int align,
                           SymbolicVal _lb, SymbolicVal _ub )
-    : LoopTreeNode(), b(_lb,_ub), loop(l, align, this) 
+    : LoopTreeNode(), b(_lb,_ub), loop(l, align, this)
 {
   AttachObserver(*this);
 }
@@ -21,16 +22,16 @@ LoopTreeRestrLoopRange:: ~LoopTreeRestrLoopRange()
 }
 
 void LoopTreeRestrLoopRange :: UpdateSwapNode( const SwapNodeInfo &info)
-   { 
+   {
        VarInfo l = info.GetVarInfo();
        if (l.IsTop())
          return;
        if (info.GetDirection() < 0)  {
-           ResetLoopAlign(); 
+           ResetLoopAlign();
            b.ReplaceVars(l);
        }
        else {
-         ResetLoopAlign(); 
+         ResetLoopAlign();
          LoopTreeGetVarBound boundInfo(Parent());
          b.Intersect(l.GetVarRestr(GetVar()), &boundInfo);
        }
@@ -45,7 +46,7 @@ std::string LoopTreeRestrLoopRange :: toString() const
       return out.str();
    }
 
-AstNodePtr LoopTreeRestrLoopRange :: 
+AstNodePtr LoopTreeRestrLoopRange ::
 CodeGen( const AstNodePtr& c) const
    {
      AstInterface& fa = LoopTransformInterface::getAstInterface();
@@ -72,8 +73,8 @@ CodeGen( const AstNodePtr& c) const
 LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, RoseSelectObject<LoopTreeNode*>& sel)
 {
    LoopTreeNode* l = 0;
-      for (l = start->Parent(); l != 0 && l->ChildCount() == 1; 
-           l = l->Parent()) { 
+      for (l = start->Parent(); l != 0 && l->ChildCount() == 1;
+           l = l->Parent()) {
          if (sel(l))
             return l;
          if (l->IncreaseLoopLevel()) {
@@ -82,14 +83,14 @@ LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, RoseSelectObject<LoopTreeN
             l = start;
          }
       }
-      return 0; 
+      return 0;
 }
 
 bool LoopTreeRestrLoopRange :: RemoveSelf()
 {
       if (ChildCount() == 0) {
         RemoveTree();
-        return true;     
+        return true;
       }
       ResetLoopAlign();
       LoopTreeGetVarBound f(this);
@@ -112,8 +113,8 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
           if (r1 == REL_LE || r1 == REL_LT || r1 == REL_EQ) {
              b.lb = SymbolicVal();
           }
-          else 
-             b.lb = Max(b.lb,  restrinfo->GetBound().lb,&f); 
+          else
+             b.lb = Max(b.lb,  restrinfo->GetBound().lb,&f);
       }
       if (!b.ub.IsNIL()) {
          if (CompareVal(restrinfo->GetBound().lb,b.ub, &f) == REL_GT) {
@@ -124,8 +125,8 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
          if (r2 == REL_LE || r2 == REL_LT || r2 == REL_EQ) {
             b.ub =  SymbolicVal();
          }
-         else 
-             b.ub = Min(b.ub,  restrinfo->GetBound().ub,&f); 
+         else
+             b.ub = Min(b.ub,  restrinfo->GetBound().ub,&f);
       }
 
       if (b.lb.IsNIL() && b.ub.IsNIL()) {
@@ -134,8 +135,8 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
       }
       if (!b.ub.IsNIL() && !b.lb.IsNIL() && b.ub <= b.lb) {
          LoopTreeNode *l1 = GetRestrLoop();
-         for (LoopTreeNode *l = Parent(); l != l1;  l = l->Parent()) { 
-            LoopInfo *info = l->GetLoopInfo(); 
+         for (LoopTreeNode *l = Parent(); l != l1;  l = l->Parent()) {
+            LoopInfo *info = l->GetLoopInfo();
             if (info == 0)
                continue;
             int align;
@@ -144,7 +145,7 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
                  LoopTreeNode::RemoveSelf();
                  return true;
             }
-         } 
+         }
       }
       return false;
 }
@@ -161,7 +162,7 @@ class SelectRestrLoopAnces : public RoseSelectObject<LoopTreeNode*>
         return false;
      LoopTreeRestrLoopRange * that = static_cast<LoopTreeRestrLoopRange* const>(n);
      return that->GetRestrLoop() == node->GetRestrLoop();
-   } 
+   }
 };
 
 bool LoopTreeRestrLoopRange :: SelfRemove()
@@ -177,9 +178,9 @@ bool LoopTreeRestrLoopRange :: SelfRemove()
          LoopTreeGetVarConstBound boundop(Parent(), l);
          b.ReplaceVars(boundop);
          LoopTreeGetVarBound boundInfo(l->Parent());
-         if (l == GetRestrLoop()) 
+         if (l == GetRestrLoop())
              l->GetLoopInfo()->GetBound().Intersect( b, &boundInfo);
-         else  
+         else
              static_cast<LoopTreeRestrLoopRange*>(l)->b.Intersect(b,&boundInfo);
          LoopTreeNode::RemoveSelf();
          return true;
@@ -195,18 +196,18 @@ LoopTreeNode* FindSibling( LoopTreeNode*& t, int opt)
    return (opt < 0)? t->PrevSibling() : t->NextSibling();
 }
 
-bool LoopTreeRestrLoopRange :: MergeSibling( int opt) 
+bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
    {
      LoopTreeNode *p1 = this;
      LoopTreeNode *p2 = FindSibling(p1, opt);
-     for (LoopTreeNode *that = p2; 
-          that != 0; 
+     for (LoopTreeNode *that = p2;
+          that != 0;
           that = (that->ChildCount() == 1)? that->FirstChild() : 0) {
         if (that->GetClassName() != GetClassName())
            continue;
         LoopTreeRestrLoopRange *n = static_cast<LoopTreeRestrLoopRange*>(that);
         if ( n->GetRestrLoop() == GetRestrLoop()) {
-          if ( (b.lb.IsNIL() || n->b.lb.IsNIL()) && 
+          if ( (b.lb.IsNIL() || n->b.lb.IsNIL()) &&
                (b.ub.IsNIL() || n->b.ub.IsNIL()) )
                continue;
           if (p1 != this) {
@@ -216,7 +217,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
           if (p2 != that) {
              while (p2->Parent() != that)
                 LoopTreeSwapNodePos()(that->Parent(), that);
-          } 
+          }
           SymbolicVal lbr = b.lb, ubr = b.ub;
           if ( !lbr.IsNIL())
              lbr = n->b.lb.IsNIL()? n->b.lb : Min(lbr, n->b.lb);
@@ -228,7 +229,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
                 n->b.lb = SymbolicVal();
              if (!b.lb.IsNIL() && b.lb <= lbr)
                 b.lb = SymbolicVal();
-             if (!n->b.lb.IsNIL() && !b.lb.IsNIL()) 
+             if (!n->b.lb.IsNIL() && !b.lb.IsNIL())
                lbr = SymbolicVal();
           }
 
@@ -252,8 +253,8 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
           else
              n->Link(nr, AsFirstChild);
           bool succ1 = RemoveSelf(), succ2 = n->RemoveSelf();
-          if (!succ1 && succ2) 
-             succ1 = MergeSibling(opt); 
+          if (!succ1 && succ2)
+             succ1 = MergeSibling(opt);
           return succ1;
         }
       }
@@ -273,7 +274,7 @@ bool LoopTreeRelateLoopIvar :: SelfRemove()
     {
       if (ChildCount() == 0) {
         RemoveTree();
-        return true;     
+        return true;
       }
       if (loop1.GetAncesLoop() == loop2.GetAncesLoop()) {
         RemoveSelf();
@@ -293,7 +294,7 @@ bool LoopTreeRelateLoopIvar :: MergeSibling( int opt)
    {
      LoopTreeNode *p1 = this;
      LoopTreeNode *p2 = FindSibling(p1, opt);
-     for (LoopTreeNode *that = p2; 
+     for (LoopTreeNode *that = p2;
           that != 0 ;
           that = (that->ChildCount() == 1)? that->FirstChild() : 0) {
         if (that->GetClassName() != GetClassName())
@@ -329,9 +330,9 @@ std::string LoopTreeRelateLoopIvar :: toString() const
      return out.str();
    }
 
-AstNodePtr LoopTreeRelateLoopIvar :: 
+AstNodePtr LoopTreeRelateLoopIvar ::
 CodeGen( const AstNodePtr& c) const
-   { 
+   {
      AstInterface& fa = LoopTransformInterface::getAstInterface();
      AstNodePtr cond = fa.CreateBinaryOP(AstInterface::BOP_EQ, GetIvar1().CodeGen(fa),
                                               (GetIvar2()+GetAlign()).CodeGen(fa));
@@ -339,18 +340,18 @@ CodeGen( const AstNodePtr& c) const
      return result;
    }
 
-bool LoopTreeReplLoopVar :: SelfRemove() 
+bool LoopTreeReplLoopVar :: SelfRemove()
     {
       if (ChildCount() == 0) {
         RemoveTree();
-        return true;     
+        return true;
       }
       if ( GetOldVar() == GetNewVal()) {
          RemoveSelf();
          return true;
       }
       if (ChildCount()==1) {
-        for (LoopTreeNode *n1 = FirstChild(); n1->ChildCount() == 1; 
+        for (LoopTreeNode *n1 = FirstChild(); n1->ChildCount() == 1;
              n1 = n1->FirstChild()) {
            if (n1->GetClassName() != GetClassName())
                 continue;
@@ -360,7 +361,7 @@ bool LoopTreeReplLoopVar :: SelfRemove()
               tmp->align = 0;
               return false;
 /*
-              while (FirstChild() != tmp) 
+              while (FirstChild() != tmp)
                  LoopTreeSwapNodePos()( this, FirstChild() );
               tmp->newval = newval;
               tmp->align = 0;
@@ -388,7 +389,7 @@ AstNodePtr LoopTreeReplLoopVar :: CodeGen( const AstNodePtr& c) const
     AstNodePtr result = c;
     if ( align != 0 || newval != oldvar ) {
       SymbolicVal val = GetNewVal();
-      AstTreeReplaceVar op(oldvar, val); 
+      AstTreeReplaceVar op(oldvar, val);
       op(LoopTransformInterface::getAstInterface(), result);
     }
     return result;
@@ -412,7 +413,7 @@ AstNodePtr LoopTreeReplAst::CodeGen( ) const
   ai.ReplaceAst(repl, orig);
   return r;
 }
- 
+
 AstNodePtr LoopTreeCopyArray::
 CodeGen( const AstNodePtr& c) const
      { return config.CodeGen( c); }

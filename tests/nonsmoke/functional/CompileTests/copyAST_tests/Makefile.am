@@ -714,44 +714,6 @@ EDG_49_GNU_6_1_PROBLEM_FILES = \
 
 EDG_412_GNU_6_1_PROBLEM_FILES =
 
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-#	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_49_CLANG_PROBLEM_FILES)
-# Exclude these tests on GNU 4.9 and later compilers).
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
-
-endif # ROSE_USING_GCC_VERSION_LATER_4_9
-else  # NOT USING_GNU_COMPILER
-#	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-#	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-#	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-#	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-#	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
 
 if USING_GNU_COMPILER
 #	@echo "USING_GCC_COMPILER == true"
@@ -787,9 +749,6 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
-
-
 
 OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -816,23 +775,6 @@ OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
    test2006_123.C 
 endif
 
-# DQ (1/10/2017): These test codes are a problem for GNU 6.1 compiler (I think mostly because 
-# of lacking support for SgTemplateTypedefDeclaration in the ast copy operation).  This issue
-# might also be present for compiler versions 4.9 to 6.1 as well.  The cause is likely something
-# in the header files for those compiler versions that we have not previously seen.
-# if !ROSE_USING_GCC_VERSION_LATER_6_1
-# endif
-
-# DQ (2/18/2017): More specific logic required for portability.
-if ROSE_USE_EDG_VERSION_4_9
-if !ROSE_USING_GCC_VERSION_LATER_6_1
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-else
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-else
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 6.1 compiler, so include these files.
 OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
    test2004_149.C \
    test2005_28.C \
@@ -843,29 +785,7 @@ OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
    test2005_181.C \
    test2006_20.C \
    test2006_79.C \
-   test2006_92.C 
-else
-# This is the GNU 6.1 or later compiler (so skip this list of files).
-endif
-
-endif
-
-endif
-
-else
-# Using EDG 4.12 or later (independent of the compiler).
-OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
-   test2004_149.C \
-   test2005_28.C \
-   test2005_45.C \
-   test2005_93.C \
-   test2005_98.C \
-   test2005_102.C \
-   test2005_181.C \
-   test2006_20.C \
-   test2006_79.C \
-   test2006_92.C 
-endif
+   test2006_92.C
 
 OLD_LONG_LIST_TESTCODES_REQUIRED_TO_PASS =
 # DQ (1/19/2017): These is also a problem for GNU 5.1 as well (at least copytest2007_40.C).
@@ -1081,53 +1001,10 @@ testCopyFunctionDefinitions: copyFunctionDefinitions
 	./copyFunctionDefinitions $(ROSE_FLAGS) $(srcdir)/copytest2007_63.C
 
 
-
-# AM_CPPFLAGS = $(ROSE_INCLUDES)
-
-# bin_PROGRAMS = copyExample
-
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
-# TESTCODES_REQUIRED_TO_PASS = copyExampleInput.C
-
-# TESTCODE_CURRENTLY_FAILING = 
-
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-# TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
-
-# QMTest allows both passing and failing tests.
-# ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
-
-# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-# ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
-
-# PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-# TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
-# # $(TEST_Objects): copyExample
-# 	./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
-
-# QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
-
-# Make rule to build the QMTest database files
-# CURRENT_DIRECTORY = `pwd`
-# $(QMTEST_Objects): copyExample $(srcdir)/$(@:.qmt=.C)
-# 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/copyExample NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.C)
-
-# Include makefile rules specific to QMTest
-# include $(top_srcdir)/config/QMTest_makefile.inc
-
-# DQ (2/26/2009): The copyGraph.[hC] files have been moved to the src/frontend/SageIII/astVisualization directory.
-# EXTRA_DIST = $(ALL_TESTCODES) copyGraph.C copyGraph.h
-# EXTRA_DIST = $(LONG_LIST_ALL_FILES) copyGraph.C copyGraph.h
 EXTRA_DIST = $(LONG_LIST_ALL_FILES)
 
 check-local:
 	@echo "Tests for AST Copy."
-#	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
 	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"

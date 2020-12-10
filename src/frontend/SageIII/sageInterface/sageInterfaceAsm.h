@@ -1,5 +1,7 @@
 #ifndef ROSE_SAGE_INTERFACE_ASM
 #define ROSE_SAGE_INTERFACE_ASM
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // These functions in this file are expected to become a part of the 
 // Binary Analysis and Transformation interfaces in the new ROSE API.
@@ -31,7 +33,7 @@ namespace SageInterface
 
      bool isMovInstruction ( SgAsmInstruction* asmInstruction );
 
-     bool isInstructionKind ( SgAsmInstruction* asmInstruction, X86InstructionKind instuctionKind );
+     bool isInstructionKind ( SgAsmInstruction* asmInstruction, Rose::BinaryAnalysis::X86InstructionKind instuctionKind );
 
      typedef bool (*EquivalenceTestFunctionType) (SgNode* x, SgNode* y);
 
@@ -67,5 +69,5 @@ namespace SageInterface
 
    }
 
-// endif for ROSE_SAGE_INTERFACE_ASM
+#endif
 #endif

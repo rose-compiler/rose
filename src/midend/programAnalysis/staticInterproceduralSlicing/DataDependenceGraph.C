@@ -223,7 +223,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
             //                          cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
             interestingDefParent=getNextParentInterstingNode(defPlaces[j]);
             if (isSgFunctionParameterList(interestingDefParent) || isSgFunctionParameterList(interestingDefParent) ||
-                isSgFunctionParameterList(defPlaces[j]->get_parent()) && isSgFunctionDeclaration(defPlaces[j]->get_parent()->get_parent()))
+                (isSgFunctionParameterList(defPlaces[j]->get_parent()) && isSgFunctionDeclaration(defPlaces[j]->get_parent()->get_parent())))
             {
               defDepNode=getNode(DependenceNode::FORMALIN,defPlaces[j]);
             }

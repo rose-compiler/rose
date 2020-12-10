@@ -87,7 +87,7 @@ void compile_test_const(Map &s) {
     typedef typename Map::Address Address;
     typedef typename Map::Value Value;
     typedef Interval<typename Map::Address> Addresses;
-    typedef typename Map::Segment Segment;
+    //typedef typename Map::Segment Segment;
 
     // Test constructors
     Map s2;
@@ -242,10 +242,10 @@ void compile_tests() {
 template<class AddressMap>
 void constraint_tests(AddressMap &m) {
     typedef typename AddressMap::Address                Address;
-    typedef typename AddressMap::Value                  Value;
+    //typedef typename AddressMap::Value                  Value;
     typedef typename AddressMap::Segment                Segment;
     typedef Interval<Address>                           AInterval;
-    typedef boost::iterator_range<typename AddressMap::ConstNodeIterator> ANodes;
+    //typedef boost::iterator_range<typename AddressMap::ConstNodeIterator> ANodes;
 
     // Mapping from address to segment number so we can compute expected answers
     std::cout <<"AddressMap:\n";
@@ -1429,7 +1429,7 @@ static void io_tests(MemoryMap &m) {
     typedef typename MemoryMap::Value Value;
     typedef typename MemoryMap::Address Address;
     typedef Interval<Address> Interval;
-    typedef typename MemoryMap::Segment Segment;
+    //typedef typename MemoryMap::Segment Segment;
 
     // Write consecutive values to all addresses
     std::cout <<"  check: at(i).limit(3).write(buf)\n";

@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_AbstractLocation_H
 #define Rose_BinaryAnalysis_AbstractLocation_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 
@@ -71,7 +73,7 @@ public:
      *
      *  Returns true if and only if this abstract location refers to a register. It is impossible for an abstract location to
      *  refer to both a register and memory. */
-    bool isRegister() const { return reg_.is_valid(); }
+    bool isRegister() const { return !reg_.isEmpty(); }
 
     /** Checks memory reference.
      *
@@ -142,4 +144,5 @@ std::ostream& operator<<(std::ostream&, const AbstractLocation&);
 } // namespace
 } // namespace
 
+#endif
 #endif

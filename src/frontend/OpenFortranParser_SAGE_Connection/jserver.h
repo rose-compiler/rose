@@ -17,7 +17,7 @@ namespace Ofp {
   jclass       jserver_FindClass(const char *name);
   jobjectArray jserver_getJavaStringArray(int argc, char **argv);
   void         jserver_callMethod(jclass, jmethodID, jobjectArray);
-  int          jserver_callBooleanMethod(jobject, jmethodID);
+  int          jserver_callStaticBooleanMethod(jclass, jmethodID);
   jmethodID    jserver_GetMethodID(int, jclass, const char*, const char*);
   void         jserver_handleException();
   void         jserver_init();

@@ -4,16 +4,16 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "LVTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
-SPRAY::LVTransferFunctions::LVTransferFunctions() {
+CodeThorn::LVTransferFunctions::LVTransferFunctions() {
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
+void CodeThorn::LVTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   // update analysis information
@@ -24,7 +24,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   // KILL
   // (for programs with pointers we require a set here)
   ROSE_ASSERT(_pointerAnalysisInterface);
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information
@@ -34,7 +34,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
     element.removeVariableId(var);
   }
   // GEN
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet useVarIds=AstUtility::useVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -44,13 +44,13 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
+void CodeThorn::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information add information
 
@@ -63,7 +63,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   }
 
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);  
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::astSubTreeVariables(initExp,*getVariableIdMapping());  
+  VariableIdSet useVarIds=AstUtility::astSubTreeVariables(initExp,*getVariableIdMapping());  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -73,7 +73,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
+void CodeThorn::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   // uses and defs in argument-expressions
@@ -92,13 +92,13 @@ void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCall
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
+
+void CodeThorn::LVTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   // kill
-  if(lhsVar) {
-    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
-    element.removeVariableId(varId);
+  if(lhsVarId.isValid()) {
+    element.removeVariableId(lhsVarId);
   }
   // gen return variable
   VariableId resVarId=getResultVariableId();
@@ -109,7 +109,7 @@ void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefE
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
+void CodeThorn::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
   int paramNr=0;
@@ -120,6 +120,7 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
+    ROSE_ASSERT(formalParameterVarId.isValid());
     element.removeVariableId(formalParameterVarId);
 
     // generate live function-call passing parameter var
@@ -133,9 +134,17 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
+void CodeThorn::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
   // kill return variable
   VariableId resVarId=getResultVariableId();
   element.removeVariableId(resVarId);
 }
+
+void CodeThorn::LVTransferFunctions::initializeExtremalValue(Lattice& element) {
+  LVLattice* lvElement=dynamic_cast<LVLattice*>(&element);
+  ROSE_ASSERT(lvElement);
+  lvElement->setEmptySet();
+  cout<<"INFO: initialized extremal value."<<endl;
+}
+

@@ -2,9 +2,7 @@
 #define _DEFUSEQUERY_H
 
 /*************************************************************
- * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
  * Author   : Sriram Aananthakrishnan                        *
- * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
 
@@ -18,7 +16,7 @@
 #include "VariableIdUtils.h"
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // VariableId is short hand for named memory
 // locations

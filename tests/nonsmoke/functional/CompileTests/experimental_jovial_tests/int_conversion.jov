@@ -1,0 +1,14 @@
+START
+PROGRAM int'conversion ;
+BEGIN
+  ITEM item'1 U;
+  ITEM item'2 U 4;
+  ITEM item'3 S;
+  ITEM item'3 S 4;
+
+  item'1 = U(1.2);
+  item'2 = (* U 4 *) (2.2);
+  item'3 = S(3.2);
+  item'4 = (* S 4 *) (4.2);
+END
+TERM

@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryLoaderElf_H
 
 #include "BinaryLoader.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -428,4 +429,5 @@ std::ostream& operator<<(std::ostream&, const BinaryLoaderElf::VersionedSymbol&)
 } // namespace
 } // namespace
 
+#endif
 #endif

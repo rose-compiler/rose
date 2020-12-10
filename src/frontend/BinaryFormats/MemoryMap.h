@@ -1,8 +1,12 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <ByteOrder.h>
 #include <Combinatorics.h>
+#include <RoseException.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -24,7 +28,7 @@ namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
- *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the same
+ *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the same
  *  type as the address before any calculations are performed. Both arguments must be integral types. An alignment less than
  *  one has undefined behavior. */
 template<typename T, typename U>
@@ -37,7 +41,7 @@ alignUp(T address, U alignment) {
 
 /** Align address upward to boundary.
  *
- *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the
+ *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the
  *  same type as the address before any calculations are performed. Both arguments must be integral types. An alignment less
  *  than one has undefined behavior. Returns zero if no such value can be returned due to overflow. */
 template<typename T, typename U>
@@ -182,9 +186,9 @@ public:
 
 public:
     /** Exception for MemoryMap operations. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &mesg, const MemoryMap::Ptr map): std::runtime_error(mesg), map(map) {}
+        Exception(const std::string &mesg, const MemoryMap::Ptr map): Rose::Exception(mesg), map(map) {}
         virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
@@ -404,7 +408,24 @@ public:
 
     /** Documentation string for @ref insertData. */
     static std::string insertDataDocumentation();
-    
+
+    /** Information about a process map. */
+    struct ProcessMapRecord {
+        AddressInterval interval;                       /** Mapped virtual addresses. */
+        unsigned accessibility;                         /** The accessibility flags. */
+        rose_addr_t fileOffset;                         /** Starting byte offset in the file. */
+        std::string deviceName;                         /** The device from which the data is mapped, or "00:00". */
+        size_t inode;                                   /** Inode on the device, or zero. */
+        std::string comment;                            /** Optional comment. */
+
+        ProcessMapRecord()
+            : accessibility(0), fileOffset(0), inode(0) {}
+    };
+
+    /** Obtain the memory map information for a process.
+     *
+     *  Returns an empty vector if there was an error parsing the process information. */
+    static std::vector<ProcessMapRecord> readProcessMap(pid_t);
 
 #ifdef BOOST_WINDOWS
     void insertProcess(int pid, Attach::Boolean attach);
@@ -504,6 +525,7 @@ public:
     void dump(FILE*, const char *prefix="") const;
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
+    void dump() const;                                  // mostly for calling from within GDB or similar
     /** @} */
 
     /** Compute a hash of the entire memory contents.
@@ -539,5 +561,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::NullBuffer);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
-
+#endif
 #endif

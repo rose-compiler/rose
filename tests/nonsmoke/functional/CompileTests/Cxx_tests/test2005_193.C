@@ -56,11 +56,12 @@ struct dummy : public super
 int main()
    {
   // dummy()["Kuh"];
-#if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+  // #if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+#if ( defined(__clang__) == 0 && (__GNUC__ <= 4) && (__GNUC_MINOR__ < 4) && !defined(LIE_ABOUT_GNU_VERSION_TO_EDG) )
 // This example fails for g++ version 4.8.1.
      dummy::dummy()["Kuh"];
 #else
-  // I think this is the only acceptable version for the GNU g++ 4.8.1 compiler.
+  // I think this is the only acceptable version for the GNU g++ 4.8.1 and later versions of GNU compilers.
      dummy()["Kuh"];
 #endif
    }

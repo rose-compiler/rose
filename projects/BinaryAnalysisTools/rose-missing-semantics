@@ -1,0 +1,10 @@
+#!/bin/bash
+
+dir="${0%/*}"
+[ -n "$dir" ] || dir=.
+
+$dir/rose-debug-semantics --no-show-states --show-failure-histogram --semantics=partitioner2 --no-post-analysis "$@" |
+    grep '^[0-9]' |
+    sort -n
+
+exit ${PIPESTATUS[0]}

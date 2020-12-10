@@ -113,6 +113,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     using namespace InstructionSemantics2;
 
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(specimen);
+    ASSERT_always_not_null(interp);
     const RegisterDictionary *regdict = interp->get_registers();
 
     // List the function
@@ -149,6 +150,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
     // Rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
     BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
+    ASSERT_always_not_null(symbolicOps);
     DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
 #if 0
     // The initial state can be modified if you like.  Here we use a constant for the stack pointer.

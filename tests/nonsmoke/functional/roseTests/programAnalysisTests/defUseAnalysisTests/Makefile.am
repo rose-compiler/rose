@@ -8,7 +8,7 @@ runTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Tests are numbered in runTest.C, and each test uses a hard-coded specimen.  Rather than duplicate the specimen-selecting
 # logic of runTest.C in this makefile, we'll just make sure that each test depends on all the available specimens.
-SPECIMEN_NUMBERS = $(shell seq 1 24)
+SPECIMEN_NUMBERS = $(shell seq 1 25)
 SPECIMEN_NAMES = $(shell ls $(srcdir)/tests/test*.C)
 TEST_CONFIG=$(srcdir)/runTest.conf
 EXTRA_DIST = tests $(TEST_CONFIG)

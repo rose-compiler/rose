@@ -237,6 +237,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\util\RoseAsserts.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4\rose_config.h"
 				>
 			</File>

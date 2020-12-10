@@ -7,21 +7,21 @@
 #include <fstream>
 #include <algorithm>
 #include "addressTakenAnalysis.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 /*************************************************
  ***************** ProcessQuery  *****************
  *************************************************/
 
-MatchResult& SPRAY::ProcessQuery::getMatchResult()
+MatchResult& CodeThorn::ProcessQuery::getMatchResult()
 {
   return match_result;
 }
 
-void SPRAY::ProcessQuery::printMatchResult()
+void CodeThorn::ProcessQuery::printMatchResult()
 {
   // MatchResult is list of maps
   // each map corresponds to one particular match instance
@@ -38,12 +38,12 @@ void SPRAY::ProcessQuery::printMatchResult()
   }
 }
 
-void SPRAY::ProcessQuery::clearMatchResult()
+void CodeThorn::ProcessQuery::clearMatchResult()
 {
   match_result.clear();
 }
 
-MatchResult& SPRAY::ProcessQuery::operator()(std::string query, SgNode* root)
+MatchResult& CodeThorn::ProcessQuery::operator()(std::string query, SgNode* root)
 {
   AstMatching m;
   match_result = m.performMatching(query, root);
@@ -54,25 +54,25 @@ MatchResult& SPRAY::ProcessQuery::operator()(std::string query, SgNode* root)
  ************* ComputeAddressTakenInfo  **********
  *************************************************/
 
-SPRAY::ComputeAddressTakenInfo::VariableAddressTakenInfo SPRAY::ComputeAddressTakenInfo::getVariableAddressTakenInfo()
+CodeThorn::ComputeAddressTakenInfo::VariableAddressTakenInfo CodeThorn::ComputeAddressTakenInfo::getVariableAddressTakenInfo()
 {
   return variableAddressTakenInfo;
 }
 
-SPRAY::ComputeAddressTakenInfo::FunctionAddressTakenInfo SPRAY::ComputeAddressTakenInfo::getFunctionAddressTakenInfo()
+CodeThorn::ComputeAddressTakenInfo::FunctionAddressTakenInfo CodeThorn::ComputeAddressTakenInfo::getFunctionAddressTakenInfo()
 {
   return functionAddressTakenInfo;
 }
 
-bool SPRAY::ComputeAddressTakenInfo::getAddAddressTakingsInsideTemplateDecls() {
+bool CodeThorn::ComputeAddressTakenInfo::getAddAddressTakingsInsideTemplateDecls() {
   return addAddressTakingsInsideTemplateDecls;
 }
 
-void SPRAY::ComputeAddressTakenInfo::setAddAddressTakingsInsideTemplateDecls(bool addAddressTakingsInsideTemplateDecls){
+void CodeThorn::ComputeAddressTakenInfo::setAddAddressTakingsInsideTemplateDecls(bool addAddressTakingsInsideTemplateDecls){
   this->addAddressTakingsInsideTemplateDecls = addAddressTakingsInsideTemplateDecls;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
 {
   std::cerr << sgn->class_name() << ": " 
             << AstTerm::astTermWithNullValuesToString(sgn) << ", " \
@@ -83,7 +83,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn
 }
 
 // base case for the recursion
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 { 
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -102,7 +102,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn
   insertVariableId(id);
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclaration* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   SgInitializedName* varDeclInitName = SgNodeHelper::getInitializedNameOfVariableDeclaration(sgn);
@@ -165,7 +165,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgVariableDeclar
 
 // only the rhs_op of SgDotExp is modified
 // recurse on rhs_op
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
@@ -174,7 +174,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 
 // only the rhs_op of SgArrowExp is modified
 // recurse on rhs_op
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
@@ -188,10 +188,10 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 //  taken and that variable or function should already be in the address-taken-set anyway.
 //  Furthermore, there is no additional address-taking inside this operator. Thus there
 //  is nothing to do (calls are handled separately).
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotStarOp* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotStarOp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 }
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 }
 
@@ -207,7 +207,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowStarOp* s
 // set as we dont have any idea about p
 // We dont need to add any new variable to addressTakenSet 
 // as a consequence of the expressions similar to above.
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -236,7 +236,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefEx
 // contents of only A. The inner index expressions are r-values
 // it is sufficient to add A to addressTakenSet
 // keep recursing on the lhs until we find A
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   // collect the info only if its array type
@@ -254,7 +254,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp*
 // &(a = expr)
 // a's address is taken here
 // process the lhs recursively
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -267,7 +267,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 // postfix uses the operand as lvalue and increments later and therefore
 // postfix increment cannot be lvalue
 // both prefix/postfix are illegal in C
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* operand = sgn->get_operand();
@@ -276,7 +276,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sg
 
 // same as prefix increment
 // &(--i)
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* operand = sgn->get_operand();
@@ -286,7 +286,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* 
 // &(a+1, b)
 // b's address is taken
 // keep recursing on the rhs_op
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
@@ -296,7 +296,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sg
 // if we see SgConditionalExp as operand of &
 // both true and false branch are lvalues
 // recurse on both of them to pick up the lvalues
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgNode* true_exp = sgn->get_true_exp();
@@ -307,7 +307,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp
 
 // cast can be lvalue
 // example :  &((struct _Rep *)((this) -> _M_data()))[-1] expr from stl_list
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -315,14 +315,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
   operand->accept(*this);
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllFunctionIds() {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertAllFunctionIds() {
   FunctionIdSet allFuncIds = cati.fidm.getFunctionIdSet();
   for(FunctionIdSet::const_iterator i = allFuncIds.begin(); i != allFuncIds.end(); ++i) {
     insertFunctionId(*i);
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds() {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds() {
   VariableIdSet allVarIds = cati.vidm.getVariableIdSet();
   for(VariableIdSet::const_iterator i = allVarIds.begin(); i != allVarIds.end(); ++i) {
     insertVariableId(*i);
@@ -331,7 +331,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertAllVariableIds()
 
 // schroder3 (2015-08-25): Insert the given variable into the address-taken set and add sibling
 //  members if the given variable is a member of an union.
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(VariableId id) {
   class VariableIdInserter {
     ComputeAddressTakenInfo& cati;
     int debuglevel;
@@ -399,7 +399,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(Varia
                   }
                 }
                 else {
-                  throw SPRAY::Exception("Nested union variable " + cati.vidm.variableName(unionMemberVarId) + ": Unable to find defining declaration of union " + memberRecordDecl->get_qualified_name().getString() + ".");
+                  throw CodeThorn::Exception("Nested union variable " + cati.vidm.variableName(unionMemberVarId) + ": Unable to find defining declaration of union " + memberRecordDecl->get_qualified_name().getString() + ".");
                   // (We could add all variables (that are members of an union) to the address-taken set instead.)
                 }
               }
@@ -415,7 +415,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(Varia
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertFunctionId(FunctionId id) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertFunctionId(FunctionId id) {
   ROSE_ASSERT(id.isValid());
 
   cati.functionAddressTakenInfo.second.insert(id);
@@ -432,7 +432,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::insertFunctionId(Funct
 // & on SgFunctionRefExp is redundant as the functions
 // are implicity converted to function pointer
 //
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
@@ -440,7 +440,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp
   cati.variableAddressTakenInfo.first = true;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
@@ -449,7 +449,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunction
   cati.variableAddressTakenInfo.first = true;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFunctionRefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
@@ -457,7 +457,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFuncti
   // functions can potentially modify anything
   cati.variableAddressTakenInfo.first = true;
 }
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMemberFunctionRefExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMemberFunctionRefExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   insertFunctionId(cati.fidm.getFunctionIdFromFunctionRef(sgn));
@@ -466,7 +466,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMember
   cati.variableAddressTakenInfo.first = true;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgReturnStmt* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgReturnStmt* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   SgFunctionDefinition* funcDef = SgNodeHelper::getClosestParentFunctionDefinitionOfLocatedNode(sgn);
@@ -485,7 +485,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgReturnStmt* sg
 // A& foo() { return A(); }
 // &(foo())
 // if foo() returns a reference then foo() returns a lvalue
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
   if(debuglevel > 0) {
     std::cout << std::endl << std::endl;
@@ -666,7 +666,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
       // Nothing to do as described above.
     }
     else {
-      throw SPRAY::Exception("Invalid internal state. firstChildOfCallExp: " + firstChildOfCallExp->unparseToString());
+      throw CodeThorn::Exception("Invalid internal state. firstChildOfCallExp: " + firstChildOfCallExp->unparseToString());
     }
   }
 
@@ -719,7 +719,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
   cati.variableAddressTakenInfo.first = true;
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   // schroder3 (Jun 2016):
@@ -729,7 +729,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThisExp* sgn)
   //  specifying an object.
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
   // schroder3 (2016-07-28): Some of SgExpression's subclasses (e.g. SgConditionalExp) are handled by specific
   //  visit member functions but if they are not then there should be nothing to do. It is for example possible to
@@ -739,12 +739,12 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sg
   //  If this expression has a reference type then ignoring this expression would ignore a possible address-taking.
   //  Make sure that this does not happen:
   if(SgNodeHelper::isReferenceType(sgn->get_type())) {
-    throw SPRAY::Exception("Address-Taken Analysis: Unhandled " + sgn->class_name() + " node of reference type "
+    throw CodeThorn::Exception("Address-Taken Analysis: Unhandled " + sgn->class_name() + " node of reference type "
                            + sgn->get_type()->unparseToString() + ".");
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParameterList* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParameterList* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-07-21): Iterate over parameters and check for default arguments
@@ -772,7 +772,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParame
       else {
         // A defining declaration resp. a definition should always have symbols for their
         //  parameters:
-        throw SPRAY::Exception("Unable to find symbol of parameter in defining declaration.");
+        throw CodeThorn::Exception("Unable to find symbol of parameter in defining declaration.");
       }
     }
     // There is a symbol available at this point.
@@ -813,7 +813,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionParame
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInitializer* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInitializer* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-08-15): Designated initializer allows to initiate members by providing their
@@ -824,7 +824,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgDesignatedInit
   insertAllFunctionIds();
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitializer* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitializer* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-08-15): Compound literals: Constructs a temporary object or array from initialization list:
@@ -837,7 +837,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundInitia
   insertAllFunctionIds();
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLiteralExp* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLiteralExp* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-08-15): Compound literal expression: currently this is a node without children
@@ -850,7 +850,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCompoundLitera
   insertAllFunctionIds();
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateInitializer* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateInitializer* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-08-15): aggregate initialization of an object or an array. In case of an object it
@@ -867,7 +867,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAggregateIniti
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorInitializer* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorInitializer* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-07-20): Call of a constructor: Basically the same as a function call expr:
@@ -900,7 +900,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgConstructorIni
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitializerList* sgn) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitializerList* sgn) {
   if(debuglevel > 0) debugPrint(sgn);
 
   // schroder3 (2016-07-20): Constructor initializer list: There is a reference creation if
@@ -936,7 +936,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgCtorInitialize
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   // schroder3 (2016-07-26): Two cases:
@@ -950,7 +950,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgAddressOfOp* s
   //  ==> nothing to do in both cases.
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -985,14 +985,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgThrowOp* sgn)
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   // lambda captures are handled in SgLambdaCapture, the lambda body
   // is traversed and processed like any other function body.
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
 
@@ -1052,7 +1052,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaCapture*
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
   std::cerr << "unhandled operand " << sgn->class_name() << " of SgAddressOfOp in AddressTakenAnalysis\n";
@@ -1061,7 +1061,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 }
 
 // schroder3 (2016-07-20): Handles the arguments of a constructor or (member) function call regarding their "address-taken-ness".
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions) {
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTypePtrList& parameterTypes, const SgExpressionPtrList& argumentExpressions) {
   // Iterators:
   SgExpressionPtrList::const_iterator argIter = argumentExpressions.begin();
   SgTypePtrList::const_iterator paramTypeIter = parameterTypes.begin();
@@ -1088,7 +1088,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTyp
     }
 
     if(!parameterType) {
-      throw SPRAY::Exception("No type of parameter!");
+      throw CodeThorn::Exception("No type of parameter!");
     }
 
     // Output the type as string if in debug mode:
@@ -1126,7 +1126,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleCall(const SgTyp
 }
 
 // schroder3 (2016-07-20): Handles all kinds of associations (currently initializations and assignments) regarding their "address-taken-ness".
-void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(const AssociationKind associationKind, const std::vector<VariableId>& possibleTargetEntities,
+void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(const AssociationKind associationKind, const std::vector<VariableId>& possibleTargetEntities,
                                                                             const SgType* targetEntityType, /*const*/ SgExpression* associatedExpression) {
   // TODO: As soon as every caller of this function provides a list of possible target entities the targetEntityType parameter can be removed.
 
@@ -1208,7 +1208,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::handleAssociation(cons
   }
 }
 
-void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
+void CodeThorn::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
   // schroder3 (2016-08-09): Check whether the ASTMatching should should be used to determine
   //  all address-taken-relevant nodes:
   if(useASTMatching) {
@@ -1325,7 +1325,7 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfo(SgNode* root) {
 
 // schroder3 (2016-08-09): Alternative to computeAddressTakenInfo(...) that uses the ASTMatching mechanism.
 //  This is currently slower than computeAddressTakenInfo(...).
-void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfoUsingASTMatching(SgNode* root) {
+void CodeThorn::ComputeAddressTakenInfo::computeAddressTakenInfoUsingASTMatching(SgNode* root) {
   // query to match all subtrees of interest
   // process query
   ProcessQuery collectAddressTakingRelatedNodes;
@@ -1423,7 +1423,7 @@ void SPRAY::ComputeAddressTakenInfo::computeAddressTakenInfoUsingASTMatching(SgN
 }
 
 // pretty print
-void SPRAY::ComputeAddressTakenInfo::printAddressTakenInfo()
+void CodeThorn::ComputeAddressTakenInfo::printAddressTakenInfo()
 {
   std::cout << "addressTakenSet: [" << (variableAddressTakenInfo.first? "true, " : "false, ")
             << VariableIdSetPrettyPrint::str(variableAddressTakenInfo.second, vidm) << "]\n";
@@ -1435,22 +1435,22 @@ void SPRAY::ComputeAddressTakenInfo::printAddressTakenInfo()
  **************** TypeAnalysis *******************
  *************************************************/
 
-VariableIdSet SPRAY::CollectTypeInfo::getPointerTypeSet()
+VariableIdSet CodeThorn::CollectTypeInfo::getPointerTypeSet()
 {
   return pointerTypeSet;
 }
 
-VariableIdSet SPRAY::CollectTypeInfo::getArrayTypeSet()
+VariableIdSet CodeThorn::CollectTypeInfo::getArrayTypeSet()
 {
   return arrayTypeSet;
 }
 
-VariableIdSet SPRAY::CollectTypeInfo::getReferenceTypeSet()
+VariableIdSet CodeThorn::CollectTypeInfo::getReferenceTypeSet()
 {
   return referenceTypeSet;
 }
 
-void SPRAY::CollectTypeInfo::collectTypes()
+void CodeThorn::CollectTypeInfo::collectTypes()
 {
   if(varsUsed.size() == 0) {
     // get the entire set from VariableIdMapping
@@ -1488,17 +1488,17 @@ void SPRAY::CollectTypeInfo::collectTypes()
   }
 }
 
-void SPRAY::CollectTypeInfo::printPointerTypeSet()
+void CodeThorn::CollectTypeInfo::printPointerTypeSet()
 {
   std::cout << "pointerTypeSet: " << VariableIdSetPrettyPrint::str(pointerTypeSet, vidm) << "\n";
 }
 
-void SPRAY::CollectTypeInfo::printArrayTypeSet()
+void CodeThorn::CollectTypeInfo::printArrayTypeSet()
 {
   std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
 }
 
-void SPRAY::CollectTypeInfo::printReferenceTypeSet()
+void CodeThorn::CollectTypeInfo::printReferenceTypeSet()
 {
   std::cout << "referenceTypeSet: " << VariableIdSetPrettyPrint::str(referenceTypeSet, vidm) << "\n";
 }
@@ -1507,13 +1507,13 @@ void SPRAY::CollectTypeInfo::printReferenceTypeSet()
  ********** FlowInsensitivePointerInfo  **********
  *************************************************/
 
-void SPRAY::FlowInsensitivePointerInfo::collectInfo()
+void CodeThorn::FlowInsensitivePointerInfo::collectInfo()
 {
   compAddrTakenInfo.computeAddressTakenInfo(root);
   collTypeInfo.collectTypes();
 }
 
-void SPRAY::FlowInsensitivePointerInfo::printInfoSets()
+void CodeThorn::FlowInsensitivePointerInfo::printInfoSets()
 {
   compAddrTakenInfo.printAddressTakenInfo();
   collTypeInfo.printPointerTypeSet();
@@ -1521,17 +1521,17 @@ void SPRAY::FlowInsensitivePointerInfo::printInfoSets()
   collTypeInfo.printReferenceTypeSet();
 }
 
-VariableIdMapping& SPRAY::FlowInsensitivePointerInfo::getVariableIdMapping()
+VariableIdMapping& CodeThorn::FlowInsensitivePointerInfo::getVariableIdMapping()
 {
   return vidm;
 }
 
-VariableIdSet SPRAY::FlowInsensitivePointerInfo::getMemModByPointer()
+VariableIdSet CodeThorn::FlowInsensitivePointerInfo::getMemModByPointer()
 {
   return getAddressTakenVariables();
 }
 
-VariableIdSet SPRAY::FlowInsensitivePointerInfo::getAddressTakenVariables() {
+VariableIdSet CodeThorn::FlowInsensitivePointerInfo::getAddressTakenVariables() {
   VariableIdSet unionSet;
   VariableIdSet addrTakenSet = (compAddrTakenInfo.getVariableAddressTakenInfo()).second;
   VariableIdSet arrayTypeSet = collTypeInfo.getArrayTypeSet();
@@ -1542,11 +1542,11 @@ VariableIdSet SPRAY::FlowInsensitivePointerInfo::getAddressTakenVariables() {
 
   // we can perhaps cache this for efficiency
   // to answer queries for multiple dereferencing queries
-  SPRAY::set_union(addrTakenSet, arrayTypeSet, unionSet);
+  CodeThorn::set_union(addrTakenSet, arrayTypeSet, unionSet);
 
   return unionSet;
 }
 
-FunctionIdSet SPRAY::FlowInsensitivePointerInfo::getAddressTakenFunctions() {
+FunctionIdSet CodeThorn::FlowInsensitivePointerInfo::getAddressTakenFunctions() {
   return compAddrTakenInfo.getFunctionAddressTakenInfo().second;
 }

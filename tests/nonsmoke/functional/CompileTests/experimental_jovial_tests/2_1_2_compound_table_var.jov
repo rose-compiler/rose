@@ -1,0 +1,17 @@
+START
+
+PROGRAM main ;
+BEGIN
+
+TABLE table'var ;
+  BEGIN
+    ITEM xpos U ;
+    ITEM ypos U ;
+  END
+
+xpos = 13;
+ypos = 14;
+
+END
+
+TERM

@@ -1,0 +1,10 @@
+START
+ 
+COMPOOL block'item'presets;
+
+CONSTANT ITEM signed'var S = -11;
+CONSTANT ITEM unsigned'var U 16 = 13;
+CONSTANT ITEM float'var F 32 = 3.1415;
+CONSTANT ITEM bit'var B 16 = 4B'FFEE';
+ 
+TERM

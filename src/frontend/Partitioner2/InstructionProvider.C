@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "InstructionProvider.h"
 
@@ -14,14 +16,18 @@ InstructionProvider::operator[](rose_addr_t va) const {
             } catch (const Disassembler::Exception &e) {
                 insn = disassembler_->makeUnknownInstruction(e);
                 ASSERT_not_null(insn);
-                uint8_t byte;
-                if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
-                    insn->set_raw_bytes(SgUnsignedCharList(1, byte));
                 ASSERT_require(insn->get_address()==va);
-                ASSERT_require(insn->get_size()==1);
+                if (0 == insn->get_size()) {
+                    uint8_t byte;
+                    if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
+                        insn->set_raw_bytes(SgUnsignedCharList(1, byte));
+                    ASSERT_require(insn->get_size()==1);
+                }
             }
+            ASSERT_not_null(insn);
+            ASSERT_require(insn->get_address() == va);
+            insnMap_.insert(va, insn);
         }
-        insnMap_.insert(va, insn);
     }
     return insn;
 }
@@ -43,3 +49,5 @@ InstructionProvider::showStatistics() const {
 
 } // namespace
 } // namespace
+
+#endif

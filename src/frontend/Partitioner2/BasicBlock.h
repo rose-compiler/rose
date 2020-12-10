@@ -1,9 +1,13 @@
 #ifndef ROSE_Partitioner2_BasicBlock_H
 #define ROSE_Partitioner2_BasicBlock_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
+#include <SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
@@ -23,6 +27,10 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BasicBlockSemantics
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Information related to instruction semantics.
  *
@@ -95,7 +103,11 @@ public:
         return usingDispatcher && operators ? operators->currentState() : BaseSemantics::StatePtr();
     }
 };
-    
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BasicBlock
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Basic block information.
  *
  *  A basic block is a sequence of distinct instructions with linear control flow from the first instruction to the last.  No
@@ -177,6 +189,7 @@ private:
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BasicBlockSemantics semantics_;                     // All semantics-related information
     std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
+    SourceLocation sourceLocation_;                     // Optional location of basic block in source code
 
     // When a basic block gets lots of instructions some operations become slow due to the linear nature of the instruction
     // list. Therefore, we also keep a mapping from instruction address to position in the list. The mapping is only used when
@@ -245,6 +258,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(mayReturn_);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(popsStack_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
     }
 #endif
 
@@ -317,6 +332,13 @@ public:
      * @{ */
     const std::string& comment() const { return comment_; }
     void comment(const std::string &s) { comment_ = s; }
+    /** @} */
+
+    /** Optional location in source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
     /** @} */
 
 
@@ -453,22 +475,32 @@ public:
      *  Thread safety: This method is not thread safe. */
     AddressIntervalSet dataAddresses() const;
 
-    /** Determine if this basic block contains the specified data block.
+    /** Determine if this basic block contains the specified data block or equivalent data block.
      *
-     *  If the basic block owns the specified data block then this method returns the specified pointer, otherwise it returns
-     *  the null pointer.
+     *  If the basic block owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
      *
      *  Thread safety: This method is not thread safe. */
     DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
 
-    /** Make this basic block own the specified data block.
+    /** Make this basic block own the specified data block or equivalent data block.
      *
-     *  If the specified data block is not yet owned by this basic block, then this method adds the data block as a member of
-     *  this basic block and returns true, otherwise nothing is inserted and returns false.  A data block cannot be inserted
-     *  when this basic block is frozen.
+     *  If the specified data block is not yet owned by this basic block and the basic block contains no equivalent data block,
+     *  then the specified data block is added as a member of this basic block and this method returns true. Otherwise, this
+     *  basic block already contains the specified data block or an equivalent data block and the method returns false. A data
+     *  block cannot be inserted when this basic block is frozen.
      *
      *  Thread safety: This method is not thread safe. */
     bool insertDataBlock(const DataBlock::Ptr&);
+
+    /** Remove specified or equivalent data block from this basic block.
+     *
+     *  If this basic block is in a detached state (i.e., not part of the CFG/AUM) then the specified data block or equivalent
+     *  data block is removed from this basic block. Returns the data block that was erased, or null if none was erased.
+     *
+     *  It is an error to invoke this method on basic block that is attached to the CFG/AUM, for which @ref isFrozen returns
+     *  true. This method is a no-op if the specified data block is a null pointer. */
+    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
 
     /** Data blocks owned.
      *
@@ -618,6 +650,9 @@ private:
     void freeze() { isFrozen_ = true; semantics_.optionalPenultimateState = Sawyer::Nothing(); }
     void thaw() { isFrozen_ = false; }
     BasicBlockSemantics undropSemanticsNS(const Partitioner&);
+
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block.
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 } // namespace
@@ -625,6 +660,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 2);
 
+#endif
 #endif

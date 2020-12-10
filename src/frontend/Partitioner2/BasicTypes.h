@@ -1,7 +1,12 @@
 #ifndef ROSE_Partitioner2_BasicTypes_H
 #define ROSE_Partitioner2_BasicTypes_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/version.hpp>
@@ -48,24 +53,24 @@ enum VertexType {
 
 /** Partitioner control flow edge types. */
 enum EdgeType {
-    E_NORMAL,                                           /**< Normal control flow edge, nothing special. */
-    E_FUNCTION_CALL,                                    /**< Edge is a function call. */
-    E_FUNCTION_RETURN,                                  /**< Edge is a function return. Such edges represent the actual
+    E_NORMAL            = 0x00000001,                   /**< Normal control flow edge, nothing special. */
+    E_FUNCTION_CALL     = 0x00000002,                   /**< Edge is a function call. */
+    E_FUNCTION_RETURN   = 0x00000004,                   /**< Edge is a function return. Such edges represent the actual
                                                          *   return-to-caller and usually originate from a return instruction
                                                          *   (e.g., x86 @c RET, m68k @c RTS, etc.). */
-    E_CALL_RETURN,                                      /**< Edge is a function return from the call site. Such edges are from
+    E_CALL_RETURN       = 0x00000008,                   /**< Edge is a function return from the call site. Such edges are from
                                                          *   a caller basic block to (probably) the fall-through address of the
                                                          *   call and don't actually exist directly in the specimen.  The
                                                          *   represent the fact that the called function eventually returns
                                                          *   even if the instructions for the called function are not available
                                                          *   to analyze. */
-    E_FUNCTION_XFER,                                    /**< Edge is a function call transfer. A function call transfer is
+    E_FUNCTION_XFER     = 0x00000010,                   /**< Edge is a function call transfer. A function call transfer is
                                                          *   similar to @ref E_FUNCTION_CALL except the entire call frame is
                                                          *   transferred to the target function and this function is no longer
                                                          *   considered part of the call stack; a return from the target
                                                          *   function will skip over this function. Function call transfers
                                                          *   most often occur as the edge leaving a thunk. */
-    E_USER_DEFINED,                                     /**< User defined edge.  These edges don't normally appear in the
+    E_USER_DEFINED      = 0x00000020,                   /**< User defined edge.  These edges don't normally appear in the
                                                          *   global control flow graph but might appear in other kinds of
                                                          *   graphs that are closely related to a CFG, such as a paths graph. */
 };
@@ -223,6 +228,15 @@ struct LoaderSettings {
                                                      *   output file name and the space separated list of input names. The
                                                      *   names are escaped when the command is generated and therefore the "%o"
                                                      *   and "%f" should not be quoted. */
+    std::vector<std::string> envEraseNames;         /**< List of environment variable names that should be removed before
+                                                     *   launching a "run:" specimen. These names are matched exactly. */
+    std::vector<boost::regex> envErasePatterns;     /**< List of regular expressions for removing environment variables
+                                                     *   before launching a "run:" specimen. The expressions match only the
+                                                     *   variable name, not its value. */
+    std::vector<std::string> envInsert;             /**< List of environment variable names and values to be inserted before
+                                                     *   launching a "run:" specimen. Each string must contain an equal sign
+                                                     *   that separates the name from the value (the first \"=\" if more
+                                                     *   than one. */
 
     LoaderSettings()
         : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
@@ -239,6 +253,20 @@ private:
         s & BOOST_SERIALIZATION_NVP(deExecuteZerosLeaveAtBack);
         s & BOOST_SERIALIZATION_NVP(memoryDataAdjustment);
         s & BOOST_SERIALIZATION_NVP(memoryIsExecutable);
+        if (version >= 1) {
+            s & BOOST_SERIALIZATION_NVP(envEraseNames);
+            s & BOOST_SERIALIZATION_NVP(envInsert);
+
+            // There's no serialization for boost::regex, so we do it ourselves.
+            std::vector<std::string> reStrings;
+            BOOST_FOREACH (const boost::regex &re, envErasePatterns)
+                reStrings.push_back(re.str());
+            s & BOOST_SERIALIZATION_NVP(reStrings);
+            if (envErasePatterns.empty()) {
+                BOOST_FOREACH (const std::string &reStr, reStrings)
+                    envErasePatterns.push_back(boost::regex(reStr));
+            }
+        }
     }
 };
 
@@ -246,6 +274,8 @@ private:
  *
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref disassemblerSwitches. */
 struct DisassemblerSettings {
+    bool doDisassemble;                             /**< Perform disassembly. If false, then it is not an error if no
+                                                     *   disassembler can be found. */
     std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
                                                      *   ISA name will override the architecture that's chosen from the
                                                      *   binary container(s) such as ELF or PE. */
@@ -255,8 +285,14 @@ private:
 
     template<class S>
     void serialize(S &s, unsigned version) {
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(doDisassemble);
         s & BOOST_SERIALIZATION_NVP(isaName);
     }
+
+public:
+    DisassemblerSettings()
+        : doDisassemble(true) {}
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -281,20 +317,23 @@ struct BasePartitionerSettings {
                                                      *   of certain kinds of opaque predicates. */
     bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
     bool basicBlockSemanticsAutoDrop;               /**< Conserve memory by dropping semantics for attached basic blocks. */
+    bool ignoringUnknownInsns;                      /**< Whether to ignore unkonwn insns when extending basic blocks. */
 
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(usingSemantics);
         s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
         s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(ignoringUnknownInsns);
     }
 
 public:
     BasePartitionerSettings()
-        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true) {}
+        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true), ignoringUnknownInsns(false) {}
 };
 
 /** Settings that control the engine partitioning.
@@ -306,7 +345,7 @@ public:
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
 struct PartitionerSettings {
     BasePartitionerSettings base;
-    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+    std::vector<rose_addr_t> functionStartingVas;   /**< Addresses at which to start recursive disassembly. These
                                                      *   addresses are in addition to entry addresses, addresses from
                                                      *   symbols, addresses from configuration files, etc. */
     bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
@@ -321,6 +360,7 @@ struct PartitionerSettings {
                                                      *   the other in memory--the block can have internal unconditional
                                                      *   branches. */
     size_t maxBasicBlockSize;                       /**< Maximum basic block size. Number of instructions. 0 => no limit. */
+    std::vector<rose_addr_t> ipRewrites;            /**< Pairs of addresses for rewriting CFG edges. */
     bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
     bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
@@ -358,10 +398,12 @@ private:
     template<class S>
     void serialize(S &s, unsigned version) {
         s & BOOST_SERIALIZATION_NVP(base);
-        s & BOOST_SERIALIZATION_NVP(startingVas);
+        s & BOOST_SERIALIZATION_NVP(functionStartingVas);
         s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
         s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
         s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);
+        if (version >= 6)
+            s & BOOST_SERIALIZATION_NVP(ipRewrites);
         s & BOOST_SERIALIZATION_NVP(findingFunctionPadding);
         s & BOOST_SERIALIZATION_NVP(findingDeadCode);
         s & BOOST_SERIALIZATION_NVP(peScramblerDispatcherVa);
@@ -461,12 +503,18 @@ class BasicBlock;
 typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
 class DataBlock;
 typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
+class ThunkPredicates;
+typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 
 } // namespace
 } // namespace
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 5);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 6);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::LoaderSettings, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DisassemblerSettings, 1);
 
+#endif
 #endif

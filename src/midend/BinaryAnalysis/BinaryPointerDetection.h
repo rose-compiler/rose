@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_PointerDetection_H
 #define ROSE_BinaryAnalysis_PointerDetection_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <MemoryCellList.h>
@@ -152,7 +154,7 @@ struct PointerDescriptor {
 /** Functor to compare two PointerLocation objects. */
 class PointerDescriptorLessp {
 public:
-    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b);
+    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b) const;
 };
 
 /** Set of pointers. */
@@ -295,4 +297,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

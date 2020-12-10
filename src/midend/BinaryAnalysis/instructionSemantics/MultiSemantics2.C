@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "MultiSemantics2.h"
 
@@ -806,9 +808,17 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a, SgAsmType *type) {
+    SValuePtr retval = svalue_empty(type->get_nBits());
+    SUBDOMAINS(sd, (a))
+        retval->set_subvalue(sd.idx(), sd->reinterpret(sd(a), type));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SValuePtr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
@@ -817,7 +827,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
 BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.get_nbits());
+    SValuePtr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->peekRegister(reg, sd(dflt)));
     return retval;
@@ -862,3 +872,5 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 } // namespace
 } // namespace
 } // namespace
+
+#endif

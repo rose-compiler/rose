@@ -1,0 +1,11 @@
+START
+
+COMPOOL a'comp;
+
+TYPE table'type TABLE W 1;
+  BEGIN
+    ITEM item'1 auto'type   POS(1,0);
+    ITEM item'2 atable'type POS(2,0);
+  END
+
+TERM

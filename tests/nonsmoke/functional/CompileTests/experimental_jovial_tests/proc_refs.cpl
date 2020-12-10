@@ -1,0 +1,33 @@
+START
+
+COMPOOL proc'refs;
+
+REF PROC proc'1 RENT;
+  BEGIN
+  END
+
+REF PROC proc'2 (in'param'1);
+  BEGIN
+    ITEM in'param'1  U 6;
+  END
+ 
+REF PROC proc'3 (in'param'1 : out'param'1, out'param'2);
+  BEGIN
+    TABLE in'param'1  (1:10);
+      BEGIN
+        ITEM in'param'item'1   U 4;
+      END
+    ITEM out'param'1   U 4;
+    ITEM out'param'2   U 4;
+  END
+  
+"This is a function declatation"
+REF PROC proc'4 RENT U 4;
+  BEGIN
+  END
+
+REF PROC proc'5 REC;
+  BEGIN
+  END
+
+TERM

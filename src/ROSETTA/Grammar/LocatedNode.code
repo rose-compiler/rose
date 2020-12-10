@@ -111,6 +111,36 @@ HEADER_START
           void setFrontendSpecific ();
           void unsetFrontendSpecific ();
 
+       // DQ (12/21/2019): Added interface function to simplify code.
+      /*! \brief Simple test for if this is a frontend specific IR node.
+
+          This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
+
+          \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
+       */
+          bool isFrontendSpecific () const;
+
+      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as shared.
+
+          Since the flag for isShared is stored in the Sg_File_Info, and because there
+          are up to three of these for the source position information to be comprehensive, this 
+          function permits a mechanism to have them be set uniformally.  Warnings are issued if
+          they are not set uniformally.
+
+          \internal This function marks the Sg_File_Info objects that must already be present.
+       */
+          void setShared();
+          void unsetShared();
+
+       // DQ (12/21/2019): Added interface function to simplify code.
+      /*! \brief Simple test for if this is a shared IR node.
+
+          This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
+
+          \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
+       */
+          bool isShared () const;
+
       /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
 
           Since the flag for isSourcePositionUnavailableInFrontend is stored in the Sg_File_Info, and because there
@@ -565,10 +595,6 @@ enum ROSE_Fortran_Additional_Info
 HEADER_TOKEN_END
 
 
-HEADER_ATERM_NODE_START
-HEADER_ATERM_NODE_END
-
-
 HEADER_LOCATED_NODE_SUPPORT_START
 HEADER_LOCATED_NODE_SUPPORT_END
 
@@ -738,6 +764,9 @@ HEADER_UNTYPED_DECLARATION_STATEMENT_END
 HEADER_UNTYPED_DIRECTIVE_DECLARATION_START
 HEADER_UNTYPED_DIRECTIVE_DECLARATION_END
 
+HEADER_UNTYPED_ENUM_DECLARATION_START
+HEADER_UNTYPED_ENUM_DECLARATION_END
+
 HEADER_UNTYPED_LABEL_STATEMENT_START
 HEADER_UNTYPED_LABEL_STATEMENT_END
 
@@ -752,6 +781,9 @@ HEADER_UNTYPED_IMPLICIT_DECLARATION_END
 
 HEADER_UNTYPED_VARIABLE_DECLARATION_START
 HEADER_UNTYPED_VARIABLE_DECLARATION_END
+
+HEADER_UNTYPED_TYPEDEF_DECLARATION_START
+HEADER_UNTYPED_TYPEDEF_DECLARATION_END
 
 HEADER_UNTYPED_PROGRAM_HEADER_DECLARATION_START
 HEADER_UNTYPED_PROGRAM_HEADER_DECLARATION_END
@@ -776,6 +808,9 @@ HEADER_UNTYPED_PACKAGE_DECLARATION_END
 
 HEADER_UNTYPED_STRUCTURE_DECLARATION_START
 HEADER_UNTYPED_STRUCTURE_DECLARATION_END
+
+HEADER_UNTYPED_STRUCTURE_DEFINITION_START
+HEADER_UNTYPED_STRUCTURE_DEFINITION_END
 
 HEADER_UNTYPED_EXCEPTION_DECLARATION_START
 HEADER_UNTYPED_EXCEPTION_DECLARATION_END
@@ -833,6 +868,10 @@ HEADER_UNTYPED_TYPE_START
                e_fixed,          //! fixed type as identified by parser.
                e_ptr,            //! ptr type as identified by parser.
                e_status,         //! status type as identified by parser.
+            // Rasmussen (10/09/2019): Added e_user_defined for Fortran; e_table and e_block for Jovial
+               e_table,          //! table type as identified by parser.
+               e_block,          //! block type as identified by parser.
+               e_user_defined,   //! type defined by the programmer as identified by the parser.
                e_last,           //! last type
              };
 
@@ -840,6 +879,9 @@ HEADER_UNTYPED_TYPE_END
 
 HEADER_UNTYPED_ARRAY_TYPE_START
 HEADER_UNTYPED_ARRAY_TYPE_END
+
+HEADER_UNTYPED_TABLE_TYPE_START
+HEADER_UNTYPED_TABLE_TYPE_END
 
 HEADER_UNTYPED_ATTRIBUTE_START
 HEADER_UNTYPED_ATTRIBUTE_END
@@ -1047,11 +1089,14 @@ SgLocatedNode::isCompilerGenerated () const
      ROSE_ASSERT(get_endOfConstruct() != NULL);
 
      bool result = get_startOfConstruct()->isCompilerGenerated();
-     ROSE_ASSERT(result == get_endOfConstruct()->isCompilerGenerated());
+     // ROSE_ASSERT(result == get_endOfConstruct()->isCompilerGenerated()); // FIXME fails on SgInitializedName = ::std::_Vector_base < Real_t , allocator< Real_t > >::_M_impl
 
      const SgExpression* expression = isSgExpression(this);
      if (expression != NULL && expression->get_operatorPosition() != NULL)
         {
+          if (result != expression->get_operatorPosition()->isCompilerGenerated()) {
+            printf ("[SgLocatedNode::isCompilerGenerated] FATAL: expression->get_operatorPosition() does not match get_startOfConstruct().\n");
+          }
           ROSE_ASSERT(result == expression->get_operatorPosition()->isCompilerGenerated());
         }
 
@@ -1144,6 +1189,91 @@ SgLocatedNode::isTransformation () const
    }
 
 
+// DQ (12/21/2019): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::setShared ()
+   {
+  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->setShared();
+     get_endOfConstruct()->setShared();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          expression->get_operatorPosition()->setShared();
+        }
+   }
+
+// DQ (12/21/2019): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::unsetShared()
+   {
+  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->unsetShared();
+     get_endOfConstruct()->unsetShared();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->unsetShared();
+        }
+   }
+
+bool
+SgLocatedNode::isShared () const
+   {
+  // DQ (12/21/2019): Added function to define a simple API.
+
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+
+     bool result = get_startOfConstruct()->isShared();
+
+  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
+  // ROSE_ASSERT(get_endOfConstruct() != NULL);
+     if (get_endOfConstruct() != NULL)
+        {
+          ROSE_ASSERT(result == get_endOfConstruct()->isShared());
+        }
+       else
+        {
+          printf ("WARNING: In SgLocatedNode::isShared(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+        }
+
+     const SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+#if 0
+          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
+#endif
+          if (result != expression->get_operatorPosition()->isShared())
+             {
+               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
+               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+             }
+       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
+       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
+       // just issue the warning.
+       // ROSE_ASSERT(result == expression->get_operatorPosition()->isShared());
+        }
+
+     return result;
+   }
+
+
 // DQ (12/22/2006): These function are part of a move to lift the interface for
 // IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
@@ -1178,6 +1308,51 @@ SgLocatedNode::unsetFrontendSpecific()
           expression->get_operatorPosition()->unsetFrontendSpecific();
         }
    }
+
+bool
+SgLocatedNode::isFrontendSpecific () const
+   {
+  // DQ (12/21/2019): Added function to define a simple API.
+
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+
+     bool result = get_startOfConstruct()->isFrontendSpecific();
+
+  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
+  // ROSE_ASSERT(get_endOfConstruct() != NULL);
+     if (get_endOfConstruct() != NULL)
+        {
+          ROSE_ASSERT(result == get_endOfConstruct()->isFrontendSpecific());
+        }
+       else
+        {
+          printf ("WARNING: In SgLocatedNode::isFrontendSpecific(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+        }
+
+     const SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+#if 0
+          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
+#endif
+          if (result != expression->get_operatorPosition()->isFrontendSpecific())
+             {
+               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
+               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+             }
+       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
+       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
+       // just issue the warning.
+       // ROSE_ASSERT(result == expression->get_operatorPosition()->isFrontendSpecific());
+        }
+
+     return result;
+   }
+
+
 
 // DQ (12/22/2006): These function are part of a move to lift the interface for
 // IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
@@ -1386,7 +1561,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      ROSE_ASSERT(prepInfoPtr != NULL);
 
 #if 0
-     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node is a %s: prepInfoPtr->getString() = %s \n",class_name().c_str(),prepInfoPtr->getString().c_str());
+     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node %p is a %s: prepInfoPtr->getString() = %s \n",this,class_name().c_str(),prepInfoPtr->getString().c_str());
 #endif
 
   // Nodes that should not have comments attached (since they are not unparsed)
@@ -1425,6 +1600,57 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
      printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): locationInList = %s \n",PreprocessingInfo::relativePositionName(locationInList).c_str());
 #endif
 
+#if 0
+       // DQ (4/22/2020): Check to see if we are adding a comment of CPP directive redundantly.
+
+          printf ("Output the associated comments and CPP directives for this IR node: \n");
+
+          AttachedPreprocessingInfoType *tmp_prepInfoPtr = this->getAttachedPreprocessingInfo();
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = tmp_prepInfoPtr->begin(); i != tmp_prepInfoPtr->end(); ++i)
+             {
+            // i is a pointer to the current prepInfo object, print current preprocessing info
+            // Assert that i points to a valid preprocssingInfo object
+               ROSE_ASSERT ((*i) != NULL);
+               ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
+               ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
+                            (*i)->getRelativePosition() == PreprocessingInfo::after  ||
+                            (*i)->getRelativePosition() == PreprocessingInfo::inside);
+
+            // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
+               printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+                 // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
+                    (*i)->getString().c_str());
+
+            // DQ (2/27/2019): Adding support for multi-file handling.
+            // printf (" ---  --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
+            // printf (" ---  --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
+#if 0
+            // if (prepInfoPtr->getString() ==  "// The use of \"\" instead of <> forces the current directory (where Simple2.h is located) to be used.")
+            // if (prepInfoPtr->getString() ==  "// Test comment")
+            // const size_t found = prepInfoPtr->getString().substr("// Test comment");
+               size_t found = prepInfoPtr->getString().find("// Test comment");
+               if (found != string::npos)
+                  {
+                    printf ("ERROR: found specific comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
+
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+#if 0
+               if (prepInfoPtr->getString() == (*i)->getString())
+                  {
+                    printf ("ERROR: redundant comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
+
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+             }
+#endif
+
   // Add the current PreprocessingInfo object
      switch (locationInList)
         {
@@ -1435,19 +1661,31 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                break;
 
           case PreprocessingInfo::before:
+             {
+#if 0
+               printf ("p_attachedPreprocessingInfoPtr = %p insert before \n",p_attachedPreprocessingInfoPtr);
+#endif
                p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
                break;
+             }
 
           case PreprocessingInfo::after:
+             {
+#if 0
+               printf ("p_attachedPreprocessingInfoPtr = %p insert after \n",p_attachedPreprocessingInfoPtr);
+#endif
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
                p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
                break;
+             }
 
           default:
                printf ("Error: default found in switch statement \n");
                ROSE_ASSERT(false);
         }
    }
+
+
 // Liao 1/27/2015   
 // Insert prepInfo right after (or before) an existing anchor info in the preprocessing info list
 void
@@ -1676,9 +1914,6 @@ SgToken::isCarriageReturn() const
 
 SOURCE_TOKEN_END
 
-SOURCE_ATERM_NODE_START
-SOURCE_ATERM_NODE_END
-
 SOURCE_LOCATED_NODE_SUPPORT_START
 SOURCE_LOCATED_NODE_SUPPORT_END
 
@@ -1857,6 +2092,9 @@ SOURCE_UNTYPED_DECLARATION_STATEMENT_END
 SOURCE_UNTYPED_DIRECTIVE_DECLARATION_START
 SOURCE_UNTYPED_DIRECTIVE_DECLARATION_END
 
+SOURCE_UNTYPED_ENUM_DECLARATION_START
+SOURCE_UNTYPED_ENUM_DECLARATION_END
+
 SOURCE_UNTYPED_LABEL_STATEMENT_START
 SOURCE_UNTYPED_LABEL_STATEMENT_END
 
@@ -1871,6 +2109,9 @@ SOURCE_UNTYPED_IMPLICIT_DECLARATION_END
 
 SOURCE_UNTYPED_VARIABLE_DECLARATION_START
 SOURCE_UNTYPED_VARIABLE_DECLARATION_END
+
+SOURCE_UNTYPED_TYPEDEF_DECLARATION_START
+SOURCE_UNTYPED_TYPEDEF_DECLARATION_END
 
 SOURCE_UNTYPED_PROGRAM_HEADER_DECLARATION_START
 SOURCE_UNTYPED_PROGRAM_HEADER_DECLARATION_END
@@ -1892,6 +2133,9 @@ SOURCE_UNTYPED_PACKAGE_DECLARATION_END
 
 SOURCE_UNTYPED_STRUCTURE_DECLARATION_START
 SOURCE_UNTYPED_STRUCTURE_DECLARATION_END
+
+SOURCE_UNTYPED_STRUCTURE_DEFINITION_START
+SOURCE_UNTYPED_STRUCTURE_DEFINITION_END
 
 SOURCE_UNTYPED_EXCEPTION_DECLARATION_START
 SOURCE_UNTYPED_EXCEPTION_DECLARATION_END
@@ -1934,6 +2178,9 @@ SOURCE_UNTYPED_TYPE_END
 
 SOURCE_UNTYPED_ARRAY_TYPE_START
 SOURCE_UNTYPED_ARRAY_TYPE_END
+
+SOURCE_UNTYPED_TABLE_TYPE_START
+SOURCE_UNTYPED_TABLE_TYPE_END
 
 SOURCE_UNTYPED_ATTRIBUTE_START
 SOURCE_UNTYPED_ATTRIBUTE_END

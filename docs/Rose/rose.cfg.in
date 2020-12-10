@@ -678,12 +678,9 @@ WARN_LOGFILE           =
 #       prevails (e.g., alphabetical or source-order).
 
 INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
-			 @top_srcdir@/docs/Rose/Installation \
 			 @top_srcdir@/docs/Rose/ToolDevelopment \
 			 @top_srcdir@/docs/Rose/LibraryGeneralPrinciples.dox \
 			 @top_srcdir@/docs/Rose/BinaryTutorial.dox \
-			 @top_srcdir@/docs/Rose/Tools \
-			 @top_srcdir@/docs/Rose/FAQ-Binary.dox \
 			 @top_srcdir@/docs/Rose/Developers.dox \
                          @top_srcdir@/docs/Rose \
                          @top_pwd@/src/frontend/SageIII \
@@ -1334,7 +1331,7 @@ SERVER_BASED_SEARCH    = YES
 
 # The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
 EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = http://rosecompiler.org/doxygen/doxysearch.cgi
+SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output

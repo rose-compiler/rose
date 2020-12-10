@@ -227,7 +227,6 @@ class SimpleColorMemoryPoolTraversal
      public ROSE_VisitTraversal
    {
      public:
-       // MangledNameMapTraversal::SetOfNodesType     & setOfIRnodes;
           static const std::set<SgNode*> defaultSetOfIRnodes;
           const std::set<SgNode*> & setOfIRnodes;
 

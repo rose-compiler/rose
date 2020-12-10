@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
-PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
@@ -73,21 +73,18 @@ noinst_PROGRAMS = \
    testTranslator \
    testTranslatorUnfoldedConstants \
    testTranslatorFoldedConstants \
-   testAstFileRead \
-   parallelASTMerge \
    testGraphGeneration \
-   testPDFGeneration \
    testTokenGeneration \
    testTemplates \
-   testBackend
+   testBackend \
+   readFileTwice
+
+if ROSE_WITH_LIBHARU
+   noinst_PROGRAMS += testPDFGeneration
+endif
 
 if ROSE_WITH_ATERM
    noinst_PROGRAMS += testAtermGraphGeneration
-endif
-
-# DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
-if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   noinst_PROGRAMS += testAstFileIO 
 endif
 
 # Phase 0 tests code:
@@ -122,30 +119,13 @@ testTranslator_SOURCES = testTranslator.C
 testTranslatorUnfoldedConstants_SOURCES = testTranslatorUnfoldedConstants.C
 testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
 
-# This tests the ability to generate a compressed binary file representation of the AST.
-# This is a special format of the ROSE AST build for performance File I/O (to address the
-# requirements of large scale applications and their analysis).
-#
-# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am. I'm not sure why it's tested down there
-# instead of here [RPM 2013-09-27].
-testAstFileIO_SOURCES = testAstFileIO.C
-
-# This tests the ability to read one or more of the binary AST files generated from the AST write.
-#
-# This executable is tested in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am.  I'm not sure why it's tested down there
-# instead of here [RPM 2013-09-27].
-testAstFileRead_SOURCES = testAstFileRead.C
-
-# This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
-#
-# This seems to be similar to the version in tests/nonsmoke/functional/roseTests/astFileIO.
-parallelASTMerge_SOURCES = parallelASTMerge.C
-
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
 
+if ROSE_WITH_LIBHARU
 # This tests the ability to generate pdf file (AST) for the input application.
 testPDFGeneration_SOURCES = testPDFGeneration.C
+endif
 
 # This tests the token generation capabilities which are an option in ROSE used to support the 
 # generation of patches to define transformations of large scale applications.
@@ -163,6 +143,8 @@ KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 testTemplates_SOURCES = testTemplates.C
 
 testBackend_SOURCES = testBackend.C
+
+readFileTwice_SOURCES = readFileTwice.C
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.
@@ -206,7 +188,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileAnalysis.C
 #	./testAnalysis $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
 #	./testAnalysis $(AM_CPPFLAGS) -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -215,7 +201,11 @@ testLinkFileAnalysis: testObjectFileAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testAnalysis $(AM_CPPFLAGS) alt_inputFile.o -o alt_inputFile
 #	./testAnalysis $(AM_CPPFLAGS) alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -223,7 +213,11 @@ endif
 testCppFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testAnalysis -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis -E $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -232,7 +226,11 @@ testExecutableFileAnalysis: testAnalysis
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileAnalysis.C
 #	./testAnalysis $(AM_CPPFLAGS) inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testAnalysis inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -249,14 +247,22 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileCodeGeneration.C
 #	./testCodeGeneration $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
 #	./testCodeGeneration $(AM_CPPFLAGS) -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testLinkFileCodeGeneration: testObjectFileCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -rose:Cxx alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -264,7 +270,11 @@ endif
 testCppFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testCodeGeneration -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration -E $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -273,7 +283,11 @@ testExecutableFileCodeGeneration: testCodeGeneration
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileCodeGeneration.C
 #	./testCodeGeneration $(AM_CPPFLAGS) inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testCodeGeneration inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -290,7 +304,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputObjectFileTranslator.C
 #	./testTranslator $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
 #	./testTranslator $(AM_CPPFLAGS) -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -298,14 +316,22 @@ endif
 testLinkFileTranslator: testObjectFileTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 #	./testTranslator $(AM_CPPFLAGS) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 testCppFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator -E $(AM_CPPFLAGS) $(srcdir)/inputFile.C
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -314,46 +340,26 @@ testExecutableFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputFileTranslator.C
 #	./testTranslator $(AM_CPPFLAGS) inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFileTranslator testExecutableFileTranslator
 
-# ************************************
-# *******  AST File I/O Tests  *******
-# ************************************
-
-# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
-testObjectFileFileAstFileIO: testAstFileIO
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
-#	./testAstFileIO $(AM_CPPFLAGS) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
-	./testAstFileIO -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
-else
-	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
-endif
-
-test_testAstFileIO: testObjectFileFileAstFileIO
-
-# *************************************
-# *******  AST File Read Tests  *******
-# *************************************
-
-# Note: This executable is tested more extensively in tests/nonsmoke/functional/roseTests/astFileIO/Makefile.am [RPM 2013-09-27]
-testAstRead: testAstFileRead testAstFileIO
-	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
-	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile
-	./testAstFileRead alt_AstFileRead_inputFile.C outputFileName_XXX
-
-test_testAstFileIO: testObjectFileFileAstFileIO
-
 # Reported failure from Tristan
 testSimpleLinkFileTranslator: testTranslator
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	cp $(srcdir)/inputFile.C inputSimpleLinkFileTranslator.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTranslator inputSimpleLinkFileTranslator.C -lm
+endif
 else
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
@@ -367,7 +373,11 @@ testObjectFileTokenGeneration: testTokenGeneration
 	cp $(srcdir)/inputFile.C alt_ObjectFileTokenGeneration_inputFile.C
 #	./testTokenGeneration $(AM_CPPFLAGS) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
 #	./testTokenGeneration $(AM_CPPFLAGS) -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./testTokenGeneration -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
+endif
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 test_testTokenGeneration: testObjectFileTokenGeneration
@@ -380,7 +390,9 @@ if !ROSE_USE_CLANG_FRONTEND
 
 test_testGraphGeneration: testGraphGeneration
 
+if ROSE_WITH_LIBHARU
 test_testPDFGeneration: testPDFGeneration
+endif
 
 # DQ (74/6/2017): Adding test for the version of identityTranslator that is distributed 
 # in the exampleTranslators/documentedExamples/simpleTranslatorExamples directory.
@@ -391,30 +403,49 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 BAD_PATH = $(builddir)/XXX
 test_exampleIdentityTranslator: exampleIdentityTranslator
 	cp $(srcdir)/inputFile.C alt_identityTranslator_inputFile.C
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	@echo "Test the identityTranslator distributed in $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples"
 	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -c alt_identityTranslator_inputFile.C
 	@echo "Test the identityTranslator using a bad path with the -I option (previous failing case)."
 	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -I$(BAD_PATH) -c alt_identityTranslator_inputFile.C
+endif
 else
 test_exampleIdentityTranslator:
 	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
 endif
 
 # Rule to run all the example translator tests
-# test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
+# test: test_testAnalysis test_testCodeGeneration test_testTranslator testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+if ROSE_WITH_LIBHARU
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
+endif
+else
+if ROSE_WITH_LIBHARU
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
+else
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
+endif
 endif
 
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
 # __minimal_input_code is defined in input_codes/Makefile.for.input.codes
 testKeepGoingTranslator: $(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
+else
 	./$(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
+endif
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates
+
+# DQ (7/12/2019): Adding support for testing outliner feature to outpline functions to a seperate file.
+test_readFileTwice: readFileTwice
 
 # This appears to be a bug, in that the executable is not build (ROSE assumes an implicit -c for compile only mode).
 #predefinedMacros: testTranslator
@@ -440,11 +471,11 @@ check-local: conditional-check-local
 clean-local: myCleanRule
 
 myCleanRule:
-	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable testExecutableFileAstFileIOExecutable
+	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable 
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
-	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C inputFileAstFileIO.C
+	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C
 	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
-	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
+	rm -f a.out *.dot *.binary
 	rm -f *.C_identity
 	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
 

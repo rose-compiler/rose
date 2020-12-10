@@ -1,3 +1,4 @@
+#include "DOM.h"
 #include <cassert>
 struct S {
   short x;
@@ -31,7 +32,7 @@ int main() {
   } else {
     r=2;
   }
-  assert(r==1);
+  printf("r:%d\n",r);
   return 0;
 }
 

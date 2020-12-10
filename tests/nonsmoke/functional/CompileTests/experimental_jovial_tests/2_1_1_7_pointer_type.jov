@@ -1,0 +1,12 @@
+START
+
+PROGRAM main ;
+BEGIN
+  ITEM anInt S ;
+  ITEM ptr P ;
+
+  ptr = loc(anInt);
+
+END
+
+TERM

@@ -1,0 +1,6 @@
+include_rules
+
+run $(public_script) rose-matrix-run rose-matrix-monitor rose-matrix-show-latest \
+    rose-matrix-count-warnings rose-matrix-output rose-matrix-aws-slave
+
+run $(public_file) -o lib/matrix/container-scripts rose-matrix-count-warnings

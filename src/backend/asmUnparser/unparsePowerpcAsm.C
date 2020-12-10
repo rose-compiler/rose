@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 
@@ -17,7 +19,7 @@ using namespace Rose::BinaryAnalysis;
 static std::string unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_powerpc();
+        registers = RegisterDictionary::dictionary_powerpc32();
     std::string name = registers->lookup(rdesc);
     if (name.empty())
         name = AsmUnparser::invalid_register(insn, rdesc, registers);
@@ -117,3 +119,5 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::L
                             expr==insn->operand(2)));
     return unparsePowerpcExpression(expr, labels, registers, isBranchTarget);
 }
+
+#endif

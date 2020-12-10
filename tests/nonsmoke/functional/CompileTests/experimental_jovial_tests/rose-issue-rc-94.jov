@@ -1,0 +1,10 @@
+START
+PROGRAM main;
+BEGIN
+   ITEM BIT1 B;
+   ITEM BIT2 B;
+   BIT1 = true;
+   BIT2 = false;
+   BIT1 = BIT1 eqv BIT2;
+END
+TERM

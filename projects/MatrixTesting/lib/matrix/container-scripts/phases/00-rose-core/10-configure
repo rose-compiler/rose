@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+rmc -C rose/_build config --dry-run >>$HOME/run/dribble
+
+set -x
+cd rose/_build
+rmc build # run ROSE's "build" script (automake, autoconf, etc.)
+rmc config

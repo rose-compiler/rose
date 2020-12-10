@@ -1,0 +1,8 @@
+project Default is
+
+   for Languages use ("Ada");
+   for Object_Dir use "./obj";
+   for Source_Dirs use ("./**");
+
+end Default;
+

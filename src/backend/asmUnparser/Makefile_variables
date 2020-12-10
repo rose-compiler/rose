@@ -1,6 +1,5 @@
 # Non-recursive Makefile -*- makefile -*-
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 asmUnparser_la_sources=					\
 	$(asmUnparserPath)/BinaryEdgeArrows.C		\
 	$(asmUnparserPath)/BinarySerialIo.C		\
@@ -8,20 +7,17 @@ asmUnparser_la_sources=					\
 	$(asmUnparserPath)/BinaryUnparserBase.C		\
 	$(asmUnparserPath)/BinaryUnparserM68k.C		\
 	$(asmUnparserPath)/BinaryUnparserMips.C		\
+	$(asmUnparserPath)/BinaryUnparserNull.C		\
 	$(asmUnparserPath)/BinaryUnparserPowerpc.C	\
 	$(asmUnparserPath)/BinaryUnparserX86.C		\
 	$(asmUnparserPath)/AsmUnparser.C		\
 	$(asmUnparserPath)/AsmUnparser_compat.C		\
 	$(asmUnparserPath)/AsmFunctionIndex.C		\
+	$(asmUnparserPath)/unparseA64Asm.C		\
 	$(asmUnparserPath)/unparseX86Asm.C		\
-	$(asmUnparserPath)/unparseArmAsm.C		\
 	$(asmUnparserPath)/unparsePowerpcAsm.C		\
 	$(asmUnparserPath)/unparseM68kAsm.C		\
 	$(asmUnparserPath)/unparseMipsAsm.C
-else
-asmUnparser_la_sources=$(asmUnparserPath)/dummyAsmUnparser.C
-endif
-
 
 asmUnparser_distIncludeHeaders=				\
 	$(asmUnparserPath)/BinaryEdgeArrows.h		\
@@ -31,12 +27,12 @@ asmUnparser_distIncludeHeaders=				\
 	$(asmUnparserPath)/BinaryUnparserBase.h		\
 	$(asmUnparserPath)/BinaryUnparserM68k.h		\
 	$(asmUnparserPath)/BinaryUnparserMips.h		\
+	$(asmUnparserPath)/BinaryUnparserNull.h		\
 	$(asmUnparserPath)/BinaryUnparserPowerpc.h	\
 	$(asmUnparserPath)/BinaryUnparserX86.h		\
 	$(asmUnparserPath)/AsmUnparser.h		\
 	$(asmUnparserPath)/AsmUnparser_compat.h		\
 	$(asmUnparserPath)/AsmFunctionIndex.h
-
 
 asmUnparser_extraDist=\
 	$(asmUnparserPath)/CMakeLists.txt \

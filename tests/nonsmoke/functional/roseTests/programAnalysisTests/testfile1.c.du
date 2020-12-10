@@ -1,25 +1,19 @@
 edge:definition:SgInitializedName:i:SgVariableDeclaration:int i = 5; ->use:SgVarRefExp:i:SgExprStatement:i++;  : 
 edge:definition:SgInitializedName:i:SgVariableDeclaration:int i = 5; ->use:SgVarRefExp:i:SgExprStatement:i < j;  : 
 edge:definition:SgInitializedName:i:SgVariableDeclaration:int i = 5; ->use:SgVarRefExp:i:SgExprStatement:i++;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = i - 1; ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = i - 1; ->use:SgVarRefExp:i:SgExprStatement:i == 101;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = i - 1; ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
+edge:definition:SgVarRefExp:i:SgExprStatement:i = i - 1; 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = i + 1; ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = i + 1; ->use:SgVarRefExp:i:SgExprStatement:i == 101;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = i + 1; ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i;  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i = i + 1;  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i = i - 1;  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i == 101;  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
-edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i > j;  : 
+edge:definition:SgVarRefExp:i:SgExprStatement:i = i + 1; ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
+edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i;  : 
+edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
+edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i == 101;  : 
+edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
+edge:definition:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} ->use:SgVarRefExp:i:SgExprStatement:i > j;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i = i + 1;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i = i - 1;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i == 101;  : 
-edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
+edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}}  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i = 500; ->use:SgVarRefExp:i:SgExprStatement:i > j;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i++; ->use:SgVarRefExp:i:SgExprStatement:i == 100;  : 
 edge:definition:SgVarRefExp:i:SgExprStatement:i++; ->use:SgVarRefExp:i:SgExprStatement:i > 300;  : 
@@ -40,6 +34,8 @@ edge:definition:SgVarRefExp:j:SgExprStatement:j++; ->use:SgVarRefExp:j:SgExprSta
 edge:definition:SgVarRefExp:j:SgExprStatement:j--; ->use:SgVarRefExp:j:SgExprStatement:j++;  : 
 edge:definition:SgVarRefExp:j:SgExprStatement:j--; ->use:SgVarRefExp:j:SgExprStatement:j--;  : 
 edge:definition:SgVarRefExp:j:SgExprStatement:j--; ->use:SgVarRefExp:j:SgExprStatement:i > j;  : 
+edge:use:SgVarRefExp:i:SgExprStatement:i = i + 1; 
+edge:use:SgVarRefExp:i:SgExprStatement:i = i - 1; 
 edge:use:SgVarRefExp:i:SgExprStatement:i++; 
 edge:use:SgVarRefExp:i:SgExprStatement:i < j; 
 edge:use:SgVarRefExp:j:SgExprStatement:i < j; 
@@ -50,12 +46,10 @@ edge:use:SgVarRefExp:i:SgExprStatement:i < 2 * j;
 edge:use:SgVarRefExp:j:SgExprStatement:i < 2 * j; 
 edge:use:SgVarRefExp:i:SgExprStatement:i++; 
 edge:use:SgVarRefExp:i:SgExprStatement:i; 
-edge:use:SgVarRefExp:i:SgExprStatement:i = i + 1; 
-edge:use:SgVarRefExp:i:SgExprStatement:i = i - 1; 
 edge:use:SgVarRefExp:i:SgExprStatement:i == 100; 
 edge:use:SgVarRefExp:j:SgExprStatement:j++; 
 edge:use:SgVarRefExp:j:SgExprStatement:j--; 
 edge:use:SgVarRefExp:i:SgExprStatement:i == 101; 
-edge:use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:{printf("init");break;}case 99:printf(" tmp");case 2:{printf(" error");return ;}case 120:continue;case 100:{printf(" ending");i = i + 1;break;}case 98:goto exit;case 101:{i = i - 1;break;}}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} 
+edge:use:SgVarRefExp:i:SgForStatement:for(i = 500;i > j;--i) {switch(i){case 200:printf("init");break;case 99:printf(" tmp");case 2:printf(" error");return ;case 120:continue;case 100:printf(" ending");i = i + 1;break;case 98:goto exit;case 101:i = i - 1;break;}if(i == 100) {j--;}else {j++;}if(i == 101) {break;}else {}} 
 edge:use:SgVarRefExp:i:SgExprStatement:i > j; 
 edge:use:SgVarRefExp:j:SgExprStatement:i > j; 

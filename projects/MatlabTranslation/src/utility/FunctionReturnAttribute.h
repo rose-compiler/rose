@@ -13,30 +13,33 @@ eg. function [a, b] = getAB()
 
 This attribute will store a, b
 */
-class FunctionReturnAttribute : public AstAttribute
+struct FunctionReturnAttribute : AstAttribute
 {
- private:
-  SgExprListExp *returnList;
-  
- public:
-  FunctionReturnAttribute(SgExprListExp *returnList)
+    static
+    SgExprListExp* getReturnList(SgNode *node)
     {
-      this->returnList = returnList;
-    }
-  
-  void attachTo(SgNode *node)
-  {
-    node->setAttribute("RETURN_VARS", this);
-  }
+      if(node->attributeExists("RETURN_VARS"))
+        return ((FunctionReturnAttribute*)node->getAttribute("RETURN_VARS"))->returnList;
 
-  static SgExprListExp* getReturnList(SgNode *node)
-  {
-    if(node->attributeExists("RETURN_VARS"))
-      return ((FunctionReturnAttribute*)node->getAttribute("RETURN_VARS"))->returnList;
-    else
       return NULL;
-  }
-  
+    }
+
+    FunctionReturnAttribute(SgExprListExp* retLst)
+    : returnList(retLst)
+    {}
+
+    void attachTo(SgNode *node)
+    {
+      node->setAttribute("RETURN_VARS", this);
+    }
+
+    std::string attribute_class_name() const ROSE_OVERRIDE;
+
+    AstAttribute::OwnershipPolicy
+    getOwnershipPolicy() const ROSE_OVERRIDE;
+
+  private:
+    SgExprListExp *returnList;
 };
 
 #endif

@@ -7,11 +7,11 @@ using namespace std;
 
 IOSolver::IOSolver() {}
 
-IOSolver::IOSolver(Analyzer* analyzer) {
+IOSolver::IOSolver(CTAnalysis* analyzer) {
   setAnalyzer(analyzer);
 }
 
-void IOSolver::setAnalyzer(Analyzer* analyzer) {
+void IOSolver::setAnalyzer(CTAnalysis* analyzer) {
   Solver::setAnalyzer(analyzer);
   if(IOAnalyzer* iOAnalyzer = dynamic_cast<IOAnalyzer*>(analyzer)) {
     _analyzer = iOAnalyzer;

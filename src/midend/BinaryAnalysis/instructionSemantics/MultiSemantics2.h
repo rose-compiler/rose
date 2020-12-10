@@ -1,5 +1,7 @@
 #ifndef Rose_MultiSemantics2_H
 #define Rose_MultiSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 
@@ -483,6 +485,7 @@ public:
                                               SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr reinterpret(const BaseSemantics::SValuePtr&, SgAsmType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
@@ -502,4 +505,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

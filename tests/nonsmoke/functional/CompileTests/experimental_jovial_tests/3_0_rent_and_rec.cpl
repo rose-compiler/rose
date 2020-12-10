@@ -1,0 +1,13 @@
+START
+
+COMPOOL rent'and'rec ;
+
+  REF PROC a'proc REC ;
+     BEGIN
+     END
+
+  REF PROC b'proc RENT ;
+     BEGIN
+     END
+
+TERM

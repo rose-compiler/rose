@@ -9,8 +9,7 @@
 #include "CFAnalysis.h"
 #include "DFAnalysisBase.h"
 #include "RDLattice.h"
-#include "WorkList.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "IntervalPropertyState.h"
 
@@ -19,12 +18,11 @@
   * \date 2013.
  */
 
-namespace SPRAY {
+namespace CodeThorn {
 class IntervalAnalysis : public DFAnalysisBase {
  public:
   IntervalAnalysis();
   ~IntervalAnalysis();
-  void initializeExtremalValue(Lattice* element);
   void initializeTransferFunctions();
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);

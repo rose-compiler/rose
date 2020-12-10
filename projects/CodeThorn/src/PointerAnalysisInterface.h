@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class PointerAnalysisInterface {
   public:

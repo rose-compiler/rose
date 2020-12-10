@@ -92,3 +92,14 @@ TypeAttribute* TypeAttribute::buildAttribute(SgType *type)
 
   return typeAttribute;
 }
+
+AstAttribute::OwnershipPolicy
+TypeAttribute::getOwnershipPolicy() const
+{
+  return NO_OWNERSHIP;
+}
+
+std::string TypeAttribute::attribute_class_name() const
+{
+  return "MatlabTranslation/TypeAttribute";
+}

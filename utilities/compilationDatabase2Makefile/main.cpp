@@ -20,6 +20,7 @@ string j_file_name="compile_commands.json";
 string mkfile_name="makefile-default";
 string compiler_name="identityTranslator"; // replace the compiler with another one, identityTranslator as the default new compiler
 string add_options=""; // additional options to add
+int timeout_length=10; // timeout length 10 minutes by default
 
 bool replaceCompiler= false;
 
@@ -73,6 +74,16 @@ static int parse_opt (int key, char* arg, struct argp_state * state)
         }
         break;
       }
+     case 't':
+      {
+        // arg stores the parsed value followed after the option
+        if (arg!=NULL)
+        {
+          timeout_length=std::stoi(string(arg));
+        }
+        break;
+      }
+ 
  }
 
   return 0;
@@ -91,6 +102,7 @@ int main(int argc, char** argv)
     {"input", 'i', "String", OPTION_ARG_OPTIONAL, "input file name of compilation database json file, default name if not provided: compile_commands.json"},
     {"output", 'o', "String", OPTION_ARG_OPTIONAL, "output file name for the generated makefile, default name if not provided: makefile-default"},
     {"compiler", 'c', "String", OPTION_ARG_OPTIONAL, "replace the compiler with a new compiler command, default replacement compiler name if not provided: identityTranslator"},
+    {"timeout", 't', "String", OPTION_ARG_OPTIONAL, "specify a timeout in minutes for running the translator/compiler, default 10 minutes if not provided."},
     // must provide values for this option
     {"add_options", 'a', "String", 0, "add additional compiler options to command lines"},
     {0}
@@ -199,8 +211,9 @@ int main(int argc, char** argv)
           }
           
           // replace the first word with a new compiler name, if requested.
+          string time_out_str= "timeout "+std::to_string(timeout_length)+"m";
           if ( (counter == 0) && replaceCompiler)
-            opt_str = compiler_name; 
+            opt_str = time_out_str + " "+ compiler_name;  // add timeout for each tool's invoking
           args_str += " " + opt_str;
 
           // add additional compiler options if provided

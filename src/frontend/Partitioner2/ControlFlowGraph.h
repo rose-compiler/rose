@@ -1,12 +1,18 @@
 #ifndef ROSE_Partitioner2_ControlFlowGraph_H
 #define ROSE_Partitioner2_ControlFlowGraph_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Utility.h>
 
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Graph.h>
+#include <Sawyer/GraphIteratorSet.h>
+#include <Sawyer/GraphIteratorBiMap.h>
 #include <Sawyer/HashMap.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
@@ -71,11 +77,11 @@ public:
      *
      * @{ */
     rose_addr_t address() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         return startVa_;
     }
     void address(rose_addr_t va) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         startVa_ = va;
     }
     /** @} */
@@ -120,7 +126,7 @@ public:
      *
      *  Returns true if the function was added, false if it was already an owner of the vertex. */
     bool insertOwningFunction(const Function::Ptr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         ASSERT_not_null(function);
         return owningFunctions_.insert(function);
     }
@@ -130,7 +136,7 @@ public:
      *  Causes the specified function to no longer be listed as an owner of this vertex. Does nothing if the function is not an
      *  owner to begin with. */
     void eraseOwningFunction(const Function::Ptr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         if (function != NULL)
             owningFunctions_.erase(function);
     }
@@ -216,6 +222,27 @@ public:
 /** Control flow graph. */
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
+/** Sort edges by source vertex address. */
+bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
+
+/** Sort edges by target vertex address. */
+bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
+
+/** Sort edges by edge ID number. */
+bool sortEdgesById(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
+
+/** Sort vertices by address. */
+bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
+
+/** Sort vertices by vertex ID number. */
+bool sortVerticesById(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
+
+/** Print control flow graph vertex. */
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
+
+/** Print control flow graph edge. */
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
+
 /** Mapping from basic block starting address to CFG vertex. */
 typedef Sawyer::Container::HashMap<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
@@ -236,22 +263,20 @@ typedef std::list<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeList;
 /** Set of CFG vertex pointers.
  *
  * @{ */
-typedef std::set<ControlFlowGraph::VertexIterator> CfgVertexSet;
-typedef std::set<ControlFlowGraph::ConstVertexIterator> CfgConstVertexSet;
+typedef Sawyer::Container::GraphIteratorSet<ControlFlowGraph::VertexIterator> CfgVertexSet;
+typedef Sawyer::Container::GraphIteratorSet<ControlFlowGraph::ConstVertexIterator> CfgConstVertexSet;
 /** @} */
 
 /** Set of CFG edge pointers.
  *
  * @{ */
-typedef std::set<ControlFlowGraph::EdgeIterator> CfgEdgeSet;
-typedef std::set<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeSet;
+typedef Sawyer::Container::GraphIteratorSet<ControlFlowGraph::EdgeIterator> CfgEdgeSet;
+typedef Sawyer::Container::GraphIteratorSet<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeSet;
 /** @} */
 
 /** Map vertices from one CFG to another CFG and vice versa. */
-typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlFlowGraph::ConstVertexIterator> CfgVertexMap;
-
-
-
+typedef Sawyer::Container::GraphIteratorBiMap<ControlFlowGraph::ConstVertexIterator,
+                                              ControlFlowGraph::ConstVertexIterator> CfgVertexMap;
 
 /** Base class for CFG-adjustment callbacks.
  *
@@ -362,7 +387,7 @@ Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(c
 
 /** Erase multiple edges.
  *
- *  Erases each edge in the @p toErase set. */
+ *  Erases each edge in the @p toErase set. Upon return, the toErase set's values will all be invalid and should not be dereferenced. */
 void eraseEdges(ControlFlowGraph&, const CfgConstEdgeSet &toErase);
 
 /** Vertices that are incident to specified edges. */
@@ -436,4 +461,5 @@ ControlFlowGraph functionCfgByReachability(const ControlFlowGraph &gcfg, const F
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -60,7 +60,7 @@
 
 shared MY_DATA_SIZE *a, *b, *c, *d, *e;
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+#if 1
 // DQ (2/17/2011): EDG 4.0 has a problem with "FLT_MAX" which is defined 
 // in some header file as "__FLT_MAX__" and which is undefined.
 static double min_time[5] = {0.0, 0.0, 0.0, 0.0, 0.0},

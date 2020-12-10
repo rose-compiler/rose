@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_DataFlow_H
 #define ROSE_Partitioner2_DataFlow_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryDataFlow.h>
 #include <BinaryStackVariable.h>
 #include <Partitioner2/BasicBlock.h>
@@ -190,8 +193,8 @@ public:
      *  Constructs a new transfer function using the specified @p cpu. */
     explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
-        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
-        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
+        size_t adjustment = STACK_POINTER_REG.nBits() / 8; // sizeof return address on top of stack
+        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.nBits(), adjustment);
     }
 
     /** Construct an initial state. */
@@ -215,7 +218,7 @@ public:
     /** @} */
 
     // Required by data-flow engine
-    std::string printState(const BaseSemantics::StatePtr &state);
+    std::string toString(const BaseSemantics::StatePtr &state);
 
     // Required by data-flow engine: compute new output state given a vertex and input state.
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
@@ -241,23 +244,23 @@ typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, T
  *  The @p ops provides the operators for comparing stack pointers, and also provides the state which is examined to find the
  *  stack variables.  The underlying memory state should be of type @ref InstructionSemantics2::BaseSemantics::MemoryCellList
  *  "MemoryCellList" or a subclass, or else no stack variables will be found. */
-StackVariables findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops,
-                                  const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findStackVariables(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                                             const BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns the list of all known local variables.
  *
  *  A local variable is any stack variable whose starting address is less than the specified stack pointer.  For the definition
  *  of stack variable, see @ref findStackVariables. */
-StackVariables findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops,
-                                  const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findLocalVariables(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                                             const BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns the list of all known function arguments.
  *
  *  A function argument is any stack variable whose starting address is greater than or equal to the specified stack pointer.
  *  For the definition of stack variable, see @ref findStackVariables.  On architectures that pass a return address on the top
  *  of the stack, that return address is considered to be the first argument of the function. */
-StackVariables findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops,
-                                     const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findFunctionArguments(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                                                const BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns a list of global variables.
  *
@@ -272,4 +275,5 @@ std::vector<AbstractLocation> findGlobalVariables(const BaseSemantics::RiscOpera
 } // namespace
 } // namespace
 
+#endif
 #endif

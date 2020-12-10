@@ -1,11 +1,14 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
+#include <featureTests.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BinaryCallingConvention.h"
 #include "BinaryUnparser.h"
 #include "Diagnostics.h"                                // Rose::Diagnostics
-#include "Registers.h"
 #include "MemoryMap.h"
+#include "Registers.h"
+#include "RoseException.h"
 #include "integerOps.h"
 #include "Map.h"
 #include "BaseSemantics2.h"
@@ -13,6 +16,11 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
+
+// REG_SP possibly defined on __sun
+// REG_LINK possibly defined on Windows
+#undef REG_SP
+#undef REG_LINK
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,26 +50,26 @@ namespace BinaryAnalysis {
 class Disassembler {
 public:
     /** Exception thrown by the disassemblers. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** A bare exception not bound to any particular instruction. */
         Exception(const std::string &reason)
-            : std::runtime_error(reason), ip(0), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(0), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a virtual address but no raw data or instruction. */
         Exception(const std::string &reason, rose_addr_t ip)
-            : std::runtime_error(reason), ip(ip), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being disassembled. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-            : std::runtime_error(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : std::runtime_error(reason), ip(insn->get_address()), bit(0), insn(insn)
+            : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
 
         ~Exception() throw() {}
@@ -78,10 +86,6 @@ public:
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
-    /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
-     *  which virtual addresses should be disassembled. */
-    typedef std::set<rose_addr_t> AddressSet;
-
     /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
     typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
@@ -94,11 +98,12 @@ private:
 
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF;  /**< Register descriptors initialized during construction. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
     std::string p_name;                                 /**< Name by which this dissassembler is registered. */
+    size_t instructionAlignment_;                       /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -124,6 +129,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
 #endif
 
@@ -132,7 +139,7 @@ private:
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4) {}
+    Disassembler(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4), instructionAlignment_(1) {}
     virtual ~Disassembler() {}
 
 
@@ -176,9 +183,10 @@ public:
 
     /** List of names recognized by @ref lookup.
      *
-     *  Returns the list of names that the @ref lookup method recognizes. */
+     *  Returns the list of names that the @ref lookup method recognizes. These are the disassemblers that are actually
+     *  enabled in this configuration of ROSE. */
     static std::vector<std::string> isaNames();
-    
+
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
      *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true. This is
      *  done for each header contained in the interpretation and the disassembler for each header must match the other
@@ -223,6 +231,11 @@ public:
     void wordSizeBytes(size_t nbytes) { p_wordSizeBytes = nbytes; }
     /** @} */
 
+    /** Property: Instruction alignment requirement.
+     *
+     *  The alignment that's required for instruction addresses. The return value is a positive number of bytes. */
+    size_t instructionAlignment() const;
+    
     /** Properties: Register dictionary.
      *
      *  Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
@@ -253,13 +266,13 @@ public:
 
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
-        ASSERT_require(REG_IP.is_valid());
+        ASSERT_forbid(REG_IP.isEmpty());
         return REG_IP;
     }
 
     /** Returns the register that points to the stack. */
     virtual RegisterDescriptor stackPointerRegister() const {
-        ASSERT_require(REG_SP.is_valid());
+        ASSERT_forbid(REG_SP.isEmpty());
         return REG_SP;
     }
 
@@ -272,6 +285,13 @@ public:
      * default-constructed register descriptor is returned. */
     virtual RegisterDescriptor stackSegmentRegister() const {
         return REG_SS;                                  // need not be valid
+    }
+
+    /** Returns the register that holds the return address for a function.
+     *
+     *  If the architecture doesn't have such a register then a default constructed descriptor is returned. */
+    virtual RegisterDescriptor callReturnRegister() const {
+        return REG_LINK;                                // need not be valid
     }
 
     /** Return an instruction semantics dispatcher if possible.
@@ -331,7 +351,7 @@ public:
      *  complete to true before returning.
      *
      *  Thread safety: Thread safe provided no other thread is modifying the specified instruction map. */
-    AddressSet get_block_successors(const InstructionMap&, bool *complete);
+    AddressSet get_block_successors(const InstructionMap&, bool &complete/*out*/);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */
@@ -350,6 +370,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 2);
 
+#endif
 #endif

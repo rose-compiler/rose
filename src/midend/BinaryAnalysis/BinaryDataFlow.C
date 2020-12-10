@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
@@ -25,7 +27,7 @@ DataFlow::initDiagnostics() {
 void
 DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
     ASSERT_not_null(userDispatcher);
-    userOps_ = userDispatcher->get_operators();
+    userOps_ = userDispatcher->operators();
     ASSERT_not_null(userOps_);
     dfOps_ = InstructionSemantics2::DataFlowSemantics::RiscOperators::instance(userOps_);
     ASSERT_not_null(dfOps_);
@@ -87,3 +89,5 @@ DataFlow::getUniqueVariables(const VertexFlowGraphs &graphs) {
 
 } // namespace
 } // namespace
+
+#endif

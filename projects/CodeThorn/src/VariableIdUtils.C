@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 #include "VariableIdUtils.h"
 
-std::string SPRAY::VariableIdSetPrettyPrint::str(VariableIdSet& vset, VariableIdMapping& vidm)
+std::string CodeThorn::VariableIdSetPrettyPrint::str(VariableIdSet& vset, VariableIdMapping& vidm)
 {
   std::ostringstream ostr;
   ostr << "[";
@@ -21,7 +21,7 @@ std::string SPRAY::VariableIdSetPrettyPrint::str(VariableIdSet& vset, VariableId
   return ostr.str();
 }
 
-std::string SPRAY::VariableIdSetPrettyPrint::str(VariableIdSet& vset)
+std::string CodeThorn::VariableIdSetPrettyPrint::str(VariableIdSet& vset)
 {
   std::ostringstream ostr;
   ostr << "[";
@@ -37,7 +37,7 @@ std::string SPRAY::VariableIdSetPrettyPrint::str(VariableIdSet& vset)
   return ostr.str();
 }
 
-void SPRAY::set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdSet& rset)
+void CodeThorn::set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdSet& rset)
 {
   VariableIdSet::const_iterator it1 = set1.begin();
   VariableIdSet::const_iterator it2 = set2.begin();

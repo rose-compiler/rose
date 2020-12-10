@@ -1,0 +1,33 @@
+START % COMPOOL COMPOOL1 IN FILE COMPOOL1.cpl %
+% DESCRIPTION COMMENT %
+COMPOOL COMPOOL'1 ;
+
+   DEFINE ONE ?1? ;
+
+   CONSTANT ITEM MAX'J U 4=ONE ;
+
+   DEF ITEM ITEM'6 F ;
+
+   TYPE STATUS'1 STATUS
+   (
+      V(LOW),
+      V(MED),
+      V(HIGH)
+   );
+
+   TYPE STATUS'2 STATUS
+   (
+      1 V(LOW),
+      3 V(MED),
+      5 V(HIGH)
+   );
+
+   % Bitpacking %
+
+   TYPE TABLE'1'TYPE TABLE W 1 ;
+      BEGIN
+         ITEM BIT'PART B 16 POS(0,0);
+         ITEM NUMBER'PART U 16 POS(16,0);
+      END
+
+TERM

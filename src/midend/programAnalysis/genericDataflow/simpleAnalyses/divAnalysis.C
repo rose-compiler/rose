@@ -609,7 +609,7 @@ void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
     return;
   }
   
-  long increment = isSgPlusPlusOp(sgn) ? 1 : -1;
+  //long increment = isSgPlusPlusOp(sgn) ? 1 : -1;
 
   if (sgn->get_mode() == SgUnaryOp::prefix) {
     //arg1Lat->incr(increment);

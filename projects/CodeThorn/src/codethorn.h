@@ -2,9 +2,7 @@
 #define CODETHORN_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <iostream>
@@ -21,16 +19,6 @@
 #include "Miscellaneous.h"
 
 namespace CodeThorn {
-
-  class CodeThornLanguageRestrictor : public LanguageRestrictorCppSubset1 {
-  public:
-    void initialize();
-  };
-
-  void printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTime, 
-                               std::string title = "state transition system computed");
-  // prints #transitions and details about states
-  void printStgSize(TransitionGraph* model, std::string optionalComment="", std::stringstream* csvOutput=NULL);
 
   void initDiagnostics();
   

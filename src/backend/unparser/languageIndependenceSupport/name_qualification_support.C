@@ -44,7 +44,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #endif
           return nameQualifier;
         }
-     ROSE_ASSERT(referencedNode != NULL);
+     ASSERT_not_null(referencedNode);
 
   // TV (10/24/2018): (ROSE-1399) unparsing template from AST requires to namequal expressions in template arguments
      SgExpression* expr = isSgExpression(referencedNode);
@@ -249,6 +249,20 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
+
+          case V_SgPointerMemberType:
+             {
+               SgPointerMemberType* node = isSgPointerMemberType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+
+            // DQ (4/21/2019): Added support for SgPointerMemberType, but not clear which of these functions should be called here.
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case SgPointerMemberType: calling node->get_qualified_name_prefix_for_class_of() \n");
+
+            // nameQualifier = node->get_qualified_name_prefix_for_base_type();
+               nameQualifier = node->get_qualified_name_prefix_for_class_of();
+               break;
+             }
+
 #if 0
           case V_:
              {
@@ -280,7 +294,7 @@ Unparser_Nameq::outputNameQualificationMap( const std::map<SgNode*,std::string> 
      std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
      while (i != qualifiedNameMap.end())
        {
-         ROSE_ASSERT(i->first != NULL);
+         ASSERT_not_null(i->first);
 
          printf (" --- *i = i->first = %p = %s i->second = %s \n",i->first,i->first->class_name().c_str(),i->second.c_str());
 
@@ -301,7 +315,7 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
   // the two maps of IR nodes to qualified name strings to use 
   // (the map for named constructs and the map for types).
 
-     ROSE_ASSERT(initializedName != NULL);
+     ASSERT_not_null(initializedName);
      return generateNameQualifierSupport(initializedName->get_scope(),info,qualificationOfType);
    }
 
@@ -319,7 +333,7 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
      printf ("In Unparser_Nameq::generateNameQualifier(): info.get_global_qualification_required() = %s \n",info.get_global_qualification_required() ? "true" : "false");
 #endif
 
-     ROSE_ASSERT(declarationStatement != NULL);
+     ASSERT_not_null(declarationStatement);
      return generateNameQualifierSupport(declarationStatement->get_scope(),info,qualificationOfType);
    }
 

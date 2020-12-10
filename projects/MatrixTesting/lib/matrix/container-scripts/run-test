@@ -1,0 +1,223 @@
+#!/bin/bash
+# Purpose is to run one ROSE test in a docker container.
+set -e
+arg0="${0##*/}"
+
+export PATH="$HOME/.spock/bin:$PATH"
+
+# Distinctive string that separates one section of output from another.
+OUTPUT_SECTION_SEPARATOR='=================-================='
+
+########################################################################################################################
+die() {
+    echo "$arg0:" "error:" "$@"
+    exit 1
+}
+
+########################################################################################################################
+# Get result value.
+get-result() {
+    local key="$1" dflt="$2"
+    local val=
+    touch "$HOME/run/result"
+    val="$(sed -n "s/^[ \\t]*${key}[ \\t]*=[ \\t]*\\(.*\\)/\\1/p" "$HOME/run/result" |\
+           sed -e 's/[ \t]*$//' -e "s/'\\(.*\\)'/\\1/")"
+
+    if [ -n "$val" ]; then
+	echo "$val"
+    else
+	echo "$dflt"
+    fi
+}
+
+########################################################################################################################
+# Delete the specified key from the result file
+delete-result() {
+    local key="$1"
+    sed -i~ "/^[ \\t]*${key}[ \\t]*=/d" "$HOME/run/result"
+}
+
+########################################################################################################################
+# Set a result value
+set-result() {
+    local key="$1" value="$2"
+    delete-result "$key"
+    echo "${key} = ${value}" >>"$HOME/run/result"
+}
+
+
+########################################################################################################################
+# Optionally enter an interactive shell.
+interactive-shell() {
+    local title="$1"
+    if [ -f "$HOME/run/interactive" ]; then
+	echo "================================================================================"
+	echo "                Interactive shell $title"
+	echo "================================================================================"
+	echo "Entering an interactive shell for debugging. Exit this shell with zero status to"
+	echo "continue testing, or non-zero status to abort the testing without reporting any"
+	echo "failre to the database. To continue the test with no further interaction, reomve"
+	echo "the $HOME/run/interactive file."
+	bash
+    fi
+}
+
+########################################################################################################################
+# Install RMC if it isn't installed yet and the ~/.spock directory is mounted.
+optional-install-rmc() {
+    if [ -d "$HOME/.spock" ]; then
+	interactive-shell "before initializing RMC"
+	if (spock-shell --version && spock-ls) >/dev/null 2>&1; then
+	    : looks good
+	else
+	    git clone https://github.com/matzke1/rmc-spock
+	    (cd rmc-spock && ./scripts/bootstrap.sh)
+	    rm -rf rmc-spock
+	fi
+    fi
+}
+
+########################################################################################################################
+# Generate an output section heading. The heading is a single line.
+output-section-heading() {
+    local name="$1"
+    echo "$OUTPUT_SECTION_SEPARATOR $name $OUTPUT_SECTION_SEPARATOR"
+}
+
+########################################################################################################################
+# Convert number of seconds to a string, like "9 hours 39 minutes 49 seconds"
+seconds-to-hms() {
+    local sec="$1"
+    if [ $sec -ge 86400 ]; then
+        local ndays=$[sec/86400]
+        sec=$[sec-ndays*86400]
+        local units="days"
+        [ "$ndays" -eq 1 ] && units="day"
+        echo -n "$ndays $units "
+    fi
+    if [ $sec -ge 3600 ]; then
+        local nhours=$[sec/3600]
+        sec=$[sec-nhours*3600]
+        local units="hours"
+        [ "$nhours" -eq 1 ] && units="hour"
+        echo -n "$nhours $units ";
+    fi
+    if [ $sec -ge 60 ]; then
+        local nmins=$[sec/60]
+        sec=$[sec-nmins*60]
+        local units="minutes"
+        [ "$nmins" -eq 1 ] && units="minute"
+        echo -n "$nmins $units ";
+    fi
+
+    local units="seconds"
+    [ "$sec" -eq 1 ] && units="second"
+    echo "$sec $units"
+}
+
+########################################################################################################################
+# Adjust the RMC configuration file. These are adjustments specific to this testing target machine.
+adjust-rmc-configuration() {
+    if grep -q '^[ \t]*rmc_compiler[ \t]\+installed' "$HOME/run/rmc-config"; then
+	local compiler="$(spock-shell --with default-generation spock-ls --usable -1 c++-compiler |shuf -n1)"
+	if [ -n "$compiler" ]; then
+	    compiler="${compiler%@*}" # strip the hash
+	    compiler="${compiler/=/-}" # replace "=" with "-" before version number
+	    sed -i~ "s/^[ \\t]*rmc_compiler[ \\t].*/rmc_compiler $compiler/" "$HOME/run/rmc-config"
+	    echo "$arg0: using installed compiler $compiler" >&2
+	else
+	    echo "$arg0: error: no installed C++ compilers for \"rmc_compiler installed\"" >&2
+	fi
+    fi
+}
+
+########################################################################################################################
+# Show some statistics
+emit-statistics() {
+    local nlines="$1" nwarnings="$2" elapsed_time="$3" did_fail="$4"
+
+    if [ -n "$did_fail" ]; then
+	echo "script faild after $(seconds-to-hms $elapsed_time)"
+    else
+	echo "script took $(seconds-to-hms $elapsed_time)"
+    fi
+    echo "script produced $nlines lines of output and $nwarnings warning messages"
+    echo
+}
+
+########################################################################################################################
+# Run the steps of the test
+run-test-steps() {
+    # Run the user-defined testing scripts
+    local step_failed= had_end=
+    local phase_basename=$(cat "$HOME/run/phase")
+    for script in $HOME/container-scripts/phases/$phase_basename/*; do
+	# Scripts have the same name as the corresponding step, but start with a number to enforce an order.
+	# Only the scripts that are executable actually run.
+	[ -x "$script" ] || continue
+	local script_basename="${script##*/}"
+	step_name="$(echo "$script_basename" |sed 's/^[0-9][0-9]*-//')"
+	[ "$step_name" = "$script_basename" ] && continue # didn't start with a number
+	output-section-heading "$step_name"
+
+	# Execute the script in the home directory, with some additional environment variables.
+	echo "Running $script" >>"$HOME/run/dribble"
+        local step_begin_time=$SECONDS
+	(
+	    set -e
+	    output-section-heading "$step_name"
+	    cd
+	    interactive-shell "before step $step_name"
+	    stdbuf -oL -eL $script
+	) >"$HOME/run/output.step" 2>&1 ||step_failed="$step_name"
+	local step_end_time=$SECONDS
+
+	# Count things
+	local nwarnings_step=$(grep -c 'warning:' "$HOME/run/output.step")
+	local nwarnings=$(get-result nwarnings 0)
+	nwarnings=$[ nwarnings + nwarnings_step ]
+	set-result nwarnings $nwarnings
+
+	local noutput_step=$(wc -l <"$HOME/run/output.step");
+	local noutput=$(get-result noutput 0)
+	noutput=$[ noutput + noutput_step ]
+	set-result noutput $noutput
+
+	local duration_step=$[step_end_time - step_begin_time]
+	if [ "$step_name" != setup ]; then
+	    local duration=$(get-result duration 0)
+	    duration=$[duration + duration_step]
+	    set-result duration $duration
+	fi
+
+	# Dribble some output about the status of this step
+	emit-statistics $noutput_step $nwarnings_step $duration_step "$step_failed" |tee -a "$HOME/run/dribble"
+
+	# Special handling for some steps
+	if [ "$step_name" = "end" ]; then
+	    mv "$HOME/run/output.step" "$HOME/run/output"
+	    had_end=yes
+	else
+	    cat "$HOME/run/output.step" >>"$HOME/run/output"
+	    rm "$HOME/run/output.step"
+	fi
+
+	[ -n "$step_failed" ] && break
+    done
+
+    # If there was no "end" step, then pretend there was one that produced no output.
+    if [ "$had_end" = "" -a "$step_failed" = "" ]; then
+	>"$HOME/run/output"
+    fi
+
+    # Statistics that go into the database test_results table
+    set-result status "${step_failed:-end}"
+    interactive-shell "before reporting results"
+}
+
+########################################################################################################################
+
+optional-install-rmc
+adjust-rmc-configuration
+run-test-steps
+exit 0

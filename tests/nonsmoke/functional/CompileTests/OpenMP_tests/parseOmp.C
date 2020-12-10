@@ -51,7 +51,14 @@ int main(int argc, char * argv[])
 
 //  visitorTraversal myvisitor;
 //  myvisitor.traverseInputFiles(project,preorder);
+#if 0  // used to trigger issue outliner-32
+  SgGlobal * global =  SageInterface::getFirstGlobalScope(project);
+  SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(global); 
+  // check this first, before doing any ast post processing
+  checkPhysicalSourcePosition(originalSourceFile);
 
+  AstPostProcessing (originalSourceFile);
+#endif 
 #if 0
   RoseAst ast(project);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {

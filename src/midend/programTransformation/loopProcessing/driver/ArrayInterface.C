@@ -7,14 +7,14 @@ extern bool DebugArrayAnnot();
 void ArrayInterface::
 initialize( AstInterface& fa, const AstNodePtr& h)
 {
-   aliasCollect(fa, h);
+   aliasCollect.analyze(fa, h);
    valueCollect.build( fa, h, *this, ArrayAnnotation::get_inst());
 }
 
 void ArrayInterface::
-AliasCollect( AstInterface& fa, const AstNodePtr& h)
+analyze( AstInterface& fa, const AstNodePtr& h)
 {
-    aliasCollect(fa, h);
+    aliasCollect.analyze(fa, h);
 }
 
 void ArrayInterface::observe( AstInterface& fa) 
@@ -143,8 +143,10 @@ set_array_dimension( const AstNodePtr& arrayexp, int dim)
 {
   std::map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
   if (p != dimmap.end()) {
+#ifndef NDEBUG
      int olddim = (*p).second;
      assert(olddim == dim);
+#endif
   }
   else
      dimmap[arrayexp] = dim;

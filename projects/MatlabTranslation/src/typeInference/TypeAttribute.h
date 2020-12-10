@@ -36,7 +36,12 @@ struct TypeAttribute : AstAttribute
 
     void attach_to(SgNode* node);
 
-    virtual std::string toString();
+    std::string toString() ROSE_OVERRIDE;
+    std::string attribute_class_name() const ROSE_OVERRIDE;
+
+    AstAttribute::OwnershipPolicy
+    getOwnershipPolicy() const ROSE_OVERRIDE;
+
   private:
     SgType* inferredType;
 };

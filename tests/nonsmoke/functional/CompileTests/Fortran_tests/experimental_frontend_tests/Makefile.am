@@ -23,6 +23,7 @@ F90_TESTCODES = \
  R404_a.f90 \
  R521.f90   \
  R545.f90   \
+ R611a.f90  \
  R719a.f90  \
  R832.f90   \
  R837.f90   \
@@ -144,7 +145,7 @@ testTranslator: ../../../testTranslator
 # DQ (9/14/2014): This forces the relinking of the testTranslator, which is a work 
 # around until the OFP and ATerm support is included in ROSE using shared libraries.
 recompile_translator:
-	rm ../../../testTranslator
+	rm -f ../../../testTranslator
 	$(MAKE) ../../../testTranslator
 
 $(TEST_F90_Objects): recompile_translator ../../../testTranslator

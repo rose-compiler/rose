@@ -1,5 +1,8 @@
-#ifndef ROSE_BINARY_REGISTERS_H
-#define ROSE_BINARY_REGISTERS_H
+#ifndef ROSE_BinaryAnalysis_Registers_H
+#define ROSE_BinaryAnalysis_Registers_H
+
+#include <featureTests.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "RegisterParts.h"
 
@@ -8,6 +11,9 @@
 #include <boost/serialization/string.hpp>
 
 #include <queue>
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Defines registers available for a particular architecture.
  *
@@ -34,6 +40,8 @@ public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
     typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
+    /** Mostly empty dictionary for the null ISA. */
+    static const RegisterDictionary *dictionary_null();
 
     /** Intel 8086 registers.
      *
@@ -99,21 +107,21 @@ public:
      *  the same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
     static const RegisterDictionary *dictionary_amd64();
 
-    /** ARM7 registers.
+#ifdef ROSE_ENABLE_ASM_A64
+    /** AArch64 registers.
      *
-     * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers
-     * named.  At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of
-     * operation. They have names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31
-     * physical general purpose registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link
-     * register holds the return address for a function call). Register r15 is the instruction pointer.  Also, at most two
-     * status registers are available at a time.
+     *  These are the registers for ARM's ARMv8 (a.k.a., "Armv8") architecture for the "AArch64" (a.k.a., "A64")
+     *  instruction set.
      *
-     * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The
-     * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
-    static const RegisterDictionary *dictionary_arm7();
+     *  They are documented in "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited. */
+    static const RegisterDictionary* dictionary_a64();
+#endif
 
-    /** PowerPC registers. */
-    static const RegisterDictionary *dictionary_powerpc();
+    /** PowerPC-32 registers. */
+    static const RegisterDictionary *dictionary_powerpc32();
+
+    /** PowerPC-64 registers. */
+    static const RegisterDictionary *dictionary_powerpc64();
 
     /** MIPS32 Release 1.
      *
@@ -208,10 +216,23 @@ public:
      *  register into the dictionary using the new descriptor.  This method does exactly that. */
     void resize(const std::string &name, unsigned new_nbits);
 
-    /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
+    /** Find a register by name.
+     *
+     *  Looks up the descriptor for the register having the specified name. If no descriptor exists for that name then a
+     *  default constructed invalid descriptor is returned. See also, @ref findOrThrow. */
+    RegisterDescriptor find(const std::string &name) const;
+
+    /** Find a register by name.
+     *
+     *  Looks up the descriptor for the register having the specified name.  If no descriptor exists for that name then a
+     *  std::domain_error exception is thrown.  See also @ref find. */
+    RegisterDescriptor findOrThrow(const std::string &name) const;
+
+    // Deprecated 2020-04-17 because it returns a raw pointer and leaves it up to the caller to check it.
+    /*  Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
      *  to modify a descriptor in the dictionary because doing so would interfere with the dictionary's data structures for
      *  reverse lookups. */
-    const RegisterDescriptor *lookup(const std::string &name) const;
+    const RegisterDescriptor *lookup(const std::string &name) const ROSE_DEPRECATED("use find or findOrThrow");
 
     /** Returns a register name for a given descriptor. If more than one register has the same descriptor then the name added
      *  latest is returned.  If no register is found then either return the empty string (default) or generate a generic name
@@ -276,8 +297,8 @@ public:
         explicit SortBySize(Direction d=DESCENDING): direction(d) {}
         bool operator()(RegisterDescriptor a, RegisterDescriptor b) const {
             return ASCENDING==direction ?
-                a.get_nbits() < b.get_nbits() :
-                a.get_nbits() > b.get_nbits();
+                a.nBits() < b.nBits() :
+                a.nBits() > b.nBits();
         }
     protected:
         Direction direction;
@@ -390,8 +411,8 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
     while (!heap.empty()) {
         const RegisterDescriptor cur_desc = heap.top();
         heap.pop();
-        const std::pair<int, int> cur_majmin(cur_desc.get_major(), cur_desc.get_minor());
-        const Extent cur_extent(cur_desc.get_offset(), cur_desc.get_nbits());
+        const std::pair<int, int> cur_majmin(cur_desc.majorNumber(), cur_desc.minorNumber());
+        const Extent cur_extent(cur_desc.offset(), cur_desc.nBits());
         ExtentMap &have_extents = have_bits[cur_majmin];
         if (have_extents.distinct(cur_extent)) {
             // We're not returning any of these bits yet, so add the whole descriptor
@@ -405,12 +426,16 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
             parts.erase_ranges(have_extents);
             for (ExtentMap::iterator pi=parts.begin(); pi!=parts.end(); ++pi) {
                 const Extent &part = pi->first;
-                RegisterDescriptor part_desc(cur_desc.get_major(), cur_desc.get_minor(), part.first(), part.size());
+                RegisterDescriptor part_desc(cur_desc.majorNumber(), cur_desc.minorNumber(), part.first(), part.size());
                 heap.push(part_desc);
             }
         }
     }
     return retval;
 }
-    
-#endif /*!ROSE_BINARY_REGISTERRS_H*/
+
+} // namespace
+} // namespace
+
+#endif
+#endif

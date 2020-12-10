@@ -180,33 +180,6 @@ multiply defined symbols at link time).
 /*!
 \var SgProject::p_astMerge
 \brief This controls the merging of AST when multiple files are being processed.
-
-"-rose:astMerge" triggers the use of the file specified by
-"-rose:astMergeCommandFile <filename>" which stores the working directory and 
-the command line required to compile the target file.  It is an error to specify 
-"-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
-It is required to specify the "-rose:astMergeCommandFile <filename>" option to
-first build the required "AST Merge Command File" prior to processing of the 
-"AST Merge Command File"using the "-rose:astMerge" option.
-See manual for details of AST merge mechanism.
-
-\internal New mechanism (not yet documented).
-*/
-
-/*!
-\var SgProject::p_astMergeCommandFile
-\brief This stores the name of the file where information is collected for the AST Merge mechanism.
-
-"-rose:astMerge" triggers the use of the file specified by
-"-rose:astMergeCommandFile <filename>" which stores the working directory and 
-the command line required to compile the target file.  It is an error to specify 
-"-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
-It is required to specify the "-rose:astMergeCommandFile <filename>" option to
-first build the required "AST Merge Command File" prior to processing of the 
-"AST Merge Command File"using the "-rose:astMerge" option.
-See manual for details of AST merge mechanism.
-
-\internal New mechanism (not yet documented).
 */
 
 /*!

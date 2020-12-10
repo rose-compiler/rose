@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 Markus Schordan                       *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <iostream>
@@ -9,7 +7,7 @@
 #include "rose.h"
 #include "AstMatching.h"
 #include "AstTerm.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "SgNodeHelper.h"
 
 using namespace std;
@@ -30,19 +28,19 @@ void write_file(string filename, string data) {
 
 int main( int argc, char * argv[] ) {
 
-  Timer timer;
+  TimeMeasurement timer;
 
   // Build the AST used by ROSE
   timer.start();
   SgProject* sageProject = frontend(argc,argv);
-  double measurementFrontend=timer.getElapsedTimeInMilliSec();
+  double measurementFrontend=timer.getTimeDurationAndStop().milliSeconds();
   timer.stop();
 
   // Run internal consistency tests on AST
   timer.start();
   AstTests::runAllTests(sageProject);
   timer.stop();
-  double measurementAstChecks=timer.getElapsedTimeInMilliSec();
+  double measurementAstChecks=timer.getTimeDurationAndStop().milliSeconds();
 
   // default ROSE dot-file generation
   AstDOTGeneration dotGen;
@@ -77,7 +75,7 @@ int main( int argc, char * argv[] ) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithNull=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTimeWithNull=timer.getTimeDurationAndStop().milliSeconds();
 
   // measure iterator without null value
   timer.start();
@@ -85,12 +83,12 @@ int main( int argc, char * argv[] ) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 
   cout << "Iteration Length: with null   : " << num1 << " nodes."<<endl;
   cout << "Iteration Length: without null: " << num2 << " nodes."<<endl;
   cout<<endl;
-  //double ttm=timer.getElapsedTimeInMilliSec();
+  //double ttm=timer.getTimeDurationAndStop().milliSeconds();
   cout << "Measurement:"<<endl;
   //cout << "Trav:"<<ttm << ";";
   cout << "ROSE Frontend    : " << measurementFrontend << " ms"<<endl;

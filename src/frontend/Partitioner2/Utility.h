@@ -1,9 +1,11 @@
 #ifndef ROSE_Partitioner2_Utility_H
 #define ROSE_Partitioner2_Utility_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
-#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
 
@@ -24,9 +26,6 @@ bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
 bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
-bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
-bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
-bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
 bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 
@@ -75,6 +74,20 @@ insertUnique(Container &container, const Value &item, Comparator cmp) {
         return true;
     }
     return false;
+}
+
+// Insert an intem into a sorted continer, replacing any existing item that compares equal to it.
+template<class Container, class Value, class Comparator>
+void
+replaceOrInsert(Container &container, const Value &item, Comparator cmp) {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
+    typename Container::iterator lb = lowerBound(container, item, cmp);
+    if (lb == container.end() || !equalUnique(*lb, item, cmp)) {
+        container.insert(lb, item);
+    } else {
+        *lb = item;
+    }
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true));
 }
 
 // Erase an item from a sorted container if it doesn't exist yet in the container.  Returns true iff erased.
@@ -135,8 +148,6 @@ isSupersetUnique(const Container &sup, const Container &sub, Comparator lessThan
 std::ostream& operator<<(std::ostream&, const AddressUser&);
 std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
 
 /** Parse an address interval.
  *
@@ -188,6 +199,7 @@ private:
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
 AddressIntervalParser::Ptr addressIntervalParser(std::vector<AddressInterval> &storage);
+AddressIntervalParser::Ptr addressIntervalParser(AddressIntervalSet &storage);
 AddressIntervalParser::Ptr addressIntervalParser();
 
 /** Trigger based on number of times called. */
@@ -250,4 +262,5 @@ size_t serialNumber();
 } // namespace
 } // namespace
 
+#endif
 #endif

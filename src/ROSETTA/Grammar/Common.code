@@ -358,6 +358,11 @@ HEADER_START
           $CLASSNAME* addRegExpAttribute(std::string s, AstRegExAttribute* a);
 
 #ifndef _MSC_VER
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+// and likely never fully implemented nor tested.  Files remain in the src tree but are no
+// longer built.
+#define BUILD_ATERM_SUPPORT 0
+   #if BUILD_ATERM_SUPPORT
    #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
       // DQ (10/4/2014): Adding ATerm support to ROSE.
       /*! \brief Support for generation of ATerms.
@@ -375,6 +380,7 @@ HEADER_START
       /*! \brief Support for generation of ATerms. */
           virtual void generate_ATerm_Annotation(ATerm & term) $ROSE_OVERRIDE;
    #endif
+   #endif // BUILD_ATERM_SUPPORT
 #endif
        // These can't be virtual functions since we don't yet know what IR node to build (until we have read the aterm).
        // virtual generate_AST(ATerm & term);
@@ -455,6 +461,7 @@ void $CLASSNAME::accept (ROSE_VisitorPattern & visitor) {
 $CLASSNAME*
 $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // This function is currently only supported for the AST used the represent Binary executables.
      if (isSgAsmNode(this) != NULL)
         {
@@ -462,6 +469,7 @@ $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
           std::string prefixCode = "REGEX:";
           addNewAttribute(prefixCode + s,a);
         }
+#endif
 
   /* Return "this" so that it can be used with the build function interface to add regex attributes. */
      return this;

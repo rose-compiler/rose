@@ -1,0 +1,13 @@
+START
+REF PROC PROC'2 B;
+  BEGIN
+  END
+
+DEF PROC PROC'1;
+  BEGIN
+    IF PROC'2();
+      BEGIN
+STOP;
+      END
+  END
+TERM

@@ -232,8 +232,6 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(QROSE_MANUAL) ROSE_WebPages/
 #	mkdir -p ROSE_WebPages/ROSE_HaskellAPI
 #	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
-#	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
-	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -fr $(srcdir)/powerpoints ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
 	cp -f ROSE_Exam.pdf ROSE_WebPages/ROSE_Exam.pdf

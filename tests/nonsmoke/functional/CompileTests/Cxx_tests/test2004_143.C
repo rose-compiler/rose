@@ -60,9 +60,6 @@ class SP {
     SP( X *px )
    {
       T *np = dynamic_cast<T *>( px );
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-      VERIFY2(np != 0, "Incompatible dumb pointer type.");
-#endif
       p = np;
       r = new SPref;
    }
@@ -84,9 +81,6 @@ class SP {
    SP& operator=( X *px )
    {
       T *np = dynamic_cast<T *>( px );
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-      VERIFY2(np != 0, "Incompatible smart pointer types.");
-#endif
       return *this = np;
    }
 
@@ -106,9 +100,6 @@ class SP {
    {
       X *px = spx.p;
       T *np = dynamic_cast<T *>( px );
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
-      VERIFY2(np != 0, "Incompatible smart pointer types.");
-#endif
       if (p == np) return *this;	// It could happen.
       detach();
       p = np;

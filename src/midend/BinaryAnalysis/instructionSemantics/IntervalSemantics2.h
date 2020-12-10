@@ -1,5 +1,8 @@
 #ifndef Rose_IntervalSemantics_H
 #define Rose_IntervalSemantics_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <stdint.h>
 
 #ifndef __STDC_FORMAT_MACROS
@@ -474,4 +477,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <Sawyer/Set.h>
@@ -244,6 +246,11 @@ public:
      * @{ */
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter operator+(const std::string &linePrefix) {
+        static Formatter fmt;
+        fmt.set_line_prefix(linePrefix);
+        return with_format(fmt);
+    }
     /** @} */
 };
 
@@ -256,4 +263,5 @@ std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 } // namespace
 } // namespace
 
+#endif
 #endif

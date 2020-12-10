@@ -2023,7 +2023,9 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             guest_ds.sem_perm.cuid = host_ds.sem_perm.cuid;
             guest_ds.sem_perm.cgid = host_ds.sem_perm.cgid;
             guest_ds.sem_perm.mode = host_ds.sem_perm.mode;
+#if 0 // [Robb P. Matzke 2020-05-05]: not present in Linux 5.4
             guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
+#endif
             guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
             guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
 #if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
@@ -2072,7 +2074,9 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             host_ds.sem_perm.cuid = guest_ds.sem_perm.cuid;
             host_ds.sem_perm.cgid = guest_ds.sem_perm.cgid;
             host_ds.sem_perm.mode = guest_ds.sem_perm.mode;
+#if 0 // [Robb P. Matzke 2020-05-05]: not present in Linux 5.4
             host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
+#endif
             host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
             host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
 #if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
@@ -2328,7 +2332,9 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.msg_perm.cuid = host_ds.msg_perm.cuid;
             guest_ds.msg_perm.cgid = host_ds.msg_perm.cgid;
             guest_ds.msg_perm.mode = host_ds.msg_perm.mode;
+#if 0 // [Robb P. Matzke 2020-05-05]: not present in Linux 5.4
             guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
+#endif
             guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
             guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
 #if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
@@ -2473,7 +2479,9 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_ds.shm_perm.cuid = host_ds.shm_perm.cuid;
             guest_ds.shm_perm.cgid = host_ds.shm_perm.cgid;
             guest_ds.shm_perm.mode = host_ds.shm_perm.mode;
+#if 0 // [Robb P. matzke 2020-05-05]: not present in Linux 5.4
             guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
+#endif
             guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
             guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
 #if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
@@ -2587,7 +2595,9 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             host_ds.shm_perm.cuid = guest_ds.shm_perm.cuid;
             host_ds.shm_perm.cgid = guest_ds.shm_perm.cgid;
             host_ds.shm_perm.mode = guest_ds.shm_perm.mode;
+#if 0 // [Robb P. Matzke 2020-05-05]: not present in Linux 5.4
             host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
+#endif
             host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
             host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
 #if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
@@ -4081,7 +4091,6 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
     uint32_t op = t->syscall_arg(1);
     uint32_t val1 = t->syscall_arg(2);
     uint32_t timeout_va = 0;                    /* arg 3 when present */
-    uint32_t futex2_va = 0;                     /* arg 4 when present */
     uint32_t val3 = 0;                          /* arg 5 when present */
 
     int result = -ENOSYS;
@@ -4095,29 +4104,42 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
             result = t->futex_wake(futex1_va, val1);
             break;
         case 2: /*FUTEX_FD*/
-            assert(0); // NOT HANDLED YET
+            abort(); // NOT HANDLED YET
+        case 3: /*FUTEX_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             break;
-        case 3: /*FUTEX_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
-            assert(0); // NOT HANDLED YET
-            break;
-        case 4: /*FUTEX_CMP_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
+        case 4: /*FUTEX_CMP_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
         case 9: /*FUTEX_WAIT_BITSET*/
             timeout_va = t->syscall_arg(3);
-            assert(0==timeout_va); // NOT HANDLED YET
+            ASSERT_always_require(0 == timeout_va); // NOT HANDLED YET
             val3 = t->syscall_arg(5);
             result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;
-        default:
+        default: {
+#if 0 // [Robb Matzke 2019-04-09]
             timeout_va =t->syscall_arg(3);
-            futex2_va = t->syscall_arg(4);
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
     }
 
     t->syscall_return(result);

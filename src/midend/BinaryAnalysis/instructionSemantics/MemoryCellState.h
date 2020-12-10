@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellState_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellState_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <MemoryCell.h>
@@ -138,4 +140,5 @@ public:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellState);
 #endif
 
+#endif
 #endif

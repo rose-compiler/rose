@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryLoaderPe_H
 
 #include "BinaryLoader.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -28,7 +29,7 @@ public:
         return Ptr(new BinaryLoaderPe);
     }
 
-    virtual BinaryLoaderPtr clone() const {
+    virtual BinaryLoaderPtr clone() const ROSE_OVERRIDE {
         return BinaryLoaderPtr(new BinaryLoaderPe(*this));
     }
 
@@ -54,4 +55,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

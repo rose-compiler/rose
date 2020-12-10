@@ -5,10 +5,10 @@
 #define  NUM_KEYS            TOTAL_KEYS
 #define  SIZE_OF_BUFFERS     NUM_KEYS 
 #define  NUM_BUCKETS         (1 << NUM_BUCKETS_LOG_2)
-// 1<< 9
 int key_array[65536];
-// 1<<9
+// 1<< 9
 int bucket_size[512];
+// 1<<9
 
 void foo(int shift)
 {

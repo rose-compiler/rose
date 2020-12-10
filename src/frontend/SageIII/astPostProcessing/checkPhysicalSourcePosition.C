@@ -32,8 +32,9 @@ checkPhysicalSourcePosition(SgNode *ast)
                   {
                     if (finfo->get_file_id() >= 0 && finfo->get_physical_file_id() < 0)
                        {
-                         ROSE_ASSERT(finfo->get_parent() != NULL);
-                         printf ("Detected inconsistant physical source position information: %p parent = %p = %s \n",finfo,finfo->get_parent(),finfo->get_parent()->class_name().c_str());
+                         SgNode* parent = finfo->get_parent();
+                         ROSE_ASSERT(parent != NULL);
+                         printf ("Detected inconsistant physical source position information: %p parent = %p = %s \n",finfo,parent,parent->class_name().c_str());
                          finfo->display("checkPhysicalSourcePosition()");
 
                          ROSE_ASSERT(false);

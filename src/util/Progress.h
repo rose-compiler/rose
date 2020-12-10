@@ -4,6 +4,7 @@
 #include <rosePublicConfig.h>                           // for ROSE_USE_CMAKE
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
+#include <rose_constants.h>
 #include <rose_isnan.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Stopwatch.h>
@@ -194,7 +195,7 @@ public:
     };
 
 private:
-    static const size_t TERMINATING = (size_t)(-1);
+    static const size_t TERMINATING = INVALID_INDEX;
 
     // Synchronized data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members

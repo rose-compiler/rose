@@ -1,179 +1,382 @@
 /* unparseAda_expressions.C
- * 
+ *
  *
  */
 #include "sage3basic.h"
 #include "unparser.h"
-#include "Utf8.h"
-#include <limits>
+//~ #include "Utf8.h"
+#include "sageGeneric.h"
 
-using namespace std;
+//~ using namespace std;
 
-#define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
-#define OUTPUT_HIDDEN_LIST_DATA 0
-#define OUTPUT_DEBUGGING_INFORMATION 0
+//~ #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
+//~ #define OUTPUT_HIDDEN_LIST_DATA 0
+//~ #define OUTPUT_DEBUGGING_INFORMATION 0
 
-#ifdef _MSC_VER
-#include "Cxx_Grammar.h"
-#endif
+//~ #ifdef _MSC_VER
+//~ #include "Cxx_Grammar.h"
+//~ #endif
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
+//~ #include "rose_config.h"
 
+namespace
+{
+  SgName nameOf(const SgSymbol& sy)
+  {
+    return sy.get_name();
+  }
 
-void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
-   {
-  // This is the X10 specific expression code generation
-#if 1
-     printf ("In Unparse_X10::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
-#endif
+  SgName nameOf(const SgVarRefExp& var_ref)
+  {
+    return nameOf(SG_DEREF(var_ref.get_symbol()));
+  }
 
-#if 0
-    //
-    // Check if this expression requires parentheses.  If so, process the opening parentheses now.
-    //
-    AstIntAttribute *parenthesis_attribute = (AstIntAttribute *) expr->getAttribute("x10-parentheses-count");
-    if (parenthesis_attribute) { // Output the left paren
-        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-            curprint("(");
-        }
+  SgName nameOf(const SgFunctionRefExp& fun_ref)
+  {
+    return nameOf(SG_DEREF(fun_ref.get_symbol()));
+  }
+
+  std::string
+  operator_sym(SgNode& n)
+  {
+    typedef std::map<int, std::string> operator_symbols_map;
+
+/*
+    static const operator_symbols_map operator_symbols;
+                = {
+                    { V_SgAssignOp,         ":=" },
+                    { V_SgOrOp,             "or else" },
+                    { V_SgAndOp,            "and then" },
+                    { V_SgBitAndOp,         "and" },
+                    { V_SgBitOrOp,          "or" },
+                    { V_SgBitXorOp,         "xor" },
+                    { V_SgEqualityOp,       "=" },
+                    { V_SgNotEqualOp,       "!=" },
+                    { V_SgLessThanOp,       "<" },
+                    { V_SgLessOrEqualOp,    "<=" },
+                    { V_SgGreaterThanOp,    ">" },
+                    { V_SgGreaterOrEqualOp, ">=" },
+                    { V_SgAddOp,            "+" },
+                    { V_SgSubtractOp,       "-" },
+                    { V_SgConcatenationOp,  "&" },
+                    { V_SgUnaryAddOp,       "+" },
+                    { V_SgMinusOp,          "-" },
+                    { V_SgMultiplyOp,       "*" },
+                    { V_SgDivideOp,         "/" },
+                    { V_SgModOp,            "mod" },
+                    //~ { V_SgRemOp,            "rem" },
+                    { V_SgExponentiationOp, "**" },
+                    //~ { V_SgAbsOp,            "abs" },
+                    { V_SgNotOp,            "not" },
+                    // SgCommaOpExp is not really in Ada, but separates discrete choices in case-when.
+                    { V_SgCommaOpExp,       "|" }
+                  };
+*/
+    static operator_symbols_map operator_symbols;
+
+    if (operator_symbols.size() == 0)
+    {
+      operator_symbols[V_SgAssignOp] =         ":=";
+      operator_symbols[V_SgOrOp] =             "or else";
+      operator_symbols[V_SgAndOp] =            "and then";
+      operator_symbols[V_SgBitAndOp] =         "and";
+      operator_symbols[V_SgBitOrOp] =          "or";
+      operator_symbols[V_SgBitXorOp] =         "xor";
+      operator_symbols[V_SgEqualityOp] =       "=";
+      operator_symbols[V_SgNotEqualOp] =       "/=";
+      operator_symbols[V_SgLessThanOp] =       "<";
+      operator_symbols[V_SgLessOrEqualOp] =    "<=";
+      operator_symbols[V_SgGreaterThanOp] =    ">";
+      operator_symbols[V_SgGreaterOrEqualOp] = ">=";
+      operator_symbols[V_SgAddOp] =            "+";
+      operator_symbols[V_SgSubtractOp] =       "-";
+      operator_symbols[V_SgConcatenationOp] =  "&";
+      operator_symbols[V_SgUnaryAddOp] =       "+";
+      operator_symbols[V_SgMinusOp] =          "-";
+      operator_symbols[V_SgMultiplyOp] =       "*";
+      operator_symbols[V_SgDivideOp] =         "/";
+      operator_symbols[V_SgModOp] =            "mod";
+      operator_symbols[V_SgExponentiationOp] = "**";
+      operator_symbols[V_SgNotOp] =            "not";
+      operator_symbols[V_SgAbsOp] =            "abs";
+      operator_symbols[V_SgRemOp] =            "rem";
+      // not an official operator
+      operator_symbols[V_SgDotExp] =           ".";
+      // not really in Ada (when clause separator)
+      operator_symbols[V_SgCommaOpExp] =       "|";
     }
 
-    switch (expr->variant()) {
-        case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
-        case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
-        case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
+    operator_symbols_map::const_iterator pos = operator_symbols.find(n.variantT());
 
-        case CHAR_VAL: { unparseCharVal(expr,info); break; }
-        case UNSIGNED_CHAR_VAL: { unparseUCharVal(expr, info); break; }
-        case WCHAR_VAL: { unparseWCharVal(expr, info); break; }
+    if (pos == operator_symbols.end())
+    {
+      std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
 
-        case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
-        case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
-        case LONG_LONG_INT_VAL: { unparseLongLongIntVal(expr, info); break; }
-        case UNSIGNED_LONG_LONG_INT_VAL: { unparseULongLongIntVal(expr, info); break; }
-        case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
-        case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
-        case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
-
-        case FUNC_CALL: { unparseFuncCall(expr, info); break; }
-        case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
-        case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
-
-        case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
-        case NOT_OP: { unparseNotOp(expr, info); break; }
-        case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
-        case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
-        case CAST_OP:                 { unparseCastOp(expr, info); break; }
-        case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
-        case NEW_OP:                  { unparseNewOp(expr, info); break; }
-        case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
-        case THIS_NODE:               { unparseThisNode(expr, info); break; }
-        case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
-        case CLASS_NODE:              { unparseClassNode(expr, info); break; }
-
-        case TYPE_REF:                { unparseTypeRef(expr, info); break; }
-        case EXPR_INIT:               { unparseExprInit(expr, info); break; }
-        case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
-        case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
-        case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
-        case THROW_OP:                { unparseThrowOp(expr, info); break; }
-        case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
-        case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
-        case JAVA_INSTANCEOF_OP:      { unparseX10InstanceOfOp(expr, info); break; }
-
-        case V_SgJavaMarkerAnnotation:       { unparseX10MarkerAnnotation(expr, info); break; }
-        case V_SgJavaSingleMemberAnnotation: { unparseX10SingleMemberAnnotation(expr, info); break; }
-        case V_SgJavaNormalAnnotation:       { unparseX10NormalAnnotation(expr, info); break; }
-
-        case V_SgJavaTypeExpression:         { unparseX10TypeExpression(expr, info); break; }
-                // MH-20140730
-        case V_SgHereExp:       { unparseHereExpression(expr, info); break; }
-
-
-        default: {
-
-            // migrate the above switch stmt to use variantT() instead on variant(). The former has much
-            // more consistent names
-            switch (expr->variantT()) {
-                case V_SgPlusAssignOp:
-                case V_SgMinusAssignOp:
-                case V_SgMultAssignOp:
-                case V_SgDivAssignOp:
-                case V_SgModAssignOp:
-                case V_SgAndAssignOp:
-                case V_SgXorAssignOp:
-                case V_SgIorAssignOp:
-                case V_SgRshiftAssignOp:
-                case V_SgLshiftAssignOp:
-                case V_SgJavaUnsignedRshiftAssignOp:
-                     unparseCompoundAssignOp( isSgCompoundAssignOp(expr), info ); break;
-
-                case V_SgAddOp:
-                case V_SgAndOp:
-                case V_SgAssignOp:
-                case V_SgBitAndOp:
-                case V_SgBitOrOp:
-                case V_SgBitXorOp:
-                case V_SgDivideOp:
-                case V_SgDotExp:
-                case V_SgArrowExp:
-                case V_SgEqualityOp:
-                case V_SgGreaterOrEqualOp:
-                case V_SgGreaterThanOp:
-                case V_SgJavaUnsignedRshiftOp:
-                case V_SgLessOrEqualOp:
-                case V_SgLessThanOp:
-                case V_SgLshiftOp:
-                case V_SgModOp:
-                case V_SgMultiplyOp:
-                case V_SgOrOp:
-                case V_SgNotEqualOp:
-                case V_SgRshiftOp:
-                case V_SgSubtractOp:
-                case V_SgCommaOpExp: // charles4 10/14/2011
-                     unparseBinaryOp(isSgBinaryOp(expr), info ); break;
-
-                case V_SgPlusPlusOp:
-                case V_SgMinusMinusOp:
-                case V_SgUnaryAddOp:
-                case V_SgMinusOp:
-                case V_SgNotOp:
-                case V_SgBitComplementOp:
-                     unparseUnaryOp(isSgUnaryOp(expr), info ); break;
-
-                case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
-                case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
-                case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
-
-                case V_SgNullExpression:        { curprint ("null"); break; }
-
-                default:
-                     cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
-                     ROSE_ASSERT(false);
-                     break;
-            }
-        }
+      return "<OP>";
     }
 
-    //
-    // If this expression requires closing parentheses, emit them now.
-    //
-    if (parenthesis_attribute) { // Output the right parentheses
-        for (int i = 0; i < parenthesis_attribute -> getValue(); i++) {
-            curprint(")");
-        }
+    return pos->second;
+  }
+
+  struct AdaExprUnparser
+  {
+    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
+    : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
+    {}
+
+    std::string
+    scopeQual(SgExpression& local, SgScopeStatement& remote);
+
+    std::string
+    scopeQual(SgExpression& local, SgScopeStatement* remote)
+    {
+      return scopeQual(local, SG_DEREF(remote));
     }
-#endif
+
+    void prn(const std::string& s)
+    {
+      unparser.curprint(s);
+      //~ os << s;
+    }
+
+    void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgExpression& n);
+
+    void handle(SgBinaryOp& n);
+    void handle(SgUnaryOp& n);
+
+    /*
+    void handle(SgIntVal& n)
+    {
+      prn(n.get_valueString());
+    }
+    */
+
+    void handle(SgDotExp& n)
+    {
+      SgExpression* lhs    = n.get_lhs_operand();
+      SgExpression* rhs    = n.get_rhs_operand();
+
+      expr(lhs);
+      //~ prn(operator_sym(n));
+      prn(".");
+      expr(rhs, false /* no need to scope qual right hand side */);
+    }
+
+
+    void handle(SgRangeExp& n)
+    {
+      expr(n.get_start());
+      prn("..");
+      expr(n.get_end());
+    }
+
+    void handle(SgCallExpression& n)
+    {
+      SgExprListExp& args = SG_DEREF(n.get_args());
+
+      expr(n.get_function());
+
+      // print () only if there are arguments to the call
+      if (args.get_expressions().size())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
+    }
+
+    void handle(SgCastExp& n)
+    {
+      type(n.get_type(), n);
+      prn("(");
+      expr(n.get_operand());
+      prn(")");
+    }
+
+    void handle(SgStringVal& n)
+    {
+      prn("\"");
+      prn(n.get_value());
+      prn("\"");
+    }
+
+
+    void handle(SgThrowOp& n)
+    {
+      prn("raise ");
+      expr(n.get_operand());
+    }
+
+    void handle(SgActualArgumentExpression& n)
+    {
+      prn(n.get_argument_name());
+      prn(" => ");
+      expr(n.get_expression());
+    }
+
+    void handle(SgVarRefExp& n)
+    {
+      prn(nameOf(n));
+    }
+
+    void handle(SgNullExpression& n)
+    {
+      prn("<null>");
+    }
+
+    void handle(SgFunctionRefExp& n)
+    {
+      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+
+      if (ctxRequiresScopeQualification)
+        prn(scopeQual(n, fundcl.get_scope()));
+
+      prn(nameOf(n));
+    }
+
+    void expr(SgExpression* exp, bool requiresScopeQual = true);
+
+    void handle(SgAssignInitializer& n)
+    {
+      expr(n.get_operand());
+    }
+
+    void expr(SgExprListExp* exp)
+    {
+      SgExpressionPtrList& lst = exp->get_expressions();
+      bool                 first = true;
+
+      //~ for (SgExpression* exp : lst)
+      for (size_t i = 0; i < lst.size(); ++i)
+      {
+        SgExpression* exp = lst[i];
+        if (!first)
+        {
+          prn(", ");
+        }
+        else
+          first = false;
+
+        expr(exp);
+      }
+    }
+
+    void operator()(SgExpression* exp)
+    {
+      expr(exp);
+    }
+
+    void type(SgType* t, SgExpression& ctx)
+    {
+      unparser.unparseType(t, &sg::ancestor<SgScopeStatement>(ctx), info);
+    }
+
+    Unparse_Ada&    unparser;
+    SgUnparse_Info& info;
+    std::ostream&   os;
+    bool            ctxRequiresScopeQualification;
+  };
+
+  bool argRequiresCallSyntax(SgExpression* n)
+  {
+    return isSgActualArgumentExpression(n);
+  }
+
+  void AdaExprUnparser::handle(SgExpression& n)
+  {
+    // if not handled here, have the language independent parser handle it..
+    unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
+  }
+
+  void AdaExprUnparser::expr(SgExpression* exp, bool requiresScopeQual)
+  {
+    // let the generic unparser handle its things..
+    //~ unparser.unparseExpression(exp, info);
+
+    // or just handle everything
+    sg::dispatch(AdaExprUnparser{unparser, info, os, requiresScopeQual}, exp);
+  }
+
+  void AdaExprUnparser::handle(SgBinaryOp& n)
+  {
+    // print either lhs binop rhs
+    //           or "binop" (lhs, rhs)
+
+    SgExpression* lhs    = n.get_lhs_operand();
+    SgExpression* rhs    = n.get_rhs_operand();
+    const bool    prefix = (  argRequiresCallSyntax(lhs)
+                           || argRequiresCallSyntax(rhs)
+                           );
+
+    if (prefix)
+    {
+      prn("\"");
+      prn(operator_sym(n));
+      prn("\" (");
+    }
+
+    expr(lhs);
+    prn(" ");
+    prn(prefix ? std::string(", ") : operator_sym(n));
+    prn(" ");
+    expr(rhs);
+
+    if (prefix) prn(")");
+  }
+
+  void AdaExprUnparser::handle(SgUnaryOp& n)
+  {
+    const bool isprefix = true; // \todo
+
+    if (isprefix) { prn(operator_sym(n)); prn(" "); }
+    expr(n.get_operand());
+    if (!isprefix) prn(operator_sym(n));
+  }
+
+  std::string
+  AdaExprUnparser::scopeQual(SgExpression& local, SgScopeStatement& remote)
+  {
+    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
+  }
+
+}
+
+bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
+{
+  ASSERT_not_null(expr);
+
+  SgStatement* stmt = sg::ancestor<SgStatement>(expr);
+
+  // inside a type, etc. ?
+  if (!stmt) return false;
+
+  if (!isTransformed(stmt))
+    return expr->get_need_paren();
+
+  return base::requiresParentheses(expr, info);
 }
 
 
+void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
+{
+  ASSERT_not_null(expr);
+
+  SG_UNEXPECTED_NODE(*expr);
+}
+
+void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
+{
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
+}
 
 
-void Unparse_Ada::unparseStringVal               (SgExpression* expr, SgUnparse_Info& info)
-   {
-     printf ("Unparse_Ada::unparseStringVal(): not implemented! \n");
-     ROSE_ASSERT(false);
-   }
+void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+{
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
+}
+

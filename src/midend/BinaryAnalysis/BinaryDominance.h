@@ -4,6 +4,9 @@
 #ifndef ROSE_BinaryAnalysis_Dominance_H
 #define ROSE_BinaryAnalysis_Dominance_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "BinaryControlFlow.h"
 
 #include <boost/graph/depth_first_search.hpp>
@@ -655,4 +658,5 @@ Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
 } // namespace
 } // namespace
 
+#endif
 #endif

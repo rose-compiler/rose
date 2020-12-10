@@ -1,7 +1,8 @@
 #ifndef Rose_BinaryAnalysis_YicesSolver_H
 #define Rose_BinaryAnalysis_YicesSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-#include "rosePublicConfig.h"
 #include "BinarySmtSolver.h"
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
@@ -94,6 +95,7 @@ public:
     virtual void clearEvidence() ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
+    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
 
 protected:
     virtual Satisfiable checkLib() ROSE_OVERRIDE;
@@ -195,4 +197,5 @@ private:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::YicesSolver);
 #endif
 
+#endif
 #endif

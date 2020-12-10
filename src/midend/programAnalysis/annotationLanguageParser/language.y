@@ -4,6 +4,7 @@
 
 // DQ (9/12/2011): Added assert to support use in testing suggested by static analysis.
 #include "assert.h"
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 extern int annlex(void);
 extern int annlineno;
@@ -289,12 +290,12 @@ void annerror(const char * msg)
 
 /* New Lexical element, whereas ANSI suggested non-terminal */
 
-/* 
+/*
    Lexer distinguishes this from an identifier.
    An identifier that is CURRENTLY in scope as a typedef name is provided
    to the parser as a TYPEDEFname
 */
-%token <idN> TYPEDEFname 
+%token <idN> TYPEDEFname
 
 /* Multi-Character operators */
 %token <tok>  ctokARROW            /*    ->                              */
@@ -399,7 +400,7 @@ property:
 
   | tokMAYPROPERTY tokID ':' tokUNION_SET
       {
-        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
+        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward,
                                                                   setPropertyAnn::Set,
                                                                   setPropertyAnn::Union));
         delete $2;
@@ -407,7 +408,7 @@ property:
 
   | tokMUSTPROPERTY tokID ':' tokINTERSECT_SET
       {
-        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
+        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward,
                                                                   setPropertyAnn::Set,
                                                                   setPropertyAnn::Intersect));
         delete $2;
@@ -415,7 +416,7 @@ property:
 
   | tokMAYPROPERTY tokID ':' tokUNION_EQUIV
       {
-        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
+        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward,
                                                                   setPropertyAnn::Equivalence,
                                                                   setPropertyAnn::Union));
         delete $2;
@@ -423,7 +424,7 @@ property:
 
   | tokMUSTPROPERTY tokID ':' tokINTERSECT_EQUIV
       {
-        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
+        Annotations::Current->add_set_property(new setPropertyAnn($2, Forward,
                                                                   setPropertyAnn::Equivalence,
                                                                   setPropertyAnn::Intersect));
         delete $2;
@@ -650,7 +651,7 @@ structures:
       }
 
   | tokDELETE qualified_identifier
-      { 
+      {
      // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
         assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_delete($2);
@@ -1130,7 +1131,7 @@ identifier_list:
       { $$ = new parserid_list();
         $$->push_back( * $1 );
         delete $1;
-      } 
+      }
 
   | identifier_list ',' qualified_identifier
       { $$ = $1;
@@ -1141,12 +1142,12 @@ identifier_list:
 
 qualified_identifier:
     tokID
-      { $$ = $1; } 
+      { $$ = $1; }
 
   | tokIO tokID
       { $$ = $2;
         $$->set_io();
-      } 
+      }
   ;
 
 /* --- C constant expression ------------------ */

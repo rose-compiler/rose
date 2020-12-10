@@ -1,0 +1,11 @@
+START
+PROGRAM byteFunctionVariable;
+BEGIN
+
+   ITEM CODE C 10;
+   CODE = 'ABQFGHIAAZ';
+
+   BYTE(CODE,5,5) = 'ZXXXY';
+
+END
+TERM

@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_TaintedFlow_H
 #define ROSE_BinaryAnalysis_TaintedFlow_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
@@ -133,7 +135,7 @@ protected:
 
         StatePtr operator()(size_t cfgVertex, const StatePtr &in);
 
-        std::string printState(const StatePtr &in);
+        std::string toString(const StatePtr &in);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,4 +303,5 @@ std::ostream& operator<<(std::ostream &out, const TaintedFlow::State &state);
 } // namespace
 } // namespace
 
+#endif
 #endif

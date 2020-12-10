@@ -1,2 +1,0 @@
-./parallel_compass -save smg2000.ast `cat parseLine_smg2000.parse`
-

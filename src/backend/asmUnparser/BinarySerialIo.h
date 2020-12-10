@@ -1,7 +1,11 @@
 #ifndef Rose_BinaryAnalysis_SerialIo_H
 #define Rose_BinaryAnalysis_SerialIo_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Progress.h>
+#include <RoseException.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
@@ -18,6 +22,8 @@
 #elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     // Lacks Boost's serialization library, which is how we convert objects to bytes and vice versa
     #undef ROSE_SUPPORTS_SERIAL_IO
+#elif defined(__clang__)
+    #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
 #elif defined(__GNUC__)
     #if __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
         // GCC <= 4.2.4 gets segfaults compiling this file
@@ -100,7 +106,7 @@ class Partitioner;
  *      loader->format(SerialIo::XML);
  *      loader->open(fileName);
  *      partitioner = loader->loadPartitioner();
- *      myVector = loader->loadObject<P2::Partitioner>(myVectorTypeId);
+ *      myVector = loader->loadObject<std::vector<double> >(myVectorTypeId);
  *      loader->close();
  *      loader->mlog[INFO] <<"; loaded\n";
  *  } catch (const SerialIo::Exception &e) {
@@ -135,10 +141,10 @@ public:
     };
 
     /** Errors thrown by this API. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construct an exception with an error message. */
-        explicit Exception(const std::string &s): std::runtime_error(s) {}
+        explicit Exception(const std::string &s): Rose::Exception(s) {}
         ~Exception() throw() {}
     };
 
@@ -485,8 +491,20 @@ public:
      * input is not an AST, or if any other errors occur while reading the AST. */
     SgNode* loadAst();
 
+    /** Load an object from the input stream.
+     *
+     *  An object with the specified tag must exist as the next item in the stream. Such an object is created, initialized from
+     *  the stream, and returned.  If an object is provided as the second argument, then it's initialized from the stream.
+     *
+     * @{ */
     template<class T>
     T loadObject(Savable objectTypeId) {
+        T object;
+        loadObject<T>(objectTypeId, object);
+        return object;
+    }
+    template<class T>
+    void loadObject(Savable objectTypeId, T &object) {
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
 
@@ -500,7 +518,6 @@ public:
                             " but read " + boost::lexical_cast<std::string>(objectType()) + ")");
         }
         objectType(ERROR); // in case of exception
-        T object;
         std::string errorMessage;
 #ifdef ROSE_DEBUG_SERIAL_IO
         asyncLoad(object, &errorMessage);
@@ -524,10 +541,10 @@ public:
             throw Exception(errorMessage);
 #endif
         advanceObjectType();
-        return object;
 #endif
     }
-
+    /** @} */
+        
 private:
     template<class T>
     static void startWorker(SerialInput *loader, T *object, std::string *errorMessage) {
@@ -576,4 +593,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

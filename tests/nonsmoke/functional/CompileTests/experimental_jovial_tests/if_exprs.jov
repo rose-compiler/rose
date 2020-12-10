@@ -1,0 +1,28 @@
+START
+PROGRAM if'exprs ;
+BEGIN
+
+TABLE a'table (10);
+  BEGIN
+    ITEM item1 U;
+    ITEM item2 U;
+  END
+
+ITEM i1 U;
+ITEM i2 U;
+ITEM b1 B;
+ITEM b2 B;
+
+  IF (item1(1)<>item2(2)OR
+      ((b1)AND
+      b2))
+      OR
+      i1>=
+      i2 ;
+      ;
+
+  IF (i1<>i2) ;
+      ;
+
+END
+TERM

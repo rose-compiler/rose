@@ -33,8 +33,8 @@ class PolygonMeshXY
 class Hydro 
 {
   public: Hydro(int c,class PolygonMeshXY m);
-// velocity BC values
   class VectorXY *bcVelocity;
+// velocity BC values
   int cycle;
   class PolygonMeshXY &mesh;
 }

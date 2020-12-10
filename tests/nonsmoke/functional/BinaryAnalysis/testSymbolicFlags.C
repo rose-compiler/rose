@@ -25,21 +25,21 @@ testSetting() {
     std::cout <<"test setting of flags:\n";
 
     // The default is that no flags are set
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1");
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerVariable(32, "e1");
     ASSERT_always_require(e1->flags() == 0);
 
     // Flags are always specified after a comment string
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createVariable(32, "e2", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::makeIntegerVariable(32, "e2", UNDEFINED);
     ASSERT_always_require(e2->flags() == UNDEFINED);
 
     // Flags can be specified for things other than variables
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Leaf::createInteger(32, 0, "e3", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::makeIntegerConstant(32, 0, "e3", INVALID);
     ASSERT_always_require(e3->flags() == INVALID);
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Leaf::createConstant(Sawyer::Container::BitVector(128), "e4", UNDEFINED|INVALID);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(128), "e4", UNDEFINED|INVALID);
     ASSERT_always_require(e4->flags() == (UNDEFINED|INVALID));
-    SymbolicExpr::Ptr e5 = SymbolicExpr::Leaf::createBoolean(true, "e5", UNDEFINED);
+    SymbolicExpr::Ptr e5 = SymbolicExpr::makeBooleanConstant(true, "e5", UNDEFINED);
     ASSERT_always_require(e5->flags() == UNDEFINED);
-    SymbolicExpr::Ptr e6 = SymbolicExpr::Leaf::createMemory(32, 32, "e6", INVALID);
+    SymbolicExpr::Ptr e6 = SymbolicExpr::makeMemoryVariable(32, 32, "e6", INVALID);
     ASSERT_always_require(e6->flags() == INVALID);
 }
 
@@ -47,9 +47,9 @@ testSetting() {
 static void
 testInternal() {
     std::cout <<"test internal internal nodes:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createVariable(32, "e2", INVALID);
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerVariable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::makeIntegerVariable(32, "e2", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, e1, e2);
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 }
 
@@ -57,9 +57,9 @@ testInternal() {
 static void
 testPrinting() {
     std::cout <<"test printing flags:\n";
-    SymbolicExpr::Ptr b = SymbolicExpr::Leaf::createVariable(32, "b", INVALID);
-    SymbolicExpr::Ptr a = SymbolicExpr::Leaf::createVariable(32, "a", UNDEFINED);
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, a, b);
+    SymbolicExpr::Ptr b = SymbolicExpr::makeIntegerVariable(32, "b", INVALID);
+    SymbolicExpr::Ptr a = SymbolicExpr::makeIntegerVariable(32, "a", UNDEFINED);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, a, b);
     std::cout <<"  e1 = " <<*e1 <<"\n";
 }
 
@@ -67,10 +67,10 @@ testPrinting() {
 static void
 testDiscardRule() {
     std::cout <<"test simplification discard rule:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1);
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Leaf::createVariable(32, "e3", INVALID);
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2, e3);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerVariable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_NEGATE, e1);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::makeIntegerVariable(32, "e3", INVALID);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, e1, e2, e3);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == INVALID);
 
@@ -80,22 +80,22 @@ testDiscardRule() {
 static void
 testNewExprRule() {
     std::cout <<"test simplification new expression rule:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
-                                                          SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1,
-                                                                                         SmtSolverPtr()),
-                                                          SmtSolverPtr());
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerVariable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, e1,
+                                                            SymbolicExpr::Interior::instance(SymbolicExpr::OP_NEGATE, e1,
+                                                                                             SmtSolverPtr()),
+                                                            SmtSolverPtr());
     std::cout <<"  e2 = " <<*e2 <<"\n";
     ASSERT_always_require(e2->flags() == 0);
 
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
-                                                          SymbolicExpr::Interior::create(32, SymbolicExpr::OP_INVERT, e1,
-                                                                                         SmtSolverPtr()),
-                                                          SmtSolverPtr());
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, e1,
+                                                            SymbolicExpr::Interior::instance(SymbolicExpr::OP_INVERT, e1,
+                                                                                             SmtSolverPtr()),
+                                                            SmtSolverPtr());
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == 0);
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_XOR, e1, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_XOR, e1, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == 0);
 }
@@ -105,9 +105,9 @@ testNewExprRule() {
 static void
 testFoldingRule() {
     std::cout <<"test simplification folding rule:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createInteger(32, 7, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createInteger(32, 8, "e2", INVALID);
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, e2);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerConstant(32, 7, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::makeIntegerConstant(32, 8, "e2", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, e1, e2);
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 }
@@ -116,8 +116,8 @@ testFoldingRule() {
 static void
 testHashing() {
     std::cout <<"test hashing:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createInteger(32, 7, "", 0);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createInteger(32, 7, "", UNDEFINED);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerConstant(32, 7, "", 0);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::makeIntegerConstant(32, 7, "", UNDEFINED);
     ASSERT_always_require(e1->hash() != e2->hash());
 }
 
@@ -126,19 +126,19 @@ testHashing() {
 static void
 testRelationalFolding() {
     std::cout <<"test relational folding:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createInteger(32, 7, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Leaf::createInteger(32, 8, "e2", INVALID);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::makeIntegerConstant(32, 7, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::makeIntegerConstant(32, 8, "e2", INVALID);
 
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e1, e2);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ULT, e1, e2);
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == (UNDEFINED|INVALID));
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_ULT, e2, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ULT, e2, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == (UNDEFINED|INVALID));
 
-    SymbolicExpr::Ptr e5 = SymbolicExpr::Leaf::createVariable(32, "e5", UNDEFINED);
-    SymbolicExpr::Ptr e6 = SymbolicExpr::Interior::create(1, SymbolicExpr::OP_EQ, e5, e5);
+    SymbolicExpr::Ptr e5 = SymbolicExpr::makeIntegerVariable(32, "e5", UNDEFINED);
+    SymbolicExpr::Ptr e6 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_EQ, e5, e5);
     std::cout <<"  e6 = " <<*e6 <<"\n";
     ASSERT_always_require(e6->flags() == UNDEFINED);
 }

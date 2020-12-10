@@ -495,7 +495,7 @@ SgAssignInitializer* splitExpression_GB(SgExpression* from, SgVarRefExp* &replac
         // cout << "This expression to split has " << ancestors.size() << " ancestor(s)" << endl;
         for (list<SgExpression*>::iterator ai = ancestors.begin(); ai != ancestors.end(); ++ai)
         {
-                SageInterface::StatementGenerator* gen;
+                SageInterface::StatementGenerator* gen = NULL;
                 switch ((*ai)->variantT()) {
                         case V_SgAndOp: 
                                 gen = new AndOpGenerator(isSgAndOp(*ai)); break;
@@ -857,6 +857,7 @@ void cfgRWTransaction::do_insertBefore(SgNode* n, SgExpression* newNode)
                 SgVarRefExp* replacement = NULL;
 
                 //SgAssignInitializer* init = splitExpression_GB(isSgReturnStmt(n)->get_expression(), replacement, "", getAccessType(n)!=readAccess);
+                ROSE_ASSERT(replacement != NULL);
                 insertBeforeExpression(replacement, newNode);
         }
         else if(isSgStatement(n))
@@ -992,7 +993,8 @@ void cfgRWTransaction::do_insertAfter(SgNode* n, SgExpression* newNode)
                              // SgVarRefExp* replacement;
                                 SgVarRefExp* replacement = NULL;
 
-                                //SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
+                             // SgAssignInitializer* init = splitExpression_GB(isSgExpression(n), replacement, "", getAccessType(n)!=readAccess);
+                                ROSE_ASSERT(replacement != NULL);
                                 insertBeforeExpression(replacement, newNode);
                         }
                 }

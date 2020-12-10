@@ -1,7 +1,7 @@
 #include <rose.h>
 
-#include <BinaryStackVariable.h>                        // ROSE
 #include <BinarySymbolicExpr.h>                         // ROSE
+#include <BinaryVariables.h>                            // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
@@ -111,34 +111,40 @@ public:
 
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
-                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
+#if 0 // [Robb Matzke 2019-12-10]: API changes
                     // Function arguments
-                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
+                    Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, stackPtr);
+                    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
                         char name[64];
-                        sprintf(name, "arg_%" PRIx64, var.location.offset);
-                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
-                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
+                        sprintf(name, "arg_%" PRIx64, var.frameOffset());
+                        SValuePtr addr = Variables::VariableFinder().symbolicAddress(ctx_.partitioner, var, ops);
+                        SValuePtr value = ops->undefined_(8*var.maxSizeBytes());
+                        value = ops->readMemory(SS, addr, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
 
                     // Function local variables
-                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
+                    vars = P2::DataFlow::findLocalVariables(function, ops, stackPtr);
+                    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
                         char name[64];
-                        sprintf(name, "var_%" PRIx64, -var.location.offset);
-                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
-                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
+                        sprintf(name, "var_%" PRIx64, -var.frameOffset());
+                        SValuePtr addr = Variables::VariableFinder().symbolicAddress(ctx_.partitioner, var, ops);
+                        SValuePtr value = ops->undefined_(8*var.maxSizeBytes());
+                        value = ops->readMemory(SS, addr, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
+#endif
 
                     // Global variables
-                    ASSERT_require(SP.get_nbits() % 8 == 0);
-                    const size_t wordNBytes = SP.get_nbits() / 8;
+                    ASSERT_require(SP.nBits() % 8 == 0);
+                    const size_t wordNBytes = SP.nBits() / 8;
                     BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordNBytes)) {
                         if (var.isAddress() && var.nBytes()>0 &&
                             var.getAddress()->is_number() && var.getAddress()->get_width()<=64) {
@@ -288,7 +294,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
         BaseSemantics::SValuePtr initialStackPointer =
-            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.nBits()), ops.get());
 
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {

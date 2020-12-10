@@ -3,7 +3,11 @@
 #include "sage3basic.h"
 
 #include "checkIsModifiedFlag.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
@@ -39,9 +43,16 @@
 // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
 #include<signal.h>
 
+#include "AST_FILE_IO.h"
+#include "merge.h"
+#include "load.h"
+// Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
+#include "Cxx_GrammarMemoryPoolSupport.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
+using namespace Rose::Diagnostics;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -180,6 +191,29 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
+// DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
+// and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in 
+// the header file.
+bool Rose::is_Ada_language        = false;
+bool Rose::is_C_language          = false;
+bool Rose::is_Cobol_language      = false;
+bool Rose::is_OpenMP_language     = false;
+bool Rose::is_UPC_language        = false;
+bool Rose::is_UPC_dynamic_threads = false;
+bool Rose::is_C99_language        = false;
+bool Rose::is_Cxx_language        = false;
+bool Rose::is_Java_language       = false;
+bool Rose::is_Jovial_language     = false;
+bool Rose::is_Fortran_language    = false;
+bool Rose::is_CAF_language        = false;
+bool Rose::is_PHP_language        = false;
+bool Rose::is_Python_language     = false;
+bool Rose::is_Cuda_language       = false;
+bool Rose::is_OpenCL_language     = false;
+bool Rose::is_X10_language        = false;
+bool Rose::is_binary_executable   = false;
+
+
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
 using namespace Rose::Diagnostics;
 
@@ -292,19 +326,6 @@ std::string version_message()
   // with -h and --version, similar to GNU compilers, as I recall.
   // outputPredefinedMacros();
 
-  // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
-     time_t scm_timestamp = rose_scm_version_date();
-     std::string scm_timestamp_human;
-     if (struct tm *tm = gmtime(&scm_timestamp)) {
-         char buf[256];
-         sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d UTC",
-                 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-                 tm->tm_hour, tm->tm_min, tm->tm_sec);
-         scm_timestamp_human = buf;
-     } else {
-         scm_timestamp_human = StringUtility::numberToString(scm_timestamp) + " unix epoch";
-     }
-
 #if 0
   // DQ (12/13/2016): Adding backend compiler and version info.
      printf ("Using backend C++ compiler (without path): %s version: %d.%d \n",BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
@@ -320,6 +341,11 @@ std::string version_message()
      string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     string backend_Fortran_compiler_with_path= BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+     string backend_Fortran_compiler_version  = StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER);
+     string backend_Fortran_compiler_without_path = BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH;
+#endif
 
 #ifdef USE_CMAKE
      string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
@@ -331,23 +357,40 @@ std::string version_message()
 
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
-          "ROSE (version: " + version_number() + ")" +
-          "\n  --- using ROSE SCM version:" +
-          "\n      --- ID: " + rose_scm_version_id() +
-          "\n      --- Timestamp: " + scm_timestamp_human +
-          "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
-          "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
-          "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
-          "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-          "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
-          "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-          "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
-          "\n  --- using original build tree path: " + build_tree_path +
-          "\n  --- using instalation path: " + install_path +
-          "\n  --- using GNU readline version: " + readlineVersionString() +
-          "\n  --- using libmagic version: " + libmagicVersionString() +
-          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
-          "\n  --- using lib-yices version: " + yicesVersionString();
+         "ROSE (version: " + version_number() + ")" +
+         "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
+         "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
+         "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+         "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+         "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
+         "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+         "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+         "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
+         "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
+#endif
+         "\n  --- using original build tree path: " + build_tree_path +
+         "\n  --- using instalation path: " + install_path +
+         "\n  --- using GNU readline version: " + readlineVersionString() +
+         "\n  --- using libmagic version: " + libmagicVersionString() +
+         "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
+         "\n  --- using lib-yices version: " + yicesVersionString() +
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+         "\n  --- binary analysis is enabled"
+#ifdef ROSE_ENABLE_ASM_A64
+         "\n  ---   ARM A64 is enabled"
+#else
+         "\n  ---   ARM A64 is disabled"
+#endif
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+         "\n  ---   concolic testing is enabled"
+#else
+         "\n  ---   concolic testing is disabled"
+#endif
+#else
+         "\n  --- binary analysis is disabled"
+#endif
+         ;
   }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -362,26 +405,6 @@ std::string version_number()
   ROSE_ASSERT(! "Expected CPP macro VERSION to be defined");
 #endif
    }
-
-std::string rose_scm_version_id()
-  {
-#ifdef ROSE_SCM_VERSION_ID
-  // generated by automake
-    return ROSE_SCM_VERSION_ID;
-#else
-  ROSE_ASSERT(! "Expected CPP macro ROSE_SCM_VERSION_ID to be defined");
-#endif
-  }
-
-time_t rose_scm_version_date()
-  {
-#ifdef ROSE_SCM_VERSION_UNIX_DATE
-  // generated by automake
-    return ROSE_SCM_VERSION_UNIX_DATE;
-#else
-  ROSE_ASSERT(! "Expected CPP macro ROSE_SCM_VERSION_UNIX_DATE to be defined");
-#endif
-  }
 
 unsigned int rose_boost_version_id()
   {
@@ -443,7 +466,6 @@ outputPredefinedMacros()
 #endif
    }
 
-
 /*! \brief Call to frontend, processes commandline and generates a SgProject object.
 
     This function represents a simple interface to the use of ROSE as a library.
@@ -499,24 +521,19 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
-  // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
-  // To be honest I find this level of technology within ROSE to be embarassing...
-  // We not handle prelinking by generating all required template instantiations
-  // as static functions.  A more global based prelinker will be built at some
-  // point and will likely utilize the SGLite database or some other auxiliary file
-  // mechansism.
-  // DQ (3/31/2004): If there are templates used then we need to modify the *.ti file build by EDG.
-  // buildTemplateInstantiationSupportFile ( project );
-
-  // DQ (4/16/2015): This is replaced with a better implementation.
-  // Make sure the isModified boolean is clear for all newly-parsed nodes.
-  // checkIsModifiedFlag(project);
-
   // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
-  // printf ("ERROR: In frontend(const std::vector<std::string>& argv): commented out unsetNodesMarkedAsModified() \n");
 
-   
+     std::list<std::string> const & astfiles = project->get_astfiles_in();
+     if (astfiles.size() > 0) {
+       Rose::AST::load(project, astfiles);
+       ROSE_ASSERT(project->get_ast_merge());
+     }
+
+     if (project->get_ast_merge()) {
+       Rose::AST::merge(project);
+     }
+
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
   // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
@@ -633,12 +650,16 @@ frontendShell (const std::vector<std::string>& argv)
               the error code.
  */
 int
-backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelagate )
+backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (backend):");
 
      int finalCombinedExitStatus = 0;
+
+#if 0
+     printf ("Inside of backend(SgProject*) (from utility_functions.C) \n");
+#endif
 
      if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
         {
@@ -650,6 +671,17 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // signal(SIG_DFL,NULL);
      signal(SIGABRT,SIG_DFL);
 #endif
+
+     std::string const & astfile_out = project->get_astfile_out();
+     if (astfile_out != "") {
+       std::list<std::string> empty_file_list;
+       project->set_astfiles_in(empty_file_list);
+       project->get_astfile_out() = "";
+       AST_FILE_IO::reset();
+       AST_FILE_IO::startUp(project);
+       AST_FILE_IO::writeASTToFile(astfile_out);
+       AST_FILE_IO::resetValidAstAfterWriting();
+     }
 
 #if 0
   // DQ (9/8/2017): Debugging ROSE_ASSERT.
@@ -688,7 +720,15 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->unparse() \n");
 
-          project->unparse(unparseFormatHelp,unparseDelagate);
+#if 0
+          printf ("Calling project->unparse() \n");
+#endif
+
+          project->unparse(unparseFormatHelp,unparseDelegate);
+
+#if 0
+          printf ("DONE: Calling project->unparse() \n");
+#endif
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                cout << "source file(s) generated. (from AST)" << endl;
@@ -752,6 +792,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
             // finalCombinedExitStatus = project->link("gcc");
                finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
+            else if (project->get_Fortran_only() == true)
+             {
+               printf ("Link using the Fortran language linker (when handling Fortran programs) = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+               finalCombinedExitStatus = project->link(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+             }
             else
              {
             // Use the default name for C++ compiler (defined at configure time)
@@ -771,6 +816,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
   // Set the final error code to be returned to the user.
      project->set_backendErrorCode(finalCombinedExitStatus);
+
+#if 0
+     printf ("Leaving backend(SgProject*) (from utility_functions.C) \n");
+#endif
+
      return project->get_backendErrorCode();
    }
 
@@ -975,9 +1025,14 @@ generatePDF ( const SgProject & project )
           printf ("Inside of generatePDF \n");
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
+#if ROSE_WITH_LIBHARU
      AstPDFGeneration pdftest;
      SgProject & nonconstProject = (SgProject &) project;
      pdftest.generateInputFiles(&nonconstProject);
+#else
+     printf("Warning: libharu support is not enabled\n");
+#endif
+
 #endif
    }
 

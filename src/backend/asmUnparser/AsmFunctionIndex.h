@@ -1,5 +1,7 @@
 #ifndef ROSE_AsmFunctionIndex_H
 #define ROSE_AsmFunctionIndex_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <algorithm>
 #include <ostream>
@@ -501,10 +503,11 @@ protected:
     virtual void init();
 
     /** List of callbacks to be invoked when printing columns. */
-    ROSE_Callbacks::List<OutputCallback> output_callbacks;
+    Callbacks::List<OutputCallback> output_callbacks;
 };
 
 } // namespace
 } // namespace
 
+#endif
 #endif

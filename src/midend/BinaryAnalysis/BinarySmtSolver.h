@@ -1,11 +1,14 @@
 #ifndef Rose_BinaryAnalysis_SmtSolver_H
 #define Rose_BinaryAnalysis_SmtSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
 
 #include <BinarySymbolicExpr.h>
+#include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
@@ -94,22 +97,32 @@ public:
         double prepareTime;                             /**< Time spent creating assertions before solving. */
         double solveTime;                               /**< Seconds spent in solver's solve function. */
         double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
+        size_t nSatisfied;                              /**< Number of times the solver returned "satisified". */
+        size_t nUnsatisfied;                            /**< Number of times the solver returned "unsatisfied". */
+        size_t nUnknown;                                /**< Number of times the solver returned "unknown". */
         // Remember to add all data members to resetStatistics()
 
         Stats()
             : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
-              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0) {
+              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0), nSatisfied(0), nUnsatisfied(0), nUnknown(0) {
         }
     };
 
     /** RAII guard for solver stack.
      *
      *  This object implements a rudimentary form of SMT transactions. The constructor starts a new transaction by pushing
-     *  a new level onto the specified solver (if the solver is non-null). The destructor pops one level from the solver
-     *  unless this object is in the @ref isCommitted state (see @ref commit).  This guard object makes no attempt to ensure
-     *  that the level popped is the same as the one that was initially pushed by the constructor. */
+     *  a new level onto the specified solver (if the solver is non-null). The destructor pops transactions until it gets
+     *  back to the same number of levels as originally. It is undefined behavior if the solver has fewer transactions than
+     *  originally when the destructor is called. If @ref commit has been called on this object then the destructor does
+     *  nothing.
+     *
+     *  This guard object makes no attempt to ensure that after popping levels we end up at the same level we started at.
+     *  In other words, although the number of levels is back to where we started, it might have been possible that between
+     *  the constructor and destructor we popped past this transaction and then pushed new transactions to replace it with
+     *  a different transaction. */
     class Transaction {
         SmtSolver::Ptr solver_;
+        size_t nLevels_;
         bool committed_;
     public:
         /** Constructor pushes level if solver is non-null.
@@ -117,17 +130,24 @@ public:
          *  It is safe to call this with a null solver. */
         explicit Transaction(const SmtSolver::Ptr &solver)
             : solver_(solver), committed_(false) {
-            if (solver)
+            if (solver) {
+                nLevels_ = solver->nLevels();
                 solver->push();
+            } else {
+                nLevels_ = 0;
+            }
         }
 
         /** Destructor pops level unless canceled. */
         ~Transaction() {
             if (solver_ && !committed_) {
-                if (solver_->nLevels() > 1) {
-                    solver_->pop();
-                } else {
-                    solver_->reset();
+                ASSERT_require2(solver_->nLevels() > nLevels_, "something popped this transaction already");
+                while (solver_->nLevels() > nLevels_) {
+                    if (solver_->nLevels() > 1) {
+                        solver_->pop();
+                    } else {
+                        solver_->reset();
+                    }
                 }
             }
         }
@@ -326,6 +346,11 @@ public:
         return memoization_.size();
     }
 
+    /** Set the timeout for the solver.
+     *
+     *  This sets the maximum time that the solver will try to find a solution before returning "unknown". */
+    virtual void timeout(boost::chrono::duration<double> seconds) = 0;
+
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High-level abstraction for testing satisfiability.
@@ -491,7 +516,7 @@ public:
      * @{ */
     virtual SymbolicExpr::Ptr evidenceForVariable(const SymbolicExpr::Ptr &var) {
         SymbolicExpr::LeafPtr ln = var->isLeafNode();
-        ASSERT_require(ln && !ln->isNumber());
+        ASSERT_require(ln && ln->isVariable2());
         return evidenceForVariable(ln->nameId());
     }
     virtual SymbolicExpr::Ptr evidenceForVariable(uint64_t varno) {
@@ -649,4 +674,5 @@ typedef SmtSolver SMTSolver;
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -26,9 +26,14 @@ int main( int argc, char * argv[] )
      AstDOTGeneration astdotgen;
   // SgProject & nonconstProject = (SgProject &) project;
      std::string filenamePostfix;
+
+  // DQ (6/1/2019): Uncommented to debug multiple file support.
   // astdotgen.generateInputFiles(project,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+
      SgFile* file = project->get_files()[0];
      ROSE_ASSERT(file != NULL);
+
+  // DQ (6/1/2019): Commented out to debug multiple file support.
      astdotgen.generateWithinFile(file,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
 #endif
 

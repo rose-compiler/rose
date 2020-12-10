@@ -1,0 +1,13 @@
+START
+
+DEF PROC a'proc RENT ;
+  BEGIN
+
+    if (a'table(1) <> 0.0) ;
+      BEGIN
+        ;
+      END
+
+  END
+
+TERM

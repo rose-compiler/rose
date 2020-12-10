@@ -1,0 +1,13 @@
+project Ada_C_Demo is
+   for Languages use ("Ada", "C");
+   for Source_Dirs use (".");
+   for Excluded_Source_Files use
+     ("animals.h",
+      "animals_h.ads");
+   for Object_Dir use "./obj";
+   for Main use
+     ("ada_main.adb",
+      "c_main.c",
+      "c_ada_c_main.c");
+end Ada_C_Demo;
+

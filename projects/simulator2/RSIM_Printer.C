@@ -6,6 +6,7 @@
 #include "Diagnostics.h"
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 
 Printer::~Printer() {
@@ -393,7 +394,7 @@ Printer::print_hex(Sawyer::Message::Stream &m, uint64_t value) {
 
 Printer&
 Printer::ret() {
-    size_t nbits = thread_->get_process()->get_simulator()->syscallReturnRegister().get_nbits();
+    size_t nbits = thread_->get_process()->get_simulator()->syscallReturnRegister().nBits();
     uint64_t unsignedRetval = nextArg();
     int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, nbits, 64);
     return ret(signedRetval);
@@ -426,7 +427,7 @@ Printer&
 Printer::eret() {
     RegisterDescriptor reg = thread_->get_process()->get_simulator()->syscallReturnRegister();
     uint64_t unsignedRetval = thread_->operators()->readRegister(reg)->get_number();
-    int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.get_nbits(), 64);
+    int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.nBits(), 64);
     return eret(signedRetval);
 }
 

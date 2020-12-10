@@ -4,7 +4,7 @@
 #include "VariableIdMapping.h"
 #include "EState.h"
 #include "ArrayElementAccessData.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "ExprAnalyzer.h"
 #include "RewriteSystem.h"
 #include "ReadWriteData.h"
@@ -18,7 +18,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
@@ -96,8 +96,8 @@ class Specialization {
 
   static void initDiagnostics();
  
-  void transformArrayProgram(SgProject* root, Analyzer* analyzer);
-  void extractArrayUpdateOperations(Analyzer* ana,
+  void transformArrayProgram(SgProject* root, CTAnalysis* analyzer);
+  void extractArrayUpdateOperations(CTAnalysis* ana,
                                     ArrayUpdatesSequence& arrayUpdates,
                                     RewriteSystem& rewriteSystem,
                                     bool useConstExprSubstRule=true

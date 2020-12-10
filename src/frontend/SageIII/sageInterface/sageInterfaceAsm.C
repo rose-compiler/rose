@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include "sageInterfaceAsm.h"
+
 #include "AsmUnparser_compat.h"
 
 // These function in this file are expected to become a part of the 
@@ -8,6 +10,7 @@
 
 using namespace std;
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 // DQ (4/26/2010): Added functions to support ASM specific details in the ROSE interface.
 void
@@ -240,7 +243,7 @@ SageInterface::get_valueString( SgAsmValueExpression* asmValueExpression )
 bool
 SageInterface::isMovInstruction ( SgAsmInstruction* asmInstruction )
    {
-     return isInstructionKind(asmInstruction,x86_mov);
+     return isInstructionKind(asmInstruction, x86_mov);
    }
 
 bool
@@ -620,3 +623,4 @@ SageInterface::removeInstruction(SgAsmStatement* instruction)
      l.erase(i);
    }
 
+#endif

@@ -93,29 +93,37 @@ if(enable-java)
     test2011_01.java test2011_02.java test2011_03.java test2011_06.java
     test2011_07.java test2011_08.java test2011_09.java test2011_10.java
     test2011_11.java test2011_12.java test2011_13.java test2011_14.java
-    test2011_15.java test2011_16.java test2011_17.java test2011_18.java
-    test2011_19.java test2011_20.java test2011_26.java test2011_29.java
+    test2011_15.java test2011_16.java test2011_17.java 
+    test2011_19.java test2011_26.java test2011_29.java
     test2011_30.java test2011_31.java test2011_32.java test2011_33.java
     test2011_34.java test2011_35.java test2011_36.java test2011_37.java
     test2011_38.java test2011_39.java test2011_40.java test2011_41.java
-    test2011_44.java test2011_46.java test2011_47.java test2011_48.java
-    test2011_49.java test2011_50.java pgc_test2011_03.java pgc_test2011_08.java
+    test2011_44.java test2011_47.java 
+    test2011_50.java pgc_test2011_03.java pgc_test2011_08.java
     cave3_IntLit0.java cave3_LoadDep0.java cave3_assert0.java cave3_assert1.java
     cave3_block0.java cave3_call0.java cave3_call1.java cave3_constructor0.java
     cave3_constructor1.java cave3_constructor2.java cave3_constructor3.java
     cave3_DoubleLit0.java cave3_dowhile0.java cave3_for0.java cave3_for1.java
     cave3_for2.java cave3_for3.java cave3_for4.java cave3_for5.java
     cave3_for6.java cave3_for7.java cave3_for8.java cave3_foreach0.java
-    cave3_foreach1.java cave3_foreach2.java cave3_foreach4.java cave3_foreach5.java
-    cave3_foreach6.java cave3_foreach7.java cave3_if0.java cave3_if1.java
+    cave3_foreach1.java cave3_if0.java cave3_if1.java
     cave3_labelDecl0.java cave3_labelDecl1.java cave3_labelDecl2.java
     cave3_labelDecl3.java cave3_labelBreak0.java cave3_labelBreak1.java
-    cave3_labelBreak2.java cave3_labelBreak4.java cave3_labelBreak5.java
+    cave3_labelBreak2.java cave3_labelBreak5.java
     cave3_labelContinue0.java cave3_labelContinue1.java cave3_labelContinue2.java
     cave3_labelContinue3.java cave3_labelContinueBreak0.java
     cave3_labelContinueBreak1.java cave3_mthParam0.java cave3_nameResolution0.java
     cave3_rshift0.java cave3_rshift1.java cave3_synchronized0.java cave3_while0.java
     cave3_while1.java cave3_while2.java cave3_while3.java cave3_while4.java)
+
+  if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+  list(APPEND TESTCODES_REQUIRED_TO_PASS 
+      test2011_18.java test2011_20.java 
+      test2011_43.java test2011_46.java test2011_48.java test2011_49.java
+      pgc_test2011_09.java 
+      cave3_foreach2.java cave3_foreach4.java cave3_foreach5.java
+      cave3_foreach6.java cave3_foreach7.java cave3_labelBreak4.java)
+  endif()
 
   foreach(file_to_test ${JAVA_FILES})
     configure_file(

@@ -3,7 +3,7 @@
 
 void MatlabUnparser::backend(SgProject *project)
 {
-    ROSE_ASSERT(project != NULL);
+    ASSERT_not_null(project);
     
     MatlabUnparserBottomUpTraversal unparserTraversal;
     unparserTraversal.traverseInputFiles(project);

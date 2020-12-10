@@ -1,0 +1,16 @@
+START
+
+PROGRAM simple'loop ;
+BEGIN
+  ITEM ia S ;
+  ITEM bf B 1 ;
+  ITEM ib U = 3;
+
+  WHILE (ib < 5) ;
+    BEGIN
+      ia = 13 ;
+      ib = 33 ;
+    END
+END
+
+TERM

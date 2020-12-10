@@ -9,6 +9,7 @@
 #include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
+#include "Lattice.h"
 
 typedef int PStateId;
 
@@ -17,34 +18,36 @@ typedef int PStateId;
 
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
-using SPRAY::Edge;
+using CodeThorn::Edge;
 
-//using namespace SPRAY;
+//using namespace CodeThorn;
 
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
   /*! 
    * \author Markus Schordan
    * \date 2012.
    */
   
   // private inharitance ensures PState is only used through methods defined here
-  class PState : private map<AbstractValue,CodeThorn::AbstractValue> {
+  class PState : private std::map<AbstractValue,CodeThorn::AbstractValue> {
   public:
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
     friend class PStateEqualToPred;
-    friend bool CodeThorn::operator==(const PState& c1, const PState& c2);
-    friend bool CodeThorn::operator!=(const PState& c1, const PState& c2);
-    friend bool CodeThorn::operator<(const PState& s1, const PState& s2);
+    friend bool operator==(const PState& c1, const PState& c2);
+    friend bool operator!=(const PState& c1, const PState& c2);
+    friend bool operator<(const PState& s1, const PState& s2);
     PState();
-    bool varExists(AbstractValue varId) const;
     bool varIsConst(AbstractValue varId) const;
+    // deprecated
+    bool varExists(AbstractValue varId) const;
+    bool memLocExists(AbstractValue memLoc) const;
     bool varIsTop(AbstractValue varId) const;
     CodeThorn::AbstractValue varValue(AbstractValue varId) const;
     string varValueToString(AbstractValue varId) const;
@@ -52,12 +55,19 @@ namespace CodeThorn {
     long memorySize() const;
     void toStream(std::ostream& os) const;
     string toString() const;
-    string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-    AbstractValueSet getVariableIds() const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
+    string toDotString(std::string prefix, CodeThorn::VariableIdMapping* variableIdMapping) const;
+    std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
+    std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     void writeTopToAllMemoryLocations();
-    void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);
+    void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
+    void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
+    void reserveMemoryLocation(AbstractValue varId);
+    void writeUndefToMemoryLocation(AbstractValue varId);
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
+    void combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                 AbstractValue abstractValue);  
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
     size_t stateSize() const;
@@ -65,11 +75,15 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
+    bool isApproximatedBy(CodeThorn::PState& other) const;
+    static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
+    AbstractValueSet getVariableIds() const;
   private:
+    static bool combineConsistencyCheck;
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
-  typedef set<const PState*> PStatePtrSet;
+  typedef std::set<const PState*> PStatePtrSet;
   
 class PStateHashFun {
    public:

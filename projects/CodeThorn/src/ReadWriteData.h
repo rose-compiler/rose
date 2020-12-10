@@ -5,7 +5,7 @@
 #include "ArrayElementAccessData.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 struct ReadWriteData {

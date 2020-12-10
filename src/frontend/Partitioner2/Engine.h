@@ -1,15 +1,22 @@
 #ifndef ROSE_Partitioner2_Engine_H
 #define ROSE_Partitioner2_Engine_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryLoader.h>
+#include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
+#include <boost/regex.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>
 
@@ -127,10 +134,10 @@ public:
     };
 
     /** Errors from the engine. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         Exception(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
 
@@ -236,6 +243,8 @@ private:
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     Progress::Ptr progress_;                            // optional progress reporting
     ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
+    ThunkPredicates::Ptr functionMatcherThunks_;        // predicates to find thunks when looking for functions
+    ThunkPredicates::Ptr functionSplittingThunks_;      // predicates for splitting thunks from front of functions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -424,26 +433,59 @@ public:
     SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
     /** @} */
 
+    /** Save a partitioner and AST to a file.
+     *
+     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
+    virtual void savePartitioner(const Partitioner&, const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
+    /** Load a partitioner and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    virtual Partitioner loadPartitioner(const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
     //
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Command-line switches related to the loader. */
+    /** Command-line switches related to the loader.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+    /** @} */
 
-    /** Command-line switches related to the disassembler. */
+    /** Command-line switches related to the disassembler.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+    /** @} */
 
-    /** Command-line switches related to the partitioner. */
+    /** Command-line switches related to the partitioner.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+    /** @} */
 
-    /** Command-line switches related to engine behavior. */
+    /** Command-line switches related to engine behavior.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+    /** @} */
 
-    /** Command-line switches related to AST construction. */
+    /** Command-line switches related to AST construction.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+    /** @} */
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
@@ -478,7 +520,7 @@ public:
     /** Determine whether a specimen is an RBA file.
      *
      *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
-     *  @c frontend function. */
+     *  global @c ::frontend function but may be passed to this Engine's @ref frontent method. */
     virtual bool isRbaFile(const std::string&);
 
     /** Determine whether a specimen name is a non-container.
@@ -493,6 +535,12 @@ public:
      *  @ref parseContainers might have already been called but no binary containers specified, in which case calling it again
      *  with the same file names will have no effect. */
     virtual bool areContainersParsed() const;
+
+    /** Parses a vxcore specification and initializes memory.
+     *
+     *  Parses a VxWorks core dump in the format defined by Jim Leek and loads the data into ROSE's analysis memory. The argument
+     *  should be everything after the first colon in the URL "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME". */
+    virtual void loadVxCore(const std::string &spec);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Load specimens
@@ -570,6 +618,8 @@ public:
      *
      *  @li If a @p hint is supplied, then use it.
      *
+     *  @li If the engine @ref doDisassemble property is false, return no disassembler (nullptr).
+     *
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
@@ -589,22 +639,24 @@ public:
     /** Create a bare partitioner.
      *
      *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
-     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor
-     *  is not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler and
-     *  @ref memoryMap properties already either assigned explicitly or as the result of earlier steps. */
+     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor is
+     *  not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler (if @ref
+     *  doDisassemble is set) and @ref memoryMap properties already either assigned explicitly or as the result of earlier
+     *  steps. */
     virtual Partitioner createBarePartitioner();
 
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  engine must have @ref disassembler and @ref memoryMap properties assigned already, either explicitly or as the result
-     *  of earlier steps. */
+     *  engine must have @ref disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned
+     *  already, either explicitly or as the result of earlier steps. */
     virtual Partitioner createGenericPartitioner();
 
     /** Create a tuned partitioner.
      *
      *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
-     *  disassembler and @ref memoryMap properties assigned already, either explicitly or as the result of earlier steps. */
+     *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
+     *  or as the result of earlier steps. */
     virtual Partitioner createTunedPartitioner();
 
     /** Create a partitioner from an AST.
@@ -654,7 +706,7 @@ public:
      *
      *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
      *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(Partitioner&);
+    virtual void labelAddresses(Partitioner&, const Configuration&);
 
     /** Make data blocks based on configuration.
      *
@@ -787,8 +839,13 @@ public:
      *  predefined and user-defined callbacks to search for the next pattern.
      *
      *  Returns a vector of non-null function pointers pointer for the newly inserted functions, otherwise returns an empty
-     *  vector. */
+     *  vector. If the @p lastSearchedVa is provided, it will be set to the highest address at which a function prologue was
+     *  searched.
+     *
+     * @{ */
     virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa, rose_addr_t &lastSearchedVa);
+    /** @} */
 
     /** Make functions from inter-function calls.
      *
@@ -1094,10 +1151,49 @@ public:
     virtual void linkerCommand(const std::string &cmd) { settings_.loader.linker = cmd; }
     /** @} */
 
+    /** Property: Environment variable erasure names.
+     *
+     *  This property is a list of environment variable names that will be removed before launching a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<std::string> environmentEraseNames() const /*final*/ { return settings_.loader.envEraseNames; }
+    virtual void environmentEraseNames(const std::vector<std::string> &names) { settings_.loader.envEraseNames = names; }
+    /** @} */
+
+    /** Property: Environment variable erasure patterns.
+     *
+     *  This property is a list of regular expressions that will erase matching environment variable names before launching
+     *  a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<boost::regex> environmentErasePatterns() const /*final*/ { return settings_.loader.envErasePatterns; }
+    virtual void environmentErasePatterns(const std::vector<boost::regex> &res) { settings_.loader.envErasePatterns = res; }
+    /** @} */
+
+    /** Property: Environment variables to insert.
+     *
+     *  This property is a list of environment variables and values to insert before launching a "run:" style
+     *  specimen. Insertions always occur after all environment variable erasures have been processed.  Each string must
+     *  contain at least one equal sign ("="), the first of which separates the variable name from its value.
+     *
+     * @{ */
+    const std::vector<std::string> environmentInsertions() const /*final*/ { return settings_.loader.envInsert; }
+    virtual void environmentInsertions(const std::vector<std::string> &vars) { settings_.loader.envInsert = vars; }
+    /** @} */
+
+    /** Property: Perform disassembly.
+     *
+     *  If true, then disassembly is performed, otherwise it's skipped.
+     *
+     * @{ */
+    bool doDisassemble() const /*final*/ { return settings_.disassembler.doDisassemble; }
+    virtual void doDisassemble(bool b) { settings_.disassembler.doDisassemble = b; }
+    /** @} */
+
     /** Property: Disassembler.
      *
      *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
-     *  a disassembler based on the binary container.
+     *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
      *
      * @{ */
     Disassembler *disassembler() const /*final*/ { return disassembler_; }
@@ -1114,14 +1210,20 @@ public:
     virtual void isaName(const std::string &s) { settings_.disassembler.isaName = s; }
     /** @} */
 
+    // This is a list of addresses where functions will be created in addition to those functions discovered by examining the
+    // binary container. Use functionStartingVas instead.
+    // DEPRECATED on 5/27/20
+    const std::vector<rose_addr_t>& startingVas() const ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& startingVas() ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+
     /** Property: Starting addresses for disassembly.
      *
      *  This is a list of addresses where functions will be created in addition to those functions discovered by examining the
      *  binary container.
      *
      * @{ */
-    const std::vector<rose_addr_t>& startingVas() const /*final*/ { return settings_.partitioner.startingVas; }
-    std::vector<rose_addr_t>& startingVas() /*final*/ { return settings_.partitioner.startingVas; }
+    const std::vector<rose_addr_t>& functionStartingVas() const /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& functionStartingVas() /*final*/ { return settings_.partitioner.functionStartingVas; }
     /** @} */
 
     /** Property: Whether to use instruction semantics.
@@ -1134,6 +1236,18 @@ public:
     virtual void usingSemantics(bool b) { settings_.partitioner.base.usingSemantics = b; }
     /** @} */
 
+    /** Property: Whether unknown instructions are ignored.
+     *
+     *  If set, then instructions that cannot be disassembled are treated like no-ops for the purpose of building the global
+     *  control flow graph (otherwise they terminate a basic block). This is useful when working with fixed-width instruction
+     *  set architectures for which ROSE has an incomplete disassembler. For instance, PowerPC architectures that are augmented
+     *  with additional undocumented co-processor instructions.
+     *
+     * @{ */
+    bool ignoringUnknownInsns() const /*final*/ { return settings_.partitioner.base.ignoringUnknownInsns; }
+    virtual void ignoringUnknownInsns(bool b) { settings_.partitioner.base.ignoringUnknownInsns = b; }
+    /** @} */
+
     /** Property: Type of container for semantic memory.
      *
      *  Determines whether @ref Partitioner objects created by this engine will be configured to use list-based or map-based
@@ -1144,12 +1258,30 @@ public:
     virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
-    /**  Property: Whether to follow ghost edges.
+    /** Property: Whether to follow ghost edges.
      *
-     *   If set, then "ghost" edges are followed during disassembly.  A ghost edge is a control flow edge from a branch
-     *   instruction where the partitioner has decided according to instruction semantics that the branch cannot be taken at
-     *   run time.  If semantics are disabled then ghost edges are always followed since its not possible to determine whether
-     *   an edge is a ghost edge.
+     *  A "ghost edge" is a control flow graph (CFG) edge that would be present if the CFG-building analysis looked only
+     *  at individual instructions, but would be absent when the analysis considers coarser units of code.  For instance,
+     *  consider the following x86 instructions:
+     *
+     * @code
+     *  1: mov eax, 0
+     *  2: cmp eax, 0
+     *  3: jne 5
+     *  4: nop
+     *  5: hlt
+     * @endcode
+     *
+     *  If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions 4 and 5. But if
+     *  the analysis looks at the first three instructions collectively it will ascertain that instruction 3 has an opaque
+     *  predicate, that the only valid CFG successor is instruction 4, and that the edge from 3 to 5 is a \"ghost\". In fact,
+     *  if there are no other incoming edges to these instructions, then instructions 1 through 4 will form a basic block with
+     *  the (unconditional) branch instruction in its interior.  The ability to look at larger units of code than single
+     *  instructions is controlled by the @ref usingSemantics property.
+     *
+     *  If this @ref followingGhostEdges property is true then ghost edges will be added back into the CFG as real edges,
+     *  which might force a basic block to end, as in this example, at the branch instruction and may attempt to disassemble
+     *  additional code by folowing all edges.
      *
      * @{ */
     bool followingGhostEdges() const /*final*/ { return settings_.partitioner.followingGhostEdges; }
@@ -1178,6 +1310,18 @@ public:
     virtual void maxBasicBlockSize(size_t n) { settings_.partitioner.maxBasicBlockSize = n; }
     /** @} */
 
+    /** Property: CFG edge rewrite pairs.
+     *
+     *  This property is a list of old/new instruction pointer pairs that describe how to rewrite edges of the global control
+     *  flow graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor
+     *  edge that points to the new address.  This list must have an even number of elements where element <code>2*i+0</code> is
+     *  and old address and element <code>2*i+1</code> is the corresponding new address.
+     *
+     * @{ */
+    const std::vector<rose_addr_t>& ipRewrites() const /*final*/ { return settings_.partitioner.ipRewrites; }
+    virtual void ipRewrites(const std::vector<rose_addr_t> &v) { settings_.partitioner.ipRewrites = v; }
+    /** @} */
+
     /** Property: Whether to find function padding.
      *
      *  If set, then the partitioner will look for certain padding bytes appearing before the lowest address of a function and
@@ -1198,6 +1342,18 @@ public:
     virtual void findingThunks(bool b) { settings_.partitioner.findingThunks = b; }
     /** @} */
 
+    /** Property: Predicate for finding functions that are thunks.
+     *
+     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
+     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
+     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
+    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    /** @} */
+
     /** Property: Whether to split thunk instructions into mini functions.
      *
      *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
@@ -1208,10 +1364,24 @@ public:
     virtual void splittingThunks(bool b) { settings_.partitioner.splittingThunks = b; }
     /** @} */
 
+    /** Property: Predicate for finding thunks at the start of functions.
+     *
+     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
+     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
+     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
+     *  The list is consulted only when @ref splittingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
+    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
+    /** @} */
+
     /** Property: Whether to find dead code.
      *
-     *  If set, then the partitioner looks for code that is reachable by ghost edges after all other code has been found.  This
-     *  is different than @ref followingGhostEdges in that the former follows those edges immediately.
+     *  If ghost edges are being discovered (see @ref usingSemantics and @ref followingGhostEdges) and are not being inserted
+     *  into the global CFG, then the target address of the ghost edges might not be used as code addresses during the code
+     *  discovery phase.  This property, when true, will cause the target address of ghost edges to be used to discover additional
+     *  instructions even if they have no incoming CFG edges.
      *
      * @{ */
     bool findingDeadCode() const /*final*/ { return settings_.partitioner.findingDeadCode; }
@@ -1575,4 +1745,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

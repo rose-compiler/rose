@@ -1,0 +1,16 @@
+START
+
+COMPOOL table'type'name;
+
+TYPE item'type STATUS
+   (
+       V(LOW),
+       V(NONE)
+   );
+
+DEF TABLE a'table W 1;
+  BEGIN
+    ITEM an'item item'type POS(1,0);
+  END
+
+TERM

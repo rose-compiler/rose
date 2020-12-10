@@ -8,7 +8,6 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # makefile.
 noinst_LTLIBRARIES = libPartitioner.la
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
 	BasicBlock.C				\
@@ -29,15 +28,14 @@ libPartitioner_la_SOURCES =			\
 	ModulesElf.C				\
 	ModulesLinux.C				\
 	ModulesM68k.C				\
+	ModulesMips.C				\
 	ModulesPe.C				\
 	ModulesPowerpc.C			\
 	ModulesX86.C				\
-	OwnedDataBlock.C			\
+	ParallelPartitioner.C			\
 	Partitioner.C				\
 	Reference.C				\
 	Semantics.C				\
 	StackDeltaAnalysis.C			\
+	Thunk.C					\
 	Utility.C
-else
-libPartitioner_la_SOURCES = dummyPartitioner2.C
-endif

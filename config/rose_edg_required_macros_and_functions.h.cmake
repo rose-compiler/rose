@@ -2,7 +2,10 @@
    which in turn calls the shell script create_system_headers to generate .h from .h.in.
 */
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
+/* TV (06/2019): use to be predicated on ROSE_USE_NEW_EDG_INTERFACE.i
+ *    FIXME: Is it really the case that no pre-include are needed for CMAKE
+ */
+#if 0
 
 /* Must use C style comments so that "--edg:old_c" options will work! */
 /* DQ (7/13/2006): Undefine these before defining them to avoid warnings. */

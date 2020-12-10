@@ -33,9 +33,16 @@ namespace Outliner {
   bool copy_origFile=false; // when generating the new file to store outlined function, copy entire original file to it.
   bool temp_variable=false; // use temporary variables to reduce pointer dereferencing
   bool enable_liveness =false;
+#if 1
   bool enable_debug=false; // 
+#else
+  // DQ (11/25/2020): Trying to turn on debugging of outliner.
+  bool enable_debug=true; // 
+#endif
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  bool enable_template=false; // Outlining code blocks inside C++ templates
+  bool select_omp_loop = false;  // Find OpenMP for loops and outline them. This is used for testing purposes.
   std::string output_path=""; // default output path is the original file's directory
   std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
 
@@ -116,6 +123,10 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 Outliner::Result
 Outliner::outline (SgStatement* s)
 {
+#ifdef __linux__
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+#endif
   string func_name = generateFuncName (s);
   return outline (s, func_name);
 }
@@ -154,7 +165,15 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
   {
  // return Transform::outlineBlock (s_post, func_name);
 
+#if 0
+    printf ("Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
+
     Outliner::Result returnResult = outlineBlock (s_post, func_name);
+
+#if 0
+    printf ("DONE: Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
 
 #if 0
 // This is now done in ASTtools::replaceStatement().
@@ -176,6 +195,10 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
 Sawyer::CommandLine::SwitchGroup
 Outliner::commandLineSwitches() {
     using namespace Sawyer::CommandLine;
+
+#if 0
+    printf ("In Outliner::commandLineSwitches(): Processing the outliner output_path \n");
+#endif
 
     SwitchGroup switches("Outliner switches");
     switches.doc("These switches control ROSE's outliner. ");
@@ -217,6 +240,10 @@ Outliner::commandLineSwitches() {
                     .intrinsicValue(true, use_dlopen)
                     .doc("Use @man{dlopen}(3) to find an outlined function saved into a new source file."));
 
+    switches.insert(Switch("enable_template")
+                    .intrinsicValue(true, enable_template)
+                    .doc("Enable outlining code blocks inside C++ templates."));
+
     switches.insert(Switch("abstract_handle")
                     .argument("handle", anyParser(handles))
                     .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
@@ -236,15 +263,34 @@ Outliner::commandLineSwitches() {
 //! Validate outliner settings. This should be called after outliner settings are adjusted (directly or by command-line
 //  parsing) and before the outliner is used to outline source code.
 void
-Outliner::validateSettings() {
+Outliner::validateSettings() 
+   {
+#if 0
+     printf ("In Outliner::validateSettings(): before building output_path directory: output_path = %s \n",output_path.c_str());
+#endif
+
     if (!output_path.empty()) {
         // remove trailing '/'
         while (output_path[output_path.size()-1]=='/')
             output_path.erase(output_path.end()-1);
         // Create such path if not exists
+
+#if 0
+        printf ("After erasing directoriies in output_path: output_path = %s \n",output_path.c_str());
+#endif
         bfs::path my_path(output_path);
         if (!bfs::exists(my_path))
+          {
+#if 0
+            printf ("Before bfs::create_directory(): my_path.string() = %s \n",my_path.string().c_str());
+#endif
             bfs::create_directory(my_path);
+#if 0
+            printf ("Exiting as a test! \n");
+            ROSE_ASSERT(false);
+#endif
+          }
+
         if (!bfs::is_directory(my_path)) {
             cerr<<"output_path:"<<output_path<<" is not a path!"<<endl;
             ROSE_ASSERT(false);
@@ -273,6 +319,10 @@ Outliner::validateSettings() {
 //! Set internal options based on command line options
 void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 {
+#if 0
+    printf ("In Outliner::commandLineProcessing(): Processing the outliner output_path \n");
+#endif
+
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_debug",true))
   {
     cout<<"Enabling debugging mode for outlined functions..."<<endl;
@@ -339,7 +389,13 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   }
   //  else
   //    enable_classic = false;
-
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_template",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling outlining code blocks inside C++ templates..."<<endl;
+    enable_template= true;
+  }
+ 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
   {
     if (enable_debug)
@@ -375,7 +431,15 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 //  else  //reset to NULL if useNewFile is not true
 //    output_path="";
 
-
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","select_omp_loop",true))
+  {
+    if (enable_debug)
+      cout<<"Select OpenMP loops for outlining  ..."<<endl;
+    select_omp_loop = true;
+    // turn on OpenMP parsing and AST creation
+    argvList.push_back("-rose:openmp:ast_only");
+  }
+ 
  if (use_dlopen || temp_variable)    
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_liveness",true))
@@ -403,7 +467,9 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:exclude_headers                  do not include any headers in the new file for outlined functions"<<endl;
     cout<<"\t-rose:outline:use_dlopen                       use dlopen() to find the outlined functions saved in new files.It will turn on new_file and parameter_wrapper flags internally"<<endl;
     cout<<"\t-rose:outline:copy_orig_file                   used with dlopen(): single lib source file copied from the entire original input file. All generated outlined functions are appended to the lib source file"<<endl;
+    cout<<"\t-rose:outline:enable_template                  support outlining code blocks inside C++ templates (experimental)"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
+    cout<<"\t-rose:outline:select_omp_loop                  select OpenMP for loops for outlining, used for testing purpose"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 
@@ -414,6 +480,10 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
+#ifdef __linux__
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+#endif
   // bool b = isOutlineable (s, enable_debug);
   bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
   if (b!= true)
@@ -431,25 +501,109 @@ Outliner::preprocess (SgStatement* s)
  *  Container to store the results of one outlining transformation.
  */
 
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (void)
-  : decl_ (0), call_ (0)
+  : decl_ (0), call_ (0),target_class_member(NULL),new_function_prototype(NULL) 
 {
 }
 
+#if 0
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (SgFunctionDeclaration* decl,
                              SgStatement* call, SgFile* file/*=NULL*/)
-  : decl_ (decl), call_ (call), file_(file)
+  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL)
 {
 }
+#else
+#if 0
+  // DQ (11/19/2020): Original code before moving the DeferredTransformation support to SageInterface.
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+Outliner::Result::Result (SgFunctionDeclaration* decl,
+                          SgStatement* call, SgFile* file/*=NULL*/, DeferredTransformation input_deferredTransformation)
+  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferredTransformation(input_deferredTransformation)
+{
+}
+#else
+  // DQ (11/19/2020): New code after moving the DeferredTransformation support to SageInterface.
+Outliner::Result::Result (SgFunctionDeclaration* decl,
+                          SgStatement* call, SgFile* file/*=NULL*/,
+                          SageInterface::DeferredTransformation input_deferredTransformation)
+   : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferredTransformation(input_deferredTransformation)
+{
+}
+#endif
+#endif
 
+#if 0
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (const Result& b)
-  : decl_ (b.decl_), call_ (b.call_)
+  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member)
 {
 }
+#else
+// DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
+Outliner::Result::Result (const Result& b)
+  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member),deferredTransformation(b.deferredTransformation)
+{
+}
+#endif
+
 
 bool
 Outliner::Result::isValid (void) const
 {
   return decl_ && call_;
 }
+
+
+/* =====================================================================
+ *  Container to store the support for defering the transformations to later (on header files that we will want to unparse).
+ */
+
+#if 0
+// DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+// So I need to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
+
+Outliner::DeferredTransformation::DeferredTransformation()
+   : class_definition(NULL),
+     target_class_member(NULL),
+     new_function_prototype(NULL)
+   {
+   }
+
+Outliner::DeferredTransformation::DeferredTransformation(
+   SgClassDefinition* input_class_definition, 
+   SgDeclarationStatement* input_target_class_member, 
+   SgDeclarationStatement* input_new_function_prototype)
+   : class_definition(input_class_definition),
+     target_class_member(input_target_class_member),
+     new_function_prototype(input_new_function_prototype)
+   {
+   }
+
+Outliner::DeferredTransformation::DeferredTransformation (const DeferredTransformation& X)
+   : class_definition(X.class_definition),
+     target_class_member(X.target_class_member),
+     new_function_prototype(X.new_function_prototype),
+     targetClasses(X.targetClasses),
+     targetFriends(X.targetFriends)
+   {
+   }
+
+Outliner::DeferredTransformation & Outliner::DeferredTransformation::operator= (const DeferredTransformation& X)
+   {
+#if 0
+     printf ("Inside of Outliner::DeferredTransformation::operator= (const DeferredTransformation& X) \n");
+#endif
+
+     targetFriends = X.targetFriends;
+     targetClasses = X.targetClasses;
+     return *this;
+   }
+
+
+Outliner::DeferredTransformation::~DeferredTransformation (void) {}; //! Shallow; does not delete fields.
+#endif
+
 // eof

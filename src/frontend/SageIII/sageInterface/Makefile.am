@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/Experimental_General_Language_Support
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 AM_CPPFLAGS += $(JAVA_JVM_INCLUDE)
@@ -17,17 +17,10 @@ libsageInterface_la_SOURCES      = \
      sageBuilder_fortran.C \
      abiStuff.C \
      sageBuilder_untypedNodes.C \
-     untypedBuilder.C 
-#     highLevelInterface.C
-
-#     buildSetOfFrontendSpecificNodes.C
-
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libsageInterface_la_SOURCES += \
+     untypedBuilder.C  \
      sageInterfaceAsm.C \
      sageInterface_asm.C \
-     sageBuilderAsm.C
-endif
+     SageBuilderAsm.C
 
 libsageInterface_la_LIBADD       =
 libsageInterface_la_DEPENDENCIES =
@@ -39,24 +32,8 @@ pkginclude_HEADERS = \
      sageFunctors.h \
      integerOps.h \
      untypedBuilder.h \
-     abiStuff.h
-#     highLevelInterface.h
-#     loopHelpers.h
-
-# if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   pkginclude_HEADERS += \
+     abiStuff.h \
      sageInterfaceAsm.h \
-     sageBuilderAsm.h
-# endif
-
-
-#libsageInterface.la: $(libastFixup_la_OBJECTS) $(libastFixup_la_DEPENDENCIES)
-#	-rm -f $@
-#	$(CXX_SHARED_LIB_UPDATE) $@ $(libastFixup_la_OBJECTS) $(libastFixup_la_LIBADD)
-#	test -f $@ || exit 1
-
-
-# noinst_PROGRAMS = testForBug
-# testForBug_SOURCES = testForBug.C
+     SageBuilderAsm.h
 
 EXTRA_DIST = CMakeLists.txt

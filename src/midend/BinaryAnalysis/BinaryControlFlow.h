@@ -1,9 +1,12 @@
 #ifndef ROSE_BinaryAnalysis_ControlFlow_H
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "Map.h"
 #include "WorkLists.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -940,7 +943,7 @@ ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Ver
     std::reverse(forward_order->begin(), forward_order->end());
     if (reverse_order) {
         reverse_order->clear();
-        reverse_order->resize(boost::num_vertices(g), (size_t)(-1));
+        reverse_order->resize(boost::num_vertices(g), INVALID_INDEX);
         for (size_t i=0; i<forward_order->size(); i++)
             (*reverse_order)[(*forward_order)[i]] = i;
     }
@@ -1084,4 +1087,5 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
 } // namespace
 } // namespace
 
+#endif
 #endif

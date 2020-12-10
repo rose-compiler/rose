@@ -839,7 +839,7 @@ namespace AstFromString
       //unsigned
       // others
       bool rt = decode_list (sq_list);
-      assert (rt);
+      ASSERT_always_require (rt);
     }
     else
     {
@@ -2454,8 +2454,10 @@ postfix_operator
      if (afs_match_identifier())
      {
         // we expect to see SgName, not a symbol yet.  
+#ifndef NDEBUG
         SgName* sname = isSgName(c_parsed_node); 
         assert (sname != NULL);
+#endif
         result = true;  
      } 
      // TODO other options 
@@ -2508,8 +2510,8 @@ postfix_operator
       c_parsed_node = NULL; // prep for initializer
       if (afs_match_char('=') && afs_match_initializer())
       {
-        *initializer = isSgExpression(c_parsed_node); 
         assert (initializer != NULL);
+        *initializer = isSgExpression(c_parsed_node); 
       }  
       return true; 
     }

@@ -1,0 +1,109 @@
+include_rules
+
+ifeq (@(ENABLE_TESTS),yes)
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Database tests
+
+# The extra "touch foo.db" commands are because the tests sometimes don't do anything (such as when the C++ compiler
+# is earlier than C++11) and Tup will emit a failure if the main test command doesn't write to the database like we
+# said it should.
+
+#
+# utilities and sample codes
+
+# a.1) sample program to load and store in DB
+run $(support_compile_linkexe) sampleExecutable.C
+
+# a.2) sample program to test the execution monitor
+run $(support_compile_linkexe) test-execution-monitor.C
+
+# a.3) execution monitor to produce quality score
+# run $(tool_compile_linkexe) rose-execution-monitor-zero.C
+
+# a.4) test compiled programs
+run $(tool_compile_linkexe) testConcolicDB.C
+run $(test) testConcolicDB
+
+run $(tool_compile_linkexe) testOpenDb.C
+run $(test) --extra=testOpenDb.db testOpenDb \
+    './testOpenDb && touch testOpenDb.db'
+
+run $(tool_compile_linkexe) testDefineTests.C
+run $(test) --extra=testDefineTests.db testDefineTests \
+    './testDefineTests && touch testDefineTests.db'
+
+run $(tool_compile_linkexe) testRun1.C
+run $(test) --extra=testRun1.db testRun1 \
+    './testRun1 && touch testRun1.db'
+
+run $(tool_compile_linkexe) testRun10.C
+run $(test) --extra=testRun10.db testRun10 \
+    './testRun10 && touch testRun10.db'
+
+run $(tool_compile_linkexe) testDefineFail.C
+run $(test) --extra=testDefineFail.db testDefineFail \
+    './testDefineFail && touch testDefineFail.db'
+
+run $(tool_compile_linkexe) testCombined.C
+run $(test) --extra=testCombined.db ./testCombined \
+    './testCombined && touch testCombined.db'
+
+run $(tool_compile_linkexe) testExport.C
+run $(test) --input=sampleExecutable --extra=testExport.db testExport \
+    './testExport && touch testExport.db'
+
+run $(tool_compile_linkexe) testAddressRandomization.C
+run $(test) --input=sampleExecutable --extra=testAddressRandomization.db testAddressRandomization \
+    './testAddressRandomization && touch testAddressRandomization.db'
+    
+#FIXME# Reported by Matzke 2019-09-23
+#FIXME# This rule has two problems: First, this rule and the testPerfExecutionMonitor test both create
+#FIXME# test-execution-monitor, which tup rightfully complains would be a race in a parallel build.
+#FIXME# Second, the test fails with this error:
+#FIXME#   test-execution-monitor sampleExecutable ./crsh/crsh testExecutionMonitor.crsh
+#FIXME#   /tmp/filewm1VzF: line 1: test-execution-monitor: command not found
+#FIXME# Therefore I'm commenting out this one until Peter can fix it.
+#FIXME#
+#FIXME# run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#FIXME#     --input=ExecutionMonitor test-execution-monitor sampleExecutable \
+#FIXME#     ./crsh/crsh testExecutionMonitor.crsh
+
+
+# Robb commented out the following test (testExecutionMonitor) because it depends on
+# rose-execution-monitor-zero, which Peter commented out above in the previous change to this file.
+#run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#    --input=rose-execution-monitor-zero test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testExecutionMonitor.crsh
+
+#run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
+#    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testPerfExecutionMonitor.crsh
+
+run $(tool_compile_linkexe) testConnectNonExisting.C
+run $(test) testConnectNonExisting
+
+run $(tool_compile_linkexe) testCreateOverwrites.C
+run $(test) --extra=testCreateOverwrites.db testCreateOverwrites \
+    './testCreateOverwrites && touch testCreateOverwrites.db'
+
+run $(tool_compile_linkexe) testConnect.C
+run $(test) --extra=testConnect.db testConnect \
+    './testConnect && touch testConnect.db'
+
+# Tests that test cases can be created correctly
+run $(tool_compile_linkexe) testTestCase.C
+run $(test) --extra testTestCase.db testTestCase \
+    './testTestCase && touch testTestCase.db'
+
+#------------------------------------------------------------------------------------------------------------------------
+# Concolic executor tests
+
+run $(tool_compile_linkexe) testConcolicExecutor.C
+run $(test) testConcolicExecutor \
+    --extra testConcolicExecutor-1.db \
+    './testConcolicExecutor --log "Rose::BinaryAnalysis::Concolic(debug)" --database=testConcolicExecutor-1.db $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01 && touch testConcolicExecutor-1.db'
+
+endif
+endif

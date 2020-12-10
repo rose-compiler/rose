@@ -13,11 +13,11 @@
 
 using namespace std;
 
-void SPRAY::CppExprEvaluator::setSoundness(bool s) {
+void CodeThorn::CppExprEvaluator::setSoundness(bool s) {
   _sound=s;
 }
 
-SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim) :
+CodeThorn::CppExprEvaluator::CppExprEvaluator(CodeThorn::NumberIntervalLattice* d, CodeThorn::VariableIdMapping* vim) :
   domain(d),
   variableIdMapping(vim),
   propertyState(0),
@@ -27,7 +27,7 @@ SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY
 {
 }
 
-int SPRAY::CppExprEvaluator::computeSize(SgSizeOfOp* node) {
+int CodeThorn::CppExprEvaluator::computeSize(SgSizeOfOp* node) {
   SgNode* child=node->get_operand_expr();
   if(child) {
     if(SgExpression* exp=isSgExpression(child)) {
@@ -54,16 +54,16 @@ int SPRAY::CppExprEvaluator::computeSize(SgSizeOfOp* node) {
   }
 }
 
-void SPRAY::CppExprEvaluator::setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) {
+void CodeThorn::CppExprEvaluator::setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) {
   _pointerAnalysisInterface=pointerAnalysisInterface;
 }
 
-SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node, PropertyState* pstate) {
+CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* node, PropertyState* pstate) {
   setPropertyState(pstate);
   return evaluate(node);
 }
   
-SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
+CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* node) {
   ROSE_ASSERT(domain);
   ROSE_ASSERT(propertyState);
   ROSE_ASSERT(variableIdMapping);
@@ -215,7 +215,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           operatorResult = domain->bitwiseShiftRight(lhsResult, rhsResult);
           break;
         default:
-          throw SPRAY::Exception("CppExprEvaluator::evaluate: internal error: unsupported case.");
+          throw CodeThorn::Exception("CppExprEvaluator::evaluate: internal error: unsupported case.");
       }
 
       // Set lhs variable to the operator result if possible:
@@ -258,7 +258,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-        Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
@@ -266,8 +265,14 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           //  an alias/reference was created) to top:
           VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
           ips->topifyVariableSet(varIdSet);
-        }
-        else {
+        } else {
+          Number plusOrMinusOne;
+          switch(node->variantT()) {
+          case V_SgPlusPlusOp:   plusOrMinusOne =  1; break;
+          case V_SgMinusMinusOp: plusOrMinusOne = -1; break;
+          default:
+            ROSE_ASSERT(false);
+          }
           if(SgNodeHelper::isPrefixIncDecOp(node)) {
             NumberIntervalLattice oldValue=evaluate(operand);
             NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);
@@ -353,7 +358,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   case V_SgNullptrValExp: return NumberIntervalLattice(Number(0));
 
   // schroder3 (2016-08-25): empty expression (e.g. ";;")
-  case V_SgNullExpression: return NumberIntervalLattice::top(); //throw SPRAY::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
+  case V_SgNullExpression: return NumberIntervalLattice::top(); //throw CodeThorn::Exception("CppExprEvaluator can not handle SgNullExpression nodes.");
 
   // schroder3 (2016-08-25): Convert char to integer:
   case V_SgCharVal: {
@@ -394,7 +399,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       if(funName=="__assert_fail") {
         return NumberIntervalLattice::bot();
       } else {
-        if(getSkipSelectedFunctionCalls()) {
+        if(getSkipUnknownFunctionCalls()) {
           //cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
           return NumberIntervalLattice::top();
         } else {
@@ -406,7 +411,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           //  normalized and we abort here because even returning top
           //  would be wrong because the function call can change
           //  other variables.
-          throw SPRAY::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " 
+          throw CodeThorn::NormalizationRequiredException("CppExprEvaluator can not handle SgFunctionCallExp nodes (Node: " 
                                                       + node->unparseToString() + ").");
         }
       }
@@ -424,32 +429,32 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   return NumberIntervalLattice::top();
 }
 
-void SPRAY::CppExprEvaluator::setDomain(NumberIntervalLattice* domain) {
+void CodeThorn::CppExprEvaluator::setDomain(NumberIntervalLattice* domain) {
   this->domain=domain;
 }
 
-void SPRAY::CppExprEvaluator::setPropertyState(PropertyState* pstate) {
+void CodeThorn::CppExprEvaluator::setPropertyState(PropertyState* pstate) {
   this->propertyState=pstate;
 }
 
-void SPRAY::CppExprEvaluator::setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
+void CodeThorn::CppExprEvaluator::setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
   this->variableIdMapping=variableIdMapping;
 }
 
-bool SPRAY::CppExprEvaluator::isValid() {
+bool CodeThorn::CppExprEvaluator::isValid() {
   return domain!=0 && propertyState!=0 && variableIdMapping!=0;
 }
 
-void SPRAY::CppExprEvaluator::setShowWarnings(bool warnings) {
+void CodeThorn::CppExprEvaluator::setShowWarnings(bool warnings) {
   _showWarnings=warnings;
 }
 
 
-bool SPRAY::CppExprEvaluator::isExprRootNode(SgNode* node) {
+bool CodeThorn::CppExprEvaluator::isExprRootNode(SgNode* node) {
   return (isSgExpression(node) && !isSgExpression(node->get_parent()));
 }
 
-SgNode* SPRAY::CppExprEvaluator::findExprRootNode(SgNode* node) {
+SgNode* CodeThorn::CppExprEvaluator::findExprRootNode(SgNode* node) {
   if(isSgExpression(node)&&!isExprRootNode(node)) {
     return findExprRootNode(node->get_parent());
   } else if(isExprRootNode(node)) {
@@ -459,11 +464,11 @@ SgNode* SPRAY::CppExprEvaluator::findExprRootNode(SgNode* node) {
   }
 }
 
-void SPRAY::CppExprEvaluator::setSkipSelectedFunctionCalls(bool flag) {
+void CodeThorn::CppExprEvaluator::setSkipUnknownFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag;
 }
 
-bool SPRAY::CppExprEvaluator::getSkipSelectedFunctionCalls() {
+bool CodeThorn::CppExprEvaluator::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 

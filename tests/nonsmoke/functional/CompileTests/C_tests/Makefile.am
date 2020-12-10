@@ -17,6 +17,7 @@ endif
 ##################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     test2020_03.c \
      test_CplusplusMacro_C.c \
      gconv_info.c \
      testCvsCpp.c \
@@ -368,7 +369,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_80.c \
      test2014_81.c \
      test2014_82.c \
-     test2014_83.c \
      test2014_84.c \
      test2014_85.c \
      test2014_86.c \
@@ -377,7 +377,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_89.c \
      test2014_91.c \
      test2014_92.c \
-     test2014_93.c \
      test2014_94.c \
      test2014_95.c \
      test2014_100.c \
@@ -528,7 +527,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_05.c \
      test2018_06.c \
      test2018_07.c \
-     test2018_08.c \
      test2018_09.c \
      test2018_10.c \
      test2018_11.c \
@@ -564,7 +562,47 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_64.c \
      test2018_67.c \
      rose-1391-a.c \
-     rose-1391-b.c
+     rose-1391-b.c \
+     test2019_01.c \
+     test2019_02.c \
+     test2019_03.c \
+     test2019_04.c \
+     test2019_05.c \
+     test2019_06.c \
+     test2019_07.c \
+     test2019_08.c \
+     test2019_09.c \
+     test2019_10.c \
+     test2019_11.c \
+     test2019_12.c \
+     test2019_13.c \
+     test2019_14.c \
+     test2019_15.c \
+     test2020_12.c \
+     test2020_13.c \
+     test2020_14.c \
+     test2020_15.c \
+     test2020_16.c \
+     test2020_17.c \
+     test2020_18.c \
+     test2020_19.c \
+     test2020_21.c \
+     test2020_22.c \
+     test2020_24.c \
+     test2020_28.c \
+     test2020_29.c \
+     test2020_30.c \
+     test2020_31.c \
+     test2020_32.c \
+     test2020_33.c \
+     test2020_34.c \
+     test2020_35.c \
+     test2020_36.c \
+     test2020_37.c \
+     test2020_38.c \
+     test2020_39.c \
+     test2020_40.c 
+
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -581,7 +619,12 @@ TESTCODE_CURRENTLY_FAILING = \
      test2018_34.c \
      test2018_38.c \
      test2018_39.c \
-     test2018_40.c
+     test2018_40.c \
+     test2020_20.c \
+     test2020_23.c \
+     test2020_25.c \
+     test2020_26.c \
+     test2020_27.c 
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
@@ -653,6 +696,7 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_147.c \
      test2015_148.c \
      test2015_149.c \
+     test2018_08.c \
      test2004_21.c \
      test2006_65.c
 
@@ -875,6 +919,8 @@ if !OS_MACOSX
       test2013_113.c \
       test2014_12.c \
       test2014_13.c \
+      test2014_83.c \
+      test2014_93.c \
       test2015_34.c \
       test2012_09.c
 else
@@ -894,6 +940,8 @@ else
       test2013_113.c \
       test2014_12.c \
       test2014_13.c \
+      test2014_83.c \
+      test2014_93.c \
       test2015_34.c \
       test2012_09.c
 endif
@@ -929,15 +977,13 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
-# if !ROSE_USE_EDG_VERSION_4_4
-# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
+
+# DQ (6/23/2020): I need to avoid having these run first.
 check_PROGRAMS = $(PASSING_TEST_Executables)
+
 # a list of programs or scripts to run in order to do the testing 
-TESTS= $(check_PROGRAMS) caller.out 
-# endif
-# endif
+TESTS= $(check_PROGRAMS) caller.out
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 
@@ -1066,10 +1112,17 @@ test_link_using_asm_symbol_injection: $(TEST_TRANSLATOR)
 caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $^
 # default case: generate executable a.out from any number of input files	
+
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
+#	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
+
+# DQ (8/3/2019): Adding multi-file test, test in both orders (one was previously a failing case).
+multiple_file_test_01: $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16b.c $(srcdir)/test2019_16a.c
 
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
@@ -1170,7 +1223,9 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_154.h \
         test2015_156.h \
         test2015_157.h \
-        test2015_159.h
+        test2015_159.h \
+        test2020_03.h \
+        test2020_26.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
@@ -1192,8 +1247,10 @@ print:
 check-local: check-pthread.passed
 	@echo "Tests for C."
 	@$(MAKE) $(PASSING_TEST_Source_passed)
+if !OS_MACOSX
 	@$(MAKE) test_link_using_asm_symbol_injection
 	@$(MAKE) test_link_using_alias_attribute
+endif
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
@@ -1209,6 +1266,7 @@ check-local: check-pthread.passed
 	@$(MAKE) test_mregparm_m32_use
 	@$(MAKE) test_compile_and_link_with_NDEBUG
 	@$(MAKE) test_compile_and_link_without_NDEBUG
+	@$(MAKE) multiple_file_test_01
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_tests: make check rule complete (terminated normally) ******"

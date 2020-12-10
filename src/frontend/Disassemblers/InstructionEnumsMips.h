@@ -1,6 +1,12 @@
 /* Enum constants for MIPS architectures */
-#ifndef ROSE_ENUMS_MIPS_H
-#define ROSE_ENUMS_MIPS_H
+#ifndef ROSE_BinaryAnalysis_InstructionEnumsMips_H
+#define ROSE_BinaryAnalysis_InstructionEnumsMips_H
+
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** MIPS major register numbers. */
 enum MipsRegisterClass {
@@ -11,7 +17,8 @@ enum MipsRegisterClass {
     mips_regclass_cp0gpr,       /**< General purpose registers for coprocessor 0. Minors are 0..31. */
     mips_regclass_cp2gpr,       /**< Coprocessor 2 general purpose registers. Minors are implementation defined. */
     mips_regclass_cp2spr,       /**< Coprocessor 2 special purpose (i.e., control) registers. Minors are implementation dfnd. */
-    mips_regclass_sgpr          /**< Shadow general purpose registers. */
+    mips_regclass_sgpr,         /**< Shadow general purpose registers. */
+    mips_regclass_hw,           /**< Hardware registers. */
 };
 
 /** Portions of the FCSR register. These are the minor numbers for mips_regclass_fcsr. */
@@ -346,5 +353,8 @@ enum MipsInstructionKind {
     mips_last_instruction // must be last enum member
 };
 
+} // namespace
+} // namespace
 
+#endif
 #endif

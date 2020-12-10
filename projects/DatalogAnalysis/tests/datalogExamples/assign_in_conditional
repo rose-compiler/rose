@@ -1,8 +1,0 @@
-.include common
-
-assign_in_conditional( a:node, c:node )
-assign_in_conditional( a, c ) :- \
-    anc(c,a), anyAssignE(a,_,_), ifS(_,c,_,_).
-
-assign_in_conditional( A, C )?
-

@@ -19,5 +19,8 @@ int main()
     *((p = &x) + 2) = 0;
     val = x + (*p = 5);
     *(int*)(p-r) = 5;
+    // 
+    //
+    *p=1000;
     return val;
 }

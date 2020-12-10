@@ -1,3 +1,0 @@
-#!/bin/sh
-
-/home/collingbourne2/work/projects/doxygen/doxygen/correctExternalCommentsAndCompile "$@" > /dev/null

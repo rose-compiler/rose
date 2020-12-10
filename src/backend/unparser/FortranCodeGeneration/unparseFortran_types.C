@@ -19,7 +19,7 @@
 void
 UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printAttrs)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
 #if 0
      printf("In unparseType: %s\n", type->class_name().c_str());
@@ -92,7 +92,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printA
           case V_SgTypeComplex:
              {
                 SgTypeComplex* complexType = isSgTypeComplex(type);
-                ROSE_ASSERT(complexType != NULL);
+                ASSERT_not_null(complexType);
                 if (isSgTypeDouble(complexType->get_base_type()))
                    {
                       unparseBaseType(type,"DOUBLE COMPLEX",info);
@@ -211,7 +211,7 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info, bool 
   // cur << "\n/* Inside of UnparserFort::unparseStringType */\n";
   
      SgTypeString* string_type = isSgTypeString(type);
-     ROSE_ASSERT(string_type != NULL);
+     ASSERT_not_null(string_type);
      curprint ("CHARACTER");
      if (printAttrs)
         unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
@@ -235,7 +235,7 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info, bool p
 #endif
 
      SgArrayType* array_type = isSgArrayType(type);
-     ROSE_ASSERT(array_type != NULL);
+     ASSERT_not_null(array_type);
 
   // I think that supressStrippedTypeName() and SkipBaseType() are redundant...
      if (info.supressStrippedTypeName() == false)
@@ -268,17 +268,17 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info, bool p
                  // this is a subscript expression but all we want to unparse is the length
                  // of the string, which should be the upper bound of the subscript expression
                     SgSubscriptExpression* sub_expr = isSgSubscriptExpression(expr);
-                    ROSE_ASSERT(sub_expr != NULL);
+                    ASSERT_not_null(sub_expr);
 
-                    ROSE_ASSERT(unp != NULL);
-                    ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
+                    ASSERT_not_null(unp);
+                    ASSERT_not_null(unp->u_fortran_locatedNode);
                     unp->u_fortran_locatedNode->unparseExpression(sub_expr->get_upperBound(), info);
                   }
                  else
                   {
                  // unparse the entire expression
-                    ROSE_ASSERT(unp != NULL);
-                    ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
+                    ASSERT_not_null(unp);
+                    ASSERT_not_null(unp->u_fortran_locatedNode);
                     unp->u_fortran_locatedNode->unparseExpression(*it, info);
                   }
              }
@@ -299,8 +299,8 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info, bool p
           ROSE_ASSERT(array_type->get_rank() >= 1);
           curprint(", DIMENSION");
 
-          ROSE_ASSERT(unp != NULL);
-          ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
+          ASSERT_not_null(unp);
+          ASSERT_not_null(unp->u_fortran_locatedNode);
        // unp->u_fortran_locatedNode->unparseExprList(dim, info); // adds parens
        // unp->u_fortran_locatedNode->UnparseLanguageIndependentConstructs::unparseExprList(dim, info); // adds parens
 
@@ -318,8 +318,8 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info, bool p
         ROSE_ASSERT(array_type->get_rank() >= 1);
         curprint(array_type->get_isCoArray()? ", CODIMENSION": ", DIMENSION");
 
-        ROSE_ASSERT(unp != NULL);
-        ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
+        ASSERT_not_null(unp);
+        ASSERT_not_null(unp->u_fortran_locatedNode);
 
         if (array_type->get_isCoArray())
         {  // print codimension info
@@ -367,7 +367,7 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info, bool
   // Not clear that we want to do anything here in the unparser...
 
      SgPointerType* pointer_type = isSgPointerType(type);
-     ROSE_ASSERT(pointer_type != NULL);
+     ASSERT_not_null(pointer_type);
 
 #if 0
   /* special cases: ptr to array, int (*p) [10] */ 
@@ -441,7 +441,7 @@ void
 UnparseFortran_type::unparseReferenceType(SgType* type, SgUnparse_Info& info)
    {
      SgReferenceType* ref_type = isSgReferenceType(type);
-     ROSE_ASSERT(ref_type != NULL);
+     ASSERT_not_null(ref_type);
   
   /* special cases: ptr to array, int (*p) [10] */
   /*                ptr to function, int (*p)(int) */
@@ -489,14 +489,14 @@ UnparseFortran_type::unparseClassType(SgType* type, SgUnparse_Info& info)
   // printf ("Inside of UnparserFortran::unparseClassType \n");
 
      SgClassType* class_type = isSgClassType(type);
-     ROSE_ASSERT(class_type != NULL);
+     ASSERT_not_null(class_type);
 
   // DQ (10/7/2004): We need to output just the name when isTypeFirstPart == false and isTypeSecondPart == false
   // this allows us to handle: "doubleArray* arrayPtr2 = new doubleArray();"
      if (info.isTypeSecondPart() == false)
         {
        // Fortran is not as complex as C++, so we can, at least for now, skip the name qualification!
-          ROSE_ASSERT(class_type != NULL);
+          ASSERT_not_null(class_type);
           curprint("TYPE ( ");
           curprint(class_type->get_name().str());
           curprint(" ) ");
@@ -508,7 +508,7 @@ void
 UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info) 
    {
      SgModifierType* mod_type = isSgModifierType(type);
-     ROSE_ASSERT(mod_type != NULL);
+     ASSERT_not_null(mod_type);
 
   // printf ("Not clear what the Fortran specific type modifiers will be, UnparseFortran_type::unparseModifierType() not implemented! \n");
 
@@ -553,7 +553,7 @@ void
 UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
    {
      SgFunctionType* func_type = isSgFunctionType(type);
-     ROSE_ASSERT (func_type != NULL);
+     ASSERT_not_null(func_type);
 
      SgUnparse_Info ninfo(info);
 

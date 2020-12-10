@@ -226,7 +226,7 @@ void PropertyValueTable::finished() {
 }
 
 void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
-  cout<<"STATUS: reachability finished: isPrecise: "<<isPrecise<<" isComplete: "<<isComplete<<endl;
+  //cout<<"STATUS: reachability finished: isPrecise: "<<isPrecise<<" isComplete: "<<isComplete<<endl;
   if(isPrecise&&isComplete) {
     convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_NO);
     return;
@@ -363,33 +363,6 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
-#ifdef HAVE_SPOT
-string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
-  stringstream propertiesSpinSyntax;
-  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
-    propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<SpotMiscellaneous::spinSyntax(i->second)<<" }";
-    if (withResults) {
-      PropertyValue val = _propertyValueTable[i->first];
-      if (val == PROPERTY_VALUE_YES) {
-	propertiesSpinSyntax << "\t /* true */";
-      } else if (val == PROPERTY_VALUE_NO) {
-	propertiesSpinSyntax << "\t /* false */";
-      } else if (val == PROPERTY_VALUE_UNKNOWN) {
-	propertiesSpinSyntax << "\t /* unknown */";
-      } else {
-	cerr << "ERROR: Unknown PropertyValue detected." << endl;
-	ROSE_ASSERT(0);
-      }
-    }
-    if (withAnnotations) {
-      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
-    }
-    propertiesSpinSyntax << endl;
-  }
-  return propertiesSpinSyntax.str();
-}
-#endif
-
 string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
   stringstream propertiesRersFormat;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
@@ -433,7 +406,7 @@ void PropertyValueTable::shuffle() {
   }
   for (unsigned int i = 1; i <= size(); ++i) {
     // randomly select a property that has not been copied yet
-    int indexNotCopied = SPRAY::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
+    int indexNotCopied = CodeThorn::randomIntInRange( pair<int,int>(0, ((size() -1) - numCopied)) );
     map<size_t, string>::iterator iter = _formulas.begin();
     int indexNotCopiedIter = 0;
     while (indexNotCopiedIter < indexNotCopied || copied[(*iter).first]) {
@@ -462,3 +435,31 @@ void PropertyValueTable::shuffle() {
   _counterexamples = counterexamples;
   _annotations = annotations;
 }
+
+#ifdef HAVE_SPOT
+string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations, std::string (*spinSyntaxCallBackFP)(std::string) ) {
+  stringstream propertiesSpinSyntax;
+  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
+    //propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<SpotMiscellaneous::spinSyntax(i->second)<<" }";
+    propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<spinSyntaxCallBackFP(i->second)<<" }";
+    if (withResults) {
+      PropertyValue val = _propertyValueTable[i->first];
+      if (val == PROPERTY_VALUE_YES) {
+	propertiesSpinSyntax << "\t /* true */";
+      } else if (val == PROPERTY_VALUE_NO) {
+	propertiesSpinSyntax << "\t /* false */";
+      } else if (val == PROPERTY_VALUE_UNKNOWN) {
+	propertiesSpinSyntax << "\t /* unknown */";
+      } else {
+	cerr << "ERROR: Unknown PropertyValue detected." << endl;
+	ROSE_ASSERT(0);
+      }
+    }
+    if (withAnnotations) {
+      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
+    }
+    propertiesSpinSyntax << endl;
+  }
+  return propertiesSpinSyntax.str();
+}
+#endif

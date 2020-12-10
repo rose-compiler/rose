@@ -2,16 +2,13 @@
 #define VISUALIZER
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "EState.h"
-#include "ParProTransitionGraph.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
 
@@ -21,26 +18,26 @@
 #include "tgba/tgba.hh"
 #endif
 
-using CodeThorn::Analyzer;
+using CodeThorn::CTAnalysis;
 using CodeThorn::PStateSet;
 using CodeThorn::EStateSet;
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 class AssertionExtractor {
  public:
-  AssertionExtractor(Analyzer* analyzer);
+  AssertionExtractor(CTAnalysis* analyzer);
   void computeLabelVectorOfEStates();
   void annotateAst();
-  void setLabeler(SPRAY::Labeler* x);
-  void setVariableIdMapping(SPRAY::VariableIdMapping* x);
+  void setLabeler(CodeThorn::Labeler* x);
+  void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
   void setPStateSet(PStateSet* x);
   void setEStateSet(EStateSet* x);
 
  private:
-  SPRAY::Labeler* labeler;
-  SPRAY::VariableIdMapping* variableIdMapping;
+  CodeThorn::Labeler* labeler;
+  CodeThorn::VariableIdMapping* variableIdMapping;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
   vector<std::string> assertions;
@@ -49,25 +46,26 @@ class AssertionExtractor {
 class Visualizer {
  public:
   Visualizer();
-  Visualizer(CodeThorn::Analyzer* analyzer);
-  Visualizer(SPRAY::IOLabeler* l, SPRAY::VariableIdMapping* vim, SPRAY::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
-  void setOptionTransitionGraphDotHtmlNode(bool);
-  void setVariableIdMapping(SPRAY::VariableIdMapping* x);
-  void setLabeler(SPRAY::IOLabeler* x);
-  void setFlow(SPRAY::Flow* x);
+  Visualizer(CodeThorn::CTAnalysis* analyzer);
+  Visualizer(CodeThorn::IOLabeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
+  void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
+  void setLabeler(CodeThorn::IOLabeler* x);
+  void setFlow(CodeThorn::Flow* x);
   void setPStateSet(CodeThorn::PStateSet* x);
   void setEStateSet(CodeThorn::EStateSet* x);
   void setTransitionGraph(CodeThorn::TransitionGraph* x);
   void createMappings();
+  void setOptionTransitionGraphDotHtmlNode(bool);
+  void setOptionMemorySubGraphs(bool flag);
+  bool getOptionMemorySubGraphs();
   std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
   std::string pstateToString(const CodeThorn::PState* pstate);
   std::string pstateToDotString(const CodeThorn::PState* pstate);
   std::string estateToString(const CodeThorn::EState* estate);
   std::string estateToDotString(const CodeThorn::EState* estate);
-  std::string transitionGraphDotHtmlNode(SPRAY::Label lab);
+  std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
-  std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
 #ifdef HAVE_SPOT
   std::string spotTgbaToDot(spot::tgba& tgba);
 #endif
@@ -80,10 +78,14 @@ class Visualizer {
   std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
+  std::string dotEStateAddressString(const EState* estate);
+  std::string dotEStateMemoryString(const EState* estate);
+  void setMemorySubGraphsOption(bool flag);
+  std::string dotClusterName(const EState* estate);
  private:
-  SPRAY::IOLabeler* labeler;
-  SPRAY::VariableIdMapping* variableIdMapping;
-  SPRAY::Flow* flow;
+  CodeThorn::IOLabeler* labeler;
+  CodeThorn::VariableIdMapping* variableIdMapping;
+  CodeThorn::Flow* flow;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
   CodeThorn::TransitionGraph* transitionGraph;
@@ -97,7 +99,7 @@ class Visualizer {
   bool optionEStateId;
   bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
-
+  bool optionMemorySubGraphs;
 };
 
 #endif

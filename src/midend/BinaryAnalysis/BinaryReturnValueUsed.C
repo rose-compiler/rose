@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <CommandLine.h>
 #include <BinaryReturnValueUsed.h>
 #include <Partitioner2/DataFlow.h>
@@ -59,7 +62,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 // those locations are written.
 class RiscOperators: public P2::Semantics::RiscOperators {
     RegisterParts calleeOutputRegisters_;
-    StackVariables calleeOutputParameters_;
+    Variables::StackVariables calleeOutputParameters_;
     CallSiteResults *results_;
     const RegisterDictionary *registerDictionary_;
 
@@ -125,7 +128,7 @@ public:
 
 public:
     // Sets the list of registers and stack locations that a callee uses as return value locations
-    void insertOutputs(const RegisterParts &regs, const StackVariables &params) {
+    void insertOutputs(const RegisterParts &regs, const Variables::StackVariables &params) {
         calleeOutputRegisters_ = regs;
         calleeOutputParameters_ = params;
     }
@@ -136,13 +139,13 @@ public:
     }
 
     // Stack parameter locations that haven't been referenced during the instruction semantics phase.
-    const StackVariables& unreferencedStackOutputs() const {
+    const Variables::StackVariables& unreferencedStackOutputs() const {
         return calleeOutputParameters_;
     }
     
     // True if a callee has return values
     bool hasOutputs() const {
-        return !calleeOutputRegisters_.isEmpty() || !calleeOutputParameters_.empty();
+        return !calleeOutputRegisters_.isEmpty() || !calleeOutputParameters_.isEmpty();
     }
 
     // Set reference to the object that holds the analysis results for a call site.  These results are updated as instructions
@@ -302,10 +305,12 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     if (calleeBehavior.hasResults() && calleeBehavior.didConverge())
         calleeReturnRegs &= calleeBehavior.outputRegisters();
     calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
-    StackVariables calleeReturnMem;
+    Variables::StackVariables calleeReturnMem;
+#if 0 // [Robb Matzke 2019-08-14]: turning off warning
     BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
         // FIXME[Robb P Matzke 2017-03-20]: todo
     }
+#endif
     
     // Build the instruction semantics that will look for which of the callee's return values are used by the caller. "Used"
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
@@ -417,7 +422,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
                     BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
-                        (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
+                        (void) ops->readRegister(reg, ops->undefined_(reg.nBits()));
                 }
             }
         }
@@ -436,3 +441,5 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 } // namespace
 } // namespace
 } // namespace
+
+#endif

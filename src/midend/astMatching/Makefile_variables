@@ -1,6 +1,6 @@
 # Non-recursive Makefile
 
-mAstMatching_built_sources=matcherparser.C 
+#mAstMatching_built_sources=matcherparser.C 
 
 mAstMatching_la_sources=\
 	$(mAstMatchingPath)/matcherparser.C \
@@ -36,17 +36,6 @@ mAstMatching_cleanLocal=\
 mAstMatching_distCleanLocal=\
 	rm -rf \
 		$(mAstMatchingPath)/Templates.DB
-
-# explicit rules because of multiple bison parser
-# this file is a tracked file now. It will only be rebuilt if manually deleted
-matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstMatchingPath)/matcherparser.yy
-	$(AM_V_GEN)
-	@$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/$(mAstMatchingPath)/matcherparser.yy # generates y.tab.h/c
-	@$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll
-	@mv y.tab.h matcherparser.h
-	@cat lex.yy.c y.tab.c > matcherparser.C
-	@rm lex.yy.c y.tab.c
-matcherparser.h: matcherparser.C
 
 if OS_MACOSX
 install-exec-hook:

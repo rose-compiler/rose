@@ -1,0 +1,6 @@
+include_rules
+
+run $(public_file) --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt --language=shell -o lib/matrix \
+    run-support
+
+run $(public_file) -o lib/matrix blacklisted.png

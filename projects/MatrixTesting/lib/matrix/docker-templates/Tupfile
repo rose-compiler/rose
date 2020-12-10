@@ -1,0 +1,8 @@
+include_rules
+
+run $(public_file) --license=$(ROSE)/LicenseInformation/ROSE_BSD_License.txt --language=shell -o lib/matrix/docker-templates \
+    centos6 \
+    centos7 \
+    debian \
+    fedora \
+    ubuntu

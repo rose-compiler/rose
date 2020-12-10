@@ -1,4 +1,0 @@
-t euid_0 euid_1 { function_call { identifier "seteuid___Fb_i_Gb___uid_tUi_Fe_" } { function_call { identifier "getuid___Fb___uid_tUi_Gb__Fe_" } } }
-t euid_0 euid_0 { other }
-t euid_1 euid_0 { function_call { identifier "seteuid___Fb_i_Gb___uid_tUi_Fe_" } { lexical_cst 0 } }
-t euid_1 euid_1 { other }

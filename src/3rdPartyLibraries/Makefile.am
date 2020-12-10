@@ -10,6 +10,10 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += fortran-parser
 endif
 
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   SUBDIRS += flang-parser
+endif
+
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += java-parser
 endif
@@ -17,7 +21,10 @@ endif
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += MSTL
 else
-SUBDIRS += MSTL libharu-2.1.0 antlr-jars qrose
+SUBDIRS += MSTL antlr-jars qrose
+if ROSE_WITH_LIBHARU
+SUBDIRS += libharu-2.1.0 
+endif
 endif
 
 # DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).

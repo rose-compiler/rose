@@ -1,7 +1,10 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-#include "BaseSemantics2.h"
+#include <BaseSemantics2.h>
+#include <Registers.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -99,6 +102,7 @@ protected:
         regcache_init();
         iproc_init();
         memory_init();
+        initializeState(ops->currentState());
     }
 
 public:
@@ -108,7 +112,7 @@ public:
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
 
-    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    /** Make sure memory properties are set up correctly. For instance, byte order should be little endian. */
     void memory_init();
 
 public:
@@ -161,8 +165,8 @@ public:
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
 
     virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
@@ -171,6 +175,8 @@ public:
     }
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
+
+    virtual void initializeState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
 
     enum AccessMode { READ_REGISTER, PEEK_REGISTER };
 
@@ -311,4 +317,5 @@ public:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
 #endif
 
+#endif
 #endif

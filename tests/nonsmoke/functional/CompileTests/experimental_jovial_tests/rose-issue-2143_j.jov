@@ -1,0 +1,10 @@
+START
+
+DEFINE PI "3.14" ;
+
+PROGRAM main ;
+BEGIN
+  ITEM ff F ;
+  ff = 2*PI ;
+END
+TERM

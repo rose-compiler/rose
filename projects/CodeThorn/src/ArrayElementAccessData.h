@@ -5,15 +5,15 @@
 #include "VariableIdMapping.h"
 
 struct ArrayElementAccessData {
-  SPRAY::VariableId varId;
+  CodeThorn::VariableId varId;
   std::vector<int> subscripts;
-  SPRAY::VariableId getVariable() const;
+  CodeThorn::VariableId getVariable() const;
   int getSubscript(int numOfDimension) const;
   int getDimensions() const;
   ArrayElementAccessData();
-  ArrayElementAccessData(SgPntrArrRefExp* ref, SPRAY::VariableIdMapping* variableIdMapping);
-  std::string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-  std::string toStringNoSsaSubscript(SPRAY::VariableIdMapping* variableIdMapping) const;
+  ArrayElementAccessData(SgPntrArrRefExp* ref, CodeThorn::VariableIdMapping* variableIdMapping);
+  std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
+  std::string toStringNoSsaSubscript(CodeThorn::VariableIdMapping* variableIdMapping) const;
   //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
   bool isValid() const;
   bool hasNegativeIndex() const;

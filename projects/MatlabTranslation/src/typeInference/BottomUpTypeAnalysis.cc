@@ -268,6 +268,7 @@ namespace MatlabAnalysis
   static
   void dumpFunctionInfo(std::string msg, SgFunctionDeclaration* fn)
   {
+    /*
     ROSE_ASSERT(fn);
 
     std::cerr << msg << '\n'
@@ -276,15 +277,18 @@ namespace MatlabAnalysis
               << "  1stdecl: " << fn->get_firstNondefiningDeclaration() << '\n'
               << "  mangled: " << fn->get_mangled_name() << '\n'
               << std::flush;
+    */
   }
 
   static
   SgFunctionDeclaration* cloneFunction(SgFunctionDeclaration* function)
   {
+    /*
     std::cerr << "Copying function "
               << function->get_name()
               << "/" << function->get_mangled_name()
               << std::endl;
+    */
 
     SgFunctionDeclaration*  copy        = si::deepCopy(function);
     SgExprListExp*          returnList  = FunctionReturnAttribute::getReturnList(function);

@@ -95,7 +95,7 @@ AstDOTGeneration::generateWithinFile(SgFile* node, traversalType tt, string file
   traverseWithinFile(node,ia);
 }
 
-DOTInheritedAttribute 
+DOTInheritedAttribute
 AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia)
    {
   // I think this may no longer be required, but I will leave it in place for now
@@ -111,24 +111,24 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
   // ia.tdTracePos   = tdTrace++;
 
   // DQ (5/3/2006)
-  // We put macros and functions required for GNU compatability in the file: 
+  // We put macros and functions required for GNU compatability in the file:
   //    rose_edg_required_macros_and_functions.h
   // and we want to avoid generating nodes for these within visualizations of the AST.
   // Once EDG supports these functions (we have collected the onese missed by EDG here)
   // this file will not be required.  We could filter on declaration first to avoid
   // lots of string comparision.  Or use a static pointer to save the first fileInfo
-  // from "rose_edg_required_macros_and_functions.h" and then use the 
+  // from "rose_edg_required_macros_and_functions.h" and then use the
   // Sg_File_Info::sameFile() function (this reduces to an integer comparision internally).
      Sg_File_Info* fileInfo = node->get_file_info();
      if (fileInfo != NULL)
         {
-       // Build factored versions of the rather numerous tests (we are now not 
-       // able to rely on short-circuit evaluation which makes the code easier 
+       // Build factored versions of the rather numerous tests (we are now not
+       // able to rely on short-circuit evaluation which makes the code easier
        // to debug using valgrind).
           bool isCompilerGeneratedOrPartOfTransformation = fileInfo->isCompilerGenerated();
 
-       // DQ (5/3/2006): All constructs from the rose_edg_required_macros_and_functions.h 
-       // file are marked as compiler generated.  These are declarations required for GNU 
+       // DQ (5/3/2006): All constructs from the rose_edg_required_macros_and_functions.h
+       // file are marked as compiler generated.  These are declarations required for GNU
        // compatability and we would like to have them be ignored because they should be
        // considered builtin and not explicitly represented.  In a sense this file is special.
        // Not that if we traverse the AST without constraint then we traverse these IR nodes.
@@ -140,32 +140,32 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                if (filenameWithoutPath == targetFileName)
                   {
 #if 0
-                 // DQ (8/22/2018): This can be handy to comment out when debuging associating comments 
+                 // DQ (8/22/2018): This can be handy to comment out when debuging associating comments
                  // and CPP directives to IR nodes (e.g. unparse header support).
                  // This permits the visualization of the AST to be smaller (skips things in std namespace for example).
                     ia.skipSubTree = true;
 #endif
                   }
 
-            // DQ (12/20/2018): Skip template instantiations that can make the DOT files too large to 
+            // DQ (12/20/2018): Skip template instantiations that can make the DOT files too large to
             // generate or look at easily.
             // DQ (12/15/2018): Use this mechanism to simplify the AST for visualization.
-            // DQ (1/6/2015): This allows us to simplify the AST visualization by reducing the 
-            // number of nodes in the AST specific to template instantiations. 
-            // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
+            // DQ (1/6/2015): This allows us to simplify the AST visualization by reducing the
+            // number of nodes in the AST specific to template instantiations.
+            // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better
             // handle visualization of selected portions of large files.
                if (ia.skipTemplateInstantiations == true)
                   {
-                 // DQ (2/12/2015): Test skipping instantiated templates since this frequently makes 
-                 // the generated dot file too large to be visualized. Ultimately this should be 
+                 // DQ (2/12/2015): Test skipping instantiated templates since this frequently makes
+                 // the generated dot file too large to be visualized. Ultimately this should be
                  // some sort of optional behavior.
                     SgTemplateInstantiationDecl*               templateInstantationClassDeclaration          = isSgTemplateInstantiationDecl(node);
                     SgTemplateInstantiationFunctionDecl*       templateInstantationFunctionDeclaration       = isSgTemplateInstantiationFunctionDecl(node);
                     SgTemplateInstantiationMemberFunctionDecl* templateInstantationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
                  // SgTemplateMemberFunctionDeclaration*       templateMemberFunctionDeclaration             = isSgTemplateMemberFunctionDeclaration(node);
 
-                    if (templateInstantationClassDeclaration != NULL || 
-                        templateInstantationFunctionDeclaration != NULL || 
+                    if (templateInstantationClassDeclaration != NULL ||
+                        templateInstantationFunctionDeclaration != NULL ||
                         templateInstantationMemberFunctionDeclaration != NULL ||
                      // templateMemberFunctionDeclaration != NULL ||
                         false)
@@ -186,7 +186,7 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
 #endif
 #if DEBUG_DSL_EXAMPLES
        // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
-       // I think we need to have a mechanism to support this so that we can better handle visualization 
+       // I think we need to have a mechanism to support this so that we can better handle visualization
        // of selected portions of large files.
           SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
           if (functionDeclaration != NULL)
@@ -364,8 +364,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (ia.skipSubTree == true)
         {
        // I am unclear if I should return NULL or node as a parameter to DOTSynthesizedAttribute
-       // Figured this out: if we return a valid pointer then we get a node in the DOT graph 
-       // (with just the pointer value as a label), where as if we return a DOTSynthesizedAttribute 
+       // Figured this out: if we return a valid pointer then we get a node in the DOT graph
+       // (with just the pointer value as a label), where as if we return a DOTSynthesizedAttribute
        // with a NUL pointer then the node will NOT appear in the DOT graph.
        // return DOTSynthesizedAttribute(node);
           return DOTSynthesizedAttribute(NULL);
@@ -383,7 +383,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
      if (genericDeclaration != NULL)
         {
-       // At the moment the mnemonic name is stored, but it could be computed in the 
+       // At the moment the mnemonic name is stored, but it could be computed in the
        // future from the kind and the tostring() function.
           string name = (genericDeclaration->isForward() == true) ? "isForward" : "!isForward";
           ROSE_ASSERT(name.empty() == false);
@@ -433,9 +433,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n variableDeclarationContainsBaseTypeDefiningDeclaration = ") + (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() ? "true " : "false ");
              }
 
-       // DQ (11/26/2015): Adding friend specification to support debugging test2012_59.C 
+       // DQ (11/26/2015): Adding friend specification to support debugging test2012_59.C
        // (multiple function definitions for the same function due to EDG template function normalizations).
           nodelabel += string("\\n isFriend = ") + (genericDeclaration->get_declarationModifier().isFriend() ? "true " : "false ");
+
+       // DQ (4/2/2020): Need to add more detail to the graph output so that we can debug Cxx_tests/test2020_02.C.
+          nodelabel += string("\\n isExtern = ") + (genericDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true " : "false ");
+
+       // DQ (10/18/2020): Add the reference to the defining and non-defining declarations. Debugging outlining into seperate file.
+          nodelabel += string("\\n firstNondefiningDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_firstNondefiningDeclaration());
+          nodelabel += string("\\n definingDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_definingDeclaration());
 
           nodelabel += string("\\n") + name;
         }
@@ -460,7 +467,6 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // DQ (4/14/2015): We need to have these additional data members output (similar to SgStatement).
           nodelabel += string("\\n") + string("isModified = ") + string(initializedName->get_isModified() ? "true" : "false");
           nodelabel += string("\\n") + string("containsTransformation = ") + string(initializedName->get_containsTransformation() ? "true" : "false");
-          nodelabel += string("\\n") + string("isTransformation = ") + string(initializedName->isTransformation() ? "true" : "false");
 #endif
         }
 
@@ -470,7 +476,15 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
           nodelabel += string("\\n") + string("isModified = ") + string(genericLocatedNode->get_isModified() ? "true" : "false");
           nodelabel += string("\\n") + string("containsTransformation = ") + string(genericLocatedNode->get_containsTransformation() ? "true" : "false");
-          nodelabel += string("\\n") + string("isTransformation = ") + string(genericLocatedNode->isTransformation() ? "true" : "false");
+          if (genericLocatedNode->get_file_info())
+          {
+            nodelabel += string("\\n") + string("isTransformation = ") + string(genericLocatedNode->isTransformation() ? "true" : "false");
+          }
+          else
+          {
+            nodelabel += ("\\n *no file info*");
+          }
+
         }
 
   // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.
@@ -496,6 +510,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           string name = "unknown";
           if (variableSymbol != NULL)
              {
+            // printf ("Commented out call to variableSymbol->get_name() \n");
                name = variableSymbol->get_name();
              }
           nodelabel += string("\\n name = ") + name;
@@ -513,6 +528,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                printf ("WARNING: functionSymbol == NULL: functionRefExp = %p \n",functionRefExp);
              }
           ROSE_ASSERT(functionSymbol != NULL);
+
+       // DQ (10/18/2020): Adding more inforamtion to the generated dot graphs.
+          nodelabel += string("\\n functionSymbol = ") + StringUtility::numberToString(functionSymbol);
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionSymbol->get_declaration());
+          nodelabel += string("\\n functionDeclaration = ") + StringUtility::numberToString(functionDeclaration);
+          if (functionDeclaration != NULL)
+             {
+               nodelabel += string("\\n defining functionDeclaration = ") + StringUtility::numberToString(functionDeclaration->get_definingDeclaration());
+               nodelabel += string("\\n nondefining functionDeclaration = ") + StringUtility::numberToString(functionDeclaration->get_firstNondefiningDeclaration());
+             }
 
           string name = "unknown";
           if (functionSymbol != NULL)
@@ -559,6 +584,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
         }
 
+  // DQ (9/4/2020): Added support for output of the kind of cast in the SgCastExp IR nodes.
+     SgCastExp* castExpression = isSgCastExp(node);
+     if (castExpression != NULL)
+        {
+          string name = SgCastExp::cast_type_to_string(castExpression->cast_type()).c_str();;
+          nodelabel += string("\\n cast kind = ") + name;
+        }
+
 #if 0
   // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
   // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
@@ -574,7 +607,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
 #if 1
-  // DQ (4/6/2018): Adding support to output lvvalue information.
+  // DQ (4/6/2018): Adding support to output lvalue information.
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
@@ -584,11 +617,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
         {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-       // At the moment the mnemonic name is stored, but it could be computed in the 
+       // At the moment the mnemonic name is stored, but it could be computed in the
        // future from the kind and the tostring() function.
 #if 1
           string unparsedInstruction = unparseInstruction(genericInstruction);
@@ -601,21 +634,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           ROSE_ASSERT(name.empty() == false);
 
           nodelabel += string("\\n") + name;
-#else
-          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
-#endif
         }
 
      SgAsmExpression* genericExpression = isSgAsmExpression(node);
      if (genericExpression != NULL)
         {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           string name = unparseExpression(genericExpression, NULL, NULL);
           if (!name.empty())
               nodelabel += string("\\n") + name;
-#else
-          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
-#endif
         }
 
      if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {
@@ -623,15 +649,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
          if (!name.empty())
              nodelabel += "\\n" + name;
      }
-     
+
   // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
-  // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
+  // In generall there are long list of these IR nodes in the binary and this helps make some sense of
   // the lists (sections, symbols, etc.).
      SgAsmExecutableFileFormat* binaryFileFormatNode = isSgAsmExecutableFileFormat(node);
      if (binaryFileFormatNode != NULL)
         {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-       // The case of binary file format IR nodes can be especially confusing so we want the 
+       // The case of binary file format IR nodes can be especially confusing so we want the
        // default to output some more specific information for some IR nodes (e.g. sections).
           string name;
 
@@ -714,10 +739,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
           if (name.empty() == false)
                nodelabel += string("\\n") + name;
-#else
-          printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
-#endif
         }
+#endif
 
   // DQ (11/29/2008): Output the directives in the label of the IR node.
      SgC_PreprocessorDirectiveStatement* preprocessorDirective = isSgC_PreprocessorDirectiveStatement(node);
@@ -783,7 +806,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           default:
                assert(false);
         }
-  
+
      ++tdbuTrace;
      ++buTrace;
 
@@ -895,7 +918,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
        // DQ (9/1/2008): Added case for output of SgProject rooted DOT file.
        // This allows source code and binary files to be combined into the same DOT file.
-          case V_SgProject: 
+          case V_SgProject:
              {
                SgProject* project = dynamic_cast<SgProject*>(node);
                ROSE_ASSERT(project != NULL);
@@ -919,9 +942,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                break;
              }
 
-       // case V_SgFile: 
-          case V_SgSourceFile: 
-          case V_SgBinaryComposite: 
+       // case V_SgFile:
+          case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+          case V_SgBinaryComposite:
+#endif
              {
                SgFile* file = dynamic_cast<SgFile*>(node);
                ROSE_ASSERT(file != NULL);
@@ -937,9 +962,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
             // printf ("file->get_parent() = %p \n",file->get_parent());
             // cout << "generating DOT file (from SgSourceFile or SgBinaryComposite): " << filename2 << " ... ";
 
-            // DQ (9/1/2008): this effects the output of DOT files when multiple files are specified 
-            // on the command line.  A SgProject is still built even when a single file is specificed 
-            // on the command line, however there are cases where a SgFile can be built without a 
+            // DQ (9/1/2008): this effects the output of DOT files when multiple files are specified
+            // on the command line.  A SgProject is still built even when a single file is specificed
+            // on the command line, however there are cases where a SgFile can be built without a
             // SgProject and this case allows those SgFile rooted subtrees to be output as DOT files.
             // If there is a SgProject then output the dot file from there, else output as a SgFile.
                if (file->get_parent() == NULL)
@@ -952,13 +977,13 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                   }
                  else
                   {
-                 // There is a SgProject IR node, but if we will be traversing it we want to output the 
-                 // graph then (so that the graph will include the SgProject IR nodes and connect multiple 
+                 // There is a SgProject IR node, but if we will be traversing it we want to output the
+                 // graph then (so that the graph will include the SgProject IR nodes and connect multiple
                  // files (SgSourceFile or SgBinaryComposite IR nodes).
                     if ( visitedNodes.find(file->get_parent()) == visitedNodes.end() )
                        {
-                      // This SgProject node was not input as part of the traversal, 
-                      // so we will not be traversing the SgProject IR nodes and we 
+                      // This SgProject node was not input as part of the traversal,
+                      // so we will not be traversing the SgProject IR nodes and we
                       // have to output the graph now!
 
                          if ( SgProject::get_verbose() >= 1 )
@@ -973,14 +998,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                               printf ("Skip the output of the DOT graph from the SgFile IR node (SgProject will be traversed) \n");
                        }
                   }
-               
+
             // cout << "done." << endl;
                break;
              }
 
-       // DQ (7/23/2005): Implemented default case to avoid g++ warnings 
+       // DQ (7/23/2005): Implemented default case to avoid g++ warnings
        // about enum values not handled by this switch
-          default: 
+          default:
              {
             // nothing to do here
                break;
@@ -992,7 +1017,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
    }
 
 
-static std::string 
+static std::string
 generateFileLineColumnString (Sg_File_Info* fileInfo)
    {
   // DQ (9/1/2013): Adding source position information for DOT output.

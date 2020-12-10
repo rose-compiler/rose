@@ -29,6 +29,12 @@ usage() {
     echo "  --add PATH | -a PATH"
     echo "      Paths to add to all rpaths."
     echo
+    echo "  --build-type TYPE"
+    echo "      Name of build type, usually 'release' or 'debug' but it can be whatever"
+    echo "      you want.  If not specified, then the word 'release' or 'debug' is used"
+    echo "      depending on how ROSE was compiled (which is determined somewhat"
+    echo "      heuristically."
+    echo
     echo "  --changer patchelf|chrpath|rpath"
     echo "      The tool to use to change the RPATH in an ELF file.  If this switch"
     echo "      isn't specified, then the tools are tried in the order listed here."
@@ -47,9 +53,9 @@ usage() {
     echo "      The PREFIX is only the root of the installation hierarchy instead of"
     echo "      the actual installation point.  When this switch is used, the installation"
     echo "      directory name is computed by combining the given PREFIX, the current"
-    echo "      date, the release mode ('release' or 'debug'), and a three-digit serial"
-    echo "      number. Also, if a SYMLINK isn't specified, it is constructed in the "
-    echo "      given PREFIX directory and named \"latest\".  If PREFIX itself is not "
+    echo "      date, the release mode (usually 'release' or 'debug'), and a three-digit"
+    echo "      serial number. Also, if a SYMLINK isn't specified, it is constructed in the"
+    echo "      given PREFIX directory and named \"latest\".  If PREFIX itself is not"
     echo "      specified, it defaults to \"\$HOME/rose-installed\"."
     echo
     echo "  --remove PATH | -d PATH"
@@ -124,6 +130,7 @@ next_serial_number() {
 
 remove_paths=()
 add_paths=()
+build_type=
 verbose=
 libtool=
 force=
@@ -140,6 +147,15 @@ while [ "$#" -gt 0 ]; do
 	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
 	    add_paths=("${add_paths[@]}" "$2")
 	    shift 2
+	    ;;
+	--build-type)
+	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
+	    build_type="$2"
+	    shift 2
+	    ;;
+	--build-type=*)
+	    build_type="${1#--build-type=}"
+	    shift
 	    ;;
 	--changer=*)
 	    rpath_changer="${1#--changer=}"
@@ -222,9 +238,11 @@ if [ "$#" -ge 1 ]; then
     symlinks=("$@")
     shift
 elif [ -n "$auto_next" ]; then
-    build_type=release
-    [ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
-    is_debug_build tup.config && build_type=debug
+    if [ "$build_type" = "" ]; then
+	build_type=release
+	[ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
+	is_debug_build tup.config && build_type=debug
+    fi
     symlinks=("$prefix/latest" "$prefix/latest-$build_type")
 fi
 
@@ -235,10 +253,11 @@ fi
 if [ -n "$auto_next" ]; then
     prefix="$prefix/$(date '+%Y-%m-%d')"
 
-    build_type=release
-    [ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
-    is_debug_build tup.config && build_type=debug
-
+    if [ "$build_type" = "" ]; then
+	build_type=release
+	[ -r tup.config ] || die "$arg0: no tup.config file; was this a tup build?"
+	is_debug_build tup.config && build_type=debug
+    fi
     prefix="${prefix}/${build_type}-$(next_serial_number "$prefix")"
 fi
 

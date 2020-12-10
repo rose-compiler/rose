@@ -1,4 +1,5 @@
 #include "rosePublicConfig.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifdef ROSE_HAVE_DWARF_H
 #include <dwarf.h>
@@ -10,4 +11,4 @@
 
 void readDwarf ( SgAsmGenericFile* asmFile );
 
-
+#endif

@@ -1,0 +1,25 @@
+START
+
+DEFINE MACRO2 "89 +
+               57" ;
+
+DEFINE MACRO3 "89  +
+               12  +
+               39" ;
+
+" PI IS DEFINED
+ BY THE FOLLOWING EQUATION "
+
+DEFINE PI "3.14" ;
+
+" DEFINE is indented "
+  DEFINE ZERO "0.0" ;
+
+
+PROGRAM main ;
+BEGIN
+  ITEM ia S ;
+  ia = 1 ;
+END
+
+TERM

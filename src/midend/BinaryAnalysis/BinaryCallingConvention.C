@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryCallingConvention.h>
 
@@ -37,7 +39,7 @@ initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Dictionary&
-dictionaryArm() {
+dictionaryArm64() {
     static Dictionary dict;
     // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
     return dict;
@@ -58,10 +60,17 @@ dictionaryMips() {
 }
 
 const Dictionary&
-dictionaryPowerpc() {
+dictionaryPowerpc32() {
     static Dictionary dict;
     if (dict.empty())
         dict.push_back(Definition::ppc_32bit_ibm());
+    return dict;
+}
+
+const Dictionary&
+dictionaryPowerpc64() {
+    static Dictionary dict;
+    // FIXME[Robb Matzke 2019-08-07]: none defined yet
     return dict;
 }
 
@@ -179,8 +188,8 @@ Definition::Ptr
 Definition::x86_cdecl(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "cdecl",
-                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
+    Ptr cc = instance(SP.nBits(), "cdecl",
+                      "x86-" + StringUtility::numberToString(SP.nBits()) + " cdecl",
                       regDict);
 
     // Stack characteristics
@@ -193,7 +202,7 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
     cc->stackCleanup(CLEANUP_BY_CALLER);
 
     // Other inputs
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -220,7 +229,7 @@ Definition::Ptr
 Definition::ppc_32bit_ibm() {
     static Ptr cc;
     if (!cc)
-        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc());
+        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc32());
     return cc;
 }
 
@@ -230,7 +239,7 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
-    Ptr cc = instance(SP.get_nbits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.get_nbits()) + " IBM", regDict);
+    Ptr cc = instance(SP.nBits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.nBits()) + " IBM", regDict);
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -331,8 +340,8 @@ Definition::Ptr
 Definition::x86_stdcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Ptr cc = instance(SP.get_nbits(), "stdcall",
-                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
+    Ptr cc = instance(SP.nBits(), "stdcall",
+                      "x86-" + StringUtility::numberToString(SP.nBits()) + " stdcall",
                       regDict);
 
     // Stack characteristics
@@ -345,7 +354,7 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
     cc->stackCleanup(CLEANUP_BY_CALLEE);
 
     // Other inputs
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -380,8 +389,8 @@ Definition::Ptr
 Definition::x86_fastcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    static Ptr cc = instance(SP.get_nbits(), "fastcall",
-                             "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
+    static Ptr cc = instance(SP.nBits(), "fastcall",
+                             "x86-" + StringUtility::numberToString(SP.nBits()) + " fastcall",
                              regDict);
 
     // Stack characteristics
@@ -394,7 +403,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->stackParameterOrder(RIGHT_TO_LEFT);
     cc->stackCleanup(CLEANUP_BY_CALLEE);
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -456,7 +465,7 @@ Definition::x86_64bit_sysv() {
         cc->appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
         // direction flag is always assumed to be initialized and is thus often treated as input
-        cc->appendInputParameter(*regDict->lookup("df"));
+        cc->appendInputParameter(regDict->findOrThrow("df"));
 
         // Arguments that don't fit in the input registers are passed on the stack
         cc->stackParameterOrder(RIGHT_TO_LEFT);
@@ -584,7 +593,7 @@ RegisterParts
 Definition::getUsedRegisterParts() const {
     RegisterParts retval = inputRegisterParts();
     retval |= outputRegisterParts();
-    if (stackPointerRegister_.is_valid())
+    if (!stackPointerRegister_.isEmpty())
         retval.insert(stackPointerRegister_);
     if (thisParameter_.type() == ParameterLocation::REGISTER)
         retval.insert(thisParameter_.reg());
@@ -620,7 +629,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
             case ORDER_UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
         }
 
-        if (stackPointerRegister_.is_valid()) {
+        if (!stackPointerRegister_.isEmpty()) {
             out <<" " <<regNames(stackPointerRegister_) <<"-based stack";
         } else {
             out <<" NO-STACK-REGISTER";
@@ -689,7 +698,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -768,8 +777,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     initialRegState->initialize_large();
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
-    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.get_nbits(), initialStackPointer),
-                                   cpu_->get_operators().get());
+    initialRegState->writeRegister(SP, cpu_->operators()->number_(SP.nBits(), initialStackPointer),
+                                   cpu_->operators().get());
 
     // Run data flow analysis
     bool converged = true;
@@ -811,7 +820,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     updateRestoredRegisters(initialState, finalState);
     updateInputRegisters(finalState);
     updateOutputRegisters(finalState);
-    updateStackParameters(initialState, finalState);
+    updateStackParameters(function, initialState, finalState);
     updateStackDelta(initialState, finalState);
     hasResults_ = true;
     didConverge_ = converged;
@@ -826,14 +835,14 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     RegisterStateGenericPtr initialRegs = RegisterStateGeneric::promote(initialState->registerState());
     RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
 
     InputOutputPropertySet props;
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
     BOOST_FOREACH (RegisterDescriptor reg, finalRegs->findProperties(props)) {
-        SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
-        SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.get_nbits()), ops.get());
+        SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+        SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
@@ -860,21 +869,21 @@ Analysis::updateOutputRegisters(const StatePtr &state) {
 }
 
 void
-Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &finalState) {
+Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePtr &initialState, const StatePtr &finalState) {
     inputStackParameters_.clear();
     outputStackParameters_.clear();
 
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
-    StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {
-            inputStackParameters_.push_back(var);
-        } else if (var.meta.ioProperties.exists(IO_WRITE) && var.meta.ioProperties.exists(IO_READ_AFTER_WRITE)) {
-            outputStackParameters_.push_back(var);
+    Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, initialStackPointer);
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.ioProperties().exists(IO_READ_BEFORE_WRITE)) {
+            inputStackParameters_.insert(var.interval(), var);
+        } else if (var.ioProperties().exists(IO_WRITE) && var.ioProperties().exists(IO_READ_AFTER_WRITE)) {
+            outputStackParameters_.insert(var.interval(), var);
         }
     }
 }
@@ -882,10 +891,10 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
 void
 Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
-    SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+    SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
     if (stackDelta->is_number() && stackDelta->get_width()<=64) {
         stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);
@@ -899,29 +908,31 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     RegisterNames regName(regDict_);
     std::string separator;
 
-    if (!inputRegisters_.isEmpty() || !inputStackParameters_.empty()) {
+    if (!inputRegisters_.isEmpty() || !inputStackParameters_.isEmpty()) {
         out <<separator <<"inputs={";
         if (!inputRegisters_.isEmpty()) {
             BOOST_FOREACH (RegisterDescriptor reg, inputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
-        if (!inputStackParameters_.empty()) {
-            BOOST_FOREACH (const StackVariable &var, inputStackParameters())
-                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        if (!inputStackParameters_.isEmpty()) {
+            Variables::StackVariables vars = inputStackParameters();
+            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
     }
 
-    if (!outputRegisters_.isEmpty() || !outputStackParameters_.empty()) {
+    if (!outputRegisters_.isEmpty() || !outputStackParameters_.isEmpty()) {
         out <<separator <<"outputs={";
         if (!outputRegisters_.isEmpty()) {
             BOOST_FOREACH (RegisterDescriptor reg, outputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
-        if (!outputStackParameters_.empty()) {
-            BOOST_FOREACH (const StackVariable &var, outputStackParameters())
-                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        if (!outputStackParameters_.isEmpty()) {
+            Variables::StackVariables vars = outputStackParameters();
+            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -959,9 +970,9 @@ Analysis::match(const Definition::Ptr &cc) const {
         return false;
     }
 
-    if (cc->wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
+    if (cc->wordWidth() != cpu_->stackPointerRegister().nBits()) {
         SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc->wordWidth() <<") != analysis word size ("
-                           <<cpu_->stackPointerRegister().get_nbits() <<")\n";
+                           <<cpu_->stackPointerRegister().nBits() <<")\n";
         return false;
     }
 
@@ -1004,10 +1015,10 @@ Analysis::match(const Definition::Ptr &cc) const {
         // pop even unused arguments).
         if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
-            BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
-            BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
+            BOOST_FOREACH (const Variables::StackVariable &var, inputStackParameters_.values())
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+            BOOST_FOREACH (const Variables::StackVariable &var, outputStackParameters_.values())
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
             if (normalizedStackDelta < normalizedEnd) {
                 SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
                 return false;
@@ -1070,7 +1081,7 @@ Analysis::match(const Definition::Ptr &cc) const {
     }
 
     // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
-    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) &&
+    if ((!inputStackParameters().isEmpty() || !outputStackParameters().isEmpty()) &&
         cc->stackParameterOrder() == ORDER_UNSPECIFIED) {
         SAWYER_MESG(debug) <<"  mismatch: stack parameters detected but not allowed by definition\n";
         return false;
@@ -1099,3 +1110,5 @@ operator<<(std::ostream &out, const Analysis &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

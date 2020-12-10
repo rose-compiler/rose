@@ -10,12 +10,15 @@
 #include "AstMatching.h"
 #include "AstTerm.h"
 #include <Sawyer/CommandLine.h>
+#include "Diagnostics.h"
 
 #include "scalarizer.h"
 
 using namespace std;
 using namespace SageInterface;
 using namespace scalarizer;
+using namespace Sawyer::Message::Common; // if you want unqualified DEBUG, WARN, ERROR, FATAL, etc.
+Sawyer::Message::Facility mlog; // a.k.a., Rose::Diagnostics::Facility
 
 
 //! [parseCommandLine decl]
@@ -35,9 +38,6 @@ parseCommandLine(int argc, char *argv[]) {
                     .action(showHelpAndExit(0))
                     .doc("Show this documentation."));
 
-    standard.insert(Switch("version", 'V')
-                    .action(showVersionAndExit("1.2.3", 0))
-                    .doc("Show version number."));
     //! [parseCommandLine helpversion]
     
 
@@ -61,6 +61,7 @@ parseCommandLine(int argc, char *argv[]) {
     //! [parseCommandLine parser]
 
     //! [parseCommandLine parse]
+    parser.skippingUnknownSwitches(true);
     return parser.with(standard).with(scalarizer).parse(argc, argv).apply();
 }
 //! [parseCommandLine parse]
@@ -91,20 +92,40 @@ static bool scalarizer::isFixedSourceForm(SgNode* c_sgnode)
   return result;
 }
 
-static bool scalarizer::is_directive_sentinels(const char* str, SgNode* c_sgnode)
+static int scalarizer::is_directive_sentinels(string str, SgNode* c_sgnode)
 {
-  static const char* c_char = str;
   bool result = false;
-  // two additional case for fixed form
-  if (isFixedSourceForm(c_sgnode))
+  std::string str2 ("scalarization");
+  std::size_t found = str.find(str2);
+  if(found!=std::string::npos)
   {
-    if (match_substr("c$rose scalarization", c_char) || match_substr("*$rose scalarization", c_char))
-      result = true;
+/*
+    stringstream str_strm;
+    str_strm << str; //convert the string s into stringstream
+    string temp_str;
+    int temp_int;
+    while(!str_strm.eof()) {
+      str_strm >> temp_str; //take words into temp_str one by one
+      if(stringstream(temp_str) >> temp_int) { //try to convert string to int
+         return  temp_int;
+      }
+      temp_str = ""; //clear temp string
+    }
+*/
+    std::string lparam ("(");
+    if(str.find(lparam)!=std::string::npos)
+    {
+      std::string rparam (")");
+      int lparamidx = str.find(lparam);
+      int rparamidx = str.find(rparam);
+      std::string number = std::string(&str[lparamidx+1], &str[rparamidx]); 
+      mlog[DEBUG] << "DEBUG: pick " << number << "th dimension for scalarization" << "\n";
+      return std::stoi(number);
+    }
+    else
+      return 1;
   }
-  // a common case for all situations
-  if (match_substr("!$rose scalarization", c_char))
-    result = true;
-  return result;
+  return 0;
 }
 
 static bool scalarizer::match_substr(const char* substr, const char* c_char)
@@ -136,9 +157,9 @@ static bool scalarizer::match_substr(const char* substr, const char* c_char)
 
 
 // Find variable name lsit from the pragma statement. works for Fortran only
-vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
+map<string,int> scalarizer::getFortranTargetnameList(SgNode* root)
 {
-  vector<string> resultlist;
+  map<string,int> resultlist;
   ROSE_ASSERT(root);
 
   // Fortran AST does not support SgPragmaNode.  Need to look for every comment and check if it has valid pragma
@@ -146,6 +167,14 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
 
   for (vector<SgLocatedNode*>::iterator i = LocatedNodeList.begin(); i != LocatedNodeList.end(); i++)
   {
+    SgFunctionDefinition* funcDef = SageInterface::getEnclosingFunctionDefinition(*i, true);
+    // In certain case, there is subroutine defined inside another subroutine
+    if(funcDef != root)
+    {
+      mlog[DEBUG] << "function definition mismatching" << endl;
+      continue;
+    }
+
     AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
     if(comments)
     {
@@ -155,10 +184,10 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
         if(pinfo->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
         {
            string buffer = pinfo->getString();
-           if(is_directive_sentinels(buffer.c_str(), *i))
+           int parameterValue = is_directive_sentinels(buffer, *i);
+           if(parameterValue != 0)
            {
-             if(enable_debug)
-               cout << "found matched pragma" << endl;
+             mlog[DEBUG] << "found matched pragma" << endl;
              SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
              ROSE_ASSERT(varDeclStmt);
              SgInitializedNamePtrList varList = varDeclStmt->get_variables();
@@ -168,7 +197,7 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
                SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
                ROSE_ASSERT(symbol);
                SgName varname = symbol->get_name();
-               resultlist.push_back(varname.getString());
+               resultlist.insert(pair<string,int>(varname.getString(),parameterValue));
              }
            }
         }
@@ -181,9 +210,9 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
 
 // Find variable name lsit from the pragma statement. works for C only
 //
-vector<string> scalarizer::getTargetnameList(SgNode* root)
+map<string,int> scalarizer::getTargetnameList(SgNode* root)
 {
-  vector<string> resultlist;
+  map<string,int> resultlist;
   ROSE_ASSERT(root);
 
   // Search for SgPragmaDeclaration to find C pragma list
@@ -195,11 +224,28 @@ vector<string> scalarizer::getTargetnameList(SgNode* root)
     SgPragma* pragma = isSgPragma(pragmaStmt->get_pragma());
     ROSE_ASSERT(pragma); 
     string srcString = pragma->get_pragma();
-    if(srcString.compare(0,26,"pragma rose scalarization") == 0)
+    std::string str2 ("scalarization");
+    //if(srcString.compare(0,26,"pragma rose scalarization") == 0)
+    std::size_t found = srcString.find(str2);
+    if(found!=std::string::npos)
     {
-      if(enable_debug)
-        cout << "found pragma" << endl;
-      SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
+      mlog[DEBUG] << "found pragma" << "\n";
+
+      stringstream str_strm;
+      str_strm << srcString; //convert the string s into stringstream
+      string temp_str;
+      int parameterValue = 1;
+      while(!str_strm.eof()) {
+        str_strm >> temp_str; //take words into temp_str one by one
+        if(stringstream(temp_str) >> parameterValue) { //try to convert string to int
+           mlog[DEBUG] << "scalarization argument:" << parameterValue << "\n";
+           break;
+        }
+        temp_str = ""; //clear temp string
+      }
+      SgStatement* nextStmt = SageInterface::getNextStatement(pragmaStmt); 
+      ROSE_ASSERT(nextStmt);
+      SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(nextStmt);
       ROSE_ASSERT(varDeclStmt);
       SgInitializedNamePtrList varList = varDeclStmt->get_variables();
 
@@ -208,7 +254,7 @@ vector<string> scalarizer::getTargetnameList(SgNode* root)
         SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
         ROSE_ASSERT(symbol);
         SgName varname = symbol->get_name();
-        resultlist.push_back(varname.getString());
+        resultlist.insert(pair<string,int>(varname.getString(),parameterValue));
       }
     }
   }
@@ -223,7 +269,7 @@ void scalarizer::transformType(SgVariableSymbol* sym, SgType* newType)
 }
 
 // Change the type of a variable symbol
-void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType)
+void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType, int parameter)
 {
   RoseAst ast(funcBody);
   std::string matchexpression;
@@ -232,25 +278,45 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,funcBody);
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    if(enable_debug)
-      std::cout << "MATCH-LHS: \n"; 
+    mlog[DEBUG] << "MATCH-LHS: \n"; 
     //SgNode* n=(*i)["X"];
     for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
       SgNode* matchedTerm=(*vars_iter).second;
-      if(enable_debug)
-        std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      mlog[DEBUG] << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
     SgNode* root=(*i)["$Root"];
     SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(root);
     if((*i)["$ARR"]) {
       SgVarRefExp* lhsVarRef = isSgVarRefExp((*i)["$ARR"]);
       ROSE_ASSERT(lhsVarRef);
+      SgExprListExp*  arraySubscript = isSgExprListExp((*i)["$IDX1"]);
+      ROSE_ASSERT(arraySubscript);
+      SgExpressionPtrList dimExprList = arraySubscript->get_expressions();
+
       SgVariableSymbol* arrayNameSymbol = lhsVarRef->get_symbol();
       if(arrayNameSymbol==sym) {
-        SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
+        if(dimExprList.size() == 1)
+        {
+          mlog[DEBUG] << "DEBUG: replacing array variable reference to scalar variable reference" << "\n";
+          SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
+        }
+        else
+        {
+          mlog[DEBUG] << "replacing n dimensional array to (n-1) dimensional array" << "\n";
+          mlog[DEBUG] << "DEBUG: Removing " << parameter << "th dimension for scalarization" << "\n";
+          SgExpressionPtrList newDimExprList;
+          for(SgExpressionPtrList::iterator i=dimExprList.begin();i!=dimExprList.end();++i) {
+            if(i == dimExprList.begin()+(parameter-1))
+              continue;
+            SgExpression* dimInfoExpr = *i;
+            ROSE_ASSERT(dimInfoExpr);
+            newDimExprList.push_back(dimInfoExpr);
+          }
+          SgExprListExp* newArraySubscript = SageBuilder::buildExprListExp(newDimExprList);
+          SgNodeHelper::replaceExpression(arraySubscript,newArraySubscript,false);
+        }
       } else {
-        if(enable_debug)
-          cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
+        mlog[DEBUG]<<"lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<"\n";
         continue;
       }
     }
@@ -259,6 +325,9 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
 
 int main(int argc, char** argv)
 {
+  ROSE_INITIALIZE;
+  Rose::Diagnostics::initAndRegister(&mlog, "Scalarizer");
+
   Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv);
   std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
 
@@ -270,7 +339,7 @@ int main(int argc, char** argv)
   AstTests::runAllTests(project);
 
   // get variable list
-  vector<string> namelist;
+  map<string,int> namelist;
 
   // For each source file in the project
   SgFilePtrList & ptr_list = project->get_fileList();
@@ -290,34 +359,64 @@ int main(int argc, char** argv)
       
       SgFunctionDefinition *defn = isSgFunctionDefinition(*p);
       ROSE_ASSERT (defn != NULL);
+      SgFunctionDeclaration *funcDecl = defn->get_declaration();
+      ROSE_ASSERT (funcDecl);
+      mlog[DEBUG] << "Processing function name: " << funcDecl->get_name() << "\n";
 
       if(isFortran)
         namelist = getFortranTargetnameList(defn);  
-      else
-        namelist = getTargetnameList(defn);
+
+//      else
+//        namelist = getTargetnameList(defn);
      
       SgBasicBlock* funcBody = defn->get_body(); 
       // Process each variable name and perform the transformation
-      for(vector<string>::iterator it=namelist.begin(); it != namelist.end(); it++)
+      for(map<string,int>::iterator it=namelist.begin(); it != namelist.end(); it++)
       {
-        if(enable_debug)
-          cout << "Processing name: " << *it << endl;
-        SgVariableSymbol* sym = lookupVariableSymbolInParentScopes(*it, funcBody);
+        mlog[DEBUG] << "Processing name: " << it->first << "\n";
+        mlog[DEBUG] << "Scalarize argument: " << it->second << "\n";
+        SgVariableSymbol* sym = lookupVariableSymbolInParentScopes(it->first, funcBody);
         ROSE_ASSERT(sym);
         SgArrayType* symType = isSgArrayType(sym->get_type());
         if(symType == NULL)
         {
-          if(enable_debug)
-            cout << "Not a variable with array type" << endl;
+          mlog[DEBUG] << "Not a variable with array type" << "\n";
           break;
         }
-        //  Assuming single dimension array only
-        SgType* baseType = symType->get_base_type();
-        // Change type in variable declartion
-        transformType(sym, baseType);
+        SgExprListExp* dimInfo = symType->get_dim_info();
+        SgExpressionPtrList dimExprList = dimInfo->get_expressions();
+        mlog[DEBUG] << "original dim size = " << dimExprList.size() << "\n";
+        int dimSize = dimExprList.size();
+        //  single dimension array only
+        if(dimSize == 1)
+        {
+          SgType* baseType = symType->get_base_type();
+          // Change type in variable declartion
+          transformType(sym, baseType);
 
-        // Follow the design in typeForge by Markus
-        transformArrayType(funcBody, sym, baseType);
+          // Follow the design in typeForge by Markus
+          transformArrayType(funcBody, sym, baseType, 1);
+        }
+        //  multi-dimension array only
+        else
+        {
+          int scalarizerParameter = it->second;
+          SgExpressionPtrList newDimExprList;
+          mlog[DEBUG] << "replacing type n dimensional array to (n-1) dimensional array" << "\n";
+          mlog[DEBUG] << "DEBUG: Removing " << scalarizerParameter << "th dimension for scalarization" << "\n";
+          for(SgExpressionPtrList::iterator i=dimExprList.begin();i!=dimExprList.end();++i) {
+            if (i == dimExprList.begin() + (scalarizerParameter-1))
+              continue;
+            SgExpression* dimInfoExpr = *i;
+            ROSE_ASSERT(dimInfoExpr);
+            newDimExprList.push_back(dimInfoExpr);
+          }
+          mlog[DEBUG] << "new dim size = " << newDimExprList.size() << "\n";
+          SgExprListExp* newDimInfo = SageBuilder::buildExprListExp(newDimExprList);
+          SgArrayType* newArrayType = SageBuilder::buildArrayType(symType->get_base_type(), newDimInfo);
+          transformType(sym, dynamic_cast<SgType*>(newArrayType));
+          transformArrayType(funcBody, sym, newArrayType, scalarizerParameter);
+        }
 
       } 
     }
@@ -328,7 +427,7 @@ int main(int argc, char** argv)
     generateDOT(*project);
 
   // Output preprocessed source file.
-  unparseProject(project);
-  return 0;
+  int status = backend (project);
+  return status;
 }
 

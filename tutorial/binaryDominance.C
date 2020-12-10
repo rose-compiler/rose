@@ -32,7 +32,7 @@ main(int argc, char *argv[])
 
     //! [iterate]
     BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions()) {
-        std::cout <<"CFG dominators for " <<function->printableName() <<":\n";
+        std::cout <<"CFG dominators for function " <<Rose::StringUtility::addrToString(function->address()) <<":\n"; // or function->printableName()
         //! [iterate]
 
         //! [cfg_enter]

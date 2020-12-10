@@ -63,7 +63,7 @@ void flattenBlocks(SgNode* n) {
 // Internal routine to check whether a given variable declaration is a
 // member variable.
 bool isMemberVariable(const SgNode& in) {
-  if (!&in) return false;
+  //if (!&in) return false;
   SgNode* p = in.get_parent();
   if (isSgClassDefinition(p)) return true;
   if (isSgGlobal(p)) return false;
@@ -323,8 +323,10 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
           // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
           SgInitializedName* orig = orig_vr->get_symbol()->get_declaration();
           assert (orig);
+#ifndef NDEBUG
           SgNode* origscope = orig->get_parent()->get_parent();
           assert (origscope);
+#endif
           shouldReplace = true;
         }
         if (shouldReplace) {

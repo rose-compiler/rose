@@ -1,11 +1,15 @@
 #ifndef ROSE_Partitioner2_Function_H
 #define ROSE_Partitioner2_Function_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BaseSemantics2.h>
 #include <BinaryCallingConvention.h>
 #include <BinaryStackDelta.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
+#include <SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
@@ -61,6 +65,7 @@ private:
     CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
+    SourceLocation sourceLocation_;                     // corresponding location of function in source code if known
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
@@ -90,8 +95,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(ccDefinition_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
-        if (version > 0)
+        if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(reasonComment_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
     }
 #endif
     
@@ -150,6 +157,13 @@ public:
      * @{ */
     const std::string& comment() const { return comment_; }
     void comment(const std::string &s) { comment_ = s; }
+    /** @} */
+
+    /** Property: Location of function definition in source code, if known.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
     /** @} */
 
     /** Property: Bit vector of function reasons.  These are SgAsmFunction::FunctionReason bits.
@@ -232,11 +246,29 @@ public:
      *  otherwise the data block is inserted and the method returns true. */
     bool insertDataBlock(const DataBlock::Ptr&);
 
-    /** Remove a data block from this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be
-     *  removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
-     *  respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If
-     *  the specified pointer is null or the data block does not exist in this function then this method is a no-op. */
-    void eraseDataBlock(const DataBlock::Ptr&);
+    /** Remove specified or equivalent data block from this function.
+     *
+     *  If this function is in a detached state (i.e., not part of the CFG/AUM) then the specified data block or equivalent
+     *  data block is removed from this function. Returns the data block that was erased, or null if none was erased.
+     *
+     *  It is an error to invoke this method on function that is attached to the CFG/AUM, for which @ref isFrozen returns
+     *  true. This method is a no-op if the specified data block is a null pointer. */
+    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+
+    /** Determine if this function contains the specified data block, or equivalent.
+     *
+     *  If this function owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
+     *
+     *  Thread safety: This method is not thread safe. */
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+
+    /** Addresses that are part of static data.
+     *
+     *  Returns all addresses that are part of static data.
+     *
+     *  Thread safety: This method is not thread safe. */
+    AddressIntervalSet dataAddresses() const;
 
     /** Determines whether a function is frozen.  The ownership relations (instructions, basic blocks, and data blocks) cannot
      *  be adjusted while a function is in a frozen state.  All functions that are represented in the control flow graph are in
@@ -341,6 +373,9 @@ private:
     friend class Partitioner;
     void freeze() { isFrozen_ = true; }
     void thaw() { isFrozen_ = false; }
+
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
@@ -351,6 +386,7 @@ typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 2);
 
+#endif
 #endif

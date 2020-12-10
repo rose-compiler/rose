@@ -1,10 +1,13 @@
 #ifndef Rose_BinaryAnalysis_LinuxSyscall_H
 #define Rose_BinaryAnalysis_LinuxSyscall_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <AbstractLocation.h>
 #include <BinarySmtSolver.h>
 #include <boost/filesystem.hpp>
 #include <Partitioner2/BasicTypes.h>
+#include <RoseException.h>
 #include <Sawyer/Map.h>
 #include <string>
 #include <vector>
@@ -19,10 +22,10 @@ namespace BinaryAnalysis {
 class SystemCall {
 public:
     /** Exceptions for system call analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construct an exception with a message. */
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
 
         /** Destructor. */
         ~Exception() throw () {}
@@ -113,4 +116,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

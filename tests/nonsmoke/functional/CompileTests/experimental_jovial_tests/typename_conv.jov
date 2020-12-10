@@ -1,0 +1,12 @@
+START
+PROGRAM typename'conv ;
+BEGIN
+  TYPE int'type S;
+  TYPE float'type F 10;
+  ITEM item'1 int'type;
+  ITEM item'2 float'type;
+
+  item'1 = int'type(1.2);
+  item'2 = (* float'type *)(5);
+END
+TERM

@@ -124,7 +124,7 @@ static
 SgVarRefExp*
 createFunctionSymbol(SgVarRefExp* n)
 {
-  SgVarRefExp* res = isSgVarRefExp(si::deepCopy(n));
+  SgVarRefExp* res = isSgVarRefExp(ru::deepCopy(n));
 
   ROSE_ASSERT(res);
   return res;
@@ -228,7 +228,7 @@ void revertForLoopChanges(SgProject *project)
 namespace MatlabAnalysis
 {
 #if OBSOLETE_CODE
-  
+
   // \todo check if this is needed
   void addAssignOpBeforeMatlabForStatement(SgProject *project)
   {
@@ -254,9 +254,13 @@ namespace MatlabAnalysis
   {
     ROSE_ASSERT(f);
 
+    std::cerr << f->get_name()
+              << ": "
+              << sg::deref(f->get_parameterList()).get_args().size()
+              << std::endl;
+
     return (sg::deref(f->get_parameterList()).get_args().size() == 0);
   }
-
 
   static inline
   bool

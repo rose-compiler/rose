@@ -1,0 +1,14 @@
+START
+PROGRAM fixed'cast;
+BEGIN
+
+  ITEM xx F;
+
+  CONSTANT ITEM an'item
+  A 0,31
+  = (* A 0,31 *) (3.3/3600.0);
+
+  xx = (* F *) (an'item);
+
+END
+TERM

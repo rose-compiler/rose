@@ -1,0 +1,25 @@
+include_rules
+
+DEFAULT_DATABASE       = 
+DEFAULT_DATABASE_LOCAL = 
+
+ifneq ($(DEFAULT_DATABASE),)
+    tool_CPPFLAGS += -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+endif
+
+run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrixNextTest.C
+run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
+run $(tool_compile_linkexe) --install -o rose-matrix-query matrixQueryTable.C
+run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
+run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
+run $(tool_compile_linkexe) --install -o rose-matrix-delete-test matrixDeleteTest.C
+run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrixSlaveConfig.C
+run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrixSlaveHealth.C
+
+ifneq (@(WITH_WT),no)
+    run $(tool_compile_linkexe) --install -o rose-matrix-web-server-http matrixWebServer.C -lwthttp
+
+    # The extra -U is to prevent compiler warnings about redefinition of DEFAULT_DATABASE
+    tool_CPPFLAGS += -UDEFAULT_DATABASE -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE_LOCAL)"' -DUSING_FASTCGI
+    run $(tool_compile_linkexe) --install -o rose-matrix-web-server-fcgi matrixWebServer.C -lwtfcgi
+endif

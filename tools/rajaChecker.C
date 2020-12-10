@@ -1364,6 +1364,7 @@ SgStatement* getNextNonNullStatement(SgStatement* s)
   //now r is NULL, or not a NULL statement
   return r; 
 }
+
 // With a known loop variable lvar, check if a basic block contains the 4-statement pattern
 // This is the finest level of checking. We call it atomic. 
 bool RAJA_Checker::isNodalAccumulationBodyAtomic(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt, SgStatement* loopStmt)
@@ -1854,6 +1855,8 @@ static void initDebugOutputFile(SgProject* project)
 int
 main ( int argc, char* argv[])
 {
+  ROSE_INITIALIZE;
+
   vector<string> argvList(argv, argv+argc);
   argvList = commandline_processing (argvList);
 

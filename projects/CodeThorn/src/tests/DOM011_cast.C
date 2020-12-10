@@ -1,3 +1,4 @@
+#include "DOM.h"
 int main() {
   int res=1;
   int* dataArray[3];
@@ -10,6 +11,6 @@ int main() {
     else
       res=3;
   }
-    // return 0
-  return !(res==3);
+  printf("res:%d\n",res);
+  return 0;
 }

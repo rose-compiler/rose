@@ -1,0 +1,15 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE openacc
+CONTAINS
+ FUNCTION acc_is_present(a,len)
+LOGICAL :: acc_is_present
+REAL, DIMENSION(*) :: a
+INTEGER :: len
+END  FUNCTION 
+
+END MODULE openacc
+

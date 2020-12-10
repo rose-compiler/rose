@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/ModulesPe.h>
+
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
@@ -139,7 +142,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    const size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
                    <<StringUtility::plural(wordSize, "bytes") <<"\n";
@@ -183,7 +186,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         }
         
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize!=partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
+        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }
@@ -203,6 +206,8 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
                 iatExtent.insert(AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size()));
         }
     }
+    if (iatExtent.isEmpty())
+        return;
 
     // Build an index that maps addresses to entries in the import tables.  The addresses are the addresses where the imported
     // functions are expected to be mapped.
@@ -279,7 +284,7 @@ PeDescrambler::nameKeyAddresses(Partitioner &partitioner) {
 bool
 PeDescrambler::operator()(bool chain, const Args &args) {
     if (!checkedPreconditions_) {
-        if (args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() != 32)
+        if (args.partitioner.instructionProvider().instructionPointerRegister().nBits() != 32)
             throw std::runtime_error("PeDescrambler module only works on 32-bit specimens");
         checkedPreconditions_ = true;
     }
@@ -350,3 +355,5 @@ PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t ret
 } // namespace
 } // namespace
 } // namespace
+
+#endif

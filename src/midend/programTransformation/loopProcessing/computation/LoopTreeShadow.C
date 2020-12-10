@@ -1,12 +1,13 @@
 #include <LoopTreeShadow.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 LoopTreeShadowNode ::
 LoopTreeShadowNode( LoopTreeNode *n, LoopTreeShadowCreate *tc)
-{ 
-  repr = n; 
+{
+  repr = n;
   map = &tc->nodeMap;
   assert(map->Map(n) == 0);
-  map->InsertMapping(n, this); 
+  map->InsertMapping(n, this);
   LoopTreeNode::Unlink();
 }
 
@@ -16,10 +17,10 @@ Build( LoopTreeNode *orig, LoopTreeNode *p)
   if (select_stmt(orig)) {
      return CreateShadowNode(orig);
   }
-  else { 
+  else {
      LoopTreeNode *shadow = orig->IncreaseLoopLevel()? 0 : p;
      LoopTreeNode* r1 = 0, *r2 = 0, *result = r1;
-     LoopTreeNode *n = orig->FirstChild(); 
+     LoopTreeNode *n = orig->FirstChild();
      for ( ; n != 0; n = n->NextSibling()) {
         if ( (r1 = Build( n, shadow)) != 0)
             break;
@@ -66,10 +67,10 @@ LoopTreeShadowCreate :: ~LoopTreeShadowCreate()
   }
 }
 
-LoopTreeShadowSelect:: 
+LoopTreeShadowSelect::
 LoopTreeShadowSelect( LoopTreeNode *orig)
      : LoopTreeShadowCreate(orig->LoopLevel())
-{ 
-   Build( orig, GetTreeRoot()); 
+{
+   Build( orig, GetTreeRoot());
 }
 

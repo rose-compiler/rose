@@ -1,4 +1,4 @@
-################################################################################################ -*- cmake -*- #########
+﻿################################################################################################ -*- cmake -*- #########
 # General warnings, instructions, and style guide.
 ########################################################################################################################
 
@@ -33,6 +33,21 @@
 ########################################################################################################################
 
 cmake_minimum_required(VERSION 2.8)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Enable ccache if not already enabled by symlink masquerading and if no other compiler launchers are already defined
+#-----------------------------------------------------------------------------------------------------------------------
+find_program(CCACHE_EXECUTABLE ccache)
+mark_as_advanced(CCACHE_EXECUTABLE)
+if(CCACHE_EXECUTABLE)
+  foreach(LANG C CXX)
+    if(NOT DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER AND NOT CMAKE_${LANG}_COMPILER MATCHES ".*/ccache")
+      message(STATUS "Enabling ccache for ${LANG}")
+      set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+    endif()
+  endforeach()
+endif()
+
 project(ROSE CXX C)
 
 # CMake 2.8.12 and newer has support for using @rpath in a target’s install name. This was enabled by setting the target
@@ -114,72 +129,27 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # ROSE version information
 ########################################################################################################################
 
-if(NOT IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
-  message(FATAL_ERROR "ROSE source code is only distributed as a Git repository; it cannot be built outside Git.")
-endif()
-
-find_package(Git)
-if(NOT GIT_FOUND)
-  string(REPLACE ":" "\n\t" ENV_PATH "$ENV{PATH}")
-  message(FATAL_ERROR "git not found in \$PATH\n" "PATH=${ENV_PATH}")
-endif()
-
-# Get the Git HEAD commit SHA1
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" rev-parse HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version hash: ${ROSE_SCM_VERSION_ID}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_ID}" MATCHES "^[0-9a-zA-Z]+$")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_ID} ROSE_SCM_VERSION_ID_LENGTH)
-if(NOT "${ROSE_SCM_VERSION_ID_LENGTH}" EQUAL "40")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-# Author time (%at) of the HEAD commit
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" log -1 --format=%at HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_UNIX_DATE
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version timestamp: ${ROSE_SCM_VERSION_UNIX_DATE}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_UNIX_DATE}" MATCHES "^[0-9]+$")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_UNIX_DATE} ROSE_SCM_VERSION_UNIX_DATE_LENGTH)
-if("${ROSE_SCM_VERSION_UNIX_DATE_LENGTH}" LESS "10")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
 # All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release
 # process.
 set(ROSE_SCM_VERSION_FILE "${PROJECT_SOURCE_DIR}/ROSE_VERSION")
 if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
   message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
 endif()
+
+# All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release
+# process.
+set(ROSE_SCM_DATE_FILE "${PROJECT_SOURCE_DIR}/config/SCM_DATE")
+if(NOT EXISTS "${ROSE_SCM_DATE_FILE}")
+  message(FATAL_ERROR "ROSE SCM Date file not found: ${ROSE_SCM_DATE_FILE}")
+endif()
+
 file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
+file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_SCM_VERSION_ID LIMIT_COUNT 1)
+file(READ ${ROSE_SCM_DATE_FILE} ROSE_VERSION)
 
 # Results
-message(STATUS "The ROSE version hash is ${ROSE_SCM_VERSION_ID}")
-message(STATUS "The ROSE version timestamp is ${ROSE_SCM_VERSION_UNIX_DATE} (Unix time)")
-message(STATUS "The ROSE version is ${ROSE_PACKAGE_VERSION}")
+message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
+message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 
 
 
@@ -241,11 +211,25 @@ endif(WIN32)
 
 # FIXME: 1.47 is no longer supported by ROSE, but is what's installed on Jenkins' CMake test machine. This should
 #        be changed to the actual minimum supported version once Pei-Hung upgrades the machine. [Matzke 2019-01-21]
-find_package(Boost 1.47.0 COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread REQUIRED)
+#
+# First look for the Boost libraries that are required in order to compile ROSE, then additionally look for any optional
+# libraries that are useful to ROSE but not required. From a user: "The find_package() change is required for boost
+# 1.70 or above on any system when using a recent enough version of cmake.  Without it, serialization support will not
+# be used.  Before boost 1.70, the findBoost() in cmake is used directly, and it will look for boost components that are
+# not in the find_package clause.  Since 1.70, cmake will load the findBoost() provided by the boost package itself.
+# Unfortunately, that findBoost() will only check for components in the find_package() clause.  This means that
+# serialization is considered not to exist, even if it is there.  My change calls find_package again without the
+# REQUIRED clause after the first one has succeeded.  That way the first clause checks for requires components, and the
+# second can check again including optional components.  If the version of cmake is high enough you can use an
+# OPTIONAL_COMPONENTS clause instead, but that wasn't introduced until 3.11."
+find_package(Boost 1.47.0
+  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread
+  REQUIRED)
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif()
-
+find_package(Boost 1.47.0
+  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread serialization)
 include_directories(${Boost_INCLUDE_DIRS})
 set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
 
@@ -337,6 +321,7 @@ endif()
 # Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.  Otherwise, it is just LD_LIBRARY_PATH.
 if(MSVC)
   set(ROSE_SHLIBPATH_VAR "PATH")
+  add_definitions("-D__STDC_LIMIT_MACROS")
 else()
   set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()
@@ -373,6 +358,15 @@ endif()
 option(enable-java "Enable Java analysis" ON)
 if(enable-java)
   message(STATUS "Looking for JAVA ...")
+  # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
+  # value of JAVA_ROOT that we can support is the empty string.
+  if("${JAVA_ROOT}" STREQUAL "")
+  elseif("${JAVA_ROOT}" STREQUAL "no")
+    message(FATAL_ERROR "Java cannot be both disabled (-DJAVA_ROOT=FALSE) and enabled (-Denable-java=TRUE)")
+  else()
+    message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
+  endif()
+
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
@@ -431,12 +425,6 @@ if(enable-python)
   endif()
 endif()
 
-# X10
-option(enable-x10 "Enable X10 analysis" OFF)
-if(enable-x10)
-  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
-endif()
-
 # Ada
 option(enable-ada "Enable Ada analysis" OFF)
 if(enable-ada)
@@ -449,6 +437,11 @@ if(enable-jovial)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
 endif()
 
+# The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
+if(enable-c OR enable-fortran)
+  set(enable-cpp ON)
+  set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
+endif()
 
 
 ########################################################################################################################
@@ -456,49 +449,58 @@ endif()
 ########################################################################################################################
 
 # Default EDG version
-set(EDG_VERSION "4.9" CACHE STRING "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
+set(EDG_VERSION "5.0" CACHE STRING "major.minor version number for EDG (e.g. 5.0).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
+
 
 set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
 set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
 if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
-  set(ROSE_USE_EDG_VERSION_4 1)
-  set(ROSE_USE_NEW_EDG_INTERFACE 1)
-  if("${EDG_MINOR_VERSION}" VERSION_GREATER "3")
-    set(TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS 1)
-  endif()
-  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "4")
-    set(ROSE_USE_EDG_VERSION_4_4 1)
-  endif()
-  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "7")
-    set(ROSE_USE_EDG_VERSION_4_7 1)
-  endif()
   if("${EDG_MINOR_VERSION}" VERSION_EQUAL "9")
     set(ROSE_USE_EDG_VERSION_4_9 1)
   endif()
+  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "12")
+    set(ROSE_USE_EDG_VERSION_4_12 1)
+  endif()
+endif()
+if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "5")
+  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "0")
+    set(ROSE_USE_EDG_VERSION_5_0 1)
+  endif()
 endif()
 
-# Check if we need to download the EDG binary tarball
+# Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
+option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
-  set(have_EDG_source TRUE)
+  if(EDG_COMPILE)
+    set(have_EDG_source TRUE)
+  else()
+    set(have_EDG_source FALSE)
+  endif()
 else()
   set(have_EDG_source FALSE)
+  set(EDG_COMPILE FALSE)
+endif()
+
+# Check if we should download the EDG binary tarball. We only need to download it if we're not compiling the
+# EDG source code and ROSE is configured to analyze C (and C++).
+if(NOT have_EDG_source)
   set(BINARY_EDG 0)
   if(enable-c)
     set(BINARY_EDG 1)
     if(NOT WIN32)
       message(STATUS "EDG - downloaindg EDG-${EDG_VERSION} binary tar file")
       if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
-	execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+        execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
       else()
-	# no need to display this message after the file has been downloaded
-	if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-	  message(WARNING
-	    "At build time, CMake will attempt to download a required library tarball.\n"
-	    "Please note that EDG binary tarballs are generated upstream for only certain compilers.")
-	endif()
-	include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+        # no need to display this message after the file has been downloaded
+        if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+          message(WARNING
+            "At build time, CMake will attempt to download a required library tarball.\n"
+            "Please note that EDG binary tarballs are available for only certain configurations.")
+        endif()
+        include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
       endif()
     endif()
   endif()
@@ -631,39 +633,70 @@ endif()
 
 option(enable-poet "Enable POET support" OFF)
 
-option(enable-yices "Use the Yices satisfiability modulo theories (SMT) solver" OFF)
-if(enable-yices)
-  find_path(with-yices bin/yices DOC "The prefix used to install Yices")
-endif()
-
-# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=none
+# To use Bison, set BISON_ROOT to the Bison installation prefix. To avoid Bison, use BISON_ROOT=no
 include(FindBison)
 find_bison()
 
-# To use Z3, set Z3_ROOT to the Z3 installation prefix. To avoid Z3, use Z3_ROOT=none.
+# To use Z3, set Z3_ROOT to the Z3 installation prefix. To avoid Z3, use Z3_ROOT=no.
 include(FindZ3)
 find_z3()
 
-# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=none.
+# To use doxygen, set DOXYGEN_ROOT to the doxygen installation prefix. To avoid doxygen use DOXYGEN_ROOT=no
+include(FindDoxygen)
+find_doxygen()
+
+# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
 include(FindYamlcpp)
 find_yamlcpp()
 
-# To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=none.
+# To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=no
 include(FindDlib)
 find_dlib()
 
-# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=none.
+# To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
 include(FindGcrypt)
 find_gcrypt()
 if(GCRYPT_FOUND)
-  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=none.
+  # To use GPG-Error, set GPGERROR_ROOT to the GPG-Error installation prefix. To avoid GPG-Error set GPGERROR=no
   include(FindGpgError)
   find_gpgerror()
 endif()
 
+# To use libmagic, set MAGIC_ROOT to the libmagic installation prefix. To avoid libmagic set MAGIC_ROOT=no
+include(FindMagic)
+find_magic()
+
+# To use libpqxx, set PQXX_ROOT to the libpqxx installation prefix. To avoid libpqxx set PQXX_ROOT=no
+include(FindPqxx)
+find_pqxx()
+
+# To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
+include(FindQt)
+find_qt()
+
+# To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
+include(FindReadline)
+find_readline()
+
+# To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
+include(FindSpot)
+find_spot()
+
+# To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
+include(FindWt)
+find_wt()
+
+# To use Yices, set YICES_ROOT to the Yices installation prefix. To avoid Yices set YICES_ROOT=no
+include(FindYices)
+find_yices()
+
 # Zlib is required by Boost. To find it in a special place, set ZLIB_ROOT to its installation prefix.
 include(FindZlib)
 find_zlib()
+
+# DWARF library
+include(FindDwarf)
+find_dwarf()
 
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
@@ -678,7 +711,6 @@ endif()
 
 find_path(with-backstroke-ross ROSS DOC "Specify the path where ROSS is installed")
 find_path(with-backstroke-speedes SPEEDES DOC "Specify the path where SPEEDES is installed")
-find_library(with-dwarf dwarf DOC "Specify the path where libdwarf is installed")
 find_library(with-gomp_omp_runtime_library gomp_omp DOC "Specify the prefix where GOMP Runtime System is installed")
 find_path(with-GraphViz_include graphviz.h DOC "Specify the prefix where GraphViz include files are installed")
 find_path(with-GraphViz_libs GraphViz_libs DOC "Specify the prefix where GraphViz libraries are installed")
@@ -699,7 +731,6 @@ endif()
 
 find_path(with-QRose QRose DOC "prefix of QRose installation")
 
-option(with-roseQt "Build with roseQt" OFF)
 if(with-roseQt)
   find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
@@ -1140,7 +1171,7 @@ set(origin "$ORIGIN")
 if(APPLE)
   set(origin "@executable_path")
 endif()
-set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
+set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/")
 
 
 ########################################################################################################################
@@ -1150,6 +1181,7 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 # Recursion in CMake is not automatic. We have to tell it where the other CMakeList.txt files are located rather than
 # letting it find them automatically.
 
+add_subdirectory(LicenseInformation)
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(exampleTranslators)
@@ -1213,10 +1245,19 @@ if(enable-c)
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_BINARY_DIR}/include-staging ${CMAKE_BINARY_DIR}/include)
+  elseif(MSVC)
+    set(INCLUDE_LIST $ENV{INCLUDE})
+    string(REPLACE "\\" "\\\\" INCLUDE_LIST "${INCLUDE_LIST}")
+    foreach(C_include_dir ${INCLUDE_LIST})
+      string(STRIP "${C_include_dir}" C_include_dir)
+      set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
+    endforeach()
+    set(CXX_INCLUDE_STRING "${C_INCLUDE_STRING}")
   endif()
   set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
   set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
-
+message("NATHAN TEST REMOVE CXX ${CXX_INCLUDE_STRING}")
+message("NATHAN TEST REMOVE C   ${C_INCLUDE_STRING}")
 else()
   set(C_INCLUDE_STRING {\"none\"})
   set(CXX_INCLUDE_STRING {\"none\"})

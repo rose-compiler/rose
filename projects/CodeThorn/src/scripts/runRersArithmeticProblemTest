@@ -19,7 +19,7 @@ mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 
 #check problem specific ltl formulae/reachability of failing assertions and generate the results. Use 4 threads
-./codethorn $SRCDIR/tests/rers/Problem1402_opt.c --edg:no_warnings --config=$SRCDIR/tests/rers/rersArithmeticProblemTest.config --check-ltl=$SRCDIR/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="${2}/${TEMP_DIR}/Problem1402_ltl_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" --csv-assert="${2}/${TEMP_DIR}/Problem1402_assert_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" 
+./codethorn $SRCDIR/tests/rers/Problem1402_opt.c --edg:no_warnings --config=$SRCDIR/tests/rers/rersArithmeticProblemTest.config --check-ltl=$SRCDIR/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="${2}/${TEMP_DIR}/Problem1402_ltl_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" --csv-assert="${2}/${TEMP_DIR}/Problem1402_assert_results_maxtrans_50000_n_la${MAKE_CHECK}.csv" --status
 if [ ! $? -eq 0 ] 
 then 
     eval echo "ERROR: codethorn failed in runRersArithmeticProblemTest."

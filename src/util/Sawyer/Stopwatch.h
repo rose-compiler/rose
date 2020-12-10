@@ -22,7 +22,7 @@ namespace Sawyer {
  * @code
  *  Stopwatch stopwatch; // starts immediately unless false argument is given
  *  do_something();
- *  std::cerr <<"that took " <<stopwatch.stop() <<" seconds.\n";
+ *  std::cerr <<"that took " <<stopwatch <<" seconds.\n";
  * @endcode
  *
  *  All times are returned as floating point number of seconds.  The underlying data structure has nanosecond resolution
@@ -76,7 +76,6 @@ public:
      * @{ */
     double start();
     double start(double value);
-    double start(bool b) SAWYER_DEPRECATED("use start() or start(double)") { return b ? start() : start(0.0); }
     /** @} */
 
     /** Restart the timer.
@@ -87,7 +86,7 @@ public:
     /** Stop the timer and report accumulated time.
      *
      *  If the timer is running then it is stopped and the elapsed time is accumulated, otherwise the timer
-     *  remains in the stopped state an no additional time is accumulated.  If @p clear is set, then the accumlated time is
+     *  remains in the stopped state and no additional time is accumulated.  If @p clear is set, then the accumlated time is
      *  reset to zero.  In any case, the return value is the accumulated time before being optionally reset to zero. */
     double stop(bool clear=false);
 

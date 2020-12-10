@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Partitioner_H
 #define ROSE_Partitioner2_Partitioner_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
@@ -22,12 +25,15 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
 
+#include <BinarySourceLocations.h>
 #include <BinaryUnparser.h>
 #include <Progress.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/version.hpp>
 
 #include <ostream>
 #include <set>
@@ -37,9 +43,32 @@
 // Derived classes needed for serialization
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
+#include <DispatcherA64.h>
 #include <DispatcherM68k.h>
 #include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
+
+// Define ROSE_PARTITIONER_MOVE if boost::move works. Mainly this is to work around a GCC bug that reports this error:
+//
+//   prototype for
+//   'Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)'
+//   does not match any in class 'Rose::BinaryAnalysis::Partitioner2::Partitioner'
+//
+// followed by saying that the exact same signature is one of the candidates:
+//
+//   candidates are:
+//   Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)
+//
+// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0.
+#if __cplusplus >= 201103L
+    #define ROSE_PARTITIONER_MOVE
+#elif defined(__GNUC__)
+    #if __GNUC__ > 5
+       #define ROSE_PARTITIONER_MOVE
+    #elif BOOST_VERSION >= 106900 // 1.68.0 might be okay too, but ROSE blacklists it for other reasons
+       #define ROSE_PARTITIONER_MOVE
+    #endif
+#endif
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -51,7 +80,7 @@ namespace BinaryAnalysis {
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
  *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
- *      global control flow graph (CFG) and address usage map (AUM). It's operations are quite low-level and its behavior is
+ *      global control flow graph (CFG) and address usage map (AUM). Its operations are quite low-level and its behavior is
  *      customized primarily by callbacks.
  *
  *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
@@ -286,11 +315,15 @@ namespace Partitioner2 {
  * Q. Why is this class final?
  *
  * A. This class represents the low-level operations for partitioning instructions and is responsible for ensuring that certain
- *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. It's
+ *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. Its
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
 class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage<> {     // final
+#ifdef ROSE_PARTITIONER_MOVE
+    BOOST_MOVABLE_BUT_NOT_COPYABLE(Partitioner)
+#endif
+
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
@@ -306,7 +339,7 @@ public:
 
     /** Map address to name. */
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
-    
+
 private:
     BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
@@ -321,9 +354,11 @@ private:
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
+    SourceLocations sourceLocations_;                   // Mapping between source locations and addresses
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
+    Unparser::BasePtr insnPlainUnparser_;               // For unparsing just instruction mnemonic and operands
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -337,10 +372,14 @@ private:
     ControlFlowGraph::VertexIterator nonexistingVertex_;
     static const size_t nSpecialVertices = 3;
 
+    // Optional cached information
+    Sawyer::Optional<rose_addr_t> elfGotVa_;            // address of ELF GOT, set by findElfGotVa
+
     // Protects the following data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
     Progress::Ptr progress_;                            // Progress reporter to update, or null
     mutable size_t cfgProgressTotal_;                   // Expected total for the CFG progress bar; initialized at first report
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,9 +394,12 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serializeCommon(S &s, const unsigned /*version*/) {
+    void serializeCommon(S &s, const unsigned version) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
+#ifdef ROSE_ENABLE_ASM_A64
+        s.template register_type<InstructionSemantics2::DispatcherA64>();
+#endif
         s.template register_type<InstructionSemantics2::DispatcherX86>();
         s.template register_type<InstructionSemantics2::DispatcherM68k>();
         s.template register_type<InstructionSemantics2::DispatcherPowerpc>();
@@ -384,6 +426,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaInterproceduralLimit_);
         s & BOOST_SERIALIZATION_NVP(addressNames_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(sourceLocations_);
         s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm_);
         // s & unparser_;                       -- not saved; restored from disassembler
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
@@ -393,6 +437,8 @@ private:
         // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
         // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
         // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(elfGotVa_);
         // s & progress_;                       -- not saved/restored
         // s & cfgProgressTotal_;               -- not saved/restored
     }
@@ -410,6 +456,7 @@ private:
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,14 +479,17 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
 
-    // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
-    // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
-    // things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
-    // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-    // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
-    // after a while.
-    Partitioner(const Partitioner &other);
-    Partitioner& operator=(const Partitioner &other);
+#ifdef ROSE_PARTITIONER_MOVE
+    /** Move constructor. */
+    Partitioner(BOOST_RV_REF(Partitioner));
+
+    /** Move assignment. */
+    Partitioner& operator=(BOOST_RV_REF(Partitioner));
+#else
+    // These are unsafe
+    Partitioner(const Partitioner&);
+    Partitioner& operator=(const Partitioner&);
+#endif
 
     ~Partitioner();
 
@@ -464,7 +514,7 @@ public:
     Configuration& configuration() { return config_; }
     const Configuration& configuration() const { return config_; }
     /** @} */
-        
+
     /** Returns the instruction provider.
      *
      *  Thread safety: Not thread safe.
@@ -527,6 +577,14 @@ public:
     void insnUnparser(const Unparser::BasePtr&) /*final*/;
     /** @} */
 
+    /** Configure the single-instruction unparser. */
+    void configureInsnUnparser(const Unparser::BasePtr&) const /*final*/;
+
+    /** Configure plain single-instruction unparser.
+     *
+     *  This configures an unparser for showing just the instruction mnemonic and operands. */
+    void configureInsnPlainUnparser(const Unparser::BasePtr&) const /*final*/;
+
     /** Unparse some entity.
      *
      *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
@@ -542,6 +600,11 @@ public:
     void unparse(std::ostream&, const Function::Ptr&) const;
     void unparse(std::ostream&) const;
     /** @} */
+
+    /** Unparse an instruction in a plain way.
+     *
+     *  This generates a string for the instruction that shows only the mnemonic and arguments. */
+    std::string unparsePlain(SgAsmInstruction*) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -626,6 +689,12 @@ public:
 
     /** Returns the address usage map for a single function. */
     AddressUsageMap aum(const Function::Ptr&) const /*final*/;
+
+    /** Entities that exist at a particular address.
+     *
+     *  Returns a vector of @ref AddressUser objects that describe instructions, basic blocks, data blocks, and functions that
+     *  exist at the specified address. */
+    std::vector<AddressUser> users(rose_addr_t) const /*final*/;
 
     /** Determine all ghost successors in the control flow graph.
      *
@@ -732,17 +801,17 @@ public:
     /** Determines whether an instruction is attached to the CFG/AUM.
      *
      *  If the CFG/AUM represents an instruction that starts at the specified address, then this method returns the
-     *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
-     *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
+     *  instruction/block pair, otherwise it returns an empty pair. The initial instruction for a basic block does not exist if
+     *  the basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
      *
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const /*final*/ {
-        return aum_.instructionExists(startVa);
+    AddressUser instructionExists(rose_addr_t startVa) const /*final*/ {
+        return aum_.findInstruction(startVa);
     }
-    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const /*final*/ {
-        return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
+    AddressUser instructionExists(SgAsmInstruction *insn) const /*final*/ {
+        return aum_.findInstruction(insn);
     }
     /** @} */
 
@@ -815,6 +884,7 @@ public:
     CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -845,7 +915,7 @@ public:
     bool placeholderExists(rose_addr_t startVa) const /*final*/;
 
     /** Find the CFG vertex for a basic block placeholder.
-     *  
+     *
      *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the
      *  end vertex (<code>partitioner.cfg().vertices().end()</code>) is returned.
      *
@@ -1092,6 +1162,8 @@ public:
      *  specified block is stored at that placeholder, otherwise a new placeholder is created first.  A basic block cannot be
      *  attached if the CFG/AUM already knows about a different basic block at the same address.  Attempting to attach a block
      *  which is already attached is allowed, and is a no-op. It is an error to specify a null pointer for the basic block.
+     *
+     *  If the basic block owns any data blocks, those data blocks are also attached to the partitioner.
      *
      *  The basic block's cached successors are consulted when creating the new edges in the CFG.  The block's successor types
      *  are used as-is except for the following modifications:
@@ -1367,7 +1439,7 @@ public:
      *  @li If the block is owned by a function and the function's name is present on a whitelist or blacklist
      *      then the block's may-return is positive if whitelisted or negative if blacklisted.
      *
-     *  @li If the block is a non-existing placeholder (i.e. it's address is not mapped with execute permission) then
+     *  @li If the block is a non-existing placeholder (i.e. its address is not mapped with execute permission) then
      *      its may-return is positive or negative depending on the value of this partitioner's @ref assumeFunctionsReturn
      *      property.
      *
@@ -1460,12 +1532,13 @@ public:
      *  Thread safety: Not thread safe. */
     size_t nDataBlocks() const /*final*/;
 
-    /** Determine if a data block is attached to the CFG/AUM.
+    /** Determine if a data block or its equivalent is attached to the CFG/AUM.
      *
-     *  Returns true if this data block is attached to the CFG/AUM and false if not attached.
+     *  If the AUM contains the specified data block or an equivalent data block, then return the non-null pointer for the data
+     *  block that's already present in the AUM. Otherwise return a null pointer.
      *
      *  Thread safety: Not thread safe. */
-    bool dataBlockExists(const DataBlock::Ptr&) const /*final*/;
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const /*final*/;
 
     /** Find an existing data block.
      *
@@ -1479,13 +1552,16 @@ public:
 
     /** Attach a data block to the CFG/AUM.
      *
-     *  Attaches the data block to the CFG/AUM if it is not already attached.  A newly attached data block will have a
-     *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been
-     *  already attached). Multiple data blocks having the same address can be attached. It is an error to supply a null
-     *  pointer.
+     *  Attaches the data block to the CFG/AUM if it is not already attached and there is no equivalent data block already
+     *  attached. If no equivalent data block exists in the CFG/AUM then the specified block is attached and will have an
+     *  ownership count of zero since none of its owners are attached (otherwise the data block or an equivalent block would
+     *  also have been already attached). It is an error to supply a null pointer.
+     *
+     *  Returns the canonical data block, either one that already existed in the CFG/AUM or the specified data block which is
+     *  now attached.
      *
      *  Thread safety: Not thread safe. */
-    void attachDataBlock(const DataBlock::Ptr&) /*final*/;
+    DataBlock::Ptr attachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Detaches a data block from the CFG/AUM.
      *
@@ -1493,7 +1569,32 @@ public:
      *  to attempt to detach a data block which is owned by attached basic blocks or attached functions.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
+    void detachDataBlock(const DataBlock::Ptr&) /*final*/;
+
+    /** Attach a data block to an attached or detached function.
+     *
+     *  Causes the data block to be owned by the specified function. If the function is attached to this partitioner (i.e.,
+     *  appears in the control flow graph and address usage map) then the specified data block is also attached to this
+     *  partitioner (if it wasn't already) and will appear in the address usage map.
+     *
+     *  Returns either the specified data block or an equivalent data block that's already owned by the function.
+     *
+     *  Thread safety: Not thread safe. */
+    DataBlock::Ptr attachDataBlockToFunction(const DataBlock::Ptr&, const Function::Ptr&) /*final*/;
+
+    /** Attach a data block to a basic block.
+     *
+     *  Causes the data block to be owned by the specified basic block. If the basic block is attached to this partitioner
+     *  (i.e., appears in the control flow graph and address usage map) then the specified data block is also attached to this
+     *  partitioner (if it wasn't already) and will appear in the address usage map.
+     *
+     *  If the basic block already owns a data block with the same starting address and size, then the specified data block
+     *  is not attached to the basic block.
+     *
+     *  Returns either the specified data block or an equivalent data block that's already owned by the basic block.
+     *
+     *  Thread safety: Not thread safe. */
+    DataBlock::Ptr attachDataBlockToBasicBlock(const DataBlock::Ptr&, const BasicBlock::Ptr&) /*final*/;
 
     /** Returns data blocks that overlap with specified address interval.
      *
@@ -1681,7 +1782,7 @@ public:
      *  One of the things that are merged are the basic blocks.  If the function being attached is A and the partitioner
      *  already knows about B having the same entry address as A, then all basic blocks owned by A are now (also) owned by
      *  B. Some of those blocks happened to be owned by other functions also attached to the partitioner they continue to be
-     *  owned also by those other functions.
+     *  owned also by those other functions. Data blocks are handled in a similar fashion.
      *
      *  Thread safety: Not thread safe. */
     Function::Ptr attachOrMergeFunction(const Function::Ptr&) /*final*/;
@@ -1720,25 +1821,6 @@ public:
      *
      *  Thread safety: Not thread safe. */
     void detachFunction(const Function::Ptr&) /*final*/;
-
-    /** Attach a data block into an attached or detached function.
-     *
-     *  @todo This is certainly not the final API.  The final API will likely describe data as an address and type rather than
-     *  an address and size.  It is also likely that attaching data to a function will try to adjust an existing data block's
-     *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
-     *  as we learn more about how it is accessed.
-     *
-     *  Returns the data block that has been attached to the function.
-     *
-     *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes) /*final*/;
-
-    /** Attach a data block to an attached or detached function.
-     *
-     *  Causes the specified function to become an owner of the specified data block.
-     *
-     *  Thread safety: Not thread safe. */
-    void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
     /** Finds functions that own the specified basic block.
      *
@@ -2050,7 +2132,7 @@ public:
     std::set<rose_addr_t> functionDataFlowConstants(const Function::Ptr&) const /*final*/;
 
 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2122,8 +2204,15 @@ public:
      *
      *  If no match is found then an empty vector is returned.
      *
-     *  Thread safety: Not thread safe. */
+     *  If The @p lastSearchedVa argument is provided, then it is set to the highest address at which a function prologue was
+     *  searched.
+     *
+     *  Thread safety: Not thread safe.
+     *
+     *  @{ */
     std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa) /*final*/;
+    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa /*out*/) /*final*/;
+    /** @} */
 
 public:
     /** Ordered list of function padding matchers.
@@ -2240,6 +2329,12 @@ public:
      *  Thread safety: Not thread safe. */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Expands indeterminate function calls.
+     *
+     *  Modifies the control flow graph so that any function call to the indeterminate vertex is replaced by function calls to
+     *  every possible function. */
+    void expandIndeterminateCalls();
+
     /** Property: How to report progress.
      *
      *  Partitioning progress is reported in two ways:
@@ -2270,8 +2365,29 @@ public:
     /** Print some partitioner performance statistics. */
     void showStatistics() const;
 
+    // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
+    void checkConsistency() const;
+
+    /** Find the ELF global offset table and save its address.
+     *
+     *  Returns the GOT section and caches the section's actual mapped address.
+     *
+     *  See also, @ref elfGotVa. */
+    SgAsmGenericSection* elfGot(SgAsmElfFileHeader*);
+
+    /** Returns a previously cached ELF GOT address.
+     *
+     *  See also, @ref elfGot. */
+    Sawyer::Optional<rose_addr_t> elfGotVa() const;
+
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Settings
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Settings
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
@@ -2356,6 +2472,16 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+    /** Property: Source locations.
+     *
+     *  The partitioner stores a mapping from source locations to virtual addresses and vice versa.
+     *
+     * @{ */
+    const SourceLocations& sourceLocations() const /*final*/ { return sourceLocations_; }
+    SourceLocations& sourceLocations() /*final*/ { return sourceLocations_; }
+    void sourceLocations(const SourceLocations &locs) { sourceLocations_ = locs; }
+    /** @} */
+
     /** Property: Whether to look for function calls used as branches.
      *
      *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
@@ -2366,6 +2492,7 @@ public:
     bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
     void checkingCallBranch(bool b) /*final*/ { settings_.checkingCallBranch = b; }
     /** @} */
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2434,7 +2561,7 @@ public:
 #endif
 
 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2452,7 +2579,7 @@ private:
     // and destination CFGs are identical.
     ControlFlowGraph::VertexIterator convertFrom(const Partitioner &other,
                                                  ControlFlowGraph::ConstVertexIterator otherIter);
-    
+
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
     ControlFlowGraph::EdgeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexIterator &placeholder);
@@ -2463,9 +2590,6 @@ private:
 
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
     BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa) const;
-
-    // Checks consistency of internal data structures when debugging is enable (when NDEBUG is not defined).
-    void checkConsistency() const;
 
     // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
     // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
@@ -2483,4 +2607,8 @@ private:
 } // namespace
 } // namespace
 
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 2);
+
+#endif
 #endif

@@ -6,8 +6,10 @@
 
 #include "rose_config.h"
 
+#include "clang-to-dot.hpp"
+
 #if 0
-// DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be3 compilied without the "-fno-rtti" option.
+// DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be compilied without the "-fno-rtti" option.
 // DQ (3/1/2017): Trying to get rid of linker error.
 #ifdef ROSE_USE_CLANG_FRONTEND
 #include "typeinfo"
@@ -35,7 +37,45 @@ void clang::PPCallbacks::type_info() {};
 
 extern bool roseInstallPrefix(std::string&);
 
+// DQ (11/28/2020): Use this for testing the DOT graph generator.
+#define EXIT_AFTER_BUILDING_DOT_FILE 0
+
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
+
+ // printf ("sageFile.get_clang_il_to_graphviz() = %s \n",sageFile.get_clang_il_to_graphviz() ? "true" : "false");
+
+ // DQ (11/27/2020): Use the -rose:clang_il_to_graphviz option to comntrol the use of the Clang Dot generator.
+#if EXIT_AFTER_BUILDING_DOT_FILE
+    if (true)
+#else
+    if (sageFile.get_clang_il_to_graphviz() == true)
+#endif
+       {
+#if 1
+      // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
+         int clang_to_dot_status = clang_to_dot_main(argc,argv);
+#if 0
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
+#endif
+         if (clang_to_dot_status != 0)
+            {
+              printf ("Error in generation of dot file of Clang IR: returing from top of clang_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
+              return clang_to_dot_status;
+            }
+           else
+            {
+#if 0
+              printf ("Note: Dot file of Clang IR output in file: clangGraph.dot \n");
+#endif
+            }
+#endif
+
+#if EXIT_AFTER_BUILDING_DOT_FILE
+         return 0;
+#endif
+       }
+
   // 0 - Analyse Cmd Line
 
     std::vector<std::string> inc_dirs_list;
@@ -123,7 +163,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     std::string rose_include_path;
     bool in_install_tree = roseInstallPrefix(rose_include_path);
     if (in_install_tree) {
-        rose_include_path += "/include-staging/";
+        rose_include_path += "/include/";
     }
     else {
         rose_include_path = std::string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/include-staging/";
@@ -140,7 +180,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     inc_dirs_list.push_back(rose_include_path + "clang/");
 
 
-    // FIXME add ROSE path to gcc headers...
+ // FIXME add ROSE path to gcc headers...
     switch (language) {
         case ClangToSageTranslator::C:
             inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
@@ -155,16 +195,24 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             inc_list.push_back("clang-builtin-cuda.hpp");
             break;
         case ClangToSageTranslator::OPENCL:
-//          inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
-            // FIXME get the path right
+         // inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
+         // FIXME get the path right
             inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
-        default:
+          {
+         // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
+            printf ("Objective C langauge support is not available in ROSE \n");
             ROSE_ASSERT(false);
+          }
+        default:
+          {
+            printf ("Default reached in switch(language) support \n");
+            ROSE_ASSERT(false);
+          }
     }
 
-    // FIXME should be handle by Clang ?
+ // FIXME should be handle by Clang ?
     define_list.push_back("__I__=_Complex_I");
 
     unsigned cnt = define_list.size() + inc_dirs_list.size() + inc_list.size();
@@ -207,12 +255,15 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     clang::CompilerInstance * compiler_instance = new clang::CompilerInstance();
 
-    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
-    compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
+    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+    compiler_instance->createDiagnostics(diag_printer, true);
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
-    clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics());
-    compiler_instance->setInvocation(invocation);
+    std::shared_ptr<clang::CompilerInvocation> invocation_shptr(std::move(invocation));
+    llvm::ArrayRef<const char *> argsArrayRef(args, &(args[cnt]));
+    clang::CompilerInvocation::CreateFromArgs(*invocation, argsArrayRef, compiler_instance->getDiagnostics());
+    compiler_instance->setInvocation(invocation_shptr);
 
     clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
 
@@ -241,22 +292,26 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     }
 
     clang::TargetOptions target_options;
-    target_options.Triple = llvm::sys::getHostTriple();
-    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), target_options);
+    target_options.Triple = llvm::sys::getDefaultTargetTriple();
+    std::shared_ptr<clang::TargetOptions> targetOption_shptr = std::make_shared<clang::TargetOptions>(target_options);
+    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), targetOption_shptr);
     compiler_instance->setTarget(target_info);
 
     compiler_instance->createFileManager();
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
-    const clang::FileEntry * input_file_entry = compiler_instance->getFileManager().getFile(input_file);
-    compiler_instance->getSourceManager().createMainFileID(input_file_entry);
+    llvm::ErrorOr<const clang::FileEntry *> ret  = compiler_instance->getFileManager().getFile(input_file);
+    const clang::FileEntry * input_file_entry = ret.get(); 
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
 
-    if (!compiler_instance->hasPreprocessor()) compiler_instance->createPreprocessor();
+    compiler_instance->getSourceManager().setMainFileID(mainFileID);
+
+    if (!compiler_instance->hasPreprocessor()) compiler_instance->createPreprocessor(clang::TU_Complete);
 
     if (!compiler_instance->hasASTContext()) compiler_instance->createASTContext();
 
     ClangToSageTranslator translator(compiler_instance, language);
-    compiler_instance->setASTConsumer(&translator);   
+    compiler_instance->setASTConsumer(std::move(std::unique_ptr<clang::ASTConsumer>(&translator)));
 
     if (!compiler_instance->hasSema()) compiler_instance->createSema(clang::TU_Complete, NULL);
 
@@ -270,9 +325,13 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 3 - Translate
 
+ // printf ("Calling clang::ParseAST() (generate ROSE AST) \n");
+
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
+
+ // printf ("DONE: Calling clang::ParseAST()  (generate ROSE AST) \n");
 
     SgGlobal * global_scope = translator.getGlobalScope();
 
@@ -297,7 +356,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     finishSageAST(translator);
 
-    return 1;
+    return 0;
 }
 
 void finishSageAST(ClangToSageTranslator & translator) {
@@ -342,121 +401,175 @@ ClangToSageTranslator::~ClangToSageTranslator() {
 
 /* (protected) Helper methods */
 
-void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange source_range) {
-    SgLocatedNode * located_node = isSgLocatedNode(node);
-    SgInitializedName * init_name = isSgInitializedName(node);
+void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange source_range) 
+   {
+     SgLocatedNode * located_node = isSgLocatedNode(node);
+     SgInitializedName * init_name = isSgInitializedName(node);
 
 #if DEBUG_SOURCE_LOCATION
-    std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
+     std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
 #endif
 
-    if (located_node == NULL && init_name == NULL) {
-        std::cerr << "Consistency error: try to apply a source range to a Sage node which is not a SgLocatedNode or a SgInitializedName." << std::endl;
-        exit(-1);
-    }
-    else if (located_node != NULL) {
-        Sg_File_Info * fi = located_node->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = located_node->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-    }
-    else if (init_name != NULL) {
-        Sg_File_Info * fi = init_name->get_startOfConstruct();
-        if (fi != NULL) delete fi;
-        fi = init_name->get_endOfConstruct();
-        if (fi != NULL) delete fi;
-    }
+     if (located_node == NULL && init_name == NULL) 
+        {
+          std::cerr << "Consistency error: try to apply a source range to a Sage node which is not a SgLocatedNode or a SgInitializedName." << std::endl;
+          exit(-1);
+        }
+       else 
+        {
+          if (located_node != NULL) 
+             {
+               Sg_File_Info * fi = located_node->get_startOfConstruct();
+               if (fi != NULL) delete fi;
+               fi = located_node->get_endOfConstruct();
+               if (fi != NULL) delete fi;
+             }
+            else
+             {
+               if (init_name != NULL)
+                  {
+                    Sg_File_Info * fi = init_name->get_startOfConstruct();
+                    if (fi != NULL) delete fi;
+                    fi = init_name->get_endOfConstruct();
+                    if (fi != NULL) delete fi;
+                  }
+             }
+        }
 
-    Sg_File_Info * start_fi = NULL;
-    Sg_File_Info * end_fi = NULL;
+     Sg_File_Info * start_fi = NULL;
+     Sg_File_Info * end_fi   = NULL;
 
-    if (source_range.isValid()) {
-        clang::SourceLocation begin  = source_range.getBegin();
-        clang::SourceLocation end    = source_range.getEnd();
+     if (source_range.isValid()) 
+        {
+          clang::SourceLocation begin  = source_range.getBegin();
+          clang::SourceLocation end    = source_range.getEnd();
 
-        if (begin.isValid() && end.isValid()) {
-            if (begin.isMacroID()) {
+          if (begin.isValid() && end.isValid())
+             {
+               if (begin.isMacroID())
+                  {
 #if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tDump SourceLocation begin as it is a MacroID: ";
-                begin.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
+                    std::cerr << "\tDump SourceLocation begin as it is a MacroID: ";
+                    begin.dump(p_compiler_instance->getSourceManager());
+                    std::cerr << std::endl;
 #endif
-                begin = p_compiler_instance->getSourceManager().getExpansionLoc(begin);
-                ROSE_ASSERT(begin.isValid());
-            }
+                    begin = p_compiler_instance->getSourceManager().getExpansionLoc(begin);
+                    ROSE_ASSERT(begin.isValid());
+                  }
 
-            if (end.isMacroID()) {
+               if (end.isMacroID())
+                  {
 #if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tDump SourceLocation end as it is a MacroID: ";
-                end.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
+                    std::cerr << "\tDump SourceLocation end as it is a MacroID: ";
+                    end.dump(p_compiler_instance->getSourceManager());
+                    std::cerr << std::endl;
 #endif
-                end = p_compiler_instance->getSourceManager().getExpansionLoc(end);
-                ROSE_ASSERT(end.isValid());
-            }
+                    end = p_compiler_instance->getSourceManager().getExpansionLoc(end);
+                    ROSE_ASSERT(end.isValid());
+                  }
 
-            clang::FileID file_begin = p_compiler_instance->getSourceManager().getFileID(begin);
-            clang::FileID file_end   = p_compiler_instance->getSourceManager().getFileID(end);
+               clang::FileID file_begin = p_compiler_instance->getSourceManager().getFileID(begin);
+               clang::FileID file_end   = p_compiler_instance->getSourceManager().getFileID(end);
 
-            bool inv_begin_line;
-            bool inv_begin_col;
-            bool inv_end_line;
-            bool inv_end_col;
+               bool inv_begin_line;
+               bool inv_begin_col;
+               bool inv_end_line;
+               bool inv_end_col;
 
-            unsigned ls = p_compiler_instance->getSourceManager().getSpellingLineNumber(begin, &inv_begin_line);
-            unsigned cs = p_compiler_instance->getSourceManager().getSpellingColumnNumber(begin, &inv_begin_col);
-            unsigned le = p_compiler_instance->getSourceManager().getSpellingLineNumber(end, &inv_end_line);
-            unsigned ce = p_compiler_instance->getSourceManager().getSpellingColumnNumber(end, &inv_end_col);
+               unsigned ls = p_compiler_instance->getSourceManager().getSpellingLineNumber(begin, &inv_begin_line);
+               unsigned cs = p_compiler_instance->getSourceManager().getSpellingColumnNumber(begin, &inv_begin_col);
+               unsigned le = p_compiler_instance->getSourceManager().getSpellingLineNumber(end, &inv_end_line);
+               unsigned ce = p_compiler_instance->getSourceManager().getSpellingColumnNumber(end, &inv_end_col);
 
-            if (file_begin.isInvalid() || file_end.isInvalid() || inv_begin_line || inv_begin_col || inv_end_line || inv_end_col) {
-                ROSE_ASSERT(!"Should not happen as everything have been check before...");
-            }
+               if (file_begin.isInvalid() || file_end.isInvalid() || inv_begin_line || inv_begin_col || inv_end_line || inv_end_col)
+                  {
+                    ROSE_ASSERT(!"Should not happen as everything have been check before...");
+                  }
 
-            if (p_compiler_instance->getSourceManager().getFileEntryForID(file_begin) != NULL) {
-                std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName();
+               if (p_compiler_instance->getSourceManager().getFileEntryForID(file_begin) != NULL) 
+                  {
+                    std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName();
 
-                start_fi = new Sg_File_Info(file, ls, cs);
-                end_fi   = new Sg_File_Info(file, le, ce);
-#if DEBUG_SOURCE_LOCATION
-                std::cerr << "\tCreate FI for node in " << file << ":" << ls << ":" << cs << std::endl;
+                 // start_fi = new Sg_File_Info(file, ls, cs);
+                 // end_fi   = new Sg_File_Info(file, le, ce);
+#if 0
+                    std::string rawFileName         = node->get_file_info()->get_raw_filename();
+                    std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(rawFileName);
+                    printf ("filenameWithoutPath = %s file = %s \n",filenameWithoutPath.c_str(),file.c_str());
 #endif
-            }
+                 // if (file == "clang-builtin-c.h")
+                    if (file.find("clang-builtin-c.h") != std::string::npos) 
+                       {
+#if 0
+                         printf ("Processing a frontend specific file \n");
+#endif
+                         start_fi = new Sg_File_Info(file, ls, cs);
+                         end_fi   = new Sg_File_Info(file, le, ce);
+
+                      // DQ (11/29/2020): This is not doing what I had hoped it would do.
+                      // I think the solution is to use the -DSKIP_ROSE_BUILTIN_DECLARATIONS option,
+                      // but that is not working as I expected either.  Time to go home.
+                      // start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+                      // end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+                         start_fi->set_classificationBitField(Sg_File_Info::e_frontend_specific);
+                         end_fi  ->set_classificationBitField(Sg_File_Info::e_frontend_specific);
+                       }
+                      else
+                       {
+                         start_fi = new Sg_File_Info(file, ls, cs);
+                         end_fi   = new Sg_File_Info(file, le, ce);
+                       }
+
 #if DEBUG_SOURCE_LOCATION
-            else {
-                std::cerr << "\tDump SourceLocation for \"Invalid FileID\": " << std::endl << "\t";
-                begin.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl << "\t";
-                end.dump(p_compiler_instance->getSourceManager());
-                std::cerr << std::endl;
-            }
+                    std::cerr << "\tCreate FI for node in " << file << ":" << ls << ":" << cs << std::endl;
+#endif
+                  }
+#if DEBUG_SOURCE_LOCATION
+                 else
+                  {
+                    std::cerr << "\tDump SourceLocation for \"Invalid FileID\": " << std::endl << "\t";
+                    begin.dump(p_compiler_instance->getSourceManager());
+                    std::cerr << std::endl << "\t";
+                    end.dump(p_compiler_instance->getSourceManager());
+                    std::cerr << std::endl;
+                  }
+#endif
+             }
+        }
+
+     if (start_fi == NULL && end_fi == NULL) 
+        {
+          start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+          end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+
+          start_fi->setCompilerGenerated();
+          end_fi->setCompilerGenerated();
+#if DEBUG_SOURCE_LOCATION
+          std::cerr << "Create FI for compiler generated node" << std::endl;
 #endif
         }
-    }
+       else
+        {
+          if (start_fi == NULL || end_fi == NULL)
+             {
+               ROSE_ASSERT(!"start_fi == NULL xor end_fi == NULL");
+             }
+        }
 
-    if (start_fi == NULL && end_fi == NULL) {
-        start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-        end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-
-        start_fi->setCompilerGenerated();
-        end_fi->setCompilerGenerated();
-#if DEBUG_SOURCE_LOCATION
-        std::cerr << "Create FI for compiler generated node" << std::endl;
-#endif
-    }
-    else if (start_fi == NULL || end_fi == NULL) {
-        ROSE_ASSERT(!"start_fi == NULL xor end_fi == NULL");
-    }
-
-    if (located_node != NULL) {
-        located_node->set_startOfConstruct(start_fi);
-        located_node->set_endOfConstruct(end_fi);
-    }
-    else if (init_name != NULL) {
-        init_name->set_startOfConstruct(start_fi);
-        init_name->set_endOfConstruct(end_fi);
-    }
-
-}
+     if (located_node != NULL)
+        {
+          located_node->set_startOfConstruct(start_fi);
+          located_node->set_endOfConstruct(end_fi);
+        }
+       else
+        {
+          if (init_name != NULL)
+             {
+               init_name->set_startOfConstruct(start_fi);
+               init_name->set_endOfConstruct(end_fi);
+             }
+        }
+   }
 
 void ClangToSageTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse) {
     Sg_File_Info * start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
@@ -521,6 +634,7 @@ bool ClangToSageTranslator::preprocessor_pop() {
 
 // struct NextPreprocessorToInsert
 
+// NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
 NextPreprocessorToInsert::NextPreprocessorToInsert(ClangToSageTranslator & translator_) :
   cursor(NULL),
   candidat(NULL),
@@ -625,7 +739,7 @@ void SagePreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Mapping mapping, llvm::StringRef Str) {
+void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
     std::cerr << "PragmaDiagnostic" << std::endl;
     ROSE_ASSERT(false);
 }

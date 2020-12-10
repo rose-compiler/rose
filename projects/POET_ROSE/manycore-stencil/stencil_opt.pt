@@ -1,0 +1,233 @@
+include utils.incl
+include stencil_ROSE.incl
+include analysis.pi
+include stencil_lib.pi
+
+<parameter manycore default=1 message="whether to use manycore lib from ROSE"/>
+<parameter gpu default=0 message="whether to target GPU"/>
+
+<parameter analyze type=INT default=0 message="whether to analyze for stencil kernels"/>
+<parameter in message="input file name"/>
+<parameter out message="output file name"/>
+<define ManycoreLib ("core"".""h")|("multicore"".""h") />
+
+<trace target/>
+<trace top_incl=""/>
+<input from=in to=target/>  <<* use ROSE parser
+
+<define TRACE_TARGET target/>
+<define TRACE_INCL top_incl />
+
+<xform sort_pragma pars=(new, old)>
+  if (old == "") return new;
+  (FunctionDecl#(f=_,_,_,_), p, basetype,body) = new;
+<<*PRINT ("f=" f);
+  res = NULL; done = 0;
+  for (pold = old; pold != NULL && !done; pold=cdr(pold)) {
+     c = (FunctionDecl#(f1=_,_,_,_), p1=_, basetype1=_, body1=_) = car(pold);
+     
+     if (f1 == f && Lookup(p, body1)) { res = AppendList(res, (f, AppendList(p1,p), basetype1,  body1)); AppendList(res, cdr(pold)); done = 1; } 
+     else if (Lookup(f1, body)) 
+       { res = AppendList(AppendList(res, new),pold); done = 1; }
+     else { res = AppendList(res, c); }
+ }
+ if (done == 0) res = AppendList(res, new); 
+ return res;
+</xform>
+
+<xform AnnotateStencils pars=(input) trace=GLOBAL.TRACE_TARGET>
+        r = CollectPatterns(input, "Stencil_pat"|"TIME_LOOP");
+        fnameMap=MAP{}; bodyMap = MAP{};
+        foreach c=(id=_, fname1=_, Pattern#("Stencil_pat", (ivars=_,arrays=_,nests=_), pat_body=_)) \in r do
+             skip = 0;
+             fname = car(fname2=SPLIT("",fname1));
+             if (fnameMap[fname] != "") { skip = 1; } 
+             else { 
+                if (cdr(fname2) != NULL)  fnameMap[fname] = 1; <<* a template instantiation
+                foreach CODE.Bop#("->", _, "coreArrayNeighborhoodSizes_2D"|"coreArrayNeighborhoodSizes_3D") \in pat_body do <<* already using internal impl
+                   skip = 1; break;
+                 enddo
+             }
+             if (!skip) {
+               dimsizes = NULL; 
+               tvars = NULL; space_body = pat_body;
+               for ((p2=nests); p2 != NULL; (p2=cdr(p2))) {
+                 Nest#(l=_, _) = car(p2);
+                 Loop#(i=_,lo=_,lsize=_,_) = Convert2Loop(l); 
+                 i = (i=>STRING);
+                 if (Lookup(i,ivars)) { dimsizes = RebuildBop("+",lsize,lo) :: dimsizes; }
+                 else if (dimsizes==NULL) { tvars = AppendList(tvars, i); space_body=car(cdr(p2)); }
+                 else { break; }
+               }
+               for (repl = pat_body; repl : CODE.Pragma#(p=_, body1=_); repl = body1) {""}
+               if (space_body == pat_body) {
+                  cur = CODE.Pragma#(CODE.StencilPragma#(id, "data", ivars, CODE.StencilArray#(DimSizeSpec#dimsizes,arrays),""),repl);
+               }
+               else {
+                  for (repl1 = space_body; repl1 : CODE.Pragma#(p=_, body1=_); repl1 = body1) {""}
+                  cur1 = CODE.Pragma#(CODE.StencilPragma#(id, "data", ivars, CODE.StencilArray#(DimSizeSpec#dimsizes,arrays),""),repl1);
+                  cur = REPLACE(space_body, cur1, repl);
+                  tarrays = arrays;
+                  for (pa = arrays; pa != NULL; pa = cdr(pa)) {
+                      arr1 = car(pa);
+                      foreach e = space_body|Assign#(arr1, rhs=_)  \in cur do
+                        if (e : Assign) tarrays = REPLACE(arr1, rhs, tarrays);
+                        break;
+                      enddo
+                  }
+                  cur = CODE.Pragma#(CODE.StencilPragma#(id, "time", tvars, CODE.StencilArray#(DimSizeSpec#dimsizes,tarrays),""),cur);
+               }
+               is_single_pat = 0;
+               foreach c1=(id, fname1, ("SINGLE_PATTERN_FUNCTION",fun_1=_)) \in r do
+                 is_single_pat = 1; break;
+               enddo
+               if (is_single_pat) {
+                  foreach c2=(id2=_, fname2=_, Pattern#("TIME_LOOP", fname1, body2=_)) \in r do 
+                    for (repl2 = body2; repl2 : CODE.Pragma#(p=_, body3=_); repl2 = body3) {""}
+                    (dimsizes_2 arrays_2) = symbolic_evaluation( (dimsizes arrays), repl, fun_1);
+                    foreach c=CODE.FunctionCall \in repl2 do 
+                       (dimsizes_2 arrays_2) = PropagateFunctionCall((dimsizes_2 arrays_2), c, fun_1);
+                       break;
+                    enddo
+                    Loop#(i=_,_,_,_) = Convert2Loop(repl2);
+                    cur2 = CODE.Pragma#(CODE.StencilPragma#(id, "time", i, CODE.StencilArray#(DimSizeSpec#dimsizes_2,arrays_2),""),repl2);
+                    print ("Identified time loop for stencil:" cur2); 
+                    REPLACE(body2,cur2, trace); 
+                  enddo
+               }
+               found = 0; out_body = ""; 
+               foreach entry = (b1,c1) \in  bodyMap do 
+                 if (Lookup(pat_body,b1)) { found = true; out_body = c1; break; }
+               enddo
+               if (!found) {
+                  REPLACE(pat_body,cur, trace); 
+                  bodyMap[pat_body]=cur;
+               }
+               else {
+                  out_body1 = REPLACE(pat_body, cur, out_body);
+                  REPLACE(out_body, out_body1, trace); 
+               }
+               print ("Identified stencils in " fname ":" cur);
+             }
+        enddo
+</xform>
+
+<xform OptimizeStencils pars=(input) trace=GLOBAL.TRACE_TARGET>
+   pragma_map = MAP{}; fun = ""; 
+   foreach fun=CODE.FunctionDecl#(fname=STRING,_,_,fbody=_) \in ERASE(input) do
+     if (fbody : "") continue;
+     enter_block(fun); enter_block(fbody);
+     foreach p=CODE.Pragma#(pragma=_,body=_) \in fbody s.t. 0 do
+        if (pragma : cur=CODE.StencilPragma || !(pragma : CODE.UnknownUntilEOL) && (SPLIT("",(pragma => STRING)) ==> cur=CODE.StencilPragma))  
+           s = StencilPragma#(name=_, dim=_, ivars=_, arrays=_, hallo=_) = cur;
+        else continue;
+        if (pragma_map[name "type"] == "" && arrays != "") {
+           ((CODE.ArrayType#(base=_)) | (CODE.PtrType#(base=_)) | (CODE.RefType#(base=_))) = get_type(car((arrays)[StencilArray.names]));
+           if (base : TypeName#("MulticoreArray",TemplateInstantiation#(base1=_)))
+              base = base1;
+           basetype = base;
+        }
+        if (GLOBAL.gpu != 0) {
+          params = pragma_map[name "params"];
+          if (params == "") {
+             params = NULL;
+             foreach CODE.TypeInfo#(t=_,v=_,_) \in fun do 
+                if (!Lookup(v, (arrays ivars dimsizes)) && Lookup(v, body)) params=TypeInfo#(t,v,"") :: params;
+             enddo
+           }
+           else {
+             res = NULL;
+             foreach t=TypeInfo#(t,v,_) \in reverse(params) do
+                if (!Lookup(v, (arrays ivars dimsizes)))
+                  res = t :: res; 
+             enddo
+             params = res;
+           }
+           pragma_map[name "params"] = params;
+        }
+        pragma_map[name]=sort_pragma((fun,s,basetype,body),pragma_map[name]);
+     enddo
+   enddo
+   foreach e=(name=_,pragmas=_) \in pragma_map do  
+     GLOBAL.STENCIL_old_array=GLOBAL.STENCIL_array = NULL;
+     stencil_params=pragma_map[name"params"];
+     foreach e1=(fcur=_,cur=_,stencil_type=_,xbody=_) \in pragmas do
+        foreach StencilPragma#(_, dimtype=_, ivars=_, arrays=_, hallo=_) \in cur do 
+           if (arrays : CODE.StencilArray#(_, a=_)) {
+              GLOBAL.STENCIL_old_array=AppendList[erase_replicate=1](GLOBAL.STENCIL_old_array,car(a));
+              GLOBAL.STENCIL_array = AppendList[erase_replicate=1](GLOBAL.STENCIL_array,car(cdr(a)));
+           }
+        enddo
+     enddo
+     foreach e1=(fcur=_,cur=_,stencil_type=_,xbody=_) \in pragmas do
+       ivars_data=ivars_time = NULL;
+       GLOBAL.STENCIL_DATA_INFO=GLOBAL.STENCIL_TIME_IVARS=GLOBAL.STENCIL_HALLO=NULL;
+       foreach StencilPragma#(_, dimtype=_, ivars=_, arrays=_, hallo=_) \in cur do 
+          switch(dimtype){
+            case "time": ivars_time=AppendList(ivars_time,ivars);
+            case "data": ivars_data=AppendList(ivars_data,ivars);
+          } 
+          GLOBAL.STENCIL_TIME_IVARS=ivars_time;
+          GLOBAL.STENCIL_HALLO = hallo;
+          dimsizes = arrays[StencilArray.dimsizes];
+          assert(dimsizes != "");
+          dimsizes = dimsizes[DimSizeSpec.dimsizes]; rdimsizes = ReverseList(dimsizes); 
+          GLOBAL.STENCIL_DATA_INFO=(stencil_type, LEN(dimsizes), dimsizes, rdimsizes);
+      enddo
+      if (ivars_data == NULL) {
+             for (i = 0; i < LEN(dimsizes); i=i+1) {
+                ivars_data = ("__"^i) :: ivars_data;
+             }
+      }
+      ivars_macro=NULL;
+      for (p = ivars_data; p != NULL; p = cdr(p)) {
+         v = car(p) ^ "_s"; 
+         if (cdr(p) != NULL) ivars_macro=AppendList(ivars_macro,v);
+      }
+      cpdims = NULL; t = 1;
+      for ( (p=dimsizes; p1=ivars_data); p != NULL && p1!=NULL; (p = cdr(p);p1=cdr(p1))) {
+         cpdims = CODE.CopyDim#(car(p1),0,car(p),t) :: cpdims;
+         t= t * (car p);
+      }
+      GLOBAL.STENCIL_DATA_IVARS_INFO=(ivars_data,ivars_macro,XFORM.gen_linearized_ref(ivars_macro,dimsizes));
+      GLOBAL.STENCIL_CP_DIMS = cpdims;
+      if (fcur != (car(pragmas))[0]) {
+         if (! (fcur : FunctionDecl#(_,fparam=_,_,_))) assert(0); 
+         fparam2= NULL;
+         foreach t=TypeInfo#(t2=_, n=_,_) \in fparam do
+           if (Lookup(n, (GLOBAL.STENCIL_old_array GLOBAL.STENCIL_array))) {
+             switch (t2) {
+             case CODE.PtrType#(t1=_) :
+                 t2 = CODE.RefType#(CODE.MulticoreArray#t1);
+             case CODE.RefType#(t1=_):
+                 t2 = CODE.RefType#(t1);
+             default: assert(0);
+             }
+             fparam2 = AppendList(fparam2, TypeInfo#(t2, n, "")); 
+           }
+           else fparam2 = AppendList(fparam2, t);
+         enddo
+         f2 = REPLACE(fparam, fparam2, fcur);
+         REPLACE(fcur, f2, trace);
+     }
+     res = from = xbody;
+     TRACE(res, gen_manycore_stencil[trace=res](from, ivars_time != NULL, stencil_params));
+     REPLACE(from, CODE.StmtBlock#res, trace);
+   enddo
+  enddo
+</xform>
+
+<eval
+    if (analyze == 1) { AnnotateStencils[trace=target](target); }
+    else  { OptimizeStencils[trace=target](target); 
+       p = "";
+       foreach p=CODE.DeclarationBlock \in ERASE(target) do
+            REPLACE(p, top_incl::p, target);
+            break;
+       enddo
+       if (p == "") { p = ERASE(trace); REPLACE(p, top_incl::p, trace); } 
+    }
+/>
+
+<output cond=manycore from=(target) syntax=("stencil_manycore.code") to=out/>
+<output cond=gpu from=(target) syntax=("stencil_gpu.code") to=out/>

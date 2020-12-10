@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "TraceSemantics2.h"
+
 #include "AsmUnparser_compat.h"
 
 namespace Rose {
@@ -1166,7 +1169,7 @@ RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr
 {
     before("readRegister", a, b);
     try {
-        return check_width(after(subdomain_->readRegister(a, b)), a.get_nbits());
+        return check_width(after(subdomain_->readRegister(a, b)), a.nBits());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;
@@ -1181,7 +1184,7 @@ RiscOperators::peekRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr
 {
     before("peekRegister", a, b);
     try {
-        return check_width(after(subdomain_->peekRegister(a, b)), a.get_nbits());
+        return check_width(after(subdomain_->peekRegister(a, b)), a.nBits());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;
@@ -1259,3 +1262,5 @@ RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr 
 } // namespace
 } // namespace
 } // namespace
+
+#endif

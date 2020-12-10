@@ -10,13 +10,13 @@ namespace Jovial_ROSE_Translation
   //
      enum ExpressionKind
         {
-          e_unknown,
+           e_unknown = 1,
 
        // Operators
        // ---------
 
        // Arithmetic operators
-          e_exponentiateOperator,
+          e_exponentiateOperator = 9999, // offset a little from enums in general_language_translation.h
           e_plusOperator,
           e_minusOperator,
           e_modOperator,
@@ -55,7 +55,6 @@ namespace Jovial_ROSE_Translation
 
        // Expressions
        // -----------
-
           e_literalExpression,
           e_referenceExpression,
 
@@ -64,6 +63,11 @@ namespace Jovial_ROSE_Translation
           e_by_phrase_expr,
           e_then_phrase_expr,
           e_while_phrase_expr,
+
+       // Expressions for table entry words-per-entry type
+       // ------------------------------------------------
+          e_words_per_entry_w,
+          e_words_per_entry_v,
 
        // Statements
        // ----------
@@ -74,6 +78,20 @@ namespace Jovial_ROSE_Translation
           e_for_while_then_stmt,
           e_for_by_while_stmt,
           e_for_then_while_stmt,
+
+       // Declarations
+       // ------------
+          e_simple_block_type_declaration,
+          e_block_type_declaration,
+          e_simple_table_type_declaration,
+          e_table_type_declaration,
+          e_anonymous_declaration,
+
+       // Directives
+       // -----------
+          e_compool_directive_stmt,
+          e_reducible_directive_stmt,
+          e_order_directive_stmt,
 
           e_last
         };

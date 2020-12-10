@@ -1,10 +1,13 @@
 #include "sage3basic.h"
 #include "Solver5.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
+#include "CodeThornCommandLineOptions.h"
 
-using namespace CodeThorn;
 using namespace std;
+using namespace CodeThorn;
 using namespace Sawyer::Message;
+
+#include "CTAnalysis.h"
 
 Sawyer::Message::Facility Solver5::logger;
 // initialize static member flag
@@ -23,7 +26,8 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
-  _analyzer->_analysisTimer.start();
+  logger[INFO]<<"Running solver "<<getId()<<endl;
+  //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -42,9 +46,9 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
+  if(_analyzer->getLtlOptionsRef().ioReduction) {
     ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
+    ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
   SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
@@ -93,8 +97,8 @@ void Solver5::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
+        Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
+        //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -112,22 +116,67 @@ void Solver5::run() {
               {
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
+                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
-                if(sourceString.size()==40) sourceString+="...";
+                if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();
               }
             }
-
+            
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                _analyzer->addToWorkList(newEStatePtr);
+              if(pres.first==true) {
+                int abstractionMode=_analyzer->getAbstractionMode();
+                switch(abstractionMode) {
+                case 0:
+                  // no abstraction
+                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
+                  _analyzer->addToWorkList(newEStatePtr);
+                  break;
+                case 1:
+                  {
+                  // performing merge
+#pragma omp critical(SUMMARY_STATES_MAP)
+                  {
+                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
+                    if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
+                      // this is not a memory leak. newEStatePtr is
+                      // stored in EStateSet and will be collected
+                      // later. It may be already used in the state
+                      // graph as an existing estate.
+                      newEStatePtr=summaryEState; 
+                    } else {
+                      EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      ROSE_ASSERT(_analyzer);
+                      HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
+                      const EState* newEStatePtr2=pres.second;
+                      if(pres.first==true) {
+                        newEStatePtr=newEStatePtr2;
+                      } else {
+                        // nothing to do, EState already exists
+                      }
+                      ROSE_ASSERT(newEStatePtr);
+                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                    }
+                  }
+                  _analyzer->addToWorkList(newEStatePtr);  
+                  break;
+                  case 2: 
+                    cerr<<"Error: abstraction mode 2 not suppored in solver 5."<<endl;
+                    exit(1);
+                }
+                default:
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  exit(1);
+                }
+              } else {
+                //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
+              }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
@@ -148,7 +197,7 @@ void Solver5::run() {
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(args.getBool("rers-binary")) {
+                if(_analyzer->getOptionsRef().rers.rersBinary) {
                   assertCode=_analyzer->reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=_analyzer->reachabilityAssertCode(currentEStatePtr);
@@ -156,18 +205,13 @@ void Solver5::run() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+                    if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.getBool("rersmode")) {
-                    // assert without label
                   }
                 }
               } // end of failed assert handling
@@ -183,7 +227,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -191,7 +235,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "analysis finished (worklist is empty)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

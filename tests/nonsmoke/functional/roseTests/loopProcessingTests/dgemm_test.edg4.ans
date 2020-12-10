@@ -48,8 +48,80 @@ void dgemm_test(const int M,const int N,const int K,const double alpha,const dou
           _var_1 = 1 + _var_1;
           C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
         }
-        for (; l <= -1 + K; l += 1) {
-          C[j * ldc + i] = C[j * ldc + i] + alpha * A[l * lda + i] * B[j * ldb + l];
+        if (l <= -1 + K) {
+          C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+          if (l <= K + -2) {
+            C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+            if (l <= K + -3) {
+              C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+              if (l <= K + -4) {
+                C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                if (l <= K + -5) {
+                  C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                  if (l <= K + -6) {
+                    C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                    if (l <= K + -7) {
+                      C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                      if (l <= K + -8) {
+                        C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                        if (l <= K + -9) {
+                          C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                          if (l <= K + -10) {
+                            C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                            if (l <= K + -11) {
+                              C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                              if (l <= K + -12) {
+                                C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                                if (l <= K + -13) {
+                                  C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                                  if (l <= K + -14) {
+                                    C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                                    if (l <= K + -15) {
+                                      C[j * ldc + i] = C[j * ldc + i] + alpha * A[_var_1 * lda + i] * B[j * ldb + _var_1];
+                                    }
+                                     else {
+                                    }
+                                  }
+                                   else {
+                                  }
+                                }
+                                 else {
+                                }
+                              }
+                               else {
+                              }
+                            }
+                             else {
+                            }
+                          }
+                           else {
+                          }
+                        }
+                         else {
+                        }
+                      }
+                       else {
+                      }
+                    }
+                     else {
+                    }
+                  }
+                   else {
+                  }
+                }
+                 else {
+                }
+              }
+               else {
+              }
+            }
+             else {
+            }
+          }
+           else {
+          }
+        }
+         else {
         }
       }
     }

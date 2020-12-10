@@ -1,9 +1,12 @@
 #ifndef ROSE_BinaryAnalysis_FunctionSimilarity_H
 #define ROSE_BinaryAnalysis_FunctionSimilarity_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
@@ -60,9 +63,9 @@ class FunctionSimilarity {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /* Exceptions thrown by this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &what): std::runtime_error(what) {}
+        Exception(const std::string &what): Rose::Exception(what) {}
         ~Exception() throw () {}
     };
 
@@ -241,7 +244,7 @@ public:
      * @{ */
     CategoryId declareCfgConnectivity(const std::string &categoryName);
     void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&,
-                                size_t maxPoints = (size_t)(-1));
+                                size_t maxPoints = UNLIMITED);
     /** @} */
 
     /** Function calls.
@@ -484,4 +487,5 @@ std::ostream& operator<<(std::ostream&, const FunctionSimilarity&);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,0 +1,12 @@
+START
+
+COMPOOL compound'table'type;
+
+TYPE a'table'type TABLE ;
+  BEGIN
+     ITEM uvar U 1;
+     ITEM ivar S 2;
+     ITEM fvar F 3;
+  END
+  
+TERM

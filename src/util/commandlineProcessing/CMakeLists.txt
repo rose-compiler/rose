@@ -1,7 +1,9 @@
 add_library(util_commandlineProcessing OBJECT
   commandline_processing.C
-  sla++.C
-)
+  sla++.C)
+
+# commandline_processing.C includes rosePublicConfig.h
+add_dependencies(util_commandlineProcessing generate_rosePublicConfig)
 
 ########### install files ###############
 install(FILES

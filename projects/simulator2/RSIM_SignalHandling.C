@@ -7,6 +7,7 @@
 #include <cassert>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */
@@ -137,7 +138,7 @@ RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const PtRegs &regs, Sig
 void
 RSIM_SignalHandling::restore_sigcontext(const sigcontext_32 &sc, uint32_t cur_flags, PtRegs *regs)
 {
-    memset(regs, 0, sizeof(*regs));
+    *regs = PtRegs();
     regs->gs = sc.gs;
     regs->fs = sc.fs;
     regs->es = sc.es;

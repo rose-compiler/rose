@@ -1,0 +1,18 @@
+START
+
+COMPOOL TYPES'2;
+
+DEFINE ONE           "1";
+  DEFINE   
+    TWO
+        "2
+"
+; DEFINE THREE "3";
+
+TYPE TABLE'1'TYPE          TABLE W 1;
+  BEGIN
+    ITEM BIT'PART B 16     POS(ONE,0);
+    ITEM NUMBER'PART U 16  POS(16,0);
+  END
+
+TERM

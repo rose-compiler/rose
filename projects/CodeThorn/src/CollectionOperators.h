@@ -2,12 +2,10 @@
 #define COLLECTIONOPERATORS_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-namespace SPRAY {
+namespace CodeThorn {
 
 // set intersection
 template<typename T>
@@ -52,6 +50,6 @@ bool operator<(std::set<T> const& s1, std::set<T> const& s2) {
   return true;
 }
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

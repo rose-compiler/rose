@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 /******************************************************************************************************************************
  * NOTE:  For any given IR class, please keep all its parts as close together as possible.  Its bad enough that we're
  *        defining classes in a non-C-like language -- and it's painful when a definition is scattered all over this file. We
@@ -19,10 +22,10 @@
  * NOTE:  Please use three blank lines between IR node definitions to help make this file more readable.  Unless those IR
  *        nodes are so closely related to one another that it's better to keep them close.
  *
- * UPDATE: Instead of splitting class declarations into four separate places, we can now use the macros defined below to put
- *        everything into one place in this file.  My goal is to eventually remove the
- *        src/ROSETTA/Grammar/BinaryInstruction.code file and the related docs/testDoxygen/xxx.docs files and to add
- *        documentation here for all property accessors.
+ * UPDATE: Instead of splitting class declarations into five separate places, we can now use the macros defined below to
+ *        put everything but the node name into one place in this file. The node name still needs a line in the
+ *        "astNodeList" file.  My goal is to eventually remove the src/ROSETTA/Grammar/BinaryInstruction.code file and
+ *        the related docs/testDoxygen/xxx.docs files and to add documentation here for all property accessors.
  *
  * ROSETTA FAILURE MODES:
  *
@@ -56,7 +59,7 @@
 //   IDE's figure out the indentation and as commentary. We don't use "#if 0" because some IDEs figure out that the code is
 //   never possible and don't indent it properly. For instance, most of the classes are defined like this:
 //       #ifdef DOCUMENTATION
-//       class SgAsmArmInstruction: public SgAsmInstruction {
+//       class SgAsmA64Instruction: public SgAsmInstruction {
 //       #endif
 //
 //       ...
@@ -108,14 +111,16 @@ DOCUMENTATION_should_never_be_defined;
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", __FILE__)
+    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
+                                             ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", __FILE__)
+    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
+                                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -166,61 +171,64 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmArmInstruction);
-    IS_SERIALIZABLE(AsmArmInstruction);
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64Instruction);
+    IS_SERIALIZABLE(AsmA64Instruction);
 
-    DECLARE_HEADERS(AsmArmInstruction);
-#if defined(SgAsmArmInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <armInstructionEnum.h>
-#endif // SgAsmArmInstruction_HEADERS
+    DECLARE_HEADERS(AsmA64Instruction);
+#if defined(SgAsmA64Instruction_HEADERS) || defined(DOCUMENTATION)
+    #include <InstructionEnumsA64.h>
+#endif // SgAsmA64Instruction_HEADERS
 
 #ifdef DOCUMENTATION
-    /** Represents one ARM machine instruction. */
-    class SgAsmArmInstruction: public SgAsmInstruction {
+    /** Represents one ARM A64 machine instruction. */
+    class SgAsmA64Instruction: public SgAsmInstruction {
     public:
 #endif
 
 #ifdef DOCUMENTATION
         /** Property: Instruction kind.
          *
-         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  Returns an enum constant describing the AArch64 A64 instruction. These enum constants correspond roughly 1:1 with
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        ArmInstructionKind get_kind() const;
-        void set_kind(ArmInstructionKind);
+        Rose::BinaryAnalysis::A64InstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::A64InstructionKind);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("ArmInstructionKind", "kind", "= arm_unknown_instruction",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+        AsmA64Instruction.setDataPrototype("Rose::BinaryAnalysis::A64InstructionKind", "kind",
+                                           "= Rose::BinaryAnalysis::A64InstructionKind::ARM64_INS_INVALID",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Arm instruction condition.
+        /** Property: ARM A64 instruction condition.
          *
          *  @{ */
-        ArmInstructionCondition get_condition() const;
-        void set_condition(ArmInstructionCondition);
+        Rose::BinaryAnalysis::A64InstructionCondition get_condition() const;
+        void set_condition(Rose::BinaryAnalysis::A64InstructionCondition);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("ArmInstructionCondition", "condition", "= arm_cond_unknown",
+        AsmA64Instruction.setDataPrototype("Rose::BinaryAnalysis::A64InstructionCondition", "condition",
+                                           "= Rose::BinaryAnalysis::A64InstructionCondition::ARM64_CC_INVALID",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Bit position of condition bits in instruction menmonic.
+        /** Property: Whether this instruction updates N, Z, C, and/or V status flags.
          *
          * @{ */
-        int get_positionOfConditionInMnemonic() const;
-        void set_positionOfConditionInMnemonic(int);
+        bool get_updatesFlags() const;
+        void set_updatesFlags(bool);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("int", "positionOfConditionInMnemonic", "= -1",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+        AsmA64Instruction.setDataPrototype("bool", "updatesFlags", "= false",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
-        DECLARE_OTHERS(AsmArmInstruction);
-#if defined(SgAsmArmInstruction_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmA64Instruction);
+#if defined(SgAsmA64Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -230,7 +238,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
             s & BOOST_SERIALIZATION_NVP(p_condition);
-            s & BOOST_SERIALIZATION_NVP(p_positionOfConditionInMnemonic);
         }
 #endif
 
@@ -238,14 +245,22 @@ void Grammar::setUpBinaryInstructions() {
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
-#endif // SgAsmArmInstruction_OTHERS
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
+                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
+                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+
+#endif // SgAsmA64Instruction_OTHERS
 #ifdef DOCUMENTATION
     };
 #endif
-
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -254,7 +269,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
     #include <InstructionEnumsX86.h>
-    class RegisterDictionary;
+    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmX86Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -270,11 +285,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        X86InstructionKind get_kind() const;
-        void set_kind(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionKind", "kind",
+                                           "= Rose::BinaryAnalysis::x86_unknown_instruction",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -282,11 +298,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing the base size of an x86 instruction.
          *
          * @{ */
-        X86InstructionSize get_baseSize() const;
-        void set_baseSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_baseSize() const;
+        void set_baseSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "baseSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -294,11 +311,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum describing the x86 instruction operand size.
          *
          * @{ */
-        X86InstructionSize get_operandSize() const;
-        void set_operandSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_operandSize() const;
+        void set_operandSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "operandSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -306,11 +324,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum describing the x86 address size.
          *
          *  @{ */
-        X86InstructionSize get_addressSize() const;
-        void set_addressSize(X86InstructionSize);
+        Rose::BinaryAnalysis::X86InstructionSize get_addressSize() const;
+        void set_addressSize(Rose::BinaryAnalysis::X86InstructionSize);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86InstructionSize", "addressSize",
+                                           "= Rose::BinaryAnalysis::x86_insnsize_none",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -332,11 +351,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing whether the instruction is repeated.
          *
          * @{ */
-        X86RepeatPrefix get_repeatPrefix() const;
-        void set_repeatPrefix(X86RepeatPrefix);
+        Rose::BinaryAnalysis::X86RepeatPrefix get_repeatPrefix() const;
+        void set_repeatPrefix(Rose::BinaryAnalysis::X86RepeatPrefix);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86RepeatPrefix", "repeatPrefix",
+                                           "= Rose::BinaryAnalysis::x86_repeat_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -344,11 +364,12 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: An enum constant describing branch prediction.
          *
          * @{ */
-        X86BranchPrediction get_branchPrediction() const;
-        void set_branchPrediction(X86BranchPrediction);
+        Rose::BinaryAnalysis::X86BranchPrediction get_branchPrediction() const;
+        void set_branchPrediction(Rose::BinaryAnalysis::X86BranchPrediction);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86BranchPrediction", "branchPrediction",
+                                           "= Rose::BinaryAnalysis::x86_branch_prediction_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -359,11 +380,12 @@ void Grammar::setUpBinaryInstructions() {
          *  constant.
          *
          *  @{ */
-        X86SegmentRegister get_segmentOverride() const;
-        void set_segmentOverride(X86SegmentRegister);
+        Rose::BinaryAnalysis::X86SegmentRegister get_segmentOverride() const;
+        void set_segmentOverride(Rose::BinaryAnalysis::X86SegmentRegister);
         /** @} */
 #else
-        AsmX86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
+        AsmX86Instruction.setDataPrototype("Rose::BinaryAnalysis::X86SegmentRegister", "segmentOverride",
+                                           "= Rose::BinaryAnalysis::x86_segreg_none",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
@@ -392,24 +414,24 @@ void Grammar::setUpBinaryInstructions() {
         /** Converts a size to an instruction size enum.
          *
          *  Given a size in bits, which must be 16, 32, or 64, return the corresponding enum constant. */
-        static X86InstructionSize instructionSizeForWidth(size_t);
+        static Rose::BinaryAnalysis::X86InstructionSize instructionSizeForWidth(size_t);
 
         /** Converts a size enum constant to a size.
          *
          *  Given a size enum constant, return the number of bits that enum represents. */
-        static size_t widthForInstructionSize(X86InstructionSize);
+        static size_t widthForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
          *  Given an instruction size enum constant return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForWidth. */
-        static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
          *  Given an instruction size of 16, 32, or 64 return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForInstructionSize. */
-        static const RegisterDictionary* registersForWidth(size_t);
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
 
         // Overrides are documented in the base class
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
@@ -420,11 +442,11 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target/*out*/) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                    bool* complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmX86Instruction_OTHERS
@@ -438,7 +460,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmPowerpcInstruction);
     DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <powerpcInstructionEnum.h>
+    #include <InstructionEnumsPowerpc.h>
 #endif // SgAsmPowerpcInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -455,11 +477,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        PowerpcInstructionKind get_kind() const;
-        void set_kind(PowerpcInstructionKind);
+        Rose::BinaryAnalysis::PowerpcInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::PowerpcInstructionKind);
         /** @} */
 #else
-        AsmPowerpcInstruction.setDataPrototype("PowerpcInstructionKind", "kind", "= powerpc_unknown_instruction",
+        AsmPowerpcInstruction.setDataPrototype("Rose::BinaryAnalysis::PowerpcInstructionKind", "kind",
+                                               "= Rose::BinaryAnalysis::powerpc_unknown_instruction",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                                COPY_DATA);
 #endif
@@ -478,10 +501,23 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Description of conditional branch BO constant.
+         *
+         *  Given a BO constant from a PowerPC conditional branch instruction, convert it to a description of the condition
+         *  that causes the branch to be taken. "BO" is the term used in the PowerPC documentation to denote the first argument
+         *  of the conditional instruction; it is a 5-bit integer constant. */
+        std::string conditionalBranchDescription() const;
+
+        /** Return the register dictionary for a PowerPC architecture.
+         *
+         *  Given an instruction size of 32 or 64 return the register dictionary that describes the PowerPC architecture with
+         *  the specified word size. */
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
+
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
@@ -518,11 +554,12 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        MipsInstructionKind get_kind() const;
-        void set_kind(MipsInstructionKind);
+        Rose::BinaryAnalysis::MipsInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::MipsInstructionKind);
         /** @} */
 #else
-        AsmMipsInstruction.setDataPrototype("MipsInstructionKind", "kind", "= mips_unknown_instruction",
+        AsmMipsInstruction.setDataPrototype("Rose::BinaryAnalysis::MipsInstructionKind", "kind",
+                                            "= Rose::BinaryAnalysis::mips_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
 #endif
@@ -550,7 +587,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
@@ -576,15 +613,16 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Instruction kind.
          *
-         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  Returns an enum constant describing the Motorola m68k instruction. These enum constants correspond roughly 1:1 with
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        M68kInstructionKind get_kind() const;
-        void set_kind(M68kInstructionKind);
+        Rose::BinaryAnalysis::M68kInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::M68kInstructionKind);
         /** @} */
 #else
-        AsmM68kInstruction.setDataPrototype("M68kInstructionKind", "kind", " = m68k_unknown_instruction",
+        AsmM68kInstruction.setDataPrototype("Rose::BinaryAnalysis::M68kInstructionKind", "kind",
+                                            " = Rose::BinaryAnalysis::m68k_unknown_instruction",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
                                             COPY_DATA);
 #endif
@@ -613,11 +651,11 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                    bool* complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmM68kInstruction_OTHERS
@@ -627,9 +665,59 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmNullInstruction);
+    IS_SERIALIZABLE(AsmNullInstruction);
+
+#ifdef DOCUMENTATION
+    class SgAsmNullInstruction: public SgAsmInstruction {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmNullInstruction);
+#if defined(SgAsmNullInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+        }
+#endif
+
+    public:
+        // there's only one kind of null instruction
+        enum Kind { null_unknown };
+
+    public: // overrides
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+#endif // SgAsmNullInstruction_OTHERS
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          AsmX86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
-                          AsmM68kInstruction,
+                          AsmX86Instruction
+#ifdef ROSE_ENABLE_ASM_A64
+                          | AsmA64Instruction
+#endif
+                          | AsmPowerpcInstruction | AsmMipsInstruction | AsmM68kInstruction | AsmNullInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmInstruction);
@@ -712,6 +800,15 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        // Documentation is below because it uses different names than normal. Functions are not automatically generated because
+        // we need to synchronize access to the private p_cacheLockCount data member. However, we still use ROSETTA to generate
+        // the data member because we need to make sure it gets initialized to zero in the constructors. What a mess.
+#else
+        AsmInstruction.setDataPrototype("size_t", "cacheLockCount", "= 0",
+                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
         // FIXME[Robb P Matzke 2017-02-13]: unused?
 #else
         AsmInstruction.setDataPrototype("SgAsmStatementPtrList", "sources", "",
@@ -734,7 +831,11 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        // FIXME[Robb P Matzke 2017-02-13]: unused?
+        /** Property: Ordered list of instruction semantics.
+         *
+         *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
+         *  semantic side effects of the instruction. The semantics are attached by using the @ref
+         *  Rose::BinaryAnalysis::InstructionSemantics2::StaticSemantics semantic domain. */
 #else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
@@ -747,12 +848,15 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
+        void serialize(S &s, const unsigned version) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_mnemonic);
             s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
             s & BOOST_SERIALIZATION_NVP(p_operandList);
             s & BOOST_SERIALIZATION_NVP(p_sources);
+            if (version >= 1)
+                s & BOOST_SERIALIZATION_NVP(semanticFailure_);
+            //s & BOOST_SERIALIZATION_NVP(p_cacheLockCount); -- definitely not!
         }
 #endif
 
@@ -760,8 +864,21 @@ void Grammar::setUpBinaryInstructions() {
         struct SemanticFailure {
             size_t n;
             SemanticFailure(): n(0) {}
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        private:
+            friend class boost::serialization::access;
+            template<class S>
+            void serialize(S &s, const unsigned /*version*/) {
+                s & BOOST_SERIALIZATION_NVP(n);
+            }
+#endif
         };
         SemanticFailure semanticFailure_;
+
+        // Synchronized data members. All the following data members (as listed in binaryInstruction.C, not the ROSETTA-generated
+        // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
+        mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
     public:
         /** Represents an invalid stack delta.
@@ -1008,7 +1125,7 @@ void Grammar::setUpBinaryInstructions() {
          *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
          *  then the @p complete argument will be set to true, otherwise false.  The base class implementation always
          *  aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due to ROSETTA). */
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete); /*subclasses must redefine*/
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete); /*subclasses must redefine*/
 
         /** Control flow successors for a basic block.
          *
@@ -1018,10 +1135,10 @@ void Grammar::setUpBinaryInstructions() {
          *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
          *  etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
          *  might want to override this to do something more sophisticated. */
-        virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
-                                                    bool *complete,
-                                                    const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                    Rose::BinaryAnalysis::MemoryMap::Ptr());
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr());
 
         /** Returns the size of an instruction in bytes.
          *
@@ -1097,6 +1214,16 @@ void Grammar::setUpBinaryInstructions() {
         void incrementSemanticFailure();
         /** @} */
 
+        /** Property: Cache lock count.
+         *
+         *  Number of locks held on this object, preventing the AST rooted at this node from being evicted from a cache.
+         *
+         *  Thread safety: This method is thread safe.
+         *
+         * @{ */
+        size_t cacheLockCount() const;
+        void adjustCacheLockCount(int increment);
+        /** @} */
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1106,7 +1233,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /**************************************************************************************************************************
      *                                  Instruction Expressions
      * Related functions and documentation can be found in src/frontend/Disassemblers/Expressions.C
@@ -1445,6 +1572,36 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmBinaryMsl);
+    IS_SERIALIZABLE(AsmBinaryMsl);
+
+#ifdef DOCUMENTATION
+    /** Expression that performs a logical left shift operation filling low-order bits with one.
+     *
+     *  This is identical to the Lsl operation except instead of low-order bits being cleared they are set. */
+    class SgAsmBinaryMsl: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryMsl);
+#if defined(SgAsmBinaryMsl_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        }
+#endif
+#endif // SgAsmBinaryMsl_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     DECLARE_LEAF_CLASS(AsmBinaryLsr);
     IS_SERIALIZABLE(AsmBinaryLsr);
 
@@ -1534,7 +1691,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
                           AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate |
                           AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
-                          AsmBinaryRor,
+                          AsmBinaryRor               | AsmBinaryMsl,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);
     AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmBinaryExpression);
@@ -1674,17 +1831,21 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmUnaryArmSpecialRegisterList);
-    IS_SERIALIZABLE(AsmUnaryArmSpecialRegisterList);
+    DECLARE_LEAF_CLASS(AsmUnaryTruncate);
+    IS_SERIALIZABLE(AsmUnaryTruncate);
 
 #ifdef DOCUMENTATION
-    // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-    class SgAsmUnaryArmSpecialRegisterList: public SgAsmUnaryExpression {
+    /** Expression representing truncation.
+     *
+     *  The amount of truncation is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnaryTruncate: public SgAsmUnaryExpression {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmUnaryArmSpecialRegisterList);
-#if defined(SgAsmUnaryArmSpecialRegisterList_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmUnaryTruncate);
+#if defined(SgAsmUnaryTruncate_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -1694,7 +1855,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
-#endif // SgAsmUnaryArmSpecialRegisterList_OTHERS
+#endif // SgAsmUnaryTruncate_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1702,9 +1863,336 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmUnarySignedExtend);
+    IS_SERIALIZABLE(AsmUnarySignedExtend);
+
+#ifdef DOCUMENTATION
+    /** Expression representing sign extending.
+     *
+     *  The size of the result is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnarySignedExtend: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnarySignedExtend);
+#if defined(SgAsmUnarySignedExtend_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        }
+#endif
+#endif // SgAsmUnarySignedExtend_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmUnaryUnsignedExtend);
+    IS_SERIALIZABLE(AsmUnaryUnsignedExtend);
+
+#ifdef DOCUMENTATION
+    /** Expression representing unsigned extending.
+     *
+     *  The size of the result is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnaryUnsignedExtend: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryUnsignedExtend);
+#if defined(SgAsmUnaryUnsignedExtend_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        }
+#endif
+#endif // SgAsmUnaryUnsignedExtend_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64AtOperand);
+    IS_SERIALIZABLE(AsmA64AtOperand);
+
+#ifdef DOCUMENTATION
+    /** Operand for an ARM AArch64 A64 AT instruction. */
+    class SgAsmA64AtOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64AtOperand);
+#if defined(SgAsmA64AtOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::A64AtOperation operation_;
+
+    public:
+        /** Construct a unary expression for the AT instruction's operand. */
+        explicit SgAsmA64AtOperand(Rose::BinaryAnalysis::A64AtOperation op)
+            : operation_(op) {}
+
+        /** Property: AT Operation.
+         *
+         *  An enum representing the operation to be performed.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::A64AtOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::A64AtOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmA64AtOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64PrefetchOperand);
+    IS_SERIALIZABLE(AsmA64PrefetchOperand);
+
+#ifdef DOCUMENTATION
+    /** Operand for an ARM AArch64 A64 prefetch instruction. */
+    class SgAsmA64PrefetchOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64PrefetchOperand);
+#if defined(SgAsmA64PrefetchOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::A64PrefetchOperation operation_;
+
+    public:
+        /** Construct a unary expression for a prefetch instruction's prefetch operand. */
+        explicit SgAsmA64PrefetchOperand(Rose::BinaryAnalysis::A64PrefetchOperation op)
+            : operation_(op) {}
+
+        /** Property: Prefetch operation.
+         *
+         *  An enum representing the operation to be performed.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::A64PrefetchOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::A64PrefetchOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmA64PrefetchOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64SysMoveOperand);
+    IS_SERIALIZABLE(AsmA64SysMoveOperand);
+
+#ifdef DOCUMENTATION
+    /** Describes a system register for the ARM AArch64 A64 MRS and MSR instructions. */
+    class SgAsmA64SysMoveOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64SysMoveOperand);
+#if defined(SgAsmA64SysMoveOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(access_);
+        }
+#endif
+
+    private:
+        unsigned access_;
+
+    public:
+        /** Construct a unary expression for the system register access. */
+        explicit SgAsmA64SysMoveOperand(unsigned access)
+            : access_(access) {}
+
+        /** Property: system register access bits.
+         *
+         *  The bits describing how to access a system register. These come directly from the encoded instruction.
+         *
+         *  @{ */
+        unsigned access() const {
+            return access_;
+        }
+        void access(unsigned ac) {
+            access_ = ac;
+        }
+        /** @} */
+#endif // SgAsmA64SysMoveOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64CImmediateOperand);
+    IS_SERIALIZABLE(AsmA64CImmediateOperand);
+
+#ifdef DOCUMENTATION
+    /** C-Immediate operand for SYS, AT, CFP, CPP, DC, DVP, IC, and TLBI instructions. */
+    class SgAsmA64CImmediateOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64CImmediateOperand);
+#if defined(SgAsmA64CImmediateOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(imm_);
+        }
+#endif
+
+    private:
+        unsigned imm_;
+
+    public:
+        /** Construct a unary expression for the C-immediate. */
+        explicit SgAsmA64CImmediateOperand(unsigned imm)
+            : imm_(imm) {}
+
+        /** Property: C-immediate value.
+         *
+         *  The C-immediate value for the instruction.
+         *
+         *  @{ */
+        unsigned immediate() const {
+            return imm_;
+        }
+        void immediate(unsigned imm) {
+            imm_ = imm;
+        }
+        /** @} */
+#endif // SgAsmA64CImmediateOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmA64BarrierOperand);
+    IS_SERIALIZABLE(AsmA64BarrierOperand);
+
+#ifdef DOCUMENTATION
+    /** Barriar operation operand for ISB, DMB, and DSB instructions. */
+    class SgAsmA64BarrierOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmA64BarrierOperand);
+#if defined(SgAsmA64BarrierOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::A64BarrierOperation operation_;
+
+    public:
+        /** Construct a unary expression for the C-immediate. */
+        explicit SgAsmA64BarrierOperand(Rose::BinaryAnalysis::A64BarrierOperation operation)
+            : operation_(operation) {}
+
+        /** Property: Barrier operation.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::A64BarrierOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::A64BarrierOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmA64BarrierOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmUnaryExpression,
-                          AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryArmSpecialRegisterList,
-                          "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
+                          AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryTruncate | AsmUnarySignedExtend
+                          | AsmUnaryUnsignedExtend
+#ifdef ROSE_ENABLE_ASM_A64
+                          | AsmA64AtOperand | AsmA64PrefetchOperand | AsmA64SysMoveOperand | AsmA64CImmediateOperand
+                          | AsmA64BarrierOperand
+#endif
+                          , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmUnaryExpression);
 
@@ -1755,19 +2243,6 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: PSR mask for ARM architectures.
-         *
-         * @{ */
-        unsigned get_psr_mask() const;
-        void set_psr_mask(unsigned);
-        /** @} */
-#else
-        AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
-                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                                     NO_DELETE);
-#endif
-
         DECLARE_OTHERS(AsmDirectRegisterExpression);
 #if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1777,14 +2252,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
-            s & BOOST_SERIALIZATION_NVP(p_psr_mask);
         }
 #endif
 
     private:
         // Default c'tor needed for serialization
-        SgAsmDirectRegisterExpression()
-            : p_psr_mask(0) {}
+        SgAsmDirectRegisterExpression() {}
 #endif // SgAsmDirectRegisterExpression_OTHERS
 
 #ifdef DOCUMENTATION
@@ -1823,11 +2296,11 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
          *
          * @{ */
-        RegisterDescriptor get_stride() const;
-        void set_stride(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_stride() const;
+        void set_stride(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
+        AsmIndirectRegisterExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "stride", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -1837,11 +2310,11 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "offset" referred to in the documentation for this class.
          *
          * @{ */
-        RegisterDescriptor get_offset() const;
-        void set_offset(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_offset() const;
+        void set_offset(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
+        AsmIndirectRegisterExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "offset", "",
                                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -1916,11 +2389,11 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        RegisterDescriptor get_descriptor() const;
-        void set_descriptor(RegisterDescriptor);
+        Rose::BinaryAnalysis::RegisterDescriptor get_descriptor() const;
+        void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor);
         /** @} */
 #else
-        AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
+        AsmRegisterReferenceExpression.setDataPrototype("Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
                                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -2876,6 +3349,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
     #include <Sawyer/BitVector.h>
+    #include <BitFlags.h>
 #endif // SgAsmFloatType_HEADERS
 
 #ifdef DOCUMENTATION
@@ -2922,17 +3396,22 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        enum {
-            GRADUAL_UNDERFLOW      = 0x00000001,
-            NORMALIZED_SIGNIFICAND = 0x00000002
+        /** Individual bit flags for this floating-point type. */
+        enum Flag {
+            GRADUAL_UNDERFLOW           = 0x00000001,   /**< De-normalized signifand when exponent field is clear. */
+            IMPLICIT_BIT_CONVENTION     = 0x00000002    /**< Use IEEE 754 implicit bit convention for signicand. */
         };
 
+        /** Collective bit flags for this floating-point type. */
+        typedef Rose::BitFlags<Flag> Flags;
+
+        /** Range of bits used for various purposes within the values of this type. */
         typedef Sawyer::Container::BitVector::BitRange BitRange;
 
         /** Construct a new floating-point type. */
         SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
                        const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
-                       uint64_t exponentBias, unsigned flags);
+                       uint64_t exponentBias, Flags flags);
 
         /** Property: Offset to significand least significant bit. */
         BitRange significandBits() const;
@@ -2947,13 +3426,31 @@ void Grammar::setUpBinaryInstructions() {
         uint64_t exponentBias() const;
 
         /** Property: Bit vector of all boolean properties. */
-        unsigned flags() const;
+        Flags flags() const;
 
-        /** Property: Whether type has gradual underflow. */
+        /** Default IEEE 754 flags.
+         *
+         *  These flags are the most common types and include the implicit bit convention for the significand and the
+         *  gradual underflow capability. */
+        static Flags ieeeFlags();
+
+        /** Property: Whether type has gradual underflow.
+         *
+         *  If the type supports gradual underflow, then when the exponent field's bits are all clear then the integer part (a
+         *  single bit implied or explicit depending on @ref implicitBitConvention) of the significand is zero instead of
+         *  one. */
         bool gradualUnderflow() const;
 
-        /** Property: Whether type has normalized significand. */
-        bool normalizedSignificand() const;
+        /** Property: Whether the type follows the IEEE 754 significand implicit bit convention.
+         *
+         *  If true, then the leading set bit of the significand is not stored but rather an implied. If the exponent field
+         *  contains any non-zero bits then the integer part of the significand is one, otherwise when the exponent field
+         *  is all clear the integer part is zero.
+         *
+         * @{ */
+        bool implicitBitConvention() const;
+
+        /** @} */
 
         // Overrides documented in base class
         virtual void check() const $ROSE_OVERRIDE;
@@ -3432,6 +3929,7 @@ void Grammar::setUpBinaryInstructions() {
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
+                FUNC_THUNK_TARGET= 0x00004000,  /**< Function is the target of a thunk. */
                 FUNC_EXCEPTION_HANDLER
                                  = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
@@ -4245,7 +4743,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
     #include <MemoryMap.h>
-    class RegisterDictionary;
+    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmInterpretation_HEADERS
 
 #ifdef DOCUMENTATION
@@ -4300,7 +4798,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
     private:
         Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
-        const RegisterDictionary *p_registers;
+        const Rose::BinaryAnalysis::RegisterDictionary *p_registers;
         bool coverageComputed;                          // true iff percentageCoverage has been computed
         mutable InstructionMap instruction_map;         // cached instruction map
 
@@ -4353,8 +4851,8 @@ void Grammar::setUpBinaryInstructions() {
          *  effect of descriptors is to describe how registers overlap with each other.
          *
          * @{ */
-        const RegisterDictionary *get_registers() const;
-        void set_registers(const RegisterDictionary*);
+        const Rose::BinaryAnalysis::RegisterDictionary *get_registers() const;
+        void set_registers(const Rose::BinaryAnalysis::RegisterDictionary*);
         /** @} */
 
         /** Property: Map of instructions by address.
@@ -4665,8 +5163,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        /** Enum for the @ref get_e_type "e_type" property. */ 
-        enum ObjectType { 
+        /** Enum for the @ref get_e_type "e_type" property. */
+        enum ObjectType {
             ET_NONE         = 0                         /**< No file type */
             ,ET_REL          = 1                        /**< Relocatable file */
             ,ET_EXEC         = 2                        /**< Executable file */
@@ -4768,7 +5266,7 @@ void Grammar::setUpBinaryInstructions() {
         uint64_t max_page_size();
 
         /** Convert ELF "machine" identifier to generic instruction set architecture value. */
-        SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine) const;
+        static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine);
 
         /** Convert architecture value to an ELF "machine" value. */
         unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
@@ -4887,7 +5385,7 @@ void Grammar::setUpBinaryInstructions() {
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
     private:
-        void ctor();    
+        void ctor();
 #endif // SgAsmElfSectionTable_OTHERS
 
 #ifdef DOCUMENTATION
@@ -5226,7 +5724,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Represents an ELF segment table.
-     * 
+     *
      * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
      * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
      * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
@@ -5266,7 +5764,7 @@ void Grammar::setUpBinaryInstructions() {
          *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
          *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
          *  segment table.
-         *  
+         *
          *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
          *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
          *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
@@ -5706,9 +6204,9 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Now that the section table has been read and all non-synthesized sections have been created, we can update
          *  pointers to other things.
-         * 
+         *
          *  The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
-         *  
+         *
          *  @li 0x0000: no section (section table entry zero should be all zeros anyway)
          *  @li 0xff00-0xffff: reserved values, not an index
          *  @li 0xff00-0xff1f: processor specific values
@@ -6224,7 +6722,7 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initializes this ELF SymverDefined Section by parsing a file.
-         *  
+         *
          *  The structure is nominally the following (where n is from DT_VERDEFNUM - 1 in .dynamic)
          *
          *  @code
@@ -6235,7 +6733,7 @@ void Grammar::setUpBinaryInstructions() {
          *      [0]       ElfSymverDefinedAux_disk <------+  |
          *                  vda_next -----------------+      |
          *      [1]       ElfSymverDefinedAux_disk <--+      |
-         *         ...                                       | 
+         *         ...                                       |
          *      [vd_cnt-1]ElfSymverDefinedAux_disk           |
          *                  vda_next = 0 <== null term       |
          *   [1]ElfSymverDefinedEntry_disk <-----------------+
@@ -6257,34 +6755,34 @@ void Grammar::setUpBinaryInstructions() {
          *    [0]ElfSymverDefinedEntry_disk ---+---+
          *    [1]ElfSymverDefinedEntry_disk <--+   |
          *    ...                                  |
-         *    [n]ElfSymverDefinedEntry_disk -------|---+ 
+         *    [n]ElfSymverDefinedEntry_disk -------|---+
          *                                         |   |
          *    [0]ElfSymverDefinedAux_disk   <------+   |
          *    ...                                      |
          *    [x]ElfSymverDefinedAux_disk   <----------+
          *    [.]ElfSymverDefinedAux_disk
          *  @endcode
-         *  
+         *
          *  There is also nothing in particular that says Aux entries need to be next to each other.  So, the code handles the
          *  most rigidly compliant case, which is to use only the offsets and make no assumptions about layouts.
-         *                              
+         *
          *  Also note the number of entries is specified in two ways -- via null termination on the "linked list", as well as
          *  the number from the .dynamic section [DT_VERDEFNUM].  For now, we'll support the null terminator, restricted by
          *  ensuring we don't exceed the size of the section (to keep from running away on a bad file).
-         *  
+         *
          *  We have a similar problem with the number of Aux's per Entry (vd_cnt versus vda_aux=0). However, in this case, we
          *  respect the min of the two (i.e. we assume cnt is right, but if vda_aux is zero earlier than expected, we stop).
          *  This is necessary because the spec allows two or more entries to point into (possibly different places) of a shared
          *  aux array.  This parser creates a new @ref SgAsmElfSymverDefinedAux object every time an element of the aux array
          *  is read from disk, ensuring that each @ref SgAsmElfSymverDefinedEntry points to its own copies.
-         *  
+         *
          *  All offsets are relative to the start of the struct they were specified in. I.e.,
          *
          *  @code
          *    Entry* entry=(0x0100);
          *    Aux* firstAux=(0x100 + entry->vd_aux)
          *    Aux* secondAux=(0x100 + entry->vd_aux + firstAux->vda_next)
-         *  
+         *
          *    Entry* secondEntry=(0x0100 + entry->vd_next);
          *  @endcode
          *
@@ -6462,7 +6960,7 @@ void Grammar::setUpBinaryInstructions() {
 # pragma pack (1)
 #endif
         /** Disk format. 32- and 64-bit formats are both the same. */
-        struct ElfSymverDefinedEntry_disk { 
+        struct ElfSymverDefinedEntry_disk {
             uint16_t      vd_version;                   /**< version of this struct: This field shall be set to 1 */
             uint16_t      vd_flags;                     /**< Version information flag bitmask */
             uint16_t      vd_ndx;                       /**< Version index of this entry */
@@ -6556,7 +7054,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
@@ -6588,7 +7086,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. The format is the same for 32bit and 64bit. */
-        struct ElfSymverDefinedAux_disk { 
+        struct ElfSymverDefinedAux_disk {
             uint32_t      vda_name;                     /**< Offset (in bytes) to strings table to name string */
             uint32_t      vda_next;                     /**< Offset (in bytes) to next verdaux entry */
         }
@@ -6609,7 +7107,7 @@ void Grammar::setUpBinaryInstructions() {
             : p_name(NULL) {
             ctor(symver_def_entry,symver_def_sec);
         }
-        
+
         /** Initialize this object with data parsed from a file. */
         void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
 
@@ -6729,7 +7227,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmElfSymverNeededEntryList: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: List of entries.
          *
@@ -6834,7 +7332,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. Same for 32bit and 64bit. */
-        struct ElfSymverNeededEntry_disk { 
+        struct ElfSymverNeededEntry_disk {
             uint16_t      vn_version;                   /**< version of this struct: This field shall be set to 1 */
             uint16_t      vn_cnt;                       /**< Number of vernaux entries @see SgAsmElfSymverNeededAux */
             uint32_t      vn_file;                      /**< Offset (in bytes) to strings table to file string */
@@ -7005,7 +7503,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. Same for 32bit and 64bit. */
-        struct ElfSymverNeededAux_disk { 
+        struct ElfSymverNeededAux_disk {
             uint32_t      vna_hash;                     /**< Hash of version name */
             uint16_t      vna_flags;                    /**< Version information flag bitmask */
             uint16_t      vna_other;                    /**< Version index of this entry (bit 15 is special) */
@@ -7535,7 +8033,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfDynamicEntryList);
     IS_SERIALIZABLE(AsmElfDynamicEntryList);
 
@@ -7547,7 +8045,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmElfDynamicEntryList: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: List of entries.
          *
@@ -7580,7 +8078,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfDynamicEntry);
     IS_SERIALIZABLE(AsmElfDynamicEntry);
 
@@ -7689,7 +8187,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_PREINIT_ARRAY = 32,  /* pointer optional   ?         Array with addrs of preinit fct (aka DT_ENCODING)*/
             DT_PREINIT_ARRAYSZ = 33,/* value   optional   ?         size in bytes of DT_PREINIT_ARRAY */
             DT_NUM      = 34,       /* ?       ?          ?         "number used"? */
-            
+
             DT_GNU_PRELINKED =0x6ffffdf5,/*value ?          ?         Prelinking time stamp */
             DT_GNU_CONFLICTSZ=0x6ffffdf6,/*value ?          ?         Size of conflict section */
             DT_GNU_LIBLISTSZ=0x6ffffdf7,/*value  ?          ?         Size of library list */
@@ -7701,7 +8199,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_POSFLAG_1= 0x6ffffdfd, /* value   ?          ?         Flag for DT_* entries affecting next entry */
             DT_SYMINSZ  = 0x6ffffdfe, /* value   ?          ?         Size of syminfo table in bytes */
             DT_SYMINENT = 0x6ffffdff, /* value   ?          ?         Size of each syminfo table entry */
-            
+
             DT_GNU_HASH = 0x6ffffef5, /* pointer ?          ?         GNU-style hash table */
             DT_TLSDESC_PLT=0x6ffffef6,/* pointer ?          ?         ? */
             DT_TLSDESC_GOT=0x6ffffef7,/* pointer ?          ?         ? */
@@ -7722,7 +8220,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_VERDEFNUM= 0x6ffffffd, /* value   ?          ?         Sun number of version definitions */
             DT_VERNEED  = 0x6ffffffe, /* pointer ?          ?         Sun needed versions table */
             DT_VERNEEDNUM=0x6fffffff, /* value   ?          ?         Sun number of needed versions */
-            
+
             DT_AUXILIARY= 0x7ffffffd, /* pointer ?          ?         Sun shared obj to load before self */
             DT_FILTER   = 0x7fffffff  /* pointer ?          ?         Shared object ot get values from */
         };
@@ -7973,7 +8471,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         ELF Notes
      *************************************************************************************************************************/
@@ -8195,7 +8693,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         ELF Exception Handling
      *************************************************************************************************************************/
@@ -8276,7 +8774,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
+
     DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCIList);
     IS_SERIALIZABLE(AsmElfEHFrameEntryCIList);
 
@@ -8582,7 +9080,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFDList);
     IS_SERIALIZABLE(AsmElfEHFrameEntryFDList);
 
@@ -8815,7 +9313,7 @@ void Grammar::setUpBinaryInstructions() {
               p_segment_entry(NULL) {
             ctor();
         }
-        
+
         /** Initializes the section from data parsed from the ELF Section Table.
          *
          *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the
@@ -8843,7 +9341,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li @p optional is the size of the optional (trailing) part of each entry. If the section has been parsed then
          *  the optional size will be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this
          *  is calculated as the difference between the @p entsize" and the @p required" sizes.
-         *   
+         *
          *  @li entcount is the total number of entries in this section. If the section has been parsed then this is the
          *  actual number of parsed entries, otherwise its the section size divided by the @p entsize.
          *
@@ -8867,7 +9365,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li @p optional is zero.
          *
          *  @li @p entcount is the number of entries, each of size entsize, that can fit in the section.
-         *  
+         *
          *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
          *  sh_entsize), could be smaller than the total size of the section. */
         virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
@@ -8924,7 +9422,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmDOSFileHeader: public SgAsmGenericHeader {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Last page size.
          *
@@ -9181,7 +9679,7 @@ void Grammar::setUpBinaryInstructions() {
         struct DOSFileHeader_disk {
             unsigned char e_magic[2];                /**< 0x00 "MZ" */
             uint16_t      e_last_page_size;          /**< 0x02 bytes used on last page of file (1 page == 512 bytes);
-                                                      *        zero implies if last page is full. */ // 
+                                                      *        zero implies if last page is full. */ //
             uint16_t      e_total_pages;             /**< 0x04 number of pages (inc. last possibly partial page) in file. */
             uint16_t      e_nrelocs;                 /**< 0x06 number of relocation entries stored after this header. */
             uint16_t      e_header_paragraphs;       /**< 0x08 header size in paragraphs (16-byte blocks) inc. relocations. */
@@ -9216,7 +9714,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL) {
+            : SgAsmGenericHeader(f), p_e_last_page_size(0), p_e_total_pages(0), p_e_nrelocs(0), p_e_header_paragraphs(0),
+              p_e_minalloc(0), p_e_maxalloc(0), p_e_ss(0), p_e_sp(0), p_e_cksum(0), p_e_ip(0), p_e_cs(0), p_e_overlay(0),
+              p_e_relocs_offset(0), p_e_res1(0), p_relocs(NULL), p_rm_section(NULL) {
             ctor();
         }
         virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
@@ -9265,7 +9765,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Rerserved area 1.
          *
@@ -9279,7 +9779,7 @@ void Grammar::setUpBinaryInstructions() {
         AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res1", "= 0",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: OEM ID.
          *
@@ -9437,7 +9937,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
-            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            : SgAsmGenericSection(fhdr->get_file(), fhdr), p_e_res1(0), p_e_oemid(0), p_e_oeminfo(0), p_e_res2(0),
+              p_e_res3(0), p_e_res4(0), p_e_res5(0), p_e_res6(0), p_e_lfanew(0) {
             ctor();
         }
         virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
@@ -10202,7 +10703,13 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_section_table(NULL), p_coff_symtab(NULL) {
+            : SgAsmGenericHeader(f), p_e_cpu_type(0), p_e_nsections(0), p_e_time(0), p_e_coff_symtab(0), p_e_nt_hdr_size(0),
+              p_e_coff_nsyms(0), p_e_flags(0), p_e_opt_magic(0), p_e_lmajor(0), p_e_lminor(0), p_e_code_size(0), p_e_data_size(0),
+              p_e_bss_size(0), p_e_code_rva(0), p_e_data_rva(0), p_e_section_align(0), p_e_file_align(0), p_e_os_major(0),
+              p_e_os_minor(0), p_e_user_major(0), p_e_user_minor(0), p_e_subsys_major(0), p_e_subsys_minor(0), p_e_reserved9(0),
+              p_e_image_size(0), p_e_header_size(0), p_e_file_checksum(0), p_e_subsystem(0), p_e_dll_flags(0),
+              p_e_stack_reserve_size(0), p_e_stack_commit_size(0), p_e_heap_reserve_size(0), p_e_heap_commit_size(0),
+              p_e_loader_flags(0), p_e_num_rvasize_pairs(0), p_rvasize_pairs(NULL), p_section_table(NULL), p_coff_symtab(NULL) {
             ctor();
         }
 
@@ -10252,7 +10759,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmPERVASizePairList);
     IS_SERIALIZABLE(AsmPERVASizePairList);
 
@@ -11095,7 +11602,7 @@ void Grammar::setUpBinaryInstructions() {
      *     }
      *  };
      * @endcode
-     * 
+     *
      * @sa
      *      SgAsmPEImportDirectory
      *      SgAsmPEImportItem
@@ -11103,7 +11610,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmPEImportSection: public SgAsmPESection {
     public:
 #endif
-        
+
 
 #ifdef DOCUMENTATION
         /** Property: List of import directories.
@@ -12155,7 +12662,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_TERMINAL_MACRO(AsmCoffSymbolList, "AsmCoffSymbolList", "AsmCoffSymbolListTag");
     AsmCoffSymbolList.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCoffSymbolList);
@@ -12312,7 +12819,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_aux_data);
         }
 #endif
-        
+
     public:
 
         static const unsigned int COFFSymbol_disk_size = 18;
@@ -12346,7 +12853,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
         void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
         virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
-    
+
     private:
         void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
 #endif // SgAsmCoffSymbol_OTHERS
@@ -12380,7 +12887,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
         }
 #endif
-        
+
     public:
         explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section)
             : SgAsmGenericStrtab(containing_section) {}
@@ -12478,7 +12985,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmNEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmNEEntryTable.setDataPrototype("SgAsmNEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -12534,7 +13041,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmNERelocTable, "AsmNERelocTable", "AsmNERelocTableTag");
     AsmNERelocTable.setFunctionPrototype("HEADER_NE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
     AsmNERelocTable.setDataPrototype("SgAsmNERelocEntryPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -12720,7 +13227,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmLEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmLEEntryTable.setDataPrototype("SgAsmLEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -12728,7 +13235,7 @@ void Grammar::setUpBinaryInstructions() {
     AsmLEEntryPoint.setFunctionPrototype("HEADER_LE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
     AsmLEEntryPoint.setFunctionSource("SOURCE_LE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
     AsmLEEntryPoint.setDataPrototype("SgAsmLEEntryPointPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AsmLEEntryPoint.setDataPrototype("unsigned", "flags", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmLEEntryPoint.setDataPrototype("unsigned", "objnum", "= 0",
@@ -12776,7 +13283,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmLERelocTable, "AsmLERelocTable", "AsmLERelocTableTag");
     AsmLERelocTable.setFunctionPrototype("HEADER_LE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
     AsmLERelocTable.setDataPrototype("SgAsmLERelocEntryPtrList", "entries", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -12796,7 +13303,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_TERMINAL_MACRO(AsmLEPageTable, "AsmLEPageTable", "AsmLEPageTableTag");
     AsmLEPageTable.setFunctionPrototype("HEADER_LE_PAGE_TABLE", "../Grammar/BinaryInstruction.code");
     AsmLEPageTable.setDataPrototype("SgAsmLEPageTableEntryPtrList", "entries", "",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -13337,7 +13844,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBasicString);
@@ -13483,7 +13990,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmGenericString,
@@ -13538,7 +14045,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         Generic Binary IR Nodes
      * These are mostly base classes for the container-specific nodes defined above.
@@ -13875,7 +14382,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericSymbol,
                           AsmCoffSymbol | AsmElfSymbol,
                           "AsmGenericSymbol", "AsmGenericSymbolTag", false);
@@ -14024,7 +14531,7 @@ void Grammar::setUpBinaryInstructions() {
               p_bound(NULL), p_name(NULL) {
             ctor();
         }
-        
+
         /** Print some debugging info. */
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
@@ -14049,7 +14556,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericStrtab,
                           AsmElfStrtab | AsmCoffStrtab,
                           "AsmGenericStrtab", "AsmGenericStrtabTag", false);
@@ -14246,7 +14753,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericSection,
                           AsmGenericHeader | AsmElfSection | AsmElfSectionTable | AsmElfSegmentTable | AsmPESection |
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
@@ -14483,7 +14990,7 @@ void Grammar::setUpBinaryInstructions() {
          *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file
          *  and/or memory alignment constraints or conflicts with other sections.  The only place values are assigned to this
          *  data member is in the @ref BinaryLoader class and subclasses thereof.
-         *  
+         *
          *  The address corresponds to the latest call into the @ref BinaryLoader classes.  Depending on the loader employed,
          *  it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other section to
          *  be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
@@ -14845,7 +15352,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericString *get_name() const;
         void set_name(SgAsmGenericString *s);
         /** @} */
-            
+
         /** Property: Abbreviated name.
          *
          *  Some sections have long names like "Import Address Table" that are cumbersome when they appear in assembly
@@ -14934,7 +15441,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmGenericDLL);
@@ -15194,7 +15701,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
 
     DECLARE_LEAF_CLASS(AsmGenericFile);
     IS_SERIALIZABLE(AsmGenericFile);
@@ -15406,7 +15913,7 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Destructor deletes children and unmaps/closes file. */
         virtual ~SgAsmGenericFile();
-        
+
         /** Loads file contents into memory. */
         SgAsmGenericFile* parse(std::string file_name);
 
@@ -15599,7 +16106,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li Section: part of an address space that is referenced by an SgAsmGenericSection other than a "hole" section.
          *  @li Hole:    part of an address space that is referenced only by a "hole" section.
          *  @li Unref:   part of an address space that is not used by any section, including any "hole" section.
-         * 
+         *
          *  The last two categories define parts of the address space that can be optionally elastic--they expand or contract
          *  to take up slack or provide space for neighboring sections. This is controlled by the "elasticity" argument.
          *
@@ -15786,7 +16293,7 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Information about the file in the filesystem. */
         typedef struct stat fileDetails;
-        
+
         /** Architecture family. */
         enum ExecFamily {
             FAMILY_UNSPECIFIED,                         /**< Unspecified family. */
@@ -15931,6 +16438,7 @@ void Grammar::setUpBinaryInstructions() {
                                                          *   IXP460, IXP465 cores */
             ISA_ARM_ARM11               = 0x090d,       /**< ARMv{6,6T2,6KZ,6K} cores */
             ISA_ARM_Cortex              = 0x090e,       /**< Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
+            ISA_ARM_A64                 = 0x090f,       /**< ARM AArch64 A64 instruction set. */
 
             // Others, not yet incorporated into this enum
             ISA_OTHER_Family            = 0xf000,
@@ -16120,4 +16628,6 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifndef DOCUMENTATION
 }
+#endif
+
 #endif

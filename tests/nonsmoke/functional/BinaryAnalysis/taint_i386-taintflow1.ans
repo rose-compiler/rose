@@ -4,47 +4,47 @@ found 1 binary interpretation
 0x0804839e: Function stack delta: +4
 
 0x0804839e: Basic block reasons: entry point, CFG head
-0x0804839e: 55                      |U       |<sp+0 >   push   ebp
-0x0804839f: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x080483a1: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x080483a4: 8b 45 08                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x08]
-0x080483a7: 83 c0 01                |...     |<sp-20>   add    eax, 0x01
-0x080483aa: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x080483ad: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x080483b0: c9                      |.       |<sp-20>   leave  
-0x080483b1: c3                      |.       |<sp+0 >   ret    
+0x0804839e: 55 |U |<sp+0 > push ebp
+0x0804839f: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x080483a1: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x080483a4: 8b 45 08 |.E. |<sp-20> mov eax, dword ss:[ebp + 0x08]
+0x080483a7: 83 c0 01 |... |<sp-20> add eax, 0x01
+0x080483aa: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x080483ad: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x080483b0: c9 |. |<sp-20> leave 
+0x080483b1: c3 |. |<sp+0 > ret 
 0x080483b1: Outgoing stack delta: +4
 0x080483b1: Successor blocks: unknown
 
 
 Taint for each variable at 0x080483b1:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  tainted  pf
-  tainted  sf
-  tainted  zf
-  tainted  af
-  tainted  cf
-  tainted  of
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  tainted  eax
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  tainted  (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ tainted pf
+ tainted sf
+ tainted zf
+ tainted af
+ tainted cf
+ tainted of
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ tainted eax
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -52,69 +52,69 @@ Taint for each variable at 0x080483b1:
 0x080483b2: Function stack delta: +4
 
 0x080483b2: Basic block reasons: entry point, CFG head
-0x080483b2: 55                      |U       |<sp+0 >   push   ebp
-0x080483b3: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x080483b5: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x080483b8: c7 45 fc 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-0x080483bf: c7 45 f8 01 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000001
-0x080483c6: eb 0a                   |..      |<sp-20>   jmp    0x080483d2<<BBlock>>
+0x080483b2: 55 |U |<sp+0 > push ebp
+0x080483b3: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x080483b5: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x080483b8: c7 45 fc 00 00 00 00 |.E..... |<sp-20> mov dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x080483bf: c7 45 f8 01 00 00 00 |.E..... |<sp-20> mov dword ss:[ebp + 0xf8<-8>], 0x00000001
+0x080483c6: eb 0a |.. |<sp-20> jmp 0x080483d2<<BBlock>>
 0x080483c6: Outgoing stack delta: -20
 0x080483c6: Successor blocks: 0x080483d2
 
 0x080483c8: Basic block reasons: 
-0x080483c8: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x080483cb: 01 45 fc                |.E.     |<sp-20>   add    dword ss:[ebp + 0xfc<-4>], eax
-0x080483ce: 83 45 f8 01             |.E..    |<sp-20>   add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x080483c8: 8b 45 f8 |.E. |<sp-20> mov eax, dword ss:[ebp + 0xf8<-8>]
+0x080483cb: 01 45 fc |.E. |<sp-20> add dword ss:[ebp + 0xfc<-4>], eax
+0x080483ce: 83 45 f8 01 |.E.. |<sp-20> add dword ss:[ebp + 0xf8<-8>], 0x01
 0x080483ce: Outgoing stack delta: -20
 0x080483ce: Successor blocks: 0x080483d2
 
 0x080483d2: Basic block reasons: 
-0x080483d2: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x080483d5: 3b 45 08                |;E.     |<sp-20>   cmp    eax, dword ss:[ebp + 0x08]
-0x080483d8: 7e ee                   |~.      |<sp-20>   jle    0x080483c8<<BBlock>>
+0x080483d2: 8b 45 f8 |.E. |<sp-20> mov eax, dword ss:[ebp + 0xf8<-8>]
+0x080483d5: 3b 45 08 |;E. |<sp-20> cmp eax, dword ss:[ebp + 0x08]
+0x080483d8: 7e ee |~. |<sp-20> jle 0x080483c8<<BBlock>>
 0x080483d8: Outgoing stack delta: -20
 0x080483d8: Successor blocks: 0x080483c8, 0x080483da
 
 0x080483da: Basic block reasons: 
-0x080483da: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x080483dd: c9                      |.       |<sp-20>   leave  
-0x080483de: c3                      |.       |<sp+0 >   ret    
+0x080483da: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x080483dd: c9 |. |<sp-20> leave 
+0x080483de: c3 |. |<sp+0 > ret 
 0x080483de: Outgoing stack delta: +4
 0x080483de: Successor blocks: unknown
 
 
 Taint for each variable at 0x080483de:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  top      pf
-  top      sf
-  top      zf
-  top      af
-  top      cf
-  top      of
-  no-taint (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  no-taint (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  no-taint (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff5<4294967285,-11>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff6<4294967286,-10>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff7<4294967287,-9>[32])
-  no-taint eax
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ top pf
+ top sf
+ top zf
+ top af
+ top cf
+ top of
+ no-taint (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff5<4294967285,-11>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff6<4294967286,-10>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32])
+ no-taint eax
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -122,53 +122,53 @@ Taint for each variable at 0x080483de:
 0x080483df: Function stack delta: +4
 
 0x080483df: Basic block reasons: entry point, CFG head
-0x080483df: 55                      |U       |<sp+0 >   push   ebp
-0x080483e0: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x080483e2: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x080483e5: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
-0x080483e8: 8b 55 08                |.U.     |<sp-20>   mov    edx, dword ss:[ebp + 0x08]
-0x080483eb: 8d 04 02                |...     |<sp-20>   lea    eax, [edx + eax]
-0x080483ee: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x080483f1: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x080483f4: c9                      |.       |<sp-20>   leave  
-0x080483f5: c3                      |.       |<sp+0 >   ret    
+0x080483df: 55 |U |<sp+0 > push ebp
+0x080483e0: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x080483e2: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x080483e5: 8b 45 0c |.E. |<sp-20> mov eax, dword ss:[ebp + 0x0c]
+0x080483e8: 8b 55 08 |.U. |<sp-20> mov edx, dword ss:[ebp + 0x08]
+0x080483eb: 8d 04 02 |... |<sp-20> lea eax, [edx + eax]
+0x080483ee: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x080483f1: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x080483f4: c9 |. |<sp-20> leave 
+0x080483f5: c3 |. |<sp+0 > ret 
 0x080483f5: Outgoing stack delta: +4
 0x080483f5: Successor blocks: unknown
 
 
 Taint for each variable at 0x080483f5:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   pf
-  bottom   sf
-  bottom   zf
-  bottom   af
-  bottom   cf
-  bottom   of
-  bottom   (add[32] esp_0[32] 0x00000008[32])
-  tainted  eax
-  bottom   (add[32] esp_0[32] 0x00000009[32])
-  bottom   (add[32] esp_0[32] 0x0000000a[32])
-  bottom   (add[32] esp_0[32] 0x0000000b[32])
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  tainted  edx
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  tainted  (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ bottom pf
+ bottom sf
+ bottom zf
+ bottom af
+ bottom cf
+ bottom of
+ bottom (add[u32] esp_0[u32] 0x00000008[u32])
+ tainted eax
+ bottom (add[u32] esp_0[u32] 0x00000009[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000a[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000b[u32])
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ tainted edx
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -176,70 +176,70 @@ Taint for each variable at 0x080483f5:
 0x080483f6: Function stack delta: +4
 
 0x080483f6: Basic block reasons: entry point, CFG head
-0x080483f6: 55                      |U       |<sp+0 >   push   ebp
-0x080483f7: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x080483f9: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x080483fc: 83 7d 08 00             |.}..    |<sp-20>   cmp    dword ss:[ebp + 0x08], 0x00
-0x08048400: 79 05                   |y.      |<sp-20>   jns    0x08048407<<BBlock>>
+0x080483f6: 55 |U |<sp+0 > push ebp
+0x080483f7: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x080483f9: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x080483fc: 83 7d 08 00 |.}.. |<sp-20> cmp dword ss:[ebp + 0x08], 0x00
+0x08048400: 79 05 |y. |<sp-20> jns 0x08048407<<BBlock>>
 0x08048400: Outgoing stack delta: -20
 0x08048400: Successor blocks: 0x08048402, 0x08048407
 
 0x08048402: Basic block reasons: 
-0x08048402: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
-0x08048405: eb 03                   |..      |<sp-20>   jmp    0x0804840a<<BBlock>>
+0x08048402: 8b 45 0c |.E. |<sp-20> mov eax, dword ss:[ebp + 0x0c]
+0x08048405: eb 03 |.. |<sp-20> jmp 0x0804840a<<BBlock>>
 0x08048405: Outgoing stack delta: -20
 0x08048405: Successor blocks: 0x0804840a
 
 0x08048407: Basic block reasons: 
-0x08048407: 8b 45 10                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x10]
+0x08048407: 8b 45 10 |.E. |<sp-20> mov eax, dword ss:[ebp + 0x10]
 0x08048407: Outgoing stack delta: -20
 0x08048407: Successor blocks: 0x0804840a
 
 0x0804840a: Basic block reasons: 
-0x0804840a: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x0804840d: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048410: c9                      |.       |<sp-20>   leave  
-0x08048411: c3                      |.       |<sp+0 >   ret    
+0x0804840a: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x0804840d: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x08048410: c9 |. |<sp-20> leave 
+0x08048411: c3 |. |<sp+0 > ret 
 0x08048411: Outgoing stack delta: +4
 0x08048411: Successor blocks: unknown
 
 
 Taint for each variable at 0x08048411:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  tainted  pf
-  tainted  sf
-  tainted  zf
-  tainted  af
-  tainted  cf
-  tainted  of
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  bottom   (add[32] esp_0[32] 0x00000008[32])
-  bottom   eax
-  bottom   (add[32] esp_0[32] 0x00000009[32])
-  bottom   (add[32] esp_0[32] 0x0000000a[32])
-  bottom   (add[32] esp_0[32] 0x0000000b[32])
-  bottom   (add[32] esp_0[32] 0x0000000c[32])
-  bottom   (add[32] esp_0[32] 0x0000000d[32])
-  bottom   (add[32] esp_0[32] 0x0000000e[32])
-  bottom   (add[32] esp_0[32] 0x0000000f[32])
-  bottom   (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  bottom   (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ tainted pf
+ tainted sf
+ tainted zf
+ tainted af
+ tainted cf
+ tainted of
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ bottom (add[u32] esp_0[u32] 0x00000008[u32])
+ bottom eax
+ bottom (add[u32] esp_0[u32] 0x00000009[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000a[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000b[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000c[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000d[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000e[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000f[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -247,71 +247,71 @@ Taint for each variable at 0x08048411:
 0x08048412: Function stack delta: +4
 
 0x08048412: Basic block reasons: entry point, CFG head
-0x08048412: 55                      |U       |<sp+0 >   push   ebp
-0x08048413: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x08048415: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x08048418: c7 45 f8 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-0x0804841f: 83 7d 0c 00             |.}..    |<sp-20>   cmp    dword ss:[ebp + 0x0c], 0x00
-0x08048423: 79 05                   |y.      |<sp-20>   jns    0x0804842a<<BBlock>>
+0x08048412: 55 |U |<sp+0 > push ebp
+0x08048413: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x08048415: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x08048418: c7 45 f8 00 00 00 00 |.E..... |<sp-20> mov dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x0804841f: 83 7d 0c 00 |.}.. |<sp-20> cmp dword ss:[ebp + 0x0c], 0x00
+0x08048423: 79 05 |y. |<sp-20> jns 0x0804842a<<BBlock>>
 0x08048423: Outgoing stack delta: -20
 0x08048423: Successor blocks: 0x08048425, 0x0804842a
 
 0x08048425: Basic block reasons: 
-0x08048425: 8b 45 08                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x08]
-0x08048428: eb 03                   |..      |<sp-20>   jmp    0x0804842d<<BBlock>>
+0x08048425: 8b 45 08 |.E. |<sp-20> mov eax, dword ss:[ebp + 0x08]
+0x08048428: eb 03 |.. |<sp-20> jmp 0x0804842d<<BBlock>>
 0x08048428: Outgoing stack delta: -20
 0x08048428: Successor blocks: 0x0804842d
 
 0x0804842a: Basic block reasons: 
-0x0804842a: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x0804842a: 8b 45 f8 |.E. |<sp-20> mov eax, dword ss:[ebp + 0xf8<-8>]
 0x0804842a: Outgoing stack delta: -20
 0x0804842a: Successor blocks: 0x0804842d
 
 0x0804842d: Basic block reasons: 
-0x0804842d: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048430: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048433: c9                      |.       |<sp-20>   leave  
-0x08048434: c3                      |.       |<sp+0 >   ret    
+0x0804842d: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x08048430: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x08048433: c9 |. |<sp-20> leave 
+0x08048434: c3 |. |<sp+0 > ret 
 0x08048434: Outgoing stack delta: +4
 0x08048434: Successor blocks: unknown
 
 
 Taint for each variable at 0x08048434:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   pf
-  bottom   sf
-  bottom   zf
-  bottom   af
-  bottom   cf
-  bottom   of
-  no-taint (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff5<4294967285,-11>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff6<4294967286,-10>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff7<4294967287,-9>[32])
-  bottom   (add[32] esp_0[32] 0x00000008[32])
-  bottom   (add[32] esp_0[32] 0x00000009[32])
-  bottom   (add[32] esp_0[32] 0x0000000a[32])
-  bottom   (add[32] esp_0[32] 0x0000000b[32])
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  top      eax
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  top      (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  top      (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  top      (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  top      (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ bottom pf
+ bottom sf
+ bottom zf
+ bottom af
+ bottom cf
+ bottom of
+ no-taint (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff5<4294967285,-11>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff6<4294967286,-10>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32])
+ bottom (add[u32] esp_0[u32] 0x00000008[u32])
+ bottom (add[u32] esp_0[u32] 0x00000009[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000a[u32])
+ bottom (add[u32] esp_0[u32] 0x0000000b[u32])
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ top eax
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ top (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ top (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ top (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ top (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -319,56 +319,56 @@ Taint for each variable at 0x08048434:
 0x08048435: Function stack delta: +4
 
 0x08048435: Basic block reasons: entry point, CFG head
-0x08048435: 55                      |U       |<sp+0 >   push   ebp
-0x08048436: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x08048438: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
-0x0804843b: 8b 45 08                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x08]
-0x0804843e: 89 45 f4                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xf4<-12>], eax
-0x08048441: c7 45 f8 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-0x08048448: 8b 45 f4                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf4<-12>]
-0x0804844b: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x0804844e: c9                      |.       |<sp-20>   leave  
-0x0804844f: c3                      |.       |<sp+0 >   ret    
+0x08048435: 55 |U |<sp+0 > push ebp
+0x08048436: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x08048438: 83 ec 10 |... |<sp-4 > sub esp, 0x10
+0x0804843b: 8b 45 08 |.E. |<sp-20> mov eax, dword ss:[ebp + 0x08]
+0x0804843e: 89 45 f4 |.E. |<sp-20> mov dword ss:[ebp + 0xf4<-12>], eax
+0x08048441: c7 45 f8 00 00 00 00 |.E..... |<sp-20> mov dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x08048448: 8b 45 f4 |.E. |<sp-20> mov eax, dword ss:[ebp + 0xf4<-12>]
+0x0804844b: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x0804844e: c9 |. |<sp-20> leave 
+0x0804844f: c3 |. |<sp+0 > ret 
 0x0804844f: Outgoing stack delta: +4
 0x0804844f: Successor blocks: unknown
 
 
 Taint for each variable at 0x0804844f:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   pf
-  bottom   sf
-  bottom   zf
-  bottom   af
-  bottom   cf
-  bottom   of
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  tainted  eax
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  tainted  (add[32] esp_0[32] 0xfffffff0<4294967280,-16>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff1<4294967281,-15>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff2<4294967282,-14>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff3<4294967283,-13>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff5<4294967285,-11>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff6<4294967286,-10>[32])
-  no-taint (add[32] esp_0[32] 0xfffffff7<4294967287,-9>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ bottom pf
+ bottom sf
+ bottom zf
+ bottom af
+ bottom cf
+ bottom of
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ tainted eax
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff1<4294967281,-15>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff2<4294967282,-14>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff3<4294967283,-13>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff5<4294967285,-11>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff6<4294967286,-10>[u32])
+ no-taint (add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 
 
@@ -376,51 +376,51 @@ Taint for each variable at 0x0804844f:
 0x08048450: Function stack delta: +4
 
 0x08048450: Basic block reasons: entry point, CFG head
-0x08048450: 55                      |U       |<sp+0 >   push   ebp
-0x08048451: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
-0x08048453: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x08048450: 55 |U |<sp+0 > push ebp
+0x08048451: 89 e5 |.. |<sp-4 > mov ebp, esp
+0x08048453: 83 ec 10 |... |<sp-4 > sub esp, 0x10
 0x08048456: c7 05 40 96 04 08 00 00 |..@.....|
-0x0804845e: 00 00                   |..      |<sp-20>   mov    dword ds:[0x08049640<(data)g1>], 0x00000000
-0x08048460: 8b 45 08                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x08]
-0x08048463: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048466: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048469: c9                      |.       |<sp-20>   leave  
-0x0804846a: c3                      |.       |<sp+0 >   ret    
+0x0804845e: 00 00 |.. |<sp-20> mov dword ds:[0x08049640<(data)g1>], 0x00000000
+0x08048460: 8b 45 08 |.E. |<sp-20> mov eax, dword ss:[ebp + 0x08]
+0x08048463: 89 45 fc |.E. |<sp-20> mov dword ss:[ebp + 0xfc<-4>], eax
+0x08048466: 8b 45 fc |.E. |<sp-20> mov eax, dword ss:[ebp + 0xfc<-4>]
+0x08048469: c9 |. |<sp-20> leave 
+0x0804846a: c3 |. |<sp+0 > ret 
 0x0804846a: Outgoing stack delta: +4
 0x0804846a: Successor blocks: unknown
 
 
 Taint for each variable at 0x0804846a:
-  no-taint NO_LOCATION
-  bottom   eip
-  bottom   esp
-  bottom   ebp
-  bottom   (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-  bottom   (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-  bottom   (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-  bottom   pf
-  bottom   sf
-  bottom   zf
-  bottom   af
-  bottom   cf
-  bottom   of
-  no-taint 0x08049640<134518336>[32]
-  no-taint 0x08049641<134518337>[32]
-  no-taint 0x08049642<134518338>[32]
-  no-taint 0x08049643<134518339>[32]
-  tainted  (add[32] esp_0[32] 0x00000004[32])
-  tainted  eax
-  bottom   (add[32] esp_0[32] 0x00000005[32])
-  bottom   (add[32] esp_0[32] 0x00000006[32])
-  bottom   (add[32] esp_0[32] 0x00000007[32])
-  tainted  (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-  tainted  (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-  tainted  (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-  bottom   esp_0[32]
-  bottom   (add[32] esp_0[32] 0x00000001[32])
-  bottom   (add[32] esp_0[32] 0x00000002[32])
-  bottom   (add[32] esp_0[32] 0x00000003[32])
+ no-taint NO_LOCATION
+ bottom eip
+ bottom esp
+ bottom ebp
+ bottom (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffd<4294967293,-3>[u32])
+ bottom (add[u32] esp_0[u32] 0xfffffffe<4294967294,-2>[u32])
+ bottom (add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])
+ bottom pf
+ bottom sf
+ bottom zf
+ bottom af
+ bottom cf
+ bottom of
+ no-taint 0x08049640<134518336>[u32]
+ no-taint 0x08049641<134518337>[u32]
+ no-taint 0x08049642<134518338>[u32]
+ no-taint 0x08049643<134518339>[u32]
+ tainted (add[u32] esp_0[u32] 0x00000004[u32])
+ tainted eax
+ bottom (add[u32] esp_0[u32] 0x00000005[u32])
+ bottom (add[u32] esp_0[u32] 0x00000006[u32])
+ bottom (add[u32] esp_0[u32] 0x00000007[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])
+ tainted (add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])
+ bottom esp_0[u32]
+ bottom (add[u32] esp_0[u32] 0x00000001[u32])
+ bottom (add[u32] esp_0[u32] 0x00000002[u32])
+ bottom (add[u32] esp_0[u32] 0x00000003[u32])
 
 

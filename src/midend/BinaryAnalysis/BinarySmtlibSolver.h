@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_SmtlibSolver_H
 #define Rose_BinaryAnalysis_SmtlibSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinarySmtSolver.h>
 #include <boost/filesystem.hpp>
@@ -19,6 +21,7 @@ protected:
     ExprExprMap evidence;
     typedef boost::unordered_map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
     MemoizedEvidence memoizedEvidence;
+    Sawyer::Optional<boost::chrono::duration<double> > timeout_; // max time for solving a single set of equations in seconds
 
 protected:
     // Reference counted. Use instance() or create() instead.
@@ -60,6 +63,7 @@ public:
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
     virtual void clearMemoization() ROSE_OVERRIDE;
+    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
 
 protected:
     /** Specify variable to use for OP_SET.
@@ -172,4 +176,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

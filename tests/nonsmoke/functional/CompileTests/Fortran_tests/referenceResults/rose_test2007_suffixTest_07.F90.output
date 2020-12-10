@@ -1,0 +1,6 @@
+! When the file has a suffix of ".F90" it appears to use
+! free format (and requires "!" as the comment character).
+! And it requires preprocessing using the cpp preprocessor.
+10 PROGRAM main
+20 END PROGRAM main
+

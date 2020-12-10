@@ -1,6 +1,9 @@
 #ifndef ROSE_DATA_CONVERSION_H
 #define ROSE_DATA_CONVERSION_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <string>
 
 /** Encodes and decodes a buffer using an algorithm defined in subclasses.  These objects are used by such things as
@@ -32,4 +35,5 @@ class Rot13: public DataConverter {
     virtual uint8_t* decode(uint8_t* buffer, size_t* nbytes);
 };
 
+#endif
 #endif

@@ -5,19 +5,19 @@ CFG dominators for function 0x080482c8:
   function 0x080482c8 dominator of 0x080482c8<1> is none
   function 0x080482c8 dominator of 0x080482d3<2> is 0x080482c8<1>
   function 0x080482c8 dominator of 0x080482d8<3> is 0x080482d3<2>
-CFG dominators for function 0x080482e0 "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x080482e0:
   function 0x080482e0 dominator of 0x080482e0<0> is none
-CFG dominators for function 0x080482f0 "signal@plt":
+CFG dominators for function 0x080482f0:
   function 0x080482f0 dominator of 0x080482f0<0> is none
-CFG dominators for function 0x08048300 "puts@plt":
+CFG dominators for function 0x08048300:
   function 0x08048300 dominator of 0x08048300<0> is none
-CFG dominators for function 0x08048310 "__libc_start_main@plt":
+CFG dominators for function 0x08048310:
   function 0x08048310 dominator of 0x08048310<0> is none
-CFG dominators for function 0x08048320 "_exit@plt":
+CFG dominators for function 0x08048320:
   function 0x08048320 dominator of 0x08048320<0> is none
-CFG dominators for function 0x08048330 "__gmon_start__@plt":
+CFG dominators for function 0x08048330:
   function 0x08048330 dominator of 0x08048330<0> is none
-CFG dominators for function 0x08048340 "_start":
+CFG dominators for function 0x08048340:
   function 0x08048340 dominator of 0x08048361<0> is 0x08048340<1>
   function 0x08048340 dominator of 0x08048340<1> is none
 CFG dominators for function 0x08048364:
@@ -38,7 +38,7 @@ CFG dominators for function 0x080483d0:
   function 0x080483d0 dominator of 0x080483f4<2> is 0x080483e8<1>
   function 0x080483d0 dominator of 0x080483d0<3> is none
   function 0x080483d0 dominator of 0x080483df<4> is 0x080483d0<3>
-CFG dominators for function 0x08048410 "main":
+CFG dominators for function 0x08048410:
   function 0x08048410 dominator of 0x08048410<0> is none
   function 0x08048410 dominator of 0x0804842e<1> is 0x08048410<0>
 CFG dominators for function 0x08048440:

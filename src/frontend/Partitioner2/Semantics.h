@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner_Semantics_H
 #define ROSE_BinaryAnalysis_Partitioner_Semantics_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include "SymbolicSemantics2.h"
 
@@ -363,9 +366,9 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics:
         if (!isModifiable || isInitialized) {
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                SymbolicExpr::Ptr expr = SymbolicExpr::makeInteger(8, byte);
+                SymbolicExpr::Ptr expr = SymbolicExpr::makeIntegerConstant(8, byte);
                 if (isModifiable) {
-                    SymbolicExpr::Ptr indet = SymbolicExpr::makeVariable(8);
+                    SymbolicExpr::Ptr indet = SymbolicExpr::makeIntegerVariable(8);
                     expr = SymbolicExpr::makeSet(expr, indet, valOps->solver());
                 }
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
@@ -416,4 +419,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapS
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 #endif
 
+#endif
 #endif

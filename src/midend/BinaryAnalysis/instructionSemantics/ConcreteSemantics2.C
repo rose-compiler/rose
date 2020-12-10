@@ -1,8 +1,11 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
+
+#include <rose_isnan.h>
 #include "integerOps.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
@@ -168,18 +171,20 @@ MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::Ri
 }
 
 void
-MemoryState::print(std::ostream &out, Formatter&) const {
+MemoryState::print(std::ostream &out, Formatter &fmt) const {
     if (!map_) {
-        out <<"no memory map\n";
+        out <<fmt.get_line_prefix() <<"no memory map\n";
     } else {
-        map_->dump(out);
+        map_->dump(out, fmt.get_line_prefix());
         rose_addr_t pageVa = 0;
         uint8_t* page = new uint8_t[pageSize_];
         while (map_->atOrAfter(pageVa).next().assignTo(pageVa)) {
             size_t nread = map_->at(pageVa).limit(pageSize_).read(page).size();
             ASSERT_always_require(nread == pageSize_);
-            HexdumpFormat fmt;
-            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
+            HexdumpFormat hdFmt;
+            hdFmt.prefix = fmt.get_line_prefix();
+            out <<fmt.get_line_prefix();
+            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, hdFmt);
             out <<"\n";
             if (pageVa + (pageSize_-1) == map_->hull().greatest())
                 break;
@@ -551,6 +556,20 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
@@ -558,7 +577,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
 
         // Use the lazily updated initial memory state if there is one.
         if (initialState()) {
@@ -613,6 +632,16 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
     if (cond->is_number() && !cond->get_number())
         return;
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     SValuePtr value = SValue::promote(value_->copy());
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
@@ -632,7 +661,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
         }
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
         currentState()->writeMemory(byte_addr, byte_value, this, this);
     }
 }
@@ -737,3 +766,5 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 } // namespace
 } // namespace
 } // namespace
+
+#endif

@@ -9,8 +9,10 @@
 #include "rose_msvc.h"                                  // DQ (3/22/2009): Added MSVS support for ROSE.
 
 // Other includes
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <cstring>
 #include <inttypes.h>
 #include <iostream>
@@ -44,76 +46,174 @@ htmlEscape(const std::string& s) {
 }
 
 std::string
-cEscape(const std::string &s) {
+cEscape(char ch, char context) {
     std::string result;
-    BOOST_FOREACH (char ch, s) {
-        switch (ch) {
-            case '\a':
-                result += "\\a";
-                break;
-            case '\b':
-                result += "\\b";
-                break;
-            case '\t':
-                result += "\\t";
-                break;
-            case '\n':
-                result += "\\n";
-                break;
-            case '\v':
-                result += "\\v";
-                break;
-            case '\f':
-                result += "\\f";
-                break;
-            case '\r':
-                result += "\\r";
-                break;
-            case '\"':
+    switch (ch) {
+        case '\a':
+            result += "\\a";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\v':
+            result += "\\v";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\"':
+            if ('"' == context) {
                 result += "\\\"";
-                break;
-            case '\\':
-                result += "\\\\";
-                break;
-            default:
-                if (isprint(ch)) {
-                    result += ch;
-                } else {
-                    char buf[8];
-                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
-                    result += buf;
-                }
-                break;
-        }
+            } else {
+                result += ch;
+            }
+            break;
+        case '\'':
+            if ('\'' == context) {
+                result += "\\'";
+            } else {
+                result += ch;
+            }
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        default:
+            if (isprint(ch)) {
+                result += ch;
+            } else {
+                char buf[8];
+                sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                result += buf;
+            }
+            break;
     }
     return result;
 }
 
 std::string
-bourneEscape(const std::string &s) {
+cEscape(const std::string &s, char context) {
     std::string result;
-    bool quoted = false;
+    BOOST_FOREACH (char ch, s)
+        result += cEscape(ch, context);
+    return result;
+}
 
-    BOOST_FOREACH (char ch, s) {
-        if (isalnum(ch) || strchr("_-+./", ch)) {
-            result += ch;
-
+std::string
+cUnescape(const std::string &s) {
+    std::string result;
+    for (size_t i = 0; i < s.size(); ++i) {
+        if ('\\' == s[i] && i+1 < s.size()) {
+            ++i;
+            switch (s[i]) {
+                case '?':
+                    result += '?';
+                    break;
+                case '"':
+                    result += '"';
+                    break;
+                case '\'':
+                    result += '\'';
+                    break;
+                case 'a':
+                    result += '\a';
+                    break;
+                case 'b':
+                    result += '\b';
+                    break;
+                case 'f':
+                    result += '\f';
+                    break;
+                case 'n':
+                    result += '\n';
+                    break;
+                case 'r':
+                    result += '\r';
+                    break;
+                case 't':
+                    result += '\t';
+                    break;
+                case 'u':
+                    result += "\\u";                    // Unicode is not supported; leave it escaped
+                    break;
+                case 'U':
+                    result += "\\U";                    // Unicode is not supported; leave it escaped
+                    break;
+                case 'v':
+                    result += '\v';
+                    break;
+                case 'x': {
+                    unsigned byte = 0;
+                    while (i+1 < s.size() && isxdigit(s[i+1]))
+                        byte = ((16*byte) + hexadecimalToInt(s[++i])) & 0xff;
+                    result += (char)byte;
+                    break;
+                }
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7': {
+                    unsigned byte = 0, nchars = 0;
+                    --i;
+                    while (i+1 < s.size() && nchars++ < 3 && strchr("01234567", s[i+1]))
+                        byte = 8*byte + s[++i] - '0';
+                    result += (char)byte;
+                    break;
+                }
+                default:
+                    result += std::string("\\") + s[i];
+            }
         } else {
-            if (!quoted) {
-                result = "'" + result;
-                quoted = true;
-            }
-
-            if (ch == '\\' || ch == '\'') {
-                result += std::string("\\") + ch;
-            } else {
-                result += ch;
-            }
+            result += s[i];
         }
     }
-    if (quoted)
-        result += "'";
     return result;
+}
+
+// Escaping special characters in shells is difficult. There are many classes of characters:
+//
+//   1. Characters that can appear unescaped and outside quotes (bare). They can also appear unescaped inside single or
+//      double quotes.  Most characters fall into this category.
+//
+//   2. Characters that must be escaped when outside quotes or (not escaped) inside double or single quotes.  These are
+//      characters like "*", "?", "=", "{", "}", "[", "]", etc. and consist of most printable non-alphanumeric characters.
+//
+//   3. Characters that cannot be escaped by some shells. These are things like non-printable control characters
+//      and characters above 0177. The Bash shell has a special syntax for escaping these in a C-like manner.
+std::string
+bourneEscape(const std::string &s) {
+    // If the string is empty it needs to be quoted.
+    if (s.empty())
+        return "'" + s + "'";
+
+    // The presence of non-printing characters trumps all others and requires C-style quoting
+    BOOST_FOREACH (char ch, s) {
+        if (!::isprint(ch))
+            return "$'" + cEscape(s, '\'') + "'";
+    }
+
+    // If the string contains any shell meta characters that must be quoted then single-quote the entire string and
+    // handle additional single quotes and backslashes specially.
+    BOOST_FOREACH (char ch, s) {
+        if (!::isalnum(ch) && s.find_first_of("_-+./") == std::string::npos)
+            return "'" + boost::replace_all_copy(boost::replace_all_copy(s, "\\", "\\\\"), "'", "'\"'\"'");
+    }
+
+    // No quoting or escaping necessary
+    return s;
 }
 
 // [Robb P Matzke 2016-06-15]: deprecated
@@ -248,6 +348,16 @@ join(const std::string &separator, const char *strings[], size_t nstrings) {
 }
 
 std::string
+join(char separator, char *strings[], size_t nstrings) {
+    return join_range(std::string(1, separator), strings, strings+nstrings);
+}
+
+std::string
+join(char separator, const char *strings[], size_t nstrings) {
+    return join_range(std::string(1, separator), strings, strings+nstrings);
+}
+
+std::string
 joinEnglish(const std::vector<std::string> &phrases, const std::string &separator, const std::string &finalIntro) {
     if (phrases.empty())
         return "";
@@ -258,7 +368,7 @@ joinEnglish(const std::vector<std::string> &phrases, const std::string &separato
 
     std::string s;
     for (size_t i=0; i<phrases.size()-1; ++i)
-        s = phrases[i] + separator + " ";
+        s += phrases[i] + separator + " ";
     return s + finalIntro + " " + phrases.back();
 }
 
@@ -640,145 +750,23 @@ removeRedundantSubstrings(const std::string &s) {
     return listToString(XStringList);
 }
 
-// [Robb Matzke 2016-01-06]: deprecated (misspelled)
 std::string
-removeRedundentSubstrings(std::string X) {
-    return removeRedundantSubstrings(X);
+removeAnsiEscapes(const std::string &s) {
+    boost::regex csiSequences("\\033\\[[\\x30-\\x3f]*[\\x20-\\x2f]*[\\x40-x7e]");
+    std::string retval;
+
+    const char *iter = s.c_str();
+    const char *end = s.c_str() + s.size();
+    boost::cmatch found;
+    while (boost::regex_search(iter, end, found, csiSequences)) {
+        retval += std::string(iter, iter + found.position());
+        iter += found.position() + found.length();
+    }
+
+    if (iter != end)
+        retval += std::string(iter, end);
+    return retval;
 }
-
-// [Robb Matzke 2016-01-06]: deprecated (misspelled)
-std::string
-removePseudoRedundentSubstrings ( std::string X ) {
-    return removePseudoRedundantSubstrings(X);
-}
-
-// Used by removePseudoRedundantSubstrings
-static bool
-isNumber(char c) {
-    return isdigit(c);
-}
-
-// Used by removePseudoRedundantSubstrings
-static bool
-isMarker(char c) {
-    return c == '$';
-}
-
-std::string
-removePseudoRedundantSubstrings(const std::string &s) {
-    // Convert the string into a list of strings and separate out the redundant entries
-     std::list<std::string> XStringList = stringToList(s);
-     XStringList.sort();
-     XStringList.unique();
-
-  // Build a list of the strings that will be modified
-     std::list<std::string> modifiedStringList;
-     std::list<std::string> listOfStringsToRemove;
-
-     std::list<std::string>::iterator i;
-
-  // Two loops over the list of strings represents a quadratic complexity!
-     for (i = XStringList.begin(); i != XStringList.end(); i++)
-        {
-          std::string i_modifiedString;
-       // printf ("At top of loop over XStringList \n");
-
-       // Build list of the differences between strings
-          std::list<std::string> listOfDifferences;
-
-          for (std::list<std::string>::iterator j = XStringList.begin(); j != XStringList.end(); j++)
-             {
-            // compare *i and *j and check for pseudo-redundence
-            // printf ("top of loop through string: compare *i and *j and check for pseudo-redundence \n");
-
-            // build information about *i
-               std::string::const_iterator i_diffpos        = find_if ( (*i).begin(), (*i).end(), isNumber );
-
-            // build information about *j
-               std::string::const_iterator j_diffpos        = find_if ( (*j).begin(), (*j).end(), isNumber );
-
-               unsigned int i_subStringLength  = i_diffpos - (*i).begin();
-               unsigned int j_subStringLength  = j_diffpos - (*j).begin();
-
-            // printf ("i_subStringLength = %d j_subStringLength = %d \n",i_subStringLength,j_subStringLength);
-
-            // Must be the same length string AND
-            // the same length substring occuring before the first number AND
-            // there must have been a number in the string
-               if ( ((*i).size() == (*j).size()) &&
-                               (i_subStringLength  == j_subStringLength)  &&
-                               (i_diffpos != (*i).end()) )
-                  {
-                 // printf ("substrings could be the same ... \n");
-
-                    i_modifiedString = *i; i_modifiedString[i_subStringLength] = '$';
-                    std::string j_modifiedString = *j; j_modifiedString[j_subStringLength] = '$';
-
-                 // After modifying the strings (uniformly) see if we have a match
-                    if ( i_modifiedString == j_modifiedString )
-                       {
-                      // (*i) and (*j) match upto the value of the number
-                      // record this as a modified string
-                      // modifiedStringList.push_back(i_modifiedString);
-
-                      // Remove these strings (after we finish these nested loops)
-                         listOfStringsToRemove.push_back(*i);
-
-                      // Build a string from the number that differentiates the two strings
-                         std::string i_numberString(1, *i_diffpos);
-                         std::string j_numberString(1, *j_diffpos);
-                      // Save the differences between the pseudo matching strings
-                         listOfDifferences.push_back(i_numberString);
-                         listOfDifferences.push_back(j_numberString);
-                       }
-                  }
-             }
-
-       // printf ("listOfDifferences.size() = %" PRIuPTR " \n",listOfDifferences.size());
-
-       // If there are any elements then we can proceed
-          if (!listOfDifferences.empty())
-             {
-               listOfDifferences.sort();
-               listOfDifferences.unique();
-
-               std::string maxvalue = listOfDifferences.back();
-               ROSE_ASSERT (!maxvalue.empty());
-
-
-            // char* diffpos = find_if ( modifiedString.c_str(), modifiedString.c_str()+modifiedString.length(), isMarker );
-               std::string::iterator diffpos = find_if (i_modifiedString.begin(), i_modifiedString.end(), isMarker );
-
-               *diffpos = maxvalue[0];
-            // modifiedString = copyEdit(modifiedString,string("$Y"),maxvalue);
-
-               modifiedStringList.push_back(i_modifiedString);
-             }
-        }
-
-  // Remove strings we identified for removal
-     listOfStringsToRemove.sort();
-     listOfStringsToRemove.unique();
-
-     for (i = listOfStringsToRemove.begin(); i != listOfStringsToRemove.end(); i++)
-        {
-          XStringList.remove(*i);
-        }
-
-  // Add the strings the we saved (the resort)
-     XStringList.insert(XStringList.end(), modifiedStringList.begin(), modifiedStringList.end());
-
-     XStringList.remove(std::string("\n"));
-
-     XStringList.sort();
-
-     XStringList.unique();
-
-     return listToString(XStringList);
-}
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions for encoding/decoding/hashing

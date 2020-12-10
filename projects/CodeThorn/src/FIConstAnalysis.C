@@ -3,7 +3,8 @@
 #include "FIConstAnalysis.h"
 #include "AbstractValue.h"
 #include "CPAstAttribute.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
+#include "AstTerm.h"
 
 using namespace CodeThorn;
 
@@ -139,10 +140,22 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
         if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         map[res.varId].insert(res.varValue);
       } else {
-        // not handled yet (the new def-use sets allow to handle this better)
-        cerr<<"Warning: unknown lhs of assignment."<<endl;
-        // TODO: all vars have to go to top and all additional entries must be top
-        exit(1);
+        // handle some special case, fail on all others
+        SgDotExp* dotExp=isSgDotExp(SgNodeHelper::getLhs(assignOp));
+        if(dotExp && isSgVarRefExp(SgNodeHelper::getLhs(dotExp)) && isSgVarRefExp(SgNodeHelper::getRhs(dotExp))) {
+          VariableId id1=varIdMapping.variableId(isSgVarRefExp(SgNodeHelper::getLhs(dotExp)));
+          VariableId id2=varIdMapping.variableId(isSgVarRefExp(SgNodeHelper::getRhs(dotExp)));
+          if(!id1.isValid()||!id2.isValid()) {
+            cerr<<"Error: FIConstAnalysis: special case v1.v2=... failed:"<<SgNodeHelper::sourceFilenameLineColumnToString(assignOp)<<":"<<assignOp->unparseToString()<<":::"<<AstTerm::astTermWithNullValuesToString(assignOp)<<endl;
+          }
+          map[id1].insert(AbstractValue::createTop());
+          map[id2].insert(AbstractValue::createTop());
+        } else {
+          // TODO: all vars have to go to top and all additional entries must be top
+          // not handled yet (the new def-use sets allow to handle this better)
+          cout<<"Error: unknown lhs of assignment:"<<SgNodeHelper::sourceFilenameLineColumnToString(assignOp)<<":"<<assignOp->unparseToString()<<":::"<<AstTerm::astTermWithNullValuesToString(assignOp)<<endl;
+          exit(1);
+        }
       }
     }
     // check for operators: +=, -=, ...
@@ -306,7 +319,7 @@ int VariableConstInfo::uniqueConst(VariableId varId) {
 VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping) {
   VarConstSetMap varConstIntMap;  
 
-  VariableIdSet varIdSet=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet varIdSet=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
 
   // initialize map such that it is resized to number of variables of interest
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
@@ -318,7 +331,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   cout << "STATUS: Number of global variables: ";
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
   cout << globalVars.size()<<endl;
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #if 0
   int filteredVars=0;
@@ -673,11 +686,15 @@ void FIConstAnalysis::filterVariables(VariableIdSet& variableIdSet) {
 
 /* format: varname, isAny, isUniqueconst, isMultiConst, width(>=1 or 0 or -1 (for any)), min, max, numBits, "{...}"
 */
-void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename) {
+void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, const char* filename) {
   ofstream myfile;
-  myfile.open(filename.c_str());
-
-  //  cout<<"Result:"<<endl;
+  cout<<"FIConstAnalysis: writing to file "<<filename<<endl;
+  myfile.open(filename);
+  if (!myfile.is_open()) {
+    cout << "Error: could not open file: " << filename << endl;
+    exit(1);
+  }
+  //cout<<"DEBUG: FIConstAnalysis: Result:"<<endl;
   //VariableConstInfo vci(&variableIdMapping, &map);
   for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
     VariableId varId=(*i).first;

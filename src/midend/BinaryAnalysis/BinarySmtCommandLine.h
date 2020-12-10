@@ -1,6 +1,8 @@
 // Command-line processing utilities related to SMT solvers
 #ifndef Rose_BinaryAnalysis_SmtCommandLine
 #define Rose_BinaryAnalysis_SmtCommandLine
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <iostream>
 #include <string>
@@ -53,4 +55,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,0 +1,20 @@
+START
+PROGRAM blockPresetList;
+BEGIN
+
+TYPE a'block'type BLOCK
+  BEGIN
+     ITEM var'1 U;
+     ITEM var'2 U;
+     ITEM var'3 U;
+  END
+
+ITEM check U;
+
+BLOCK my'block'1 a'block'type = 3, 4, 5;
+BLOCK my'block'2 a'block'type = (1, 2, 3);
+
+check = 1;
+
+END
+TERM

@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryPointerDetection.h>
 
@@ -35,7 +37,7 @@ initDiagnostics() {
 }
 
 bool
-PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) {
+PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) const {
     if (a.lvalue == NULL || b.lvalue == NULL)
         return a.lvalue == NULL && b.lvalue != NULL;
     return a.lvalue->hash() < b.lvalue->hash();
@@ -46,7 +48,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -204,9 +206,18 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        // Offset the address by the value of the segment register.
+        BaseSemantics::SValuePtr adjustedVa;
+        if (segreg.isEmpty()) {
+            adjustedVa = addr;
+        } else {
+            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            adjustedVa = add(addr, signExtend(segregValue, addr->get_width()));
+        }
+
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
         StatePtr state = State::promote(currentState());
-        state->saveRead(addr, retval);
+        state->saveRead(adjustedVa, retval);
         return retval;
     }
 };
@@ -225,7 +236,7 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
         BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                    mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+                    mlog[DEBUG] <<"    " <<partitioner.unparse(insn) <<"\n";
                 }
             }
         }
@@ -312,6 +323,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BaseSemantics::RegisterStateGenericPtr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState());
     initialRegState->initialize_large();
+    cpu->initializeState(initialState_);
 
     // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
     SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
@@ -348,7 +360,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Find data pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
-    size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
+    size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
     Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
@@ -358,21 +370,21 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Find code pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
-    size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+    size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         SymbolicSemantics::SValuePtr ip =
-            SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.get_nbits()), ops.get()));
+            SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {
             bool isSignificant = false;
             if (!settings_.ignoreConstIp) {
                 isSignificant = true;
             } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpr::OP_ITE) {
-                isSignificant = !ipExpr->isInteriorNode()->child(1)->isNumber() ||
-                                !ipExpr->isInteriorNode()->child(2)->isNumber();
-            } else if (!ipExpr->isNumber()) {
+                isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
+                                !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
+            } else if (!ipExpr->isIntegerConstant()) {
                 isSignificant = true;
             }
             if (isSignificant)
@@ -387,3 +399,5 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 } // namespace
 } // namespace
 } // namespace
+
+#endif

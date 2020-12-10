@@ -120,6 +120,7 @@ class ROSE_DLL_API TransformationSupport
 
       //! Get the string representing the function name (should be added to Sage III interface).
           static std::string getFunctionName ( SgFunctionCallExp* functionCallExp );
+
       //! Get the string representing the type name (should be added to Sage III interface).
           static std::string getTypeName ( SgType* type );
 
@@ -206,7 +207,9 @@ class ROSE_DLL_API TransformationSupport
           static SgDirectory* getDirectory( const SgNode* astNode);
           static SgFile* getFile( const SgNode* astNode);
           static SgSourceFile* getSourceFile( const SgNode* astNode);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           static SgBinaryComposite* getBinaryFile( const SgNode* astNode);
+#endif
           static SgGlobal* getGlobalScope( const SgNode* astNode);
           static SgStatement* getStatement(const SgNode* astNode);
           static SgFunctionDeclaration* getFunctionDeclaration( const SgNode* astNode);

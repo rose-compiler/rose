@@ -3,4 +3,4 @@
 #include "fixupTypeReferences.h"
 
 void FixupTypeReferencesOnMemoryPool::visit(SgNode*) {}
-std::set<SgVariableDeclaration*> nodesAddedWithinFieldUseSet;
+

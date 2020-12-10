@@ -5,7 +5,7 @@
 #include "VariableIdMapping.h"
 #include "Lattice.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -13,28 +13,29 @@ namespace SPRAY {
  */
 class RDLattice : public Lattice {
  public:
-  typedef std::set<std::pair<SPRAY::Label,VariableId> >::iterator iterator;
+  typedef std::pair<CodeThorn::Label, VariableId> value_type;
+  typedef std::set<value_type> RDSet;
+  typedef RDSet::iterator iterator;
   RDLattice();
-  iterator begin();
-  iterator end();
-  size_t size();
-  void insertPair(SPRAY::Label,VariableId);
-  void erasePair(SPRAY::Label,VariableId);
+  iterator begin() const;
+  iterator end() const;
+  size_t size() const;
+  void insertPair(CodeThorn::Label,VariableId);
+  void erasePair(CodeThorn::Label,VariableId);
   void removeAllPairsWithVariableId(VariableId var);
-  bool isBot();
+  bool isBot() const;
   void setBot();
   void toStream(std::ostream& os, VariableIdMapping* vim=0);
-  bool exists(std::pair<SPRAY::Label,VariableId>);
+  bool exists(RDSet::key_type);
   void setEmptySet();
   void combine(Lattice& b);
-  bool approximatedBy(Lattice& b);
-  LabelSet getRDs(SPRAY::VariableId);
+  bool approximatedBy(Lattice& b) const;
+  LabelSet getRDs(CodeThorn::VariableId);
  private:
-  std::set<std::pair<SPRAY::Label,VariableId> > rdSet;
+  RDSet rdSet;
   bool _bot;
 };
 
 }
 
 #endif
-

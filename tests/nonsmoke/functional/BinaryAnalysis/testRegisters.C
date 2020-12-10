@@ -8,19 +8,19 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "Registers.h"
 
+using namespace Rose::BinaryAnalysis;
+
 int
 main()
 {
-    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc32();
     ROSE_ASSERT(dict!=NULL);
     // std::cout <<*dict;
 
-    const RegisterDescriptor *desc = dict->lookup("spr8");
-    ROSE_ASSERT(desc!=NULL);
-    // std::cout <<"found r8 = " <<*desc <<"\n";
+    const RegisterDescriptor desc = dict->findOrThrow("spr8");
 
     /* Register "lr" is the preferred name for "spr8", so that's what we'll get back for the reverse lookup */
-    std::string alias = dict->lookup(*desc);
+    std::string alias = dict->lookup(desc);
     ROSE_ASSERT(alias=="lr");
 
     return 0;

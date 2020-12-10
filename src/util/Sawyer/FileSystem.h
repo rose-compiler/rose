@@ -31,13 +31,13 @@ public:
     /** Create a temporary file in the system temp directory. */
     TemporaryFile(): keep_(false) {
         name_ = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path();
-        stream_.open(name_.native().c_str());
+        stream_.open(name_.string().c_str());
     }
 
     /** Create a temporary file with the specified name. */
     explicit TemporaryFile(const boost::filesystem::path &name): keep_(false) {
         name_ = name;
-        stream_.open(name.native().c_str());
+        stream_.open(name.string().c_str());
     }
 
     /** Unlink the temporary file from the filesystem.

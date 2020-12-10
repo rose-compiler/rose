@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser.h"
+
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include "Disassembler.h"
 
@@ -27,14 +30,16 @@ Sawyer::Message::Facility AsmUnparser::mlog;
  * instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
  * no-op instructions. */
 static std::vector<bool>
-build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
-{
+build_noop_index(const std::vector <std::pair <size_t /*offset*/, size_t /*size*/> > &noops) {
+    typedef std::vector<std::pair<size_t /*offset*/, size_t /*size*/> > Unsorted;
+    typedef std::map<size_t/*size*/, std::vector <size_t/*offset*/> > Sorted;
+
     /* Sort subsequences into buckets by length */
     size_t retval_size = 0;
-    std::map<size_t/*size*/, std::vector <size_t/*offset*/> > sorted;
-    for (std::vector<std::pair<size_t, size_t> >::const_iterator ni=noops.begin(); ni!=noops.end(); ++ni) {
-        sorted[(*ni).second].push_back((*ni).first);
-        retval_size = std::max(retval_size, (*ni).first + (*ni).second);
+    Sorted sorted;
+    for (Unsorted::const_iterator ni = noops.begin(); ni != noops.end(); ++ni) {
+        sorted[ni->second /*size*/].push_back(ni->first /*offset*/);
+        retval_size = std::max(retval_size, ni->first /*offset*/ + ni->second /*size*/);
     }
     
     /* Allocate a return value */
@@ -45,11 +50,9 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     std::vector<bool> retval(retval_size, false);
 
     /* Process in order from largest to smallest */
-    for (std::map<size_t, std::vector<size_t> >::reverse_iterator szi=sorted.rbegin(); szi!=sorted.rend(); ++szi) {
-        size_t sz = (*szi).first;
-        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi<(*szi).second.end(); ++idxi) {
-            size_t idx = *idxi;
-            
+    for (Sorted::reverse_iterator szi = sorted.rbegin(); szi != sorted.rend(); ++szi) {
+        size_t sz = szi->first;
+        BOOST_FOREACH (size_t idx, szi->second) {
             /* Are any instructions in this range already marked as no-ops?  If so, then skip this one. */
             bool overlaps = false;
             for (size_t i=0; i<sz && !overlaps; ++i)
@@ -300,8 +303,8 @@ AsmUnparser::invalid_register(SgAsmInstruction *insn, RegisterDescriptor reg, co
     using namespace StringUtility;
     Stream warn(mlog[WARN]);
 
-    std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
-                         numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
+    std::string regstr = numberToString(reg.majorNumber()) + "." + numberToString(reg.minorNumber()) + "." +
+                         numberToString(reg.offset()) + "." + numberToString(reg.nBits());
     if (insn) {
         warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
     } else {
@@ -387,11 +390,11 @@ AsmUnparser::unparse_one_node(std::ostream &output, SgNode *node)
 {
     SgAsmInstruction *insn = isSgAsmInstruction(node);
     if (insn)
-        return unparse_insn(true, output, insn, (size_t)(-1));
+        return unparse_insn(true, output, insn, INVALID_INDEX);
 
     SgAsmStaticData *data = isSgAsmStaticData(node);
     if (data)
-        return unparse_staticdata(true, output, data, (size_t)(-1));
+        return unparse_staticdata(true, output, data, INVALID_INDEX);
 
     SgAsmBlock *block = isSgAsmBlock(node);
     if (block) {
@@ -541,6 +544,7 @@ AsmUnparser::InsnFuncEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
+        ASSERT_not_null(func);
         if (func->get_entry_va()==args.insn->get_address())
             args.unparser->unparse_function(true, args.output, func);
     }
@@ -948,7 +952,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             addr_fmt = strdup("");
         }
 
-        tmp_fmt.addr_fmt = addr_fmt;
+        tmp_fmt.addr_fmt = addr_fmt ? addr_fmt : "";
         if (!tmp_fmt.multiline)
             args.output <<tmp_fmt.prefix;
 
@@ -1274,3 +1278,5 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
 
 } // namespace
 } // namespace
+
+#endif

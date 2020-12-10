@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 srcdir exedir" 1>&2
+  exit 1
+fi
+srcdir=$1
+
+DIFF="diff"
+
+function run() {
+echo $1
+$1
+echo "${DIFF} rose_$2.C $srcdir/rose_$2$3.C.save "
+${DIFF} rose_$2.C $srcdir/rose_$2$3.C.save 
+rm rose_$2.C
+}
+
+test1="$2/ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot $srcdir/interp1.C"
+run "$test1" "interp1"
+
+test2="$2/ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot $srcdir/redBlack1.C"
+run "$test2" "redBlack1"
+
+test3="$2/ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot -splitloop $srcdir/redBlack1.C"
+echo skipping run "$test3" "redBlack1" "_split"
+echo "currently disabled as it seems to get into an infinite loop during RewriteFromArrayAst"

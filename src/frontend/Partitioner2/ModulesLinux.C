@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <Partitioner2/ModulesLinux.h>
 
@@ -98,14 +100,26 @@ nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &s
     }
 }
 
+BaseSemantics::SValuePtr
+LibcStartMain::readStack(const Partitioner &partitioner, const BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+                         size_t nBits, RegisterDescriptor segmentRegister) {
+    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    if (SP.isEmpty())
+        return BaseSemantics::SValuePtr();
+    BaseSemantics::SValuePtr sp = cpu->operators()->peekRegister(SP, cpu->undefined_(SP.nBits()));
+    BaseSemantics::SValuePtr stackOffset = cpu->number_(SP.nBits(),
+                                                        BitOps::signExtend((uint64_t)byteOffset, 8*sizeof(byteOffset)));
+    BaseSemantics::SValuePtr addr = cpu->operators()->add(sp, stackOffset);
+    BaseSemantics::SValuePtr value = cpu->operators()->peekMemory(segmentRegister, addr, cpu->undefined_(nBits));
+    return value;
+}
+
 bool
 LibcStartMain::operator()(bool chain, const Args &args) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Look at this block only if it's a function call
     if (!chain || !args.bblock || args.bblock->nInstructions() == 0)
-        return chain;
-    if (!isSgAsmX86Instruction(args.bblock->instructions().back()))
         return chain;
     if (!args.partitioner.basicBlockIsFunctionCall(args.bblock))
         return chain;
@@ -114,7 +128,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     bool foundCallToLibcStartMain = false;
     BOOST_FOREACH (const rose_addr_t &succVa, args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
         Function::Ptr func = args.partitioner.functionExists(succVa);
-        if (func && func->name() == "__libc_start_main@plt") {
+        if (func && (func->name() == "__libc_start_main@plt" || func->name() == "__libc_start_main")) {
             foundCallToLibcStartMain = true;
             break;
         }
@@ -149,48 +163,80 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         return chain;
     }
 
+    // Some of the arguments are going to be function pointers. Give them names if we can.
+    std::vector<BaseSemantics::SValuePtr> functionPtrs;
+
     // Location and size of argument varies by architecture
-    Semantics::SValuePtr mainVa;
+    const RegisterDictionary *regs = args.partitioner.instructionProvider().registerDictionary();
     if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
         if (dispatcher->addressWidth() == 64) {
-            const RegisterDescriptor REG_RCX = dispatcher->findRegister("rcx", 64, true /*allowMissing*/);
-            ASSERT_require(!REG_RCX.isEmpty());
+            // Amd64 integer arguments are passed in registers: rdi, rsi, rdx, rcx, r8, and r9
+            const RegisterDescriptor FIRST_ARG = regs->findOrThrow("rdi");
+            const RegisterDescriptor FOURTH_ARG = regs->findOrThrow("rcx");
+            const RegisterDescriptor FIFTH_ARG = regs->findOrThrow("r8");
+            BaseSemantics::SValuePtr firstArg = state->peekRegister(FIRST_ARG, dispatcher->undefined_(64), ops.get());
+            BaseSemantics::SValuePtr fourthArg = state->peekRegister(FOURTH_ARG, dispatcher->undefined_(64), ops.get());
+            BaseSemantics::SValuePtr fifthArg = state->peekRegister(FIFTH_ARG, dispatcher->undefined_(64), ops.get());
 
-            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, dispatcher->undefined_(64), ops.get());
-            if (rcx->is_number())
-                mainVa = Semantics::SValue::promote(rcx);
+            if (firstArg->is_number() && fourthArg->is_number() && fifthArg->is_number() &&
+                args.partitioner.memoryMap()->at(firstArg->get_number()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner.memoryMap()->at(fourthArg->get_number()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner.memoryMap()->at(fifthArg->get_number()).require(MemoryMap::EXECUTABLE).exists()) {
+                // Sometimes the address of main is passed as the first argument (rdi) with __libc_csu_init and __libc_csu_fini
+                // passed as the fourth (rcx) and fifth (r8) arguments. By this point in the disassembly process, would not
+                // have discovered PLT function yet. So if the first, fourth, and fifth arguments seem to point at executable
+                // memory then assume they are "main", "__libc_csu_fini@plt", and "libc_csu_init@plt". Don't bother naming the
+                // two PLT functions though since we'll get their names later by processing the PLT.
+                SAWYER_MESG(debug) <<"LibcStartMain analysis: amd64 with main as the fisrt argument\n";
+                mainVa_ = firstArg->get_number();
+                functionPtrs.push_back(firstArg);
+                functionPtrs.push_back(fourthArg);
+                functionPtrs.push_back(fifthArg);
+
+            } else if (fourthArg->is_number() &&
+                       args.partitioner.memoryMap()->at(fourthArg->get_number()).require(MemoryMap::EXECUTABLE).exists()) {
+                // Sometimes then address of main is passed as the fourth argument (in rcx).
+                SAWYER_MESG(debug) <<"LibcStartMain analysis: amd64 with main as the fourth argument\n";
+                mainVa_ = fourthArg->get_number();
+                functionPtrs.push_back(fourthArg);
+            }
 
         } else if (dispatcher->addressWidth() == 32) {
-            dispatcher->get_operators()->currentState(state);
-            const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
-            ASSERT_require(!REG_ESP.isEmpty());
-            BaseSemantics::SValuePtr esp = dispatcher->get_operators()->peekRegister(REG_ESP, dispatcher->undefined_(32));
-            BaseSemantics::SValuePtr arg0addr = dispatcher->get_operators()->add(esp, dispatcher->number_(32, 4));
-            BaseSemantics::SValuePtr arg0 = dispatcher->get_operators()->peekMemory(RegisterDescriptor(),
-                                                                                        arg0addr, dispatcher->undefined_(32));
-            SAWYER_MESG(debug) <<"LibcStartMain analysis: x86-32 arg0 addr  = " <<*arg0addr <<"\n"
-                               <<"LibcStartMain analysis: x86-32 arg0 value = " <<*arg0 <<"\n";
-            if (arg0->is_number())
-                mainVa = Semantics::SValue::promote(arg0);
-
-        } else {
-            // architecture not supported yet
+            // x86 integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
+            // into the stack because the return address has also been pushed onto the stack.
+            BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
+            if (arg0->is_number()) {
+                SAWYER_MESG(debug) <<"LibcStartMain analysis: x86 with main as the first argument\n";
+                mainVa_ = arg0->get_number();
+                functionPtrs.push_back(arg0);
+            }
+        }
+    } else if (isSgAsmM68kInstruction(args.bblock->instructions().back())) {
+        // M68k integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
+        // into the stack because the return address has also been pushed onto the stack.
+        BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
+        if (arg0->is_number()) {
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: m68k with main as the first argument\n";
+            mainVa_ = arg0->get_number();
+            functionPtrs.push_back(arg0);
         }
     }
 
-    if (mainVa) {
+    if (!functionPtrs.empty()) {
         ASSERT_require(args.bblock->successors().isCached());
-        SAWYER_MESG(debug) <<"LibcStartMain analysis: address of \"main\" is " <<*mainVa <<"\n";
         BasicBlock::Successors succs = args.bblock->successors().get();
-        succs.push_back(BasicBlock::Successor(mainVa, E_FUNCTION_CALL));
+        BOOST_FOREACH (const BaseSemantics::SValuePtr &calleeVa, functionPtrs) {
+            succs.push_back(BasicBlock::Successor(Semantics::SValue::promote(calleeVa), E_FUNCTION_CALL));
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: fcall to " <<*calleeVa
+                               <<(mainVa_ && calleeVa->get_number() == *mainVa_ ? ", assumed to be \"main\"" : "") <<"\n";
+        }
         args.bblock->successors() = succs;
-
-        if (mainVa->is_number() && mainVa->get_width() <= 64)
-            mainVa_ = mainVa->get_number();
     }
 
     return true;
 }
+
+
 
 void
 LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
@@ -206,3 +252,5 @@ LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

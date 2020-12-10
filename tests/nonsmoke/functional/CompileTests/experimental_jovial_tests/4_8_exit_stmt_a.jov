@@ -1,0 +1,6 @@
+START
+PROGRAM testexit ;
+BEGIN
+  EXIT ;
+END
+TERM

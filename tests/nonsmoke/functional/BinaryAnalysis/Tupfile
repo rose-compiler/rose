@@ -1,6 +1,12 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+###############################################################################################################################
+# Utilities to test whether certain features are enabled, thus whether certain tests need to be run.
+###############################################################################################################################
+run $(tool_compile_linkexe) isA64Disabled.C
 
 ###############################################################################################################################
 # Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
@@ -47,8 +53,8 @@ run $(test) testFunctionCall -oB --answer=testFunctionCall-B.ans ./testFunctionC
 # quite easy to do, but it turns out to involve lots of details.
 ###############################################################################################################################
 run $(tool_compile_linkexe) testElfStrtab.C
-run $(test) testElfStrtab -x arm-poweroff.dump -x arm-poweroff.new -x rose_arm-poweroff.s \
-    ./testElfStrtab $(ROSE)/tests/nonsmoke/specimens/binary/arm-poweroff
+run $(test) testElfStrtab -x i386-poweroff.dump -x i386-poweroff.new -x rose_i386-poweroff.s \
+    ./testElfStrtab $(ROSE)/tests/nonsmoke/specimens/binary/i386-poweroff
 
 ###############################################################################################################################
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
@@ -57,10 +63,10 @@ run $(test) testElfStrtab -x arm-poweroff.dump -x arm-poweroff.new -x rose_arm-p
 
 # FIXME: This test produces way too many output files that aren't needed and just clutter things up.
 run $(tool_compile_linkexe) testElfByteOrder.C
-run $(test) testElfByteOrder -i execFormatsTest -i $(ROSE)/tests/nonsmoke/specimens/binary/arm-poweroff \
+run $(test) testElfByteOrder -i execFormatsTest -i $(ROSE)/tests/nonsmoke/specimens/binary/i386-poweroff \
     -x testElfByteOrder-1 -x testElfByteOrder-1.dump -x testElfByteOrder-1.new -x testElfByteOrder-2 \
     -x testElfByteOrder-2.dump -x testElfByteOrder-2.new \
-    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary INPUT=arm-poweroff ./testElfByteOrderScript
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary INPUT=i386-poweroff ./testElfByteOrderScript
 
 ###############################################################################################################################
 # Reads in an ELF executable and changes the word size from eight to four bytes or vice versa and writes out a new file. Note
@@ -110,10 +116,10 @@ run $(test) testPeConstruct -x testPeConstruct-a.out ./testPeConstruct testPeCon
 run $(tool_compile_linkexe) shiftResizeSection.C
 
 run $(test) shiftResizeSection -i execFormatsTest \
-    -x arm-ctrlaltdel.dump-1 -x arm-ctrlaltdel.new -x rose_arm-ctrlaltdel.s -x arm-ctrlaltdel.dump-2 \
-    -x arm-ctrlaltdel.new.new -x rose_arm-ctrlaltdel.new.s -x arm-ctrlaltdel.dump-3 \
+    -x i386-ctrlaltdel.dump-1 -x i386-ctrlaltdel.new -x rose_i386-ctrlaltdel.s -x i386-ctrlaltdel.dump-2 \
+    -x i386-ctrlaltdel.new.new -x rose_i386-ctrlaltdel.new.s -x i386-ctrlaltdel.dump-3 \
     --answer=shiftResizeSection.ans \
-    ./testShiftResizeSection.sh $(ROSE)/tests/nonsmoke/specimens/binary/arm-ctrlaltdel \
+    ./testShiftResizeSection.sh $(ROSE)/tests/nonsmoke/specimens/binary/i386-ctrlaltdel \
     				\$($(ROSE)/scripts/tup/fix-tup-builddir-name \$(pwd))
 
 ###############################################################################################################################
@@ -190,7 +196,8 @@ run $(test) testReadPastEOF --answer=testReadPastEOF.ans \
 ###############################################################################################################################
 ifneq (@(WITH_SQLITE),no)
 run $(tool_compile_linkexe) testLibraryDb.C
-run $(test) testLibraryDb
+run $(test) testLibraryDb -x test.db \
+    ./testLibraryDb
 endif
 
 ###############################################################################################################################
@@ -237,10 +244,17 @@ run $(tool_compile_linkexe) cory008.C
 run $(test) cory008 --answer=cory008.ans ./cory008 $(ROSE)/tests/nonsmoke/specimens/binary/i386-nologin
 
 ###############################################################################################################################
+# Test structural comparison of symbolic integer constants
+###############################################################################################################################
+run $(tool_compile_linkexe) cory009.C
+run $(test) cory009
+
+###############################################################################################################################
 # Test symbolic semantics memory read-after-write
 ###############################################################################################################################
 run $(tool_compile_linkexe) testSymReadWrite.C
-run $(test) testSymReadWrite ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
+run $(test) testSymReadWrite --answer=testSymReadWrite.ans \
+    ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
 
 ###############################################################################################################################
 # Test the WorkList class
@@ -473,13 +487,13 @@ run $(test) testStaticSemantics -x buffer2.bin.dot \
 ###############################################################################################################################
 run $(tool_compile_linkexe) testLazyInitialStates.C
 run $(test) testLazyInitialStates \
-    ./testLazyInitialStates --isa=i386 --start=0 map:0=rx::$(ROSE)/tests/nonsmoke/specimens/binary/i386-initialState
+    ./testLazyInitialStates --isa=i386 --function-at=0 map:0=rx::$(ROSE)/tests/nonsmoke/specimens/binary/i386-initialState
 
 #############################################################################################
 # Test disassembling random input data for various architectures.
 #############################################################################################
 run $(tool_compile_linkexe) testRandomInput.C
-testRandomInput_ISA = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
+testRandomInput_ISA = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 
 run for isa in $(testRandomInput_ISA); do \
         $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \
@@ -525,4 +539,46 @@ endif
 run $(tool_compile_linkexe) testPeekRegister.C
 run $(test) testPeekRegister
 
+########################################################################################################################
+# Test data block ownership rules in Partitioner2
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDataBlockOwnership.C
+run $(test) testDataBlockOwnership ./testDataBlockOwnership $(ROSE)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSRecords.C
+run $(test) testSRecords
+
+########################################################################################################################
+# Disassembler
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDisassembler.C
+
+# PowerPC-32
+run $(test) testDisassembler -o ppc32-be --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc32.ans \
+    ./testDisassembler --isa=ppc32-be ./testDisassembler-ppc32.txt
+
+# PowerPC-64
+run $(test) testDisassembler -o ppc64a-be --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc64a.ans \
+    ./testDisassembler --isa=ppc64-be ./testDisassembler-ppc32.txt
+run $(test) testDisassembler -o ppc64b-be --input=testDisassembler-ppc64.txt --answer=testDisassembler-ppc64b.ans \
+    ./testDisassembler --isa=ppc64-be ./testDisassembler-ppc64.txt
+
+# ARM AArch A64
+run $(test) testDisassembler -o a64 --input=isA64Disabled --disabled-by=./isA64Disabled \
+    --input=testDisassembler-a64.txt --answer=testDisassembler-a64.ans \
+    ./testDisassembler --isa=a64 ./testDisassembler-a64.txt
+
+########################################################################################################################
+# Native semantics
+########################################################################################################################
+
+run $(tool_compile_linkexe) testNativeSemantics.C
+
+endif
 endif

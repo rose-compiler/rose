@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Registers.h"
 #include "AsmUnparser.h"
 #include "Diagnostics.h"
@@ -22,7 +25,8 @@ std::string unparseX86Mnemonic(SgAsmX86Instruction *insn) {
         case x86_branch_prediction_taken: result += ",pt"; break;
         case x86_branch_prediction_not_taken: result += ",pn"; break;
         default:
-            ASSERT_not_reachable("bad x86 branch prediction: " + stringifyX86BranchPrediction(insn->get_branchPrediction()));
+            ASSERT_not_reachable("bad x86 branch prediction: " +
+                                 stringifyBinaryAnalysisX86BranchPrediction(insn->get_branchPrediction()));
     }
     return result;
 }
@@ -177,3 +181,5 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
     ASSERT_not_null(insn);
     return unparseX86Expression(expr, labels, registers, insn->get_kind()==x86_lea);
 }
+
+#endif

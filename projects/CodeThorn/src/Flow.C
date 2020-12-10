@@ -4,13 +4,14 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "Sawyer/GraphTraversal.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
-Edge::Edge():_source(0),_target(0),_annotation(""){
+Edge::Edge() {
+  // all default constructed values for the 4 private member variables are as intended
 }
 Edge::Edge(Label source0,Label target0):_source(source0),_target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
@@ -20,6 +21,10 @@ Edge::Edge(Label source0,EdgeType et,Label target0):_source(source0),_target(tar
 }
 Edge::Edge(Label source0,set<EdgeType> tset,Label target0):_source(source0),_target(target0),_annotation(""){
   _types=tset;
+}
+
+bool Edge::isValid() const {
+  return _source.isValid() && _target.isValid();
 }
 
 bool Edge::isType(EdgeType et) const {
@@ -199,7 +204,21 @@ string InterFlow::toString() const {
   return res;
 }
 
-bool SPRAY::operator<(const InterEdge& e1, const InterEdge& e2) {
+std::string InterFlow::dotCallGraphEdges(LabelToFunctionMap& map) const {
+  stringstream ss;
+  for(InterFlow::iterator i=begin();i!=end();++i) {
+    InterEdge ie=*i;
+    if(ie.entry.isValid()&&ie.exit.isValid()) {
+      ss<<map[ie.call].toString()<<"->"<<ie.entry.toString()<<endl;
+    }
+  }
+  return ss.str();
+}
+std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
+  return "digraph G {\n"+dotCallGraphEdges(map)+"}\n";
+}
+
+bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
     return e1.call<e2.call;
   if(e1.entry!=e2.entry)
@@ -209,7 +228,7 @@ bool SPRAY::operator<(const InterEdge& e1, const InterEdge& e2) {
   return e1.callReturn<e2.callReturn;
 }
 
-bool SPRAY::operator==(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator==(const InterEdge& e1, const InterEdge& e2) {
   return e1.call==e2.call
     && e1.entry==e2.entry
     && e1.exit==e2.exit
@@ -217,21 +236,17 @@ bool SPRAY::operator==(const InterEdge& e1, const InterEdge& e2) {
     ;
 }
 
-bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
   return !(e1==e2);
 }
 
-bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
+bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
   return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
-bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
-bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
+bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
   if(e1.source()!=e2.source())
     return e1.source()<e2.source();
   if(e1.target()!=e2.target())
@@ -263,7 +278,37 @@ Flow::Flow() {
   resetDotOptions(); 
 }
 
-SPRAY::Flow Flow::reverseFlow() {
+Label Flow::getStartLabel() {
+  if(_startLabelSet.size()==1) {
+    return *_startLabelSet.begin();
+  } else if(_startLabelSet.size()==0) {
+    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
+    Label lab;
+    return lab; // intentionally returns invalid label
+  } else {
+    //cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
+    return *_startLabelSet.begin();
+  }
+}
+void Flow::setStartLabel(Label label) {
+  LabelSet ls;
+  ls.insert(label);
+  _startLabelSet=ls;
+}
+
+void Flow::addStartLabel(Label label) {
+  _startLabelSet.insert(label);
+}
+
+void Flow::setStartLabelSet(LabelSet labelSet) {
+  _startLabelSet = labelSet;
+}
+
+LabelSet Flow::getStartLabelSet() {
+  return _startLabelSet;
+}
+
+CodeThorn::Flow Flow::reverseFlow() {
   Flow reverseFlow;
   for(Flow::iterator i=begin();i!=end();++i) {
     reverseFlow.insert(Edge((*i).target(),(*i).getTypes(),(*i).source()));
@@ -308,9 +353,9 @@ Flow::iterator Flow::find(Edge e) {
     for (SawyerCfg::EdgeIterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
       EdgeData eData = (*i).value();
       if (eData.edgeTypes == e.types() && eData.annotation == e.getAnnotation()) {
-	if ((*((*i).target())).value() == e.target()) {
-	  return Flow::iterator(i);
-	}
+        if ((*((*i).target())).value() == e.target()) {
+          return Flow::iterator(i);
+        }
       }
     }
   }
@@ -398,7 +443,7 @@ Flow::node_iterator Flow::nodes_begin() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -406,7 +451,7 @@ Flow::node_iterator Flow::nodes_end() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -414,7 +459,7 @@ Flow::const_node_iterator Flow::nodes_begin() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -422,7 +467,7 @@ Flow::const_node_iterator Flow::nodes_end() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -516,8 +561,27 @@ string Flow::toDot(Labeler* labeler) {
           ss<<" ... "<<expr->unparseToString();
         }
         ss<<":";
+      } else if(isSgTryStmt(node)) {
+        ss<<"try: ";
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
+      } else if(labeler->isJoinLabel(*i)) {
+        ss<<"Join for fork "<<labeler->forkLabel(node);
+      } else if(labeler->isForkLabel(*i)) {
+        ss<<"Fork: ";
+      } else if(labeler->isWorkshareLabel(*i)) {
+        ss<<"Workshare: ";
+        if (isSgOmpForStatement(node)) {
+          ss << "OMP for";
+        } else if (isSgOmpSectionsStatement(node)) {
+          ss << "OMP sections";
+        }
+      } else if(labeler->isBarrierLabel(*i)) {
+        if (isSgOmpBarrierStatement(node)) {
+          ss<<"Barrier";
+        } else {
+          ss<<"Barrier for workshare "<<labeler->workshareLabel(node);
+        }
       } else if(isSgOmpBodyStatement(node)) {
         ss<<node->class_name();
       } else {
@@ -527,17 +591,17 @@ string Flow::toDot(Labeler* labeler) {
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt) {
       ss << "\"";
       if (labeler) {
-	SgNode* node=labeler->getNode(*i);
-	if(SgNodeHelper::isCond(node)) {
-	  ss << " shape=oval style=filled ";
-	  ss<<"color=yellow "; 
-	} else {
-	  ss << " shape=box ";
-	}
+        SgNode* node=labeler->getNode(*i);
+        if(SgNodeHelper::isCond(node)) {
+          ss << " shape=oval style=filled ";
+          ss<<"color=yellow ";
+        } else {
+          ss << " shape=box ";
+        }
       } else {
-	if (_fixedNodeColor != "white") {
-	  ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
-	}
+        if (_fixedNodeColor != "white") {
+          ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
+        }
       }
       ss << "];\n";
     }
@@ -615,6 +679,16 @@ Flow Flow::inEdges(Label label) {
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
   return flow;
+}
+
+Edge Flow::outEdgeOfType(Label label, EdgeType type) {
+  Flow flow=outEdgesOfType(label,type);
+  if(flow.size()==1) {
+    return *flow.begin();
+  } else {
+    Edge invalidEdge;
+    return invalidEdge;
+  }
 }
 
 Flow Flow::outEdges(Label label) {
@@ -735,6 +809,40 @@ set<string> Flow::getAllAnnotations() {
     result.insert((*i).getAnnotation());
   }
   return result;
+}
+
+LabelSet Flow::reachableNodes(Label start) {
+  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
+}
+
+LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
+  LabelSet reachableNodes;
+  reachableNodes.insert(start);
+  if(target==start) {
+    return reachableNodes;
+  }
+  LabelSet toVisitSet=succ(start);
+  size_t oldSize=0;
+  size_t newSize=0;
+  do {
+    LabelSet newToVisitSet;
+    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
+      if(*i==target) {
+        reachableNodes.insert(*i);
+        continue;
+      }
+      LabelSet succSet=succ(*i);
+      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+        if(reachableNodes.find(*j)==reachableNodes.end())
+          newToVisitSet.insert(*j);
+      }
+    }
+    toVisitSet=newToVisitSet;
+    oldSize=reachableNodes.size();
+    reachableNodes+=toVisitSet;
+    newSize=reachableNodes.size();
+  } while(oldSize!=newSize);
+  return reachableNodes;
 }
 
 #ifdef USE_SAWYER_GRAPH

@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
+
 #include "CommandLine.h"
 
 namespace Rose {
@@ -7,22 +10,32 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
 
-uint64_t name_counter;
-
 uint64_t
 Formatter::rename(uint64_t orig_name)
 {
     if (0==orig_name)
         return orig_name;
-    std::pair<Map::iterator, bool> inserted = renames.insert(std::make_pair(orig_name, next_name));
-    if (!inserted.second)
-        return orig_name;
-    return next_name++;
+
+    // Previous version of this code was not only thread unsafe, but had a bug that caused it to return the original name
+    // rather than the new name with it encounted the same name twice.
+    Map::iterator found = renames.find(orig_name);
+    if (renames.end() == found)
+        found = renames.insert(std::make_pair(orig_name, SValue::nextName())).first;
+    return found->second;
 }
 
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
+
+// class method
+uint64_t
+SValue::nextName() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    static uint64_t seq = 0;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    return ++seq;                                       // first value returned should be one, not zero
+}
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
@@ -225,6 +238,8 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->name || b->name)
+        return undefined_(a->get_width() + b->get_width());
+    if (a->get_width() + b->get_width() > 64)
         return undefined_(a->get_width() + b->get_width());
     return number_(a->get_width()+b->get_width(), a->offset | (b->offset << a->get_width()));
 }
@@ -453,10 +468,14 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
-    if (!a->name && !b->name)
+    if (retwidth > 64)
+        return undefined_(retwidth);
+
+    if (!a->name && !b->name) {
         return number_(retwidth,
                        (IntegerOps::signExtend2(a->offset, a->get_width(), 64) *
                         IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+    }
     if (!b->name) {
         if (0==b->offset)
             return number_(retwidth, 0);
@@ -519,6 +538,8 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
+    if (retwidth > 64)
+        return undefined_(retwidth);
     if (!a->name && !b->name)
         return number_(retwidth, a->offset * b->offset);
     if (!b->name) {
@@ -540,6 +561,8 @@ BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
+    if (new_width > 64)
+        return undefined_(new_width);
     if (new_width==a->get_width())
         return a->copy();
     if (a->name)
@@ -561,8 +584,18 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
     if (condition->is_number() && !condition->get_number())
         return;
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
+
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    currentState()->writeMemory(address, value, this, this);
+    currentState()->writeMemory(adjustedVa, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -574,22 +607,38 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     size_t nbits = dflt->get_width();
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     // Use the initial memory state if there is one.
     if (initialState()) {
         if (allowSideEffects) {
-            dflt = initialState()->readMemory(address, dflt, this, this);
+            dflt = initialState()->readMemory(adjustedVa, dflt, this, this);
         } else {
-            dflt = initialState()->peekMemory(address, dflt, this, this);
+            dflt = initialState()->peekMemory(adjustedVa, dflt, this, this);
         }
     }
     
     // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
-    if (map && address->is_number()) {
+    if (map && adjustedVa->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
         size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
-                       .at(address->get_number()).limit(nbytes).read(buf).size();
+                       .at(adjustedVa->get_number()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
+            if (nbytes > 1 && map->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+                throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
             ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;
             for (size_t i=0; i<nbytes; ++i)
@@ -600,7 +649,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(adjustedVa, dflt, this, this));
     return retval;
 }
 
@@ -628,3 +677,5 @@ RiscOperators::peekMemory(RegisterDescriptor segreg,
 } // namespace
 } // namespace
 } // namespace
+
+#endif

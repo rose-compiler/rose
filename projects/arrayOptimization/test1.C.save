@@ -1,0 +1,22 @@
+//#include "A++.h"
+#include "simpleA++.h"
+
+int main()
+{
+   doubleArray A(10);
+   doubleArray B(10);
+   doubleArray C(10);
+
+   Index I(0,5,1);
+
+   C(0) = C(9);
+   C = A;
+
+   for (int i = 1; i < 10; ++i) {
+   B(I) = C(I+1);
+   B = B + C;
+   A = B + C + A;
+  }
+
+   return 0;
+}

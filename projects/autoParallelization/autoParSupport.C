@@ -1261,7 +1261,46 @@ namespace AutoParallelization
             }
           }
 #endif
+          //x. Eliminate a dependence if a dependence involving two different array references and no-aliasing is assumed.
+          SgExpression* src_array_exp=NULL;
+          SgExpression* snk_array_exp=NULL;
+          SgExpression* src_exp = isSgExpression(src_node);
+          SgExpression* snk_exp = isSgExpression (snk_node); 
+          if (src_exp && snk_exp)
+          {
+            isArrayReference (src_exp, &src_array_exp);
+            isArrayReference (snk_exp, &snk_array_exp);
 
+            if (isArray1 && isArray2 && src_array_exp && snk_array_exp) 
+            {
+
+              SgInitializedName* src_array_iname= convertRefToInitializedName(src_array_exp);
+              SgInitializedName* snk_array_iname= convertRefToInitializedName(snk_array_exp);
+
+              SgSymbol * src_sym = src_array_iname->search_for_symbol_from_symbol_table () ;
+              SgSymbol * snk_sym = snk_array_iname->search_for_symbol_from_symbol_table () ;
+              if (src_sym != snk_sym)
+              {
+                if (enable_debug)
+                  cout<<"Both source and sink reference are array references..."<<endl;
+
+                if ((info.GetDepType() & DEPTYPE_ANTI)||(info.GetDepType() & DEPTYPE_TRUE)||(info.GetDepType() & DEPTYPE_OUTPUT) )
+                {
+                  if (enable_debug)
+                    cout<<"\t Dep type is TRUE_DEP or ANTI_DEP or OUTPUT_DEP"<<endl;
+                  if (AutoParallelization::no_aliasing) 
+                  {
+                    if (enable_debug)
+                    {
+                      cout<<"Non-aliasing assumed, eliminating a dep relation due to two pointers used as arrays)"<<endl; 
+                      info.Dump();
+                    }
+                    continue;
+                  }
+                }
+              }
+            }
+          }
           //x. Eliminate dependencies caused by autoscoped variables
           // -----------------------------------------------
           // such as private, firstprivate, lastprivate, and reduction
@@ -1318,8 +1357,8 @@ namespace AutoParallelization
           // x. Eliminate dependencies between two different memory locations
           // -----------------------------------------------
 
-          SgExpression* src_exp = isSgExpression(src_node);
-          SgExpression* snk_exp = isSgExpression(snk_node);
+          //SgExpression* src_exp = isSgExpression(src_node);
+          //SgExpression* snk_exp = isSgExpression(snk_node);
           if (src_exp && snk_exp)
           {
             if (differentMemoryLocation (src_exp, snk_exp))

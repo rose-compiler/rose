@@ -1,6 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include <Partitioner2/BasicBlock.h>
+
+#include <DispatcherX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
@@ -137,6 +140,7 @@ BasicBlock::undropSemanticsNS(const Partitioner &partitioner) {
             ASSERT_not_null(sem.dispatcher);
             BaseSemantics::StatePtr curState = sem.operators->currentState();
             BaseSemantics::RegisterStateGeneric::promote(curState->registerState())->initialize_large();
+            sem.dispatcher->initializeState(curState);
             sem.initialState = curState->clone();
             sem.usingDispatcher = true;
 
@@ -198,7 +202,7 @@ BasicBlock::append(const Partitioner &partitioner, SgAsmInstruction *insn) {
 
     // Process the instruction to create a new state
     semantics_.optionalPenultimateState = semantics_.usingDispatcher ?
-                                              semantics_.dispatcher->get_operators()->currentState()->clone() :
+                                              semantics_.dispatcher->operators()->currentState()->clone() :
                                               BaseSemantics::StatePtr();
     if (semantics_.usingDispatcher) {
         try {
@@ -229,7 +233,7 @@ BasicBlock::pop() {
         // If we didn't save a previous state it means that we didn't call processInstruction during the append, and therefore
         // we don't need to update the dispatcher (it's already out of date anyway).  Otherwise the dispatcher state needs to
         // be re-initialized by transferring ownership of the previous state into the partitioner.
-        semantics_.dispatcher->get_operators()->currentState(ps);
+        semantics_.dispatcher->operators()->currentState(ps);
         semantics_.optionalPenultimateState = Sawyer::Nothing();
     }
     clearCacheNS();
@@ -259,19 +263,43 @@ BasicBlock::fallthroughVa() const {
 
 std::string
 BasicBlock::printableName() const {
-    return "basic block " + StringUtility::addrToString(address());
+    return "basic block " + StringUtility::addrToString(address()) +
+        (comment_.empty() ? "" : " \"" + StringUtility::cEscape(comment_) + "\"");
 }
 
 DataBlock::Ptr
 BasicBlock::dataBlockExists(const DataBlock::Ptr &dblock) const {
-    return dblock!=NULL && existsUnique(dblocks_, dblock, sortDataBlocks) ? dblock : DataBlock::Ptr();
+    Sawyer::Optional<DataBlock::Ptr> found;
+    if (dblock)
+        found = getUnique(dblocks_, dblock, sortDataBlocks);
+    return found ? *found : DataBlock::Ptr();
 }
 
 bool
 BasicBlock::insertDataBlock(const DataBlock::Ptr &dblock) {
     ASSERT_forbid2(isFrozen(), "basic block must be modifiable to insert data block");
     ASSERT_not_null(dblock);
-    return insertUnique(dblocks_, dblock, sortDataBlocks);
+    return insertUnique(dblocks_, dblock, sortDataBlocks); // false if equivalent dblock already exists
+}
+
+DataBlock::Ptr
+BasicBlock::eraseDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_forbid2(isFrozen(), "basic block must be modifiable to erase data block");
+    DataBlock::Ptr retval;
+    if (dblock) {
+        std::vector<DataBlock::Ptr>::iterator lb = std::lower_bound(dblocks_.begin(), dblocks_.end(), dblock, sortDataBlocks);
+        if (lb != dblocks_.end() && (*lb)->extent() == dblock->extent()) {
+            retval = *lb;
+            dblocks_.erase(lb);
+        }
+    }
+    return retval;
+}
+
+void
+BasicBlock::replaceOrInsertDataBlock(const DataBlock::Ptr &dblock) {
+    ASSERT_not_null(dblock);
+    replaceOrInsert(dblocks_, dblock, sortDataBlocks);
 }
 
 std::set<rose_addr_t>
@@ -288,3 +316,5 @@ BasicBlock::explicitConstants() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

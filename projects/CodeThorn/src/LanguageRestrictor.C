@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -10,7 +8,7 @@
 #include "SgNodeHelper.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {
   LanguageRestrictor::VariantSet vset;

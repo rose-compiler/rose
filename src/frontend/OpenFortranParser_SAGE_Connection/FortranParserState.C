@@ -55,10 +55,16 @@ FortranParserState::clearStacks()
    }
 
 
-// DQ (7/30/2010): Added empty function to if there are entries in the stack
+// DQ (7/30/2010): Added empty function to see if there are entries in the stack
 bool emptyFortranStateStack()
    {
      return FortranParserState::empty();
+   }
+
+// Rasmussen (7/17/2019): Added function to see if there are entries in scope stack
+bool emptyFortranScopeStack()
+   {
+     return astScopeStack.empty();
    }
 
 void AttributeRec::setDeclAttrSpecs()

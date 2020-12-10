@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #define __STD_FORMAT_MACROS
@@ -393,3 +395,5 @@ AsmFunctionIndex::FootnotesCallback::operator()(bool enabled, const BeforeAfterA
 
 } // namespace
 } // namespace
+
+#endif

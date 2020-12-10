@@ -1,16 +1,51 @@
 #ifndef GENERAL_LANGUAGE_TRANSLATION_H
 #define GENERAL_LANGUAGE_TRANSLATION_H
 
-namespace General_Language_Translation
-   {
+class SgExpression;
 
-  // TODO - split out the StatementEnums?
+namespace LanguageTranslation
+   {
+  // Forward declarations
+     struct FormalParameter;
+     struct LocationSpecifier;
+     struct StructureSpecifier;
+
+
+     enum FunctionModifier
+        {
+           e_function_modifier_none = 0,
+
+           e_function_modifier_reentrant,
+           e_function_modifier_recursive,
+
+        // Jovial
+           e_function_modifier_definition,
+           e_function_modifier_reference,
+
+        // Fortran
+        // e_function_modifier_list,
+           e_function_modifier_elemental,
+           e_function_modifier_impure,
+           e_function_modifier_module,
+           e_function_modifier_pure,
+
+           e_function_modifier_last
+        };
+
+     enum PackingSpecifier
+        {
+           e_packing_spec_unknown = 0,
+           e_packing_spec_none,    // "N" from grammar
+           e_packing_spec_mixed,   // "M" from grammar
+           e_packing_spec_dense,   // "D" from grammar
+        };
 
   // Enum for different types of expressions (used with untyped IR nodes).
   //
      enum ExpressionKind
         {
-          e_unknown = 0,
+          e_none = 0,
+          e_unknown = 1,
 
        // Access modifiers
        // --------------
@@ -22,6 +57,9 @@ namespace General_Language_Translation
           e_storage_modifier_contiguous,
           e_storage_modifier_external,
           e_storage_modifier_static,
+          e_storage_modifier_location,
+          e_storage_modifier_jovial_def,     /* SimpleDef or CompoundDef */
+          e_storage_modifier_jovial_ref,     /* SimpleRef or CompoundRef */
 
        // Type modifiers
        // --------------
@@ -40,22 +78,18 @@ namespace General_Language_Translation
           e_type_modifier_save,
           e_type_modifier_target,
           e_type_modifier_truncate,
-          e_type_modifier_value,
-          e_type_modifier_reference,
-          e_type_modifier_result,
           e_type_modifier_volatile,
           e_type_modifier_z,
 
-       // Function modifiers
-       // ------------------
-          e_function_modifier_list,
-          e_function_modifier_none,
-          e_function_modifier_elemental,
-          e_function_modifier_impure,
-          e_function_modifier_module,
-          e_function_modifier_pure,
-          e_function_modifier_recursive,
-          e_function_modifier_reentrant,
+       // Function formal parameters
+       // --------------------------
+          e_param_binding_value,
+          e_param_binding_reference,
+          e_param_binding_result,
+
+       // Structure modifiers
+          e_struct_modifier_list,
+          e_struct_item_modifier_list,
 
        // Operators
        // ---------
@@ -81,10 +115,12 @@ namespace General_Language_Translation
        // Relational operators
           e_operator_less_than,
           e_operator_greater_than,
-          e_operator_less_than_or_equal,
-          e_operator_greater_than_or_equal,
+          e_operator_less_or_equal,
+          e_operator_greater_or_equal,
           e_operator_equality,
           e_operator_not_equal,
+          e_operator_eqv,           // equivalent for relational expressions
+          e_operator_not_eqv,       // not equivalent for relational expressions
 
        // Unary operators
           e_operator_unary_plus,
@@ -127,6 +163,10 @@ namespace General_Language_Translation
           e_star_dimension,
 
           e_star_expression,
+
+       // Expressions for initialization (preset in Jovial)
+          e_initializer,
+          e_struct_initializer,
 
        // Statements
        // ----------
@@ -193,6 +233,39 @@ namespace General_Language_Translation
           e_last
         };
 
-   } // namespace General_Language_Translation 
+      struct FormalParameter
+        {
+           FormalParameter()
+             : name(std::string("")), output(false), binding(LanguageTranslation::e_none) {} // want to use C++11 = delete
+           FormalParameter(const std::string &param_name, bool out, const ExpressionKind &param_binding)
+             : name(param_name), output(out), binding(param_binding) {}
+           std::string name;
+           bool output;
+           ExpressionKind binding;
+        };
+
+      struct LocationSpecifier {
+         LocationSpecifier() : start_bit(NULL), start_word(NULL) {}
+         LocationSpecifier(SgExpression* sbit, SgExpression* sword) : start_bit(sbit), start_word(sword) {}
+         SgExpression* start_bit;
+         SgExpression* start_word;
+      };
+
+      struct StructureSpecifier {
+         StructureSpecifier() : is_parallel(false), is_tight(false), bits_per_entry(0) {}
+         bool is_parallel;
+         bool is_tight;
+         int  bits_per_entry;
+      };
+
+      struct TableSpecifier {
+         TableSpecifier() : packing_spec(e_packing_spec_unknown) {}
+         StructureSpecifier struct_spec;
+         PackingSpecifier packing_spec;
+      };
+
+     typedef std::list<LanguageTranslation::FunctionModifier> FunctionModifierList;
+
+   } // namespace LanguageTranslation
 
 #endif

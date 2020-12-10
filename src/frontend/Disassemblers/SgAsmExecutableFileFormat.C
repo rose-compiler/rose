@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -15,3 +17,5 @@ SgAsmExecutableFileFormat::initDiagnostics() {
         mlog.comment("operating on binary abstract syntax trees");
     }
 }
+
+#endif

@@ -4,6 +4,7 @@
 #include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <ValueAnnot.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 bool DebugValuePropogate();
 
@@ -51,7 +52,7 @@ void HasValueDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVal>& rep
       }
 }
 
-void RestrictValueOpDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVal>& repl) 
+void RestrictValueOpDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVal>& repl)
 {
   for (iterator p = begin(); p != end(); ++p) {
       RestrictValueDescriptor& cur = *p;
@@ -63,7 +64,7 @@ void RestrictValueOpDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVa
 std::string HasValueCollection::
 is_known_member_function( AstInterface& fa,
                         const SymbolicVal& exp, AstNodePtr* objp,
-                        SymbolicFunction::Arguments* argsp , 
+                        SymbolicFunction::Arguments* argsp ,
                         HasValueDescriptor* descp )
 {
  std::string op1, op2;
@@ -135,7 +136,7 @@ known_type( AstInterface& fa, const AstNodePtr& exp, HasValueDescriptor* r)
   return true;
 }
 
-class ReplaceValue 
+class ReplaceValue
   : public MapObject<SymbolicVal, SymbolicVal>, public SymbolicVisitor
 {
    MapObject<SymbolicVal, SymbolicVal>* valmap;
@@ -153,20 +154,20 @@ class ReplaceValue
   }
   virtual SymbolicVal operator()( const SymbolicVal& v)
   {
-      SymbolicVal r; 
+      SymbolicVal r;
       if (valmap != 0)
          r = (*valmap)(v);
-      if (r.IsNIL()) { 
+      if (r.IsNIL()) {
          v.Visit(this);
        }
        return r;
   }
 
  public:
-   ReplaceValue( AstInterface& _fa, 
-                 MapObject<SymbolicVal, SymbolicVal>* _valmap = 0) 
+   ReplaceValue( AstInterface& _fa,
+                 MapObject<SymbolicVal, SymbolicVal>* _valmap = 0)
          : valmap(_valmap), fa(_fa), succ(false)  {}
-   bool operator()( HasValueDescriptor& desc) 
+   bool operator()( HasValueDescriptor& desc)
    {
       bool onesucc = false;
       for (HasValueDescriptor::iterator p = desc.begin(); p != desc.end(); ++p) {
@@ -184,7 +185,7 @@ class ReplaceValue
 
 
 bool ValueAnnotation::
-is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp, 
+is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
                     Collect2Object< AstNodePtr, HasValueDescriptor>* descp,
                      MapObject<SymbolicVal, SymbolicVal>* valMap,
                      Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen)
@@ -195,9 +196,9 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
   if (descp == 0)
      return true;
   ReplaceValue repl( fa, valMap);
-  for (RestrictValueOpDescriptor::const_iterator p = desc.begin(); 
+  for (RestrictValueOpDescriptor::const_iterator p = desc.begin();
         p != desc.end(); ++p) {
-      RestrictValueDescriptor cur = *p; 
+      RestrictValueDescriptor cur = *p;
       AstNodePtr curast;
       if (!cur.first.get_val().isAstWrap(curast))
          assert(false);

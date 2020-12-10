@@ -1,0 +1,39 @@
+
+int min2(int a0,int a1)
+{
+  return a0 < a1?a0 : a1;
+}
+#define N 50
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
+
+int main()
+{
+  int i;
+  int j;
+  int k;
+  double a[50][50];
+  double b[50][50];
+  double c[50][50];
+  double s;
+  int _var_0;
+  int _var_1;
+  s = 235.0;
+  initmatrix(a,s);
+  s = 321.0;
+  initmatrix(b,s);
+  printmatrix(a);
+  printmatrix(b);
+  for (_var_1 = 0; _var_1 <= 49; _var_1 += 16) {
+    for (_var_0 = 0; _var_0 <= 49; _var_0 += 16) {
+      for (k = 0; k <= 49; k += 1) {
+        for (i = _var_1; i <= min2(49,_var_1 + 15); i += 1) {
+          for (j = _var_0; j <= min2(49,_var_0 + 15); j += 1) {
+            c[i][j] = c[i][j] + a[i][k] * b[k][j];
+          }
+        }
+      }
+    }
+  }
+  printmatrix(c);
+}

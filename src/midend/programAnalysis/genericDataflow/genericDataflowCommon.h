@@ -1,30 +1,32 @@
 #ifndef ROSE_GENERIC_DATAFLOW_COMMON_H
 #define ROSE_GENERIC_DATAFLOW_COMMON_H
 
-#include <sage3.h>
+#include <sage3basic.h>
 #include <list>
-using std::list;
 #include <map>
+#include <set>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
+
+#include "AnalysisDebuggingUtils.h"
+
+using std::list;
 using std::map;
 using std::pair;
 using std::make_pair;
-#include <set>
 using std::set;
-#include <vector>
 using std::vector;
-#include <string>
 using std::string;
-#include <iostream>
 using std::ostream;
 using std::ofstream;
-#include <sstream>
 using std::stringstream;
 using std::ostringstream;
 using std::endl;
 using std::cout;
 using std::cerr;
 
-#include "AnalysisDebuggingUtils.h"
 
 using namespace VirtualCFG;
 
@@ -42,7 +44,10 @@ inline bool XOR(bool x, bool y) { return x != y; }
    ######### T Y P E S #########
    ############################# */
 
+
+#if !defined(__sun)
 typedef long long quad;
+#endif
 //typedef quad variable;
 
 typedef std::map<quad, quad>                     m_quad2quad;

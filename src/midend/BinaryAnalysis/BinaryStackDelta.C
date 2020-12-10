@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryStackDelta.h>
 
@@ -36,7 +38,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
@@ -86,18 +88,20 @@ public:
 
     // Override the base class by initializing only the stack pointer register.
     BaseSemantics::StatePtr initialState() const {
-        BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
+        BaseSemantics::RiscOperatorsPtr ops = cpu()->operators();
         BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
+        cpu()->initializeState(newState);
+
         BaseSemantics::RegisterStateGenericPtr regState =
             BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
         rose_addr_t initialSp = 0;
         if (analysis_->initialConcreteStackPointer().assignTo(initialSp)) {
-            newState->writeRegister(SP, ops->number_(SP.get_nbits(), initialSp), ops.get());
+            newState->writeRegister(SP, ops->number_(SP.nBits(), initialSp), ops.get());
         } else {
-            newState->writeRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            newState->writeRegister(SP, ops->undefined_(SP.nBits()), ops.get());
         }
         return newState;
     }
@@ -109,14 +113,14 @@ public:
         ASSERT_require(dfCfg.isValidVertex(vertex));
         if (P2::DataFlow::DfCfgVertex::BBLOCK == vertex->value().type()) {
             BaseSemantics::StatePtr retval = incomingState->clone();
-            BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->get_operators();
+            BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->operators();
             ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
             RegisterDescriptor SP = cpu()->stackPointerRegister();
-            BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
-                BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                 BaseSemantics::SValuePtr delta = ops->subtract(newSp, oldSp);
                 analysis_->adjustInstruction(insn, oldSp, newSp, delta);
                 oldSp = newSp;
@@ -131,7 +135,8 @@ public:
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::FunctionPtr &function,
                           Partitioner2::DataFlow::InterproceduralPredicate &ipPredicate) {
-    mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"analyzeFunction(" <<function->printableName() <<")\n";
     clearResults();
 
     // Build the CFG used by the data-flow: dfCfg. The dfCfg includes only those vertices that are reachable from the entry
@@ -149,7 +154,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         }
     }
     if (returnVertex == dfCfg.vertices().end()) {
-        mlog[DEBUG] <<"  function CFG has no return vertex\n";
+        SAWYER_MESG(debug) <<"  function CFG has no return vertex\n";
         // continue anyway, to get stack delta info for blocks and instructions...
     }
 
@@ -157,7 +162,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // it in this analysis object.
     typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
-        mlog[DEBUG] <<"  no instruction semantics\n";
+        SAWYER_MESG(debug) <<"  no instruction semantics\n";
         return;
     }
     const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
@@ -167,7 +172,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
 
     // Build the initial state
     BaseSemantics::StatePtr initialState = xfer.initialState();
@@ -194,24 +199,24 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
     }
-    
+
     // Get the final dataflow state
     BaseSemantics::StatePtr finalState;
     BaseSemantics::RegisterStateGenericPtr finalRegState;
     if (dfCfg.isValidVertex(returnVertex)) {
         finalState = dfEngine.getInitialState(returnVertex->id());
         if (finalState == NULL) {
-            mlog[DEBUG] <<"  data flow analysis did not reach final state\n";
+            SAWYER_MESG(debug) <<"  data flow analysis did not reach final state\n";
             // continue anyway for stack delta info for blocks and instructions
         }
-        if (mlog[DEBUG]) {
+        if (debug) {
             if (!converged) {
-                mlog[DEBUG] <<"  data flow analysis did not converge to a solution (using partial solution)\n";
+                debug <<"  data flow analysis did not converge to a solution (using partial solution)\n";
             } else if (finalState) {
                 SymbolicSemantics::Formatter fmt;
                 fmt.set_line_prefix("    ");
                 fmt.expr_formatter.max_depth = 10;          // prevent really long output
-                mlog[DEBUG] <<"  final state:\n" <<(*finalState+fmt);
+                debug <<"  final state:\n" <<(*finalState+fmt);
             }
         }
         if (finalState)
@@ -226,9 +231,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             BaseSemantics::SValuePtr sp0, sp1;
             RegisterDescriptor SP = cpu_->stackPointerRegister();
             if (BaseSemantics::StatePtr state = dfEngine.getInitialState(vertex.id()))
-                sp0 = state->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                sp0 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             if (BaseSemantics::StatePtr state = dfEngine.getFinalState(vertex.id()))
-                sp1 = state->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                sp1 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             bblockStackPtrs_.insert(bblock->address(), SValuePair(sp0, sp1));
 
             if (sp0 && sp1) {
@@ -237,14 +242,19 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             }
         }
     }
-    
+
     // Functon stack delta is final stack pointer minus initial stack pointer.  This includes popping the return address from
     // the stack (if the function did that) and popping arguments (if the function did that).
     const RegisterDescriptor REG_SP = cpu_->stackPointerRegister();
-    functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+    functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
+    SAWYER_MESG(debug) <<"  function initial stack pointer is " <<*functionStackPtrs_.first <<"\n";
     if (finalRegState) {
-        functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+        functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
         functionDelta_ = ops->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
+        SAWYER_MESG(debug) <<"  function final stack pointer is " <<*functionStackPtrs_.second <<"\n";
+        SAWYER_MESG(debug) <<"  function stack delta is " <<*functionDelta_ <<"\n";
+    } else {
+        SAWYER_MESG(debug) <<"  no final state, thus no stack delta\n";
     }
 
     hasResults_ = true;
@@ -277,7 +287,7 @@ Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) co
     BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 BaseSemantics::SValuePtr
@@ -286,7 +296,7 @@ Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) c
     BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 Analysis::SValuePair
@@ -314,7 +324,7 @@ Analysis::instructionInputStackDeltaWrtFunction(SgAsmInstruction *insn) const {
     BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 BaseSemantics::SValuePtr
@@ -323,7 +333,7 @@ Analysis::instructionOutputStackDeltaWrtFunction(SgAsmInstruction*insn) const {
     BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 void
@@ -332,7 +342,7 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
         clearAstStackDeltas(function);
         if (hasResults_) {
             function->set_stackDelta(functionStackDeltaConcrete());
-            BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->get_operators() : BaseSemantics::RiscOperatorsPtr();
+            BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperatorsPtr();
             BaseSemantics::SValuePtr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
                 BOOST_FOREACH (SgAsmBlock *block, SageInterface::querySubTree<SgAsmBlock>(function)) {
@@ -472,3 +482,4 @@ std::ostream& operator<<(std::ostream &out, const Analysis &x) {
 } // namespace
 } // namespace
 
+#endif

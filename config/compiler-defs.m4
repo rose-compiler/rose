@@ -23,6 +23,9 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
 
     case "$CXX_COMPILER_VENDOR" in
         clang)
+
+          # Rasmussen (11/19/2019): "grep -Po" not supported on Apple OSX
+          if test "x$OS_vendor" != xapple ; then
             CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
@@ -35,10 +38,11 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f3 |\
                 cut -d\( -f1)
+          fi
 
           # DQ (12/3/2016): These variables were previously set in the ROSE configuration.
-            echo "Get CXX Version info: OS_vendor = $OS_vendor"
-            echo "Get CXX Version info: OS_release = $OS_release"
+            #echo "Get CXX Version info: OS_vendor = $OS_vendor"
+            #echo "Get CXX Version info: OS_release = $OS_release"
 
           # DQ (12/3/2016): If we are on a Linux OS then we have the version number of Clang 
           # directly, but if this is on a MAC (OSX) system then this is the version of 
@@ -87,8 +91,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 8; then
@@ -99,8 +102,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 9; then
@@ -118,8 +120,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=0
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 10; then
@@ -130,16 +131,27 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                   # NOTE that this is very tentative and don't know if it will work
                     case "$XCODE_VERSION_MINOR" in
                         0|1)
-                            BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                            CXX_VERSION_MINOR=0
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
+                            ;;
+                    esac
+                elif test $XCODE_VERSION_MAJOR -eq 11; then
+                    CXX_VERSION_MAJOR=8
+                  # Rasmussen (11/19/2019): Added results for clang --version 11.0.0
+                  # see https://en.wikipedia.org/wiki/Xcode#11.x_series
+                  # NOTE that this is very tentative and don't know if it will work
+                    case "$XCODE_VERSION_MINOR" in
+                        0|2)
+                            CXX_VERSION_MINOR=0
+                            ;;
+                        *)
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
                             ;;
                     esac
                 else
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
-                    exit 1
+                    AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR")])
                 fi
 
 #              # Note "build_os" is a variable determined by autoconf.
@@ -168,10 +180,10 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
 #                esac
 
               # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
-                echo "compilerVendorName = $compilerVendorName"
-                echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
-                echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
-                echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
+                #echo "compilerVendorName = $compilerVendorName"
+                #echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
+                #echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
+                #echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
             fi
             ;;
 
@@ -253,7 +265,20 @@ AC_DEFUN([GET_CXX_VERSION_MACROS],[
             fi
         fi
     done
+    
+    if test "$CXX_COMPILER_VENDOR" = clang; then
+    for symbol in __clang__ __clang_major__ __clang_minor__ __clang_patchlevel__; do
+        value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
+        if test "$value" != ""; then
+            if test "$CXX_VERSION_MACROS" = ""; then
+                CXX_VERSION_MACROS="-D$symbol=$value"
+            else
+                CXX_VERSION_MACROS="$CXX_VERSION_MACROS -D$symbol=$value"
+            fi
+        fi
+    done
 
+    fi    
     rm -f $tmp_input $tmp_output
 ])
 
@@ -380,6 +405,8 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the frontend compiler ---
     dnl ------------------------------------------------
 
+AC_MSG_NOTICE([START: Setup characteristics of the frontend compiler])
+
     ROSE_CONFIGURE_SECTION([Checking frontend compiler])
     GET_CXX_VERSION_INFO([$CXX], [$FRONTEND_CXX_COMPILER_VENDOR])
     GET_CXX_VERSION_MACROS
@@ -409,7 +436,19 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION3)
 
     # Frontend C++ compiler vendor and version major.minor
-    FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    #echo FRONTEND_CXX_COMPILER_VENDOR=$FRONTEND_CXX_COMPILER_VENDOR
+    #echo FRONTEND_CXX_VERSION_MAJOR=$FRONTEND_CXX_VERSION_MAJOR
+    #echo FRONTEND_CXX_VERSION_MINOR=$FRONTEND_CXX_VERSION_MINOR
+    if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "clang" && test $FRONTEND_CXX_VERSION_MAJOR -ge 4; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "intel"; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    else
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    fi
+    #echo FRONTEND_CXX_VENDOR_AND_VERSION2=$FRONTEND_CXX_VENDOR_AND_VERSION2
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION2)
 
     # Backend C++ compiler vendor and version triplet
@@ -554,5 +593,8 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AC_SUBST(BACKEND_COMPILER_VERSION_MAJOR_NUMBER)
     AC_SUBST(BACKEND_COMPILER_VERSION_MINOR_NUMBER)
     AC_SUBST(BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER)
+
+AC_MSG_NOTICE([END: Setup characteristics of the frontend compiler])
+AC_MSG_NOTICE([ --- FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR])
 
 ])

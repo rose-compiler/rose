@@ -6,7 +6,7 @@ AppVersion=${LIBHARU_VERSION}
 MenuName=libHaru ${LIBHARU_VERSION}
 Description=${LIBHARU_DESCRIPTION}
 Url=http://www.libharu.org
-Readme=README
+Readme=README.md
 Dependencies=zlib libpng
 Reboot=0
 

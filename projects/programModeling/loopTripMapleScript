@@ -1,8 +1,0 @@
-interface(echo=0);
-appendto("rose.log");
-# Read the file containing the equation
-read "/home/dquinlan2/ROSE/LINUX-3.3.2/projects/programModeling/inputEquationFile.eq";
-# simplify the equation
-simplify( statement_equation );
-# write the simplified equation to a file
-save statement_equation, "/home/dquinlan2/ROSE/LINUX-3.3.2/projects/programModeling/outputEquationFile.eq";

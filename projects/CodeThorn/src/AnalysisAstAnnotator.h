@@ -4,11 +4,11 @@
 #include "AstAnnotator.h"
 #include "DFAnalysisBase.h"
 
-class AnalysisAstAnnotator : public SPRAY::AstAnnotator {
+class AnalysisAstAnnotator : public CodeThorn::AstAnnotator {
 public:
-  AnalysisAstAnnotator(SPRAY::Labeler* labeler);
-  AnalysisAstAnnotator(SPRAY::Labeler* labeler, SPRAY::VariableIdMapping* variableIdMapping);
-  void annotateAnalysisPrePostInfoAsComments(SgNode* root,  string analysisInfoTypeDescription, SPRAY::DFAnalysisBase* analysis);
+  AnalysisAstAnnotator(CodeThorn::Labeler* labeler);
+  AnalysisAstAnnotator(CodeThorn::Labeler* labeler, CodeThorn::VariableIdMapping* variableIdMapping);
+  void annotateAnalysisPrePostInfoAsComments(SgNode* root,  string analysisInfoTypeDescription, CodeThorn::DFAnalysisBase* analysis);
 };
 
 #endif

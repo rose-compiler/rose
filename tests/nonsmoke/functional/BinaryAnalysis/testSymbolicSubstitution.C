@@ -8,7 +8,7 @@ using namespace Rose::BinaryAnalysis;
 // Build an expression with lots of common subexpressions. This is a tiny
 // bit tricky because we need to build something that ROSE cannot simplify.
 SymbolicExpr::Ptr highSharing(size_t depth) {
-    SymbolicExpr::Ptr retval = SymbolicExpr::makeVariable(32);
+    SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(32);
     for (size_t i=0; i<depth; ++i) {
         if (i % 2) {
             retval = SymbolicExpr::makeAdd(retval, retval);
@@ -45,7 +45,7 @@ int main() {
     // Substitute one variable for another
     std::cerr <<"performing variable substitution...\n";
     SymbolicExpr::Ptr oldVar = *e1->getVariables().begin();
-    SymbolicExpr::Ptr newVar = SymbolicExpr::makeVariable(oldVar->nBits());
+    SymbolicExpr::Ptr newVar = SymbolicExpr::makeIntegerVariable(oldVar->nBits());
     timer.restart();
     SymbolicExpr::Ptr e3 = e1->substitute(oldVar, newVar);
     std::cerr <<"  time to substitute:          " <<timer <<" seconds\n";

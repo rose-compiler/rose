@@ -1,48 +1,90 @@
 Parser input: 123
-Parse expr:   0x0000007b[32]
+Parse expr:   0x0000007b[u32]
 
 Parser input: 0x0000007b[32]
-Parse expr:   0x0000007b[32]
+Parse expr:   0x0000007b[u32]
+
+Parser input: 0x0000007b[u32]
+Parse expr:   0x0000007b[u32]
 
 Parser input: -123
-Parse expr:   0xffffff85<4294967173,-123>[32]
+Parse expr:   0xffffff85<4294967173,-123>[u32]
 
 Parser input: 0xffffff85<4294967173,-123>[32]
-Parse expr:   0xffffff85<4294967173,-123>[32]
+Parse expr:   0xffffff85<4294967173,-123>[u32]
+
+Parser input: 0xffffff85<4294967173,-123>[u32]
+Parse expr:   0xffffff85<4294967173,-123>[u32]
 
 Parser input: 123[4]
-Parse expr:   0xb<-5>[4]
+Parse expr:   0xb<-5>[u4]
+
+Parser input: 123[u4]
+Parse expr:   0xb<-5>[u4]
 
 Parser input: 0xb<-5>[4]
-Parse expr:   0xb<-5>[4]
+Parse expr:   0xb<-5>[u4]
+
+Parser input: 0xb<-5>[u4]
+Parse expr:   0xb<-5>[u4]
 
 Parser input: -5[4]
-Parse expr:   0xb<-5>[4]
+Parse expr:   0xb<-5>[u4]
+
+Parser input: -5[u4]
+Parse expr:   0xb<-5>[u4]
 
 Parser input: 0x123456789abcdef00fedcba987654321[256]
-Parse expr:   0x00000000000000000000000000000000123456789abcdef00fedcba987654321[256]
+Parse expr:   0x00000000000000000000000000000000123456789abcdef00fedcba987654321[u256]
+
+Parser input: 0x123456789abcdef00fedcba987654321[u256]
+Parse expr:   0x00000000000000000000000000000000123456789abcdef00fedcba987654321[u256]
 
 Parser input: v1[8]
-Parse expr:   v1[8]
+Parse expr:   v1[u8]
+
+Parser input: v1[u8]
+Parse expr:   v1[u8]
+
+Parser input: v1[f32]
+Parse expr:   v1[f32]
+
+Parser input: v1[f64]
+Parse expr:   v1[f64]
 
 Parser input: v1<this is a comment>[8]
-Parse expr:   v1[8]
+Parse expr:   v1[u8]
+
+Parser input: v1<this is a comment>[u8]
+Parse expr:   v1[u8]
 
 Parser input: v100[32]
-Parse expr:   v100[32]
+Parse expr:   v100[u32]
+
+Parser input: v100[u32]
+Parse expr:   v100[u32]
 
 Parser input: (add v1[32] v2[32])
-Parse expr:   (add[32] v1[32] v2[32])
+Parse expr:   (add[u32] v1[u32] v2[u32])
+
+Parser input: (add v1[u32] v2[u32])
+Parse expr:   (add[u32] v1[u32] v2[u32])
 
 Parser input: (add[32] v1[32] v2[32])
-Parse expr:   (add[32] v1[32] v2[32])
+Parse expr:   (add[u32] v1[u32] v2[u32])
+
+Parser input: (add[u32] v1[u32] v2[u32])
+Parse expr:   (add[u32] v1[u32] v2[u32])
 
 Parser input: (add 10 20)
-Parse expr:   0x0000001e[32]
+Parse expr:   0x0000001e[u32]
 
 Parser input: (negate (negate 1))
-Parse expr:   0x00000001[32]
+Parse expr:   0x00000001[u32]
 
 Parser input: (add (umul v1[8] v2[8]) (umul v3[8] v4[8]))
-Parse expr:   (add[16] (umul[16] v1[8] v2[8]) (umul[16] v3[8] v4[8]))
+Parse expr:   (add[u16] (umul[u16] v1[u8] v2[u8]) (umul[u16] v3[u8] v4[u8]))
+
+Parser input: (add (umul v1[u8] v2[u8]) (umul v3[u8] v4[u8]))
+Parse expr:   (add[u16] (umul[u16] v1[u8] v2[u8]) (umul[u16] v3[u8] v4[u8]))
 

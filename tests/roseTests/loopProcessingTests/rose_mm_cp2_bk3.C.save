@@ -1,0 +1,74 @@
+
+int min2(int a0,int a1)
+{
+  return a0 < a1?a0 : a1;
+}
+#define N 50
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
+
+int main()
+{
+  int i;
+  int j;
+  int k;
+  double a[50][50];
+  double b[50][50];
+  double c[50][50];
+  double s;
+  int _var_0;
+  int _var_1;
+  int _var_2;
+  double c_buf3;
+  int a_csz_04;
+  double *a_buf5;
+  int b_csz_06;
+  int b_csz_17;
+  double *b_buf8;
+  int _var_9;
+  int _var_10;
+  int _var_11;
+  int _var_12;
+  int _var_13;
+  s = 235.0;
+  initmatrix(a,s);
+  s = 321.0;
+  initmatrix(b,s);
+  printmatrix(a);
+  printmatrix(b);
+  for (_var_1 = 0; _var_1 <= 49; _var_1 += 16) {
+    for (_var_2 = 0; _var_2 <= 49; _var_2 += 16) {
+      for (_var_0 = 0; _var_0 <= 49; _var_0 += 16) {
+        b_csz_06 = min2(50 - _var_1,16);
+        b_csz_17 = min2(50 - _var_0,16);
+        b_buf8 = (new double [b_csz_17 * b_csz_06]);
+        _var_11 = 0;
+        for (_var_12 = 0; _var_12 <= -1 + b_csz_06; _var_12 += 1) {
+          for (_var_13 = 0; _var_13 <= -1 + b_csz_17; _var_13 += 1) {
+            b_buf8[_var_11] = b[_var_0 + _var_13][_var_1 + _var_12];
+            _var_11 = _var_11 + 1;
+          }
+        }
+        for (i = _var_2; i <= min2(49,_var_2 + 15); i += 1) {
+          a_csz_04 = min2(50 - _var_0,16);
+          a_buf5 = (new double [a_csz_04]);
+          _var_9 = 0;
+          for (_var_10 = 0; _var_10 <= -1 + a_csz_04; _var_10 += 1) {
+            a_buf5[_var_9] = a[i][_var_0 + _var_10];
+            _var_9 = _var_9 + 1;
+          }
+          for (j = _var_1; j <= min2(49,_var_1 + 15); j += 1) {
+            c_buf3 = c[i][j];
+            for (k = _var_0; k <= min2(49,_var_0 + 15); k += 1) {
+              c_buf3 = c_buf3 + a_buf5[k - _var_0] * b_buf8[b_csz_17 * j - _var_1 * b_csz_17 + k - _var_0];
+            }
+            c[i][j] = c_buf3;
+          }
+          delete []a_buf5;
+        }
+        delete []b_buf8;
+      }
+    }
+  }
+  printmatrix(c);
+}

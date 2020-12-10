@@ -6,7 +6,11 @@
 
 //#include <sage3.h>
 #include <AstDOTGeneration.h>
+
+#if ROSE_WITH_LIBHARU
 #include <AstPDFGeneration.h>
+#endif
+
 #include <AstConsistencyTests.h>
 
 //! Default Cpp2Cpp Translator. Translates a C++ program by 

@@ -1,8 +1,0 @@
-
-Comments on use of the documentation generator for ROSE.
-
-1) I get two groups names "Class Members"
-    One for those data members without comments and the other for those with doxygen
-    comments.  I have added comments to the few without comments to see if that fixes
-    the problem.
-

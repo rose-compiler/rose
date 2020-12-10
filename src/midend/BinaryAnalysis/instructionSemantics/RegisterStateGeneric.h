@@ -1,11 +1,14 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_RegisterStateGeneric_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_RegisterStateGeneric_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <Sawyer/IntervalSetMap.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -75,7 +78,7 @@ public:
         RegStore()                                      // for serialization
             : majr(0), minr(0) {}
         RegStore(RegisterDescriptor d) // implicit
-            : majr(d.get_major()), minr(d.get_minor()) {}
+            : majr(d.majorNumber()), minr(d.minorNumber()) {}
         bool operator<(const RegStore &other) const {
             return majr<other.majr || (majr==other.majr && minr<other.minr);
         }
@@ -107,7 +110,7 @@ public:
 
     public:
         RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
-        BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
+        BitRange location() const { return BitRange::baseSize(desc.offset(), desc.nBits()); }
     };
 
     /** Vector of register/value pairs. */
@@ -624,4 +627,5 @@ protected:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
 #endif
 
+#endif
 #endif

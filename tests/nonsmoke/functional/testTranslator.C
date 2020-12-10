@@ -35,11 +35,14 @@ int main( int argc, char * argv[] )
        //    to activate specific messge streams use (e.g.): -rose:log none,EDG_ROSE_Translation::(debug)
        //    there are numerous additional options...
 #if 0
-       // DQ (3/5/2017): Disable to support evaluation of ROSE compilationwithout output spew 
+       // DQ (3/5/2017): Disable to support evaluation of ROSE compilation without output spew 
        // (then convert those messge to use the message log).
 
        // DQ (3/5/2017): Allow output of diagnostic messages from the EDG/ROSE translation.
           EDG_ROSE_Translation::mlog[Rose::Diagnostics::DEBUG].enable(true);
+
+       // DQ (10/17/2020): Turning on the name qualification diagnostics.
+       // Rose::Diagnostics::mlog[Rose::Diagnostics::WARN].enable(true);
 
        // DQ (3/5/2017): Allow output of diagnostic messages from the ROSE IR nodes.
           Rose::ir_node_mlog[Rose::Diagnostics::DEBUG].enable(true);
@@ -81,8 +84,10 @@ int main( int argc, char * argv[] )
 #if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
-     generateDOT ( *project );
-     // generateAstGraph(project, 2000);
+  // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
+  // generateAstGraph(project, 2000);
+  // generateDOT ( *project );
+     generateDOTforMultipleFile(*project);
 #endif
 
 #if 0
@@ -103,5 +108,16 @@ int main( int argc, char * argv[] )
 
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.
-     return backend(project);
+  // return backend(project);
+     int status = backend(project);
+
+  // DQ (10/21/2020): Adding IR node usage statistics reporting.
+  // AstNodeStatistics::IRnodeUsageStatistics();
+
+  // DQ (10/21/2020): Adding performance reporting.
+     TimingPerformance::generateReport();
+  // TimingPerformance::generateReportToFile(project);
+  // TimingPerformance::set_project(SgProject* project);
+
+     return status;
    }

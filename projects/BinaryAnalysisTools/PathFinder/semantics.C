@@ -21,7 +21,7 @@ symbolicFormat(const std::string &prefix) {
     SymbolicSemantics::Formatter retval;
     retval.set_line_prefix(prefix);
     retval.expr_formatter.max_depth = settings.maxExprDepth;
-    retval.expr_formatter.show_width = settings.showExprWidth;
+    retval.expr_formatter.show_type = settings.showExprType;
     return retval;
 }
 
@@ -69,13 +69,13 @@ std::string
 RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
     const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
-    if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
+    if (pathInsnIndex_ == INVALID_INDEX && currentInstruction() == NULL) {
         varComment += " by initialization";
     } else {
-        if (pathInsnIndex_ != (size_t)(-1))
+        if (pathInsnIndex_ != INVALID_INDEX)
             varComment += " at path position #" + StringUtility::numberToString(pathInsnIndex_);
         if (SgAsmInstruction *insn = currentInstruction())
-            varComment += " by " + unparseInstructionWithAddress(insn);
+            varComment += " by " + partitioner_->unparse(insn);
     }
     return varComment;
 }
@@ -84,15 +84,15 @@ std::string
 RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode, size_t byteNumber,
                                   size_t nBytes) const {
     std::string varComment = "first " + accessMode + " at ";
-    if (pathInsnIndex_ != (size_t)(-1))
+    if (pathInsnIndex_ != INVALID_INDEX)
         varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
-    varComment += "instruction " + unparseInstructionWithAddress(currentInstruction());
+    varComment += "instruction " + partitioner_->unparse(currentInstruction());
 
     // Sometimes we can save useful information about the address.
     if (nBytes != 1) {
         SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
         if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
-            if (addrLeaf->isNumber()) {
+            if (addrLeaf->isIntegerConstant()) {
                 varComment += "\n";
                 if (nBytes > 1) {
                     varComment += StringUtility::numberToString(byteNumber) + " of " +
@@ -102,8 +102,8 @@ RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const st
             }
         } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
             if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
-                addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isVariable() &&
-                addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
+                addrINode->child(0)->isIntegerVariable() &&
+                addrINode->child(1)->isIntegerConstant()) {
                 SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
                 SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
                 varComment += "\n";
@@ -136,7 +136,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     if (mlog[DEBUG]) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
         mlog[DEBUG] <<"  +-------------------------------------------------\n"
-                    <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
+                    <<"  | " <<partitioner_->unparse(insn) <<"\n"
                     <<"  +-------------------------------------------------\n"
                     <<"    state before instruction:\n"
                     <<(*currentState() + fmt);
@@ -206,7 +206,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
     // Save a description of the variable
     SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
-    if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
+    if (valExpr->isIntegerVariable()) {
         std::string comment = commentForVariable(addr, "read");
         State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
     }
@@ -236,7 +236,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 
     // Save a description of the variable
     SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
-    if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
+    if (valExpr->isIntegerVariable()) {
         std::string comment = commentForVariable(addr, "write");
         State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
     }

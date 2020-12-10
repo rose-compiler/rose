@@ -1,8 +1,9 @@
 
 #include "sage3basic.h"
 #include "TransitionGraph.h"
-#include "IOAnalyzer.h"
+#include "CTAnalysis.h"
 #include "CodeThornException.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 
@@ -15,10 +16,10 @@ Transition::Transition(const EState* source,Edge edge, const EState* target)
   :source(source),edge(edge),target(target) {
 }
 
-string Transition::toString() const {
-  string s1=source->toString();
+string Transition::toString(CodeThorn::VariableIdMapping* variableIdMapping) const {
+  string s1=source->toString(variableIdMapping);
   string s2=edge.toString();
-  string s3=target->toString();
+  string s3=target->toString(variableIdMapping);
   return string("(")+s1+", "+s2+", "+s3+")";
 }
 
@@ -71,23 +72,6 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
 void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
     reduceEState(*i);
-  }
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
-  size_t todo=toReduce.size();
-  if(args.getBool("post-semantic-fold"))
-    cout << "STATUS: remaining states to fold: "<<todo<<endl;
-  for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
-    reduceEState2(*i);
-    todo--;
-    if(todo%10000==0 && args.getBool("post-semantic-fold")) {
-      cout << "STATUS: remaining states to fold: "<<todo<<endl;
-    }
   }
 }
 
@@ -168,9 +152,9 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
     }
     if(_outEdges[estate].size()==0) {
       ROSE_ASSERT(_analyzer);
-      IOAnalyzer::SubSolverResultType subSolverResult;
-      if(IOAnalyzer* iOAnalyzer = dynamic_cast<IOAnalyzer*>(_analyzer)) {
-	subSolverResult = iOAnalyzer->subSolver(estate);
+      CTAnalysis::SubSolverResultType subSolverResult;
+      if(_analyzer) {
+	subSolverResult = _analyzer->subSolver(estate);
       } else {
 	throw CodeThorn::Exception("Used analyzer must be an instance of \"IOAnalyzer\" in order to run the sub solver.");
       }
@@ -325,11 +309,11 @@ void TransitionGraph::eliminateEState(const EState* estate) {
   * \author Markus Schordan
   * \date 2012.
  */
-string TransitionGraph::toString() const {
+string TransitionGraph::toString(VariableIdMapping* variableIdMapping) const {
   string s;
   size_t cnt=0;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
-    s+=(*i)->toString()+"\n";
+    s+=(*i)->toString(variableIdMapping)+"\n";
     cnt++;
   }
   assert(cnt==size());
@@ -582,3 +566,24 @@ Transition TransitionGraph::getStartTransition() {
     throw CodeThorn::Exception("TransitionGraph: no start transition found.");
   }
 }
+void TransitionGraph::printStgSize(std::string optionalComment) {
+  long inStates = numberOfObservableStates(true, false, false);
+  long outStates = numberOfObservableStates(false, true, false);
+  long errStates = numberOfObservableStates(false, false, true);
+  cout << "STATUS: STG size ";
+  if (optionalComment != "") {
+    cout << "(" << optionalComment << "): ";
+  }
+  cout << "#transitions: " << size();
+  cout << ", #states: " << estateSet().size()
+       << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)"
+       << endl;
+}
+
+void TransitionGraph::csvToStream(std::stringstream& csvOutput) {
+  long inStates = numberOfObservableStates(true, false, false);
+  long outStates = numberOfObservableStates(false, true, false);
+  long errStates = numberOfObservableStates(false, false, true);
+  csvOutput << size() <<","<< estateSet().size() <<","<< inStates <<","<< outStates <<","<< errStates;
+}
+

@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinaryBestMapAddress.h>
+
 #include <CommandLine.h>
 #include <integerOps.h>
 #include <Sawyer/Graph.h>
@@ -47,7 +49,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
     if (0 == nBits_) {
         if (!dis)
             throw Exception("no disassembler");
-        nBits_ = dis->instructionPointerRegister().get_nbits();
+        nBits_ = dis->instructionPointerRegister().nBits();
     } else if (dis->wordSizeBytes()*8 != nBits_) {
         throw Exception("mismatched address sizes");
     }
@@ -134,7 +136,8 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
         tasks.insertVertex(Task(deltas[i], nMatches[i]));
     Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH]);
     progressBar.suffix(" comparisons");
-    Sawyer::workInParallel(tasks, Rose::CommandLine::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
+    size_t nThreads = settings_.nThreads ? *settings_.nThreads : Rose::CommandLine::genericSwitchArgs.threads;
+    Sawyer::workInParallel(tasks, nThreads, Worker(this, progress_, progressBar));
 
     // Sort and cache the results by number of matches.
     upToDate_ = false;
@@ -254,8 +257,9 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         if (!remapped) {
-            mlog[ERROR] <<"cannot find a valid destination address for \"" <<StringUtility::cEscape(segment.name()) <<"\""
-                        <<" originally at " <<StringUtility::addrToString(interval.least()) <<"\n";
+            mlog[WARN] <<"cannot find a valid destination address for \"" <<StringUtility::cEscape(segment.name()) <<"\""
+                       <<"; leaving at " <<StringUtility::addrToString(interval.least()) <<"\n";
+            retval->insert(interval, segment);
         }
 
         // Add adjusted entry addresses to the set of all entry addresses.  This is optional, but sometimes helps the remap
@@ -267,5 +271,8 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
     }
     return retval;
 }
+
 } // namespace
 } // namespace
+
+#endif

@@ -1,3 +1,3 @@
-CFG dominators for function 0x08048060 "_start":
+CFG dominators for function 0x08048060:
   function 0x08048060 dominator of 0x08048077<0> is 0x08048060<1>
   function 0x08048060 dominator of 0x08048060<1> is none

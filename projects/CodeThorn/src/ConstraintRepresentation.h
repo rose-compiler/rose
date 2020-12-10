@@ -2,9 +2,7 @@
 #define CONSTRAINT_REPRESENTATION_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <set>
@@ -20,7 +18,7 @@
 #include "HSetMaintainer.h"
 #include "AbstractValue.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 
@@ -80,7 +78,7 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
   * \author Markus Schordan
   * \date 2012.
  */
-class ConstraintSet : public set<Constraint> {
+class ConstraintSet : public std::set<Constraint> {
  public:
   ConstraintSet constraintsOfVariable(CodeThorn::AbstractValue varId) const;
   bool constraintExists(Constraint::ConstraintOp op, CodeThorn::AbstractValue varId, AbstractValue intVal) const;
@@ -136,7 +134,7 @@ class ConstraintSet : public set<Constraint> {
   void insertConstraint(Constraint c);
   //! modifies internal representation
   void eraseConstraint(Constraint c);
-  void eraseConstraint(set<Constraint>::iterator i);
+  void eraseConstraint(std::set<Constraint>::iterator i);
   //! modifies internal representation
   void eraseEqWithLhsVar(CodeThorn::AbstractValue);
   void duplicateConstConstraints(CodeThorn::AbstractValue lhsVarId, CodeThorn::AbstractValue rhsVarId);

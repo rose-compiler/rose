@@ -4,6 +4,7 @@
 #include <sstream>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
@@ -13,10 +14,11 @@ main() {
 
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64();
     RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    ASSERT_always_not_null(ops);
     RegisterStateGenericPtr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
 
     // Store some things in the register state
-    const RegisterDescriptor RIP = *regdict->lookup("rip");
+    const RegisterDescriptor RIP = regdict->findOrThrow("rip");
     RegisterDescriptor bit1 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 1, 1);
     RegisterDescriptor bit3 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 3, 1);
     registers->writeRegister(bit1, ops->boolean_(true), ops.get());

@@ -1,70 +1,132 @@
 #include "sage3basic.h"
 #include "ProgramAbstractionLayer.h"
+#include "ClassHierarchyGraph.h"
 #include "Normalization.h"
+#include "CTIOLabeler.h"
+#include "CodeThornLib.h"
 
 #include <iostream>
 
 using namespace std;
 
-SPRAY::ProgramAbstractionLayer::ProgramAbstractionLayer()
-  :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
+CodeThorn::ProgramAbstractionLayer::ProgramAbstractionLayer()
+  :_labeler(0),_variableIdMapping(0) {
 }
 
-SPRAY::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
+CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
+  delete _cfanalyzer;
 }
 
-void SPRAY::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
-  _modeArrayElementVariableId=val; 
-}
-
-bool SPRAY::ProgramAbstractionLayer::getModeArrayElementVariableId() {
-  return _modeArrayElementVariableId;; 
-}
-
-SgProject* SPRAY::ProgramAbstractionLayer::getRoot() {
+SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }
 
-void SPRAY::ProgramAbstractionLayer::initialize(SgProject* root) {
+
+void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root) {
   _root=root;
-  CodeThorn::Normalization lowering;
-  lowering.setInliningOption(getInliningOption());
-  lowering.normalizeAst(root,getNormalizationLevel());
-  _variableIdMapping=new VariableIdMapping();
-  getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
-  getVariableIdMapping()->computeVariableSymbolMapping(root);
-  _labeler=new Labeler(root);
-  _functionIdMapping=new FunctionIdMapping();
-  getFunctionIdMapping()->computeFunctionSymbolMapping(root);
+  normalizationPass(ctOpt,root);
+  _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
+  _labeler=createLabeler(root,_variableIdMapping);
+  
+  _classHierarchy=new ClassHierarchyWrapper(root);
+  _cfanalyzer=new CFAnalysis(_labeler);
+  _functionCallMapping=nullptr; 
+  _functionCallMapping2=nullptr;
+
+  if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
+  {
+    // another function resolution mode
+    _functionCallMapping = new FunctionCallMapping();
+  
+    getFunctionCallMapping()->setClassHierarchy(_classHierarchy);
+    getFunctionCallMapping()->computeFunctionCallMapping(root);
+    _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
+  }
+  else
+  {
+    // PP (02/17/20) add class hierarchy and call mapping
+    _functionCallMapping2=new FunctionCallMapping2();
+    getFunctionCallMapping2()->setLabeler(_labeler);
+    getFunctionCallMapping2()->setClassHierarchy(_classHierarchy);
+    getFunctionCallMapping2()->computeFunctionCallMapping(root);
+    _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
+  }
+  
+  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
+  //cout << "INIT: Building CFG for each function."<<endl;
+  _fwFlow = _cfanalyzer->flow(root);
+  //cout << "STATUS: Building CFGs finished."<<endl;
+  //cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  _interFlow=_cfanalyzer->interFlow(_fwFlow);
+  //cout << "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
+  //cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+
+  _bwFlow = _fwFlow.reverseFlow();
 }
 
-SPRAY::Labeler* SPRAY::ProgramAbstractionLayer::getLabeler(){
+CodeThorn::InterFlow* CodeThorn::ProgramAbstractionLayer::getInterFlow() {
+  return &_interFlow;
+}
+
+void CodeThorn::ProgramAbstractionLayer::setForwardFlow(const Flow& fwdflow)
+{
+  _fwFlow = fwdflow;
+  _bwFlow = _fwFlow.reverseFlow();
+}
+
+void CodeThorn::ProgramAbstractionLayer::setLabeler(Labeler* labeler)
+{
+  ROSE_ASSERT(labeler != NULL);
+  _labeler = labeler;
+}
+
+
+CodeThorn::Flow* CodeThorn::ProgramAbstractionLayer::getFlow(bool backwardflow)
+{
+  if (backwardflow) return &_bwFlow;
+
+  return &_fwFlow;
+}
+
+CodeThorn::CFAnalysis* CodeThorn::ProgramAbstractionLayer::getCFAnalyzer()
+{
+  ROSE_ASSERT(_cfanalyzer);
+  return _cfanalyzer;
+}
+
+CodeThorn::Labeler* CodeThorn::ProgramAbstractionLayer::getLabeler(){
   ROSE_ASSERT(_labeler!=0);
   return _labeler;
 }
 
-SPRAY::VariableIdMapping* SPRAY::ProgramAbstractionLayer::getVariableIdMapping(){
+CodeThorn::VariableIdMappingExtended* CodeThorn::ProgramAbstractionLayer::getVariableIdMapping(){
   ROSE_ASSERT(_variableIdMapping!=0);
   return _variableIdMapping;
 }
 
-SPRAY::FunctionIdMapping* SPRAY::ProgramAbstractionLayer::getFunctionIdMapping(){
-  ROSE_ASSERT(_functionIdMapping!=0);
-  return _functionIdMapping;
+CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping(){
+  ROSE_ASSERT(_functionCallMapping!=0);
+  return _functionCallMapping;
 }
 
-void SPRAY::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {
+CodeThorn::FunctionCallMapping2* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping2(){
+  ROSE_ASSERT(_functionCallMapping2!=0);
+  return _functionCallMapping2;
+}
+
+void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {
   _normalizationLevel=level;
 }
 
-bool SPRAY::ProgramAbstractionLayer::getNormalizationLevel() {
+unsigned int CodeThorn::ProgramAbstractionLayer::getNormalizationLevel() {
   return _normalizationLevel;
 }
 
-void SPRAY::ProgramAbstractionLayer::setInliningOption(bool flag) {
+void CodeThorn::ProgramAbstractionLayer::setInliningOption(bool flag) {
   _inliningOption=flag;
 }
 
-bool SPRAY::ProgramAbstractionLayer::getInliningOption() {
+bool CodeThorn::ProgramAbstractionLayer::getInliningOption() {
   return _inliningOption;
 }

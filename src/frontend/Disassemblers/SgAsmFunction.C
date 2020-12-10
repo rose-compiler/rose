@@ -1,7 +1,9 @@
 /* SgAsmFunction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 #include "rosePublicConfig.h"
@@ -15,7 +17,7 @@ std::string
 SgAsmFunction::reason_key(const std::string &prefix)
 {
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
-            prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
+            prefix + "X = exception frame       T = thunk, t = target    I = imported/dyn-linked\n" +
             prefix + "O = exported              S = function symbol      P = instruction pattern\n" +
             prefix + "G = CFG graph analysis    U = user-def detection   N = NOP/zero padding\n" +
             prefix + "D = discontiguous blocks  V = intra-function block L = leftover blocks\n" +
@@ -74,6 +76,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
     add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
+    add_to_reason_string(result, (r & FUNC_THUNK_TARGET),  do_pad, "t", "thunk target");
 
     /* The miscellaneous marker is special. It's a single letter like the others, but is followed by a fixed width
      * integer indicating the (user-defined) algorithm that added the function. */
@@ -224,3 +227,5 @@ SgAsmFunction::remove_statement( SgAsmStatement* statement )
         if (l!=p_statementList.end())
             p_statementList.erase(l);
    }
+
+#endif

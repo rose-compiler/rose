@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "DataFlowSemantics2.h"
+
 #include "Diagnostics.h"
 
 namespace Rose {
@@ -446,7 +449,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
     BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
-    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
+    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
     value->insert(AbstractLocation(reg, regdict_));
     result->set_subvalue(innerDomainId_, value);
     return result;
@@ -457,7 +460,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::peekRegister(reg, dflt));
     BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
-    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
+    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
     value->insert(AbstractLocation(reg, regdict_));
     result->set_subvalue(innerDomainId_, value);
     return result;
@@ -546,3 +549,5 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 } // namespace
 } // namespace
 } // namespace
+
+#endif

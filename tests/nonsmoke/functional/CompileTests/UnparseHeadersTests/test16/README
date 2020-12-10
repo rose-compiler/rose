@@ -1,0 +1,5 @@
+In this test, a single source file includes a single header file,
+which is located in the parent folder of the source file. The header
+file is not unparsed because there are no changes in it. The unparsed
+source file should find correctly its included not unparsed header
+file.

@@ -1,7 +1,7 @@
 // Implementation of UPC related translation
-// All things are inside the namespace by default. 
+// All things are inside the namespace by default.
 #include "rose.h"
-#include "upc_translation.h" 
+#include "upc_translation.h"
 #include <algorithm>
 #include <functional>      // For greater<int>( )
 #include <boost/functional/hash.hpp>
@@ -37,16 +37,16 @@ namespace upcTranslation{
                   PreprocessingInfo::before);
 
   // Add UPCR system headers
-     insertHeader("upcr.h",PreprocessingInfo::after,false,global_scope); 
-   //  insertHeader("whirl2c.h",false,global_scope); 
-     insertHeader("upcr_proxy.h",PreprocessingInfo::after,false,global_scope); 
-     //insertHeader("upcr_geninclude/stdio.h",false,global_scope); 
+     insertHeader("upcr.h",PreprocessingInfo::after,false,global_scope);
+   //  insertHeader("whirl2c.h",false,global_scope);
+     insertHeader("upcr_proxy.h",PreprocessingInfo::after,false,global_scope);
+     //insertHeader("upcr_geninclude/stdio.h",false,global_scope);
   }
 
-  //! Check if a variable declaration declares a thread local datum, including 
+  //! Check if a variable declaration declares a thread local datum, including
   //unshared global and static local variables
   // global extern variables are counted as TLD even though no translation is needed sometimes
-  // At least in UPCR_INIT_xxx(), Adresses of other TLD count them 
+  // At least in UPCR_INIT_xxx(), Adresses of other TLD count them
   bool isThreadLocalDataDecl(SgVariableDeclaration* vardecl)
   {
     ROSE_ASSERT(vardecl!=NULL);
@@ -67,7 +67,7 @@ namespace upcTranslation{
   } // isThreadLocalDataRef()
 
 
-    //! Check if an initializer involves addresses of other TLD data, used for generating 
+    //! Check if an initializer involves addresses of other TLD data, used for generating
   // void UPCRI_INIT_filename_xxx()
   bool hasAddressOfOtherTLD (SgInitializer* initor)
   {
@@ -93,7 +93,7 @@ namespace upcTranslation{
  //-----------------------------------------------------------------
   //! Insert macros and helper function prototypes: upcrt_gcd() etc.
   // extern int upcrt_gcd (int a, int b);
-  /* 
+  /*
    extern int _upcrt_forall_start(int start_thread, int step, int lo UPCRI_PT_ARG);
    #define upcrt_forall_start(start_thread, step, lo)  \
        _upcrt_forall_start(start_thread, step, lo UPCRI_PT_PASS)
@@ -112,7 +112,7 @@ namespace upcTranslation{
       { &(sptr), (blockbytes), (numblocks), (mult_by_threads) }
     #endif
     #define UPCRT_STARTUP_PSHALLOC UPCRT_STARTUP_SHALLOC
- 
+
     TODO
     extern int _upcrt_forall_start (int start_thread, int step,
     int lo UPCRI_PT_ARG);
@@ -131,8 +131,8 @@ namespace upcTranslation{
     SgInitializedName* arg1 = buildInitializedName(SgName("a"),buildIntType());
     SgInitializedName* arg2 = buildInitializedName(SgName("b"),buildIntType());
     SgFunctionParameterList * paraList = buildFunctionParameterList();
-    appendArg(paraList,arg1);  
-    appendArg(paraList,arg2);  
+    appendArg(paraList,arg1);
+    appendArg(paraList,arg2);
 
  // DQ (8/29/2012): Minor fix to compile with new SageBuilder API.
  // SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration ("upcrt_gcd",buildIntType(),paraList);
@@ -146,20 +146,20 @@ namespace upcTranslation{
     string macros="";
     macros+="extern int _upcrt_forall_start(int start_thread, int step, int lo UPCRI_PT_ARG);\n#define upcrt_forall_start(start_thread, step, lo)  \\\n\t_upcrt_forall_start(start_thread, step, lo UPCRI_PT_PASS)\nint32_t UPCR_TLD_DEFINE_TENTATIVE(upcrt_forall_control, 4, 4);\n#define upcr_forall_control upcrt_forall_control\n";
     macros+="#ifndef UPCR_EXIT_FUNCTION\n#define UPCR_EXIT_FUNCTION() ((void)0)\n#endif\n";
-    macros+="#if UPCR_RUNTIME_SPEC_MAJOR > 3 || (UPCR_RUNTIME_SPEC_MAJOR == 3 && UPCR_RUNTIME_SPEC_MINOR >= 8)\n#define UPCRT_STARTUP_SHALLOC(sptr, blockbytes, numblocks, mult_by_threads, elemsz, typestr) \\\n\t{ &(sptr), (blockbytes), (numblocks), (mult_by_threads), (elemsz), #sptr, (typestr) }\n#else\n#define UPCRT_STARTUP_SHALLOC(sptr, blockbytes, numblocks, mult_by_threads, elemsz, typestr) \\\n\t{ &(sptr), (blockbytes), (numblocks), (mult_by_threads) }\n#endif\n#define UPCRT_STARTUP_PSHALLOC UPCRT_STARTUP_SHALLOC\n"; 
+    macros+="#if UPCR_RUNTIME_SPEC_MAJOR > 3 || (UPCR_RUNTIME_SPEC_MAJOR == 3 && UPCR_RUNTIME_SPEC_MINOR >= 8)\n#define UPCRT_STARTUP_SHALLOC(sptr, blockbytes, numblocks, mult_by_threads, elemsz, typestr) \\\n\t{ &(sptr), (blockbytes), (numblocks), (mult_by_threads), (elemsz), #sptr, (typestr) }\n#else\n#define UPCRT_STARTUP_SHALLOC(sptr, blockbytes, numblocks, mult_by_threads, elemsz, typestr) \\\n\t{ &(sptr), (blockbytes), (numblocks), (mult_by_threads) }\n#endif\n#define UPCRT_STARTUP_PSHALLOC UPCRT_STARTUP_SHALLOC\n";
     // attach them after the statement, ensure it is after #include ... sequence
     attachArbitraryText(func1,macros,PreprocessingInfo::after);
-    
-    if (old_first_stmt) // prepend to global scope, but after all #include 
-    { 
-#if 0      
+
+    if (old_first_stmt) // prepend to global scope, but after all #include
+    {
+#if 0
       cout<<"Find a preexist statement in the global scope, with VariantT:"
-     <<old_first_stmt->sage_class_name() 
+     <<old_first_stmt->sage_class_name()
      << " unparseToString: "
      <<old_first_stmt->unparseToString()<<endl;
 #endif
        moveUpPreprocessingInfo(func1,old_first_stmt);
-     }  
+     }
      else
      {
        // cout<<"Debug:Cannot find a preexist statement in the global scope!"<<endl;
@@ -168,16 +168,16 @@ namespace upcTranslation{
   } // addHelperFunctionPrototypes
 
  //----------------------------------------------------
-  //! Change output file's suffix to .c when necessary 
+  //! Change output file's suffix to .c when necessary
   //! Consider from .upc to .c for now
    void setOutputFileName(SgFile* cur_file)
    {
      ROSE_ASSERT(cur_file);
-      string orig_name = cur_file->get_file_info()->get_filenameString(); 
+      string orig_name = cur_file->get_file_info()->get_filenameString();
       //cout<<"orig file name is :"<<orig_name<<endl;
       string file_suffix = StringUtility::fileNameSuffix(orig_name);
       if (CommandlineProcessing::isUPCFileNameSuffix(file_suffix))
-      {  
+      {
         orig_name = StringUtility::stripPathFromFileName(orig_name);
         string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
         cur_file->set_unparse_output_filename("rose_"+naked_name+".c");
@@ -241,15 +241,15 @@ namespace upcTranslation{
        }
      default:
       {
-        // do nothing here    
+        // do nothing here
       }
     }// switch
-         
+
   }//translationDriver::visit()
 
  //----------------------------------------------------
   //! Replace it with a function call to upcr_mythread()
-  // example case: printf (.., MYTHREAD) with AST 
+  // example case: printf (.., MYTHREAD) with AST
   // SgFunctionCallExp (SgFunctionRefExp, SgExprListExp)
   // SgExprListExp(..., SgUpcMythread)
   void transUpcMythread(SgNode * node)
@@ -257,9 +257,9 @@ namespace upcTranslation{
     SgUpcMythread * sg_mythread = isSgUpcMythread(node);
     ROSE_ASSERT(sg_mythread);
     //cout<<"Found a SgUpcMythread node!"<<endl;
-    
+
     //build unsigned int upcr_mythread();
-    SgScopeStatement* cur_scope = SageInterface::getScope(node); 
+    SgScopeStatement* cur_scope = SageInterface::getScope(node);
     ROSE_ASSERT(cur_scope);
     pushScopeStack(cur_scope);
     SgType* return_type = buildUnsignedIntType();
@@ -267,9 +267,9 @@ namespace upcTranslation{
                            return_type, buildExprListExp());
 
    // replace variable ref to call exp
-    replaceExpression(sg_mythread,call_exp); 
+    replaceExpression(sg_mythread,call_exp);
 
-    popScopeStack(); 
+    popScopeStack();
   } //transUpcMythread
 
  //----------------------------------------------------
@@ -279,17 +279,17 @@ namespace upcTranslation{
     SgUpcThreads * sg_node = isSgUpcThreads(node);
     ROSE_ASSERT(sg_node);
    // cout<<"Found a SgUpcMythread node!"<<endl;
-    
+
     //build unsigned int upcr_threads();
-    SgScopeStatement* cur_scope = SageInterface::getScope(node); 
+    SgScopeStatement* cur_scope = SageInterface::getScope(node);
     ROSE_ASSERT(cur_scope);
     pushScopeStack(cur_scope);
     SgType* return_type = buildUnsignedIntType();
     SgFunctionCallExp* call_exp = buildFunctionCallExp("upcr_threads",
                            return_type, buildExprListExp());
    // replace variable ref to call exp
-    replaceExpression(sg_node,call_exp); 
-    popScopeStack(); 
+    replaceExpression(sg_node,call_exp);
+    popScopeStack();
   } //transUpcMythread
 
  //----------------------------------------------------
@@ -300,7 +300,7 @@ namespace upcTranslation{
     SgUpcBarrierStatement * sg_node = isSgUpcBarrierStatement(node);
     ROSE_ASSERT(sg_node);
     //cout<<"Found a SgUpcBarrierStatment node!"<<endl;
-    SgScopeStatement* cur_scope = SageInterface::getScope(node); 
+    SgScopeStatement* cur_scope = SageInterface::getScope(node);
     ROSE_ASSERT(cur_scope);
 
     pushScopeStack(cur_scope);
@@ -309,7 +309,7 @@ namespace upcTranslation{
     SgExpression* arg2 = NULL;
 
     if (exp)
-    {  
+    {
       arg1 = copyExpression(exp);  // should not share expressions in AST
       arg2 = buildIntVal(0);
     }
@@ -324,28 +324,28 @@ namespace upcTranslation{
     SgType* return_type = buildVoidType();
     SgExprStatement* call_stmt = buildFunctionCallStmt("upcr_barrier",
                            return_type, arg_list);
-    replaceStatement(sg_node,call_stmt);   
+    replaceStatement(sg_node,call_stmt);
     popScopeStack();
   } // transUpcBarrier
 
  //----------------------------------------------------
   //! Add UPCR_BEGIN_FUNCTION () and  UPCR_EXIT_FUNCTION() into function definitions
    void addUpcrBeginAndExitFunctions(SgFunctionDefinition* funcdef)
-   { 
+   {
      ROSE_ASSERT(funcdef!=NULL);
 
-     // prepend UPCR_BEGIN_FUNCTION () 
+     // prepend UPCR_BEGIN_FUNCTION ()
      SgBasicBlock * body = funcdef->get_body();
-     SgExprStatement* call_stmt = buildFunctionCallStmt 
-            ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body); 
-     prependStatement(call_stmt, body);       
-     
-     // instrument UPCR_EXIT_FUNCTION() 
+     SgExprStatement* call_stmt = buildFunctionCallStmt
+            ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body);
+     prependStatement(call_stmt, body);
+
+     // instrument UPCR_EXIT_FUNCTION()
      //if (isMain(funcdef->get_declaration()))
-      { 
+      {
        SgExprStatement* call_stmt2 =  buildFunctionCallStmt
             ("UPCR_EXIT_FUNCTION",buildVoidType(),buildExprListExp(),body);
-       int result = instrumentEndOfFunction(funcdef->get_declaration(), call_stmt2); 
+       int result = instrumentEndOfFunction(funcdef->get_declaration(), call_stmt2);
        ROSE_ASSERT(result >0);
      }
    } // addUpcrBeginAndExitFunctions
@@ -354,9 +354,9 @@ namespace upcTranslation{
    //! Rename main() to extern  user_main()
    void renameMainToUserMain(SgFunctionDeclaration* sg_func)
    {
-     ROSE_ASSERT(isMain(sg_func)); 
+     ROSE_ASSERT(isMain(sg_func));
 
-     // grab symbol before any modifications. 
+     // grab symbol before any modifications.
      SgGlobal* global_scope= isSgGlobal(sg_func->get_scope());
      ROSE_ASSERT(global_scope);
      SgFunctionSymbol * symbol = global_scope->lookup_function_symbol
@@ -366,7 +366,7 @@ namespace upcTranslation{
      delete (symbol); // avoid dangling symbol!!
 
      // rename it
-     SgName new_name = SgName("user_main"); 
+     SgName new_name = SgName("user_main");
      sg_func->set_name(new_name);
      sg_func->get_declarationModifier().get_storageModifier().setExtern();
 
@@ -389,20 +389,20 @@ namespace upcTranslation{
 
      SgVariableDeclaration * var_decl = buildVariableDeclaration
         ("UPCRL_main_name",buildPointerType(var_type),init,global_scope);
-        
-     appendStatement(var_decl,global_scope);   
-     
+
+     appendStatement(var_decl,global_scope);
+
      // int main( int arc, char** argc)
-     SgInitializedName* arg1 = buildInitializedName("argc", buildIntType()); 
+     SgInitializedName* arg1 = buildInitializedName("argc", buildIntType());
      SgType* type2= buildPointerType(buildPointerType(buildCharType()));
      SgInitializedName* arg2 = buildInitializedName("argv", type2);
      SgFunctionParameterList * paraList = buildFunctionParameterList();
-     appendArg(paraList, arg1);  
+     appendArg(paraList, arg1);
      appendArg(paraList, arg2);
 
      SgFunctionDeclaration * func = buildDefiningFunctionDeclaration
              ("main",buildIntType(),paraList,global_scope);
-     appendStatement(func,global_scope); 
+     appendStatement(func,global_scope);
 
      // fill main body:
      SgBasicBlock* body = func->get_definition()->get_body();
@@ -435,58 +435,58 @@ namespace upcTranslation{
 
 //----------------------------------------
  //! Translate shared variables: replace them with generic shared pointers, generate allocation and initialization functions.
- /*! Handling of statically-allocated shared data (SSD), 
+ /*! Handling of statically-allocated shared data (SSD),
   *  global shared data + function scope static shared data
   *  find shared ones of different types scalar/pointer & arrays
-  *     x. private to shared 
+  *     x. private to shared
   * They are divided into two categories: regular and phase-less shared variables
   * a. phase-less: blocksize ==1 or blocksize == 0 or blocksize == unspecified
   * b. regular : the rest
   */
   int transStaticallyAllocatedData(SgNode* global)
   {
-    SgGlobal * global_scope = isSgGlobal(global); 
+    SgGlobal * global_scope = isSgGlobal(global);
     ROSE_ASSERT(global_scope);
 
     Rose_STL_Container<SgVariableDeclaration*> decl_list;
-    decl_list = querySubTree<SgVariableDeclaration>(global, V_SgVariableDeclaration); 
+    decl_list = querySubTree<SgVariableDeclaration>(global, V_SgVariableDeclaration);
 
     // One list for shared data: SSD
     // One list for all unshared data: statically allocated unshared data,
     Rose_STL_Container<SgVariableDeclaration*> ssd_list, tld_list,global_ssd_list, local_ssd_list;
-    
-    // collect global shared declarations 
-    Rose_STL_Container<SgVariableDeclaration*>::iterator iter; 
+
+    // collect global shared declarations
+    Rose_STL_Container<SgVariableDeclaration*>::iterator iter;
     for (iter = decl_list.begin();iter != decl_list.end(); iter++)
-    { 
+    {
       SgVariableDeclaration * var_decl = isSgVariableDeclaration(*iter);
       ROSE_ASSERT(var_decl != NULL );
 
       bool isGlobal = isSgGlobal(var_decl->get_scope());  // local or global?
-      //ROSE AST has only one variable in a declaration. 
+      //ROSE AST has only one variable in a declaration.
       SgType* t = getFirstVarType(isSgVariableDeclaration(var_decl));
 
       if (isUpcSharedType(t))
-      {  
+      {
         ssd_list.push_back(var_decl);
-        if (isGlobal) 
+        if (isGlobal)
           global_ssd_list.push_back(var_decl);
         else
           local_ssd_list.push_back(var_decl);
-      }  
+      }
       else
-      { 
+      {
         if (isGlobal)
           tld_list.push_back(var_decl);
         else // only static local or private-to-shared local variables matter
-          if (isStatic(var_decl)||isUpcPrivateToSharedType(t)) 
+          if (isStatic(var_decl)||isUpcPrivateToSharedType(t))
             tld_list.push_back(var_decl);
       }
     } //for decl_list
 
    //--------------allocation function-----------------------
    // global and local shared
-     
+
    // invoke for each file/SgGlobal (global_scope)?
     SgFunctionDeclaration* func_alloc = generateUpcriAllocFunc(
       isSgFile(global_scope->get_parent()),global_ssd_list, local_ssd_list,global_scope);
@@ -496,13 +496,13 @@ namespace upcTranslation{
     SgFunctionDeclaration* func_alloc2 = buildNondefiningFunctionDeclaration(func_alloc,global_scope);
     SgStatement* old_first_stmt = getFirstStatement(global_scope);
     prependStatement(func_alloc2,global_scope);
-    if (old_first_stmt) // prepend to global scope, but after all #include 
+    if (old_first_stmt) // prepend to global scope, but after all #include
          moveUpPreprocessingInfo(func_alloc2,old_first_stmt,PreprocessingInfo::before);
 #endif
- 
+
    //---------------initialization function-------------------
    //Generate TLD data initializations before generating their declarations using
-   //  transThreadLocalData(), which will remove the original decls 
+   //  transThreadLocalData(), which will remove the original decls
    //  needed by the initialization process
     SgFunctionDeclaration* func_init = generateUpcriInitFunc(
       isSgFile(global_scope->get_parent()),ssd_list, tld_list,global_scope);
@@ -512,53 +512,53 @@ namespace upcTranslation{
     SgFunctionDeclaration* func_init2 = buildNondefiningFunctionDeclaration(func_init,global_scope);
     old_first_stmt = getFirstStatement(global_scope);
     prependStatement(func_init2,global_scope);
-    if (old_first_stmt) // prepend to global scope, but after all #include 
+    if (old_first_stmt) // prepend to global scope, but after all #include
        moveUpPreprocessingInfo(func_init2,old_first_stmt,PreprocessingInfo::before);
 #endif
     // handle SSD variables
     transStaticallyAllocatedSharedData(ssd_list);
 
    // handle TLD variable declarations
-    transThreadLocalData (tld_list,global_scope); 
+    transThreadLocalData (tld_list,global_scope);
 
- 
+
    //Finally, fix symbols referenced since we generate var ref before their declarations
     fixVariableReferences(global_scope);
-    
+
     return decl_list.size();
   } // transStaticallyAllocatedData()
 
   /*!
-   * This function implements the translation of Statically-allocated shared Data (SSD), 
-   * defined in The Berkeley UPC Runtime Specification V 3.9. It returns the number of 
-   * variables handled. 
+   * This function implements the translation of Statically-allocated shared Data (SSD),
+   * defined in The Berkeley UPC Runtime Specification V 3.9. It returns the number of
+   * variables handled.
    */
   int transStaticallyAllocatedSharedData(Rose_STL_Container<SgVariableDeclaration*> ssd_list)
   {
     if (ssd_list.size()==0) return 0;
 
-    SgGlobal * global_scope = getGlobalScope(*(ssd_list.begin())); 
+    SgGlobal * global_scope = getGlobalScope(*(ssd_list.begin()));
     ROSE_ASSERT(global_scope);
    // Generate upcr_pshared_ptr_t var or upcr_shared_ptr_t var
    // and insert them into the global scope
-     // prepare types 
+     // prepare types
     SgType* regular_type = lookupNamedTypeInParentScopes("upcr_shared_ptr_t",global_scope);
     SgType* phaseLess_type = lookupNamedTypeInParentScopes("upcr_pshared_ptr_t",global_scope);
 
-    if (regular_type==NULL) 
+    if (regular_type==NULL)
       regular_type = buildOpaqueType("upcr_shared_ptr_t",global_scope);
-    if( phaseLess_type == NULL ) 
+    if( phaseLess_type == NULL )
       phaseLess_type = buildOpaqueType("upcr_pshared_ptr_t",global_scope);
 
       // handle them one by one
-    Rose_STL_Container<SgVariableDeclaration*>::iterator iter2; 
-   for (iter2 = ssd_list.begin(); iter2 != ssd_list.end(); iter2++) 
+    Rose_STL_Container<SgVariableDeclaration*>::iterator iter2;
+   for (iter2 = ssd_list.begin(); iter2 != ssd_list.end(); iter2++)
    {
      SgVariableDeclaration* orig_decl = *iter2;
      SgVariableDeclaration* new_decl = NULL;
 
      bool isGlobal = isSgGlobal(orig_decl->get_scope());  // local or global?
-     bool hasInitializer = 
+     bool hasInitializer =
         (getFirstVarSym(orig_decl)->get_declaration()->get_initptr ()==NULL)?false:true;
 
      SgName name;
@@ -574,12 +574,12 @@ namespace upcTranslation{
          buildAssignInitializer(buildOpaqueVarRefExp("UPCR_INITIALIZED_PSHARED",global_scope)), \
          global_scope );
        else
-       {  // Only global ones need handling for now 
+       {  // Only global ones need handling for now
          //if (isGlobal) // not if a local one has been referenced later on
            new_decl = buildVariableDeclaration(name, phaseLess_type,NULL, global_scope );
-       }  
+       }
      }
-     else  // regular shared types  
+     else  // regular shared types
      {
        if (hasInitializer)
          new_decl = buildVariableDeclaration(name, regular_type, \
@@ -597,10 +597,10 @@ namespace upcTranslation{
          moveUpPreprocessingInfo(new_decl,orig_decl);
        }
        else
-        //local SSD's global version  needs to be inserted as the last one in the 
-        //decl stmt sequence to avoid undeclared global variables in the initializer         
+        //local SSD's global version  needs to be inserted as the last one in the
+        //decl stmt sequence to avoid undeclared global variables in the initializer
        {
-          SgStatement* anchor_stmt = findFirstDefiningFunctionDecl(global_scope);  
+          SgStatement* anchor_stmt = findFirstDefiningFunctionDecl(global_scope);
           if (anchor_stmt)
               insertStatementBefore(anchor_stmt, new_decl);
           else
@@ -613,9 +613,9 @@ namespace upcTranslation{
     return ssd_list.size();
   }
    /*!
-   * This function implements the translation of Statically-allocated unshared Data, 
+   * This function implements the translation of Statically-allocated unshared Data,
    * namely Thread-Local Data (TLD)
-   * defined in The Berkeley UPC Runtime Specification V 3.9. 
+   * defined in The Berkeley UPC Runtime Specification V 3.9.
    *
    * We extend the TLD list to contain non-static local pointer-to-shared variables
    * since they demand the similar translation, although they are not TLD variables.
@@ -623,8 +623,8 @@ namespace upcTranslation{
   int transThreadLocalData(Rose_STL_Container<SgVariableDeclaration*> tld_list,SgGlobal* global_scope)
   {
     ROSE_ASSERT(global_scope);
-    ofstream tld_file; 
-    string orig_file_name= global_scope->get_file_info()->get_filenameString();   
+    ofstream tld_file;
+    string orig_file_name= global_scope->get_file_info()->get_filenameString();
     string tld_file_name =StringUtility::stripFileSuffixFromFileName(
                             StringUtility::stripPathFromFileName(orig_file_name));
     tld_file_name+="_obj.tld";
@@ -634,8 +634,8 @@ namespace upcTranslation{
     tld_file.open(tld_file_name.c_str(),ios::app);
 
     tld_file<<"UPCR_TLD_DEFINE(upcrt_forall_control, 4, 4)"<<"\n";
-    Rose_STL_Container<SgVariableDeclaration*>::iterator iter; 
-   for (iter = tld_list.begin(); iter != tld_list.end(); iter++) 
+    Rose_STL_Container<SgVariableDeclaration*>::iterator iter;
+   for (iter = tld_list.begin(); iter != tld_list.end(); iter++)
    {
      SgVariableDeclaration* decl = *iter;
      SgVariableDeclaration* vardecl = isSgVariableDeclaration(decl);
@@ -653,46 +653,44 @@ namespace upcTranslation{
      if (isSgPointerType(t))
        if (isSgFunctionType(isSgPointerType(t)->get_base_type()))
          isFunctionPointer = true;
- 
-    // prepare types 
+
+    // prepare types
     SgType* regular_type = lookupNamedTypeInParentScopes("upcr_shared_ptr_t",global_scope);
     SgType* phaseLess_type = lookupNamedTypeInParentScopes("upcr_pshared_ptr_t",global_scope);
-    if (regular_type==NULL) 
+    if (regular_type==NULL)
       regular_type = buildOpaqueType("upcr_shared_ptr_t",global_scope);
-    if( phaseLess_type == NULL ) 
+    if( phaseLess_type == NULL )
       phaseLess_type = buildOpaqueType("upcr_pshared_ptr_t",global_scope);
 
-    if (isGlobal&&isExtern(vardecl)&&(!isp2s)) 
+    if (isGlobal&&isExtern(vardecl)&&(!isp2s))
      //No action needed for extern global variables which are not private pointers to shared
      //e.g. extern int quux;
         continue;
-    else if ((isGlobal&&isExtern(vardecl) 
-                ||!isGlobal&&!isStatic(vardecl)) 
-             &&isp2s) 
+    else if ((isGlobal&&isExtern(vardecl) || !isGlobal&&!isStatic(vardecl)) && isp2s)
      // Handle special cases for private to shared pointers
-     //  a)  global: must have extern modifier 
-     //  b)  local: must not be static , 
+     //  a)  global: must have extern modifier
+     //  b)  local: must not be static ,
       transSpecialPrivate2Shared(vardecl);
-    else if (isGlobal||(isStatic(vardecl))) 
-     // static local variables without initializers also have global version! 
+    else if (isGlobal||(isStatic(vardecl)))
+     // static local variables without initializers also have global version!
      // The rest TLD variables, include private to shared pointers
      // Global variables which are not shared
      // a) global private to shared pointer variables
      //   upcr_shared_ptr_t UPCR_TLD_DEFINE_TENTATIVE (p2s_p1, 8, 4);
      //   upcr_pshared_ptr_t UPCR_TLD_DEFINE (p2s_p2, 8, 4) = UPCR_INITIALIZED_PSHARED;
-     // b)regular global variables 
+     // b)regular global variables
      //  int UPCR_TLD_DEFINE_TENTATIVE(counter, 4, 4);
      //  int UPCR_TLD_DEFINE(counter2, 4, 4) = 100;
      // c) array and pointer to function types need one more type definition
      //     typedef double _type_myarray[10];
      //     _type_myarray UPCR_TLD_DEFINE_TENTATIVE(myarray, 80, 4);
-     // The recommended translation using macro is put as source comment 
+     // The recommended translation using macro is put as source comment
      // to 'fool' Berkeley UPC compiler's linker script to get list of TLD_DEFINE items
      // We generate a legal declaration to facilitate analysis of AST
     //
-     // Similar handling for local TLD 
+     // Similar handling for local TLD
      //   a) Must be static variables with initializers
-     { 
+     {
        SgTypedefDeclaration* typedef_decl = NULL;
        string typedef_name, tldstr;
        stringstream ss,ss2;
@@ -702,46 +700,46 @@ namespace upcTranslation{
        //typedef double _type__N9_fooArray2_N10_1665815976_[2];
        // _type__N9_fooArray2_N10_1665815976_ UPCR_TLD_DEFINE(_N9_fooArray2_N10_1665815976_, 16, 4) = {3.1,1.3,};
          if (isArrayType||isFunctionPointer)
-       { 
+       {
          string prefix = "_type_";
-         if (isFunctionPointer) 
+         if (isFunctionPointer)
            prefix = "_funptr_";
          if (isGlobal)
-           typedef_name = prefix+varname; 
-         else  
+           typedef_name = prefix+varname;
+         else
            typedef_name = prefix +generateUniqueGlobalName(vardecl);  // local only
          typedef_decl = buildTypedefDeclaration(typedef_name,t);
          typedef_type = typedef_decl->get_type();
        }
-      
+
        if (isp2s)
-       {  
+       {
          if (isphaseless)
            srcstr = "upcr_pshared_ptr_t";
          else
-           srcstr = "upcr_shared_ptr_t"; 
+           srcstr = "upcr_shared_ptr_t";
        }
        else if (isArrayType||isFunctionPointer)// scalar or array types are handled differently
          srcstr = typedef_name;
        else
          srcstr = t->unparseToString();
 
-       srcstr += " UPCR_TLD_DEFINE";  
+       srcstr += " UPCR_TLD_DEFINE";
        if (initor==NULL)
          srcstr += "_TENTATIVE (";
         else
          srcstr += " (";
-       // file_obj.tld always has  UPCR_TLD_DEFINE(..) 
-       tldstr = "UPCR_TLD_DEFINE(";  
-        if (isGlobal) 
+       // file_obj.tld always has  UPCR_TLD_DEFINE(..)
+       tldstr = "UPCR_TLD_DEFINE(";
+        if (isGlobal)
         {
-          srcstr += varname;  
+          srcstr += varname;
           tldstr += varname;
         }
         else
         {
-          srcstr +=generateUniqueGlobalName(vardecl);  
-          tldstr += generateUniqueGlobalName(vardecl); 
+          srcstr +=generateUniqueGlobalName(vardecl);
+          tldstr += generateUniqueGlobalName(vardecl);
         }
         srcstr += ", ";
         tldstr += ", ";
@@ -754,7 +752,7 @@ namespace upcTranslation{
         srcstr += ss2.str() + " )";
         tldstr += ss2.str() + " )";
         if (initor)
-        {  
+        {
           if (isp2s) // pointer to shared cases
           {
             SgAssignInitializer * assign_initor = isSgAssignInitializer(initor);
@@ -768,15 +766,15 @@ namespace upcTranslation{
             {
               if (isphaseless)
                 srcstr+=" = UPCR_INITIALIZED_PSHARED";
-              else 
+              else
                 srcstr+=" = UPCR_INITIALIZED_SHARED";
-            }  
-          } 
+            }
+          }
           else // regular cases
             srcstr+= " = "+initor->unparseToString();
         }
-        srcstr += ";";  
-        // write file_obj.tld 
+        srcstr += ";";
+        // write file_obj.tld
          tld_file<<tldstr.c_str()<<"\n";
         // Generate the real variable declaration in our translation
         // new_type name = initializer;
@@ -784,11 +782,11 @@ namespace upcTranslation{
         SgType* new_type=NULL;//regular_type;
        if (isUpcPhaseLessSharedType(t))
           new_type = phaseLess_type;
-        else 
+        else
           new_type = regular_type;
 
         SgInitializer* initializer = NULL;
-        if (initor ==NULL) 
+        if (initor ==NULL)
           initializer = NULL;
         else if (isp2s)
         {
@@ -828,24 +826,24 @@ namespace upcTranslation{
 
         if (isArrayType||isFunctionPointer) // adjust for array and function pointer types
           new_type = typedef_type;
-        if (!isGlobal) // global variable for local static variable needs mangled name 
+        if (!isGlobal) // global variable for local static variable needs mangled name
           varname = generateUniqueGlobalName(vardecl);
 
         SgVariableDeclaration* new_decl = buildVariableDeclaration(varname, new_type,initializer, global_scope);
         attachComment(new_decl,srcstr,PreprocessingInfo::after);
 
         // different insert point for local and global TLD variables
-        //SgStatement* anchor_stmt = getFirstStatement(global_scope);  
+        //SgStatement* anchor_stmt = getFirstStatement(global_scope);
         if (isGlobal) // insert before the original place for global ones
         {
           insertStatementBefore(decl, new_decl);
           moveUpPreprocessingInfo(new_decl,decl,PreprocessingInfo::before);
         }
         else
-        //local TLD need to be inserted as the last one in the decl stmt sequence 
+        //local TLD need to be inserted as the last one in the decl stmt sequence
         //to avoid undeclared global variables being used in the initializer
         {
-           SgStatement* anchor_stmt = findFirstDefiningFunctionDecl(global_scope);  
+           SgStatement* anchor_stmt = findFirstDefiningFunctionDecl(global_scope);
            if (anchor_stmt)
               insertStatementBefore(anchor_stmt, new_decl);
             else
@@ -854,20 +852,20 @@ namespace upcTranslation{
 
         //keep the base defining type declaration like: union xxx {} a;
         // TODO refactor it to a function
-        SgDeclarationStatement* base_decl = decl->get_baseTypeDefiningDeclaration(); 
+        SgDeclarationStatement* base_decl = decl->get_baseTypeDefiningDeclaration();
         if (base_decl)
-         { 
+         {
           ROSE_ASSERT(base_decl);
-          SgClassDeclaration* classDecl = isSgClassDeclaration (base_decl); 
+          SgClassDeclaration* classDecl = isSgClassDeclaration (base_decl);
           if (classDecl)
           {
-            SgClassDeclaration* newdecl2 = deepCopy<SgClassDeclaration>(classDecl);     
+            SgClassDeclaration* newdecl2 = deepCopy<SgClassDeclaration>(classDecl);
             ROSE_ASSERT(newdecl2);
             setOneSourcePositionForTransformation(newdecl2);
             newdecl2->set_definingDeclaration(classDecl->get_definingDeclaration());
             newdecl2->set_firstNondefiningDeclaration(
                      classDecl->get_firstNondefiningDeclaration());
-            // insert the type declaration newdecl2  
+            // insert the type declaration newdecl2
             // before the use of the type in the new declaration new_decl;
             insertStatementBefore(new_decl, newdecl2);
             moveUpPreprocessingInfo(newdecl2,new_decl,PreprocessingInfo::before);
@@ -885,8 +883,8 @@ namespace upcTranslation{
           insertStatementBefore(new_decl,typedef_decl);
           moveUpPreprocessingInfo(typedef_decl,new_decl,PreprocessingInfo::before);
         }
-     } // end if  for eligible variables for handling 
-     // global 
+     } // end if  for eligible variables for handling
+     // global
    } // for
    // return the actual statements processed
    tld_file.close();
@@ -895,9 +893,9 @@ namespace upcTranslation{
 
    /*! Per file UPCRI allocation function for shared variables
     *  Remember to insert the returned function declaration to the right position
-    *  of the scope after calling this function. 
+    *  of the scope after calling this function.
     *
-    * e.g.: 
+    * e.g.:
   void
   UPCRI_ALLOC_flename_3447388659 ()
   {
@@ -917,46 +915,46 @@ namespace upcTranslation{
                            sizeof (pinfo) / sizeof (upcr_startup_pshalloc_t));
   }
    */
-  SgFunctionDeclaration * generateUpcriAllocFunc(SgFile* file, 
-                    std::vector<SgVariableDeclaration*>global_list, 
+  SgFunctionDeclaration * generateUpcriAllocFunc(SgFile* file,
+                    std::vector<SgVariableDeclaration*>global_list,
                     std::vector<SgVariableDeclaration*>local_list,
                     SgScopeStatement* scope)
   {
-    string fullfilename, filename; 
+    string fullfilename, filename;
     boost::hash<std::string> string_hash;
     fullfilename = file->get_file_info()->get_filename();
     size_t file_num =  string_hash(fullfilename);
     // cout<<"file name is: "<<file->get_file_info()->get_filename()<<endl;
     // get file name without path and suffix
     filename = StringUtility::stripFileSuffixFromFileName(
-               StringUtility::stripPathFromFileName(fullfilename)); 
+               StringUtility::stripPathFromFileName(fullfilename));
     stringstream ss;
     ss<<file_num;
 
     string func_name = "UPCRI_ALLOC_"+filename+"_"+ss.str();
-    
-    SgFunctionDeclaration* result = buildDefiningFunctionDeclaration (func_name, 
+
+    SgFunctionDeclaration* result = buildDefiningFunctionDeclaration (func_name,
           buildVoidType(), buildFunctionParameterList(),scope);
 
     SgBasicBlock * body = result->get_definition()->get_body();
- 
+
     // handled in addUpcrBeginAndExitFunctions() now
-    //SgExprStatement* begin_stmt = buildFunctionCallStmt 
-     //         ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body); 
-    //prependStatement(begin_stmt, body);       
+    //SgExprStatement* begin_stmt = buildFunctionCallStmt
+     //         ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body);
+    //prependStatement(begin_stmt, body);
     // ------------ prepare regular and phaseless shared variable lists-----
     vector<SgVariableDeclaration*> regular_list, phaseless_list;
     vector<SgVariableDeclaration*>::iterator iter1, iter2;
 
-        // collect static local shared variables 
+        // collect static local shared variables
     for (iter1 = local_list.begin(); iter1 != local_list.end(); iter1 ++)
     {
       SgVariableDeclaration* decl = * iter1;
       //bool hasInitializer = (getFirstInitializedName(decl)->get_initptr ()==NULL)?false:true;
       // Ideally, local shared variables without initializers should not be allocated
-      // if they are not used later. We simply it by allocating them all. 
-      //if (hasInitializer)  
-      {  
+      // if they are not used later. We simply it by allocating them all.
+      //if (hasInitializer)
+      {
         if  (isUpcPhaseLessSharedType(getFirstVarType(decl)))
         {
           phaseless_list.push_back(decl);
@@ -966,20 +964,20 @@ namespace upcTranslation{
         {
           regular_list.push_back(decl);
           //cout<<"found local regular shared with initializer...."<<endl;
-        }  
-      }  
+        }
+      }
     } // end for local list
         // collect global shared variables
     for (iter2 = global_list.begin(); iter2 != global_list.end(); iter2 ++)
     {
       SgVariableDeclaration* decl = * iter2;
       if  (isUpcPhaseLessSharedType(getFirstVarType(decl)))
-      {  
+      {
        phaseless_list.push_back(decl);
        // cout<<"found global phaseless shared var...."<<endl;
-      } 
+      }
       else
-      {  
+      {
         regular_list.push_back(decl);
        // cout<<"found global regular shared var...."<<endl;
       }
@@ -989,38 +987,38 @@ namespace upcTranslation{
     // upcr_startup_shalloc_t info[] = {a,b,c,..};
     // SgAggregateInitializer -->SgExprListExp -> SgAssignInitializer
 
-    SgAggregateInitializer * initializer = generateUpcriAllocFuncInitializer(regular_list,false, body); 
-    bool hasRegElements=true, hasPhaselessElements=true; 
+    SgAggregateInitializer * initializer = generateUpcriAllocFuncInitializer(regular_list,false, body);
+    bool hasRegElements=true, hasPhaselessElements=true;
     if (initializer->get_initializers()->get_expressions ().size()==0)
       hasRegElements= false;
-    if (hasRegElements)  
+    if (hasRegElements)
     {
       SgVariableDeclaration* info_decl = buildVariableDeclaration
-      ("info", buildArrayType(buildOpaqueType("upcr_startup_shalloc_t",body)),initializer,body);  
-      appendStatement(info_decl, body); 
+      ("info", buildArrayType(buildOpaqueType("upcr_startup_shalloc_t",body)),initializer,body);
+      appendStatement(info_decl, body);
     }
     // --------------------phaseless shared-----------------------------
     //upcr_startup_pshalloc_t pinfo[] = {...};
-    
-    SgAggregateInitializer * initializer2 = generateUpcriAllocFuncInitializer(phaseless_list,true, body); 
+
+    SgAggregateInitializer * initializer2 = generateUpcriAllocFuncInitializer(phaseless_list,true, body);
     if (initializer2->get_initializers()->get_expressions ().size()==0)
       hasPhaselessElements= false;
-    if (hasPhaselessElements)  
+    if (hasPhaselessElements)
     {
-     
+
       SgVariableDeclaration* pinfo_decl = buildVariableDeclaration
         ("pinfo", buildArrayType(buildOpaqueType("upcr_startup_pshalloc_t",body)),
-          initializer2,body);  
-      appendStatement(pinfo_decl, body); 
-    } 
+          initializer2,body);
+      appendStatement(pinfo_decl, body);
+    }
     // -----------------------Other statements--------------------------
     // UPCR_SET_SRCPOS ("_filename_3447388659_ALLOC", 0);
     SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list, buildStringVal("_"+filename+"_"+ss.str()+"_ALLOC")); 
-    appendExpression(arg_list, buildIntVal(0)); 
+    appendExpression(arg_list, buildStringVal("_"+filename+"_"+ss.str()+"_ALLOC"));
+    appendExpression(arg_list, buildIntVal(0));
     SgExprStatement* src_stmt = buildFunctionCallStmt
          ("UPCR_SET_SRCPOS", buildVoidType(), arg_list, body);
-    appendStatement(src_stmt, body);       
+    appendStatement(src_stmt, body);
 
     //upcr_startup_shalloc (info, sizeof (info) / sizeof (upcr_startup_shalloc_t));
     if (hasRegElements)
@@ -1032,7 +1030,7 @@ namespace upcTranslation{
       appendExpression(shalloc_args, ss_arg2);
       SgExprStatement* ss_stmt = buildFunctionCallStmt
            ("upcr_startup_shalloc", buildVoidType(), shalloc_args, body);
-      appendStatement(ss_stmt, body);   
+      appendStatement(ss_stmt, body);
     }
 
     if (hasPhaselessElements)
@@ -1045,7 +1043,7 @@ namespace upcTranslation{
       appendExpression(pshalloc_args, sp_arg2);
       SgExprStatement* sp_stmt = buildFunctionCallStmt
            ("upcr_startup_pshalloc", buildVoidType(), pshalloc_args, body);
-      appendStatement(sp_stmt, body);   
+      appendStatement(sp_stmt, body);
     }
 
     return result;
@@ -1056,12 +1054,12 @@ namespace upcTranslation{
   /* Per-file initialization for  shared and unshared(TLD) data
   *
    */
-  SgFunctionDeclaration* generateUpcriInitFunc(SgFile* file, 
-                    std::vector<SgVariableDeclaration*>shared_list, 
-                    std::vector<SgVariableDeclaration*>tld_list, 
+  SgFunctionDeclaration* generateUpcriInitFunc(SgFile* file,
+                    std::vector<SgVariableDeclaration*>shared_list,
+                    std::vector<SgVariableDeclaration*>tld_list,
                     SgScopeStatement* scope)
   {
-    string fullfilename, filename; 
+    string fullfilename, filename;
     boost::hash<std::string> string_hash;
     SgSourceFile* srcfile = isSgSourceFile(file);
     ROSE_ASSERT(srcfile!=NULL);
@@ -1069,37 +1067,37 @@ namespace upcTranslation{
     SgGlobal* global_scope = srcfile->get_globalScope();
     size_t file_num =  string_hash(fullfilename);
     filename = StringUtility::stripFileSuffixFromFileName(
-               StringUtility::stripPathFromFileName(fullfilename)); 
+               StringUtility::stripPathFromFileName(fullfilename));
     stringstream ss;
     ss<<file_num;
     //   void UPCRI_INIT_filename_xxx()  {}
     string func_name = "UPCRI_INIT_"+filename+"_"+ss.str();
-    SgFunctionDeclaration* result = buildDefiningFunctionDeclaration (func_name, 
+    SgFunctionDeclaration* result = buildDefiningFunctionDeclaration (func_name,
           buildVoidType(), buildFunctionParameterList(),scope);
 
     SgBasicBlock * body = result->get_definition()->get_body();
        //handled in addUpcrBeginAndExitFunctions() now
        //UPCR_BEGIN_FUNCTION ();
-    //SgExprStatement* begin_stmt = buildFunctionCallStmt 
-      //        ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body); 
-   // prependStatement(begin_stmt, body);       
+    //SgExprStatement* begin_stmt = buildFunctionCallStmt
+      //        ("UPCR_BEGIN_FUNCTION",buildVoidType(), buildExprListExp(),body);
+   // prependStatement(begin_stmt, body);
 
        // UPCR_SET_SRCPOS ("_filename_3447388659_INIT", 0);
     SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list, buildStringVal("_"+filename+"_"+ss.str()+"_INIT")); 
-    appendExpression(arg_list, buildIntVal(0)); 
+    appendExpression(arg_list, buildStringVal("_"+filename+"_"+ss.str()+"_INIT"));
+    appendExpression(arg_list, buildIntVal(0));
     SgExprStatement* src_stmt = buildFunctionCallStmt
          ("UPCR_SET_SRCPOS", buildVoidType(), arg_list, body);
-    appendStatement(src_stmt, body);      
+    appendStatement(src_stmt, body);
     //generate initialization statements for shared declarations
     generateUpcriInitStmtForShared(shared_list,body, global_scope);
 
     // generate initialization statements for TLD declarations
-     generateUpcriInitStmtForTLD (tld_list,body,global_scope); 
+     generateUpcriInitStmtForTLD (tld_list,body,global_scope);
      return result;
   } // generateUpcriInitFunc()
 
-  //!Generate the initialization statements for shared variables and insert them into  UPCRI_INIT_filename_xxx() 
+  //!Generate the initialization statements for shared variables and insert them into  UPCRI_INIT_filename_xxx()
   /*!
    * two categories for shared variables:
    *   1) scalar: only thread 0 does the initialization
@@ -1110,14 +1108,14 @@ namespace upcTranslation{
    *       &_N11_lsscounter2_N10_3305040721__val, 4);
    *     }
    *   2) arrays: special macro: upcr_startup_initarray();
- 
+
    */
   void generateUpcriInitStmtForShared(std::vector<SgVariableDeclaration*>shared_list,
                        SgBasicBlock* func_body,SgScopeStatement* global_scope)
   {
      ROSE_ASSERT(global_scope);
-     Rose_STL_Container<SgVariableDeclaration*>::iterator iter; 
-     for (iter = shared_list.begin(); iter != shared_list.end(); iter++) 
+     Rose_STL_Container<SgVariableDeclaration*>::iterator iter;
+     for (iter = shared_list.begin(); iter != shared_list.end(); iter++)
      {
        SgVariableDeclaration* vardecl = *iter;
        SgVariableSymbol* varsymbol = getFirstVarSym(vardecl);
@@ -1127,40 +1125,40 @@ namespace upcTranslation{
        bool isGlobal = isSgGlobal(vardecl->get_scope());
        bool isArrayType = isSgArrayType(t);
        bool isphaseless = isUpcPhaseLessSharedType(t);
-      if (initor) 
-       {  
+      if (initor)
+       {
          if (isArrayType)
          {//TODO
-           
+
            ROSE_ASSERT(false);
-         } 
+         }
          else // scalar case
          {
            SgModifierType* modifier_type=NULL;
            hasUpcSharedType(t,&modifier_type);
-           ROSE_ASSERT(modifier_type); 
+           ROSE_ASSERT(modifier_type);
            SgType* base_type = modifier_type->get_base_type();
            string var_val_name;
            string global_var_name;
            if (isGlobal)
              global_var_name = varname;
-           else  
+           else
              global_var_name= generateUniqueGlobalName(vardecl);
            var_val_name =  global_var_name+"_val";
            //int32_t _N11_lsscounter1_N8_63317268__val = 0;
            SgVariableDeclaration* decl = buildVariableDeclaration(var_val_name,
-                     base_type, deepCopy<SgInitializer>(initor), func_body);  
+                     base_type, deepCopy<SgInitializer>(initor), func_body);
            appendStatement(decl,func_body);
 
             // if (upcr_mythread() ==0 ) {...}
             SgFunctionCallExp *func_call= buildFunctionCallExp("upcr_mythread",buildIntType(),
-                       buildExprListExp(),global_scope); 
+                       buildExprListExp(),global_scope);
             SgExprStatement* condition = buildExprStatement(
-              buildEqualityOp(func_call,buildIntVal(0))); 
+              buildEqualityOp(func_call,buildIntVal(0)));
             SgBasicBlock* true_body = buildBasicBlock();
             SgIfStmt* ifstmt = buildIfStmt(condition,true_body,NULL);
             appendStatement(ifstmt,func_body);
-            //void upcr_put_shared (upcr_shared_ptr_t dest,  ptrdiff_t destoffset, 
+            //void upcr_put_shared (upcr_shared_ptr_t dest,  ptrdiff_t destoffset,
             //              const void *src, size_t nbytes);
             SgExprListExp* arg_list = buildExprListExp();
             appendExpression(arg_list,buildVarRefExp(global_var_name,global_scope));
@@ -1170,7 +1168,7 @@ namespace upcTranslation{
             string func_name;
             if (isphaseless)
               func_name = "upcr_put_pshared";
-            else  
+            else
               func_name = "upcr_put_shared";
             SgExprStatement* func_call_stmt = buildFunctionCallStmt(func_name,
                   buildVoidType(),arg_list,global_scope);
@@ -1182,10 +1180,10 @@ namespace upcTranslation{
   } //generateUpcriInitStmtForShared()
 
   /* TLD: two cases
-   *   1) initialization involving addresses of other TLD data: 
+   *   1) initialization involving addresses of other TLD data:
    *      int* pcounter= &counter; // is translated into -->
    *      *((int* *) UPCR_TLD_ADDR(pcounter)) = (int* )UPCR_TLD_ADDR(counter);
-   *   2) declaration for local pointer to shared data: 
+   *   2) declaration for local pointer to shared data:
    *     shared int* p2s_p2 = & shareddata; // is translated into-->
    *     *((upcr_pshared_ptr_t *) UPCR_TLD_ADDR(p2s_p2)) = shareddata;
    */
@@ -1194,16 +1192,16 @@ namespace upcTranslation{
    {
      ROSE_ASSERT(global_scope);
      SgType* shared_type;
-     // prepare types 
+     // prepare types
      SgType* regular_type = lookupNamedTypeInParentScopes("upcr_shared_ptr_t",global_scope);
     SgType* phaseLess_type = lookupNamedTypeInParentScopes("upcr_pshared_ptr_t",global_scope);
-    if (regular_type==NULL) 
+    if (regular_type==NULL)
       regular_type = buildOpaqueType("upcr_shared_ptr_t",global_scope);
-    if( phaseLess_type == NULL ) 
+    if( phaseLess_type == NULL )
       phaseLess_type = buildOpaqueType("upcr_pshared_ptr_t",global_scope);
 
-        Rose_STL_Container<SgVariableDeclaration*>::iterator iter; 
-       for (iter = tld_list.begin(); iter != tld_list.end(); iter++) 
+        Rose_STL_Container<SgVariableDeclaration*>::iterator iter;
+       for (iter = tld_list.begin(); iter != tld_list.end(); iter++)
      {
        SgVariableDeclaration* vardecl = *iter;
        SgVariableSymbol* varsymbol = getFirstVarSym(vardecl);
@@ -1215,23 +1213,23 @@ namespace upcTranslation{
        bool isp2s = isUpcPrivateToSharedType(t);
        bool isphaseless = isUpcPhaseLessSharedType(t);
        bool hasNullValue = false;
-       if (!isGlobal) 
+       if (!isGlobal)
          varname = generateUniqueGlobalName(vardecl);
-       if (isphaseless) 
+       if (isphaseless)
          shared_type = phaseLess_type;
        else
          shared_type = regular_type;
-       // a) involves addresses of other TLD: AddessOf 
+       // a) involves addresses of other TLD: AddessOf
        // *((int* *) UPCR_TLD_ADDR(pcounter)) = &(*(int* )UPCR_TLD_ADDR(counter));
-       if (initor) 
-       {  
+       if (initor)
+       {
          if (isp2s) // pointer to shared cases
          {
             SgAssignInitializer * assign_initor = isSgAssignInitializer(initor);
             if (assign_initor)
                 hasNullValue = isNullValued(assign_initor->get_operand());
          }
-         if (hasAddressOfOtherTLD(initor)) 
+         if (hasAddressOfOtherTLD(initor))
           {
            //cout<<"Found address of other TLD:"<<initor->unparseToString()<<endl;
            SgType* return_type = buildPointerType(buildVoidType());
@@ -1243,28 +1241,28 @@ namespace upcTranslation{
            SgAssignInitializer *initializer = isSgAssignInitializer(initor);
            ROSE_ASSERT(initializer);
            SgExpression* righthand=copyExpression(initializer->get_operand());
-           // We defer the variable substitution for the right hand until 
-           // the postorder processing by transVarRefExp() 
+           // We defer the variable substitution for the right hand until
+           // the postorder processing by transVarRefExp()
            SgExprStatement* assign_stmt = buildAssignStatement(lefthand,righthand);
-           appendStatement(assign_stmt, body);      
+           appendStatement(assign_stmt, body);
           }
-         //b) pointer to shared data: global and static local 
+         //b) pointer to shared data: global and static local
          //   shared int * p2s_p2 = &gsj ; // --translated into--->
          // *((upcr_pshared_ptr_t *) UPCR_TLD_ADDR(p2s_p2)) = *(&gsj);
          // we use *(... &gsj..) since the initializer could be expressions of &gsj
-          else if ((isp2s) && (isGlobal||isStatic(vardecl))) 
-          // we extend tld list to have some unstatic local pointer-2-shared variables, 
+          else if ((isp2s) && (isGlobal||isStatic(vardecl)))
+          // we extend tld list to have some unstatic local pointer-2-shared variables,
           // should exclude them here
           {
             if (!isp2s||!hasNullValue)// ignore p2s with 0 value !(isp2s&&hasNullValue)
             {
              SgType* return_type = buildPointerType(buildVoidType());
              // local variables need to be replaced to be their global versions
-             //if (!isGlobal) 
+             //if (!isGlobal)
              //  varname = SgName(generateUniqueGlobalName(vardecl));
              SgFunctionCallExp * leftFunc= buildFunctionCallExp("UPCR_TLD_ADDR",return_type,
                 buildExprListExp(buildVarRefExp(varname,vardecl->get_scope())), global_scope);
-             SgType* cast_type = buildPointerType(shared_type); 
+             SgType* cast_type = buildPointerType(shared_type);
              SgExpression* lefthand = buildCastExp(leftFunc,cast_type);
 
            SgAssignInitializer *initializer = isSgAssignInitializer(initor);
@@ -1272,11 +1270,11 @@ namespace upcTranslation{
            SgExpression* righthand=copyExpression(initializer->get_operand());
            SgExprStatement* assign_stmt = buildAssignStatement(
                                buildPointerDerefExp(lefthand),buildPointerDerefExp(righthand));
-           appendStatement(assign_stmt, body);      
+           appendStatement(assign_stmt, body);
           }
-        } 
+        }
      }//end if (initor)
-    } // end for TLD_list 
+    } // end for TLD_list
    }
 
   //! TODO read upcc-sizes file from UPC driver or configuration script
@@ -1314,7 +1312,7 @@ namespace upcTranslation{
     upc_sizes.sz_alignof_double=4;
     upc_sizes.sz_longdouble=12;
     upc_sizes.sz_alignof_longdouble=4;
- 
+
     upc_sizes.sz_size_t=4;
     upc_sizes.sz_alignof_size_t=4;
     upc_sizes.sz_alignof_dbl_1st=0;
@@ -1326,15 +1324,15 @@ namespace upcTranslation{
     upc_sizes.sz_alignof_sharedptr_innerstruct =0;
     upc_sizes.sz_alignof_psharedptr_innerstruct= 0;
     upc_sizes.sz_maxblocksz= 4194304;
- /* NOT used yet, put it into another structure later  
+ /* NOT used yet, put it into another structure later
     upc_sizes.UPCRConfig="VERSION=2.6.0,PLATFORMENV=shared,SHMEM=pthreads,SHAREDPTRREP=packed,TRANS=berkeleyupc,debug,nogasp,notv";
     upc_sizes.GASNetConfig="RELEASE=1.10.0,SPEC=1.8,CONDUIT=SMP(SMP-1.7/REFERENCE-1.10),THREADMODEL=PAR,SEGMENT=FAST,PTR=32bit,align,debug,trace,stats,srclines,timers_native,membars_native,atomics_native,atomic32_native,atomic64_native";
     upc_sizes.runtime_spec="3.9";
     upc_sizes.upc_header_dir="/upcr_preinclude/";
     upc_sizes.use_type_interface=false;
     upc_sizes.system_header_dirs=":";
-  */  
-  } 
+  */
+  }
 
   //! Get size of a type, using customized UPC fundamental sizes
   size_t customsizeof(SgType* t)
@@ -1358,14 +1356,14 @@ namespace upcTranslation{
   //! Get size of an element type
   size_t getElementSize(SgType* t)
   {
-    size_t result = customsizeof(t); 
+    size_t result = customsizeof(t);
     if (isSgArrayType(t))
     {
       result = customsizeof(getArrayElementType(isSgArrayType(t)));
     }
-    return result;  
+    return result;
   }
- 
+
   //! Get number of blocks of a UPC shared type
   size_t getNumberOfBlocks(SgType* t)
   {
@@ -1387,7 +1385,7 @@ namespace upcTranslation{
       { block_bytes = size; }
     else
       {block_bytes = min (block_bytes*element_size, size);}
-    return block_bytes;  
+    return block_bytes;
   }
 
   //! Is a type is a UPC shared array with THREADS related dimension?
@@ -1397,18 +1395,18 @@ namespace upcTranslation{
     if (isSgArrayType(t))
         if (isUpcArrayWithThreads(isSgArrayType(t)))
           return true;
-    return false;      
+    return false;
   }
 
   SgAggregateInitializer*
-  generateUpcriAllocFuncInitializer(std::vector<SgVariableDeclaration*>decl_list, 
+  generateUpcriAllocFuncInitializer(std::vector<SgVariableDeclaration*>decl_list,
            bool phaseless, SgScopeStatement* scope)
   {
      vector<SgVariableDeclaration*>::iterator iter1, iter2;
         // upcr_startup_shalloc_t info[] = {a,b,c,..};
         // upcr_startup_pshalloc_t info[] = {a,b,c,..};
     // SgAggregateInitializer -->SgExprListExp -> SgAssignInitializer
-    SgExprListExp * exp_list = buildExprListExp(); 
+    SgExprListExp * exp_list = buildExprListExp();
     for (iter1 = decl_list.begin();iter1 != decl_list.end(); iter1++)
     {
       SgVariableDeclaration * decl = *iter1;
@@ -1416,21 +1414,21 @@ namespace upcTranslation{
       SgType* t = var->get_type();
       SgName name = var->get_name();
       // get the global version of static local shared variables with initializers
-      if (isStatic(decl)&&isUpcSharedType(t)) 
+      if (isStatic(decl)&&isUpcSharedType(t))
         if (decl->get_scope()!=getGlobalScope(decl))
-         // if (var->get_initializer()!=NULL) 
+         // if (var->get_initializer()!=NULL)
          // we need this actually if the variable is used later
             name = SgName(generateUniqueGlobalName(decl));
 
       SgExprListExp* para_list = buildExprListExp();
       // UPCRT_STARTUP_SHALLOC (array, 40, 20, 1, 8, "A100H_R5_d"),
   // shared pointer, block bytes, number of blocks, multi_by_threads, elementsize, type string
-      //shaky here: the var decl will be removed later actually, 
-      //rename them should be a better solution. 
+      //shaky here: the var decl will be removed later actually,
+      //rename them should be a better solution.
       SgVarRefExp* arg1 = buildVarRefExp(name, scope);
 
       appendExpression(para_list,arg1);
-      
+
       SgIntVal* arg2 = buildIntVal(getBlockBytes(t));
       appendExpression(para_list,arg2);
 
@@ -1454,13 +1452,13 @@ namespace upcTranslation{
            (startup_name,buildIntType(), para_list,scope);
       // append function call expression into aggregate initializer
       SgAssignInitializer* initor2 =  buildAssignInitializer(callExp);
-       // must not have () around to enable correct macro expansion!!  
+       // must not have () around to enable correct macro expansion!!
       //initor2->set_need_paren(false);
       appendExpression(exp_list,initor2);
 
     }
 
-    SgAggregateInitializer * initializer = buildAggregateInitializer(exp_list); 
+    SgAggregateInitializer * initializer = buildAggregateInitializer(exp_list);
     return initializer;
 
   } //generateUpcriAllocFuncInitializer()
@@ -1487,23 +1485,23 @@ namespace upcTranslation{
     ROSE_ASSERT(varRef!=NULL);
     SgExprListExp* exp_list = isSgExprListExp(varRef->get_parent());
     if (exp_list)
-    {  
+    {
       SgFunctionCallExp* callExp = isSgFunctionCallExp(exp_list->get_parent());
       if (callExp)
        {
          string funcName0= isSgFunctionRefExp(callExp->get_function())->
                  get_symbol()->get_name().getString();
-         if (funcName0.compare(funcName)==0) result = true; 
+         if (funcName0.compare(funcName)==0) result = true;
        }
     }
     return result;
-  } 
+  }
 
 
-  /*! 
+  /*!
    * Translate a variable reference expression, mostly replace it with another expression
-   * Variable substitution: 
-   * for thread-local data (TLD): treat as pointer deference  
+   * Variable substitution:
+   * for thread-local data (TLD): treat as pointer deference
    *   global regular variable
    *   *((int *) UPCR_TLD_ADDR (counter))
    *   TODO array references
@@ -1512,7 +1510,7 @@ namespace upcTranslation{
    *                                     not = &( *((int *)(UPCR_TLD_ADDR(counter))));
    * Skip the var ref already inside UPCR_TLD_ADDR() to avoid duplicated substitution!!
    */
-  void transVarRefExp(SgNode* node) 
+  void transVarRefExp(SgNode* node)
   {
     SgVarRefExp* exp = isSgVarRefExp(node);
     SgVarRefExp* exp2 = NULL;
@@ -1520,36 +1518,36 @@ namespace upcTranslation{
     ROSE_ASSERT(exp);
     SgGlobal* global_scope = getGlobalScope(node);
     ROSE_ASSERT(global_scope);
-    
+
 
     // skip the one already translated into runtime library calls or macro calls
     if (isParameterOfFunctionCall("UPCR_TLD_ADDR",exp)||
-        isParameterOfFunctionCall("UPCRT_STARTUP_PSHALLOC",exp)|| 
-        isParameterOfFunctionCall("upcr_put_shared",exp)|| 
-        isParameterOfFunctionCall("UPCR_PUT_SHARED_VAL",exp)|| 
-        isParameterOfFunctionCall("upcr_put_pshared",exp)|| 
-        isParameterOfFunctionCall("UPCR_PUT_PSHARED_VAL",exp)|| 
-        isParameterOfFunctionCall("UPCR_GET_PSHARED",exp)|| 
-        isParameterOfFunctionCall("UPCR_GET_SHARED",exp)|| 
-        isParameterOfFunctionCall("UPCRT_STARTUP_SHALLOC",exp)) 
+        isParameterOfFunctionCall("UPCRT_STARTUP_PSHALLOC",exp)||
+        isParameterOfFunctionCall("upcr_put_shared",exp)||
+        isParameterOfFunctionCall("UPCR_PUT_SHARED_VAL",exp)||
+        isParameterOfFunctionCall("upcr_put_pshared",exp)||
+        isParameterOfFunctionCall("UPCR_PUT_PSHARED_VAL",exp)||
+        isParameterOfFunctionCall("UPCR_GET_PSHARED",exp)||
+        isParameterOfFunctionCall("UPCR_GET_SHARED",exp)||
+        isParameterOfFunctionCall("UPCRT_STARTUP_SHALLOC",exp))
       return;
-    
+
     SgExpression* new_exp=NULL;
-    
+
     // var_scope is the declaration scope of the referenced variable
-    // varexp_scope is the enclosing scope of the current node. 
+    // varexp_scope is the enclosing scope of the current node.
     vardecl = isSgVariableDeclaration(exp->get_symbol()->get_declaration()->get_declaration());
     ROSE_ASSERT(vardecl!=NULL);
     SgScopeStatement * var_scope = exp->get_symbol()->get_declaration()->get_scope();
     SgScopeStatement* varexp_scope = getScope(node);
     //bool isGlobal = isSgGlobal(vardecl);
     SgVariableSymbol* varsymbol = getFirstVarSym(vardecl);
-    string varname = varsymbol->get_name().str();    
+    string varname = varsymbol->get_name().str();
 
-    // unshared, regular scalar or local static scalar (mangled global name) 
+    // unshared, regular scalar or local static scalar (mangled global name)
     // The expression types remain after removing the original shared declarations??
     SgType* t = exp->get_type();
-#if 0    
+#if 0
     // should not do this replacement here , moved to transAssignOp()
     // postorder traversal will crash when replacing a parent node (assignop) of the varRef
     // with the function call exp
@@ -1567,21 +1565,21 @@ namespace upcTranslation{
         //.........
       } // end if (assignop)
     } else
-#endif    
+#endif
     //------------------------TLD cases ----------------------------
     //if (isScalarType(t)&&!isUpcSharedType(t))
     if ((!isUpcSharedType(t))&&(varexp_scope!=global_scope))
-      if ((var_scope == global_scope) || 
+      if ((var_scope == global_scope) ||
           (isStatic(exp->get_symbol()->get_declaration()->get_declaration())))
       {
         //cout<<"Found unshared static/global variables!!"<<endl;
         SgType* return_type = buildPointerType(buildVoidType());
-        // must use deepcopy here, otherwise its parent pointer will be changed to exprList 
+        // must use deepcopy here, otherwise its parent pointer will be changed to exprList
         // The replacement later on won't operate on the right parent!!
-        if (var_scope==global_scope) 
+        if (var_scope==global_scope)
           exp2 = isSgVarRefExp(copyExpression(exp));
         else // local TLD, use reference to its global version
-        { 
+        {
           exp2= buildVarRefExp(generateUniqueGlobalName(vardecl),global_scope);
         }
         ROSE_ASSERT(exp2!=NULL);
@@ -1590,7 +1588,7 @@ namespace upcTranslation{
               buildExprListExp(exp2), global_scope);
         new_exp = buildPointerDerefExp(buildCastExp(call_exp,buildPointerType(t)));
         //cout<<"new exp is:"<< new_exp->unparseToString() <<endl;
-        //replace expression , keep old one used as a function parameter now 
+        //replace expression , keep old one used as a function parameter now
         replaceExpression(exp, new_exp);
         //replaceExpression(exp, new_exp,true);
       }  // end if
@@ -1621,14 +1619,14 @@ namespace upcTranslation{
     if (exp) // if left hand is a variable reference expression
     {
       // var_scope is the declaration scope of the referenced variable
-      // varexp_scope is the enclosing scope of the current node. 
+      // varexp_scope is the enclosing scope of the current node.
       SgVariableDeclaration* vardecl = isSgVariableDeclaration(exp->get_symbol()->get_declaration()->get_declaration());
       ROSE_ASSERT(vardecl!=NULL);
       //SgScopeStatement * var_scope = exp->get_symbol()->get_declaration()->get_scope();
       SgScopeStatement* varexp_scope = getScope(node);
       bool isGlobal = isSgGlobal(vardecl);
       SgVariableSymbol* varsymbol = getFirstVarSym(vardecl);
-      string varname = varsymbol->get_name().str();    
+      string varname = varsymbol->get_name().str();
 
       SgType* t = exp->get_type();
       if (isUpcSharedType(t)&&(varexp_scope!=global_scope))
@@ -1640,10 +1638,10 @@ namespace upcTranslation{
           global_name = varname;
         else
           global_name = generateUniqueGlobalName(vardecl);
-        // base type for shared scalar variables  
+        // base type for shared scalar variables
         SgModifierType* modifier_type=NULL;
         hasUpcSharedType(t,&modifier_type);
-        ROSE_ASSERT(modifier_type); 
+        ROSE_ASSERT(modifier_type);
         SgType* base_type = modifier_type->get_base_type();
 
         if (isArrayType)
@@ -1661,7 +1659,7 @@ namespace upcTranslation{
           string func_name;
           if (isphaseless)
              func_name = "UPCR_PUT_PSHARED_VAL";
-          else  
+          else
              func_name = "UPCR_PUT_SHARED_VAL";
           SgFunctionCallExp* func_call_exp = buildFunctionCallExp(func_name,
                     buildVoidType(),arg_list,global_scope);
@@ -1670,7 +1668,7 @@ namespace upcTranslation{
        } // end if shared variable ref inside a local scope
     } // if lhs is a varRefExp
   } //transAssignOp()
- 
+
    //! Linking stage processing: insert per-file alloc/init functions etc.
   void transProject(SgNode* node)
   {
@@ -1679,7 +1677,7 @@ namespace upcTranslation{
     //printf("Number of files: %zu \n", filelist.size());
     //No action for single file project
     if (filelist.size()<=1)
-      return; 
+      return;
     vector<SgFile*>  src_files;
     SgFile* target_file=NULL;
     // collect source(anything else) and target (bupc_magic.c) files
@@ -1720,23 +1718,23 @@ namespace upcTranslation{
         SgFile* src_file = *iter;
        SgFunctionDeclaration* alloc_func = findUpcriAllocInit(src_file,true);
        if (alloc_func)
-       {  
+       {
          SgFunctionDeclaration* func = buildNondefiningFunctionDeclaration(alloc_func
            ,global);
-        prependStatement(func,global); 
+        prependStatement(func,global);
         appendStatement(func, allocs_body);
-       } 
+       }
 
        SgFunctionDeclaration* init_func = findUpcriAllocInit(src_file,false);
        if (init_func)
-       {  
+       {
          SgFunctionDeclaration* func = buildNondefiningFunctionDeclaration(init_func
            ,global);
-        prependStatement(func,global); 
+        prependStatement(func,global);
         appendStatement(func, inits_body);
-       } 
+       }
       } // end for
-    } 
+    }
     else
     {
       cout<<"Cannot find the target magic file to add perfile processing functions."<<endl;
@@ -1754,7 +1752,7 @@ namespace upcTranslation{
     bool result = false;
     if (isSgFunctionDeclaration(n) &&
      isSgGlobal(isSgStatement(n)->get_scope())&&
-     (isSgFunctionDeclaration(n)->get_name().getString().find(matchStr,0) == 0)) 
+     (isSgFunctionDeclaration(n)->get_name().getString().find(matchStr,0) == 0))
    result = true;
 
    return result;
@@ -1763,18 +1761,18 @@ namespace upcTranslation{
   //! Find defining UPCRI_ALLCO_file_xxx() or UPCRI_INIT_file_xxx() from a file
   SgFunctionDeclaration* findUpcriAllocInit(SgNode* n, bool checkAlloc)
   {
-    if (!n) return 0;   
+    if (!n) return 0;
 
-    if (isUpcriAllocInit(n,checkAlloc)) 
+    if (isUpcriAllocInit(n,checkAlloc))
     {
       return isSgFunctionDeclaration(n);
     }
     vector<SgNode*> children = n->get_traversalSuccessorContainer();
-    for (vector<SgNode*>::const_iterator i = children.begin(); 
-    i != children.end(); ++i) 
+    for (vector<SgNode*>::const_iterator i = children.begin();
+    i != children.end(); ++i)
     {
       SgFunctionDeclaration* target= findUpcriAllocInit(*i,checkAlloc);
-      if (target) 
+      if (target)
         return target;
     }
     return 0;
@@ -1789,7 +1787,7 @@ namespace upcTranslation{
    *  extern upcr_pshared_ptr_t ep2s_p1;
    *
    * b) in local scope: must not have 'static' modifier
-   *   
+   *
    *  shared int *lp2s_p;
    *  shared int *lp2s_p1=0;
    *  shared int *lp2s_p2=&global_counter2;
@@ -1808,7 +1806,7 @@ namespace upcTranslation{
    void transSpecialPrivate2Shared(SgVariableDeclaration* vardecl)
    {
      ROSE_ASSERT(vardecl!=NULL);
-     SgGlobal* global_scope = getGlobalScope(vardecl); 
+     SgGlobal* global_scope = getGlobalScope(vardecl);
      ROSE_ASSERT(global_scope!=NULL);
 
      SgVariableSymbol* varsymbol = getFirstVarSym(vardecl);
@@ -1820,18 +1818,18 @@ namespace upcTranslation{
      bool isp2s = isUpcPrivateToSharedType(t);
      //bool isphaseless = isUpcPhaseLessSharedType(t);
      // must be private-to-shared pointers
-     ROSE_ASSERT(isp2s); 
+     ROSE_ASSERT(isp2s);
      // must be either global with extern or non-static local
      ROSE_ASSERT((isGlobal && isExtern(vardecl)) ||
                   (!isGlobal&&!isStatic(vardecl)));
-        // prepare types 
+        // prepare types
     SgType* regular_type = lookupNamedTypeInParentScopes("upcr_shared_ptr_t",global_scope);
     SgType* phaseLess_type = lookupNamedTypeInParentScopes("upcr_pshared_ptr_t",global_scope);
-    if (regular_type==NULL) 
+    if (regular_type==NULL)
       regular_type = buildOpaqueType("upcr_shared_ptr_t",global_scope);
-    if( phaseLess_type == NULL ) 
+    if( phaseLess_type == NULL )
       phaseLess_type = buildOpaqueType("upcr_pshared_ptr_t",global_scope);
-     
+
     SgType* new_type=regular_type;
     SgScopeStatement* new_scope = global_scope;
     if (!isGlobal) new_scope = vardecl->get_scope();
@@ -1842,36 +1840,36 @@ namespace upcTranslation{
     insertStatementBefore(vardecl, new_decl);
     moveUpPreprocessingInfo(new_decl,vardecl);
     // for local pointer to shared data with an initializer
-    // add an extra assignment statement. 
+    // add an extra assignment statement.
     // e.g:
-    //  shared int * lp2s_p2 = &gsj // is translated into 
+    //  shared int * lp2s_p2 = &gsj // is translated into
     //  upcr_pshared_ptr_t lp2s_p2;
     //   lp2s_p2 = gsj;
     //
     // // Special handling for null-valued initializer
-    //  shared int *lp2s_p1=0; 
+    //  shared int *lp2s_p1=0;
     //  UPCR_SETNULL_PSHARED ((_UINT32) & lp2s_p1);
-    if ((!isGlobal) &&(initor))  
+    if ((!isGlobal) &&(initor))
     {
       SgExpression* lhs = buildVarRefExp(new_decl);
-      // Only handle SgAssignInitializer for now, 
+      // Only handle SgAssignInitializer for now,
       // TODO SgAggregateInitializer and others
-      SgAssignInitializer * assign_initor = isSgAssignInitializer(initor); 
+      SgAssignInitializer * assign_initor = isSgAssignInitializer(initor);
       if (!assign_initor)
       {
          cerr<<"Error: unhandled SgInitializer type in transThreadLocalData()"<<endl;
          ROSE_ASSERT(assign_initor);
       }
        // distinguish between null value and others
-      bool hasNullValue = isNullValued(assign_initor->get_operand()); 
-     if (hasNullValue) 
+      bool hasNullValue = isNullValued(assign_initor->get_operand());
+     if (hasNullValue)
       {
         SgType* return_type = buildVoidType();
         SgVarRefExp* var1 = buildVarRefExp(new_decl);
         //grab the base type for private-to-shared type
         SgModifierType* modifier_type=NULL;
         hasUpcSharedType(t,&modifier_type);
-        ROSE_ASSERT(modifier_type); 
+        ROSE_ASSERT(modifier_type);
         SgType* base_type = modifier_type->get_base_type();
 
         SgExpression* arg1= buildCastExp(buildAddressOfOp(var1),base_type);
@@ -1894,15 +1892,15 @@ namespace upcTranslation{
      // TODO replace variable reference from global -> *global ??
      // lp2s_p1 = &global_counter2; // translated into -->
      // lp2s_p1 = global_counter2;
-      
+
    } //transSpecialPrivate2Shared()
 
-  //shared int* pp =0; 
+  //shared int* pp =0;
   //initializer is represented as SgAssignInitializer->SgCastExp->SgIntVal
    bool isNullValued(SgExpression* exp)
    {
      ROSE_ASSERT(exp);
-      bool hasNullValue = false; 
+      bool hasNullValue = false;
       SgCastExp* cast_exp = isSgCastExp(exp);
       if (cast_exp)
       {

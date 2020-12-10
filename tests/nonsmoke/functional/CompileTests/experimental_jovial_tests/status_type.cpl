@@ -1,0 +1,23 @@
+START
+
+COMPOOL status'type;
+
+TYPE status'1 STATUS
+(
+  V(LOW),
+  V(MED),
+  V(HIGH)
+);
+
+TYPE status'2 STATUS
+(
+   V(ZERO),
+  1V(ONE),
+   V(TWO),
+  3V(THREE),
+  5V(FIVE),
+   V(SIX),
+   V(SEVEN)
+);
+
+TERM

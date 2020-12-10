@@ -78,8 +78,10 @@ YardenPragmaPackExample.c
 # Yarden_client.c 
 
 if !USING_CLANG_COMPILER
+if !USING_INTEL_COMPILER
 C_TESTCODES_REQUIRED_TO_PASS += \
    Yarden_client.c 
+endif
 endif
 
 C_FAILURE_TESTCODES = \

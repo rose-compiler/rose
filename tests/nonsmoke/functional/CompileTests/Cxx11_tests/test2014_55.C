@@ -13,7 +13,14 @@ void foo()
    {
      int x;
 
+
+#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 61
+// #error "EDG_VERSION >= 61"
+     [[likely]] if (x == 0)
+#else
+// #error "EDG_VERSION < 61"
      [[likely(true)]] if (x == 0)
+#endif
         {
         }
    }

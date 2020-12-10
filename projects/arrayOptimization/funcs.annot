@@ -1,0 +1,34 @@
+operator interpolate1D(floatArray & fineGrid, floatArray & coarseGrid) 
+   {
+    allow_alias none;
+   }
+
+operator interpolate2D(floatArray & fineGrid,floatArray & coarseGrid) 
+   {
+   allow_alias none;
+   }
+
+operator interpolate3D ( floatArray & fineGrid, floatArray & coarseGrid )
+   {
+   allow_alias none;
+   }
+
+operator redBlackRelax1D(floatArray & s,floatArray & rhs) 
+   { 
+   allow_alias none;
+   }
+
+operator redBlackRelax2D(floatArray & s,floatArray & rhs) 
+   { 
+   allow_alias none;
+   }
+
+operator redBlackRelax3DNonFullyVariational ( floatArray & s, floatArray & rhs )
+   {
+   allow_alias none;
+   }
+
+operator redBlackRelax3DFullyVariational ( floatArray & s, floatArray & rhs )
+   {
+   allow_alias none;
+   }

@@ -49,7 +49,7 @@ public:
         regIp_ = partitioner.instructionProvider().instructionPointerRegister();
         regSp_ = partitioner.instructionProvider().stackPointerRegister();
         regSs_ = partitioner.instructionProvider().stackSegmentRegister();
-        wordSize_ = regIp_.get_nbits();
+        wordSize_ = regIp_.nBits();
     }
 
     void reset(const MemoryMap::Ptr &map) {
@@ -120,7 +120,7 @@ public:
             if (!insn)
                 throw std::runtime_error("no instruction at " + StringUtility::addrToString(ip));
             if (settings.traceInsns && ::mlog[TRACE])
-                ::mlog[TRACE] <<unparseInstructionWithAddress(insn) <<"\n";
+                ::mlog[TRACE] <<partitioner.unparse(insn) <<"\n";
             cpu_->processInstruction(insn);
         }
         throw std::runtime_error("execution limit exceeded ("+StringUtility::plural(settings.insnLimit, "instructions")+")");
@@ -236,7 +236,8 @@ processExistingCalls(const P2::Partitioner &partitioner, const Settings &setting
 
         // Decoder return addresses
         std::set<rose_addr_t> breakpoints;
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(caller)) {
+        P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(caller);
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values()) {
             const P2::ControlFlowGraph::ConstVertexIterator returnVertex = callret->target();
             if (returnVertex->value().type() == P2::V_BASIC_BLOCK)
                 breakpoints.insert(returnVertex->value().address());

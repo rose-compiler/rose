@@ -1,4 +1,6 @@
 include_rules
+
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_CXX_ANALYSIS),yes)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
@@ -38,4 +40,5 @@ run for specimen in $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS); do \
 	    ../../testTranslator $(ROSE_FLAGS) -I. -c $specimen; \
     done
 
+endif
 endif

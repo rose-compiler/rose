@@ -1,0 +1,11 @@
+START
+PROGRAM charItemDesc;
+BEGIN
+
+  ITEM str C 7;
+  ITEM chr C;
+
+  ;
+
+END
+TERM

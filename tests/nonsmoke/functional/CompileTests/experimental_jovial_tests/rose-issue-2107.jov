@@ -1,0 +1,8 @@
+START
+DEF PROC PROC'1;
+  BEGIN
+    FOR I : 0 BY 1 WHILE I <= 10;
+      BEGIN
+      END
+  END
+TERM

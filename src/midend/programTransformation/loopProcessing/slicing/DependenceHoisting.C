@@ -10,20 +10,21 @@
 #include <DepCompTransform.h>
 #include <LoopTreeTransform.h>
 #include <LoopInfoInterface.h>
+#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
 
 struct SliceInfo
-{ 
+{
   LoopTreeNode* loop, *stmt;
   int looplevel;
   bool reversible;
   LoopAlignInfo alignInfo;
 
-  SliceInfo(LoopTreeNode *s = 0, LoopTreeNode *l=0, int level=-1, 
+  SliceInfo(LoopTreeNode *s = 0, LoopTreeNode *l=0, int level=-1,
                 bool r=false, int mina=1, int maxa = -1)
     : loop(l), stmt(s), looplevel(level), reversible(r), alignInfo(mina,maxa) {}
   void SetLoop(LoopTreeNode *l, int level) { loop=l; looplevel=level; }
   operator bool() { return alignInfo; }
-  void write(std::ostream& out) const 
+  void write(std::ostream& out) const
    { out << "slice stmt: \n";
      stmt->write(out);
      out << "slice loop: \n";
@@ -31,20 +32,20 @@ struct SliceInfo
      out << "alignment: " << alignInfo.mina << "->" << alignInfo.maxa << "\n";
    }
 };
- 
+
 class TransSlicingAnal
 {
   SliceInfo* sliceLoops;
   LoopAlignInfo* fuseInfo;
   int size, maxsize;
  public:
-  void Reset( int m = 0, int s = 0) 
-    { 
+  void Reset( int m = 0, int s = 0)
+    {
        assert(m >= s);
        if (m != maxsize) {
           if (sliceLoops != 0)
              delete [] sliceLoops;
-          if (fuseInfo != 0) 
+          if (fuseInfo != 0)
              delete [] fuseInfo;
        }
        maxsize = m;
@@ -56,12 +57,12 @@ class TransSlicingAnal
     }
   int FuseInfoOffset( int i1, int i2) const
    {
-      return i1 * maxsize / 2 + i2 -1; 
+      return i1 * maxsize / 2 + i2 -1;
    }
 
   TransSlicingAnal() : sliceLoops(0), fuseInfo(0), size(0), maxsize(0) {}
   ~TransSlicingAnal() { Reset(); }
-  TransSlicingAnal& operator = (const TransSlicingAnal& that) 
+  TransSlicingAnal& operator = (const TransSlicingAnal& that)
    {
       Reset( that.maxsize, that.size);
       for (int i = 0; i < size; ++i) {
@@ -86,7 +87,7 @@ class TransSlicingAnal
    }
 
   bool LoopSlicible( LoopTreeDepComp& comp, LoopTreeTransDepGraphCreate *tg,
-                        SliceInfo& curloop, LoopAlignInfo* _fuseInfo) 
+                        SliceInfo& curloop, LoopAlignInfo* _fuseInfo)
    {
     typedef TransLoopSlicable<LoopTreeDepGraphNode> TransLoopSlicable;
     typedef TransLoopReversible<LoopTreeDepGraphNode> TransLoopReversible;
@@ -95,7 +96,7 @@ class TransSlicingAnal
     LoopAnalInfo anal1( comp.GetDepNode(curloop.stmt), curloop.looplevel);
     if ( ! TransLoopSlicable()( tg, anal1) )
        return false;
-    curloop.reversible = TransLoopReversible()(tg,anal1); 
+    curloop.reversible = TransLoopReversible()(tg,anal1);
     if (size == 0)
        curloop.alignInfo.Set(0,0);
     else {
@@ -106,7 +107,7 @@ class TransSlicingAnal
         LoopAlignInfo fuse=
             (loop2.loop == curloop.loop)?
              LoopAlignInfo(0,0) :
-             TransLoopFusible<LoopTreeDepGraphNode>()(tg, anal1,anal2); 
+             TransLoopFusible<LoopTreeDepGraphNode>()(tg, anal1,anal2);
         if (!fuse)
            return false;
         curloop.alignInfo &= loop2.alignInfo + fuse;
@@ -127,7 +128,7 @@ class TransSlicingAnal
    }
    unsigned NumberOfSliceStmts() const { return size; }
    LoopTreeNode* SliceStmt(int i) { return sliceLoops[i].stmt; }
-   SliceInfo& SliceLoop(int i) { return sliceLoops[i]; } 
+   SliceInfo& SliceLoop(int i) { return sliceLoops[i]; }
    LoopTreeNode* LastSliceStmt() { return sliceLoops[size-1].stmt; }
    void write(std::ostream& out) const;
 };
@@ -153,7 +154,7 @@ void GetLoopTreeSize( LoopTreeNode* root, int& stmtnum, int& stmtlevel)
 }
 
 void DependenceHoisting ::
-Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg, 
+Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
          CompSliceNest& result)
 {
   LoopTreeInterface interface;
@@ -163,12 +164,12 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   GetLoopTreeSize(root, slicesize, size);
   size -= rootlevel;
   size *= slicesize;
- 
+
   result.Reset(size);
   TransSlicingAnal* tmpSlices = new TransSlicingAnal[size];
   LoopAlignInfo* buf1 = new LoopAlignInfo[slicesize], *buf2 = new LoopAlignInfo[slicesize];
   for (int i = 0; i < size; ++i)
-    tmpSlices[i].Reset(slicesize); 
+    tmpSlices[i].Reset(slicesize);
 
   /* QY: 6/2009: create a tmporary slice for each individual slicable loop;
      i.e. for each loop that can be placed at the outermost position */
@@ -177,7 +178,7 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   if (stmt == 0) return;
   size = 0;
   int index = stmt->LoopLevel()-1;
-  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interface); 
+  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
        index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
     SliceInfo curloop(stmt, loop, index--);
     TransSlicingAnal anal;
@@ -198,10 +199,10 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
       LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
       for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
         curloop.SetLoop(loop, index--);
-        if (anal.LoopSlicible( comp, tg, curloop, buf1)) 
+        if (anal.LoopSlicible( comp, tg, curloop, buf1))
            break;
-      } 
-      if (loop == 0) /* QY: no slicable loop has been found for stmt */ 
+      }
+      if (loop == 0) /* QY: no slicable loop has been found for stmt */
          { break; }
       else {
          for (loop = GetEnclosingLoop(loop, interface);
@@ -222,9 +223,9 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
       for (int i = 0; i < slicesize; ++i) {
         SliceInfo& info = anal.SliceLoop(i);
         slice->SetSliceLoop(info.stmt, info.loop, info.reversible,
-                            info.alignInfo.mina); 
+                            info.alignInfo.mina);
       }
-      result.Append( slice ); 
+      result.Append( slice );
     }
   }
   delete[] tmpSlices;
@@ -236,7 +237,7 @@ void DependenceHoisting ::
 Analyze( LoopTreeDepComp &comp, CompSliceNest& result)
 {
   typedef PerfectLoopSlicable<DepInfoEdge,LoopTreeDepGraph> LoopSlicable;
-  typedef PerfectLoopReversible<DepInfoEdge,LoopTreeDepGraph> 
+  typedef PerfectLoopReversible<DepInfoEdge,LoopTreeDepGraph>
           LoopReversible;
 
   LoopTreeNode *root = comp.GetLoopTreeRoot();
@@ -249,23 +250,23 @@ Analyze( LoopTreeDepComp &comp, CompSliceNest& result)
 
   LoopTreeDepGraph *dg = comp.GetDepGraph();
   for (LoopTreeNode *n = root;
-       n; n = (n->ChildCount() == 1)? n->FirstChild() : 0) { 
+       n; n = (n->ChildCount() == 1)? n->FirstChild() : 0) {
      if (!n->IncreaseLoopLevel())
         continue;
      index++;
      if (!LoopSlicable()(dg, index))
-        continue;   
+        continue;
      CompSlice *slice = CreateCompSlice( rootlevel );
      bool r = LoopReversible()(dg, index);
      LoopTreeTraverseSelectStmt stmtIter(n);
-     for (LoopTreeNode *s; (s = stmtIter.Current()); stmtIter++) 
+     for (LoopTreeNode *s; (s = stmtIter.Current()); stmtIter++)
        slice->SetSliceLoop( s, n, r, 0);
-     result.Append(slice);   
+     result.Append(slice);
   }
 }
 
 LoopTreeNode* DependenceHoisting::
-Transform ( LoopTreeDepComp &comp, 
+Transform ( LoopTreeDepComp &comp,
             const CompSlice *slice, LoopTreeNode *h1)
 {
   bool alreadySliced = true;

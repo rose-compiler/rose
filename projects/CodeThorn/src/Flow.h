@@ -7,8 +7,9 @@
 #include "Labeler.h"
 
 #include "Sawyer/Graph.h"
+#include <map>
 
-namespace SPRAY {
+namespace CodeThorn {
 
   enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
 
@@ -59,6 +60,11 @@ namespace SPRAY {
     EdgeTypeSet getTypes() const { return _types; }
     std::string getAnnotation() const { return _annotation; }
     void setAnnotation(std::string annotation) { _annotation = annotation;}
+
+    /* an edge is valid if source and target labels are valid
+       a default constructed edge is not valid */
+    bool isValid() const;
+
   private:
     Label _source;
     Label _target;
@@ -80,7 +86,8 @@ namespace SPRAY {
 #ifdef USE_SAWYER_GRAPH
     class iterator : public SawyerCfg::EdgeIterator {
     public: 
-      iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
+
+  iterator(const SawyerCfg::EdgeIterator& it) : SawyerCfg::EdgeIterator(it) {}
       Edge operator*();
       iterator& operator++() { SawyerCfg::EdgeIterator::operator++(); return *this; }
       iterator operator++(int) { return iterator(SawyerCfg::EdgeIterator::operator++(1)); }
@@ -149,8 +156,15 @@ namespace SPRAY {
 #endif
     Flow edgesOfType(EdgeType edgeType);
     Flow outEdgesOfType(Label label, EdgeType edgeType);
-    Label getStartLabel() { return _startLabel; }
-    void setStartLabel(Label label) { _startLabel = label; }
+    // this function only returns a valid edge if exactly one edge exists
+    Edge outEdgeOfType(Label label, EdgeType edgeType);
+
+    void setStartLabel(Label label);
+    void addStartLabel(Label label);
+    Label getStartLabel();
+    void setStartLabelSet(LabelSet labelSet);
+    LabelSet getStartLabelSet();
+
     void setDotOptionDisplayLabel(bool opt);
     void setDotOptionDisplayStmt(bool opt);
     void setDotOptionEdgeAnnotationsOnly(bool opt);
@@ -166,10 +180,10 @@ namespace SPRAY {
     std::size_t deleteEdges(EdgeType edgeType);
     std::size_t deleteEdges(Flow& flow);
     void establishBoostGraph();
-    
+
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
-    SPRAY::Flow reverseFlow();
+    CodeThorn::Flow reverseFlow();
   private:
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;
@@ -179,7 +193,7 @@ namespace SPRAY {
     std::string _fixedColor;
     std::string _fixedNodeColor;
     bool _dotOptionHeaderFooter;
-    Label _startLabel;
+    LabelSet _startLabelSet;
 #ifdef USE_SAWYER_GRAPH
     SawyerCfg  _sawyerFlowGraph;
 #else
@@ -207,7 +221,11 @@ namespace SPRAY {
    */
   class InterFlow : public std::set<InterEdge> {
   public:
+    // type used to map any label to a respective function
+    typedef std::map<Label,Label> LabelToFunctionMap;
     std::string toString() const;
+    std::string dotCallGraph(LabelToFunctionMap& map) const;
+    std::string dotCallGraphEdges(LabelToFunctionMap& map) const;
   };
 
 } // end namespace CodeThorn

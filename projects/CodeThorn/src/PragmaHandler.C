@@ -2,16 +2,16 @@
 
 #include "PragmaHandler.h"
 #include "SgNodeHelper.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "Specialization.h"
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace boost;
-using namespace SPRAY;
+using namespace CodeThorn;
 
-size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::Analyzer* analyzer) {
+size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::CTAnalysis* analyzer) {
   size_t num=extractAndParsePragmas(sageProject, analyzer);
   performSpecialization(sageProject, analyzer);
   return num;
@@ -19,7 +19,7 @@ size_t PragmaHandler::handlePragmas(SgProject* sageProject, CodeThorn::Analyzer*
 
 // MS 2015: this function is implemented with boost tokenizers. If more features are added
 // it's certainly better to replace it with a parser.
-size_t PragmaHandler::extractAndParsePragmas(SgNode* root, CodeThorn::Analyzer* analyzer) {
+size_t PragmaHandler::extractAndParsePragmas(SgNode* root, CodeThorn::CTAnalysis* analyzer) {
   SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
   if(size_t numPragmas=pragmaList.size()>0) {
     cout<<"STATUS: found "<<numPragmas<<" verify pragmas."<<endl;
@@ -78,14 +78,14 @@ size_t PragmaHandler::extractAndParsePragmas(SgNode* root, CodeThorn::Analyzer* 
 
     //option_specialize_fun_param_list.push_back(1);
     //option_specialize_fun_const_list.push_back(16);
-    analyzer->setSkipSelectedFunctionCalls(true);
+    analyzer->setSkipUnknownFunctionCalls(true);
     analyzer->setSkipArrayAccesses(true);
     return numPragmas;
   }
   return 0;
 }
 
-void PragmaHandler::performSpecialization(SgProject* sageProject, CodeThorn::Analyzer* analyzer) {
+void PragmaHandler::performSpecialization(SgProject* sageProject, CodeThorn::CTAnalysis* analyzer) {
   //TODO1: refactor into separate function
   int numSubst=0;
   if(option_specialize_fun_name!="")

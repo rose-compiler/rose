@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_ModulesM68k_H
 #define ROSE_Partitioner2_ModulesM68k_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 
@@ -51,4 +54,5 @@ std::vector<Function::Ptr> findInterruptFunctions(const Partitioner&, rose_addr_
 } // namespace
 } // namespace
 
+#endif
 #endif

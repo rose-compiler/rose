@@ -1,7 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
-#include <Diagnostics.h>
 #include <BinaryString.h>
+
 #include <Sawyer/ProgressBar.h>
 
 using namespace Rose::Diagnostics;
@@ -943,3 +944,5 @@ operator<<(std::ostream &out, const StringFinder &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

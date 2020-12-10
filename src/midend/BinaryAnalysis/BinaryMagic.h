@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_MagicNumber_H
 #define ROSE_BinaryAnalysis_MagicNumber_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <MemoryMap.h>
 
 namespace Rose {
@@ -63,4 +66,6 @@ private:
 
 } // namespace
 } // namespace
+
+#endif
 #endif

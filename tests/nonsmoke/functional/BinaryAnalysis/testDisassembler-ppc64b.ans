@@ -1,0 +1,258 @@
+L1    # The section numbers and titles in this file come from "PowerPC User
+L2    # Instruction Set Architecture Book I" Version 2.02, January 28, 2005.
+L3    
+L4    # This file contains only those instructions that exist in the PowerPC-64
+L5    # ISA but not the PowerPC-32 ISA. Since PowerPC-64 is backward compatible with
+L6    # PowerPC-32, the instructions listed in testDisassembler-ppc32.txt can be
+L7    # tested in 64-bit mode as well as 32-bit mode, although the answer files
+L8    # will differ due to different operand types.
+L9    
+L10   va 0x1000
+L11   
+L12   #-------------------------------------------------------------------------------
+L13   # 3.3.2 Fixed-Point Load Instructions
+L14   #-------------------------------------------------------------------------------
+L15   
+L16   # ld r1, u64 [r2 - 4]
+L17   0xe8 0x22 0xff 0xfc
+L17   0x00001000: e8 22 ff fc               ?? ld       r1, u64 [r2 + 0xfffffffffffffffc<18446744073709551612,-4>] ; load doubleword
+L18   
+L19   # ldx r1, r2, r3
+L20   0x7c 0x22 0x18 0x2a
+L20   0x00001000: 7c 22 18 2a               ?? ldx      r1, u64 [r2 + r3]                        ; load doubleword indexed
+L21   
+L22   # ldu r1, u64 [r2 - 4]
+L23   0xe8 0x22 0xff 0xfd
+L23   0x00001000: e8 22 ff fd               ?? ldu      r1, u64 [r2 + 0xfffffffffffffffc<18446744073709551612,-4>] ; load doubleword with update
+L24   
+L25   # ldux r1, r2, r3
+L26   0x7c 0x22 0x18 0x6a
+L26   0x00001000: 7c 22 18 6a               ?? ldux     r1, u64 [r2 + r3]                        ; load doubleword with update indexed
+L27   
+L28   #-------------------------------------------------------------------------------
+L29   # 3.3.3 Fixed-Point Store Instructions
+L30   #-------------------------------------------------------------------------------
+L31   
+L32   # std r1, u64 [r2 - 4]
+L33   0xf8 0x22 0xff 0xfc
+L33   0x00001000: f8 22 ff fc               ?? std      r1, u64 [r2 + 0xfffffffffffffffc<18446744073709551612,-4>] ; store doubleword
+L34   
+L35   # stdu r1, u64 [r2 - 4]
+L36   0xf8 0x22 0xff 0xfd
+L36   0x00001000: f8 22 ff fd               ?? stdu     r1, u64 [r2 + 0xfffffffffffffffc<18446744073709551612,-4>] ; store doubleword with update
+L37   
+L38   # stdx r1, r2, r3
+L39   0x7c 0x22 0x19 0x2a
+L39   0x00001000: 7c 22 19 2a               ?? stdx     r1, u64 [r2 + r3]                        ; store doubleword indexed
+L40   
+L41   # stdux r1, r2, r3
+L42   0x7c 0x22 0x19 0x6a
+L42   0x00001000: 7c 22 19 6a               ?? stdux    r1, u64 [r2 + r3]                        ; store doubleword with update indexed
+L43   
+L44   #-------------------------------------------------------------------------------
+L45   # 3.3.8 Fixed-Point Arithmetic Instructions
+L46   #-------------------------------------------------------------------------------
+L47   
+L48   # mulhd r1, r2, r3
+L49   0x7c 0x22 0x18 0x92
+L49   0x00001000: 7c 22 18 92               ?? mulhd    r1, r2, r3                               ; multiply high doubleword
+L50   
+L51   # mulhd. r1, r2, r3
+L52   0x7c 0x22 0x18 0x93
+L52   0x00001000: 7c 22 18 93               ?? mulhd.   r1, r2, r3                               ; multiply high doubleword
+L53   
+L54   # mulhdu r1, r2, r3
+L55   0x7c 0x22 0x18 0x12
+L55   0x00001000: 7c 22 18 12               ?? mulhdu   r1, r2, r3                               ; multiply high doubleword unsigned
+L56   
+L57   # mulhdu. r1, r2, r3
+L58   0x7c 0x22 0x18 0x13
+L58   0x00001000: 7c 22 18 13               ?? mulhdu.  r1, r2, r3                               ; multiply high doubleword unsigned
+L59   
+L60   # divd r1, r2, r3
+L61   0x7c 0x22 0x1b 0xd2
+L61   0x00001000: 7c 22 1b d2               ?? divd     r1, r2, r3                               ; divide doubleword
+L62   
+L63   # divd. r1, r2, r3
+L64   0x7c 0x22 0x1b 0xd3
+L64   0x00001000: 7c 22 1b d3               ?? divd.    r1, r2, r3                               ; divide doubleword
+L65   
+L66   # divdo r1, r2, r3
+L67   0x7c 0x22 0x1f 0xd2
+L67   0x00001000: 7c 22 1f d2               ?? divdo    r1, r2, r3                               ; divide doubleword
+L68   
+L69   # divdo. r1, r2, r3
+L70   0x7c 0x22 0x1f 0xd3
+L70   0x00001000: 7c 22 1f d3               ?? divdo.   r1, r2, r3                               ; divide doubleword
+L71   
+L72   # divdu r1, r2, r3
+L73   0x7c 0x22 0x1b 0x92
+L73   0x00001000: 7c 22 1b 92               ?? divdu    r1, r2, r3                               ; divide doubleword unsigned
+L74   
+L75   # divdu. r1, r2, r3
+L76   0x7c 0x22 0x1b 0x93
+L76   0x00001000: 7c 22 1b 93               ?? divdu.   r1, r2, r3                               ; divide doubleword unsigned
+L77   
+L78   # divduo r1, r2, r3
+L79   0x7c 0x22 0x1f 0x92
+L79   0x00001000: 7c 22 1f 92               ?? divduo   r1, r2, r3                               ; divide doubleword unsigned
+L80   
+L81   # divduo. r1, r2, r3
+L82   0x7c 0x22 0x1f 0x93
+L82   0x00001000: 7c 22 1f 93               ?? divduo.  r1, r2, r3                               ; divide doubleword unsigned
+L83   
+L84   #-------------------------------------------------------------------------------
+L85   # 3.3.10 Fixed-Point Trap Instructions
+L86   #-------------------------------------------------------------------------------
+L87   
+L88   # tdi 0x15, r1, -4
+L89   0x0a 0xa1 0xff 0xfc
+L89   0x00001000: 0a a1 ff fc               ?? tdi      0x15<21>, r1, 0xfffffffffffffffc<18446744073709551612,-4> ; trap doubleword immediate
+L90   
+L91   # td 0x15, r1, r2
+L92   0x7e 0xa1 0x10 0x88
+L92   0x00001000: 7e a1 10 88               ?? td       0x15<21>, r1, r2                         ; trap doubleword
+L93   
+L94   #-------------------------------------------------------------------------------
+L95   # 3.3.11 Fixed-Point Logical Instructions
+L96   #-------------------------------------------------------------------------------
+L97   
+L98   # cntlzd r1, r2
+L99   0x7c 0x41 0x00 0x74
+L99   0x00001000: 7c 41 00 74               ?? cntlzd   r1, r2                                   ; count leading zeros doubleword
+L100  
+L101  # cntlzd. r1, r2
+L102  0x7c 0x41 0x00 0x75
+L102  0x00001000: 7c 41 00 75               ?? cntlzd.  r1, r2                                   ; count leading zeros doubleword
+L103  
+L104  #-------------------------------------------------------------------------------
+L105  # 3.3.12.1 Fixed-Point Rotate Instructions
+L106  #-------------------------------------------------------------------------------
+L107  
+L108  # rldicl r1, r2, 3, 4
+L109  0x78 0x41 0x19 0x00
+L109  0x00001000: 78 41 19 00               ?? rldicl   r1, r2, 3, 4                             ; rotate left doubleword immediate then clear left
+L110  
+L111  # rldicl. r1, r2, 3, 4
+L112  0x78 0x41 0x19 0x01
+L112  0x00001000: 78 41 19 01               ?? rldicl.  r1, r2, 3, 4                             ; rotate left doubleword immediate then clear left
+L113  
+L114  # rldicr r1, r2, 3, 4
+L115  0x78 0x41 0x19 0x04
+L115  0x00001000: 78 41 19 04               ?? rldicr   r1, r2, 3, 4                             ; rotate left doubleword immediate then clear right
+L116  
+L117  # rldicr. r1, r2, 3, 4
+L118  0x78 0x41 0x19 0x05
+L118  0x00001000: 78 41 19 05               ?? rldicr.  r1, r2, 3, 4                             ; rotate left doubleword immediate then clear right
+L119  
+L120  # rldic r1, r2, 3, 4
+L121  0x78 0x41 0x19 0x08
+L121  0x00001000: 78 41 19 08               ?? rldic    r1, r2, 3, 4                             ; rotate left doubleword immediate then clear
+L122  
+L123  # rldic. r1, r2, 3, 4
+L124  0x78 0x41 0x19 0x09
+L124  0x00001000: 78 41 19 09               ?? rldic.   r1, r2, 3, 4                             ; rotate left doubleword immediate then clear
+L125  
+L126  # rldcl r1, r2, r3, 4
+L127  0x78 0x41 0x19 0x10
+L127  0x00001000: 78 41 19 10               ?? rldcl    r1, r2, r3, 4                            ; rotate left doubleword then clear left
+L128  
+L129  # rldcl. r1, r2, r3, 4
+L130  0x78 0x41 0x19 0x11
+L130  0x00001000: 78 41 19 11               ?? rldcl.   r1, r2, r3, 4                            ; rotate left doubleword then clear left
+L131  
+L132  # rldcr r1, r2, r3, 4
+L133  0x78 0x41 0x19 0x12
+L133  0x00001000: 78 41 19 12               ?? rldcr    r1, r2, r3, 4                            ; rotate left doubleword then clear right
+L134  
+L135  # rldcr. r1, r2, r3, 4
+L136  0x78 0x41 0x19 0x13
+L136  0x00001000: 78 41 19 13               ?? rldcr.   r1, r2, r3, 4                            ; rotate left doubleword then clear right
+L137  
+L138  # rldimi r1, r2, 3, 4
+L139  0x78 0x41 0x19 0x0c
+L139  0x00001000: 78 41 19 0c               ?? rldimi   r1, r2, 3, 4                             ; rotate left doubleword immediate then mask insert
+L140  
+L141  # rldimi. r1, r2, 3, 4
+L142  0x78 0x41 0x19 0x0d
+L142  0x00001000: 78 41 19 0d               ?? rldimi.  r1, r2, 3, 4                             ; rotate left doubleword immediate then mask insert
+L143  
+L144  #-------------------------------------------------------------------------------
+L145  # 3.3.12.2 Fixed-Point Shift Instructions
+L146  #-------------------------------------------------------------------------------
+L147  
+L148  # sld r1, r2, r3
+L149  0x7c 0x41 0x18 0x36
+L149  0x00001000: 7c 41 18 36               ?? sld      r1, r2, r3                               ; shift left doubleword
+L150  
+L151  # sld. r1, r2, r3
+L152  0x7c 0x41 0x18 0x37
+L152  0x00001000: 7c 41 18 37               ?? sld.     r1, r2, r3                               ; shift left doubleword
+L153  
+L154  # srd r1, r2, r3
+L155  0x7c 0x41 0x1c 0x36
+L155  0x00001000: 7c 41 1c 36               ?? srd      r1, r2, r3                               ; shift right doubleword
+L156  
+L157  # srd. r1, r2, r3
+L158  0x7c 0x41 0x1c 0x37
+L158  0x00001000: 7c 41 1c 37               ?? srd.     r1, r2, r3                               ; shift right doubleword
+L159  
+L160  # sradi r1, r2, 3
+L161  0x7c 0x41 0x1e 0x74
+L161  0x00001000: 7c 41 1e 74               ?? sradi    r1, r2, 3                                ; shift right algebraic doubleword immediate
+L162  
+L163  # sradi. r1, r2, 3
+L164  0x7c 0x41 0x1e 0x75
+L164  0x00001000: 7c 41 1e 75               ?? sradi.   r1, r2, 3                                ; shift right algebraic doubleword immediate
+L165  
+L166  # srad r1, r2, r3
+L167  0x7c 0x41 0x1e 0x34
+L167  0x00001000: 7c 41 1e 34               ?? srad     r1, r2, r3                               ; shift right algebraic doubleword
+L168  
+L169  # srad. r1, r2, r3
+L170  0x7c 0x41 0x1e 0x35
+L170  0x00001000: 7c 41 1e 35               ?? srad.    r1, r2, r3                               ; shift right algebraic doubleword
+L171  
+L172  # extsw r1, r2
+L173  0x7c 0x41 0x07 0xb4
+L173  0x00001000: 7c 41 07 b4               ?? extsw    r1, r2                                   ; extend sign word
+L174  
+L175  # extsw. r1, r2
+L176  0x7c 0x41 0x07 0xb5
+L176  0x00001000: 7c 41 07 b5               ?? extsw.   r1, r2                                   ; extend sign word
+L177  
+L178  #-------------------------------------------------------------------------------
+L179  # 4.6.2 Floating-Point Load Instructions
+L180  #-------------------------------------------------------------------------------
+L181  
+L182  #-------------------------------------------------------------------------------
+L183  # 4.6.3 Floating-Point Store Instructions
+L184  #-------------------------------------------------------------------------------
+L185  
+L186  # stfd f5, f64 [r2 - 4]
+L187  0xd8 0xa2 0xff 0xfc
+L187  0x00001000: d8 a2 ff fc               ?? stfd     f5, f64 [r2 + 0xfffffffffffffffc<18446744073709551612,-4>] ; store fp double
+L188  
+L189  #-------------------------------------------------------------------------------
+L190  # 4.6.4 Floating-Point Move Instructions
+L191  #-------------------------------------------------------------------------------
+L192  
+L193  #-------------------------------------------------------------------------------
+L194  # 4.6.5.1 Floating-Point Elementary Arithmetic Instructions
+L195  #-------------------------------------------------------------------------------
+L196  
+L197  #-------------------------------------------------------------------------------
+L198  # 4.6.5.2 Floating-Point Multiply-Add Instructions
+L199  #-------------------------------------------------------------------------------
+L200  
+L201  #-------------------------------------------------------------------------------
+L202  # 4.6.6 FLoating-Point Rounding and Conversion Instructions
+L203  #-------------------------------------------------------------------------------
+L204  
+L205  #-------------------------------------------------------------------------------
+L206  # 4.6.7 Floating-Point Compare Instructions
+L207  #-------------------------------------------------------------------------------
+L208  
+L209  #-------------------------------------------------------------------------------
+L210  # 4.6.8 Floating-Point Status and Control Register Instructions
+L211  #-------------------------------------------------------------------------------

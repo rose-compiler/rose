@@ -35,6 +35,15 @@ Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
 
+Hasher::HasherFactory& Hasher::HasherFactory::Instance()
+{
+    // So called Meyers Singleton implementation,
+    // In C++ 11 this is in fact thread-safe
+    static HasherFactory factory;
+    return factory;
+}
+
+
 ROSE_DLL_API std::string digest_to_string(const uint8_t *data, size_t size) {
     std::vector<uint8_t> digest(data+0, data+size);
     return Hasher::toString(digest);
@@ -51,6 +60,52 @@ digest_to_string(const std::string &data) {
     std::vector<uint8_t> digest(s, s + data.size());
     return Hasher::toString(digest);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// HasherFactory function definitions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Hasher::HasherFactory::registerMaker(const std::string& hashType, 
+                                          Hasher::IHasherMaker* hasherMakerPtr)
+{
+    // Validate uniquness and add to the map
+    if (hashMakers.find(hashType) != hashMakers.end())
+    {
+        throw new Exception("Multiple makers for given key!");
+    }
+    hashMakers[hashType] = hasherMakerPtr;
+}
+
+boost::shared_ptr<Hasher> Hasher::HasherFactory::createHasher(const std::string& hashType) const
+{
+    // Look up the maker by nodes name
+    std::map<std::string, IHasherMaker* >::const_iterator hashItr = hashMakers.find(hashType);
+    if (hashItr == hashMakers.end())
+    {
+        std::ostringstream ss;
+        ss <<"createHasher: Unrecognized hasher type name: " << hashType;
+        if(strncmp(hashType.c_str(), "GCRYPT", 6) == 0) {
+            ss << ". A libgcrypt hasher was requested, are you sure ROSE was built with libgcrypt?";
+        }
+        throw new Exception(ss.str());
+    }
+    IHasherMaker* hashMaker = hashItr->second;
+    return hashMaker->create();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Register all GCRYPT hashing, iff ROSE was built with libgcrypt
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_LIBGCRYPT
+/** Auto register Gcrypt hash functions with the HasherFactory' **/
+static Hasher::HasherMaker<HasherMd5> makerMd5("GCRYPT_MD5");
+static Hasher::HasherMaker<HasherSha1> makerSha1("GCRYPT_SHA1");
+static Hasher::HasherMaker<HasherSha256> makerSha256("GCRYPT_SHA256");
+static Hasher::HasherMaker<HasherSha384> makerSha384("GCRYPT_SHA384");
+static Hasher::HasherMaker<HasherSha512> makerSha512("GCRYPT_SHA512");
+static Hasher::HasherMaker<HasherCrc32> makerCrc32("GCRYPT_CRC32");
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SHA1 hashing
@@ -81,6 +136,9 @@ sha1_digest(const uint8_t *data, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fowler-Noll-Vo hashing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Auto register Fowler-Noll-Vo hashing with the Hasher Factory as 'FNV' **/
+static Hasher::HasherMaker<HasherFnv> makerFNV("FNV");
 
 const Hasher::Digest&
 HasherFnv::digest() {
@@ -130,6 +188,8 @@ fnv1a64_digest(const uint8_t *data, size_t size) {
 // Implementation based on FIPS PUB 180-4 "Federal Information Processing Standards Publication: Secure Hash Standard (SHS)"
 // found at [https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf]
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** Auto register Built-in SHA256 with the HasherFactory as SHA256' **/
+static Hasher::HasherMaker<HasherSha256Builtin> makerSHA256("SHA256");
 
 // The first 32 bits of the fractional parts of the cube roots of the first 64 primes
 const uint32_t HasherSha256Builtin::roundConstants_[64] = {
@@ -169,8 +229,8 @@ HasherSha256Builtin::messageByte(size_t index, const uint8_t *message, size_t me
     return message[index];
 }
 
-// Get the next 16 words from the big-endian message if possible, or save the message for later. Update message pointer and
-// size to reflect the number of bytes we just consumed or saved.
+// Get the next 16 32-bit words from the big-endian message if possible, or save the message for later. Update message pointer
+// and size to reflect the number of bytes we just consumed or saved.
 bool
 HasherSha256Builtin::getNextChunk(const uint8_t *&message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/) {
     ASSERT_require(leftoverBytes_.size() < 16 * 4);
@@ -274,11 +334,12 @@ HasherSha256Builtin::digest() {
         // Pad the message by appending an 0x80 followed by zero bytes, followed by the 8-byte big-endian message length so
         // that the total length (message length plus paddng) is a multiple of 64 bytes.
         const size_t messageSizeBytes = processedBytes_ + leftoverBytes_.size();
-        const size_t nZeroPadding = 64 - (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64;
-        ASSERT_require((messageSizeBytes + 1 + nZeroPadding + 8) % 64 == 0);
+        const size_t finalBlockSizeBytes = (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64; // w/out zero padding [0,63]
+        const size_t nZeroPadding = 0 == finalBlockSizeBytes ? 0 : 64 - finalBlockSizeBytes;    // bytes of zero needed [0,63]
+        ASSERT_require((messageSizeBytes + 1 + nZeroPadding + 8) % 64 == 0); // suffix wil padd message to multiple of 64 bytes
 
         // Create and hash the padding
-        uint8_t padding[64];
+        uint8_t padding[64 + 9];                        // big enough for the 0x80 and 8-byte length, plus zero padding
         padding[0] = 0x80;
         memset(padding+1, 0, nZeroPadding);
         const uint64_t messageSizeBits = 8 * messageSizeBytes;
@@ -289,7 +350,7 @@ HasherSha256Builtin::digest() {
         padding[1 + nZeroPadding + 4] = messageSizeBits >> 24;
         padding[1 + nZeroPadding + 5] = messageSizeBits >> 16;
         padding[1 + nZeroPadding + 6] = messageSizeBits >> 8;
-        padding[1 + nZeroPadding + 7] = messageSizeBits;
+        padding[1 + nZeroPadding + 7] = messageSizeBits; // max index is 1 + 63 + 7 = 73
         append(padding, 1 + nZeroPadding + 8);
         ASSERT_require(leftoverBytes_.size() == 0);
 

@@ -2,7 +2,6 @@
 #define _VARIABLEIDUTILS_H
 
 /*************************************************************
- * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
  * Author   : Sriram Aananthakrishnan                        *
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
@@ -10,7 +9,7 @@
 #include "VariableIdMapping.h"
 #include <set>
 
-namespace SPRAY {
+namespace CodeThorn {
 
 // some utility functions for sets of VariableId
 // 

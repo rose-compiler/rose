@@ -250,13 +250,13 @@ Unparse_X10::getAssociativity(SgExpression* expr) {
 void
 Unparse_X10::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
    {
-     ROSE_ASSERT (templateInstantiationDeclaration != NULL);
+     ASSERT_not_null(templateInstantiationDeclaration);
    }
 
 void
 Unparse_X10::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(templateParameter != NULL);
+     ASSERT_not_null(templateParameter);
      printf ("unparseTemplateParameter(): Sorry, not implemented! \n");
      ROSE_ASSERT(false);
    }
@@ -265,7 +265,7 @@ Unparse_X10::unparseTemplateParameter(SgTemplateParameter* templateParameter, Sg
 void
 Unparse_X10::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(templateArgument != NULL);
+      ASSERT_not_null(templateArgument);
    }
 
 
@@ -307,7 +307,7 @@ cout << "unparseAssignExpr" << endl;
 void
 Unparse_X10::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
-     ROSE_ASSERT(var_ref != NULL);
+     ASSERT_not_null(var_ref);
 
      unparseName(var_ref->get_symbol()->get_name(), info);
 }
@@ -316,7 +316,7 @@ void
 Unparse_X10::unparseClassRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgClassNameRefExp* classname_ref = isSgClassNameRefExp(expr);
-     ROSE_ASSERT(classname_ref != NULL);
+     ASSERT_not_null(classname_ref);
 
      curprint (  classname_ref->get_symbol()->get_declaration()->get_name().str());
    }
@@ -325,7 +325,7 @@ void
 Unparse_X10::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
-     ROSE_ASSERT(func_ref != NULL);
+     ASSERT_not_null(func_ref);
 
      cout << "unparser: warning. SgFunctionRef should be SgMemberFunctionRef: "
           << func_ref->get_symbol()->get_name().getString() << endl;
@@ -336,14 +336,14 @@ void
 Unparse_X10::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-     ROSE_ASSERT(mfunc_ref != NULL);
+     ASSERT_not_null(mfunc_ref);
      unparseName(mfunc_ref->get_symbol()->get_name(), info);
    }
 
 void
 Unparse_X10::unparseBoolVal(SgExpression* expr, SgUnparse_Info& info) {
     SgBoolValExp *bool_val = isSgBoolValExp(expr);
-    ROSE_ASSERT(bool_val != NULL);
+    ASSERT_not_null(bool_val);
     curprint (bool_val->get_value() ? "true" : "false");
 }
 
@@ -351,7 +351,7 @@ void
 Unparse_X10::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgStringVal *str_val = isSgStringVal(expr);
-     ROSE_ASSERT(str_val != NULL);
+     ASSERT_not_null(str_val);
 
   // Handle special case of macro specification (this is a temporary hack to permit us to
   // specify macros within transformations)
@@ -406,7 +406,7 @@ Unparse_X10::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
  */
 void Unparse_X10::unparseWCharVal(SgExpression* expr, SgUnparse_Info& info) {
     SgWcharVal* wchar_val = isSgWcharVal(expr);
-    ROSE_ASSERT(wchar_val != NULL);
+    ASSERT_not_null(wchar_val);
 
     if (wchar_val->get_valueString() == "") {
         int value = wchar_val->get_value();
@@ -466,7 +466,7 @@ void
 Unparse_X10::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
-     ROSE_ASSERT(uint_val != NULL);
+     ASSERT_not_null(uint_val);
 
   // curprint ( uint_val->get_value();
   // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
@@ -487,7 +487,7 @@ void
 Unparse_X10::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongIntVal* longint_val = isSgLongIntVal(expr);
-     ROSE_ASSERT(longint_val != NULL);
+     ASSERT_not_null(longint_val);
 
   // curprint ( longint_val->get_value();
   // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
@@ -508,7 +508,7 @@ void
 Unparse_X10::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
-     ROSE_ASSERT(longlongint_val != NULL);
+     ASSERT_not_null(longlongint_val);
 
   // curprint ( longlongint_val->get_value();
   // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
@@ -529,7 +529,7 @@ void
 Unparse_X10::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
-     ROSE_ASSERT(ulonglongint_val != NULL);
+     ASSERT_not_null(ulonglongint_val);
 
   // curprint ( ulonglongint_val->get_value();
   // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
@@ -550,7 +550,7 @@ void
 Unparse_X10::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
-     ROSE_ASSERT(ulongint_val != NULL);
+     ASSERT_not_null(ulongint_val);
 
   // curprint ( ulongint_val->get_value();
   // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
@@ -571,7 +571,7 @@ void
 Unparse_X10::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFloatVal* float_val = isSgFloatVal(expr);
-     ROSE_ASSERT(float_val != NULL);
+     ASSERT_not_null(float_val);
 
   // DQ (10/18/2005): Need to handle C code which cannot use C++ mechanism to specify 
   // infinity, quiet NaN, and signaling NaN values.  Note that we can't use the C++
@@ -625,7 +625,7 @@ void
 Unparse_X10::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongDoubleVal* longdbl_val = isSgLongDoubleVal(expr);
-     ROSE_ASSERT(longdbl_val != NULL);
+     ASSERT_not_null(longdbl_val);
   /* code inserted from specification */
   
   // curprint ( longdbl_val->get_value();
@@ -673,7 +673,7 @@ void
 Unparse_X10::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgComplexVal* complex_val = isSgComplexVal(expr);
-     ROSE_ASSERT(complex_val != NULL);
+     ASSERT_not_null(complex_val);
 
      if (complex_val->get_valueString() != "") { // Has string
        curprint (complex_val->get_valueString());
@@ -706,7 +706,7 @@ void replaceString (std::string& str, const std::string& from, const std::string
 //-----------------------------------------------------------------------------------
 void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-    ROSE_ASSERT(func_call != NULL);
+    ASSERT_not_null(func_call);
 // TODO: Remove this !!!
 /*
     if (func_call -> attributeExists("invocation_parameter_types")) {
@@ -786,17 +786,17 @@ void
 Unparse_X10::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
    {
      SgSizeOfOp* sizeof_op = isSgSizeOfOp(expr);
-     ROSE_ASSERT(sizeof_op != NULL);
+     ASSERT_not_null(sizeof_op);
 
      curprint ( "sizeof(");
      if (sizeof_op->get_operand_expr() != NULL)
         {
-          ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
+          ASSERT_not_null(sizeof_op->get_operand_expr());
           unparseExpression(sizeof_op->get_operand_expr(), info);
         }
        else
         {
-          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          ASSERT_not_null(sizeof_op->get_operand_type());
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
           info2.set_SkipClassDefinition();
@@ -811,18 +811,18 @@ void
 Unparse_X10::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgTypeIdOp* typeid_op = isSgTypeIdOp(expr);
-     ROSE_ASSERT(typeid_op != NULL);
+     ASSERT_not_null(typeid_op);
   /* code inserted from specification */
 
      curprint ( "typeid(");
      if (typeid_op->get_operand_expr() != NULL)
          {
-           ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
+           ASSERT_not_null(typeid_op->get_operand_expr());
            unparseExpression(typeid_op->get_operand_expr(), info);
          }
         else
          {
-           ROSE_ASSERT(typeid_op->get_operand_type() != NULL);
+           ASSERT_not_null(typeid_op->get_operand_type());
            SgUnparse_Info info2(info);
            info2.unset_SkipBaseType();
            info2.set_SkipClassDefinition();
@@ -839,7 +839,7 @@ void
 Unparse_X10::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    {
      SgConditionalExp* expr_cond = isSgConditionalExp(expr);
-     ROSE_ASSERT(expr_cond != NULL);
+     ASSERT_not_null(expr_cond);
 
      unparseExpression(expr_cond->get_conditional_exp(), info);
      curprint(" ? ");
@@ -861,7 +861,7 @@ Unparse_X10::unparseDyCastOp(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_X10::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
     SgCastExp* cast = isSgCastExp(expr);
-    ROSE_ASSERT(cast != NULL);
+    ASSERT_not_null(cast);
 
     curprint("(");
     unparseExpression(cast->get_operand(), info);
@@ -881,7 +881,7 @@ void
 Unparse_X10::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    { 
     SgPntrArrRefExp *array_ref = isSgPntrArrRefExp(expr);
-    ROSE_ASSERT(array_ref != NULL);
+    ASSERT_not_null(array_ref);
 
     unparseExpression(array_ref -> get_lhs_operand(), info);
     curprint("(");
@@ -897,7 +897,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
 #ifndef CXX_IS_ROSE_CODE_GENERATION
      SgNewExp* new_op = isSgNewExp(expr);
-     ROSE_ASSERT(new_op != NULL);
+     ASSERT_not_null(new_op);
   /* code inserted from specification */
 
      // charles4: 02/26/2012  Seems to be left-over code from C++
@@ -1136,7 +1136,7 @@ void
 Unparse_X10::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgDeleteExp* delete_op = isSgDeleteExp(expr);
-     ROSE_ASSERT(delete_op != NULL);
+     ASSERT_not_null(delete_op);
   /* code inserted from specification */
 
      if (delete_op->get_need_global_specifier())
@@ -1157,7 +1157,7 @@ Unparse_X10::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
    {
      SgThisExp* this_node = isSgThisExp(expr);
 
-     ROSE_ASSERT(this_node != NULL);
+     ASSERT_not_null(this_node);
 
   // printf ("In Unparse_ExprStmt::unparseThisNode: unp->opt.get_this_opt() = %s \n", (unp->opt.get_this_opt()) ? "true" : "false");
 
@@ -1171,7 +1171,7 @@ void
 Unparse_X10::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
     SgSuperExp* super_node = isSgSuperExp(expr);
 
-    ROSE_ASSERT(super_node != NULL);
+    ASSERT_not_null(super_node);
     curprint ("super"); 
 }
 
@@ -1179,7 +1179,7 @@ void
 Unparse_X10::unparseClassNode(SgExpression* expr, SgUnparse_Info& info) {
     SgClassExp* class_node = isSgClassExp(expr);
 
-    ROSE_ASSERT(class_node != NULL);
+    ASSERT_not_null(class_node);
     curprint ("class"); 
 }
 
@@ -1187,7 +1187,7 @@ void
 Unparse_X10::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgScopeOp* scope_op = isSgScopeOp(expr);
-     ROSE_ASSERT(scope_op != NULL);
+     ASSERT_not_null(scope_op);
   /* code inserted from specification */
 
      if (scope_op->get_lhs_operand())
@@ -1202,7 +1202,7 @@ void
 Unparse_X10::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgRefExp* type_ref = isSgRefExp(expr);
-     ROSE_ASSERT(type_ref != NULL);
+     ASSERT_not_null(type_ref);
   /* code inserted from specification */
 
      SgUnparse_Info newinfo(info);
@@ -1226,7 +1226,7 @@ void Unparse_X10::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 static bool isFromAnotherFile (SgLocatedNode* lnode)
 {
   bool result = false;
-  ROSE_ASSERT (lnode != NULL);
+  ASSERT_not_null(lnode);
   // Liao 11/22/2010, a workaround for enum value constant assign initializer
   // EDG passes the source location information of the original declaration of the enum value, not the location for the value's reference
   // So SgAssignInitializer has wrong file info.
@@ -1270,7 +1270,7 @@ Unparse_X10::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      if (isFromAnotherFile (expr))
        return;
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
-     ROSE_ASSERT(aggr_init != NULL);
+     ASSERT_not_null(aggr_init);
   // code inserted from specification
 
      SgUnparse_Info newinfo(info);
@@ -1299,7 +1299,7 @@ Unparse_X10::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_X10::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info) {
     SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
-    ROSE_ASSERT(aggr_init != NULL);
+    ASSERT_not_null(aggr_init);
 
     SgUnparse_Info newinfo(info);
     curprint ("{");
@@ -1329,7 +1329,7 @@ void
 Unparse_X10::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
-     ROSE_ASSERT(assn_init != NULL);
+     ASSERT_not_null(assn_init);
      unparseExpression(assn_init->get_operand(), info);
    }
 
@@ -1337,7 +1337,7 @@ void
 Unparse_X10::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgThrowOp* throw_op = isSgThrowOp(expr);
-     ROSE_ASSERT(throw_op != NULL);
+     ASSERT_not_null(throw_op);
 
   // printf ("In unparseThrowOp(%s) \n",expr->sage_class_name());
   // curprint ( "\n/* In unparseThrowOp(" + expr->sage_class_name() + ") */ \n";
@@ -1352,7 +1352,7 @@ Unparse_X10::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & i
 void
 Unparse_X10::unparseX10InstanceOfOp(SgExpression* expr, SgUnparse_Info & info) {
     SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
-    ROSE_ASSERT(inst_op != NULL);
+    ASSERT_not_null(inst_op);
 
     unparseExpression(inst_op->get_operand_expr(), info);
     curprint(" instanceof ");
@@ -1491,7 +1491,7 @@ Unparse_X10::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
 //  will not print out file information
 //-----------------------------------------------------------------------------------
 void Unparse_X10::unparseExpression(SgExpression *expr, SgUnparse_Info &info) {
-    ROSE_ASSERT (expr != NULL);
+    ASSERT_not_null(expr);
 
     switch (expr->variant()) {
         // DQ (8/15/2007): This has been moved to the base class
@@ -1529,7 +1529,7 @@ void Unparse_X10::unparseExpression(SgExpression *expr, SgUnparse_Info &info) {
 
 void Unparse_X10::unparseUnaryExpr(SgExpression *expr, SgUnparse_Info &info) {
     SgUnaryOp *unary_op = isSgUnaryOp(expr);
-    ROSE_ASSERT(unary_op != NULL);
+    ASSERT_not_null(unary_op);
 
     if (unary_op->get_mode() != SgUnaryOp::postfix) { // a prefix unary operator?
         //
@@ -1550,7 +1550,7 @@ void Unparse_X10::unparseUnaryExpr(SgExpression *expr, SgUnparse_Info &info) {
 
 void Unparse_X10::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
     SgBinaryOp *binary_op = isSgBinaryOp(expr);
-    ROSE_ASSERT(binary_op != NULL);
+    ASSERT_not_null(binary_op);
 
 
     // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
@@ -1560,13 +1560,13 @@ void Unparse_X10::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
         return;
     }
     SgExpression *lhs = binary_op->get_lhs_operand();
-    ROSE_ASSERT(lhs != NULL);
+    ASSERT_not_null(lhs);
     unparseExpression(lhs, info);
 
     curprint(info.get_operator_name()); 
 
     SgExpression *rhs = binary_op->get_rhs_operand();
-    ROSE_ASSERT(rhs != NULL);
+    ASSERT_not_null(rhs);
     unparseExpression(rhs, info);
 }
 

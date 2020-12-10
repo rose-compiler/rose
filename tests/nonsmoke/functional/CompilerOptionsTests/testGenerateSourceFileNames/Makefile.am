@@ -41,7 +41,7 @@ if USING_GNU_COMPILER
 	$(MAKE) clean
 endif
 endif
-# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only langauge configuration.
+# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only language configuration.
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	@echo "** The 'roseTranslator -o exe source' should compile source and not disassemble obj **"
 	$(CXX) -o test1 $(srcdir)/test1.C
@@ -50,7 +50,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	sh $(srcdir)/filesNotExist.sh  ./rose_test1.s
 	$(MAKE) clean
 endif
-# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only langauge configuration.
+# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only language configuration.
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if USING_GNU_COMPILER
 #	This fails for the Intel icc or icpc compiler.
@@ -68,7 +68,7 @@ endif
 	$(VALGRIND) $(TEST_TRANSLATOR) -rose:verbose 0 $(srcdir)/test1.C
 	sh $(srcdir)/doesFilesExist.sh ./a.out ./rose_test1.C
 	$(MAKE) clean
-# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only langauge configuration.
+# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only language configuration.
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if USING_GNU_COMPILER
 #	This fails for the Intel icc or icpc compiler.
@@ -82,7 +82,7 @@ endif
 	$(MAKE) clean
 endif
 endif
-# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only langauge configuration.
+# DQ (10/20/2010): Unclear what shuld be done when using C/C++ only language configuration.
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if USING_GNU_COMPILER
 #	This fails for the Intel icc or icpc compiler.

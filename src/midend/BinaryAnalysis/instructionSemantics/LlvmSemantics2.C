@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -22,8 +24,19 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     if (cond->is_number() && !cond->get_number())
         return dflt;
     size_t nbits = dflt->get_width();
-    SValuePtr addr = SValue::promote(addr_);
-    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemory(addr->get_width(), nbits), addr->get_expression(),
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+    }
+
+
+    SValuePtr addr = SValue::promote(adjustedVa);
+    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->get_width(), nbits), addr->get_expression(),
                                               solver()));
 }
 
@@ -33,9 +46,19 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 {
     if (cond->is_number() && !cond->get_number())
         return;
-    SValuePtr addr = SValue::promote(addr_);
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+    }
+
+    SValuePtr addr = SValue::promote(adjustedVa);
     SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemory(addr->get_width(), data->get_width()),
+    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->get_width(), data->get_width()),
                                                  addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
 }
@@ -89,62 +112,62 @@ RiscOperators::get_important_registers()
         const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
 
         // General-purpose registers
-        important_registers.push_back(*dictionary->lookup("eax"));
-        important_registers.push_back(*dictionary->lookup("ebx"));
-        important_registers.push_back(*dictionary->lookup("ecx"));
-        important_registers.push_back(*dictionary->lookup("edx"));
-        important_registers.push_back(*dictionary->lookup("esp"));
-        important_registers.push_back(*dictionary->lookup("ebp"));
-        important_registers.push_back(*dictionary->lookup("esi"));
-        important_registers.push_back(*dictionary->lookup("edi"));
-        important_registers.push_back(*dictionary->lookup("eip"));
+        important_registers.push_back(dictionary->findOrThrow("eax"));
+        important_registers.push_back(dictionary->findOrThrow("ebx"));
+        important_registers.push_back(dictionary->findOrThrow("ecx"));
+        important_registers.push_back(dictionary->findOrThrow("edx"));
+        important_registers.push_back(dictionary->findOrThrow("esp"));
+        important_registers.push_back(dictionary->findOrThrow("ebp"));
+        important_registers.push_back(dictionary->findOrThrow("esi"));
+        important_registers.push_back(dictionary->findOrThrow("edi"));
+        important_registers.push_back(dictionary->findOrThrow("eip"));
 
         // Segment registers
-        important_registers.push_back(*dictionary->lookup("cs"));
-        important_registers.push_back(*dictionary->lookup("ds"));
-        important_registers.push_back(*dictionary->lookup("ss"));
-        important_registers.push_back(*dictionary->lookup("es"));
-        important_registers.push_back(*dictionary->lookup("fs"));
-        important_registers.push_back(*dictionary->lookup("gs"));
+        important_registers.push_back(dictionary->findOrThrow("cs"));
+        important_registers.push_back(dictionary->findOrThrow("ds"));
+        important_registers.push_back(dictionary->findOrThrow("ss"));
+        important_registers.push_back(dictionary->findOrThrow("es"));
+        important_registers.push_back(dictionary->findOrThrow("fs"));
+        important_registers.push_back(dictionary->findOrThrow("gs"));
 
         // Treat EFLAGS as individual bits
-        important_registers.push_back(*dictionary->lookup("cf"));
-        important_registers.push_back(*dictionary->lookup("pf"));
-        important_registers.push_back(*dictionary->lookup("af"));
-        important_registers.push_back(*dictionary->lookup("zf"));
-        important_registers.push_back(*dictionary->lookup("sf"));
-        important_registers.push_back(*dictionary->lookup("tf"));
-        important_registers.push_back(*dictionary->lookup("if"));
-        important_registers.push_back(*dictionary->lookup("df"));
-        important_registers.push_back(*dictionary->lookup("of"));
-        important_registers.push_back(*dictionary->lookup("nt"));
-        important_registers.push_back(*dictionary->lookup("iopl"));
-        important_registers.push_back(*dictionary->lookup("rf"));
-        important_registers.push_back(*dictionary->lookup("vm"));
-        important_registers.push_back(*dictionary->lookup("vif"));
-        important_registers.push_back(*dictionary->lookup("vip"));
-        important_registers.push_back(*dictionary->lookup("id"));
+        important_registers.push_back(dictionary->findOrThrow("cf"));
+        important_registers.push_back(dictionary->findOrThrow("pf"));
+        important_registers.push_back(dictionary->findOrThrow("af"));
+        important_registers.push_back(dictionary->findOrThrow("zf"));
+        important_registers.push_back(dictionary->findOrThrow("sf"));
+        important_registers.push_back(dictionary->findOrThrow("tf"));
+        important_registers.push_back(dictionary->findOrThrow("if"));
+        important_registers.push_back(dictionary->findOrThrow("df"));
+        important_registers.push_back(dictionary->findOrThrow("of"));
+        important_registers.push_back(dictionary->findOrThrow("nt"));
+        important_registers.push_back(dictionary->findOrThrow("iopl"));
+        important_registers.push_back(dictionary->findOrThrow("rf"));
+        important_registers.push_back(dictionary->findOrThrow("vm"));
+        important_registers.push_back(dictionary->findOrThrow("vif"));
+        important_registers.push_back(dictionary->findOrThrow("vip"));
+        important_registers.push_back(dictionary->findOrThrow("id"));
 
         // Floating point stuff, probably not handled too well yet.
-        important_registers.push_back(*dictionary->lookup("fpstatus"));
-        important_registers.push_back(*dictionary->lookup("fpctl"));
-        important_registers.push_back(*dictionary->lookup("mxcsr"));
-        important_registers.push_back(*dictionary->lookup("mm0"));
-        important_registers.push_back(*dictionary->lookup("mm1"));
-        important_registers.push_back(*dictionary->lookup("mm2"));
-        important_registers.push_back(*dictionary->lookup("mm3"));
-        important_registers.push_back(*dictionary->lookup("mm4"));
-        important_registers.push_back(*dictionary->lookup("mm5"));
-        important_registers.push_back(*dictionary->lookup("mm6"));
-        important_registers.push_back(*dictionary->lookup("mm7"));
-        important_registers.push_back(*dictionary->lookup("xmm0"));
-        important_registers.push_back(*dictionary->lookup("xmm1"));
-        important_registers.push_back(*dictionary->lookup("xmm2"));
-        important_registers.push_back(*dictionary->lookup("xmm3"));
-        important_registers.push_back(*dictionary->lookup("xmm4"));
-        important_registers.push_back(*dictionary->lookup("xmm5"));
-        important_registers.push_back(*dictionary->lookup("xmm6"));
-        important_registers.push_back(*dictionary->lookup("xmm7"));
+        important_registers.push_back(dictionary->findOrThrow("fpstatus"));
+        important_registers.push_back(dictionary->findOrThrow("fpctl"));
+        important_registers.push_back(dictionary->findOrThrow("mxcsr"));
+        important_registers.push_back(dictionary->findOrThrow("mm0"));
+        important_registers.push_back(dictionary->findOrThrow("mm1"));
+        important_registers.push_back(dictionary->findOrThrow("mm2"));
+        important_registers.push_back(dictionary->findOrThrow("mm3"));
+        important_registers.push_back(dictionary->findOrThrow("mm4"));
+        important_registers.push_back(dictionary->findOrThrow("mm5"));
+        important_registers.push_back(dictionary->findOrThrow("mm6"));
+        important_registers.push_back(dictionary->findOrThrow("mm7"));
+        important_registers.push_back(dictionary->findOrThrow("xmm0"));
+        important_registers.push_back(dictionary->findOrThrow("xmm1"));
+        important_registers.push_back(dictionary->findOrThrow("xmm2"));
+        important_registers.push_back(dictionary->findOrThrow("xmm3"));
+        important_registers.push_back(dictionary->findOrThrow("xmm4"));
+        important_registers.push_back(dictionary->findOrThrow("xmm5"));
+        important_registers.push_back(dictionary->findOrThrow("xmm6"));
+        important_registers.push_back(dictionary->findOrThrow("xmm7"));
     }
     return important_registers;
 }
@@ -161,7 +184,7 @@ RiscOperators::get_stored_registers()
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
@@ -187,7 +210,7 @@ RiscOperators::get_modified_registers()
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
             if (0==cur_value->get_comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
@@ -209,14 +232,14 @@ RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
     const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
-    return *dictionary->lookup("eip");
+    return dictionary->findOrThrow("eip");
 }
 
 SValuePtr
 RiscOperators::get_instruction_pointer()
 {
     RegisterDescriptor EIP = get_insn_pointer_register();
-    BaseSemantics::SValuePtr dflt = undefined_(EIP.get_nbits());
+    BaseSemantics::SValuePtr dflt = undefined_(EIP.nBits());
     return SValue::promote(currentState()->registerState()->readRegister(EIP, dflt, this));
 }
 
@@ -244,7 +267,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
             } else {
                 LeafPtr leaf = node->isLeafNode();
                 ASSERT_not_null(leaf);
-                if (leaf->isVariable()) {
+                if (leaf->isIntegerVariable()) {
                     std::string comment = leaf->comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
                         ops->add_variable(leaf);        // becomes a global variable if not already
@@ -261,7 +284,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     // Prerequisites for the registers
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
     for (size_t i=0; i<regs.size(); ++i) {
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         value->get_expression()->depthFirstTraversal(t1);
     }
@@ -283,7 +306,7 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        o <<prefix() <<"@" <<name <<" = external global " <<llvm_integer_type(regs[i].get_nbits()) <<"\n";
+        o <<prefix() <<"@" <<name <<" = external global " <<llvm_integer_type(regs[i].nBits()) <<"\n";
     }
 }
 
@@ -295,7 +318,7 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
@@ -357,9 +380,9 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     if (inode && SymbolicExpr::OP_ITE==inode->getOperator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
-        if (leaf1!=NULL && leaf1->isNumber() && leaf2!=NULL && leaf2->isNumber()) {
-            rose_addr_t true_va = leaf1->toInt();
-            rose_addr_t false_va = leaf2->toInt();
+        if (leaf1!=NULL && leaf1->isIntegerConstant() && leaf2!=NULL && leaf2->isIntegerConstant()) {
+            rose_addr_t true_va = leaf1->toUnsigned().get();
+            rose_addr_t false_va = leaf2->toUnsigned().get();
             if (false_va != fallthrough_va)
                 std::swap(true_va, false_va);
             SgAsmFunction *true_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(true_va, NULL));
@@ -496,7 +519,7 @@ RiscOperators::llvm_integer_type(size_t width)
 std::string
 RiscOperators::llvm_lvalue(const LeafPtr &var)
 {
-    ASSERT_require(var && var->isVariable());
+    ASSERT_require(var && var->isIntegerVariable());
     ASSERT_require(!variables.exists(var->nameId()));         // LLVM assembly is SSA
     return add_variable(var);
 }
@@ -508,8 +531,8 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
     ASSERT_not_null(leaf);
     leaf = rewrites.get_value_or(leaf->hash(), leaf);
 
-    if (leaf->isNumber()) {
-        int64_t sv = IntegerOps::signExtend2(leaf->toInt(), leaf->nBits(), 8*sizeof(int64_t));
+    if (leaf->isIntegerConstant()) {
+        int64_t sv = leaf->toSigned().get();
         return StringUtility::numberToString(sv);
     }
 
@@ -521,7 +544,7 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
 LeafPtr
 RiscOperators::next_temporary(size_t nbits)
 {
-    return LeafNode::createVariable(nbits);
+    return SymbolicExpr::makeIntegerVariable(nbits);
 }
 
 std::string
@@ -673,11 +696,11 @@ ExpressionPtr
 RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->isNumber()) {
-            if (amount_leaf->toInt() == 0)
+        if (amount_leaf->isIntegerConstant()) {
+            if (amount_leaf->toUnsigned().get() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->nBits())
-                return SymbolicExpr::makeInteger(value->nBits(), 0);
+            if (amount_leaf->toUnsigned().get() >= value->nBits())
+                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -690,8 +713,8 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPt
 {
     ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->nBits(), amount->nBits());
-    ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeInteger(width, value->nBits()),
-                                               SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(8, width),
+    ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeIntegerConstant(width, value->nBits()),
+                                               SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(8, width),
                                                                                                  amount, solver()),
                                                                         solver()),
                                                solver());
@@ -704,11 +727,11 @@ ExpressionPtr
 RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->isNumber()) {
-            if (amount_leaf->toInt() == 0)
+        if (amount_leaf->isIntegerConstant()) {
+            if (amount_leaf->toUnsigned().get() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->nBits())
-                return SymbolicExpr::makeInteger(value->nBits(), 0);
+            if (amount_leaf->toUnsigned().get() >= value->nBits())
+                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -720,11 +743,11 @@ ExpressionPtr
 RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->isNumber()) {
-            if (amount_leaf->toInt() == 0)
+        if (amount_leaf->isIntegerConstant()) {
+            if (amount_leaf->toUnsigned().get() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->nBits())
-                return SymbolicExpr::makeInteger(value->nBits(), 0);
+            if (amount_leaf->toUnsigned().get() >= value->nBits())
+                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -738,7 +761,7 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value,
 {
     size_t width = value->nBits();
     ExpressionPtr t1 = emit_left_shift(o, value, amount);
-    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpr::makeInteger(width, -1), amount));
+    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpr::makeIntegerConstant(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -753,7 +776,7 @@ ExpressionPtr
 RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = LeafNode::createInteger(width, 0);
+    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
@@ -775,13 +798,13 @@ ExpressionPtr
 RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = LeafNode::createInteger(width, 0);
+    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpr::makeInteger(width, width-1), t3);
+    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(width, width-1), t3);
     ExpressionPtr t5 = emit_ite(o, t2, zero, t4);
     return t5;
 }
@@ -798,7 +821,7 @@ RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const E
 ExpressionPtr
 RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
-    return emit_binary(o, "xor", value, SymbolicExpr::makeInteger(value->nBits(), -1));
+    return emit_binary(o, "xor", value, SymbolicExpr::makeIntegerConstant(value->nBits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
@@ -837,7 +860,7 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
     for (size_t i=1; i<operands.size(); ++i) {
         ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
         ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
-        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpr::makeInteger(result_width, shift));
+        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpr::makeIntegerConstant(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
         shift += operands[i]->nBits();
     }
@@ -947,7 +970,7 @@ RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, con
 {
     ExpressionPtr t3 = emit_left_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeInteger(amount->nBits(), 32),
+                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -965,7 +988,7 @@ RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, co
 {
     ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeInteger(amount->nBits(), 32),
+                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_left_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -1088,7 +1111,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 
     // Handle leaf nodes
     if (LeafPtr leaf = cur_expr->isLeafNode()) {
-        if (leaf->isVariable()) {
+        if (leaf->isVariable2()) {
             std::string varname = get_variable(leaf);
             if (varname.empty()) {
                 // This is a reference to a ROSE variable that has no corresponding LLVM variable.  This can happen for things
@@ -1109,6 +1132,8 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("cannot happen for an interior node");
             case SymbolicExpr::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
@@ -1155,7 +1180,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_NEGATE:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_binary(o, "sub", SymbolicExpr::makeInteger(operands[0]->nBits(), 0), operands[0]);
+                operator_result = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0), operands[0]);
                 break;
             case SymbolicExpr::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
@@ -1252,13 +1277,39 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_ZEROP:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_compare(o, "icmp eq", operands[0], SymbolicExpr::makeInteger(operands[0]->nBits(), 0));
+                operator_result = emit_compare(o, "icmp eq", operands[0],
+                                               SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0));
                 break;
 
             case SymbolicExpr::OP_LET:
             case SymbolicExpr::OP_NOOP:
             case SymbolicExpr::OP_WRITE:
             case SymbolicExpr::OP_SET:
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+            case SymbolicExpr::OP_CONVERT:
+            case SymbolicExpr::OP_REINTERPRET:
                 throw BaseSemantics::Exception("LLVM translation for " +
                                                stringifyBinaryAnalysisSymbolicExprOperator(inode->getOperator()) +
                                                " is not implemented yet", NULL);
@@ -1271,7 +1322,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 
     // The return value must be a constant or variable
     LeafPtr retval = cur_expr->isLeafNode();
-    ASSERT_require(retval!=NULL && (retval->isNumber() || retval->isVariable()));
+    ASSERT_require(retval!=NULL && (retval->isIntegerConstant() || retval->isIntegerVariable()));
 
     // Add a rewrite rule so that next time we're asked to emit the same expression we can just emit the result without going
     // through all this work again.
@@ -1288,7 +1339,7 @@ RiscOperators::add_rewrite(const ExpressionPtr &from, const LeafPtr &to)
         rewrites.erase(from->hash());
     } else {
         rewrites.insert(std::make_pair(from->hash(), to));
-        if (to->isVariable())
+        if (to->isIntegerVariable())
             add_variable(to);
     }
 }
@@ -1296,7 +1347,7 @@ RiscOperators::add_rewrite(const ExpressionPtr &from, const LeafPtr &to)
 std::string
 RiscOperators::add_variable(const LeafPtr &var)
 {
-    ASSERT_require(var!=NULL && var->isVariable());
+    ASSERT_require(var!=NULL && var->isIntegerVariable());
     std::string name = get_variable(var);
     if (name.empty()) {
         name = var->comment();
@@ -1315,7 +1366,7 @@ RiscOperators::add_variable(const LeafPtr &var)
 std::string
 RiscOperators::get_variable(const LeafPtr &var)
 {
-    ASSERT_require(var!=NULL && var->isVariable());
+    ASSERT_require(var!=NULL && var->isIntegerVariable());
     return variables.get_value_or(var->nameId(), "");
 }
 
@@ -1325,7 +1376,7 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
     ASSERT_not_null(rhs);
     LeafPtr t1 = emit_expression(o, rhs);
 
-    if (t1->isVariable() && t1->comment().empty())
+    if (t1->isIntegerVariable() && t1->comment().empty())
         return t1;
 
     LeafPtr lhs = next_temporary(rhs->nBits());
@@ -1435,7 +1486,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
                 // guaranteed.
                 o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
                 RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
-                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.get_nbits(),
+                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.nBits(),
                                                                              insn->get_address() + insn->get_size());
                 operators->currentState()->registerState()->writeRegister(IP_REG, fallthrough_va, operators.get());
             } else {
@@ -1490,7 +1541,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
         }
         {
             RiscOperators::Indent indent2(operators);
-            ExpressionPtr t1 = SymbolicExpr::makeInteger(32, insn->get_address());
+            ExpressionPtr t1 = SymbolicExpr::makeIntegerConstant(32, insn->get_address());
             o <<operators->prefix() <<"store " <<operators->llvm_integer_type(32) <<" " <<operators->llvm_term(t1)
               <<", " <<operators->llvm_integer_type(32) <<"* @eip\n";
             operators->emit_changed_state(o);
@@ -1604,3 +1655,5 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
 } // namespace
 } // namespace
 } // namespace
+
+#endif

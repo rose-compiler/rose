@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Registers.h"
 #include "AsmUnparser.h"
 #include <boost/foreach.hpp>
@@ -78,3 +81,5 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }
+
+#endif

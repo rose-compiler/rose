@@ -1,0 +1,195 @@
+#!/usr/bin/perl
+use strict;
+
+# Create a histogram showing how many warnings come from each directory.
+# Usage: Pipe the standard error of build commands to this file.
+# Bourne-shell example: make 2>&1 |this_script
+#
+# The default output is sorted by directory/file name. To get output sorted by number of warnings instead,
+# run it like this: make 2>&1 |this_script |sort -nrs
+
+########################################################################################################################
+# Filter input to remove ANSI escape sequences that would interfere with pattern matching.
+sub filter_input {
+    my($s) = @_;
+    $s =~ s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mKG]//g;
+    return $s;
+}
+
+########################################################################################################################
+# Returns a tuple which is a file name and the warning message if the line looks like a warning.
+
+sub is_warning {
+    my($line) = @_;
+
+    $line =~ /(.+?):\d+:\d+: warning: (.*)/ and return ($1,$2);	    	# GCC and LLVM warnings with line and column numbers
+    $line =~ /(.+?):\d+: warning: (.*)/ and return ($1,$2);         	# GCC and LLVM warnings with only line numbers
+    $line =~ /(.+?)\(\d+\): warning #\d+: (.*)/ and return ($1,$3); 	# Intel warnings
+    $line =~ /(.+?):[.0-9]+-[.0-9]+: warning: (.*)/ and return ($1,$3); # yacc location range: L1.C1-C2 or L1.C1-L2.C2
+    $line =~ /(.+\.yy): warning: (.*)/ and return ($1,$2);              # yacc file name w/out location
+    $line =~ /(configure): WARNING: (.*)/ and return ($1,$2);           # Autotool's "configure" script
+
+    # Some tool-specific warnings that lack location information
+    $line =~ /^clang: warning: (.*)/ and return ("unknown","clang $1");
+    $line =~ /^libtool: warning: (.*)/ and return ("unknown","libtool $1");
+    $line =~ /^libtool: install: warning: (.*)/ and return ("unkonwn","libtool $1");
+    $line =~ /^warning: (unknown warning option.*)/ and return ("unknown", $1);
+
+    return ();
+}
+
+########################################################################################################################
+# Return directory if this line represents a change of current working directory. Returns "" to cancel a previous return
+# directory (e.g., at the end of a command), and undef if the line doesn't match.
+
+sub changed_cwd {
+    my($line) = @_;
+    if ($line =~ /\d+\) \[\d+\.\d+s\] (.*?):/) {
+	# This is a Tup output. The compiler warnings that follow don't have a directory component for their source
+	# file names since they're run with only base names.
+	return $1
+    } elsif ($line =~ /\[ tup \].*complete/) {
+	return "";
+    } else {
+	return undef;
+    }
+}
+
+########################################################################################################################
+# Normalize a file name.
+
+sub normalize_filename {
+    my($file, $directory) = @_;
+
+    $file =~ s/^\s+//;
+    $file =~ s/\s+$//;
+    $file = "$directory/$file" if $directory ne "" && $file !~ /^\//;
+    return $file;
+}
+
+########################################################################################################################
+# Given the file name field of a warning message, return a list of suitable keys for the location histogram.
+
+sub location_keys {
+    my($file_name) = @_;
+    my @retval;
+
+    my @parts = grep {$_ ne ".." && $_ ne ""} split /\/+/, $file_name;
+    while (@parts) {
+	push @retval, join "/", @parts;
+	pop @parts;
+    }
+
+    return @retval;
+}
+
+########################################################################################################################
+# Emit info about where the errors are located.
+
+sub count_locations {
+    my %histogram;
+    my($directory);
+    while (<>) {
+	$_ = filter_input($_);
+	my($d) = changed_cwd($_);
+	$directory = $d if defined $d;
+
+	if (my($file,$warning) = is_warning $_) {
+	    $file = normalize_filename($file, $directory);
+	    ++$histogram{$_} for location_keys $file;
+	    ++$histogram{total};
+	}
+    }
+
+    print $histogram{$_}, "\t", $_, "\n" for sort keys %histogram;
+}
+
+########################################################################################################################
+# Given a warning message, clean it up so it can be categorized.
+
+sub clean_message {
+    local($_) = @_;
+
+    s/'[^']+'/'...'/g;		# remove single-quoted content
+    return $_;
+}
+
+########################################################################################################################
+# Emit info about the types of errors.
+
+sub count_types {
+    my %histogram;
+    my($directory);
+    while (<>) {
+	$_ = filter_input($_);
+	my($d) = changed_cwd($_);
+	$directory = $d if defined $d;
+
+	if (my($file,$mesg) = is_warning $_) {
+	    ++$histogram{clean_message $mesg};
+	    ++$histogram{total};
+	}
+    }
+
+    print $histogram{$_}, "\t", $_, "\n" for sort keys %histogram;
+}
+
+########################################################################################################################
+# Filter out warnings, emitting all other lines
+
+sub filter_out {
+    while (<>) {
+	my($file,$mesg) = is_warning $_;
+	print $_ unless $file;
+    }
+}
+
+########################################################################################################################
+# Classify each line as to whether it is waning or not.
+
+sub classify {
+    while (<>) {
+	$_ = filter_input($_);
+	if (/\d+\) \[\d+\.\d+s\] (.*?):/) {
+	    # This is a Tup output. The compiler warnings that follow don't have a directory component for their source
+	    # file names since they're run with only base names.
+	    print "D|$_";
+	} elsif (/\[ tup \].*complete/) {
+	    print "D|$_";
+	} elsif (my($file,$mesg) = is_warning $_) {
+	    print "W|$_";
+	} else {
+	    print " |$_";
+	}
+    }
+}
+
+########################################################################################################################
+
+# Parse arguments
+my $action = \&count_locations;
+while (@ARGV) {
+    if ($ARGV[0] eq '--') {
+	shift @ARGV;
+	last;
+    } elsif ($ARGV[0] =~ /^-?-locations?$/) {
+	$action = \&count_locations;
+	shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-?-types?$/) {
+	$action = \&count_types;
+	shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-?-filter$/) {
+	$action = \&filter_out;
+	shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-?-classify$/) {
+	$action = \&classify;
+	shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-/) {
+	die "$0: invalid switch: $ARGV[0]\n";
+    } else {
+	last;
+    }
+}
+
+&$action;
+exit 0;

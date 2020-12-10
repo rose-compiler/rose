@@ -1,3 +1,7 @@
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+// and likely never fully implemented nor tested.  Files remain in the src tree but are no
+// longer built.
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -136,6 +140,12 @@ AtermSupport::uniqueId(uint64_t n)
   // return an empty string for now.
      return "empty_string_uint64_t";
    }
+
+string 
+AtermSupport::uniqueId(Rose::BinaryAnalysis::RegisterDescriptor) {
+    // This supports generation of strings from addresses (mostly so that the SgAsm support will compile).
+    return "empty_string_Rose::BinaryAnalysis::RegisterDescriptor";
+}
 
 string 
 AtermSupport::uniqueId(const rose_rva_t & n)

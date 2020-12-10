@@ -2,7 +2,6 @@
 #define ADDRESSTAKENANALYSIS_H
 
 /*************************************************************
- * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
  * Author   : Sriram Aananthakrishnan                        *
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
@@ -10,6 +9,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "VariableIdMapping.h"
+//~ #include "FunctionCallMapping.h"
 #include "Miscellaneous.h"
 #include <set>
 
@@ -23,7 +23,7 @@
  ***************** ProcessQuery  *****************
  *************************************************/
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class ProcessQuery
 {
@@ -237,6 +237,6 @@ public:
   VariableIdMapping& getVariableIdMapping();
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

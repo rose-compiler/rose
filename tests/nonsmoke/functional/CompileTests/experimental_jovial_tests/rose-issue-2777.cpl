@@ -1,0 +1,19 @@
+START
+
+COMPOOL bit'cast'j;
+
+TYPE a'table'type TABLE W 1 ;
+   BEGIN
+      ITEM bit'part B 16 POS(0,0);
+      ITEM num'part U 16 POS(16,0);
+   END
+
+DEF TABLE table'1(1) a'table'type
+   = 
+   POS(0):4B'FFEE', 
+   148 ;
+
+DEF TABLE table'2(1) a'table'type
+   = POS(0): (*B 16*) (1), 148 ;
+
+TERM

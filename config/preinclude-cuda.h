@@ -8,6 +8,7 @@
   #define ROSE_DEFINE_CUDA_BUILTIN_TYPES 1
   #define ROSE_DEFINE_CUDA_BUILTIN_VARIABLES 1
   #define ROSE_DEFINE_CUDA_BUILTIN_FUNCTIONS 1
+  #define ROSE_DEFINE_CUDA_BUILTIN_TEXTURES 1
 #endif
 
 #include <vector_types.h>
@@ -895,4 +896,67 @@ int __builtin_bswap32 (int x);
 
 
 #endif /* ROSE_DEFINE_GNU_BUILTIN_FOR_CUDA */
+
+#if ROSE_DEFINE_CUDA_BUILTIN_TEXTURES
+// \pp added preliminry support for textures (incomplete)
+#include "texture_types.h"
+
+#if defined(__cplusplus)
+
+// \todo to be completed..
+// is there a header for the C++ variants?
+template <class DataType, int, cudaTextureReadMode> 
+struct texture : textureReference
+{};
+
+template <class DataType>
+DataType
+tex1Dfetch(texture <DataType, cudaTextureType1D, cudaReadModeElementType> texRef, int x ) ;  
+
+template<class T>
+cudaChannelFormatDesc cudaCreateChannelDesc();  	
+
+template<class T, int dim, cudaTextureReadMode readMode>
+cudaError_t 
+cudaBindTexture( size_t* offset, 
+                 const texture< T, dim, readMode>& tex,
+                 const void*                       devPtr,
+                 const cudaChannelFormatDesc&  	   desc,
+                 size_t                            size = UINT_MAX
+               ); 	
+
+template<class T, int dim, cudaTextureReadMode readMode>
+cudaError_t 
+cudaBindTexture( size_t*                          offset, 
+                 const texture<T, dim, readMode>& tex,
+                 const void*                      devPtr,
+                 size_t                           size = UINT_MAX
+               );
+#endif /* __cplusplus */
+
+#endif /* ROSE_DEFINE_CUDA_BUILTIN_TEXTURES */
+
+#ifdef __host__
+#  undef __host__
+#endif
+
+#ifdef __device__
+# undef __device__
+#endif
+
+#ifdef __global__
+#  undef __global__
+#endif
+
+#ifdef __shared__
+# undef __shared__
+#endif
+
+#ifdef __constant__
+# undef __constant__
+#endif
+
+#ifdef __managed__
+# undef __managed__
+#endif
 

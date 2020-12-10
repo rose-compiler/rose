@@ -1,5 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
+
+#include <boost/lexical_cast.hpp>
 #include <rose_strtoull.h>
 #include <stringify.h>
 #include <Sawyer/Stopwatch.h>
@@ -34,6 +38,22 @@ Z3Solver::reset() {
         delete ctx_;
         ctx_ = new z3::context;
         solver_ = new z3::solver(*ctx_);
+        if (timeout_) {
+            // It's not well documented. Experimentally determined to be milliseconds.
+            ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(timeout_->count()*1000)).c_str());
+        }
+    }
+#endif
+}
+
+void
+Z3Solver::timeout(boost::chrono::duration<double> seconds) {
+#ifdef ROSE_HAVE_Z3
+    timeout_ = seconds;
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        // It's not well documented. Experimentally determined to be milliseconds.
+        ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(seconds.count()*1000)).c_str());
     }
 #endif
 }
@@ -156,6 +176,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 retval = outputList("bvadd", inode);
                 break;
@@ -186,6 +208,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 break;
             }
+            case SymbolicExpr::OP_CONVERT:
+                throw Exception("OP_CONVERT is not implemented yet");
             case SymbolicExpr::OP_EQ:
                 retval = outputBinary("=", inode, BOOLEAN);
                 break;
@@ -197,6 +221,30 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_EXTRACT:
                 retval = outputExtract(inode);
                 break;
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+                throw Exception("floating point operations are not implemented yet");
             case SymbolicExpr::OP_INVERT: {
                 ASSERT_require(inode->nChildren() == 1);
                 SExprTypePair child = outputExpression(inode->child(0));
@@ -222,7 +270,7 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 break;
             }
             case SymbolicExpr::OP_NOOP:
-                retval = outputExpression(SymbolicExpr::makeInteger(inode->nBits(), 0));
+                retval = outputExpression(SymbolicExpr::makeIntegerConstant(inode->nBits(), 0));
                 break;
             case SymbolicExpr::OP_OR: {
                 Etv children = outputExpressions(inode->children());
@@ -239,6 +287,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_READ:
                 retval = outputRead(inode);
                 break;
+            case SymbolicExpr::OP_REINTERPRET:
+                throw Exception("OP_REINTERPRET not implemented");
             case SymbolicExpr::OP_ROL:
                 retval = outputRotateLeft(inode);
                 break;
@@ -384,9 +434,9 @@ portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
 Z3Solver::Z3ExprTypePair
 Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
     ASSERT_not_null(leaf);
-    if (leaf->isNumber()) {
+    if (leaf->isIntegerConstant()) {
         if (leaf->nBits() <= 64) {
-            z3::expr z3expr = portable_z3_bv_val(ctx_, leaf->toInt(), leaf->nBits());
+            z3::expr z3expr = portable_z3_bv_val(ctx_, *leaf->toUnsigned(), leaf->nBits());
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         } else {
             // Z3-4.5.0 and 4.6.0 lack an interface for creating a bit vector with more than 64 bits from a hexadecimal
@@ -406,11 +456,11 @@ Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
             }
             return Z3ExprTypePair(z3expr, BIT_VECTOR);
         }
-    } else if (leaf->isVariable()) {
+    } else if (leaf->isIntegerVariable()) {
         z3::func_decl decl = ctxVarDecls_.get(leaf);
         return Z3ExprTypePair(decl(), BIT_VECTOR);
     } else {
-        ASSERT_require(leaf->isMemory());
+        ASSERT_require(leaf->isMemoryVariable());
         z3::func_decl decl = ctxVarDecls_.get(leaf);
         return Z3ExprTypePair(decl(), MEM_STATE);
     }
@@ -450,6 +500,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD: {
                 Etv children = ctxCast(ctxExpressions(inode->children()), BIT_VECTOR);
                 ASSERT_forbid(children.empty());
@@ -504,6 +556,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                     z3expr = z3::concat(z3expr, children[i].first);
                 return Z3ExprTypePair(z3expr, BIT_VECTOR);
             }
+            case SymbolicExpr::OP_CONVERT:
+                throw Exception("OP_CONVERT is not implemented yet");
             case SymbolicExpr::OP_EXTRACT:
                 return ctxExtract(inode);
             case SymbolicExpr::OP_INVERT: {
@@ -517,6 +571,30 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 return Z3ExprTypePair(z3expr, child.second);
             }
+            case SymbolicExpr::OP_FP_ABS:
+            case SymbolicExpr::OP_FP_NEGATE:
+            case SymbolicExpr::OP_FP_ADD:
+            case SymbolicExpr::OP_FP_MUL:
+            case SymbolicExpr::OP_FP_DIV:
+            case SymbolicExpr::OP_FP_MULADD:
+            case SymbolicExpr::OP_FP_SQRT:
+            case SymbolicExpr::OP_FP_MOD:
+            case SymbolicExpr::OP_FP_ROUND:
+            case SymbolicExpr::OP_FP_MIN:
+            case SymbolicExpr::OP_FP_MAX:
+            case SymbolicExpr::OP_FP_LE:
+            case SymbolicExpr::OP_FP_LT:
+            case SymbolicExpr::OP_FP_GE:
+            case SymbolicExpr::OP_FP_GT:
+            case SymbolicExpr::OP_FP_EQ:
+            case SymbolicExpr::OP_FP_ISNORM:
+            case SymbolicExpr::OP_FP_ISSUBNORM:
+            case SymbolicExpr::OP_FP_ISZERO:
+            case SymbolicExpr::OP_FP_ISINFINITE:
+            case SymbolicExpr::OP_FP_ISNAN:
+            case SymbolicExpr::OP_FP_ISNEG:
+            case SymbolicExpr::OP_FP_ISPOS:
+                throw Exception("floating point operations are not implemented yet");
             case SymbolicExpr::OP_ITE: {
                 ASSERT_require(inode->nChildren() == 3);
                 Etv alternatives;
@@ -550,7 +628,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return Z3ExprTypePair(z3expr, BIT_VECTOR);
             }
             case SymbolicExpr::OP_NOOP:
-                return ctxExpression(SymbolicExpr::makeInteger(inode->nBits(), 0));
+                return ctxExpression(SymbolicExpr::makeIntegerConstant(inode->nBits(), 0));
             case SymbolicExpr::OP_OR: {
                 ASSERT_require(inode->nChildren() >= 2);
                 Etv children = ctxExpressions(inode->children());
@@ -570,6 +648,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             }
             case SymbolicExpr::OP_READ:
                 return ctxRead(inode);
+            case SymbolicExpr::OP_REINTERPRET:
+                throw Exception("OP_REINTERPRET not implemented");
             case SymbolicExpr::OP_ROL:
                 return ctxRotateLeft(inode);
             case SymbolicExpr::OP_ROR:
@@ -646,7 +726,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxZerop(inode);
         }
     }
-    ASSERT_not_reachable("unhandled case");
+    ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +
+                         " (" + boost::lexical_cast<std::string>(inode->getOperator()) + ")");
 }
 
 std::vector<Z3Solver::Z3ExprTypePair>
@@ -691,7 +772,7 @@ Z3Solver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa);
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance("bvashr"),
@@ -706,7 +787,7 @@ void
 Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
     BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
         ASSERT_not_null(var);
-        ASSERT_require(var->isVariable() || var->isMemory());
+        ASSERT_require(var->isVariable2());
         if (ctxVarDecls_.exists(var)) {
             // already emitted a declaration for this variable
         } else if (var->isScalar()) {
@@ -765,7 +846,7 @@ Z3Solver::ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa);
     z3::expr e = z3::ashr(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
                           ctxCast(ctxExpression(sa), BIT_VECTOR).first);
     return Z3ExprTypePair(e, BIT_VECTOR);
@@ -775,10 +856,10 @@ Z3Solver::Z3ExprTypePair
 Z3Solver::ctxExtract(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
-    ASSERT_require(inode->child(0)->isNumber());
-    ASSERT_require(inode->child(1)->isNumber());
-    size_t begin = inode->child(0)->toInt();            // low, inclusive
-    size_t end = inode->child(1)->toInt();              // high, exclusive
+    ASSERT_require(inode->child(0)->isIntegerConstant());
+    ASSERT_require(inode->child(1)->isIntegerConstant());
+    size_t begin = inode->child(0)->toUnsigned().get(); // low, inclusive
+    size_t end = inode->child(1)->toUnsigned().get();   // high, exclusive
     ASSERT_require(end > begin);
     ASSERT_require(end <= inode->child(2)->nBits());
 
@@ -802,7 +883,7 @@ Z3Solver::ctxRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
     z3::expr e = z3::shl(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
                                     ctxCast(ctxExpression(expr), BIT_VECTOR).first),
                          ctxCast(ctxExpression(sa), BIT_VECTOR).first)
@@ -817,7 +898,7 @@ Z3Solver::ctxRotateRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*w), sa);
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
     z3::expr e = z3::lshr(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
                                      ctxCast(ctxExpression(expr), BIT_VECTOR).first),
                           ctxCast(ctxExpression(sa), BIT_VECTOR).first)
@@ -839,13 +920,13 @@ Z3Solver::Z3ExprTypePair
 Z3Solver::ctxSignExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    ASSERT_require(inode->child(0)->isNumber());
-    ASSERT_require(inode->child(0)->toInt() > inode->child(1)->nBits());
+    ASSERT_require(inode->child(0)->isIntegerConstant());
+    ASSERT_require(inode->child(0)->toUnsigned().get() > inode->child(1)->nBits());
     SymbolicExpr::Ptr newSize = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     size_t signBitIdx = expr->nBits() - 1;
-    size_t growth = newSize->toInt() - expr->nBits();
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(growth, false));
+    size_t growth = newSize->toUnsigned().get() - expr->nBits();
+    SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(growth, false));
 
     z3::expr isNegative =
         ctxCast(ctxExpression(expr), BIT_VECTOR).first.extract(signBitIdx, signBitIdx) == ctx_->bv_val(1, 1);
@@ -867,9 +948,9 @@ Z3Solver::ctxShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
-    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
         z3::shl(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
@@ -888,9 +969,9 @@ Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
+    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
-    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
         z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
@@ -907,7 +988,7 @@ Z3Solver::ctxMultiply(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr a = inode->child(0);
     SymbolicExpr::Ptr b = inode->child(1);
-    SymbolicExpr::Ptr resultSize = SymbolicExpr::makeInteger(32, a->nBits() + b->nBits());
+    SymbolicExpr::Ptr resultSize = SymbolicExpr::makeIntegerConstant(32, a->nBits() + b->nBits());
 
     SymbolicExpr::Ptr aExtended, bExtended;
     if (inode->getOperator() == SymbolicExpr::OP_SMUL) {
@@ -930,8 +1011,8 @@ Z3Solver::ctxUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
 
     z3::expr e =
         z3::udiv(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
@@ -946,8 +1027,8 @@ Z3Solver::ctxSignedDivide(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
 
     z3::expr e =
         (ctxCast(ctxExpression(aExtended), BIT_VECTOR).first /
@@ -961,11 +1042,11 @@ Z3Solver::Z3ExprTypePair
 Z3Solver::ctxUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    ASSERT_require(inode->child(0)->isNumber());
-    ASSERT_require(inode->child(0)->toInt() > inode->child(1)->nBits());
-    size_t newWidth = inode->child(0)->toInt();
+    ASSERT_require(inode->child(0)->isIntegerConstant());
+    ASSERT_require(inode->child(0)->toUnsigned().get() > inode->child(1)->nBits());
+    size_t newWidth = inode->child(0)->toUnsigned().get();
     size_t needBits = newWidth - inode->child(1)->nBits();
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(needBits, false));
+    SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(needBits, false));
 
     z3::expr e = z3::concat(ctxCast(ctxExpression(zeros), BIT_VECTOR).first,
                             ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
@@ -978,8 +1059,8 @@ Z3Solver::ctxUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
 
     z3::expr e =
         z3::urem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
@@ -994,8 +1075,8 @@ Z3Solver::ctxSignedModulo(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, w), inode->child(1));
+    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
 
     z3::expr e =
         z3::srem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
@@ -1022,7 +1103,7 @@ Z3Solver::ctxZerop(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 1);
 
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeInteger(inode->child(0)->nBits(), 0);
+    SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(inode->child(0)->nBits(), 0);
     z3::expr e = ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first ==
                  ctxCast(ctxExpression(zeros), BIT_VECTOR).first;
 
@@ -1101,7 +1182,7 @@ Z3Solver::parseEvidence() {
         z3::expr interp = model.get_const_interp(fdecl);
         if (interp.is_bv()) {
             if (var->nBits() <= 64) {
-                val = SymbolicExpr::makeInteger(var->nBits(), interp.get_numeral_uint64());
+                val = SymbolicExpr::makeIntegerConstant(var->nBits(), interp.get_numeral_uint64());
             } else {
                 // Z3 doesn't have an API function to obtain the bits of a constant if the constant is wider than 64 bits. We
                 // can't use the trick of splitting the Z3 bit vector into 64-bit chunks and converting each to a uint64_t and
@@ -1111,12 +1192,12 @@ Z3Solver::parseEvidence() {
                 std::string digits = interp.get_decimal_string(0);
                 Sawyer::Container::BitVector bits(var->nBits());
                 bits.fromDecimal(bits.hull(), digits);
-                val = SymbolicExpr::makeConstant(bits);
+                val = SymbolicExpr::makeIntegerConstant(bits);
                 ASSERT_require(val->nBits() == var->nBits());
-                ASSERT_require(val->isLeafNode() && val->isLeafNode()->isNumber());
+                ASSERT_require(val->isLeafNode() && val->isLeafNode()->isIntegerConstant());
             }
         } else if (interp.is_bool()) {
-            val = SymbolicExpr::makeBoolean(interp.get_numeral_uint() != 0);
+            val = SymbolicExpr::makeBooleanConstant(interp.get_numeral_uint() != 0);
         } else {
             mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
             continue;
@@ -1163,9 +1244,9 @@ Z3Solver::selfTest() {
     //-----
 
     // Create the expression
-    Expr a = makeVariable(32, "a");
-    Expr rol = makeRol(makeInteger(32, 3), a);
-    Expr ror = makeRor(makeInteger(32, 3), a);
+    Expr a = makeIntegerVariable(32, "a");
+    Expr rol = makeRol(makeIntegerConstant(32, 3), a);
+    Expr ror = makeRor(makeIntegerConstant(32, 3), a);
     Expr expr1 = makeEq(rol, ror);
 
     // Insert the expression into the solver
@@ -1198,16 +1279,16 @@ Z3Solver::selfTest() {
     ASSERT_always_not_null(aEvidence);
     ASSERT_always_require(aEvidence->nBits() == a->nBits());
     ASSERT_always_require(aEvidence->isLeafNode());
-    ASSERT_always_require(aEvidence->isLeafNode()->isNumber());
-    uint32_t aVal = aEvidence->isLeafNode()->toInt();
+    ASSERT_always_require(aEvidence->isLeafNode()->isIntegerConstant());
+    uint32_t aVal = aEvidence->isLeafNode()->toUnsigned().get();
     ASSERT_always_require2(aVal == 0x00000000 || aVal == 0x11111111 || aVal == 0xaaaaaaaa || aVal == 0x55555555,
                            StringUtility::addrToString(aVal));
 
     // Augment by requiring that the answer is not certain values
     push();
-    insert(makeNe(a, makeInteger(32, 0x00000000)));
-    insert(makeNe(a, makeInteger(32, 0xffffffff)));
-    insert(makeNe(a, makeInteger(32, 0xaaaaaaaa)));
+    insert(makeNe(a, makeIntegerConstant(32, 0x00000000)));
+    insert(makeNe(a, makeIntegerConstant(32, 0xffffffff)));
+    insert(makeNe(a, makeIntegerConstant(32, 0xaaaaaaaa)));
 
     // Check again and get an answer
     sat = check();
@@ -1216,8 +1297,8 @@ Z3Solver::selfTest() {
     aEvidence = evidenceForName(a->isLeafNode()->toString());
     ASSERT_always_not_null(aEvidence);
     ASSERT_always_require(aEvidence->isLeafNode());
-    ASSERT_always_require(aEvidence->isLeafNode()->isNumber());
-    aVal = aEvidence->isLeafNode()->toInt();
+    ASSERT_always_require(aEvidence->isLeafNode()->isIntegerConstant());
+    aVal = aEvidence->isLeafNode()->toUnsigned().get();
     ASSERT_always_require2(aVal == 0x55555555, StringUtility::addrToString(aVal));
 
     trace <<"; pass\n";
@@ -1228,4 +1309,6 @@ Z3Solver::selfTest() {
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Z3Solver);
+#endif
+
 #endif

@@ -2,7 +2,7 @@
 
 #include "DotGraphCfgFrontend.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 Flow DotGraphCfgFrontend::parseDotCfg(string filename) {

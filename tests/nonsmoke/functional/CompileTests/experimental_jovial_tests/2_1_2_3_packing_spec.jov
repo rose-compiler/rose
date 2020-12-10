@@ -1,0 +1,19 @@
+START
+
+PROGRAM packing'specifier ;
+BEGIN
+
+TABLE table'n N ;
+   ITEM xpos U ;
+
+TABLE table'm M ;
+   ITEM ypos U ;
+
+TABLE table'd D ;
+   ITEM zpos U ;
+
+xpos = 13;
+
+END
+
+TERM

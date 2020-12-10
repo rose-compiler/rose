@@ -1,29 +1,29 @@
 Functions detected from binary executable:
-  Num Entry-Addr Begin-Addr  End-Addr  Insns/ Bytes     Reason(*1)    CallConv  Returns  Stack(*2)               Name              
- ---- ---------- ---------- ---------- ------------ ----------------- -------- --------- --------- --------------------------------
-    0 0x080482c8 0x080482c8 0x080482df     8/23     .C....PG.........  unknown       yes        +4                                 
-    1 0x080482e0 0x080482e0 0x080482ec     2/12     ...I...G.........  unknown       yes           DYNAMIC_LINKER_TRAMPOLINE       
-    2 0x080482f0 0x080482f0 0x080482f6     1/6      .C.I...G.........  unknown       yes        +4 signal@plt                      
-    3 0x08048300 0x08048300 0x08048306     1/6      .C.I...G.........  unknown       yes        +4 puts@plt                        
-    4 0x08048310 0x08048310 0x08048316     1/6      .C.I...G.........  unknown       yes        +4 __libc_start_main@plt           
-    5 0x08048320 0x08048320 0x08048326     1/6      .C.I...G.........  unknown        no        +4 _exit@plt                       
-    6 0x08048330 0x08048330 0x08048336     1/6      .C.I...G.........  unknown       yes        +4 __gmon_start__@plt              
-    7 0x08048340 0x08048340 0x08048362    14/34     E......G.........  unknown        no           _start                          
-    8 0x08048364 0x08048364 0x08048388    15/36     .C.....G.........  unknown       yes        +4                                 
-    9 0x08048390 0x08048390 0x080483ce    20/62     .C....PG.........  unknown       yes        +4                                 
-   10 0x080483d0 0x080483d0 0x08048404    16/52     .C.....G.........  unknown       yes        +4                                 
-   11 0x08048410 0x08048410 0x08048434    12/36     .C.....G.........  unknown       yes        +4 main                            
-   12 0x08048440 0x08048440 0x08048456     8/22     ......PG.........  unknown       yes        +4                                 
-   13 0x08048460 0x08048460 0x0804847e     7/30     ......PG.........  unknown        no                                           
-   14 0x08048480 0x08048480 0x080484a4     8/36     ......PG.........  unknown        no                                           
-   15 0x080484b0 0x080484b0 0x08048513    39/99     ......PG.........  unknown       yes        +4                                 
-   16 0x08048520 0x08048520 0x08048578    33/88     ......PG.........  unknown       yes        +4                                 
-   17 0x08048580 0x08048580 0x080485b0    19/48     .C.....G.........  unknown       yes        +4                                 
-   18 0x080485b0 0x080485b0 0x080485ca    12/26     .C.....G.........  unknown       yes        +4                                 
- ---- ---------- ---------- ---------- ------------ ----------------- -------- --------- --------- --------------------------------
+  Num Entry-Addr Begin-Addr  End-Addr  Insns/ Bytes     Reason(*1)     CallConv  Returns  Stack(*2)               Name              
+ ---- ---------- ---------- ---------- ------------ ------------------ -------- --------- --------- --------------------------------
+    0 0x080482c8 0x080482c8 0x080482df     8/23     .C....PG..........  unknown       yes        +4                                 
+    1 0x080482e0 0x080482e0 0x080482ec     2/12     ...I...G..........  unknown       yes           DYNAMIC_LINKER_TRAMPOLINE       
+    2 0x080482f0 0x080482f0 0x080482f6     1/6      .C.I...G..........  unknown       yes        +4 signal@plt                      
+    3 0x08048300 0x08048300 0x08048306     1/6      .C.I...G..........  unknown       yes        +4 puts@plt                        
+    4 0x08048310 0x08048310 0x08048316     1/6      .C.I...G..........  unknown       yes        +4 __libc_start_main@plt           
+    5 0x08048320 0x08048320 0x08048326     1/6      .C.I...G..........  unknown        no        +4 _exit@plt                       
+    6 0x08048330 0x08048330 0x08048336     1/6      .C.I...G..........  unknown       yes        +4 __gmon_start__@plt              
+    7 0x08048340 0x08048340 0x08048362    14/34     E......G..........  unknown        no           _start                          
+    8 0x08048364 0x08048364 0x08048388    15/36     .C.....G..........  unknown       yes        +4                                 
+    9 0x08048390 0x08048390 0x080483ce    20/62     .C....PG..........  unknown       yes        +4                                 
+   10 0x080483d0 0x080483d0 0x08048404    16/52     .C.....G..........  unknown       yes        +4                                 
+   11 0x08048410 0x08048410 0x08048434    12/36     .C.....G..........  unknown       yes        +4 main                            
+   12 0x08048440 0x08048440 0x08048456     8/22     ......PG..........  unknown       yes        +4                                 
+   13 0x08048460 0x08048460 0x0804847e     7/30     ......PG..........  unknown        no                                           
+   14 0x08048480 0x08048480 0x080484a4     8/36     ......PG..........  unknown        no                                           
+   15 0x080484b0 0x080484b0 0x08048513    39/99     ......PG..........  unknown       yes        +4                                 
+   16 0x08048520 0x08048520 0x08048578    33/88     ......PG..........  unknown       yes        +4                                 
+   17 0x08048580 0x08048580 0x080485b0    19/48     .C.....G..........  unknown       yes        +4                                 
+   18 0x080485b0 0x080485b0 0x080485ca    12/26     .C.....G..........  unknown       yes        +4                                 
+ ---- ---------- ---------- ---------- ------------ ------------------ -------- --------- --------- --------------------------------
   == Footnotes ==
   Footnote *1: E = entry address         H = CFG head             C = function call(*)
-               X = exception frame       T = thunk                I = imported/dyn-linked
+               X = exception frame       T = thunk, t = target    I = imported/dyn-linked
                O = exported              S = function symbol      P = instruction pattern
                G = CFG graph analysis    U = user-def detection   N = NOP/zero padding
                D = discontiguous blocks  V = intra-function block L = leftover blocks

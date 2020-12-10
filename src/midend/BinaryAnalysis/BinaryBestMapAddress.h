@@ -1,9 +1,13 @@
 #ifndef ROSE_BinaryAnalysis_BestMapAddress
 #define ROSE_BinaryAnalysis_BestMapAddress
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
@@ -19,11 +23,11 @@ namespace BinaryAnalysis {
 class BestMapAddress {
 public:
     /** Exceptions for this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Construct an exception with a message. */
         explicit Exception(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
 
         /** Destructor. */
         ~Exception() throw () {}
@@ -35,9 +39,15 @@ public:
     /** Facility for emitting diagnostics. */
     static Diagnostics::Facility mlog;
 
+    /** Settings to control the analysis. */
+    struct Settings {
+        Sawyer::Optional<size_t> nThreads;              /**< Number of threads to use, overriding the global setting. */
+    };
+
 private:
     typedef Sawyer::Container::Map<size_t /*nMatches*/, std::vector<rose_addr_t>/*deltas*/> MatchedDeltas;
 
+    Settings settings_;
     AddressSet entryVas_;                               // set of function entry virtual addresses
     AddressSet targetVas_;                              // set of call target (callee) addresses
     MatchedDeltas results_;                             // results of analyze() call
@@ -50,6 +60,17 @@ public:
     /** Construct an empty analysis. */
     BestMapAddress()
         : upToDate_(true), maxMatches_(0), nBits_(0), progress_(Progress::instance()) {}
+
+    /** Settings.
+     *
+     *  @{ */
+    const Settings& settings() const {
+        return settings_;
+    }
+    Settings& settings() {
+        return settings_;
+    }
+    /** @} */
 
     /** Clear gathered addresses.
      *
@@ -152,7 +173,7 @@ public:
      *  If a progress reporting object has been configured for this analysis, then this method periodically updates it with
      *  progress reports.
      *
-     *  Returns a reference to the analysis object so for easy chaining to a query. */
+     *  Returns a reference to the analysis object for easy chaining to a query. */
     BestMapAddress& analyze(const AddressInterval &restrictEntryAddresses = AddressInterval::whole(),
                             const AddressInterval &restrictTargetAddresses = AddressInterval::whole());
 
@@ -181,4 +202,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,9 +1,0 @@
-
-Macro def at: test7.c l 1 c 11
-FORMAL BODY: tab_prefix[i]
-It has 1 calls to it
-
-Macro Call at test7.c l 8 c 3EXPANDED: tab_prefix[2]
-Matching AST: tab_prefix[2];
- Corresponding Ast Nodes: 
-Is inconsistent with:

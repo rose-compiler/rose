@@ -1,10 +1,10 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinaryAstHash.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
-    
     /**  HashAST::visit
      *  
      * Called by traverse.  Gets the whatever data is of interest and puts
@@ -15,18 +15,20 @@ namespace BinaryAnalysis {
     void
     AstHash::visit(SgNode* node)
     {
-        //Always include the type of each node in the hash
-        VariantT vType = node->variantT();
-        hasher_.insert(vType);
+        // Always include the type of each node in the hash. We include the type name rather than the enum constant because we
+        // want the hash to be as stable as possible across different ROSE versions. The type name never changes, but the enum
+        // constant can change whenever someone adds a new SgNode type even if that type is completely unrelated to binary
+        // analysis.
+        hasher_->insert(node->class_name());
         
         //If it's an instruction, include the mnemonic, and maybe the address
         SgAsmInstruction* asmInstruction = isSgAsmInstruction(node);
         if(asmInstruction != NULL) {
             std::string mnemonic = asmInstruction->get_mnemonic();
-            hasher_.insert(mnemonic);
+            hasher_->insert(mnemonic);
             if(includeAddresses) {
                 rose_addr_t addr = asmInstruction->get_address();
-                hasher_.insert(addr);
+                hasher_->insert(addr);
             }
             return;
         }
@@ -36,7 +38,7 @@ namespace BinaryAnalysis {
         if(regRef != NULL)
             {
                 unsigned regHash = regRef->get_descriptor().hash();
-                hasher_.insert(regHash);
+                hasher_->insert(regHash);
                 return;
             }
         
@@ -45,12 +47,11 @@ namespace BinaryAnalysis {
             SgAsmConstantExpression* constExpr = isSgAsmConstantExpression(node);
             if(constExpr != NULL) {
                 std::string mnemonic = constExpr->get_bitVector().toHex();
-                hasher_.insert(mnemonic);
+                hasher_->insert(mnemonic);
                 return;
             }
         }    
     }
-
 
     /**  HashAST::appendBasicBlock
      *  
@@ -71,8 +72,8 @@ namespace BinaryAnalysis {
                 this->traverse((SgNode*) *instIt, preorder);
             }
     }
-    
-
 
 } // namespace
 } // namespace
+
+#endif

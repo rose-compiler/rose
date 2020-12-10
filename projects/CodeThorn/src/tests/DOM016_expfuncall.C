@@ -1,3 +1,5 @@
+#include "DOM.h"
+
 int f() {
   return 1;
 }
@@ -5,5 +7,6 @@ int f() {
 int main() {
   int x;
   x=f()+1;
+  printf("x:%d\n",x);
   return 0;
 }

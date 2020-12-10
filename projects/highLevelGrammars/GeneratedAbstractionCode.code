@@ -1,7 +1,0 @@
-BinaryOperatorAttribute*
-is$DEFINED_LIBRARY_NAME_BinaryOperatorAbstraction ( SgNode* astNode )
-   {
-     BinaryOperatorAttribute* binaryOperator = astNode->attribute.get("DEFINED_LIBRARY_NAME_Abstraction");
-     return binaryOperator;
-   }
-

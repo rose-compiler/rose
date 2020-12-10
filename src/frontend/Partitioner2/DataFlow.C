@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include <AsmUnparser_compat.h>
@@ -30,7 +32,7 @@ public:
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
+    typedef Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
 
     // Info about one function call
     struct CallFrame {
@@ -62,7 +64,7 @@ public:
     DfCfg::VertexIterator findVertex(const ControlFlowGraph::ConstVertexIterator cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
-        return callFrame.vmap.getOrElse(cfgVertex, dfCfg.vertices().end());
+        return callFrame.vmap.find(cfgVertex).orElse(dfCfg.vertices().end());
     }
 
     // Insert the specified dfVertex into the data-flow graph and associate it with the specified cfgVertex. The mapping is
@@ -105,7 +107,7 @@ public:
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(cfgVertex->value().type() == V_BASIC_BLOCK);
         DfCfg::VertexIterator retval = dfCfg.vertices().end();
-        if (!callFrame.vmap.getOptional(cfgVertex).assignTo(retval)) {
+        if (!callFrame.vmap.find(cfgVertex).assignTo(retval)) {
             BasicBlock::Ptr bblock = cfgVertex->value().bblock();
             ASSERT_not_null(bblock);
             retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);
@@ -353,22 +355,37 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
     variable = inode->child(0)->isLeafNode();
     SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         std::swap(variable, constant);
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         return Sawyer::Nothing();
-    if (!variable || !variable->isVariable())
+    if (!variable || !variable->isIntegerVariable())
         return Sawyer::Nothing();
 
     if (!variable->mustEqual(initialStack, solver))
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
+    int64_t val = constant->toSigned().get();
     return val;
 }
 
-StackVariables
-findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
+// Info about stack variables that is distributed across function frame offsets using a Sawyer::IntervalMap.
+struct StackVariableMeta {
+    InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet writers;
+    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties;
+
+    StackVariableMeta(const InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet &writers,
+                      const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
+        : writers(writers), ioProperties(io) {}
+
+    bool operator==(const StackVariableMeta &other) const {
+        return writers == other.writers && ioProperties == other.ioProperties;
+    }
+};
+
+Variables::StackVariables
+findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                   const BaseSemantics::SValuePtr &initialStackPointer) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
@@ -384,7 +401,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
     // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
     // properties. This is how we coalesce adjacent bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<StackVariableLocation::Interval, StackVariableMeta> CellCoalescer;
+    typedef Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta> CellCoalescer;
     CellCoalescer cellCoalescer;
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
@@ -395,9 +412,9 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
         size_t nBytes = cell->get_value()->get_width() / 8;
         ASSERT_require(nBytes > 0);
         if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
-            StackVariableLocation location(*stackOffset, nBytes, address);
+            Variables::OffsetInterval location = Variables::OffsetInterval::baseSize(*stackOffset, nBytes);
             StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
-            cellCoalescer.insert(location.interval(), meta);
+            cellCoalescer.insert(location, meta);
             for (size_t i=0; i<nBytes; ++i) {
                 BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
                 offsetAddresses.insert(*stackOffset+i, byteAddr);
@@ -407,11 +424,11 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
     // The cellCoalescer has automatically organized the individual bytes into the largest possible intervals that have the
     // same set of writers and I/O properties.  We just need to pick them off in order to build the return value.
-    std::vector<StackVariable> retval;
-    BOOST_FOREACH (const StackVariableLocation::Interval &interval, cellCoalescer.intervals()) {
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::OffsetInterval &interval, cellCoalescer.intervals()) {
         int64_t offset = interval.least();
         int64_t nRemaining = interval.size();
-        ASSERT_require2(nRemaining>0, "overflow");
+        ASSERT_require2(nRemaining > 0, "overflow");
         while (nRemaining > 0) {
             BaseSemantics::SValuePtr address = offsetAddresses[offset];
             int64_t nBytes = nRemaining;
@@ -424,12 +441,14 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
             // Never create a variable that's wider than the architecture's natural word size.
             nBytes = std::min(nBytes, wordNBytes);
-            ASSERT_require(nBytes>0 && nBytes<=nRemaining);
+            ASSERT_require(nBytes > 0 && nBytes <= nRemaining);
 
             // Create the stack variable.
-            StackVariableLocation location(offset, nBytes, address);
-            StackVariableMeta meta = cellCoalescer[offset];
-            retval.push_back(StackVariable(location, meta));
+            const StackVariableMeta &meta = cellCoalescer[offset];
+            Variables::StackVariable var(function, offset, nBytes, meta.writers);
+            var.ioProperties(meta.ioProperties);
+            var.setDefaultName();
+            retval.insert(var.interval(), var);
 
             // Advance to next chunk of bytes within this interval
             offset += nBytes;
@@ -439,24 +458,26 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     return retval;
 }
 
-StackVariables
-findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    StackVariables vars = findStackVariables(ops, initialStackPointer);
-    StackVariables retval;
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.location.offset < 0)
-            retval.push_back(var);
+Variables::StackVariables
+findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                   const BaseSemantics::SValuePtr &initialStackPointer) {
+    Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.frameOffset() < 0)
+            retval.insert(var.interval(), var);
     }
     return retval;
 }
 
-StackVariables
-findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    StackVariables vars = findStackVariables(ops, initialStackPointer);
-    StackVariables retval;
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.location.offset >= 0)
-            retval.push_back(var);
+Variables::StackVariables
+findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                      const BaseSemantics::SValuePtr &initialStackPointer) {
+    Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.frameOffset() >= 0)
+            retval.insert(var.interval(), var);
     }
     return retval;
 }
@@ -514,9 +535,11 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 // Construct a new state from scratch
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
+    ASSERT_not_null(cpu_);
+    cpu_->initializeState(newState);
 
     BaseSemantics::RegisterStateGenericPtr regState =
         BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
@@ -524,18 +547,15 @@ TransferFunction::initialState() const {
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
     // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
-#if 0 // [Robb Matzke 2015-01-14]
-    regState->initialize_large();
-#else
-    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.get_nbits()), ops.get());
-#endif
+    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
+
     return newState;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
 BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
     const RegisterDictionary *regDict = cpu_->get_register_dictionary();
     ops->currentState(retval);
@@ -543,6 +563,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
+        CallingConvention::Definition::Ptr ccDefn;
         Function::Ptr callee = vertex->value().callee();
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
@@ -557,27 +578,28 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         if (callee && callee->callingConventionAnalysis().didConverge()) {
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
+            ccDefn = ccAnalysis.defaultCallingConvention();
             BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
-                ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
             }
             if (ccAnalysis.stackDelta())
-                stackDelta = ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta());
+                stackDelta = ops->number_(STACK_POINTER_REG.nBits(), *ccAnalysis.stackDelta());
 
-        } else if (defaultCallingConvention_) {
+        } else if ((ccDefn = defaultCallingConvention_)) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
+            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, ccDefn->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
-                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
+                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
-            BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
+            BOOST_FOREACH (RegisterDescriptor reg, ccDefn->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
-                    ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                    ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
@@ -586,9 +608,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
             // stack delta analysis, and only if the default CC is caller-cleanup.
             if (!stackDelta || !stackDelta->is_number() || stackDelta->get_width() > 64) {
-                if (defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
-                    stackDelta = ops->number_(origStackPtr->get_width(), defaultCallingConvention_->nonParameterStackSize());
-                    if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                if (ccDefn->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                    stackDelta = ops->number_(origStackPtr->get_width(), ccDefn->nonParameterStackSize());
+                    if (ccDefn->stackDirection() == CallingConvention::GROWS_UP)
                         stackDelta = ops->negate(stackDelta);
                 }
             }
@@ -598,13 +620,12 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
         }
 
-        // Adjust the stack pointer (regardless of whether we also did something to it above)
         BaseSemantics::SValuePtr newStack;
         if (stackDelta && stackDelta->is_number() && stackDelta->get_width() <= 64) {
             newStack = ops->add(origStackPtr, stackDelta);
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            newStack = ops->undefined_(STACK_POINTER_REG.nBits());
         }
         ASSERT_not_null(newStack);
         ops->writeRegister(STACK_POINTER_REG, newStack);
@@ -636,7 +657,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 }
 
 std::string
-TransferFunction::printState(const BaseSemantics::StatePtr &state) {
+TransferFunction::toString(const BaseSemantics::StatePtr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;
@@ -648,3 +669,5 @@ TransferFunction::printState(const BaseSemantics::StatePtr &state) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

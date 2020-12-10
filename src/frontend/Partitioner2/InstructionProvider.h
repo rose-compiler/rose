@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 #define ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 #include "AstSerialization.h"
@@ -168,6 +171,12 @@ public:
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
     RegisterDescriptor stackFrameRegister() const { return disassembler_->stackFrameRegister(); }
 
+    /** Register holding a function call's return address.
+     *
+     *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. Some
+     *  architectures call this a "link" register (e.g., PowerPC). */
+    RegisterDescriptor callReturnRegister() const { return disassembler_->callReturnRegister(); }
+
     /** Register used as a segment to access stack memory.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
@@ -175,6 +184,12 @@ public:
 
     /** Default memory byte order. */
     ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
+
+    /** Word size in bits. */
+    size_t wordSize() const { return 8 * disassembler_->wordSizeBytes(); }
+
+    /** Alignment requirement for instructions. */
+    size_t instructionAlignment() const { return disassembler_->instructionAlignment(); }
 
     /** Instruction dispatcher.
      *
@@ -190,4 +205,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

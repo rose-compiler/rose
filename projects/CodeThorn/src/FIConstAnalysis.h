@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {
@@ -87,7 +87,7 @@ class FIConstAnalysis {
   void attachAstAttributes(Labeler* labeler, string attributeName);
 
   void setOptionMultiConstAnalysis(bool);
-  void writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename);
+  void writeCvsConstResult(VariableIdMapping& variableIdMapping, const char* filename);
 
   VariableIdMapping::VariableIdSet determinedConstantVariables();
 

@@ -1,10 +1,4 @@
 include_rules
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES = BinaryLoader.C BinaryLoaderElf.C BinaryLoaderElfObj.C BinaryLoaderPe.C
-else
-    SOURCES = dummyBinaryLoader.C
-endif
-
-run $(librose_compile) $(SOURCES)
+run $(librose_compile) BinaryLoader.C BinaryLoaderElf.C BinaryLoaderElfObj.C BinaryLoaderPe.C
 run $(public_header) BinaryLoader.h BinaryLoaderElf.h BinaryLoaderElfObj.h BinaryLoaderPe.h

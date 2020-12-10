@@ -11,6 +11,9 @@ template <typename S, typename T>
 ParseAndSetMember<S,T> createParseAndSetMember( T S::*mptr)
 {}
 
+// DQ (7/23/2020): Added for GNU 10 version of STL.
+#include <string>
+
 #include <map>
 namespace LEOS {
     enum functionsType {
@@ -983,8 +986,8 @@ namespace boost {
 
     public: // should be protected, but GCC 2.95.3 will fail to allow access
         detail::function::vtable_base* get_vtable() const {
-            return reinterpret_cast<detail::function::vtable_base*>(
-                    reinterpret_cast<std::size_t>(vtable) & ~static_cast<std::size_t>(0x01));
+         // Original code: return reinterpret_cast<detail::function::vtable_base*>(reinterpret_cast<std::size_t>(vtable) & ~static_cast<std::size_t>(0x01));
+            return reinterpret_cast<detail::function::vtable_base*>(reinterpret_cast<std::size_t>(vtable) & ~static_cast<std::size_t>(0x01));
         }
 
         bool has_trivial_copy_and_destroy() const {

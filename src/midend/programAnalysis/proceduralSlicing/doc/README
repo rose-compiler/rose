@@ -1,6 +1,0 @@
-
-main.cpp, example.c and rose_example.c are all included in the latex document as examples.
-
-The Makefile is for compiling main.cpp,
-and then run ./exampleSlice with the input file tutorialexample2.c.
-This produces the output file rose_tutorialexample2.c.
