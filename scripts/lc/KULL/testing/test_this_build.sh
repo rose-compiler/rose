@@ -29,6 +29,9 @@ else
   export  LAST_UNIT="2237"
 fi
 
+#NUMBER_CORES=36
+NUMBER_CORES=24
+
 # Declares and sets:
 #   log_then_run
 #   set_strict
@@ -59,7 +62,7 @@ cd ${TEST_SCRIPT_DIR}
 
 # Run ROSE on units (Expensive!  Use srun!):
 log_then_run \
-${SRUN_DO} -c36 \
+${SRUN_DO} -c${NUMBER_CORES} \
 ${COMP_DB_MAP} \
 ${SOURCE_HOME} \
 ${BUILD_HOME} \
@@ -68,7 +71,7 @@ ${ROSE_TOOL} \
 --report=${JSON_REPORT_FILE_NAME} \
 --start_at=${FIRST_UNIT} \
 --end_at=${LAST_UNIT} \
---nprocs=36 \
+--nprocs=${NUMBER_CORES} \
 --filter f:-cxx=/usr/tce/packages/gcc/gcc-4.9.3/bin/g++ \
 -- \
 -rose:no_optimize_flag_for_frontend \
