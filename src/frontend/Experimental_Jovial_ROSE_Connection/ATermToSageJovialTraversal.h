@@ -324,6 +324,7 @@ ATbool traverse_TableDereference (ATerm term, SgExpression* &expr, bool build_pt
 ATbool traverse_Dereference      (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &func_call);
 ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &func_call);
+ATbool traverse_RepFunctionVariable  (ATerm term, SgExpression* &func_call);
 
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);

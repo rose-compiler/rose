@@ -5643,6 +5643,22 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_Formula(ATerm term, SgExpression* &expr)
 {
+   ATerm t_amb;
+
+#if CHECK_AMB
+   if (ATmatch(term, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+      cerr << "WARNING AMBIGUITY: Formula \n";
+      printf("... traverse_Formula: %s\n", ATwriteToString(term));
+#endif
+      ATermList tail = (ATermList) ATmake("<term>", t_amb);
+      ATerm head = ATgetFirst(tail);
+
+      // try first amb path
+      return traverse_Formula(head, expr);
+   }
+#endif
+
    if (traverse_NumericFormula(term, expr)) {
       // MATCHED NumericFormula
    } else if (traverse_BitFormula(term, expr)) {
@@ -6089,6 +6105,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
 #endif
       else return ATfalse;
    }
+
    else if (ATmatch(term, "BitOperandContinuation(<term>,<term>)", &t_operand, &t_continuation)) {
       if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
@@ -6129,21 +6146,26 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       SgNotOp* not_op = SageBuilder::buildNotOp(expr);
       setSourcePosition(not_op, term);
       expr = not_op;
+   }
 
-   } else if (ATmatch(term, "BitVariableFormula(<term>)", &t_operand)) {
-#if CHECK_AMB
-        if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
-#if PRINT_AMB_WARNINGS
-          cerr << "WARNING AMBIGUITY: BitFormula(BitVariableFormula) \n";
-          printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
-#endif
-          expr = SB::buildNullExpression_nfi();
-        }
-#endif
+   else if (ATmatch(term, "BitVariableFormula(<term>)", &t_operand)) {
       if (traverse_Variable(t_operand, expr)) {
          // MATCHED Variable
-      } else return ATfalse;
+      }
+
+#if CHECK_AMB
+      else if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+#if PRINT_AMB_WARNINGS
+         cerr << "WARNING AMBIGUITY: BitFormula(BitVariableFormula) \n";
+         printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+#endif
+         expr = SB::buildNullExpression_nfi();
+         ROSE_ASSERT(false);
+      }
+#endif
+      else return ATfalse;
    }
+
    else return ATfalse;
 
    ROSE_ASSERT(expr);
@@ -6341,7 +6363,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    else if (traverse_BitLiteral(term, expr)) {
       // MATCHED BitLiteral
    }
-   else if (ATmatch(term, "BitPrimaryConversion(<term>, <term>)", &t_conv_type, &t_formula)) {
+   else if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
 #if CHECK_AMB
         if (ATmatch(t_conv_type, "amb(<term>)", &t_amb)) {
 #if PRINT_AMB_WARNINGS
@@ -6694,10 +6716,10 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
      // MATCHED BitFunctionVariable
    } else if (traverse_ByteFunctionVariable(term, var)) {
      // MATCHED ByteFunctionVariable
+   } else if (traverse_RepFunctionVariable(term, var)) {
+     // MATCHED RepFunctionVariable
    }
    else return ATfalse;
-
-   //  RepFunctionVariable         -> Variable           {cons("RepFunctionVariable")}
 
    return ATtrue;
 }
@@ -7044,6 +7066,51 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    return ATtrue;
 }
 
+ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgExpression* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_RepFunctionVariable: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_rep, t_name;
+   char* name;
+   SgExpression* var_ref = nullptr;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "RepFunctionVariable(<term>,<term>)", &t_rep, &t_name)) {
+      if (ATmatch(t_rep, "RepConversion()")) {
+         // MATCHED "REP" grammar keyword
+      } else return ATfalse;
+
+      if (ATmatch(t_name, "<str>", &name)) {
+         // MATCHED NamedVariable
+         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         setSourcePosition(var_ref, t_name);
+      } else return ATfalse;
+   }
+   else return ATfalse;
+   ROSE_ASSERT(var_ref);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(var_ref);
+
+   // Create the return type. The language specifies the result is a bit string and
+   // has an example assuming BITSINWORD is 16. Because WORD is mentioned it seems
+   // that long is a good choice for a return type.
+   SgType* result_type = SageBuilder::buildLongType();
+   ROSE_ASSERT(result_type);
+
+   func_call = SageBuilder::buildFunctionCallExp("REP", result_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
+
+   func_call->set_lvalue(true);
+
+   return ATtrue;
+}
+
 //========================================================================================
 // 6.2 NAMED CONSTANTS
 //----------------------------------------------------------------------------------------
@@ -7238,7 +7305,6 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
            ROSE_ASSERT(false);
         }
 
-        SgType* type = init_name->get_type();
         SgReplicationOp* rep_op = nullptr;
         SgExpression* value = expr_list->get_expressions()[0];
         ROSE_ASSERT(value);
