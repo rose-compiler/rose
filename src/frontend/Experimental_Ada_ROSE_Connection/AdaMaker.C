@@ -966,7 +966,7 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
 
-SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices)
+SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
 {
   ROSE_ASSERT(choices.size() > 0);
 
@@ -976,6 +976,11 @@ SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices)
                                   ));
 }
 
+SgTypeTraitBuiltinOperator&
+mkAdaExprAttribute(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+{
+  return SG_DEREF(sb::buildTypeTraitBuiltinOperator(ident, { &expr, &args }));
+}
 
 //
 // specialized templates

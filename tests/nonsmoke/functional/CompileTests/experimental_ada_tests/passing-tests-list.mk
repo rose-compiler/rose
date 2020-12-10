@@ -65,4 +65,5 @@ PASSING_TESTS :=                       \
   multidimensional_array.ads           \
   multidimensional_array.adb           \
   simple_array_expressions.adb         \
+  array_declare_2.adb                  \
   EndOfList

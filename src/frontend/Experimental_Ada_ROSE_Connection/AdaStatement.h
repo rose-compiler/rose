@@ -66,6 +66,10 @@ namespace Ada_ROSE_Translation
   ///   if no record was found, nullptr is returned
   SgDeclarationStatement*
   getDecl_opt(Expression_Struct& expr, AstContext ctx);
+
+  /// returns a NameData object for the element \ref el
+  NameData
+  getNameID(Element_ID el, AstContext ctx);
 }
 
 #endif /* _ADA_STATEMENT */
