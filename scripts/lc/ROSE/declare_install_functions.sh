@@ -258,6 +258,9 @@ set_ROSE_LATEST_WORKSPACE_VERSION () {
 
 # Uses:
 #   rose_branch_path_part
+#   rose_repo_path_cloned
+#   rose_remote_repo
+#   ROSE_BRANCH_NAME_GIT
 #   ROSE_BUILD_BASE
 #   ROSE_INSTALL_BASE
 # Sets:
@@ -267,7 +270,9 @@ set_ROSE_LATEST_WORKSPACE_VERSION () {
 #   ROSE_VERSION
 clone_latest_workspace () {
   cd ${ROSE_BUILD_BASE}
-  run_or_not git clone ${rose_remote_repo}
+#  run_or_not git clone ${rose_remote_repo}
+  run_or_not scp rose-mgr@hudson-rose-45:/export/tmp.rose-mgr/rose-tar/merging/rose.tar ./
+  run_or_not tar -xf rose.tar
   run_or_not cd ${rose_repo_path_cloned}
   # Check out the desired branch as needed:
   run_or_not git checkout ${ROSE_BRANCH_NAME_GIT}
