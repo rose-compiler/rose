@@ -2740,14 +2740,8 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression*
    else if (ATmatch(term, "ItemPreset(<term>)", &t_preset_value)) {
       if (traverse_ItemPresetValue(t_preset_value, preset)) {
          // MATCHED ItemPresetValue
-         if (preset == nullptr) {
-#if PRINT_WARNINGS
-           // DELETE_ME - perhaps this is the LOC function
-           cerr << "WARNING UNIMPLEMENTED: ItemPreset (perhaps this is LOC) \n";
-#endif
-            return ATtrue;
-         }
       } else return ATfalse;
+      ROSE_ASSERT(preset);
    }
    else return ATfalse;
 
@@ -2780,6 +2774,10 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpres
    preset = nullptr;
    SgFunctionCallExp* func_call = nullptr;
 
+   // In the process of building an initialization expression, setting this flag will
+   // aid in disambiguation of undeclared variable and function symbols.
+   sage_tree_builder.setInitializationContext(true);
+
    // CompileTimeFormula -> ItemPresetValue
    if (traverse_Formula(term, preset)) {
       // MATCHED CompileTimeFormula
@@ -2791,14 +2789,9 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpres
    }
    else return ATfalse;
 
- // DELETE_ME - perhaps this is the LOC function
-   if (preset == nullptr) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
-#endif
-      return ATtrue;
-   }
- // ROSE_ASSERT(preset);
+   sage_tree_builder.setInitializationContext(false);
+
+   ROSE_ASSERT(preset);
 
    return ATtrue;
 }
@@ -6692,6 +6685,8 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
    if (ATmatch(term, "<str>" , &name)) {
      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
 
+     var = nullptr;
+
      // Look for a function call first (function need not be declared yet)
      //
      if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
@@ -6700,9 +6695,13 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
        sage_tree_builder.Leave(func_call);
        var = func_call;
      }
-     else {
+
+     // Depending on traversal context (e.g., an initialization expression), it may not be
+     // appropriate to build an implicitly declared function (the case of symbol==nullptr)
+     if (var == nullptr) {
        var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
      }
+
      ROSE_ASSERT(var);
      setSourcePosition(var, term);
 
