@@ -656,6 +656,14 @@ class SgIncludeFile;
 typedef Rose_STL_Container<SgIncludeFile*>        SgIncludeFilePtrList;
 typedef SgIncludeFilePtrList*                     SgIncludeFilePtrListPtr;
 
+// PP (11/24/2020) Add support for Ada representation clauses
+class SgAdaComponentClause;
+typedef Rose_STL_Container<SgAdaComponentClause*> SgAdaComponentClausePtrList;
+typedef SgAdaComponentClausePtrList*              SgAdaComponentClausePtrListPtr;
+
+class SgRangeExp;
+typedef Rose_STL_Container<SgRangeExp*> SgRangeExpPtrList;
+typedef SgRangeExpPtrList*              SgRangeExpPtrListPtr;
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;

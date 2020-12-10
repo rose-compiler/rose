@@ -58,4 +58,11 @@ PASSING_TESTS :=                       \
   simpleada-io.ads                     \
   simple_hello_world.adb               \
   nullrecord.ads                       \
+  simple_hello_world_with_use.adb      \
+  simple_use_type.ads                  \
+  representation_clause.ads            \
+  unconstrained_array_definition.ads   \
+  multidimensional_array.ads           \
+  multidimensional_array.adb           \
+  simple_array_expressions.adb         \
   EndOfList
