@@ -471,7 +471,16 @@ namespace Ada_ROSE_Translation
   /// \param choices a non-empty sequence of choices
   /// \return if multiple choices: a tree of expressions combined using SgCommaOpExp
   ///         otherwise (exactly one choice): the expression in \ref choices
-  SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices);
+  SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices);
+
+  /// returns a representation of an Ada Attribute in expression context
+  /// \param exp the attribute's prefix expression
+  /// \param ident the attribute identifier
+  /// \param args the attribute's arguments
+  /// \example
+  ///    Arr'Range(1) -> exp'ident(args)
+  SgTypeTraitBuiltinOperator&
+  mkAdaExprAttribute(SgExpression& exp, const std::string& ident, SgExprListExp& args);
 
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder

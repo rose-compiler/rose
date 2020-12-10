@@ -206,14 +206,21 @@ namespace
       SgExprListExp& args = SG_DEREF(n.get_args());
 
       expr(n.get_function());
+      arglst_opt(args);
+    }
 
-      // print () only if there are arguments to the call
-      if (args.get_expressions().size())
-      {
-        prn("(");
-        exprlst(args);
-        prn(")");
-      }
+    // unparse expression attributes
+    void handle(SgTypeTraitBuiltinOperator& n)
+    {
+      SgNodePtrList& args = n.get_args();
+      ROSE_ASSERT(args.size() == 2);
+
+      expr(isSgExpression(args.front()));
+      prn("'");
+      prn(n.get_name());
+
+      SgExprListExp& attrargs = SG_DEREF(isSgExprListExp(args.back()));
+      arglst_opt(attrargs);
     }
 
     void handle(SgCastExp& n)
@@ -300,21 +307,8 @@ namespace
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-
-    void exprlst(SgExprListExp& exp)
-    {
-      SgExpressionPtrList& lst = exp.get_expressions();
-
-      if (lst.empty()) return;
-
-      expr(lst[0]);
-
-      for (size_t i = 1; i < lst.size(); ++i)
-      {
-        prn(", ");
-        expr(lst[i]);
-      }
-    }
+    void exprlst(SgExprListExp& exp);
+    void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
     {
@@ -391,6 +385,30 @@ namespace
     if (isprefix) { prn(operator_sym(n)); prn(" "); }
     expr(n.get_operand());
     if (!isprefix) prn(operator_sym(n));
+  }
+
+  void AdaExprUnparser::exprlst(SgExprListExp& exp)
+  {
+    SgExpressionPtrList& lst = exp.get_expressions();
+
+    if (lst.empty()) return;
+
+    expr(lst[0]);
+
+    for (size_t i = 1; i < lst.size(); ++i)
+    {
+      prn(", ");
+      expr(lst[i]);
+    }
+  }
+
+  void AdaExprUnparser::arglst_opt(SgExprListExp& args)
+  {
+    if (args.get_expressions().empty()) return;
+
+    prn("(");
+    exprlst(args);
+    prn(")");
   }
 
   std::string

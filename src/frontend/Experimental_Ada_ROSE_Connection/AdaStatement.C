@@ -120,12 +120,6 @@ namespace
     return SG_DEREF(res);
   }
 
-
-  /// returns a NameData object for the element \ref el
-  NameData
-  getNameID(Element_ID el, AstContext ctx);
-
-
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)
   NameData
@@ -237,13 +231,6 @@ namespace
     }
 
     return NameData{ ident, name, parent, &elem };
-  }
-
-
-  NameData
-  getNameID(Element_ID el, AstContext ctx)
-  {
-    return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
   }
 
 
@@ -967,7 +954,7 @@ namespace
                 // \todo reconsider the "reuse" of SgCommaOp
                 //   SgCommaOp is only used to separate discrete choices in case-when
                 ROSE_ASSERT(choices.size());
-                SgExpression&              caseCond  = mkChoiceExp(std::move(choices));
+                SgExpression&              caseCond  = mkChoiceExpIfNeeded(std::move(choices));
                 SgCaseOptionStmt*          whenNode  = &mkWhenPath(caseCond, block);
 
                 caseNode.append_case(whenNode);
@@ -2565,5 +2552,12 @@ singleName(Declaration_Struct& decl, AstContext ctx)
 
   return getNameID(*range.first, ctx);
 }
+
+NameData
+getNameID(Element_ID el, AstContext ctx)
+{
+  return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+}
+
 
 }
