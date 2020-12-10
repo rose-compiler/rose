@@ -3966,7 +3966,7 @@ void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& 
 
 #if 1
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In prependIncludeOptionsToCommandLine(): includeCompilerOptions.size() = %zu \n",includeCompilerOptions.size());
           for (list<string>::const_iterator i = includeCompilerOptions.begin(); i != includeCompilerOptions.end(); i++)
@@ -4023,7 +4023,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
 #if 1
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("$$$$$$$$$$$$$$$$$$$$$$ In buildSourceFileForHeaderFile(): Using the first file in the project file list as the sourceFile! \n");
         }
@@ -4034,7 +4034,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
 #if 1
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In buildSourceFileForHeaderFile(): includedFileName = %s \n",includedFileName.c_str());
           printf (" --- EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
@@ -4481,7 +4481,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
             // #if DEBUG_UNPARSE_INCLUDE_FILES
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() > 0)
+               if (SgProject::get_unparseHeaderFilesDebug() > 4)
                   {
                     printf ("Loop over files to copy: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
                   }
@@ -4505,7 +4505,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
                  // #if DEBUG_UNPARSE_INCLUDE_FILES
                  // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() > 0)
+                    if (SgProject::get_unparseHeaderFilesDebug() > 4)
                        {
                          printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
                        }
@@ -4714,7 +4714,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
             // #if DEBUG_UNPARSE_INCLUDE_FILES
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                   {
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
@@ -5355,7 +5355,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
             // #if DEBUG_UNPARSE_INCLUDE_FILES
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 5)
                   {
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
                     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
@@ -5640,7 +5640,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
         }
 
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In unparseProject(): Unparse the file list first, then the directory list \n");
         }
@@ -5664,7 +5664,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
         }
 
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In unparseProject(): Unparse the directory list... \n");
         }
@@ -5689,7 +5689,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 #endif
 
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving unparseProject(): project = %p \n",project);
         }

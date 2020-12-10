@@ -1626,7 +1626,13 @@ ROSE_DLL_API void fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* ins
                                                                 SgNode* node_copy, SgNode* node_original);
 ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
 ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the original function (modified slightly, but mostly I have defined a new function that 
+// will not effect the AST snippet support that is used by this function.
 ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the new function (modified in API and made suitable for the codeSegregation support).
+ROSE_DLL_API SgDeclarationStatement* findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 
 //! Error checking the inserted snippet AST.
 ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
