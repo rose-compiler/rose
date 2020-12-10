@@ -1684,6 +1684,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Traverse back through a node's parents to find the enclosing global scope
   ROSE_DLL_API SgGlobal* getGlobalScope( const SgNode* astNode);
 
+ // DQ (12/7/2020): This is supporting the recognition of functions in header files from two different AST.
+ //! This is supporting the recognition of functions in header files from two different ASTs
+  ROSE_DLL_API bool hasSameGlobalScope ( SgStatement* statement_1, SgStatement* statement_2 );
 
   //! Find the function definition
   ROSE_DLL_API SgFunctionDefinition* getEnclosingProcedure(SgNode* n, const bool includingSelf=false);
