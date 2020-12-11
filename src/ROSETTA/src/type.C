@@ -123,6 +123,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
      NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
      NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
+     NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
 
   // Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical operations
@@ -222,7 +223,7 @@ Grammar::setUpTypes ()
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
           TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
-          AdaFloatType         | JovialBitType,
+          AdaFloatType         | AdaModularType          | JovialBitType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -408,6 +409,9 @@ Grammar::setUpTypes ()
 
      AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaSubtype.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+     AdaModularType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaModularType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      AdaFloatType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaFloatType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -695,6 +699,10 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaSubtype,
             "SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE",
             "SgType* type = NULL, SgAdaTypeConstraint* constraint = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(AdaModularType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE",
+            "SgExpression* modexpr = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(AdaFloatType,
             "SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE",
@@ -1119,6 +1127,13 @@ Grammar::setUpTypes ()
      AdaSubtype.setDataPrototype ("SgAdaTypeConstraint*", "constraint", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaModularType.setFunctionPrototype ("HEADER_ADA_MODULAR_TYPE", "../Grammar/Type.code" );
+
+     AdaModularType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaModularType.setDataPrototype ("SgExpression*", "modexpr", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      AdaFloatType.setFunctionPrototype ("HEADER_ADA_FLOAT_TYPE", "../Grammar/Type.code" );
 
@@ -1127,7 +1142,7 @@ Grammar::setUpTypes ()
      AdaFloatType.setDataPrototype ("SgExpression*", "digits", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AdaFloatType.setDataPrototype ("SgAdaRangeConstraint*", "range", "= NULL",
+     AdaFloatType.setDataPrototype ("SgAdaRangeConstraint*", "constraint", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JovialBitType.setFunctionPrototype ("HEADER_JOVIAL_BIT_TYPE", "../Grammar/Type.code" );
@@ -1229,6 +1244,7 @@ Grammar::setUpTypes ()
 
      AdaAccessType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaSubtype.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaModularType.excludeFunctionSource( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaFloatType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JovialBitType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1404,6 +1420,7 @@ Grammar::setUpTypes ()
 
      AdaAccessType.setFunctionSource     ( "SOURCE_ADA_ACCESS_TYPE", "../Grammar/Type.code");
      AdaSubtype.setFunctionSource        ( "SOURCE_ADA_SUBTYPE", "../Grammar/Type.code");
+     AdaModularType.setFunctionSource    ( "SOURCE_ADA_MODULAR_TYPE", "../Grammar/Type.code");
      AdaFloatType.setFunctionSource      ( "SOURCE_ADA_FLOAT_TYPE", "../Grammar/Type.code");
 
      JovialBitType.setFunctionSource     ( "SOURCE_JOVIAL_BIT_TYPE", "../Grammar/Type.code");

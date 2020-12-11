@@ -538,6 +538,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskSpecDecl,       "AdaTaskSpecDecl", "ADA_TASK_SPEC_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
@@ -558,7 +559,8 @@ Grammar::setUpStatements ()
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
-          AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl
+          AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
+          AdaRecordRepresentationClause
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -3078,6 +3080,21 @@ Grammar::setUpStatements ()
      AdaRenamingDecl.setDataPrototype ( "size_t", "renamedIndex", "= 0",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaRecordRepresentationClause.setDataPrototype ( "SgClassType*", "recordType", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaRecordRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaRecordRepresentationClause.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaRecordRepresentationClause.editSubstitute( "LIST_DATA_TYPE", "SgAdaComponentClausePtrList" );
+     AdaRecordRepresentationClause.editSubstitute( "LIST_NAME", "components" );
+     AdaRecordRepresentationClause.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AdaRecordRepresentationClause.editSubstitute( "LIST_FUNCTION_NAME", "component" );
+     AdaRecordRepresentationClause.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgAdaComponentClause*" );
+     AdaRecordRepresentationClause.setDataPrototype("SgAdaComponentClausePtrList", "components", "",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
@@ -4198,6 +4215,7 @@ Grammar::setUpStatements ()
      AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with

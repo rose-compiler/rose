@@ -963,3 +963,8 @@ SgFinishExp
 SgHereExp
 SgDotDotExp
 SgAsmNullInstruction
+SgAdaComponentClause
+SgAdaIndexConstraint
+SgAdaModularType
+SgAdaRecordRepresentationClause
+

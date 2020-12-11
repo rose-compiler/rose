@@ -24,5 +24,6 @@ ASIS_TODO := \
   unit_2.ads                           \
   unit_2.adb                           \
   pkgrename.ads                        \
+  array_declare_2.ads                  \
   EndOfList
 

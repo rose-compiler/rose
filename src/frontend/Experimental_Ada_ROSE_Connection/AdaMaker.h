@@ -59,22 +59,27 @@ namespace Ada_ROSE_Translation
   //
   // Type Makers
 
-  /// builds a range constraint to \ref range
+  /// builds a range constraint from \ref range
   SgAdaRangeConstraint&
   mkAdaRangeConstraint(SgRangeExp& range);
+
+  /// builds an index constraint from \ref ranges
+  /// \param ranges a sequence of ranges.
+  ///        the content of the sequence container \ref ranges will be chnage.
+  SgAdaIndexConstraint&
+  mkAdaIndexConstraint(SgRangeExpPtrList&& ranges);
 
   /// builds a subtype constraint by \ref constr
   SgAdaSubtype&
   mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr);
 
-  /// builds a float type with a range constraint \ref range
-  SgAdaFloatType&
-  mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint& range);
+  /// builds a modular integral type with mod expression \ref modexpr.
+  SgAdaModularType&
+  mkAdaModularType(SgExpression& modexpr);
 
-  /// creates an SgType node referencing \ref dcl
-  // \todo is SgTypedefType the right kind?
-  SgTypedefType&
-  mkTypedefType(SgTypedefDeclaration& dcl);
+  /// builds a float type with an optional range constraint \ref range_opt
+  SgAdaFloatType&
+  mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt);
 
   /// returns the type of an exception
   // \todo revise Exception representation
@@ -114,8 +119,17 @@ namespace Ada_ROSE_Translation
 
   /// creates an array type with index ranges \ref indices and component
   /// type \ref comptype.
-  SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& indices);
+  /// \param compType the component type
+  /// \param dimInfo the dimension information (sets dim_info property)
+  /// \param variableLength is true for unconstrained arrays, false otherwise
+  ///        (sets is_variable_length_array property)
+  SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variableLength = false);
 
+  /// creates the most general integral type
+  SgType& mkIntegralType();
+
+  /// creates the most general real type
+  SgType& mkRealType();
 
   //
   // Statement Makers
@@ -151,6 +165,12 @@ namespace Ada_ROSE_Translation
   SgImportStatement&
   mkWithClause(const std::vector<SgExpression*>& imported);
 
+  /// creates a use declaration for "use packagename" declarations
+  /// \todo revisit representation in ROSE (use package seems more similar to using dircetive)
+  /// \param used the used declaration
+  SgUsingDeclarationStatement&
+  mkUseClause(SgDeclarationStatement& used);
+
   /// creates an exit statement from loop \ref loop with condition \ref condition.
   ///   \ref explicitLoopName is set if the loop was named and the loop name
   ///   specified with the exit statement.
@@ -185,6 +205,11 @@ namespace Ada_ROSE_Translation
   ///                     false if it is a point in time (delay until)
   SgAdaDelayStmt&
   mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime);
+
+  /// creates an Ada abort statement
+  /// \param abortList a list of aborted tasks
+  SgProcessControlStatement&
+  mkAbortStmt(SgExprListExp& abortList);
 
   /// creates an Ada labeled statement.
   /// \param label the label name
@@ -388,8 +413,22 @@ namespace Ada_ROSE_Translation
   SgBaseClass&
   mkRecordParent(SgClassDeclaration& n);
 
+  /// creates an Ada component clause (part of a record representation clause)
+  SgAdaComponentClause&
+  mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range);
+
+  /// creates an Ada Record represtation clause for \ref record aligned at \ref align.
+  SgAdaRecordRepresentationClause&
+  mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
+
   //
   // Expression Makers
+
+  /// Creates a named aggregate initializer
+  /// \param what the named components that will get initialized
+  /// \param the initialized value
+  SgDesignatedInitializer&
+  mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val);
 
   /// creates an expression for an unresolved name (e.g., imported names)
   /// \note unresolved names are an indication for an incomplete AST
@@ -419,9 +458,20 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope);
 
+  /// Creates a reference to the "exception type"
+  /// \todo revisit exception representation
+  SgAdaTaskRefExp&
+  mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
+
   /// creates a field selection expression (expr.field)
   SgDotExp&
   mkSelectedComponent(SgExpression& prefix, SgExpression& selector);
+
+  /// returns a combined expression representing an Ada choice
+  /// \param choices a non-empty sequence of choices
+  /// \return if multiple choices: a tree of expressions combined using SgCommaOpExp
+  ///         otherwise (exactly one choice): the expression in \ref choices
+  SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices);
 
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder
