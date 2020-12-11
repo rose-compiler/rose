@@ -87,6 +87,7 @@ ASIS_BODY_PASS_TESTS := \
 	minimal.adb \
 	operator.adb \
 	package_with_body.adb \
+	pragmas.adb \
 	procedure_call.adb \
 	procedure_declaration.adb \
         procedure_pragma.adb \

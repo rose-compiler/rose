@@ -138,6 +138,12 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">10</TD></TR>
           </TABLE>> ];
+  Element_2314012 -> Element_2317381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2314012 -> Element_2319381
+      [ label="Pragma_Argument_Associations ( 2)" ];
+  Element_2314012 -> Element_2321381
+      [ label="Pragma_Argument_Associations ( 3)" ];
   Element_2314012
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2314012</TD></TR>
@@ -146,7 +152,10 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303106</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Procedure_Pragma.adb - 5:4 .. 5:45</TD></TR>
           <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPORT_PRAGMA</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Export</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2319381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2321381</TD></TR>
           </TABLE>> ];
   Element_2317381 -> Element_2316237
       [ label=Actual_Parameter ];
@@ -271,6 +280,12 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
+  Element_2332013 -> Element_2335381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2332013 -> Element_2337381
+      [ label="Pragma_Argument_Associations ( 2)" ];
+  Element_2332013 -> Element_2339381
+      [ label="Pragma_Argument_Associations ( 3)" ];
   Element_2332013
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2332013</TD></TR>
@@ -279,7 +294,10 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303106</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Procedure_Pragma.adb - 10:4 .. 10:41</TD></TR>
           <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_IMPORT_PRAGMA</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Import</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2335381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339381</TD></TR>
           </TABLE>> ];
   Element_2335381 -> Element_2334237
       [ label=Actual_Parameter ];
@@ -431,6 +449,12 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
+  Element_2358013 -> Element_2361381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2358013 -> Element_2363381
+      [ label="Pragma_Argument_Associations ( 2)" ];
+  Element_2358013 -> Element_2365381
+      [ label="Pragma_Argument_Associations ( 3)" ];
   Element_2358013
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2358013</TD></TR>
@@ -439,7 +463,10 @@ digraph "procedure_pragma.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303106</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Procedure_Pragma.adb - 15:4 .. 15:45</TD></TR>
           <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_IMPORT_PRAGMA</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Import</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2363381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2365381</TD></TR>
           </TABLE>> ];
   Element_2361381 -> Element_2360237
       [ label=Actual_Parameter ];

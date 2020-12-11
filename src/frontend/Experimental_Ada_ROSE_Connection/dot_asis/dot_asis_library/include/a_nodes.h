@@ -231,7 +231,6 @@ enum Pragma_Kinds {
 // May take ??*4 bytes:
 struct Pragma_Struct {
   enum Pragma_Kinds   Pragma_Kind;
-  Pragma_Element_ID_List Pragmas;
   Program_Text        Pragma_Name_Image;
   Association_List    Pragma_Argument_Associations;
 };
