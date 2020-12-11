@@ -8792,6 +8792,12 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                break;
              }
 
+          case V_SgAdaTaskRefExp:
+             {
+               precedence_value = 0;
+               break;
+             }
+
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
           case V_SgStatementExpression:      // return 0;
