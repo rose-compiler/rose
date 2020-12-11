@@ -976,6 +976,19 @@ SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
                                   ));
 }
 
+
+SgUnaryOp&
+mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
+{
+  SgVarRefExp& varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildUnaryAddOp(&varref))
+                                : sb::buildMinusOp(&varref)
+                                ;
+
+  return SG_DEREF(sgnode);
+}
+
+
 SgTypeTraitBuiltinOperator&
 mkAdaExprAttribute(SgExpression& expr, const std::string& ident, SgExprListExp& args)
 {
