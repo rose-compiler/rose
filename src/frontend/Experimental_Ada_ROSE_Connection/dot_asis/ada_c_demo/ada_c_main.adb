@@ -1,12 +1,10 @@
 with Ada.Text_IO;
+with c_code_h;
 
-procedure Ada_Main is
-   procedure C_Func;
-   pragma Import (C, C_Func);
-
+procedure Ada_C_Main is
    package ATI renames Ada.Text_Io;
 begin
-   ATI.Put_Line ("Ada_Main: Calling C_Func");
-   C_Func;
-   ATI.Put_Line ("Ada_Main: Returned from C_Func");
-end Ada_Main;
+   ATI.Put_Line ("Ada_C_Main: Calling c_func");
+   c_code_h.c_func;
+   ATI.Put_Line ("Ada_C_Main: Returned from c_func");
+end Ada_C_Main;

@@ -1,4 +1,5 @@
 with Ada.Text_IO;
+with c_code_h;
 
 package body Ada_Code is
    package ATI renames Ada.Text_Io;
@@ -10,12 +11,10 @@ package body Ada_Code is
    end Ada_Proc;
 
    procedure Ada_C_Caller is
-      procedure C_Func;
-      pragma Import (C, C_Func);
    begin
-      ATI.Put_Line ("Ada_C_Caller: Calling C_Func");
-      C_Func;
-      ATI.Put_Line ("Ada_C_Caller: Returned from C_Func");
+      ATI.Put_Line ("Ada_C_Caller: Calling c_func");
+      c_code_h.c_func;
+      ATI.Put_Line ("Ada_C_Caller: Returned from c_func");
    end Ada_C_Caller;
 
 end Ada_Code;

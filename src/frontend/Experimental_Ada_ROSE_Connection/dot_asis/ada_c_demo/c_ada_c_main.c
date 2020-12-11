@@ -1,14 +1,12 @@
 #include <stdio.h>
-
-extern void adainit (void);
-extern void adafinal (void);
-extern void ada_c_caller (void);
+#include "ada_init_final.h"
+#include "ada_code.h"
 
 int main (int argc, char *argv[])
 {
-  adainit();
-  printf ("c_main: Calling ada_c_caller\n");
-  ada_c_caller();
-  printf ("c_main: Returned from ada_c_caller\n");
-  adafinal();
+  adainit ();
+  printf ("c_main: Calling Ada_C_Caller\n");
+  Ada_C_Caller ();
+  printf ("c_main: Returned from Ada_C_Caller\n");
+  adafinal ();
 }
