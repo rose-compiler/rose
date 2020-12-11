@@ -1122,6 +1122,7 @@ namespace
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
+    void handle(SgAdaFloatType&)   { res = ReturnType("type",    ""); }
   };
 
   std::pair<std::string, std::string>
