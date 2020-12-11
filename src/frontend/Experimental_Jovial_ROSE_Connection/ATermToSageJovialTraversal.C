@@ -2741,6 +2741,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression*
       if (traverse_ItemPresetValue(t_preset_value, preset)) {
          // MATCHED ItemPresetValue
       } else return ATfalse;
+
       ROSE_ASSERT(preset);
    }
    else return ATfalse;
@@ -7249,7 +7250,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       expr = cast_expr;
    }
 
-// Look for table variable or table initialization replication operator
+// Look for table variable, table member, or table initialization replication operator
 //
    else if (isSgVariableSymbol(symbol)) {
    // First look for a table type
@@ -7261,18 +7262,20 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       if (var_sym) init_name = isSgInitializedName(var_sym->get_declaration());
       if (init_name) table_type = isSgJovialTableType(init_name->get_type());
       if (!table_type) {
-         // Sometimes can't get to table type directly through initialized name,
-         // try looking at parent of the declaration for subscripts.
-         // TODO: maybe not needed anymore so try deleting and see if tests pass
+         // Variable could be a member of a table
          SgVariableDeclaration* var_decl = nullptr;
-         SgClassDefinition* var_def = nullptr;
+         SgClassDefinition* class_def = nullptr;
          SgJovialTableStatement* table_decl = nullptr;
 
          if (init_name) var_decl = isSgVariableDeclaration(init_name->get_parent());
-         if (var_decl) var_def = isSgClassDefinition(var_decl->get_parent());
-         if (var_def) {
-           table_decl = isSgJovialTableStatement(var_def->get_parent());
-           table_decl = isSgJovialTableStatement(var_decl->get_parent());
+         if (var_decl) class_def = isSgClassDefinition(var_decl->get_parent());
+         if (class_def) {
+           table_decl = isSgJovialTableStatement(class_def->get_parent());
+           // Make sure this isn't a Block in disguise
+           // TODO: make node SgJovialBlockStatement (or SgJovialBlockType?)
+           if (table_decl && (table_decl->get_class_type() == SgClassDeclaration::e_jovial_block)) {
+             table_decl = nullptr; // This a block not a table so don't allow table_type==true
+           }
          }
          if (table_decl) table_type = isSgJovialTableType(table_decl->get_type());
       }
