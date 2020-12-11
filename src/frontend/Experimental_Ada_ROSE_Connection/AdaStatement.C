@@ -1067,6 +1067,15 @@ namespace
       IfStmtCreator() = delete;
   };
 
+  bool isForwardLoop(Element_Struct& forvar)
+  {
+    ROSE_ASSERT (forvar.Element_Kind == A_Declaration);
+
+    Declaration_Struct& decl = forvar.The_Union.Declaration;
+    ROSE_ASSERT(decl.Declaration_Kind == A_Loop_Parameter_Specification);
+
+    return !decl.Has_Reverse;
+  }
 
 
   void handleStmt(Element_Struct& elem, AstContext ctx)
@@ -1185,24 +1194,33 @@ namespace
         {
           logKind("A_For_Loop_Statement");
 
-          SgBasicBlock&       block  = mkBasicBlock();
-          SgForStatement&     sgnode = mkForStatement(block);
-          Element_Struct&     forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
-          SgForInitStatement& forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
+          SgBasicBlock&          block  = mkBasicBlock();
+          SgForStatement&        sgnode = mkForStatement(block);
+          Element_Struct&        forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
+          SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
 
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
           handleDeclaration(forvar, ctx.scope_npc(sgnode));
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
-          ROSE_ASSERT(sgnode.getStatementList().size() <= 1 /* \todo should be 0 */);
 
-          // \todo this swap is needed, otherwise the variable declaration ends
-          //       up in the body instead of the initializer.. ???
+          // this swap is needed, b/c SgForInitStatement is not a scope
+          // and when the loop variable declaration is created, the declaration
+          // is pushed to the wrong statement list.
+          ROSE_ASSERT(sgnode.getStatementList().size() == 1);
           std::swap(forini.get_init_stmt(), block.get_statements());
 
-          ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
+          SgVariableDeclaration* inductionVar = isSgVariableDeclaration(forini.get_init_stmt().front());
+          SgExpression&          direction    = mkForLoopIncrement(isForwardLoop(forvar), SG_DEREF(inductionVar));
 
-          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
-          traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
+          sgnode.set_increment(&direction);
+
+          // loop body
+          {
+            ElemIdRange            loopStmts = idRange(stmt.Loop_Statements);
+
+            recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
+            traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
+          }
 
           /* unused fields:
                Pragma_Element_ID_List Pragmas;
@@ -2210,7 +2228,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 
         SgType&                vartype = SG_DEREF( sb::buildIntType() ); // \todo
-        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, nullptr);
+        SgExpression&          range   = getDefinitionExprID(decl.Specification_Subtype_Definition, ctx);
+        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, &range);
         SgScopeStatement&      scope   = ctx.scope();
 
         recordNode(asisVars(), adaname.id(), loopvar);
@@ -2223,8 +2242,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(sgnode.get_parent() == &scope);
 
         /* unused fields:
-             bool                           Has_Reverse;
-             Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
          */
         break;
       }

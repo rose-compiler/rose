@@ -482,6 +482,14 @@ namespace Ada_ROSE_Translation
   SgTypeTraitBuiltinOperator&
   mkAdaExprAttribute(SgExpression& exp, const std::string& ident, SgExprListExp& args);
 
+  /// creates an increment/decrement of the variable \ref var
+  /// depending on whether the loop uses forward or backward iteration.
+  /// \param forward iteration direction
+  /// \param var the loop variable
+  /// \param scope the for loop's scope
+  SgUnaryOp&
+  mkForLoopIncrement(bool forward, SgVariableDeclaration& var);
+
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder
   ///       should SgRemOp be called SgAdaRem?

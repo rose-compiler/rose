@@ -684,8 +684,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
         ElemIdRange                idxrange = idRange(expr.Index_Expressions);
         std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
         SgExpression&              indices = SG_DEREF(idxexpr.size() < 2 ? idxexpr.at(0)
-                                                                         : sb::buildExprListExp(idxexpr)
-                                                     );
+                                                                         : sb::buildExprListExp(idxexpr));
 
         res = sb::buildPntrArrRefExp(&prefix, &indices);
         /* unused fields
@@ -1058,6 +1057,12 @@ SgExpression&
 getDiscreteRangeID(Element_ID id, AstContext ctx)
 {
   return getDiscreteRange(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+}
+
+SgExpression&
+getDefinitionExprID(Element_ID id, AstContext ctx)
+{
+  return getDefinitionExpr(retrieveAs<Element_Struct>(elemMap(), id), ctx);
 }
 
 } // namespace Ada_ROSE_Translation

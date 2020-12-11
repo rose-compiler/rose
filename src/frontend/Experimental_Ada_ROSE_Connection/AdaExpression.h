@@ -30,6 +30,12 @@ namespace Ada_ROSE_Translation
   SgExpression&
   getDiscreteRangeID(Element_ID id, AstContext ctx);
 
+  /// returns an expression for the Asis definition
+  /// \pre id identifies a Asis definition
+  SgExpression&
+  getDefinitionExprID(Element_ID id, AstContext ctx);
+
+
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
   struct ExprSeqCreator
