@@ -42,7 +42,6 @@ package a_nodes_h.Support is
 
    Default_Pragma_Struct : constant Pragma_Struct :=
      (Pragma_Kind                  => Not_A_Pragma,
-      Pragmas                      => Empty_Element_ID_List,
       Pragma_Name_Image            => Invalid_Program_Text,
       Pragma_Argument_Associations => Empty_Element_ID_List
      );
