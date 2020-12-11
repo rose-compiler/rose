@@ -1,4 +1,4 @@
-function IsDivisible(x, y: IN Integer) return Integer is
+function Short_Circuit(x, y: IN Integer) return Integer is
    Result : Integer;
 begin
    Result := 0;
@@ -17,4 +17,4 @@ begin
 
 
    return Result;
-end IsDivisible;
+end Short_Circuit;
