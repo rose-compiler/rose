@@ -899,6 +899,43 @@ SageInterface::isAncestor (SgNode* node1, SgNode* node2)
         }
    }
 
+bool
+SageInterface::hasSameGlobalScope ( SgStatement* statement_1, SgStatement* statement_2 )
+   {
+  // DQ (12/7/2020): This is supporting the recognition of functions in header files from two different AST.
+
+#define DEBUG_HAS_SAME_SCOPE 0
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf ("In SageInterface::hasSameGlobalScope(): \n");
+     printf (" --- statement_1 = %p = %s \n",statement_1,statement_1->class_name().c_str());
+     printf (" --- statement_2 = %p = %s \n",statement_2,statement_2->class_name().c_str());
+#endif
+
+     bool includingSelf = true;
+     SgGlobal* global_scope_1 = getEnclosingNode<SgGlobal>(statement_1,includingSelf);
+     SgGlobal* global_scope_2 = getEnclosingNode<SgGlobal>(statement_2,includingSelf);
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf (" --- global_scope_1 = %p = %s \n",global_scope_1,global_scope_1->class_name().c_str());
+     SgSourceFile* sourcefile_1 = isSgSourceFile(global_scope_1->get_parent());
+     printf (" --- --- sourcefile_1 = %p filename = %s \n",sourcefile_1,sourcefile_1->getFileName().c_str());
+
+     printf (" --- global_scope_2 = %p = %s \n",global_scope_2,global_scope_2->class_name().c_str());
+     SgSourceFile* sourcefile_2 = isSgSourceFile(global_scope_2->get_parent());
+     printf (" --- --- sourcefile_2 = %p filename = %s \n",sourcefile_2,sourcefile_2->getFileName().c_str());
+#endif
+
+     bool returnResult = (global_scope_1 == global_scope_2);
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf ("Leaving SageInterface::hasSameGlobalScope(): returning: %s \n",returnResult ? "true" : "false");
+#endif
+
+     return returnResult;
+   }
+
+
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
    {
