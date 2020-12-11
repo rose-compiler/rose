@@ -4,6 +4,7 @@
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480a0: je 0x080480a3<case1>
 Symbolic: startInstruction(0x080480a0: je 0x080480a3<case1>)
@@ -21,6 +22,7 @@ Symbolic insn@0x080480a0[0]: ite(zf_0[u1], {defs={0x080480a0}, expr=0x080480a3<1
 Symbolic insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=(ite[u32] zf_0[u1] 0x080480a3<134512803>[u32] 0x080480a2<134512802>[u32])})
 Symbolic insn@0x080480a0[0]: finishInstruction(je 0x080480a3<case1>)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -31,6 +33,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -46,6 +49,7 @@ Symbolic insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0
 Symbolic insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a2<134512802>[u32]})
 Symbolic insn@0x080480a2[0]: finishInstruction(hlt)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -56,6 +60,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -72,6 +77,7 @@ Symbolic insn@0x080480a3[0]: writeRegister(eax, ebx_0[u32])
 Symbolic insn@0x080480a3[0]: finishInstruction(mov eax, ebx)
 registers:
  eax [writer=0x080480a3] write-only = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -91,6 +97,7 @@ Symbolic insn@0x080480a5[1]: writeRegister(eax, ebx_0[u32])
 Symbolic insn@0x080480a5[1]: finishInstruction(mov eax, eax)
 registers:
  eax [writer=0x080480a5] = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -115,6 +122,7 @@ Symbolic insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=(ite[u3
 Symbolic insn@0x080480a7[2]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480a5] = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -125,6 +133,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -175,6 +184,7 @@ Symbolic insn@0x080480a9[0]: writeRegister(eax, {defs={0x080480a9}, expr=(add[u3
 Symbolic insn@0x080480a9[0]: finishInstruction(add eax, eax)
 registers:
  eax [writer=0x080480a9] read-before-write = {defs={0x080480a9}, expr=(add[u32] eax_0[u32] eax_0[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -235,6 +245,7 @@ Symbolic insn@0x080480ab[1]: finishInstruction(add ebx, ebx)
 registers:
  eax [writer=0x080480a9] read-before-write = {defs={0x080480a9}, expr=(add[u32] eax_0[u32] eax_0[u32])}
  ebx [writer=0x080480ab] read-before-write = {defs={0x080480ab}, expr=(add[u32] ebx_0[u32] ebx_0[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -295,6 +306,7 @@ Symbolic insn@0x080480ad[2]: finishInstruction(add eax, ebx)
 registers:
  eax [writer=0x080480ad] read-before-write = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])}
  ebx [writer=0x080480ab] read-before-write = {defs={0x080480ab}, expr=(add[u32] ebx_0[u32] ebx_0[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -326,6 +338,7 @@ Symbolic insn@0x080480af[3]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480ad] read-before-write = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])}
  ebx [writer=0x080480ab] read-before-write = {defs={0x080480ab}, expr=(add[u32] ebx_0[u32] ebx_0[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -345,6 +358,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480b1: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480b1: mov eax, 0x00000001)
@@ -357,6 +371,7 @@ Symbolic insn@0x080480b1[0]: writeRegister(eax, {defs={0x080480b1}, expr=0x00000
 Symbolic insn@0x080480b1[0]: finishInstruction(mov eax, 0x00000001)
 registers:
  eax [writer=0x080480b1] write-only = {defs={0x080480b1}, expr=0x00000001[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -381,6 +396,7 @@ Symbolic insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=(ite[u3
 Symbolic insn@0x080480b6[1]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480b1] write-only = {defs={0x080480b1}, expr=0x00000001[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -391,6 +407,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -406,6 +423,7 @@ Symbolic insn@0x080480b8[0]: writeRegister(eax, {defs={0x080480b8}, expr=0x00000
 Symbolic insn@0x080480b8[0]: finishInstruction(mov eax, 0x00000003)
 registers:
  eax [writer=0x080480b8] write-only = {defs={0x080480b8}, expr=0x00000003[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -425,6 +443,7 @@ Symbolic insn@0x080480bd[1]: finishInstruction(mov ebx, 0x00000004)
 registers:
  eax [writer=0x080480b8] write-only = {defs={0x080480b8}, expr=0x00000003[u32]}
  ebx [writer=0x080480bd] write-only = {defs={0x080480bd}, expr=0x00000004[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -479,6 +498,7 @@ Symbolic insn@0x080480c2[2]: finishInstruction(add eax, ebx)
 registers:
  eax [writer=0x080480c2] = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0x00000007[u32]}
  ebx [writer=0x080480bd] = {defs={0x080480bd}, expr=0x00000004[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -543,6 +563,7 @@ registers:
  eax [writer=0x080480c2] = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0x00000007[u32]}
  ecx [writer=0x080480c4] read-before-write = {defs={0x080480c4}, expr=(add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])}
  ebx [writer=0x080480bd] = {defs={0x080480bd}, expr=0x00000004[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -575,6 +596,7 @@ registers:
  eax [writer=0x080480c2] = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=0x00000007[u32]}
  ecx [writer=0x080480c4] read-before-write = {defs={0x080480c4}, expr=(add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])}
  ebx [writer=0x080480bd] = {defs={0x080480bd}, expr=0x00000004[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -594,6 +616,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480c8: mov eax, ebx
 Symbolic: startInstruction(0x080480c8: mov eax, ebx)
@@ -607,6 +630,7 @@ Symbolic insn@0x080480c8[0]: writeRegister(eax, ebx_0[u32])
 Symbolic insn@0x080480c8[0]: finishInstruction(mov eax, ebx)
 registers:
  eax [writer=0x080480c8] write-only = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -631,6 +655,7 @@ registers:
  bl read-before-write = (extract[u8] 0x00000000[u32] 0x00000008[u32] ebx_0[u32])
  bh read-before-write = (extract[u8] 0x00000008[u32] 0x00000010[u32] ebx_0[u32])
  REG0.3@16+16 read-before-write = (extract[u16] 0x00000010[u32] 0x00000020[u32] ebx_0[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -655,6 +680,7 @@ registers:
  bl read-before-write = (extract[u8] 0x00000000[u32] 0x00000008[u32] ebx_0[u32])
  bh read-before-write = (extract[u8] 0x00000008[u32] 0x00000010[u32] ebx_0[u32])
  REG0.3@16+16 read-before-write = (extract[u16] 0x00000010[u32] 0x00000020[u32] ebx_0[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -678,6 +704,7 @@ registers:
  bl read-before-write = (extract[u8] 0x00000000[u32] 0x00000008[u32] ebx_0[u32])
  bh read-before-write = (extract[u8] 0x00000008[u32] 0x00000010[u32] ebx_0[u32])
  REG0.3@16+16 read-before-write = (extract[u16] 0x00000010[u32] 0x00000020[u32] ebx_0[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -697,6 +724,7 @@ Symbolic insn@0x080480d1[4]: writeRegister(eax, ebx_0[u32])
 Symbolic insn@0x080480d1[4]: finishInstruction(mov eax, ebx)
 registers:
  eax [writer=0x080480d1] write-only = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -721,6 +749,7 @@ Symbolic insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=(ite[u3
 Symbolic insn@0x080480d3[5]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480d1] write-only = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -731,6 +760,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -749,6 +779,7 @@ Symbolic insn@0x080480d5[0]: boolean_(1) = {defs={0x080480d5}, expr=true[u1]}
 Symbolic insn@0x080480d5[0]: writeMemory(ds, eax_0[u32], ebx_0[u32], {defs={0x080480d5}, expr=true[u1]})
 Symbolic insn@0x080480d5[0]: finishInstruction(mov dword ds:[eax], ebx)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -776,6 +807,7 @@ Symbolic insn@0x080480d7[1]: ite(zf_0[u1], {defs={0x080480d7}, expr=0x080480a2<1
 Symbolic insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480d9<134512857>[u32])})
 Symbolic insn@0x080480d7[1]: finishInstruction(je 0x080480a2<end>)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -790,6 +822,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -809,6 +842,7 @@ Symbolic insn@0x080480d9[0]: writeRegister(eax, V2[u32])
 Symbolic insn@0x080480d9[0]: finishInstruction(mov eax, dword ds:[ebx])
 registers:
  eax [writer=0x080480d9] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -837,6 +871,7 @@ Symbolic insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=(ite[u3
 Symbolic insn@0x080480db[1]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480d9] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -851,6 +886,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -932,6 +968,7 @@ Symbolic insn@0x080480dd[0]: writeRegister(eax, {defs={0x080480dd}, expr=(concat
 Symbolic insn@0x080480dd[0]: finishInstruction(shr eax, 0x0a)
 registers:
  eax [writer=0x080480dd] read-before-write = {defs={0x080480dd}, expr=(concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32]))}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1022,6 +1059,7 @@ Symbolic insn@0x080480e0[1]: writeRegister(eax, {defs={0x080480dd,0x080480e0}, e
 Symbolic insn@0x080480e0[1]: finishInstruction(shr eax, 0x0a)
 registers:
  eax [writer=0x080480e0] read-before-write = {defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32]))}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1112,6 +1150,7 @@ Symbolic insn@0x080480e3[2]: writeRegister(eax, {defs={0x080480dd,0x080480e0,0x0
 Symbolic insn@0x080480e3[2]: finishInstruction(shr eax, 0x0a)
 registers:
  eax [writer=0x080480e3] read-before-write = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1202,6 +1241,7 @@ Symbolic insn@0x080480e6[3]: writeRegister(eax, {defs={0x080480dd,0x080480e0,0x0
 Symbolic insn@0x080480e6[3]: finishInstruction(shr eax, 0x02)
 registers:
  eax [writer=0x080480e6] read-before-write = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1227,6 +1267,7 @@ Symbolic insn@0x080480e9[4]: writeRegister(eax, ebx_0[u32])
 Symbolic insn@0x080480e9[4]: finishInstruction(mov eax, ebx)
 registers:
  eax [writer=0x080480e9] read-before-write = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1257,6 +1298,7 @@ Symbolic insn@0x080480eb[5]: writeRegister(eip, {defs={0x080480dd,0x080480e0,0x0
 Symbolic insn@0x080480eb[5]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480e9] read-before-write = ebx_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1276,6 +1318,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480ed: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480ed: mov eax, 0x00000001)
@@ -1288,6 +1331,7 @@ Symbolic insn@0x080480ed[0]: writeRegister(eax, {defs={0x080480ed}, expr=0x00000
 Symbolic insn@0x080480ed[0]: finishInstruction(mov eax, 0x00000001)
 registers:
  eax [writer=0x080480ed] write-only = {defs={0x080480ed}, expr=0x00000001[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1334,6 +1378,7 @@ Symbolic insn@0x080480f2[1]: writeRegister(cf, {defs={0x080480f2}, expr=false[u1
 Symbolic insn@0x080480f2[1]: finishInstruction(xor eax, eax)
 registers:
  eax [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1397,6 +1442,7 @@ Symbolic insn@0x080480f4[2]: finishInstruction(neg ecx)
 registers:
  eax [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=0x00000000[u32]}
  ecx [writer=0x080480f4] read-before-write = {defs={0x080480f4}, expr=(add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1428,6 +1474,7 @@ Symbolic insn@0x080480f6[3]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=0x00000000[u32]}
  ecx [writer=0x080480f4] read-before-write = {defs={0x080480f4}, expr=(add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1444,6 +1491,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -1465,6 +1513,7 @@ Symbolic insn@0x080480f8[0]: writeMemory(ss, {defs={0x080480f8}, expr=(add[u32] 
 Symbolic insn@0x080480f8[0]: finishInstruction(push 0x00000003)
 registers:
  esp [writer=0x080480f8] read-before-write = {defs={0x080480f8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1488,6 +1537,7 @@ Symbolic insn@0x080480fd[1]: finishInstruction(mov eax, 0x00000007)
 registers:
  eax [writer=0x080480fd] write-only = {defs={0x080480fd}, expr=0x00000007[u32]}
  esp [writer=0x080480f8] read-before-write = {defs={0x080480f8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1518,6 +1568,7 @@ Symbolic insn@0x08048102[2]: finishInstruction(push eax)
 registers:
  eax [writer=0x080480fd] = {defs={0x080480fd}, expr=0x00000007[u32]}
  esp [writer=0x08048102] read-before-write = {defs={0x080480f8,0x08048102}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1551,6 +1602,7 @@ Symbolic insn@0x08048103[3]: finishInstruction(je 0x080480a2<end>)
 registers:
  eax [writer=0x080480fd] = {defs={0x080480fd}, expr=0x00000007[u32]}
  esp [writer=0x08048102] read-before-write = {defs={0x080480f8,0x08048102}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1572,6 +1624,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048105: hlt 
 Symbolic: startInstruction(0x08048105: hlt)
@@ -1584,6 +1637,7 @@ Symbolic insn@0x08048105[0]: number_(32, 134512901) = {defs={0x08048105}, expr=0
 Symbolic insn@0x08048105[0]: writeRegister(eip, {defs={0x08048105}, expr=0x08048105<134512901>[u32]})
 Symbolic insn@0x08048105[0]: finishInstruction(hlt)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]

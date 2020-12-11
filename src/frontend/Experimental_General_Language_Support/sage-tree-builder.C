@@ -598,24 +598,35 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
+   func_call = nullptr;
+
    // Function calls are ambiguous with arrays in Fortran (and type casts and the replication operator
    // in Jovial).  Start out by assuming it's a function call if another symbol doesn't exist.
 
-   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name);
 
-   if (func_symbol == nullptr) {
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
-      if (symbol) {
-         // There is a symbol but it is not a function, punt and let someone else deal with it.
-      }
-      else {
-         // Assume a void return type.
-        SgType* return_type = SageBuilder::buildVoidType();
-        func_call = SB::buildFunctionCallExp(SgName(name), return_type, params, SageBuilder::topScopeStack());
-      }
+   if (func_symbol) {
+     func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
    }
    else {
-      func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+     SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
+
+     if (symbol) {
+       // There is a symbol but it is not a function, perhaps it is an array reference.
+       // Punt and let someone else deal with it.
+       return;
+     }
+     else {
+       // First try to find an intrinsic function call that hasn't been seen (or created) yet
+       func_call = SageBuilderCpp17::buildIntrinsicFunctionCallExp_nfi(name, params);
+
+       if (!func_call) {
+         // This function must not have been declared yet, without further knowledge,
+         // assume a void return type.
+         SgType* return_type = SageBuilder::buildVoidType();
+         func_call = SageBuilder::buildFunctionCallExp(SgName(name), return_type, params);
+       }
+     }
    }
 
    ROSE_ASSERT(func_call);
@@ -651,6 +662,19 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
 
    SgType* conv_type = symbol->get_type();
    cast_expr = SageBuilder::buildCastExp_nfi(cast_operand, conv_type, SgCastExp::e_default);
+}
+
+void SageTreeBuilder::
+Enter(SgPntrArrRefExp* &array_ref, const std::string &name, SgExprListExp* subscripts, SgExprListExp* cosubscripts)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgPntrArrRefExp* &, ...) \n";
+
+   SgVarRefExp* var_ref = nullptr;
+   Enter(var_ref, name, false);
+   Leave(var_ref);
+
+   // No cosubscripts for now
+   array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, subscripts);
 }
 
 void SageTreeBuilder::
@@ -1282,9 +1306,16 @@ Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<
             init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
          }
 
-         SgInitializedName* init_name = SageBuilder::buildInitializedName(name, type, init);
+         SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, type, init);
          var_decl->append_variable(init_name, init);
          init_name->set_declptr(var_decl);
+
+         // A symbol for the variable also has to be created
+         SgVariableSymbol* var_sym = new SgVariableSymbol(init_name);
+         ROSE_ASSERT(var_sym);
+         SageBuilder::topScopeStack()->insert_symbol(SgName(name), var_sym);
+         //ROSE_ASSERT(init_name->get_symbol_from_symbol_table() != nullptr);
+         SgSymbol* sym = SageInterface::lookupSymbolInParentScopes(name);
       }
    }
 }
@@ -1556,6 +1587,63 @@ SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
    }
    return expr_list;
 }
+
+SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgScopeStatement* scope)
+{
+   SgFunctionRefExp* func_ref = nullptr;
+
+  // assumes Fortran for now
+   SgFunctionSymbol* symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, scope);
+
+   if (symbol) {
+   }
+   else {
+     // Look for intrinsic name
+     if (name == "num_images") {
+       std::cout << "--> need to build a function reference to num_images \n";
+       // Doesn't work
+       // func_ref = SageBuilder::buildFunctionRefExp(SgName(name), scope);
+       SgType* return_type = SB::buildIntType();
+       SgFunctionParameterList *parList = SB::buildFunctionParameterList();
+
+       SgGlobal* globalscope = SI::getGlobalScope(scope);
+
+       SgFunctionDeclaration * funcDecl = SB::buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+     }
+   }
+
+   return func_ref;
+}
+
+SgFunctionCallExp*
+buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params, SgScopeStatement* scope)
+{
+  SgType* return_type = nullptr;
+  SgFunctionCallExp* func_call = nullptr;
+
+  if (!params) {
+    params = SageBuilder::buildExprListExp_nfi();
+  }
+  if (!scope) {
+    scope = SageBuilder::topScopeStack();
+  }
+  ROSE_ASSERT(params);
+  ROSE_ASSERT(scope);
+
+  // Create a return type based on the intrinsic name
+  if (name == "num_images") {
+    return_type = SageBuilder::buildIntType();
+  }
+
+  if (return_type) {
+    func_call = SageBuilder::buildFunctionCallExp(SgName(name), return_type, params, scope);
+    ROSE_ASSERT(func_call);
+    SageInterface::setSourcePosition(func_call);
+  }
+
+  return func_call;
+}
+
 
 } // namespace SageBuilderCpp17
 

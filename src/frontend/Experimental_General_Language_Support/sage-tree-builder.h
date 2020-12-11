@@ -30,6 +30,7 @@ class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgPntrArrRefExp;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgReplicationOp;
@@ -51,6 +52,7 @@ class SgJovialForThenStatement;
 class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
+enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
 
 namespace Rose {
 namespace builder {
@@ -92,7 +94,18 @@ public:
 
 
 class SageTreeBuilder {
+private:
+
 public:
+
+   // C++11
+   // enum class LanguageEnum{Fortran, Jovial};
+   enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+
+   // C++11
+   // Don't allow default constructor, ...
+   SageTreeBuilder() = delete;
+   SageTreeBuilder(SageTreeBuilder::LanguageEnum language) : language_(language) {}
 
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
@@ -186,6 +199,7 @@ public:
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
    void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
    void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
+   void Enter(SgPntrArrRefExp* &, const std::string &name, SgExprListExp* subscripts, SgExprListExp* cosubscripts);
    void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
@@ -211,12 +225,17 @@ public:
    void Leave(SgJovialTableStatement*);
 
 private:
+
+   LanguageEnum language_;
    TraversalContext context_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
 public:
+   bool is_Fortran_language() {return (language_ == e_language_fortran);}
+   bool is_Jovial_language()  {return (language_ == e_language_jovial);}
+
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
@@ -264,6 +283,10 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
+
+// This is new and should be added to SageBuilder?
+   SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
+                                                        SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
 
 } // namespace SageBuilderCpp17
 } // namespace builder
