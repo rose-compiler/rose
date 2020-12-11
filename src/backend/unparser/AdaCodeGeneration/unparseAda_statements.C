@@ -576,7 +576,7 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgForInitStatement& n)
+    void forInitStmt(SgForInitStatement& n, bool reverse)
     {
       SgStatementPtrList&    stmts = n.get_init_stmt();
       ROSE_ASSERT(stmts.size() == 1);
@@ -588,19 +588,19 @@ namespace
 
       prn(ini.get_name());
       prn(" in ");
-
-      if (SgExpression* range = ini.get_initializer())
-        expr(range);
-      else
-        prn("<missing>");
-
+      if (reverse) prn("reverse ");
+      expr(ini.get_initializer());
       prn(" ");
     }
 
     void handle(SgForStatement& n)
     {
+      ROSE_ASSERT(n.get_increment());
+
+      const bool isReverse = isSgMinusOp(n.get_increment());
+
       prn("for ");
-      stmt(n.get_for_init_stmt());
+      forInitStmt(SG_DEREF(n.get_for_init_stmt()), isReverse);
       prn(" loop\n");
       stmt(n.get_loop_body());
       prn("end loop");

@@ -966,7 +966,7 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
 
-SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices)
+SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
 {
   ROSE_ASSERT(choices.size() > 0);
 
@@ -976,6 +976,24 @@ SgExpression& mkChoiceExp(std::vector<SgExpression*>&& choices)
                                   ));
 }
 
+
+SgUnaryOp&
+mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
+{
+  SgVarRefExp& varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildUnaryAddOp(&varref))
+                                : sb::buildMinusOp(&varref)
+                                ;
+
+  return SG_DEREF(sgnode);
+}
+
+
+SgTypeTraitBuiltinOperator&
+mkAdaExprAttribute(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+{
+  return SG_DEREF(sb::buildTypeTraitBuiltinOperator(ident, { &expr, &args }));
+}
 
 //
 // specialized templates
