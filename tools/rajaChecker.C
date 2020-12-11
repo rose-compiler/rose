@@ -1855,6 +1855,8 @@ static void initDebugOutputFile(SgProject* project)
 int
 main ( int argc, char* argv[])
 {
+  ROSE_INITIALIZE;
+
   vector<string> argvList(argv, argv+argc);
   argvList = commandline_processing (argvList);
 
