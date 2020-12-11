@@ -70,8 +70,10 @@ struct SourcePosition {
 };
 
  struct TraversalContext {
-    TraversalContext() : type(nullptr), actual_function_param_scope(nullptr) {}
+    TraversalContext() : type(nullptr), is_initialization(false),
+                         actual_function_param_scope(nullptr) {}
     SgType* type;
+    bool is_initialization;
     SgScopeStatement* actual_function_param_scope;
  };
 
@@ -94,8 +96,6 @@ public:
 
 
 class SageTreeBuilder {
-private:
-
 public:
 
    // C++11
@@ -239,6 +239,9 @@ public:
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+   void setInitializationContext(bool flag) {context_.is_initialization = flag;}
+   bool  isInitializationContext()          {return context_.is_initialization;}
 
 // Helper function
    bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)

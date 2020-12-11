@@ -61,6 +61,7 @@ ASIS_BODY_FAILED_TESTS := \
 ASIS_BODY_PASS_TESTS := \
 	accept_statement.adb \
 	alignment_component_clause.adb \
+	allocators.adb \
         array_declare.adb \
 	array_expressions.adb \
 	asm_machine_code.adb \
@@ -74,6 +75,7 @@ ASIS_BODY_PASS_TESTS := \
 	enumeration.adb \
 	exit_statement.adb \
 	explicit_deref.adb \
+	extension_aggregate.adb \
 	for_loop_statement.adb \
 	function_call.adb \
 	function_declaration.adb \
@@ -85,9 +87,11 @@ ASIS_BODY_PASS_TESTS := \
 	minimal.adb \
 	operator.adb \
 	package_with_body.adb \
+	pragmas.adb \
 	procedure_call.adb \
 	procedure_declaration.adb \
         procedure_pragma.adb \
+	qualified_expression.adb \
 	raise_statement.adb \
         requeue_statement_2.adb \
 	requeue_statements.adb \

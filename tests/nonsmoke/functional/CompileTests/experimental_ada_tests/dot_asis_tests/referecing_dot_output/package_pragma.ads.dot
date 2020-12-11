@@ -158,6 +158,12 @@ digraph "package_pragma.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
+  Element_2330012 -> Element_2333381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2330012 -> Element_2335381
+      [ label="Pragma_Argument_Associations ( 2)" ];
+  Element_2330012 -> Element_2337381
+      [ label="Pragma_Argument_Associations ( 3)" ];
   Element_2330012
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2330012</TD></TR>
@@ -166,7 +172,10 @@ digraph "package_pragma.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Package_Pragma.ads - 3:4 .. 3:33</TD></TR>
           <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPORT_PRAGMA</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Export</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2333381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2335381</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337381</TD></TR>
           </TABLE>> ];
   Element_2333381 -> Element_2332237
       [ label=Actual_Parameter ];

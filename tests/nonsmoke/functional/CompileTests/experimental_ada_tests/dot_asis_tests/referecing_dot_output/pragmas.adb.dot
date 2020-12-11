@@ -1,0 +1,301 @@
+digraph "pragmas.adt" {
+  Unit_3 -> Element_2301106
+      [ label=Unit_Declaration ];
+  Unit_3
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Unit_3</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_BODY</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Class   </TD><TD> = </TD><TD ALIGN="LEFT">A_PUBLIC_DECLARATION_AND_BODY</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Origin   </TD><TD> = </TD><TD ALIGN="LEFT">AN_APPLICATION_UNIT</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Full_Name    </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas</TD></TR>
+          <TR><TD ALIGN="LEFT">Unique_Name   </TD><TD> = </TD><TD ALIGN="LEFT">ASIS Context 1: Pragmas (body)</TD></TR>
+          <TR><TD ALIGN="LEFT">Exists  </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Can_Be_Main_Program     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Body_Required     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">pragmas.adb</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Compilation_Command_Line_Options         </TD><TD> = </TD><TD ALIGN="LEFT">-gnatA -gnatc -gnatt -gnatws -gnatyN -mtune=generic -march=x86-64</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Parent_Declaration         </TD><TD> = </TD><TD ALIGN="LEFT">Unit_1</TD></TR>
+          </TABLE>> ];
+  Element_2301106 -> Element_2293057
+      [ label="Names ( 1)" ];
+  Element_2301106 -> Element_2302019
+      [ label="Pragmas ( 1)" ];
+  Element_2301106 -> Element_2306022
+      [ label="Pragmas ( 2)" ];
+  Element_2301106 -> Element_2334014
+      [ label="Pragmas ( 3)" ];
+  Element_2301106 -> Element_2320106
+      [ label="Body_Declarative_Items ( 1)" ];
+  Element_2301106 -> Element_2339387
+      [ label="Body_Statements ( 1)" ];
+  Element_2301106
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1064484534</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 2:1 .. 15:4</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_BODY_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2293057</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragmas ( 1)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302019</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragmas ( 2)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306022</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragmas ( 3)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2334014</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Declarative_Items ( 1)       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320106</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Statements ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339387</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          </TABLE>> ];
+  Element_2293057
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2293057</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1064883382</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 2:11 .. 2:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Pragmas"</TD></TR>
+          </TABLE>> ];
+  Element_2302019 -> Element_2305381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2302019
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2302019</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1616982437</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 3:3 .. 3:19</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_LIST_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">List</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2305381</TD></TR>
+          </TABLE>> ];
+  Element_2305381 -> Element_2304237
+      [ label=Actual_Parameter ];
+  Element_2305381
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2305381</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1617418149</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302019</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 3:15 .. 3:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA_ARGUMENT_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2304237</TD></TR>
+          </TABLE>> ];
+  Element_2304237
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2304237</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1617876901</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2305381</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 3:15 .. 3:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Off</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">***Invalid ID***</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">***Invalid ID***</TD></TR>
+          </TABLE>> ];
+  Element_2306022 -> Element_2309381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2306022
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2306022</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337937710</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 4:3 .. 4:23</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_OPTIMIZE_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Optimize</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309381</TD></TR>
+          </TABLE>> ];
+  Element_2309381 -> Element_2308237
+      [ label=Actual_Parameter ];
+  Element_2309381
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2309381</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337726766</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306022</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 4:19 .. 4:21</TD></TR>
+          <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA_ARGUMENT_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2308237</TD></TR>
+          </TABLE>> ];
+  Element_2308237
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2308237</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337497390</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309381</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 4:19 .. 4:21</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Off</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">***Invalid ID***</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">***Invalid ID***</TD></TR>
+          </TABLE>> ];
+  Element_2320106 -> Element_2334014
+      [ label="Corresponding_Pragmas ( 1)" ];
+  Element_2320106 -> Element_2310057
+      [ label="Names ( 1)" ];
+  Element_2320106 -> Element_2329090
+      [ label="Body_Declarative_Items ( 1)" ];
+  Element_2320106 -> Element_2332387
+      [ label="Body_Statements ( 1)" ];
+  Element_2320106
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2320106</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1407658956</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 6:3 .. 10:6</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_BODY_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Pragmas ( 1)       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2334014</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Declarative_Items ( 1)       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329090</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Statements ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2332387</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          </TABLE>> ];
+  Element_2310057
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2310057</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1407683884</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 6:13 .. 6:21</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"TryInline"</TD></TR>
+          </TABLE>> ];
+  Element_2329090 -> Element_2321057
+      [ label="Names ( 1)" ];
+  Element_2329090 -> Element_2328176
+      [ label=Object_Declaration_View ];
+  Element_2329090 -> Element_2330234
+      [ label=Initialization_Expression ];
+  Element_2329090
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2329090</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1443781162</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 7:5 .. 7:23</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIABLE_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2321057</TD></TR>
+          <TR><TD ALIGN="LEFT">Object_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328176</TD></TR>
+          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2330234</TD></TR>
+          </TABLE>> ];
+  Element_2321057
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2321057</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1443772714</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329090</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 7:5 .. 7:7</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Foo"</TD></TR>
+          </TABLE>> ];
+  Element_2328176 -> Element_2328237
+      [ label=Subtype_Mark ];
+  Element_2328176
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2328176</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINITION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1443803226</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329090</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 7:11 .. 7:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_SUBTYPE_INDICATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Mark    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328237</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Constraint     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          </TABLE>> ];
+  Element_2328237
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2328237</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1443818842</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328176</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 7:11 .. 7:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Integer</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
+          </TABLE>> ];
+  Element_2330234
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2330234</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1443818034</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329090</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 7:22 .. 7:22</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INTEGER_LITERAL</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
+          <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0</TD></TR>
+          </TABLE>> ];
+  Element_2332387
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2332387</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1786470196</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 9:6 .. 9:10</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NULL_STATEMENT</TD></TR>
+          </TABLE>> ];
+  Element_2334014 -> Element_2337381
+      [ label="Pragma_Argument_Associations ( 1)" ];
+  Element_2334014
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2334014</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1520344863</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 11:3 .. 11:27</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_INLINE_PRAGMA</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">Inline</TD></TR>
+          <TR><TD ALIGN="LEFT">Pragma_Argument_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337381</TD></TR>
+          </TABLE>> ];
+  Element_2337381 -> Element_2336237
+      [ label=Actual_Parameter ];
+  Element_2337381
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2337381</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1520343088</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2334014</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 11:17 .. 11:25</TD></TR>
+          <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PRAGMA_ARGUMENT_ASSOCIATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Formal_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Actual_Parameter     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336237</TD></TR>
+          </TABLE>> ];
+  Element_2336237
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2336237</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1520341296</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337381</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 11:17 .. 11:25</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">TryInline</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320106</TD></TR>
+          </TABLE>> ];
+  Element_2339387
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2339387</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 883702022</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Pragmas.adb - 14:3 .. 14:7</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NULL_STATEMENT</TD></TR>
+          </TABLE>> ]
+}

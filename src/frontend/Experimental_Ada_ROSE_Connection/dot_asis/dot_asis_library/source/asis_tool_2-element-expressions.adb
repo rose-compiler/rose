@@ -199,8 +199,8 @@ package body Asis_Tool_2.Element.Expressions is
            Get_Element_ID (Asis.Expressions.Extension_Aggregate_Expression
                            (Element));
       begin
-         State.Add_To_Dot_Label
-           ("Extension_Aggregate_Expression", To_String (ID));
+         State.Add_To_Dot_Label_And_Edge
+           ("Extension_Aggregate_Expression", ID);
          Result.Extension_Aggregate_Expression := ID;
       end;
       

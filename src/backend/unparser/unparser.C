@@ -2702,6 +2702,12 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     ASSERT_not_null(roseUnparser.u_fortran_locatedNode);
                     roseUnparser.u_fortran_locatedNode->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
                   }
+               else if (SageInterface::is_Ada_language())
+                  {
+                    Unparse_Ada adagen{&roseUnparser, ""};
+
+                    adagen.unparseExpression( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+                  }
                  else
                   {
                  // Unparse as a C/C++ code.

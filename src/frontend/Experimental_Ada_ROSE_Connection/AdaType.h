@@ -18,7 +18,7 @@ void initializeAdaTypes(SgGlobal& global);
 struct TypeData
 {
   SgNode* n; // The partialy converted ROSE representation
-  
+
   // additional declaration modifiers
   bool    hasAbstract;
   bool    hasLimited;
@@ -56,6 +56,9 @@ getDeclTypeID(Element_ID id, AstContext ctx);
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx);
 
+/// creates a constraint node for \ref el
+SgAdaTypeConstraint&
+getConstraintID(Element_ID el, AstContext ctx);
 
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
