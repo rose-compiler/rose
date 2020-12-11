@@ -419,7 +419,6 @@ package body Asis_Tool_2.Element.Statements is
             State.Add_Not_Implemented (Ada_2005);
 
          when An_Accept_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
             Add_Accept_Entry_Index;
             Add_Accept_Entry_Direct_Name;
             Add_Accept_Parameters;
@@ -428,19 +427,14 @@ package body Asis_Tool_2.Element.Statements is
             Add_Corresponding_Entry;
 
          when An_Entry_Call_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
             Add_Called_Name;
             Add_Corresponding_Called_Entity;
             Add_Call_Statement_Parameters;
 
          when A_Requeue_Statement =>
-            --I think this works, but it cannot be tested until attributes work
-            --Ada.Text_IO.Put_Line("----  Requeue----");
             Add_Requeue_Entry_Name;
 
          when A_Requeue_Statement_With_Abort =>
-            --I think this works, but it cannot be tested until attributes work
-            --Ada.Text_IO.Put_Line("----  Requeue----");
             Add_Requeue_Entry_Name;
 
          when A_Delay_Until_Statement =>
@@ -453,27 +447,18 @@ package body Asis_Tool_2.Element.Statements is
             null; -- No more info
 
          when A_Selective_Accept_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
-            --Ada.Text_IO.Put_Line("----  Selective Accept----");
             Add_Statement_Paths;
 
          when A_Timed_Entry_Call_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
-            --Ada.Text_IO.Put_Line("----  Timed Entry Call----");
             Add_Statement_Paths;
 
          when A_Conditional_Entry_Call_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
-            --Ada.Text_IO.Put_Line("----  Conditional Entry Call----");
             Add_Statement_Paths;
 
          when An_Asynchronous_Select_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
-            --Ada.Text_IO.Put_Line("----  Asynchronous Select----");
             Add_Statement_Paths;
 
          when An_Abort_Statement =>
-            --I think this works, but it cannot be tested until task declaration work
             Add_Aborted_Tasks;
 
          when A_Raise_Statement =>
@@ -481,9 +466,6 @@ package body Asis_Tool_2.Element.Statements is
             Add_Associated_Message;
 
          when A_Code_Statement =>
-            -- TODO: Untested.  I can't figure out how to get this statement
-            -- The standard example is unintelligble, and everywhere else says
-            -- "Don't do this, use gcc style asm instead."
             Add_Qualified_Expression;
 
       end case;

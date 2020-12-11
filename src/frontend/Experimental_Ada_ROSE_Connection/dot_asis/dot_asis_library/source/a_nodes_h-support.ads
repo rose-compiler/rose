@@ -125,7 +125,8 @@ package a_nodes_h.Support is
       Generic_Unit_Name                    => Invalid_Element_ID,
       Generic_Actual_Part                  => Empty_Element_ID_List,
       Formal_Subprogram_Default            => Invalid_Element_ID,
-      Is_Dispatching_Operation             => Invalid_bool);
+      Is_Dispatching_Operation             => Invalid_bool,
+      Corresponding_Type_Operators         => Empty_Element_ID_List);
 
    Default_Access_Type_Struct : constant Access_Type_Struct :=
      (Access_Type_Kind                       => Not_An_Access_Type_Definition,
@@ -232,16 +233,18 @@ package a_nodes_h.Support is
 
    Default_Private_Type_Definition_Struct :
    constant Private_Type_Definition_Struct :=
-     (Has_Abstract => Invalid_bool,
-      Has_Limited  => Invalid_bool,
-      Has_Private  => Invalid_bool);
+     (Has_Abstract                 => Invalid_bool,
+      Has_Limited                  => Invalid_bool,
+      Has_Private                  => Invalid_bool,
+      Corresponding_Type_Operators => Empty_Element_ID_List);
 
    Default_Tagged_Private_Type_Definition_Struct :
    constant Tagged_Private_Type_Definition_Struct :=
-     (Has_Abstract => Invalid_bool,
-      Has_Limited  => Invalid_bool,
-      Has_Private  => Invalid_bool,
-      Has_Tagged   => Invalid_bool);
+     (Has_Abstract                 => Invalid_bool,
+      Has_Limited                  => Invalid_bool,
+      Has_Private                  => Invalid_bool,
+      Has_Tagged                   => Invalid_bool,
+      Corresponding_Type_Operators => Empty_Element_ID_List);
 
    Default_Private_Extension_Definition_Struct :
    constant Private_Extension_Definition_Struct :=
@@ -252,19 +255,22 @@ package a_nodes_h.Support is
       Implicit_Inherited_Declarations => Empty_Element_ID_List,
       Implicit_Inherited_Subprograms  => Empty_Element_ID_List,
       Definition_Interface_List       => Empty_Element_ID_List,
-      Ancestor_Subtype_Indication     => Invalid_Element_ID);
+      Ancestor_Subtype_Indication     => Invalid_Element_ID,
+      Corresponding_Type_Operators    => Empty_Element_ID_List);
 
    Default_Task_Definition_Struct : constant Task_Definition_Struct :=
-     (Has_Task           => Invalid_bool,
-      Visible_Part_Items => Empty_Element_ID_List,
-      Private_Part_Items => Empty_Element_ID_List,
-      Is_Private_Present => Invalid_bool);
+     (Has_Task                     => Invalid_bool,
+      Visible_Part_Items           => Empty_Element_ID_List,
+      Private_Part_Items           => Empty_Element_ID_List,
+      Is_Private_Present           => Invalid_bool,
+      Corresponding_Type_Operators => Empty_Element_ID_List);
 
    Default_Protected_Definition_Struct : constant Protected_Definition_Struct :=
-     (Has_Protected      => Invalid_bool,
-      Visible_Part_Items => Empty_Element_ID_List,
-      Private_Part_Items => Empty_Element_ID_List,
-      Is_Private_Present => Invalid_bool);
+     (Has_Protected                => Invalid_bool,
+      Visible_Part_Items           => Empty_Element_ID_List,
+      Private_Part_Items           => Empty_Element_ID_List,
+      Is_Private_Present           => Invalid_bool,
+      Corresponding_Type_Operators => Empty_Element_ID_List);
 
    Default_Formal_Type_Definition_Struct :
    constant Formal_Type_Definition_Struct :=

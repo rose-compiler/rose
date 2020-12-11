@@ -1,0 +1,20 @@
+# File patterns and directories:
+
+# Editor backup files:
+*~
+
+# GPS temporary files:
+.#*#
+
+# GNAT generates these files in the project directory when there is no project 
+# file present that specifies an obj directory:
+*.ali
+*.adt
+
+# GNAT/gprbuild .ali and .o files:
+obj/
+
+# Produced when compiling code for the .adt files:
+*.stderr
+*.stdout
+

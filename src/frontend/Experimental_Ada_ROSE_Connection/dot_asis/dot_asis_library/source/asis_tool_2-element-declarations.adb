@@ -1,4 +1,5 @@
 with Asis.Declarations;
+with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
@@ -219,15 +220,12 @@ package body Asis_Tool_2.Element.Declarations is
       end;
 
       procedure Add_Corresponding_Type_Operators is begin
-         -- No Corresponding_Type_Operators in Declaration_Struct:
-         --              Add_Element_List
-         --                (This           => State,
-         --                 Elements_In    => Asis.Definitions.Corresponding_Type_Operators (Element),
-         --                 Dot_Label_Name => "Corresponding_Type_Operators",
-         --                 List_Out       => Result.Corresponding_Type_Operators,
-         --                 Add_Edges      => True);
-
-         State.Add_Not_Implemented;
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Definitions.Corresponding_Type_Operators (Element),
+            Dot_Label_Name => "Corresponding_Type_Operators",
+            List_Out       => Result.Corresponding_Type_Operators,
+            Add_Edges      => False);
       end;
 
       procedure Add_Corresponding_Type_Partial_View is
@@ -1065,12 +1063,12 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Mode_Kind;
 
       when A_Formal_Type_Declaration =>
+         Add_Discriminant_Part;
+         Add_Type_Declaration_View;
          Add_Corresponding_First_Subtype;
          Add_Corresponding_Last_Constraint;
          Add_Corresponding_Last_Subtype;
-         Add_Corresponding_Type_Operators; -- Has Add_Not_Implemented
-         Add_Discriminant_Part;
-         Add_Type_Declaration_View;
+         Add_Corresponding_Type_Operators;
 
       when A_Formal_Incomplete_Type_Declaration => -- A2012
          State.Add_Not_Implemented (Ada_2012);

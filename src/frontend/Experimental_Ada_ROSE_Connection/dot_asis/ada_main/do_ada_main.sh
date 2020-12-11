@@ -1,8 +1,14 @@
 #!/bin/bash
-# Builds a dot_asis tool with an Ada main program, and runs it on some test code.
+# Builds a dot_asis tool with an Ada main program, and runs it on some test 
+# code.  
+#
+# If there are file name parameters, uses those in ${target_dir}, otherwise 
+# uses all in ${target_dir}
 #
 # Parameters:
 # -d  Turns on debug
+# [file name(s)] 
+#     Test code file(s)
 
 # Prevents some informative error messages, so is usually commented out:
 #set -o errexit
@@ -26,15 +32,13 @@ test_dir="${test_base_dir}/dot_asis_tests/test_units"
 reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
 
 target_dir="${test_dir}"
-#target_units="minimal.adb"
-#target_units="package_pragma.ads procedure_pragma.adb"
-#target_units="array_declare_2.ads"
-#target_units="variable_declaration.ads"
-#target_units="if_statement.adb"
-#target_units="requeue_statement_2.adb"
-#target_units="hello_world.adb"
-#target_units="ordinary_type_declaration.ads"
-target_units=`(cd ${target_dir}; ls *.ad[bs])`
+
+if [[ ${#*} -ge 1 ]] 
+then
+  target_units="$@"
+else
+  target_units=`(cd ${target_dir}; ls *.ad[bs])`
+fi
 
 output_dir="${reference_dot_file_dir}"
 

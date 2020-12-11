@@ -430,9 +430,9 @@ enum Subprogram_Default_Kinds {
 struct Declaration_Struct {
   enum Declaration_Kinds         Declaration_Kind;
   enum Declaration_Origins       Declaration_Origin;
-  Pragma_Element_ID_List            Corresponding_Pragmas;
+  Pragma_Element_ID_List         Corresponding_Pragmas;
   Defining_Name_List             Names;  
-  Element_ID_List                   Aspect_Specifications;
+  Element_ID_List                Aspect_Specifications;
   Representation_Clause_List     Corresponding_Representation_Clauses;
   
   // These fields are only valid for the kinds above them:
@@ -799,6 +799,8 @@ struct Declaration_Struct {
   //  A_Procedure_Body_Stub,                    // 10.1.3(3)
   //  A_Function_Body_Stub,                     // 10.1.3(3)
   bool                           Is_Dispatching_Operation;
+  //  A_Formal_Type_Declaration,                // 12.5(2)
+  Declaration_List               Corresponding_Type_Operators;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1139,16 +1141,18 @@ typedef struct _Access_Definition_Struct {
 } Access_Definition_Struct;
 
 typedef struct _Private_Type_Definition_Struct {
-  bool             Has_Abstract;
-  bool             Has_Limited;
-  bool             Has_Private;
+  bool               Has_Abstract;
+  bool               Has_Limited;
+  bool               Has_Private;
+  Declaration_List   Corresponding_Type_Operators;
 } Private_Type_Definition_Struct;
 
 typedef struct _Tagged_Private_Type_Definition_Struct {
-  bool             Has_Abstract;
-  bool             Has_Limited;
-  bool             Has_Private;
-  bool             Has_Tagged;
+  bool               Has_Abstract;
+  bool               Has_Limited;
+  bool               Has_Private;
+  bool               Has_Tagged;
+  Declaration_List   Corresponding_Type_Operators;
 } Tagged_Private_Type_Definition_Struct;
 
 typedef struct _Private_Extension_Definition_Struct {
@@ -1160,6 +1164,7 @@ typedef struct _Private_Extension_Definition_Struct {
   Declaration_List   Implicit_Inherited_Subprograms;
   Expression_List    Definition_Interface_List;
   Subtype_Indication Ancestor_Subtype_Indication;
+  Declaration_List   Corresponding_Type_Operators;
 } Private_Extension_Definition_Struct;
 
 typedef struct _Task_Definition_Struct {
@@ -1167,6 +1172,7 @@ typedef struct _Task_Definition_Struct {
   Declarative_Item_List Visible_Part_Items;
   Declarative_Item_List Private_Part_Items;
   bool                  Is_Private_Present;
+  Declaration_List      Corresponding_Type_Operators;
 } Task_Definition_Struct;
 
 typedef struct _Protected_Definition_Struct {
@@ -1174,6 +1180,7 @@ typedef struct _Protected_Definition_Struct {
   Declarative_Item_List Visible_Part_Items;
   Declarative_Item_List Private_Part_Items;
   bool                  Is_Private_Present;
+  Declaration_List      Corresponding_Type_Operators;
 } Protected_Definition_Struct;
 
 typedef struct _Formal_Type_Definition_Struct {

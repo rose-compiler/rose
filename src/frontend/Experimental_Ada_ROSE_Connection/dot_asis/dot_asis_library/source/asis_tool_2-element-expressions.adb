@@ -27,20 +27,21 @@ package body Asis_Tool_2.Element.Expressions is
       procedure Add_Attribute_Designator_Expressions is
          Arg_Kind : constant Internal_Element_Kinds := Int_Kind (Element);
       begin
-         if (Arg_Kind = A_First_Attribute                   or else
-             Arg_Kind = A_Last_Attribute                    or else
-             Arg_Kind = A_Length_Attribute                  or else
-             Arg_Kind = A_Range_Attribute                   or else
-             Arg_Kind = An_Implementation_Defined_Attribute or else
-             Arg_Kind = An_Unknown_Attribute)
-         then  
-            Add_Element_List
-              (This           => State,
-               Elements_In    => Asis.Expressions.Attribute_Designator_Expressions (Element),
-               Dot_Label_Name => "Attribute_Designator_Expressions",
-               List_Out       => Result.Attribute_Designator_Expressions,
-               Add_Edges      => True);
-         end if;
+         case Arg_Kind is 
+            when A_First_Attribute  |
+                 A_Last_Attribute |
+                 A_Length_Attribute |
+                 A_Range_Attribute |
+                 An_Implementation_Defined_Attribute |
+                 An_Unknown_Attribute =>
+               Add_Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Expressions.Attribute_Designator_Expressions (Element),
+                  Dot_Label_Name => "Attribute_Designator_Expressions",
+                  List_Out       => Result.Attribute_Designator_Expressions,
+                  Add_Edges      => True);
+            when others => null;
+         end case;
       end;
       
       procedure Add_Allocator_Qualified_Expression is

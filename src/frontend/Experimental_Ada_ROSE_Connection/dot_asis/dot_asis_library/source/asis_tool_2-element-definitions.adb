@@ -657,6 +657,7 @@ package body Asis_Tool_2.Element.Definitions is
          begin
             State.Add_To_Dot_Label ("Formal_Type_Kind", Formal_Type_Kind'Image);
             Result.Formal_Type_Kind := anhS.To_Formal_Type_Kinds (Formal_Type_Kind);
+            Result.Corresponding_Type_Operators := Add_And_Return_Corresponding_Type_Operators;
          end Add_Common_Items;
 
          use all type Asis.Formal_Type_Kinds;
@@ -747,7 +748,9 @@ package body Asis_Tool_2.Element.Definitions is
             Definition_Interface_List       =>
               Add_And_Return_Definition_Interface_List,
             Ancestor_Subtype_Indication     =>
-              Add_And_Return_Ancestor_Subtype_Indication);
+              Add_And_Return_Ancestor_Subtype_Indication,
+            Corresponding_Type_Operators =>
+              Add_And_Return_Corresponding_Type_Operators);
       end Create_And_Return_Private_Extension_Definition;
 
       -- Has side effects:
@@ -757,7 +760,9 @@ package body Asis_Tool_2.Element.Definitions is
          return
            (Has_Abstract => Add_And_Return_Has_Abstract,
             Has_Limited  => Add_And_Return_Has_Limited,
-            Has_Private  => Add_And_Return_Has_Private);
+            Has_Private  => Add_And_Return_Has_Private,
+            Corresponding_Type_Operators =>
+              Add_And_Return_Corresponding_Type_Operators);
       end Create_And_Return_Private_Type_Definition;
 
       -- Has side effects:
@@ -768,7 +773,9 @@ package body Asis_Tool_2.Element.Definitions is
            (Has_Protected      => Add_And_Return_Has_Protected,
             Visible_Part_Items => Add_And_Return_Visible_Part_Items,
             Private_Part_Items => Add_And_Return_Private_Part_Items,
-            Is_Private_Present => Add_And_Return_Is_Private_Present);
+            Is_Private_Present => Add_And_Return_Is_Private_Present,
+            Corresponding_Type_Operators =>
+              Add_And_Return_Corresponding_Type_Operators);
       end Create_And_Return_Protected_Definition;
 
       -- Has side effects:
@@ -837,7 +844,9 @@ package body Asis_Tool_2.Element.Definitions is
            (Has_Abstract => Add_And_Return_Has_Abstract,
             Has_Limited  => Add_And_Return_Has_Limited,
             Has_Private  => Add_And_Return_Has_Private,
-            Has_Tagged   => Add_And_Return_Has_Tagged);
+            Has_Tagged   => Add_And_Return_Has_Tagged,
+            Corresponding_Type_Operators =>
+              Add_And_Return_Corresponding_Type_Operators);
       end Create_And_Return_Tagged_Private_Type_Definition;
 
       -- Has side effects:
@@ -1008,7 +1017,9 @@ package body Asis_Tool_2.Element.Definitions is
            (Has_Task            => Add_And_Return_Has_Task,
             Visible_Part_Items  => Add_And_Return_Visible_Part_Items,
             Private_Part_Items  => Add_And_Return_Private_Part_Items,
-            Is_Private_Present  => Add_And_Return_Is_Private_Present);
+            Is_Private_Present  => Add_And_Return_Is_Private_Present,
+            Corresponding_Type_Operators =>
+              Add_And_Return_Corresponding_Type_Operators);
       end Create_And_Return_Task_Definition;
 
       -- Has side effects:
