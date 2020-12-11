@@ -149,7 +149,6 @@ int main( int argc, char * argv[] ) {
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
-    cout<<roseGlobalVariantNameList[V_SgTypeShort]<<endl;
     TimingCollector tc;
 
     tc.startTimer();
@@ -194,7 +193,8 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
-
+    AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+    
     runSolver(ctOpt,analyzer,sageProject,tc);
 
     analyzer->printStatusMessageLine("==============================================================");

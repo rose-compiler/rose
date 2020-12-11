@@ -353,13 +353,14 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
                                    AbstractValue abstractValue) {
   if(abstractValue.isBot()) {
     // writing bot to memory (bot->top conversion)
-    abstractValue=AbstractValue(CodeThorn::Top());
+    abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
   }
   if(abstractMemLoc.isTop()) {
     combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
     return;
   } else {
     if(AbstractValue::byteMode) {
+      // POINTERTODO
       VariableId varId=abstractMemLoc.getVariableId();
       long int offset=abstractMemLoc.getIndexIntValue();
       ROSE_ASSERT(AbstractValue::_variableIdMapping);

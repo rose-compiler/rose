@@ -22,6 +22,7 @@ using namespace Sawyer::Message; // required for logger[WARN]
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
+bool AbstractValue::pointerSetsEnabled=false;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -271,6 +272,16 @@ long AbstractValue::hash() const {
   }
 }
 
+bool AbstractValue::ptrSetContainsNullPtr() const {
+  ROSE_ASSERT(valueType==PTR_SET);
+  return getAbstractValueSet()->find(createNullPtr())!=getAbstractValueSet()->end();
+}
+
+size_t AbstractValue::getPtrSetSize() const {
+  ROSE_ASSERT(valueType==PTR_SET);
+  return getAbstractValueSet()->size();
+}
+
 AbstractValue AbstractValue::operatorNot() {
   AbstractValue tmp;
   switch(valueType) {
@@ -285,6 +296,17 @@ AbstractValue AbstractValue::operatorNot() {
   case AbstractValue::TOP: tmp=Top();break;
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::UNDEFINED: tmp=*this;break;
+  case AbstractValue::PTR_SET:
+    if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()>1) {
+    tmp=Top();
+  } else if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()==1) {
+    tmp.intValue=1;
+  } else if(!AbstractValue::ptrSetContainsNullPtr()) {
+    tmp.intValue=0;
+  } else {
+    SAWYER_MESG(logger[ERROR])<<"Error: unhandled case in AbstractValue::operatorNot() (PTR_SET)."<<endl;
+    exit(1);
+  }
   default:
     // other cases should not appear because there must be a proper cast
     SAWYER_MESG(logger[WARN])<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
@@ -368,6 +390,30 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
           else
             return c1.getElementTypeSize()<c2.getElementTypeSize();
         }
+      }
+    } else if(c1.isPtrSet() && c2.isPtrSet()) {
+      if(c1.getPtrSetSize()!=c2.getPtrSetSize()) {
+        return c1.getPtrSetSize()<c2.getPtrSetSize();
+      } else {
+        // since the set is an ordered set, there exists a weak ordering
+        // [1,2,3]<[1,2,4]; [1,2,3] >= [1,2,3]; [1,4,5] > [1,3,6]
+        AbstractValueSet& s1=*c1.getAbstractValueSet();
+        AbstractValueSet& s2=*c2.getAbstractValueSet();
+        for(auto e1 : s1) {
+          size_t eqCnt=0;
+          for(auto e2 : s2) {
+            if(e1!=e2) {
+              if(!(e1<e2))
+                return false;
+            } else {
+              eqCnt++;
+            }
+            if(eqCnt==s2.size()) {
+              return false; // case ==
+            }
+          }
+        }
+        return true;
       }
     } else if (c1.isBot()==c2.isBot()) {
       return false;
@@ -1071,7 +1117,15 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
          &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
       } else {
-        return createTop();
+        if(AbstractValue::pointerSetsEnabled) {
+          // promote to ptr set in case the values are not equal (handled above)
+          AbstractValueSet* resultSet=new AbstractValueSet();
+          resultSet->insert(val1);
+          resultSet->insert(val2);
+          return createAbstractValuePtrSet(resultSet);
+        } else {
+          return createTop();
+        }
       }
     }
     case FUN_PTR: {

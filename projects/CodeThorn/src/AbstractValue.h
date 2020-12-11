@@ -92,6 +92,8 @@ class AbstractValue {
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
+  bool ptrSetContainsNullPtr() const;
+  size_t getPtrSetSize() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
   AbstractValue operatorOr(AbstractValue other);
@@ -181,6 +183,7 @@ class AbstractValue {
   // returns a memLoc aligned to the declared element size of the memory region it's referring to
   // with the offset into the element. If the offset is 0, then it's exactly aligned.
   AlignedMemLoc alignedMemLoc();
+  // if the type is PTR_SET it determines whether the set contains a null pointer (zero)
  private:
 
   // functions used for (de)allocating additional memory for some abstractions
@@ -201,6 +204,7 @@ class AbstractValue {
  public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements
+  static bool pointerSetsEnabled;
 };
 
 // arithmetic operators
