@@ -18,7 +18,7 @@ private with Types;
 private with a_nodes_h.Support;
 
 -- Contains supporting declarations for child packages
-package Asis_Tool_2 is
+package Asis_Adapter is
 
    -- Controls behavior of Trace_ routines.  Renamed here so clients have to
    -- with fewer packages:
@@ -42,7 +42,7 @@ package Asis_Tool_2 is
    Internal_Error : Exception;
 
 private
-   Module_Name : constant String := "Asis_Tool_2";
+   Module_Name : constant String := "Asis_Adapter";
 
    package AEX renames Ada.Exceptions;
    package ASU renames Ada.Strings.Unbounded;
@@ -137,4 +137,4 @@ private
       To_Kind   : in     ID_Kind;
       Label     : in     String);
 
-end Asis_Tool_2;
+end Asis_Adapter;

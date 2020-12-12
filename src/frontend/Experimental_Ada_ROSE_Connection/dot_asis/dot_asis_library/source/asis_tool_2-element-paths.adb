@@ -1,7 +1,7 @@
 with Asis.Elements;
 with Asis.Statements;
 
-package body Asis_Tool_2.Element.Paths is
+package body Asis_Adapter.Element.Paths is
 
    ------------
    -- EXPORTED:
@@ -103,4 +103,4 @@ package body Asis_Tool_2.Element.Paths is
       State.A_Element.The_Union.Path := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Paths;
+end Asis_Adapter.Element.Paths;

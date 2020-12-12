@@ -5,10 +5,10 @@ with Asis.Errors;
 with Asis.Implementation;
 with GNAT.Directory_Operations;
 
-with Asis_Tool_2.Unit;
+with Asis_Adapter.Unit;
 with a_nodes_h.Support;
 
-package body Asis_Tool_2.Context is
+package body Asis_Adapter.Context is
 
    procedure Set_Context
      (Asis_Context : in Asis.Context;
@@ -37,7 +37,7 @@ package body Asis_Tool_2.Context is
    begin
       for Unit of Units loop
          declare
-            Tool_Unit : Asis_Tool_2.Unit.Class;
+            Tool_Unit : Asis_Adapter.Unit.Class;
          begin
             Tool_Unit.Process (Unit, Options, Outputs);
          end;
@@ -96,4 +96,4 @@ package body Asis_Tool_2.Context is
       Log ("END");
    end Process;
 
-end Asis_Tool_2.Context;
+end Asis_Adapter.Context;

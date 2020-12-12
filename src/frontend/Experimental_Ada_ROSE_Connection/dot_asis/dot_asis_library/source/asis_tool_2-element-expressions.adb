@@ -4,7 +4,7 @@ with Asis.Expressions;
 with Asis.Extensions;
 with Asis.Set_Get; use  Asis.Set_Get;
 with A4G.Int_Knds; use A4G.Int_Knds;
-package body Asis_Tool_2.Element.Expressions is
+package body Asis_Adapter.Element.Expressions is
 
    -----------------------------
    -- Do_Pre_Child_Processing --
@@ -478,4 +478,4 @@ package body Asis_Tool_2.Element.Expressions is
       State.A_Element.The_Union.Expression := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Expressions;
+end Asis_Adapter.Element.Expressions;

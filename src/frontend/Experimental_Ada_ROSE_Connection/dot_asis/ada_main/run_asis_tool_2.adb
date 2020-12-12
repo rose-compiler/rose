@@ -4,9 +4,9 @@ with GNAT.Command_Line;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
-with Asis_Tool_2.Tool;
+with Asis_Adapter.Tool;
 
-procedure Run_Asis_Tool_2 is
+procedure Run_Asis_Adapter is
    package ACL renames Ada.Command_Line;
    package GCL renames GNAT.Command_Line;
 
@@ -23,11 +23,11 @@ procedure Run_Asis_Tool_2 is
    end record;
 
    Options : aliased Options_Record; -- Initialized
-   Tool    : Asis_Tool_2.Tool.Class; -- Initialized
+   Tool    : Asis_Adapter.Tool.Class; -- Initialized
 
    procedure Log (Message : in String) is
    begin
-      Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+      Ada.Text_Io.Put_Line ("Run_Asis_Adapter:  " & Message);
    end;
 
    procedure Get_Options is
@@ -76,4 +76,4 @@ begin
       Debug                        => Options.Debug);
    dot_asisfinal;
    Log ("END");
-end Run_Asis_Tool_2;
+end Run_Asis_Adapter;

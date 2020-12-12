@@ -5,9 +5,9 @@ with Asis.Implementation;
 with Asis.Extensions;
 with Gnat.OS_Lib;
 
-with Asis_Tool_2.Unit;
+with Asis_Adapter.Unit;
 
-package body Asis_Tool_2.Tool is
+package body Asis_Adapter.Tool is
 
    ------------
    -- EXPORTED:
@@ -87,7 +87,7 @@ package body Asis_Tool_2.Tool is
          2 => Project_File'Unchecked_Access,
          3 => Relocate_build_tree'Unchecked_Access);
    begin
-      Asis_Tool_2.Trace_On := Debug;
+      Asis_Adapter.Trace_On := Debug;
       Log ("BEGIN");
       Log ("File_Name  => """ & File_Name & """");
       Log ("Output_Dir => """ & Output_Dir & """");
@@ -151,4 +151,4 @@ package body Asis_Tool_2.Tool is
          raise Internal_Error;
    end Get_Nodes;
 
-end Asis_Tool_2.Tool;
+end Asis_Adapter.Tool;

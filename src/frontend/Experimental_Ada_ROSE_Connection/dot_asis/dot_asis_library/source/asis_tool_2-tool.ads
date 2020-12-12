@@ -1,9 +1,9 @@
--- This is the main Asis_Tool_2 class.
+-- This is the main Asis_Adapter class.
 
-private with Asis_Tool_2.Context;
+private with Asis_Adapter.Context;
 with a_nodes_h;
 
-package Asis_Tool_2.Tool is
+package Asis_Adapter.Tool is
 
    type Class is tagged limited private;
 
@@ -35,8 +35,8 @@ private
 
    type Class is tagged limited -- Initialized
       record
-         My_Context : Asis_Tool_2.Context.Class; -- Initialized
+         My_Context : Asis_Adapter.Context.Class; -- Initialized
          Outputs    : Outputs_Record; -- Initialized
       end record;
 
-end Asis_Tool_2.Tool;
+end Asis_Adapter.Tool;

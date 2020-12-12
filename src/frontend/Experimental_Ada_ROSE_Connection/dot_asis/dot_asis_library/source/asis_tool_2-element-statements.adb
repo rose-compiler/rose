@@ -2,7 +2,7 @@ with Asis.Elements;
 with Asis.Statements;
 with Ada.Text_IO;
 
-package body Asis_Tool_2.Element.Statements is
+package body Asis_Adapter.Element.Statements is
 
    ------------
    -- EXPORTED:
@@ -474,4 +474,4 @@ package body Asis_Tool_2.Element.Statements is
       State.A_Element.the_union.statement := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Statements;
+end Asis_Adapter.Element.Statements;

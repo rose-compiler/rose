@@ -1,6 +1,6 @@
 with Asis.Elements;
 
-package body Asis_Tool_2.Element.Pragmas is
+package body Asis_Adapter.Element.Pragmas is
 
    procedure Do_Pre_Child_Processing
      (Element : in Asis.Element; State : in out Class)
@@ -45,4 +45,4 @@ package body Asis_Tool_2.Element.Pragmas is
 
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Pragmas;
+end Asis_Adapter.Element.Pragmas;

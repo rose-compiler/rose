@@ -3,9 +3,9 @@ with Asis;
 with A_Nodes;
 with Dot;
 
-with Asis_Tool_2.Unit;
+with Asis_Adapter.Unit;
 
-package Asis_Tool_2.Context is
+package Asis_Adapter.Context is
 
    type Class is tagged limited private;
 
@@ -26,4 +26,4 @@ private
          Asis_Context : Asis.Context; -- Initialized
       end record;
 
-end Asis_Tool_2.Context;
+end Asis_Adapter.Context;

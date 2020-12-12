@@ -1,6 +1,6 @@
 with Asis.Statements;
 
-package body Asis_Tool_2.Element.Exception_Handlers is
+package body Asis_Adapter.Element.Exception_Handlers is
 
    -----------------------------
    -- EXPORTED:
@@ -53,4 +53,4 @@ package body Asis_Tool_2.Element.Exception_Handlers is
       State.A_Element.the_union.exception_handler := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Exception_Handlers;
+end Asis_Adapter.Element.Exception_Handlers;

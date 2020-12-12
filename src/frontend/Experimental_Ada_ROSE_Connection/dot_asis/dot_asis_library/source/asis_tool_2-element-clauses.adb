@@ -1,7 +1,7 @@
 with Asis.Clauses;
 with Asis.Elements;
 
-package body Asis_Tool_2.Element.Clauses is
+package body Asis_Adapter.Element.Clauses is
 
    ------------
    -- EXPORTED:
@@ -193,4 +193,4 @@ package body Asis_Tool_2.Element.Clauses is
       State.A_Element.the_union.clause := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Clauses;
+end Asis_Adapter.Element.Clauses;

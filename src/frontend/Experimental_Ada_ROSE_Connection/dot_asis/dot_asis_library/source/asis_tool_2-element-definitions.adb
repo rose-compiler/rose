@@ -1,7 +1,7 @@
 with Asis.Definitions;
 with Asis.Elements;
 
-package body Asis_Tool_2.Element.Definitions is
+package body Asis_Adapter.Element.Definitions is
 
    -- "Add_And_Return_* functions query ASIS for a single value or list of
    -- values, add it to the Dot graph, and return the value.  These functions
@@ -1130,4 +1130,4 @@ package body Asis_Tool_2.Element.Definitions is
       State.A_Element.The_Union.Definition := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Definitions;
+end Asis_Adapter.Element.Definitions;

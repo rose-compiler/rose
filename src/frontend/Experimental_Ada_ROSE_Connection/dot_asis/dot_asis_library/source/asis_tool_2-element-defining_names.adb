@@ -1,7 +1,7 @@
 with Asis.Declarations;
 with Asis.Elements;
 
-package body Asis_Tool_2.Element.Defining_Names is
+package body Asis_Adapter.Element.Defining_Names is
 
    ------------
    -- EXPORTED:
@@ -113,4 +113,4 @@ begin
    State.A_Element.The_Union.Defining_Name := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Defining_Names;
+end Asis_Adapter.Element.Defining_Names;

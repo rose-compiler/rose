@@ -1,7 +1,7 @@
 with Asis.Elements;
 with Asis.Expressions;
 
-package body Asis_Tool_2.Element.Associations is
+package body Asis_Adapter.Element.Associations is
 
    ------------
    -- EXPORTED:
@@ -138,4 +138,4 @@ package body Asis_Tool_2.Element.Associations is
       State.A_Element.The_union.association := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Associations;
+end Asis_Adapter.Element.Associations;

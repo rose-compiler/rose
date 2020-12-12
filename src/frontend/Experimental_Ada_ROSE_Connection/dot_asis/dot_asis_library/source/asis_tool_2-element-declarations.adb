@@ -4,7 +4,7 @@ with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
 
-package body Asis_Tool_2.Element.Declarations is
+package body Asis_Adapter.Element.Declarations is
 
    procedure Do_Pre_Child_Processing
      (Element : in Asis.Element;
@@ -1104,4 +1104,4 @@ package body Asis_Tool_2.Element.Declarations is
       State.A_Element.The_Union.Declaration := Result;
    end Do_Pre_Child_Processing;
 
-end Asis_Tool_2.Element.Declarations;
+end Asis_Adapter.Element.Declarations;

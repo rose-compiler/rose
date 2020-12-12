@@ -8,7 +8,7 @@ with Dot;
 
 private with Ada.Containers.Doubly_Linked_Lists;
 
-package Asis_Tool_2.Element is
+package Asis_Adapter.Element is
 
    type Class is tagged private; -- Initialized
 
@@ -197,4 +197,4 @@ private
       List_Out       :    out a_nodes_h.Element_ID_List;
       Add_Edges      : in     Boolean := False);
 
-end Asis_Tool_2.Element;
+end Asis_Adapter.Element;

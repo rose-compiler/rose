@@ -1,4 +1,4 @@
-package Asis_Tool_2.Element.Associations is
+package Asis_Adapter.Element.Associations is
 
    procedure Do_Pre_Child_Processing
      (Element : in     Asis.Element;
@@ -10,4 +10,4 @@ private
    Parent_Name : constant String := Module_Name;
    Module_Name : constant String := Parent_Name & "Associations";
 
-end Asis_Tool_2.Element.Associations;
+end Asis_Adapter.Element.Associations;

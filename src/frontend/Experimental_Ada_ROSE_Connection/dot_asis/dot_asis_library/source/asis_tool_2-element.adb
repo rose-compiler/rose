@@ -5,18 +5,18 @@ with Asis.Iterator;
 with Asis.Set_Get;
 with Asis.Text;
 
-with Asis_Tool_2.Element.Associations;
-with Asis_Tool_2.Element.Clauses;
-with Asis_Tool_2.Element.Declarations;
-with Asis_Tool_2.Element.Defining_Names;
-with Asis_Tool_2.Element.Definitions;
-with Asis_Tool_2.Element.Exception_Handlers;
-with Asis_Tool_2.Element.Expressions;
-with Asis_Tool_2.Element.Paths;
-with Asis_Tool_2.Element.Pragmas;
-with Asis_Tool_2.Element.Statements;
+with Asis_Adapter.Element.Associations;
+with Asis_Adapter.Element.Clauses;
+with Asis_Adapter.Element.Declarations;
+with Asis_Adapter.Element.Defining_Names;
+with Asis_Adapter.Element.Definitions;
+with Asis_Adapter.Element.Exception_Handlers;
+with Asis_Adapter.Element.Expressions;
+with Asis_Adapter.Element.Paths;
+with Asis_Adapter.Element.Pragmas;
+with Asis_Adapter.Element.Statements;
 
-package body Asis_Tool_2.Element is
+package body Asis_Adapter.Element is
 
    ----------------------
    -- EXPORTED (private):
@@ -573,5 +573,5 @@ package body Asis_Tool_2.Element is
          State   => This);
    end Process_Element_Tree;
 
-end Asis_Tool_2.Element;
+end Asis_Adapter.Element;
 

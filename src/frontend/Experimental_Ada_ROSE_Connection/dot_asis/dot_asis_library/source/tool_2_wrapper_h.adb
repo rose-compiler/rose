@@ -1,7 +1,7 @@
 with Ada.Text_IO;
 with Interfaces.C;
 
-with Asis_Tool_2.Tool;
+with Asis_Adapter.Tool;
 with a_nodes_h.Support;
 
 package body tool_2_wrapper_h is
@@ -60,7 +60,7 @@ package body tool_2_wrapper_h is
                     (Interfaces.C.Strings.Value (output_dir)));
 
       Compile_Succeeded : Boolean  := False;
-      Tool              : Asis_Tool_2.Tool.Class; -- Initialized
+      Tool              : Asis_Adapter.Tool.Class; -- Initialized
       Result            : a_nodes_h.Nodes_Struct := anhs.Default_Nodes_Struct;
    begin
       Log ("BEGIN");

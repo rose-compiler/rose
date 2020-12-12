@@ -8,10 +8,10 @@ with Ada.Characters.Handling;
 with Asis.Set_Get;
 with A4G.A_Types;
 
-with Asis_Tool_2.Element;
+with Asis_Adapter.Element;
 with Dot;
 
-package body Asis_Tool_2.Unit is
+package body Asis_Adapter.Unit is
 
    package ACU renames Asis.Compilation_Units;
 
@@ -692,4 +692,4 @@ package body Asis_Tool_2.Unit is
          raise;
    end Process;
 
-end Asis_Tool_2.Unit;
+end Asis_Adapter.Unit;

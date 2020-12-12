@@ -4,7 +4,7 @@ with Ada.Characters.Handling;
 with Asis.Set_Get;
 with GNAT.Traceback.Symbolic;
 
-package body Asis_Tool_2 is
+package body Asis_Adapter is
 
    package Ach renames Ada.Characters.Handling;
 
@@ -182,4 +182,4 @@ package body Asis_Tool_2 is
       end if;
    end Add_Dot_Edge;
 
-end Asis_Tool_2;
+end Asis_Adapter;

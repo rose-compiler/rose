@@ -3,7 +3,7 @@ with Asis;
 with A_Nodes;
 with Dot;
 
-package Asis_Tool_2.Unit is
+package Asis_Adapter.Unit is
 
    type Class (Trace : Boolean := False) is tagged limited private; -- Initialized
 
@@ -44,4 +44,4 @@ private
          Outputs   : Outputs_Record; -- Initialized
       end record;
 
-end Asis_Tool_2.Unit;
+end Asis_Adapter.Unit;
