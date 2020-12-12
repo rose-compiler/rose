@@ -10,7 +10,7 @@ project C_Main is
    for Languages use ("C");
 
    for Main use
-     ("call_asis_tool_2.c");
+     ("call_adapter.c");
 
    package Ide is
       for Vcs_Kind use "Git";

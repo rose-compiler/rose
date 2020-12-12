@@ -11,11 +11,11 @@ project DOT_ASIS is
    -- below so that the GPS IDE may easily be used for incidental language-
    -- aware viewing of C and C++ files when it has this project open.
    --
-   for Languages use ("Ada", "C", "C++");
+   --for Languages use ("Ada", "C", "C++");
 
    for Main use
      ("demo_dot.adb",
-      "run_asis_tool_2.adb",
+      "run_asis_adapter.adb",
       "test_gnat_command_line.adb");
 
    package Compiler is

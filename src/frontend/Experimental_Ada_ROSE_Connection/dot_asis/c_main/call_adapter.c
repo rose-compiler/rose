@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "a_nodes.h"
-#include "tool_2_wrapper.h"
+#include "adapter_wrapper.h"
 
 int main (int argc, char *argv[])
 {
-  char *prefix = "call_asis_tool_2.main";
+  char *prefix = "call_adapter.main";
   // argv[1] should be "-f":
   char *target_file = argv[2];
   // argv[3] should be "-g":
@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
   printf ("%s:  BEGIN.\n", prefix);
 
   dot_asisinit();
-  nodes = tool_2_wrapper 
+  nodes = adapter_wrapper_with_flags 
     (target_file,
     gnat_home, 
     output_dir,
@@ -29,15 +29,15 @@ int main (int argc, char *argv[])
   dot_asisfinal();
 
   if (nodes.Units == 0) {
-    printf ("%s:  tool_2_wrapper returned NO Units.\n", prefix);
+    printf ("%s:  adapter_wrapper returned NO Units.\n", prefix);
   } else {
-    printf ("%s:  tool_2_wrapper returned %i Units.\n" , prefix,
+    printf ("%s:  adapter_wrapper returned %i Units.\n" , prefix,
         nodes.Units->Next_Count + 1);
   }
   if (nodes.Elements == 0) {
-    printf ("%s:  tool_2_wrapper returned NO Elements.\n", prefix);
+    printf ("%s:  adapter_wrapper returned NO Elements.\n", prefix);
   } else {
-    printf ("%s:  tool_2_wrapper returned %i Elements.\n" , prefix,
+    printf ("%s:  adapter_wrapper returned %i Elements.\n" , prefix,
         nodes.Elements->Next_Count + 1);
   }
 

@@ -2,17 +2,17 @@ with Interfaces.C.Extensions;
 with Interfaces.C.Strings;
 with a_nodes_h;
 
-package tool_2_wrapper_h is
+package adapter_wrapper_h is
 
-   function tool_2_wrapper
+   function adapter_wrapper
      (target_file_in               : in Interfaces.C.Strings.chars_ptr;
       gnat_home                    : in Interfaces.C.Strings.chars_ptr;
       output_dir                   : in Interfaces.C.Strings.chars_ptr
      )
       return a_nodes_h.Nodes_Struct;
-   pragma Export (C, tool_2_wrapper);
+   pragma Export (C, adapter_wrapper);
 
-   function tool_2_wrapper_with_flags
+   function adapter_wrapper_with_flags
      (target_file_in               : in Interfaces.C.Strings.chars_ptr;
       gnat_home                    : in Interfaces.C.Strings.chars_ptr;
       output_dir                   : in Interfaces.C.Strings.chars_ptr;
@@ -21,11 +21,11 @@ package tool_2_wrapper_h is
       debug                        : in Interfaces.C.Extensions.bool
      )
       return a_nodes_h.Nodes_Struct;
-   pragma Export (C, tool_2_wrapper_with_flags);
+   pragma Export (C, adapter_wrapper_with_flags);
 
 private
 
    -- for debugging:
-   Module_Name : constant String := "tool_2_wrapper_h";
+   Module_Name : constant String := "adapter_wrapper_h";
 
-end tool_2_wrapper_h;
+end adapter_wrapper_h;

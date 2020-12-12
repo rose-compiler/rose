@@ -11,18 +11,18 @@ library project DOT_ASIS_Library is
    for Interfaces use 
      (-- C interfaces:
       "a_nodes.h",
-      "tool_2_wrapper.h",
+      "adapter_wrapper.h",
       -- Ada interfaces:
       "a_nodes.ads",
       "a_nodes_h.ads",
       "a_nodes_h-support.ads",
-      "asis_tool_2.ads",
-      "asis_tool_2-context.ads",
-      "asis_tool_2-tool.ads",
-      "asis_tool_2-unit.ads",
+      "asis_adapter.ads",
+      "asis_adapter-context.ads",
+      "asis_adapter-tool.ads",
+      "asis_adapter-unit.ads",
       "dot.ads",
       "indented_text.ads",
-      "tool_2_wrapper_h.ads");
+      "adapter_wrapper_h.ads");
 --   for Library_Standalone use "encapsulated";
    for Library_Auto_Init use "false";
    

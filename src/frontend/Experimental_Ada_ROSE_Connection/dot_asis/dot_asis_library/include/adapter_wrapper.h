@@ -1,5 +1,5 @@
-#ifndef TOOL_2_WRAPPER_H
-#define TOOL_2_WRAPPER_H
+#ifndef ADAPTER_WRAPPER_H
+#define ADAPTER_WRAPPER_H
 
 #include "a_nodes.h"
 
@@ -10,12 +10,12 @@
 void dot_asisinit (void);
 void dot_asisfinal (void);
 
-Nodes_Struct tool_2_wrapper
+Nodes_Struct adapter_wrapper
   (char *target_file_in,
    char *gnat_home,
    char *output_dir);
 
-Nodes_Struct tool_2_wrapper_with_flags
+Nodes_Struct adapter_wrapper_with_flags
   (char *target_file_in,
    char *gnat_home,
    char *output_dir,
@@ -26,4 +26,4 @@ Nodes_Struct tool_2_wrapper_with_flags
   }
 #endif
 
-#endif // ifndef TOOL_2_WRAPPER_H
+#endif // ifndef ADAPTER_WRAPPER_H

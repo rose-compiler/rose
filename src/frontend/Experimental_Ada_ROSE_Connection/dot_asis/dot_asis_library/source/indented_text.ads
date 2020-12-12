@@ -50,7 +50,7 @@ private
 
    -- Can't be limited because generic Asis.Iterator.Traverse_Element doesn't
    -- want limited state information:
-   -- (In Asis_Tool_2.Element)
+   -- (In Asis_Adapter.Element)
    type Class is tagged -- Initialized
       record
          Line_In_Progress : Boolean := False;

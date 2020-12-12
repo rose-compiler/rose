@@ -44,7 +44,7 @@ output_dir="${reference_dot_file_dir}"
 
 obj_dir=${base_dir}/obj
 
-tool_name=run_asis_tool_2
+tool_name=run_asis_adapter
 
 show_compiler_version () {
   log_separator_1

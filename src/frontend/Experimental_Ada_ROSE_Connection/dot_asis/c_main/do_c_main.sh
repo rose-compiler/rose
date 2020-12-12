@@ -38,7 +38,7 @@ gcc_home=`dirname ${gcc_bin}`
 # gcc_home=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.4/mpc/1.0/mpfr/3.1.2/gmp/5.1.2
 export CC=${gcc_home}/bin/gcc
 
-tool_name=call_asis_tool_2
+tool_name=call_adapter
 target_dir=${base_dir}/../test_units
 target_units="unit_2.adb"
 
@@ -60,7 +60,7 @@ build_asis_tool () {
   log_then_run ${CC} -c -x c -MMD -MF ${tool_name}.d \
   -I${dot_asis_home}/include \
   ${base_dir}/${tool_name}.c || exit $?
-
+#/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2019/lib/asis/asislib
   log_then_run ${CC} \
   ${tool_name}.o \
   ${dot_asis_lib_dir}/libdot_asis.so \
