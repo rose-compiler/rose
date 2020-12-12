@@ -31,7 +31,7 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 
 
 // default constructor
-AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
+AbstractValue::AbstractValue():valueType(AbstractValue::BOT),extension(0) {}
 
 // type conversion
 // TODO: represent value 'undefined' here
@@ -63,8 +63,47 @@ AbstractValue::~AbstractValue() {
     // intentionally no default case to get compiler warning if one is missing
   }
 }
-  
-  
+
+AbstractValueSet* AbstractValue::abstractValueSetCopy() const {
+  AbstractValueSet* avs=new AbstractValueSet();
+  AbstractValueSet* current=getAbstractValueSet();
+  for(AbstractValueSet::iterator i=current->begin();i!=current->end();++i) {
+    avs->insert(*i);
+  }
+  return avs;
+}
+
+void AbstractValue::copy(const AbstractValue& other) {
+  valueType = other.valueType;
+  variableId = other.variableId;
+  label= other.label;
+  typeSize=other.typeSize;
+  elementTypeSize=other.elementTypeSize;
+  switch(valueType) {
+  case BOT:
+  case TOP:
+  case UNDEFINED:
+  case FUN_PTR: // uses label
+    break;
+  case PTR:
+  case REF:
+  case INTEGER: intValue=other.intValue;
+    break;
+  case FLOAT: floatValue=other.floatValue;
+    break;
+  case PTR_SET: extension=other.abstractValueSetCopy();
+    break;
+  }
+}
+
+AbstractValue::AbstractValue(const AbstractValue& other) {
+  copy(other);
+}
+
+AbstractValue& AbstractValue::operator=(AbstractValue other) {
+  copy(other);
+  return *this;
+}
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
@@ -210,7 +249,11 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
       val.intValue=index.getIntValue()*elemSize;
       val.setElementTypeSize(elemSize);
     }
-    return val;
+    if(pointerSetsEnabled) {
+      return convertPtrToPtrSet(val);
+    } else {
+      return val;
+    }
   } else {
     cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
     exit(1);
@@ -220,6 +263,15 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
 AbstractValue 
 AbstractValue::createAddressOfFunction(CodeThorn::Label lab) {
   return AbstractValue(lab);
+}
+
+AbstractValue AbstractValue::convertPtrToPtrSet(AbstractValue val) {
+  ROSE_ASSERT(val.isPtr());
+  AbstractValue newVal;
+  newVal.allocateExtension(PTR_SET);
+  ROSE_ASSERT(newVal.isPtrSet());
+  newVal.addSetElement(val);
+  return newVal;
 }
 
 std::string AbstractValue::valueTypeToString() const {
@@ -433,6 +485,8 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
       return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize();
     } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
       return c1.getLabel()==c2.getLabel();
+    } else if(c1.isPtrSet() && c2.isPtrSet()) {
+      return c1.getAbstractValueSet()->isEqual(*c2.getAbstractValueSet());
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -646,7 +700,8 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      stringstream ss;ss<<valueType;
+      return "<<ERROR0-"+ss.str()+">>";
     }
   }
 }
@@ -675,7 +730,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR1>>";
     }
   }
 }
@@ -691,7 +746,7 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR2>>";
     }
   }
 }
@@ -724,6 +779,18 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //      return variableId.toString(vim);
       //    }
   }
+  case PTR_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      ss<<el.toString(vim);
+      ss<<" ";
+    }
+    ss<<"}";
+    return ss.str();
+  }
   case FUN_PTR: {
     return "fptr:"+label.toString();
   }
@@ -731,7 +798,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR3>>";
     }
   }
 }
@@ -757,11 +824,23 @@ string AbstractValue::toString() const {
   case FUN_PTR: {
     return "fptr:"+label.toString();
   }
+  case PTR_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      ss<<el.toString();
+      ss<<" ";
+    }
+    ss<<"}";
+    return ss.str();
+  }
   default:
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR4>>";
     }
   }
 }
@@ -860,8 +939,8 @@ CodeThorn::VariableId AbstractValue::getVariableId() const {
   if(valueType!=PTR && valueType!=REF) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     cerr << "AbstractValue: value:"<<toString()<<endl;
-    int *x=0;
-    *x=1;
+    //int *x=0;
+    //*x=1; // trigger stack trace
     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
   }
   else 
@@ -1070,7 +1149,7 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
       AbstractValueSet* set2=val2.getAbstractValueSet();
       // (val1 approximatedBy val2) iff (val1 subsetOf val2) iff (val2 includes val1)
       return std::includes(set2->begin(),set2->end(),
-                           set1->begin(),set2->end());
+                           set1->begin(),set1->end());
     }
     }
   }
@@ -1119,10 +1198,16 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
       } else {
         if(AbstractValue::pointerSetsEnabled) {
           // promote to ptr set in case the values are not equal (handled above)
+          //cout<<"DEBUG: promoto to pointer set"<<endl;
           AbstractValueSet* resultSet=new AbstractValueSet();
+          //cout<<"DEBUG: result set:"<<resultSet<<endl;
           resultSet->insert(val1);
           resultSet->insert(val2);
-          return createAbstractValuePtrSet(resultSet);
+          AbstractValue av=createAbstractValuePtrSet(resultSet);
+          //cout<<"DEBUG: promot to potiner set, result set:"<<resultSet<<" elements:"<<resultSet->size()
+          //    <<" av:"<<av.toString()<<endl;
+          //cout<<"DEBUG: pointer set number of elems:"<<av.getAbstractValueSet()->size()<<endl;
+          return av;
         } else {
           return createTop();
         }
@@ -1140,6 +1225,7 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
       AbstractValueSet* set1=val1.getAbstractValueSet();
       AbstractValueSet* set2=val2.getAbstractValueSet();
       AbstractValueSet* resultSet=new AbstractValueSet();
+      //cout<<"DEBUG: combine: set union: new set:"<<resultSet<<endl;
 #if 1
       for(AbstractValueSet::iterator i=set1->begin();i!=set1->end();++i) {
         resultSet->insert(*i);
@@ -1178,8 +1264,17 @@ AbstractValue AbstractValue::createAbstractValuePtrSet(AbstractValueSet* set) {
 }
 
 void AbstractValue::setAbstractValueSetPtr(AbstractValueSet* avPtr) {
+  //cout<<"DEBUG: setAbstractValueSetPtr:"<<avPtr<<endl;
   valueType=PTR_SET;
   extension=avPtr;
+  //cout<<"DEBUG: toString:"<<this->toString()<<endl;
+}
+
+void AbstractValue::addSetElement(AbstractValue av) {
+  ROSE_ASSERT(valueType==PTR_SET);
+  AbstractValueSet* avs=getAbstractValueSet();
+  ROSE_ASSERT(avs);
+  avs->insert(av);
 }
 
 bool AbstractValue::isReferenceVariableAddress() {
@@ -1198,6 +1293,7 @@ void AbstractValue::allocateExtension(ValueType valueTypeParam) {
   switch(valueType) {
   case PTR_SET:
     extension=new AbstractValueSet();
+    //cout<<"DEBUG: ALLOC:"<<extension<<endl;
     break;
   default:
     cerr<<"Error: unsupported value type extension:"<<valueType<<endl;
@@ -1207,7 +1303,32 @@ void AbstractValue::allocateExtension(ValueType valueTypeParam) {
 
 void AbstractValue::deallocateExtension() {
   ROSE_ASSERT(valueType==PTR_SET);
-  delete getAbstractValueSet();
+  AbstractValueSet* avs=getAbstractValueSet();
+  //cout<<"DELETE: "<<this<<":"<<avs<<":"<<this->toString()<<endl;
+  if(avs)
+    delete avs;
+}
+
+bool AbstractValueSet::isEqual(AbstractValueSet& other) const {
+  if(this->size()==other.size()) {
+    for(auto e2 : other) {
+      if(this->find(e2)==this->end())
+        return false;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+std::string AbstractValueSet::toString(VariableIdMapping* vim) const {
+  stringstream ss;
+  ss<<"{";
+  for(auto i=this->begin();i!=this->end();++i) {
+    ss<<(*i).toString(vim)+" ";
+  }
+  ss<<"}";
+  return ss.str();
 }
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {

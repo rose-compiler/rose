@@ -53,6 +53,11 @@ class AbstractValue {
   AbstractValue(CodeThorn::Bot e);
   // type conversion
   AbstractValue(Label lab); // for modelling function addresses
+  // copy constructor
+  AbstractValue(const AbstractValue& other);
+  // assignment op
+  AbstractValue& operator=(AbstractValue other);
+ 
   AbstractValue(signed char x);
   AbstractValue(unsigned char x);
   AbstractValue(short int x);
@@ -92,6 +97,7 @@ class AbstractValue {
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
+  // if the type is PTR_SET it determines whether the set contains a null pointer (zero)
   bool ptrSetContainsNullPtr() const;
   size_t getPtrSetSize() const;
   AbstractValue operatorNot();
@@ -183,12 +189,14 @@ class AbstractValue {
   // returns a memLoc aligned to the declared element size of the memory region it's referring to
   // with the offset into the element. If the offset is 0, then it's exactly aligned.
   AlignedMemLoc alignedMemLoc();
-  // if the type is PTR_SET it determines whether the set contains a null pointer (zero)
+  static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
  private:
-
   // functions used for (de)allocating additional memory for some abstractions
+  AbstractValueSet* abstractValueSetCopy() const;
+  void copy(const AbstractValue& other);
   void allocateExtension(ValueType);
   void deallocateExtension();
+  void addSetElement(AbstractValue av); // requires this to be PTR_SET, adds av to PTR_SET
   void setExtension(void*);
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
@@ -226,7 +234,11 @@ class AbstractValue {
   };
 
   //typedef std::set<AbstractValue> AbstractValueSet;
-  class AbstractValueSet : public std::set<AbstractValue> {};
+  class AbstractValueSet : public std::set<AbstractValue> {
+  public:
+    bool isEqual(AbstractValueSet& other) const;
+    std::string toString(VariableIdMapping* vim) const;
+  };
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 
   struct AlignedMemLoc {
