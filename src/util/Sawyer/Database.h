@@ -471,7 +471,7 @@ class Parameter {
     friend class ::Sawyer::Database::Detail::StatementBase;
 
     std::vector<size_t> indexes;                        // "?" indexes
-    bool isBound = true;
+    bool isBound = false;
 
     void append(size_t idx) {
         indexes.push_back(idx);
@@ -657,7 +657,7 @@ protected:
                 if (!params_.exists(name))
                     throw Exception("no such parameter \"" + name + "\" in statement");
                 Parameter &param = params_[name];
-                bool wasUnbound = param.isBound;
+                bool wasUnbound = !param.isBound;
                 for (size_t idx: param.indexes) {
                     try {
                         bindLow(idx, value);

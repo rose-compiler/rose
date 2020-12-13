@@ -97,7 +97,7 @@ initSchema(Sawyer::Database::Connection db) {
            " function_number integer not null,"         // system call function identification number
            " call_site integer,"                        // address at which the system call occurs
            " retval integer,"                           // system call concrete return value
-           " constraint fk_test_case foreign key (test_case) references test_cases(id),"
+           " constraint fk_test_case foreign key (test_case) references test_cases (id),"
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
 }
 
@@ -291,8 +291,13 @@ updateObject(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &ob
                                       " order by created_ts").bind("id", *id).begin();
     if (!iter)
         throw Exception("no such system call in database where id=" + boost::lexical_cast<std::string>(*id));
+
+    TestCaseId tcid(*iter->get<size_t>(1));
+    TestCase::Ptr testcase = db->object(tcid);
+    ASSERT_not_null(testcase);
+
     obj->timestamp(*iter->get<std::string>(0));
-    obj->testCase(TestCaseId(*iter->get<size_t>(1)));
+    obj->testCase(testcase);
     obj->callSequenceNumber(*iter->get<size_t>(2));
     obj->functionId(*iter->get<size_t>(3));
     obj->callSite(*iter->get<rose_addr_t>(4));
@@ -304,6 +309,18 @@ updateDb(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
+    ASSERT_not_null(obj->testCase());
+    TestCaseId tcid = db->id(obj->testCase(), Update::NO);
+    ASSERT_require(tcid);
+
+    // Assign a call sequence number if there is none yet.
+    if (INVALID_INDEX == obj->callSequenceNumber()) {
+        size_t csn = db->connection().stmt("select count(*) from system_calls where test_case = ?tcid")
+                     .bind("tcid", *tcid)
+                     .get<size_t>().get();
+        obj->callSequenceNumber(csn);
+    }
+
     Sawyer::Database::Statement stmt;
     if (*db->connection().stmt("select count(*) from system_calls where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update system_calls set id = ?id, test_case = ?tcid, call_number = ?seq "
@@ -313,13 +330,14 @@ updateDb(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
         std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
         stmt = db->connection().stmt("insert into system_calls (id, created_ts, test_suite, test_case, call_number,"
                                      " function_number, call_site, retval)"
-                                     " values (?id, ?ts, ?tsid, ?tcid, ?seq, ?function, ?va, ?retval,)")
+                                     " values (?id, ?ts, ?tsid, ?tcid, ?seq, ?function, ?va, ?retval)")
                .bind("ts", ts)
                .bind("tsid", *db->id(db->testSuite()));
     }
 
     stmt
-        .bind("tcid", *db->id(obj->testCase(), Update::NO))
+        .bind("id", *id)
+        .bind("tcid", *tcid)
         .bind("seq", obj->callSequenceNumber())
         .bind("function", obj->functionId())
         .bind("va", obj->callSite())
@@ -523,10 +541,29 @@ std::vector<SystemCallId>
 Database::systemCalls(TestCaseId tcid) {
     ASSERT_require(tcid);
     Sawyer::Database::Statement stmt;
-    stmt = connection_.stmt("select id from system_calls where test_case = ?tcid order by created_ts");
+    stmt = connection_.stmt("select id from system_calls where test_case = ?tcid order by created_ts")
+           .bind("tcid", *tcid);
     std::vector<SystemCallId> retval;
     for (auto row: stmt)
         retval.push_back(SystemCallId(row.get<size_t>(0)));
+    return retval;
+}
+
+std::vector<SystemCallId>
+Database::systemCalls(TestCaseId tcid, const std::vector<SystemCall::Ptr> &syscalls) {
+    ASSERT_require(tcid);
+    std::vector<SystemCallId> retval;
+    eraseSystemCalls(tcid);
+    for (size_t i = 0; i < syscalls.size(); ++i) {
+        ASSERT_not_null(syscalls[i]);
+        ASSERT_require(syscalls[i]->callSequenceNumber() == i);
+        if (syscalls[i]->testCase()) {
+            ASSERT_require(id(syscalls[i]->testCase(), Update::NO).isEqual(tcid));
+        } else {
+            syscalls[i]->testCase(object(tcid));
+        }
+        retval.push_back(id(syscalls[i]));
+    }
     return retval;
 }
 
