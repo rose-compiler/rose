@@ -68,4 +68,5 @@ PASSING_TESTS :=                       \
   array_declare_2.ads                  \
   for_loop_statement.adb               \
   for_loop.adb                         \
+  floating_point_definitions.ads       \
   EndOfList
