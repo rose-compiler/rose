@@ -157,6 +157,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-400.pre.jov              \
  rose-issue-rc-410.jov                  \
  rose-issue-rc-410.pre.jov              \
+ rose-issue-rc-413.jov                  \
+ rose-issue-rc-413.pre.jov              \
  rose-issue-rc-416.jov                  \
  rose-issue-rc-416.pre.jov              \
  rose-issue-rc-429.jov                  \
