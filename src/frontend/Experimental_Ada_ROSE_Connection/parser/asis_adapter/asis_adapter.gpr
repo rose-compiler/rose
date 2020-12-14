@@ -1,6 +1,6 @@
 with "asis";
 
-library project ASIS_Library is
+library project ASIS_Adapter is
 
    for Library_Name use "asis_adapter";
    for Library_Dir  use "./lib";
@@ -48,5 +48,5 @@ library project ASIS_Library is
       for Switches ("ada") use ("-E");
    end Binder;
 
-end ASIS_Library;
+end ASIS_Adapter;
 
