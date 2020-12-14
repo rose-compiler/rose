@@ -4,7 +4,7 @@
 
 int main (int argc, char *argv[])
 {
-  char *prefix = "call_adapter.main";
+  char *prefix = "run_parser_adapter.main";
   // argv[1] should be "-f":
   char *target_file = argv[2];
   // argv[3] should be "-g":
@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
 
   printf ("%s:  BEGIN.\n", prefix);
 
-  dot_asisinit();
+  asis_adapterinit();
   nodes = adapter_wrapper_with_flags 
     (target_file,
     gnat_home, 
@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
     process_predefined_units,
     process_implementation_units,
     debug);
-  dot_asisfinal();
+  asis_adapterfinal();
 
   if (nodes.Units == 0) {
     printf ("%s:  adapter_wrapper returned NO Units.\n", prefix);

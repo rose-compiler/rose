@@ -6,7 +6,7 @@ with GNAT.Strings;
 
 with Asis_Adapter.Tool;
 
-procedure Run_Asis_Adapter is
+procedure Run_Parser_Adapter is
    package ACL renames Ada.Command_Line;
    package GCL renames GNAT.Command_Line;
 
@@ -57,16 +57,16 @@ procedure Run_Asis_Adapter is
          raise;
    end Get_Options;
 
-   procedure dot_asisinit;
-   pragma Import (C, dot_asisinit);
+   procedure asis_adapterinit;
+   pragma Import (C, asis_adapterinit);
 
-   procedure dot_asisfinal;
-   pragma Import (C, dot_asisfinal);
+   procedure asis_adapterfinal;
+   pragma Import (C, asis_adapterfinal);
 
 begin
    Get_Options;
    Log ("BEGIN");
-   dot_asisinit;
+   asis_adapterinit;
    Tool.Process
      (File_Name                    => Options.File_Name.all,
       Output_Dir                   => Options.Output_Dir.all,
@@ -74,6 +74,6 @@ begin
       Process_Predefined_Units     => Options.Process_Predefined_Units,
       Process_Implementation_Units => Options.Process_Implementation_Units,
       Debug                        => Options.Debug);
-   dot_asisfinal;
+   asis_adapterfinal;
    Log ("END");
-end Run_Asis_Adapter;
+end Run_Parser_Adapter;
