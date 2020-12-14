@@ -1,7 +1,7 @@
 project Ada_C_Demo is
 
    for Languages use ("Ada", "C");
-   for Source_Dirs use (".");
+   for Source_Dirs use ("./source");
    for Object_Dir use "./obj";
    for Main use
      ("ada_main.adb",
