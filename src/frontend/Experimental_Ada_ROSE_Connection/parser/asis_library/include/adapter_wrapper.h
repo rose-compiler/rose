@@ -7,8 +7,8 @@
 #ifdef __cplusplus
   extern "C" {
 #endif
-void dot_asisinit (void);
-void dot_asisfinal (void);
+void asis_adapterinit (void);
+void asis_adapterfinal (void);
 
 Nodes_Struct adapter_wrapper
   (char *target_file_in,

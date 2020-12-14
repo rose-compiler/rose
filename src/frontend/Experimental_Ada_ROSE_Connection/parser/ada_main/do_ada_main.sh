@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds a dot_asis tool with an Ada main program, and runs it on some test 
+# Builds an Ada parser_adapter demonstration program, and runs it on some test 
 # code.  
 #
 # If there are file name parameters, uses those in ${target_dir}, otherwise 
@@ -24,7 +24,7 @@ gprbuild_path=`which gprbuild` || exit -1
 gnat_bin=`dirname ${gprbuild_path}`
 gnat_home=`dirname ${gnat_bin}`
 
-# The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main:
+# The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main:
 repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
 test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
 #test_dir="${test_base_dir}/tests"
@@ -44,7 +44,7 @@ output_dir="${reference_dot_file_dir}"
 
 obj_dir=${base_dir}/obj
 
-tool_name=run_asis_adapter
+tool_name=run_parser_adapter
 
 show_compiler_version () {
   log_separator_1
@@ -63,7 +63,7 @@ build_asis_tool () {
   # -Xnm=val Specify an external reference for Project Files
   log_then_run gprbuild \
   -p \
-  -P ${base_dir}/dot_asis.gpr \
+  -P ${base_dir}/ada_main.gpr \
   -ws \
   -XLIBRARY_TYPE=static \
   -XASIS_BUILD=static \

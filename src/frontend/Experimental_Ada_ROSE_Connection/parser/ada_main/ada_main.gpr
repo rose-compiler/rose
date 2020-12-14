@@ -1,9 +1,9 @@
-with "../dot_asis_library/dot_asis_library";
+with "../asis_library/asis_library";
 
-project DOT_ASIS is
+project Ada_Main is
 
    for Source_Dirs use
-     (".");
+     ("./source");
 
    for Object_Dir use "./obj";
 
@@ -15,7 +15,7 @@ project DOT_ASIS is
 
    for Main use
      ("demo_dot.adb",
-      "run_asis_adapter.adb",
+      "run_parser_adapter.adb",
       "test_gnat_command_line.adb");
 
    package Compiler is
@@ -34,5 +34,5 @@ project DOT_ASIS is
       for Switches ("ada") use ("-E");
    end Binder;
 
-end DOT_ASIS;
+end Ada_Main;
 

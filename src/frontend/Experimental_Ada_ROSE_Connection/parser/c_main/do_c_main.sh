@@ -1,9 +1,14 @@
 #!/bin/bash
-# Builds a dot_asis tool with a C main program, and runs it on some test code.
-# Depends on libdot_asis.so.
+# Builds a C parser_adapter demonstration program, and runs it on some test
+# code.
+#
+# If there are file name parameters, uses those in ${target_dir}, otherwise 
+# uses all in ${target_dir}
 #
 # Parameters:
 # -d  Turns on debug
+# [file name(s)] 
+#     Test code file(s)
 
 # Prevents some informative error messages, so is usually commented out:
 #set -o errexit
@@ -12,7 +17,6 @@
 # This script is in the base directory of this build:
 rel_base_dir=`dirname $0`
 base_dir=`(cd ${rel_base_dir}; pwd)`
-
 # Defines log, log_and_run, etc.:
 source ${base_dir}/../utility_functions.sh
 
@@ -22,14 +26,27 @@ gnat_home=`dirname ${gnat_bin}`
 asis_lib_dir=${gnat_home}/lib/asis/asislib
 gnat_lib_dir=${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
 
+# The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main:
+repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
+test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
+#test_dir="${test_base_dir}/tests"
+test_dir="${test_base_dir}/dot_asis_tests/test_units"
+reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
 dot_asis_home=${base_dir}/../dot_asis_library
 dot_asis_lib_dir=${dot_asis_home}/lib
 
+target_dir="${test_dir}"
 obj_dir=${base_dir}/obj
 
 gcc=`which gcc` || exit -1
 gcc_bin=`dirname ${gcc}`
 gcc_home=`dirname ${gcc_bin}`
+if [[ ${#*} -ge 1 ]] 
+then
+  target_units="$@"
+else
+  target_units=`(cd ${target_dir}; ls *.ad[bs])`
+fi
 
 # Override the default gcc if needed (e.g. when GNAT gcc is not wanted):
 # For Charles on LC:
@@ -38,7 +55,7 @@ gcc_home=`dirname ${gcc_bin}`
 # gcc_home=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.4/mpc/1.0/mpfr/3.1.2/gmp/5.1.2
 export CC=${gcc_home}/bin/gcc
 
-tool_name=call_adapter
+tool_name=run_parser_adapter
 target_dir=${base_dir}/../test_units
 target_units="unit_2.adb"
 
@@ -75,7 +92,8 @@ build_asis_tool () {
 process_units () {
   status=0  
   log_separator_1
-  log "Processing specified files in ${target_dir} with ${tool_name}"
+  log "Processing specified files in ${target_dir} with ${tool_name}."
+  log "Writing dot files to ${output_dir}."
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}" 
@@ -85,7 +103,7 @@ process_units () {
     log_then_run ${obj_dir}/${tool_name} \
        --file=${target_dir}/${target_unit} \
        --gnat_home=${gnat_home} \
-       --output_dir=`pwd` \
+       --output_dir=${output_dir} \
        "$@" || status=1
   done
   return ${status}
@@ -99,5 +117,4 @@ build_asis_tool
 process_units "$@" || exit $?
 
 log_end
-
 

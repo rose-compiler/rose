@@ -1,16 +1,16 @@
-with "../dot_asis_library/dot_asis_library";
+with "../asis_library/asis_library";
 
 project C_Main is
 
    for Source_Dirs use
-     (".");
+     ("./source");
 
    for Object_Dir use "./obj";
 
    for Languages use ("C");
 
    for Main use
-     ("call_adapter.c");
+     ("run_parser_adapter.c");
 
    package Ide is
       for Vcs_Kind use "Git";
