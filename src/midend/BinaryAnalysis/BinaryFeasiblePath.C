@@ -1925,7 +1925,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 markAsReached(cfgBackVertex);
 
             // Call user-supplied path processor when appropriate
-            if (atEndOfPath && pathIsFeasible) {
+            if ((atEndOfPath && pathIsFeasible) || (!isDirectedSearch() && 0 == backVertex->nOutEdges() && pathIsFeasible)) {
                 // Process final vertex semantics before invoking user callback?
                 if (settings().processFinalVertex) {
                     SAWYER_MESG(debug) <<"    reached end of path; processing final path vertex\n";
