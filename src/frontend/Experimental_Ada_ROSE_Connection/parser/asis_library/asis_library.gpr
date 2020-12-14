@@ -1,8 +1,8 @@
 with "asis";
 
-library project DOT_ASIS_Library is
+library project ASIS_Library is
 
-   for Library_Name use "dot_asis";
+   for Library_Name use "asis_adapter";
    for Library_Dir  use "./lib";
    for Library_Kind use "dynamic";
    
@@ -48,5 +48,5 @@ library project DOT_ASIS_Library is
       for Switches ("ada") use ("-E");
    end Binder;
 
-end DOT_ASIS_Library;
+end ASIS_Library;
 
