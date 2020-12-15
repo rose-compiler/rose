@@ -1,4 +1,4 @@
-with "../asis_library/asis_library";
+with "../asis_adapter/asis_adapter";
 
 project C_Main is
 
