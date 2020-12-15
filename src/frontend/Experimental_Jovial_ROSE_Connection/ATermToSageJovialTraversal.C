@@ -4706,7 +4706,7 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
    printf("... traverse_WhileStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_clause, t_stmt, t_formula;
+   ATerm t_labels, t_clause, t_stmt, t_formula, t_amb;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
@@ -4719,11 +4719,27 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
       } else return ATfalse;
 
       if (ATmatch(t_clause, "WhileClause(<term>)", &t_formula)) {
-         // MATCHED WhileClause
          if (traverse_BitFormula(t_formula, condition)) {
             // MATCHED BitFormula
-         } else return ATfalse;
+         }
+
+         // Check for ambiguity in BitFormula
+         else if (ATmatch(t_formula, "amb(<term>)", &t_amb)) {
+            // MATCHED amb
+#if PRINT_AMB_WARNINGS
+            cerr << "WARNING AMBIGUITY: \n";
+            printf("... traverse_WhileStatement: %s\n", ATwriteToString(term));
+#endif
+            ATermList tail = (ATermList) ATmake("<term>", t_amb);
+            ATerm head = ATgetFirst(tail);
+            // chose first amb path, now traverse it
+            if (traverse_BitFormula(head, condition)) {
+               // MATCHED BitFormula
+            } else return ATfalse;
+         }
+         else return ATfalse;
       }
+      else return ATfalse;
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(while_stmt, condition);
