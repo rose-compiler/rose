@@ -17,8 +17,11 @@
 # This script is in the base directory of this build:
 rel_base_dir=`dirname $0`
 base_dir=`(cd ${rel_base_dir}; pwd)`
+current_dir=`pwd`
 # Defines log, log_and_run, etc.:
 source ${base_dir}/../utility_functions.sh
+
+obj_dir=${base_dir}/obj
 
 gprbuild_path=`which gprbuild` || exit -1
 gnat_bin=`dirname ${gprbuild_path}`
@@ -32,6 +35,7 @@ test_dir="${test_base_dir}/dot_asis_tests/test_units"
 reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
 
 target_dir="${test_dir}"
+output_dir="${reference_dot_file_dir}"
 
 if [[ ${#*} -ge 1 ]] 
 then
@@ -39,10 +43,6 @@ then
 else
   target_units=`(cd ${target_dir}; ls *.ad[bs])`
 fi
-
-output_dir="${reference_dot_file_dir}"
-
-obj_dir=${base_dir}/obj
 
 tool_name=run_parser_adapter
 
@@ -73,6 +73,7 @@ build_asis_tool () {
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
 process_units () {
   status=0  
+  cd ${current_dir}
   log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}."
   log "Writing dot files to ${output_dir}."

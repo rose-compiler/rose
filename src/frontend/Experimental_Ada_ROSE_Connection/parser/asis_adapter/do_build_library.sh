@@ -5,8 +5,11 @@
 #set -o errexit
 #trap "__exit_status=$?; echo Error - exiting do_build_library.sh with status ${__exit_status}; exit ${__exit_status}" ERR
 
+# This script is in the base directory of this build:
+rel_base_dir=`dirname $0`
+base_dir=`(cd ${rel_base_dir}; pwd)`
 # Defines log, log_and_run, etc.:
-source ../utility_functions.sh
+source ${base_dir}/../utility_functions.sh
 
 check_for_gnat () {
   log_separator_1
@@ -23,12 +26,18 @@ build_library () {
   # -vh      Verbose output (high verbosity)
   # -vPx     Specify verbosity when parsing Project Files (x = 0/1/2)
   # -Xnm=val Specify an external reference for Project Files
-  gprbuild -p -Pdot_asis_library.gpr -v
+  log_then_run \
+  gprbuild \
+  -p \
+  -P ${base_dir}/asis_adapter.gpr \
+  -v || exit $?
 }
 
 log_start
 log_invocation "$@"
+
 check_for_gnat
-log_then_run build_library || exit $?
+build_library
+
 log_end
 

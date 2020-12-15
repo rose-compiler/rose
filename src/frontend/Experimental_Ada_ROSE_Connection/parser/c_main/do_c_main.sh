@@ -17,14 +17,15 @@
 # This script is in the base directory of this build:
 rel_base_dir=`dirname $0`
 base_dir=`(cd ${rel_base_dir}; pwd)`
+current_dir=`pwd`
 # Defines log, log_and_run, etc.:
 source ${base_dir}/../utility_functions.sh
+
+obj_dir=${base_dir}/obj
 
 gprbuild_path=`which gprbuild` || exit -1
 gnat_bin=`dirname ${gprbuild_path}`
 gnat_home=`dirname ${gnat_bin}`
-asis_lib_dir=${gnat_home}/lib/asis/asislib
-gnat_lib_dir=${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
 
 # The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main:
 repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
@@ -32,15 +33,10 @@ test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimen
 #test_dir="${test_base_dir}/tests"
 test_dir="${test_base_dir}/dot_asis_tests/test_units"
 reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
-dot_asis_home=${base_dir}/../dot_asis_library
-dot_asis_lib_dir=${dot_asis_home}/lib
 
 target_dir="${test_dir}"
-obj_dir=${base_dir}/obj
+output_dir="${reference_dot_file_dir}"
 
-gcc=`which gcc` || exit -1
-gcc_bin=`dirname ${gcc}`
-gcc_home=`dirname ${gcc_bin}`
 if [[ ${#*} -ge 1 ]] 
 then
   target_units="$@"
@@ -48,6 +44,7 @@ else
   target_units=`(cd ${target_dir}; ls *.ad[bs])`
 fi
 
+gcc_home="${gnat_home}"
 # Override the default gcc if needed (e.g. when GNAT gcc is not wanted):
 # For Charles on LC:
 # gcc_home=/usr/tce/packages/gcc/gcc-8.1.0
@@ -56,8 +53,6 @@ fi
 export CC=${gcc_home}/bin/gcc
 
 tool_name=run_parser_adapter
-target_dir=${base_dir}/../test_units
-target_units="unit_2.adb"
 
 show_compiler_version () {
   log_separator_1
@@ -68,42 +63,64 @@ show_compiler_version () {
 build_asis_tool () {
   log_separator_1
   log "Building ${tool_name}"
-  current_dir=`pwd`
+  # -p       Create missing obj, lib and exec dirs
+  # -P proj  Use Project File proj
+  # -v       Verbose output
+  # -vPx     Specify verbosity when parsing Project Files (x = 0/1/2)
+  # -ws      Ignore builder warnings
+  # -Xnm=val Specify an external reference for Project Files
+  log_then_run gprbuild \
+  -p \
+  -P ${base_dir}/c_main.gpr \
+  ${tool_name} || exit $?
+}
+
+build_asis_tool_cc () {
+  log_separator_1
+  log "Building ${tool_name}"
+  asis_adapter_home=${base_dir}/../asis_adapter
+  asis_adapter_lib_dir=${asis_adapter_home}/lib
+  asis_lib_dir=${gnat_home}/lib/asis/asislib
+  gnat_lib_dir=${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
   if [ ! -d ${obj_dir} ]; then
     mkdir ${obj_dir} || exit $?
   fi
   cd ${obj_dir}
-  
+
+  log_then_run ${asis_adapter_home}/do_build_library.sh || exit $?
+
   log_then_run ${CC} -c -x c -MMD -MF ${tool_name}.d \
-  -I${dot_asis_home}/include \
-  ${base_dir}/${tool_name}.c || exit $?
+  -I${asis_adapter_home}/include \
+  ${base_dir}/source/${tool_name}.c || exit $?
 #/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2019/lib/asis/asislib
+
   log_then_run ${CC} \
   ${tool_name}.o \
-  ${dot_asis_lib_dir}/libdot_asis.so \
+  ${asis_adapter_lib_dir}/libasis_adapter.a \
   -lpthread \
   -lrt \
   -ldl \
+  -L
   -o ${tool_name} || exit $?
-  cd ${current_dir}
 }
 
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
 process_units () {
   status=0  
+  cd ${current_dir}
   log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}."
   log "Writing dot files to ${output_dir}."
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}" 
-    # -f, --file - Input file name (required)
-    # -g, --gnat_home - GNAT home directory (required)
-    # -o, --output_dir - Output directory (optional)
+    # -f - Input file name (required)
+    # -g - GNAT home directory (required)
+    # -o - Output directory (optional)
     log_then_run ${obj_dir}/${tool_name} \
-       --file=${target_dir}/${target_unit} \
-       --gnat_home=${gnat_home} \
-       --output_dir=${output_dir} \
+       -f ${target_dir}/${target_unit} \
+       -g ${gnat_home} \
+       -o ${output_dir} \
        "$@" || status=1
   done
   return ${status}
