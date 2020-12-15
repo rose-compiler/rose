@@ -1,4 +1,4 @@
-procedure Variant2 is
+procedure Variable_Variant_Record is
 
    type POWER is (GAS, STEAM, DIESEL, NONE);
 
@@ -36,4 +36,4 @@ begin
    Schwinn.Wheels := 2;
    Schwinn.Model_Year := 1985;
 
-end Variant2;
+end Variable_Variant_Record;
