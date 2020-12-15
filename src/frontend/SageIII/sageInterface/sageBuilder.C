@@ -17980,6 +17980,8 @@ SageBuilder::findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippe
                break;
              }
 
+       // DQ (12/11/2020): Adding support for codeSegregation tool.
+          case V_SgTemplateMemberFunctionDeclaration:
        // DQ (12/8/2020): Adding support for codeSegregation tool.
           case V_SgTemplateFunctionDeclaration:
        // DQ (12/5/2020): Adding support for codeSegregation tool.
