@@ -1865,6 +1865,11 @@ struct DeferredTransformation
 
      TransformationKind deferredTransformationKind;
 
+  // DQ (12/12/2020): Adding a string label so that we can name the different kinds of transformations.
+  // E.g. moving pattern matched function from header file to dynamic library, vs. replacing function 
+  // definitions in the dynamic library file with function prototypes. 
+     std::string transformationLabel;
+
   // Remove sets statementToRemove, replace sets statementToRemove and StatementToAdd.
      SgStatement* statementToRemove;
      SgStatement* statementToAdd;

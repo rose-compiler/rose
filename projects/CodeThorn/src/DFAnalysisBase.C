@@ -7,12 +7,12 @@
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "DFSolver1.h" 
+#include "DFSolver1.h"
 
 
 using namespace std;
 
-namespace CodeThorn 
+namespace CodeThorn
 {
 
   DFAnalysisBase::DFAnalysisBase()
@@ -21,16 +21,19 @@ namespace CodeThorn
   }
 
   DFAnalysisBase::~DFAnalysisBase() {
-    if(_pointerAnalysisEmptyImplementation)
-      delete _pointerAnalysisEmptyImplementation;
-    if(_programAbstractionLayer && _programAbstractionLayerOwner)
-      delete _programAbstractionLayer;
+    // \pp the base class is responsible for freeing its pointers
+    /*
+      if(_pointerAnalysisEmptyImplementation)
+        delete _pointerAnalysisEmptyImplementation;
+      if(_programAbstractionLayer && _programAbstractionLayerOwner)
+        delete _programAbstractionLayer;
+    */
   }
 
   void DFAnalysisBase::initializeSolver() {
     ROSE_ASSERT(getInitialElementFactory());
     ROSE_ASSERT(getFlow());
-     
+
     _solver = new DFSolver1( _workList,
                              _analyzerDataPreInfo,
                              _analyzerDataPostInfo,
@@ -38,7 +41,7 @@ namespace CodeThorn
                              *getFlow(),
                              *_transferFunctions
                              );
-  
+
     ROSE_ASSERT(_solver);
   }
 
@@ -87,8 +90,8 @@ namespace CodeThorn
   DFAnalysisBase::initializeAnalyzerDataInfo() {
     Labeler*              labeler = getLabeler();
     PropertyStateFactory* factory = getInitialElementFactory();
-    ROSE_ASSERT(factory && labeler);  
-    const size_t          numLabels = labeler->numberOfLabels(); 
+    ROSE_ASSERT(factory && labeler);
+    const size_t          numLabels = labeler->numberOfLabels();
 
     _analyzerDataPreInfo.reserve(numLabels);
     _analyzerDataPostInfo.reserve(numLabels);
@@ -103,6 +106,7 @@ namespace CodeThorn
   void
   DFAnalysisBase::initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) {
     //cout << "INIT: establishing program abstraction layer." << endl;
+
     if(programAbstractionLayer) {
       ROSE_ASSERT(_programAbstractionLayer==nullptr);
       _programAbstractionLayer=programAbstractionLayer;
@@ -112,7 +116,9 @@ namespace CodeThorn
       _programAbstractionLayerOwner=true;
       _programAbstractionLayer->initialize(ctOpt,root);
     }
-    _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());
+
+    _pointerAnalysisEmptyImplementation = new PointerAnalysisEmptyImplementation(getVariableIdMapping());
+
     _pointerAnalysisEmptyImplementation->initialize();
     _pointerAnalysisEmptyImplementation->run();
 
@@ -290,6 +296,6 @@ namespace CodeThorn
   void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
     attachInfoToAst(attributeName,false);
   }
- 
+
 }
 
