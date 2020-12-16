@@ -5288,7 +5288,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // const SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     ASSERT_not_null(header_file_associated_scope);
-#if 0
+#if 1
                     printf ("header_file_associated_scope   = %p = %s \n",header_file_associated_scope,header_file_associated_scope->class_name().c_str());
                     printf ("   --- unparsedFile->getFileName()  = %s \n",unparsedFile->getFileName().c_str());
                     printf ("   --- header_file_associated_scope = %p \n",header_file_associated_scope);
@@ -5304,11 +5304,11 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // This might be a better solution.
                     if (isSgGlobal(header_file_associated_scope) != NULL)
                        {
-#if 0
+#if 1
                          printf ("isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
 #endif
                          unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, NULL);
-#if 0
+#if 1
                          printf ("DONE: isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
 #endif
                        }
@@ -5325,7 +5325,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                   }
                  else
                   {
-#if 0
+#if 1
                     printf ("Skipping unparsing of non-header files (will be unparsed as the original source file) \n");
 #endif
 #if 0
@@ -5346,7 +5346,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 // DQ (9/7/2018): END OF OLD CODE
 // #endif
 
-#if 0
+#if 1
                printf ("In unparseIncludedFiles(): End of loop over unparseMapEntries: originalFileName = %s \n",originalFileName.c_str());
 #endif
 #if 0
@@ -5499,7 +5499,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
   // #if DEBUG_UNPARSE_INCLUDE_FILES || 0
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
         {
           printf ("Leaving unparseIncludedFiles() project = %p \n",project);
         }
