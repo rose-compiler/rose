@@ -26206,10 +26206,15 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
           ROSE_ASSERT(nondefiningFunctionDeclaration->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(nondefiningFunctionDeclaration->get_definingDeclaration() != NULL);
 
-       // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
-       // This is a bug in the support for building a new prototype from a defining function declaration 
-       // and caused this problem. This assertion will prevent this sort of error from happening again.
-          ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+       // DQ (12/17/2020): This is a required fix that was only caught as an issue by some customer code.
+          if (nondefiningFunctionDeclaration != NULL)
+             {
+            // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+            // This is a bug in the support for building a new prototype from a defining function declaration 
+            // and caused this problem. This assertion will prevent this sort of error from happening again.
+               ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || 
+                           functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+             }
         }
 
      return nondefiningFunctionDeclaration;
@@ -26264,10 +26269,15 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
         }
 #endif
 
-  // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
-  // This is a bug in the support for building a new prototype from a defining function declaration 
-  // and caused this problem. This assertion will prevent this sort of error from happening again.
-     ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+  // DQ (12/17/2020): This is a required fix that was only caught as an issue by some customer code.
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+       // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+       // This is a bug in the support for building a new prototype from a defining function declaration 
+       // and caused this problem. This assertion will prevent this sort of error from happening again.
+          ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || 
+                      functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+         }
 
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
 
