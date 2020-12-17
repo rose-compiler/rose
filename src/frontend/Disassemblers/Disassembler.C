@@ -8,7 +8,7 @@
 #include <AsmUnparser_compat.h>
 #include <Diagnostics.h>
 #include <DisassemblerPowerpc.h>
-#include <DisassemblerA64.h>
+#include <DisassemblerAarch64.h>
 #include <DisassemblerM68k.h>
 #include <DisassemblerMips.h>
 #include <DisassemblerNull.h>
@@ -79,8 +79,8 @@ operator<<(std::ostream &o, const Disassembler::Exception &e)
 void
 Disassembler::initclassHelper()
 {
-#ifdef ROSE_ENABLE_ASM_A64
-    registerSubclass(new DisassemblerArm(DisassemblerArm::ARCH_ARM64));
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    registerSubclass(new DisassemblerAarch64());
 #endif
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_MSB));
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_LSB));
@@ -180,8 +180,8 @@ std::vector<std::string>
 Disassembler::isaNames() {
     std::vector<std::string> v;
     v.push_back("amd64");
-#ifdef ROSE_ENABLE_ASM_A64
-    v.push_back("a64");         // ARM AArch64 A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    v.push_back("AArch64");
 #endif
     v.push_back("coldfire");
     v.push_back("i386");
@@ -207,8 +207,8 @@ Disassembler::lookup(const std::string &name)
             std::cout <<"  " <<name <<"\n";
         exit(0);
     } else if (name == "a64") {
-#ifdef ROSE_ENABLE_ASM_A64
-        retval = new DisassemblerArm(DisassemblerArm::ARCH_ARM64);
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        retval = new DisassemblerAarch64();
 #else
         throw Exception(name + " disassembler is not enabled in this ROSE configuration");
 #endif

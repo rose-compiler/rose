@@ -37,12 +37,12 @@ SgArithmeticIfStatement
 SgArrayType
 SgArrowExp
 SgArrowStarOp
-SgAsmA64AtOperand
-SgAsmA64BarrierOperand
-SgAsmA64CImmediateOperand
-SgAsmA64Instruction
-SgAsmA64PrefetchOperand
-SgAsmA64SysMoveOperand
+SgAsmAarch64AtOperand
+SgAsmAarch64BarrierOperand
+SgAsmAarch64CImmediateOperand
+SgAsmAarch64Instruction
+SgAsmAarch64PrefetchOperand
+SgAsmAarch64SysMoveOperand
 SgAsmBasicString
 SgAsmBinaryAdd
 SgAsmBinaryAddPostupdate
@@ -971,3 +971,5 @@ SgAdaFunctionRenamingDecl
 SgAdaSelectStmt
 SgAdaSelectAlternativeStmt
 SgAdaTerminateStmt
+SgAsmAarch32Instruction
+

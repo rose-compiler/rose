@@ -163,12 +163,12 @@ PltEntryMatcher::matchIndirectJumpEbx(const Partitioner &partitioner, rose_addr_
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchA64Adrp(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
+PltEntryMatcher::matchAarch64Adrp(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
     value = 0;
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
     // match "adrp X, I" where I is an integer that will be returned through the "value" argument
-    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() == A64InstructionKind::ARM64_INS_ADRP) {
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_ADRP) {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(1));
             ASSERT_not_null(ival);
             value = ival->get_absoluteValue();
@@ -180,14 +180,14 @@ PltEntryMatcher::matchA64Adrp(const Partitioner &partitioner, rose_addr_t va, ro
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchA64Ldr(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
-                             rose_addr_t &indirectNBytes /*out*/) {
+PltEntryMatcher::matchAarch64Ldr(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                                 rose_addr_t &indirectNBytes /*out*/) {
     indirectNBytes = 0;
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
     // match "ldr R1, [ R2 + C ]" where R1 and R2 are registers and C is a constant. The initial value of R2 is
     // provided as "indirectVa", which will be incremented by C upon return.
-    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() != A64InstructionKind::ARM64_INS_LDR || insn->nOperands() != 2)
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() != Aarch64InstructionKind::ARM64_INS_LDR || insn->nOperands() != 2)
             return NULL;
         SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(1));
         if (!mre)
@@ -217,10 +217,10 @@ PltEntryMatcher::matchA64Ldr(const Partitioner &partitioner, rose_addr_t va, ros
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchA64Add(const Partitioner &partitioner, rose_addr_t va) {
-#ifdef ROSE_ENABLE_ASM_A64
-    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() == A64InstructionKind::ARM64_INS_ADD)
+PltEntryMatcher::matchAarch64Add(const Partitioner &partitioner, rose_addr_t va) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_ADD)
             return insn;
     }
 #endif
@@ -228,10 +228,10 @@ PltEntryMatcher::matchA64Add(const Partitioner &partitioner, rose_addr_t va) {
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchA64Br(const Partitioner &partitioner, rose_addr_t va) {
-#ifdef ROSE_ENABLE_ASM_A64
-    if (SgAsmA64Instruction *insn = isSgAsmA64Instruction(partitioner.discoverInstruction(va))) {
-        if (insn->get_kind() == A64InstructionKind::ARM64_INS_BR)
+PltEntryMatcher::matchAarch64Br(const Partitioner &partitioner, rose_addr_t va) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+        if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_BR)
             return insn;
     }
 #endif
@@ -341,21 +341,21 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
             }
         }
 
-#ifdef ROSE_ENABLE_ASM_A64
-    } else if (isSgAsmA64Instruction(insn)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    } else if (isSgAsmAarch64Instruction(insn)) {
         if (0 == gotEntryNBytes_) {
-            // A64 entries look like this:
+            // Aarch64 entries look like this:
             //     adrp     x16, 0x00011000
             //     ldr      x17, u64 [x16 + 0x0000000000000ef8<3832>]
             //     add      x16, x16, 0x0000000000000ef8<3832>
             //     br       x17
             rose_addr_t indirectVa = 0;
             size_t indirectNBytes = 0;
-            SgAsmInstruction *adrp = matchA64Adrp(partitioner, anchor, indirectVa /*out*/);
-            SgAsmInstruction *ldr = adrp ? matchA64Ldr(partitioner, adrp->get_address() + adrp->get_size(),
-                                                       indirectVa /*in,out*/, indirectNBytes /*out*/) : NULL;
-            SgAsmInstruction *add = ldr ? matchA64Add(partitioner, ldr->get_address() + ldr->get_size()) : NULL;
-            SgAsmInstruction *br = add ? matchA64Br(partitioner, add->get_address() + add->get_size()) : NULL;
+            SgAsmInstruction *adrp = matchAarch64Adrp(partitioner, anchor, indirectVa /*out*/);
+            SgAsmInstruction *ldr = adrp ? matchAarch64Ldr(partitioner, adrp->get_address() + adrp->get_size(),
+                                                           indirectVa /*in,out*/, indirectNBytes /*out*/) : NULL;
+            SgAsmInstruction *add = ldr ? matchAarch64Add(partitioner, ldr->get_address() + ldr->get_size()) : NULL;
+            SgAsmInstruction *br = add ? matchAarch64Br(partitioner, add->get_address() + add->get_size()) : NULL;
             if (br) {
                 gotEntryNBytes_ = indirectNBytes;
                 gotEntryVa_ = indirectVa;

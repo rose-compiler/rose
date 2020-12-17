@@ -1,16 +1,16 @@
-/* SgAsmA64Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
- * because then they won't get indexed/formatted/etc. by C-aware tools. */
+/* SgAsmAarch64Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code
+ * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_ASM_A64
-#include "sage3basic.h"
+#ifdef ROSE_ENABLE_ASM_AARCH64
+#include <sage3basic.h>
 
-#include "Disassembler.h"
+#include <Disassembler.h>
 
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;                   // temporary
 
 unsigned
-SgAsmA64Instruction::get_anyKind() const {
+SgAsmAarch64Instruction::get_anyKind() const {
     return p_kind;
 }
 
@@ -18,8 +18,8 @@ SgAsmA64Instruction::get_anyKind() const {
 // advancing it to the fall-through address (the instruction at the following memory address), in which this function returns
 // false. This function returns true if @c this instruction can cause the instruction pointer to point somewhere other than the
 // following instruction.
-static bool modifies_ip(SgAsmA64Instruction *insn) {
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+static bool modifies_ip(SgAsmAarch64Instruction *insn) {
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
 
     switch (insn->get_kind()) {
         case Kind::ARM64_INS_INVALID:
@@ -47,15 +47,16 @@ static bool modifies_ip(SgAsmA64Instruction *insn) {
 
 // see base class
 bool
-SgAsmA64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmAarch64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
+                                            rose_addr_t *return_va) {
     if (insns.empty())
         return false;
-    SgAsmA64Instruction *last = isSgAsmA64Instruction(insns.back());
+    SgAsmAarch64Instruction *last = isSgAsmAarch64Instruction(insns.back());
     if (!last)
         return false;
 
     // Quick method based only on the kind of instruction
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     switch (last->get_kind()) {
         case Kind::ARM64_INS_BL:
         case Kind::ARM64_INS_BLR:
@@ -74,20 +75,21 @@ SgAsmA64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &in
 
 // see base class
 bool
-SgAsmA64Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+SgAsmAarch64Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
+                                            rose_addr_t *return_va) {
     return isFunctionCallFast(insns, target, return_va);
 }
 
 // see base class
 bool
-SgAsmA64Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
+SgAsmAarch64Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return false;
-    SgAsmA64Instruction *last_insn = isSgAsmA64Instruction(insns.back());
+    SgAsmAarch64Instruction *last_insn = isSgAsmAarch64Instruction(insns.back());
     if (!last_insn)
         return false;
 
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     switch (last_insn->get_kind()) {
         case Kind::ARM64_INS_RET:
         //case Kind::ARM64_INS_RETAA: -- not present in capstone
@@ -100,13 +102,13 @@ SgAsmA64Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &
 
 // see base class
 bool
-SgAsmA64Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+SgAsmAarch64Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
     return isFunctionReturnFast(insns);
 }
 
 AddressSet
-SgAsmA64Instruction::getSuccessors(bool &complete) {
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+SgAsmAarch64Instruction::getSuccessors(bool &complete) {
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     complete = true;           // set to true for now, change below if necessary
 
     AddressSet retval;
@@ -175,8 +177,8 @@ SgAsmA64Instruction::getSuccessors(bool &complete) {
 }
 
 bool
-SgAsmA64Instruction::getBranchTarget(rose_addr_t *target) {
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+SgAsmAarch64Instruction::getBranchTarget(rose_addr_t *target) {
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
     switch (get_kind()) {
         case Kind::ARM64_INS_B:
@@ -232,22 +234,22 @@ SgAsmA64Instruction::getBranchTarget(rose_addr_t *target) {
 
 // Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmA64Instruction::terminatesBasicBlock() {
-    if (get_kind()==A64InstructionKind::ARM64_INS_INVALID)
+SgAsmAarch64Instruction::terminatesBasicBlock() {
+    if (get_kind()==Aarch64InstructionKind::ARM64_INS_INVALID)
         return true;
     return modifies_ip(this);
 }
 
 // Determines whether this is the special ARM "unkown" instruction. See base class for documentation.
 bool
-SgAsmA64Instruction::isUnknown() const {
-    return A64InstructionKind::ARM64_INS_INVALID == get_kind();
+SgAsmAarch64Instruction::isUnknown() const {
+    return Aarch64InstructionKind::ARM64_INS_INVALID == get_kind();
 }
 
 std::string
-SgAsmA64Instruction::description() const {
+SgAsmAarch64Instruction::description() const {
     // The commented out cases are not present in Capstone at this time. Parenthesized reasons are given when available.
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     switch (get_kind()) {
         case Kind::ARM64_INS_INVALID:           return "";
         case Kind::ARM64_INS_ABS:               return "absolute value";

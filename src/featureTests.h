@@ -19,8 +19,13 @@
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
-#if !defined(ROSE_ENABLE_ASM_A64) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)
-    #define ROSE_ENABLE_ASM_A64
+#if !defined(ROSE_ENABLE_ASM_AARCH64) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)
+    #define ROSE_ENABLE_ASM_AARCH64
+#endif
+
+// ARM AArch32 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
+#if !defined(ROSE_ENABLE_ASM_AARCH32) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)
+    #define ROSE_ENABLE_ASM_AARCH32
 #endif
 
 // Whether to enable concolic testing.

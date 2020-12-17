@@ -1,7 +1,7 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 #include <sage3basic.h>
-#include <BinaryUnparserArm.h>
+#include <BinaryUnparserAarch64.h>
 
 #include <BitOps.h>
 #include <boost/regex.hpp>
@@ -13,7 +13,7 @@ namespace Unparser {
 
 // class method
 std::string
-Arm::unparseArmCondition(A64InstructionCondition cond) {
+Aarch64::unparseArmCondition(Aarch64InstructionCondition cond) {
     // These constants come from capstone, so we don't have any easy stringification mechanism for them like we do for ROSE
     // enums.
     switch (cond) {
@@ -39,13 +39,13 @@ Arm::unparseArmCondition(A64InstructionCondition cond) {
 }
 
 void
-Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
-    SgAsmA64Instruction *insn = isSgAsmA64Instruction(insn_);
+Aarch64::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
+    SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(insn_);
     out <<insn->get_mnemonic();
 }
 
 void
-Arm::outputRegister(std::ostream &out, SgAsmRegisterReferenceExpression *expr, State &state) const {
+Aarch64::outputRegister(std::ostream &out, SgAsmRegisterReferenceExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     ASSERT_not_null(expr->get_type());
     std::string name = state.registerNames()(expr->get_descriptor());
@@ -91,7 +91,7 @@ Arm::outputRegister(std::ostream &out, SgAsmRegisterReferenceExpression *expr, S
 }
 
 void
-Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
+Aarch64::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
@@ -178,7 +178,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         outputExpr(out, op->get_rhs(), state);
         out <<")";
 
-    } else if (SgAsmA64AtOperand *op = isSgAsmA64AtOperand(expr)) {
+    } else if (SgAsmAarch64AtOperand *op = isSgAsmAarch64AtOperand(expr)) {
         switch (op->operation()) {
             case ARM64_AT_S1E1R:
                 out <<"s1e1r";
@@ -220,7 +220,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
                 ASSERT_not_reachable("invalid AT operand");
         }
 
-    } else if (SgAsmA64PrefetchOperand *op = isSgAsmA64PrefetchOperand(expr)) {
+    } else if (SgAsmAarch64PrefetchOperand *op = isSgAsmAarch64PrefetchOperand(expr)) {
         switch (op->operation()) {
             case ARM64_PRFM_PLDL1KEEP:  out <<"pldl1keep"; break;
             case ARM64_PRFM_PLDL1STRM:  out <<"pldl1strm"; break;
@@ -244,7 +244,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
                 ASSERT_not_reachable("invalid prefetch command");
         }
 
-    } else if (SgAsmA64SysMoveOperand *op = isSgAsmA64SysMoveOperand(expr)) {
+    } else if (SgAsmAarch64SysMoveOperand *op = isSgAsmAarch64SysMoveOperand(expr)) {
         using namespace Rose::BitOps;
         unsigned op0 = bit(op->access(), 14) ? 3 : 2;
         unsigned op1 = bits(op->access(), 11, 13);
@@ -253,10 +253,10 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         unsigned op2 = bits(op->access(), 0, 2);
         out <<"s" <<op0 <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
 
-    } else if (SgAsmA64CImmediateOperand *op = isSgAsmA64CImmediateOperand(expr)) {
+    } else if (SgAsmAarch64CImmediateOperand *op = isSgAsmAarch64CImmediateOperand(expr)) {
         out <<"c" <<op->immediate();
 
-    } else if (SgAsmA64BarrierOperand *op = isSgAsmA64BarrierOperand(expr)) {
+    } else if (SgAsmAarch64BarrierOperand *op = isSgAsmAarch64BarrierOperand(expr)) {
         switch (op->operation()) {
             case ARM64_BARRIER_INVALID:
                 out <<"barrier invalid";
@@ -313,7 +313,7 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
 }
 
 void
-Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
+Aarch64::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     outputExpr(out, expr, state);
 }

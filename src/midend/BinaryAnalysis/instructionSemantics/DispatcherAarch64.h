@@ -1,5 +1,7 @@
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_DispatcherAarch64_H
+#define ROSE_BinaryAnalysis_InstructionSemantics2_DispatcherAarch64_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <BaseSemantics2.h>
 
@@ -13,9 +15,9 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
 /** Shared-ownership pointer to an A64 instruction dispatcher. See @ref heap_object_shared_ownership. */
-using DispatcherA64Ptr = boost::shared_ptr<class DispatcherA64>;
+using DispatcherAarch64Ptr = boost::shared_ptr<class DispatcherAarch64>;
 
-class DispatcherA64: public BaseSemantics::Dispatcher {
+class DispatcherAarch64: public BaseSemantics::Dispatcher {
 public:
     using Super = BaseSemantics::Dispatcher;
 
@@ -49,11 +51,11 @@ private:
 
 protected:
     // prototypical constructor
-    DispatcherA64()
-        : BaseSemantics::Dispatcher(64, RegisterDictionary::dictionary_a64()) {}
+    DispatcherAarch64()
+        : BaseSemantics::Dispatcher(64, RegisterDictionary::dictionary_aarch64()) {}
 
-    DispatcherA64(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, 64, regs ? regs : RegisterDictionary::dictionary_a64()) {
+    DispatcherAarch64(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, 64, regs ? regs : RegisterDictionary::dictionary_aarch64()) {
         initializeRegisterDescriptors();
         initializeInsnDispatchTable();
         initializeMemory();
@@ -63,14 +65,14 @@ protected:
 public:
     /** Construct a prototypical dispatcher.
      *
-     *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual Wref create method. */
-    static DispatcherA64Ptr instance() {
-        return DispatcherA64Ptr(new DispatcherA64);
+     *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
+    static DispatcherAarch64Ptr instance() {
+        return DispatcherAarch64Ptr(new DispatcherAarch64);
     }
 
     /** Allocating constructor. */
-    static DispatcherA64Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs = nullptr) {
-        return DispatcherA64Ptr(new DispatcherA64(ops, regs));
+    static DispatcherAarch64Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs = nullptr) {
+        return DispatcherAarch64Ptr(new DispatcherAarch64(ops, regs));
     }
 
     /** Virtual constructor. */
@@ -80,9 +82,9 @@ public:
         return instance(ops, regs);
     }
 
-    /** Dynamic cast to DispatcherA64 with assertion. */
-    static DispatcherA64Ptr promote(const BaseSemantics::DispatcherPtr &d) {
-        DispatcherA64Ptr retval = boost::dynamic_pointer_cast<DispatcherA64>(d);
+    /** Dynamic cast to DispatcherAarch64 with assertion. */
+    static DispatcherAarch64Ptr promote(const BaseSemantics::DispatcherPtr &d) {
+        DispatcherAarch64Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch64>(d);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -126,7 +128,7 @@ public:
     void updateNZCV(const BaseSemantics::SValuePtr &sum, const BaseSemantics::SValuePtr &carries);
 
     // Return true or false depending on whether the condition holds.
-    BaseSemantics::SValuePtr conditionHolds(A64InstructionCondition);
+    BaseSemantics::SValuePtr conditionHolds(Aarch64InstructionCondition);
 
     // From ARM documentation: "Decode AArch64 bitfield and logical immediate masks which use a similar encoding structure."
     std::pair<uint64_t, uint64_t> decodeBitMasks(size_t m, bool immN, uint64_t imms, uint64_t immr, bool immediate);
@@ -156,7 +158,8 @@ protected:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherA64);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherAarch64);
 #endif
 
+#endif
 #endif

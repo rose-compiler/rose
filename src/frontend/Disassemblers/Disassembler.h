@@ -28,7 +28,7 @@ namespace BinaryAnalysis {
 /** Virtual base class for instruction disassemblers.
  *
  *  The Disassembler class is a virtual class providing all non-architecture-specific functionality for disassembling
- *  instructions; architecture-specific components are in subclasses @ref DisassemblerArm, @ref DisassemblerPowerpc, @ref
+ *  instructions; architecture-specific components are in subclasses @ref DisassemblerAarch64, @ref DisassemblerPowerpc, @ref
  *  DisassemblerX86, and others. In general, there is no need to explicitly instantiate or call functions in any of these
  *  subclasses.  A @ref Disassembler is responsible for disassembling a single instruction at a time at some specified address,
  *  whereas the classes in @ref Rose::BinaryAnalysis::Partitioner2 are responsible for deciding what addresses should be
