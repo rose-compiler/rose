@@ -406,7 +406,8 @@ MemoryMap::adjustMapDocumentation() {
             "which the @v{command} applies, and is of the form \"@v{address}[+@v{size}]\". If the @v{size} is "
             "absent then the region extends to the maximum address. The following @v{command} forms are recognized:"
 
-            "@named{Print meta information}{The \"print\" command prints meta information about the mapping to standard output.}"
+            "@named{Print meta information}{The \"print\" command prints meta information about the mapping to standard output. "
+            "This command ignores the @v{region}, always printing the entire map.}"
 
             "@named{Change permissions}{The \"perm @v{op} @v{value}\" command changes the permissions of mapped memory "
             "that falls within the @v{region} (white space is optional). The operation, @v{op} is one of \"=\" to set "
@@ -488,13 +489,13 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         }
         switch (op) {
             case '-':
-                at(region).changeAccess(0, perm);
+                within(region).changeAccess(0, perm);
                 break;
             case '+':
-                at(region).changeAccess(perm, 0);
+                within(region).changeAccess(perm, 0);
                 break;
             case '=':
-                at(region).changeAccess(perm, ~perm);
+                within(region).changeAccess(perm, ~perm);
                 break;
         }
 
@@ -592,7 +593,7 @@ MemoryMap::adjustMap(const std::string &locatorString) {
 
     } else if (!strncmp(s, "unmap", 5)) {
         s += 5;
-        at(region).prune();
+        within(region).prune();
 
     } else {
         throw adjustMapError(locatorString, "unrecognized command");
