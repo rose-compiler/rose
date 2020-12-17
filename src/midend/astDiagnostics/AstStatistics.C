@@ -471,8 +471,8 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           IR_NODE_VISIT_CASE(SgAsmBlock)
           IR_NODE_VISIT_CASE(SgAsmOperandList)
-#ifdef ROSE_ENABLE_ASM_A64
-          IR_NODE_VISIT_CASE(SgAsmA64Instruction)
+#ifdef ROSE_ENABLE_ASM_AARCH64
+          IR_NODE_VISIT_CASE(SgAsmAarch64Instruction)
 #endif
           IR_NODE_VISIT_CASE(SgAsmX86Instruction)
           IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)
