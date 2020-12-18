@@ -343,8 +343,10 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
     AbstractValueSet& set=*memLoc.getAbstractValueSet();
     bool moreThanOneElement=set.size()>1;
     for(auto memLoc : set) {
-      ROSE_ASSERT(!memLoc.isPtrSet());
-      AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive call
+      AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive cal
+      if(av.isPtrSet()) {
+        av=varValue(av);
+      } 
       ROSE_ASSERT(!av.isPtrSet());
       readSummary=AbstractValue::combine(readSummary,av);
     }

@@ -2,6 +2,11 @@
 
 int rand();
 
+struct S {
+  int s1;
+  int s2;
+};
+
 int main() {
   int x=rand(); // uninitialized
   int a=1;
@@ -22,9 +27,12 @@ int main() {
   }
 #endif
   ;
-  ;
-  // empty statement
+ int ** pp;
+ pp=&p;
+ **pp=100;
+// empty statement
   printf("a:%d\n",a);
   printf("b:%d\n",a);
   printf("*p:%d\n",*p);
+  printf("*p:%d\n",**pp);
 }
