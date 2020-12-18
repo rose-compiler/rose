@@ -1064,7 +1064,32 @@ insertFriendDecls (SgFunctionDeclaration* func,
             classes.insert (cl_def);
           }
         }
-      
+
+      // EnumVal may have a private type: TODO: all expressions should be check against private type
+       NodeList_t enum_val = NodeQuery::querySubTree (func, V_SgEnumVal);
+      for (NodeList_t::iterator v = enum_val.begin (); v != enum_val.end (); ++v)
+      {
+        SgEnumVal* v_ref = isSgEnumVal(*v);
+        SgClassDefinition* cl_def ; 
+
+        if (enable_debug)
+        {
+          ROSE_ASSERT(v_ref->get_type() != NULL);
+          printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
+        }
+
+        cl_def = isProtPrivType (v_ref->get_type());
+        if (enable_debug)
+          printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
+
+        if (cl_def != NULL)
+        {
+          if (enable_debug)
+            printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+          classes.insert (cl_def);
+        }
+      }
+           
    // Get a list of all function reference expressions.
       NodeList_t func_refs = NodeQuery::querySubTree (func,V_SgMemberFunctionRefExp);
       if (enable_debug)
@@ -1081,6 +1106,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
             classes.insert (cl_def);
           }
         }
+
     //C++ constructors are called through SgConstructorInitializer, not SgMemberFunctionRefExp.
    // Get a list of all SgConstructorInitializer nodes
       NodeList_t ctor_init = NodeQuery::querySubTree (func,V_SgConstructorInitializer);
