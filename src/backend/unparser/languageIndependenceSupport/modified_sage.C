@@ -803,9 +803,6 @@ GetOperatorVariant(SgExpression* expr)
                  name = tplmfunc_ref->get_symbol()->get_name();
                } else if (nrref != NULL) {
                  name = nrref->get_symbol()->get_name();
-               } else {
-                 printf("ERROR: unexpected reference expression for a member-function: %p (%s)\n", mfunc, mfunc ? mfunc->class_name().c_str() : "");
-                 ROSE_ASSERT(false);
                }
 #endif
                break;

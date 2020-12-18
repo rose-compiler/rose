@@ -74,12 +74,12 @@ bool traceKind(const char* /* kind */)
   return true;
 }
 
-//~ void logKind(const char* kind, bool /* unused */)
-//~ {
-  //~ if (!traceKind(kind)) return;
+void logKind(const char* kind, bool /* unused */)
+{
+  if (!traceKind(kind)) return;
 
-  //~ logTrace() << kind << std::endl;
-//~ }
+  logTrace() << kind << std::endl;
+}
 
 LabelAndLoopManager::~LabelAndLoopManager()
 {
@@ -184,7 +184,6 @@ namespace
 
       case A_Clause:                  // Asis.Clauses
         {
-          // currently only handles with clauses
           logKind("A_Clause");
           handleClause(elem, ctx);
           break;
@@ -541,7 +540,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
-  Unit_Struct_List_Struct*  adaLimit = 0;
+  //~ Unit_Struct_List_Struct*  adaLimit = 0;
   Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
   SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
   std::vector<Unit_Struct*> units    = reorderUnits(adaUnit);

@@ -1003,7 +1003,6 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      printf ("   --- initializedName->get_type()                   = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
 #endif
 
-#if 1
   // DQ (9/14/2015): Test disabling this for C++11 mode.
 
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
@@ -1072,7 +1071,6 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        // DQ (7/10/2014): Enforce this rule.
           ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
         }
-#endif
 
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
@@ -1125,7 +1123,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(appdomain) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_deprecated())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1133,7 +1131,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(deprecated) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_dllimport())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1141,7 +1139,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(dllimport) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_dllexport())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1149,7 +1147,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(dllexport) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_novtable())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1157,7 +1155,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(novtable) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_process())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1165,7 +1163,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(process) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_restrict())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1173,7 +1171,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(restrict) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_selectany())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1181,7 +1179,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(selectany) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_thread())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1189,7 +1187,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
           curprint("__declspec(thread) ");
         }
-    
+
      if (initializedName->is_ms_declspec_parameter_uuid())
         {
 #if MS_DECLSPEC_DEBUG
@@ -1354,6 +1352,10 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        // Cong (6/28/2011): When unparsing an initializer for a function parameter, we should add a space before '='.
        // Or else, foo(const int& = 1) will be unparsed to foo(const int&=1) which contains an operator '&=", which is 
        // incorrect.
+#if 0
+          printf ("In unparseFunctionParameterDeclaration(): Output a default value for the function parameter: tmp_name = %s tmp_init = %p \n",tmp_name.str(),tmp_init);
+       // printf ("Output a default value for the function parameter: tmp_init = %s \n",tmp_init->unparseToString().c_str());
+#endif
           curprint(" = ");
           unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
         }

@@ -1,0 +1,18 @@
+#!/bin/bash
+# Check that ROSE's current enums are compatible with those stored in the enum database, and update the enum database.
+#
+# Usage: check-enums $ROSE_SOURCE_DIRECTORY $ROSE_BUILD_DIRECTORY  # from any working directory
+
+set -e
+
+if [ "$#" -ne 2 ]; then
+    echo "usage: ${0##*/} ROSE_SOURCE_DIR ROSE_BUILD_DIR" >&2
+    exit 1
+fi
+
+top_srcdir="$(readlink -f "$1")"
+top_blddir="$(readlink -f "$2")"
+
+export CHECK_ENUMS="$top_srcdir/enums.txt"
+touch "$CHECK_ENUMS"
+exec "$top_srcdir/scripts/restringify" "$1" "$2"

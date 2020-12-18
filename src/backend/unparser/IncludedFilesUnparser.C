@@ -268,14 +268,14 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): unparseAllHeaderFiles = %s \n",unparseAllHeaderFiles ? "true" : "false");
         }
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List allFiles list: processing parent include files chain: (size = %zu): \n",allFiles.size());
         }
@@ -289,7 +289,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
         {
 #if 1
        // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("   --- allFiles[%zu] = %s \n",tmp_counter,(*k).c_str());
              }
@@ -299,7 +299,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
        // Lookup the include file, so that we can traverse it's parents to a known file (in the allFiles list).
 #if 1
        // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("   --- EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end() = %s \n",
                     EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end() ? "true" : "false");
@@ -319,7 +319,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                   {
 #if 1
                  // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                    if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                        {
                          printf ("include_file->get_filename() = %s \n",include_file->get_filename().str());
                        }
@@ -327,7 +327,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                     SgIncludeFile* parent_include_file = isSgIncludeFile(include_file->get_parent());
 #if 1
                  // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                    if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                        {
                          printf ("parent_include_file = %p \n",parent_include_file);
                        }
@@ -337,7 +337,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                          string parent_filename = parent_include_file->get_filename().str();
 #if 1
                       // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                         if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                         if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                             {
                               printf ("parent_include_file->get_filename() = %s \n",parent_include_file->get_filename().str());
                             }
@@ -515,7 +515,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 #if 1
             // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                   {
                     printf ("$$$$$$$$$$$$ Calling collectAdditionalFilesToUnparse() $$$$$$$$$$$$ \n");
                   }
@@ -528,7 +528,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(filesToUnparse) \n");
              }
@@ -540,7 +540,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           collectIncludeCompilerPaths();
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(allFiles) \n");
              }
@@ -558,7 +558,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 #if 1
        // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("At bottom of DO WHILE loop: newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
              }
@@ -596,7 +596,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           FileHelper::ensureFolderExists(it -> second);
         }
 
-#if 0
+#if 1
      printf ("Before leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printDiagnosticOutput();
 #endif
@@ -608,7 +608,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
         }
@@ -628,8 +628,9 @@ IncludedFilesUnparser::printDiagnosticOutput()
      if (SgProject::get_verbose() >= 0)
         {
           printf ("In IncludedFilesUnparser::printDiagnosticOutput(): Output internal data \n");
+#if 0
           printf ("################################################## \n");
-
+#endif
           CollectionHelper::printSet(allFiles, "\nAll files:", "");
           CollectionHelper::printSet(modifiedFiles, "\nModified files:", "");
 
@@ -655,9 +656,10 @@ IncludedFilesUnparser::printDiagnosticOutput()
 
           cout << endl << endl;
 
+#if 0
           printf ("################################################## \n");
           printf ("Leaving IncludedFilesUnparser::printDiagnosticOutput(): Output internal data \n");
-
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -770,7 +772,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
    {
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In IncludedFilesUnparser::collectIncludeCompilerPaths(): includingPathsMap.size() = %zu \n",includingPathsMap.size());
         }
@@ -781,7 +783,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
           string fileToUnparse = mapEntry -> first;
 #if 1
        // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf (" --- In loop over includingPathsMap: fileToUnparse = %s \n",fileToUnparse.c_str());
              }
@@ -833,7 +835,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
 
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving IncludedFilesUnparser::collectIncludeCompilerPaths(): includingPathsMap.size() = %zu \n",includingPathsMap.size());
         }
@@ -1890,6 +1892,12 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
      printf ("In IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+     if (functionDeclaration != NULL)
+        {
+          printf (" --- functionDeclaration name = %s \n",functionDeclaration->get_name().str());
+          printf (" --- functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
+        }
 #endif
 
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT

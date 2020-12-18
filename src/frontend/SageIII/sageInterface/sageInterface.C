@@ -899,6 +899,43 @@ SageInterface::isAncestor (SgNode* node1, SgNode* node2)
         }
    }
 
+bool
+SageInterface::hasSameGlobalScope ( SgStatement* statement_1, SgStatement* statement_2 )
+   {
+  // DQ (12/7/2020): This is supporting the recognition of functions in header files from two different AST.
+
+#define DEBUG_HAS_SAME_SCOPE 0
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf ("In SageInterface::hasSameGlobalScope(): \n");
+     printf (" --- statement_1 = %p = %s \n",statement_1,statement_1->class_name().c_str());
+     printf (" --- statement_2 = %p = %s \n",statement_2,statement_2->class_name().c_str());
+#endif
+
+     bool includingSelf = true;
+     SgGlobal* global_scope_1 = getEnclosingNode<SgGlobal>(statement_1,includingSelf);
+     SgGlobal* global_scope_2 = getEnclosingNode<SgGlobal>(statement_2,includingSelf);
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf (" --- global_scope_1 = %p = %s \n",global_scope_1,global_scope_1->class_name().c_str());
+     SgSourceFile* sourcefile_1 = isSgSourceFile(global_scope_1->get_parent());
+     printf (" --- --- sourcefile_1 = %p filename = %s \n",sourcefile_1,sourcefile_1->getFileName().c_str());
+
+     printf (" --- global_scope_2 = %p = %s \n",global_scope_2,global_scope_2->class_name().c_str());
+     SgSourceFile* sourcefile_2 = isSgSourceFile(global_scope_2->get_parent());
+     printf (" --- --- sourcefile_2 = %p filename = %s \n",sourcefile_2,sourcefile_2->getFileName().c_str());
+#endif
+
+     bool returnResult = (global_scope_1 == global_scope_2);
+
+#if DEBUG_HAS_SAME_SCOPE
+     printf ("Leaving SageInterface::hasSameGlobalScope(): returning: %s \n",returnResult ? "true" : "false");
+#endif
+
+     return returnResult;
+   }
+
+
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
    {
@@ -1853,6 +1890,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
+          case V_SgAdaPackageSpec:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
@@ -1865,10 +1903,6 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgWhileStmt:
           case V_SgFortranDo:
           case V_SgForAllStatement:
-               name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
-               break;
-
-       // DQ (3/26/2018): Added support for new IR node.
           case V_SgRangeBasedForStatement:
                name = StringUtility::numberToString(const_cast<SgScopeStatement*>(scope));
                break;
@@ -9575,6 +9609,12 @@ SageInterface::DeferredTransformation & SageInterface::DeferredTransformation::o
      targetFriends = X.targetFriends;
      targetClasses = X.targetClasses;
 #else
+
+  // DQ (12/12/2020): Adding a string label so that we can name the different kinds of transformations.
+  // E.g. moving pattern matched function from header file to dynamic library, vs. replacing function 
+  // definitions in the dynamic library file with function prototypes. 
+     transformationLabel = X.transformationLabel;
+
   // New code added to support more general usage.
      deferredTransformationKind = X.deferredTransformationKind;
      statementToRemove          = X.statementToRemove;
@@ -9620,27 +9660,46 @@ std::string SageInterface::DeferredTransformation::outputDeferredTransformationK
 void SageInterface::DeferredTransformation::display ( std::string label ) const
    {
      printf ("SageInterface::DeferredTransformation::display(): label = %s \n",label.c_str());
+
+  // DQ (12/12/2020): Adding a string label so that we can name the different kinds of transformations.
+  // E.g. moving pattern matched function from header file to dynamic library, vs. replacing function 
+  // definitions in the dynamic library file with function prototypes. 
+     printf (" --- transformationLabel = %s \n",transformationLabel.c_str());
+
      printf (" --- deferredTransformationKind = %s \n",outputDeferredTransformationKind(deferredTransformationKind).c_str());
      if (statementToRemove != NULL)
         {
           printf (" --- statementToRemove = %p = %s name = %s \n",statementToRemove,statementToRemove->class_name().c_str(),get_name(statementToRemove).c_str());
         }
+       else
+        {
+          printf (" --- statementToRemove == NULL \n");
+        }
+
      if (statementToAdd != NULL)
         {
           printf (" --- statementToAdd = %p = %s name = %s \n",statementToAdd,statementToAdd->class_name().c_str(),get_name(statementToAdd).c_str());
         }
+       else
+        {
+          printf (" --- statementToAdd == NULL \n");
+        }
+
      if (class_definition != NULL)
         {
           printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
         }
+
      if (target_class_member != NULL)
         {
           printf (" --- target_class_member = %p = %s name = %s \n",target_class_member,target_class_member->class_name().c_str(),get_name(target_class_member).c_str());
         }
+
      if (new_function_prototype != NULL)
         {
           printf (" --- new_function_prototype = %p = %s name = %s \n",new_function_prototype,new_function_prototype->class_name().c_str(),get_name(new_function_prototype).c_str());
         }
+
      printf ("targetClasses.size() = %zu \n",targetClasses.size());
      printf ("targetFriends.size() = %zu \n",targetFriends.size());
    }
@@ -25776,7 +25835,8 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
   // SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
 
 #if 0
-     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration = %p = %s name = %s \n",
+          functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
 
   // DQ (11/21/2019): Check if this is a constructor, this is a temporary fix.
@@ -25802,6 +25862,33 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
      SgName name                         = functionDeclaration->get_name();
      SgType* return_type                 = functionDeclaration->get_type()->get_return_type();
 
+#if 0
+  // DQ (12/10/2020): The issue is that the default arguments defined in template functions are represented in the AST.
+  // Where we output the template as a string, it is included, and in the template instantiation it is represented in
+  // the AST.  So where it is used, default arguments are not represented in the AST and so the are not generated in
+  // this function that builds the function prototype from the defining function.
+
+     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration = %p \n",functionDeclaration);
+     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
+     printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration->get_definingDeclaration()         = %p \n",functionDeclaration->get_definingDeclaration());
+
+  // DQ (12/9/2020): Check if there is a default argument.  Need to figure out how default arguments
+  // are specified in the function declarations, and make sure the prototype reproduces them.
+     for (size_t i = 0; i < functionDeclaration->get_args().size(); i++)
+       {
+         SgInitializedName* arg = functionDeclaration->get_args()[i];
+#if 1
+         printf ("In SageInterface::buildFunctionPrototype(): functionDeclaration->get_args(): (i = %zu) arg = %p = %s isDefaultArgument = %s \n",
+              i,arg,arg->get_name().str(),arg->get_file_info()->isDefaultArgument() ? "true" : "false");
+         printf (" --- arg->get_initializer() = %p \n",arg->get_initializer());
+#endif
+         if (arg->get_file_info()->isDefaultArgument() == true)
+            {
+              printf ("NOTE: default argument (i = %zu) not reproduced in function prototype: arg = %p = %s \n",i,arg,arg->get_name().str());
+            }
+       }
+#endif
+
 #if 1
      SgFunctionParameterList* param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
 #else
@@ -25823,6 +25910,7 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
              }
         }
 #endif
+
 
   // bool isTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration) != NULL);
      bool isTemplateInstantiationMemberFunctionDecl = false;
@@ -26312,6 +26400,11 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
                SgScopeStatement* scope = functionDeclaration->get_scope();
                printf ("calling displayScope: scope = %p = %s \n",scope,scope->class_name().c_str());
                displayScope(scope);
+#endif
+#if 0
+               SgScopeStatement* parent_scope = isSgScopeStatement(functionDeclaration->get_parent());
+               printf ("calling displayScope: parent_scope = %p = %s \n",parent_scope,parent_scope->class_name().c_str());
+               displayScope(parent_scope);
 #endif
 #if 0
                printf ("Calling replaceStatement(): functionDeclaration            = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
