@@ -97,6 +97,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   int testSelector=0;
   bool intraProcedural=false;
   int precisionLevel=1;
+  bool pointerSetsEnabled=false; // used in more precise pointer analysis
   std::string csvReportModeString="generate";
   std::string forkFunction1="!undefined:forkFunction1!";
   

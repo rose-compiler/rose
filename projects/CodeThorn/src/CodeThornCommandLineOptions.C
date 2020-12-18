@@ -215,7 +215,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
-    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.");
+    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.")
+    ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
     ;
 
   rersOptions.add_options()

@@ -2194,21 +2194,26 @@ void ExprAnalyzer::reserveMemoryLocation(Label lab, PState* pstate, AbstractValu
 }
 
 void ExprAnalyzer::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
-  AbstractValue undefValue=AbstractValue::createUndefined();
-  VariableId varId=memLoc.getVariableId();
+#if 0
   if(AbstractValue::byteMode) {
-    memLoc.setElementTypeSize(_variableIdMapping->getElementSize(varId)); // TODO: structs vars?
-  }
-  writeToMemoryLocation(lab,pstate,memLoc,undefValue);
-}
-
-void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
-  AbstractValue undefValue=AbstractValue::createUndefined();
-  if(AbstractValue::byteMode && memLoc.getElementTypeSize()==0) {
+    AbstractValue undefValue=AbstractValue::createUndefined();
     VariableId varId=memLoc.getVariableId();
     memLoc.setElementTypeSize(_variableIdMapping->getElementSize(varId)); // TODO: structs vars?
   }
-  pstate->writeToMemoryLocation(memLoc,undefValue);
+#endif
+  pstate->writeUndefToMemoryLocation(memLoc);
+  //writeToMemoryLocation(lab,pstate,memLoc,undefValue);
+}
+
+void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
+#if 0
+  if(AbstractValue::byteMode && memLoc.getElementTypeSize()==0) {
+    ROSE_ASSERT(memLoc.isPtr());
+    VariableId varId=memLoc.getVariableId();
+    memLoc.setElementTypeSize(_variableIdMapping->getElementSize(varId)); // TODO: structs vars?
+  }
+#endif
+  pstate->writeUndefToMemoryLocation(memLoc);
 }
 
 void ExprAnalyzer::printLoggerWarning(EState& estate) {
