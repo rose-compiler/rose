@@ -337,6 +337,9 @@ Grammar::setUpNodes ()
           UntypedNameList | UntypedTokenList | UntypedTokenPairList,
          "UntypedNode", "UntypedNodeTag", false);
 
+     NEW_TERMINAL_MACRO (AdaComponentClause, "AdaComponentClause", "AdaComponentClauseTag");
+
+
   // ***************************************************************************************
   //                              END of Untyped IR Node Support
   // ***************************************************************************************
@@ -353,7 +356,8 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
      NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | 
                             HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode | 
-                            LambdaCapture | LambdaCaptureList, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+                            LambdaCapture  | LambdaCaptureList | AdaComponentClause,
+                            "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -625,6 +629,8 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
+  // PP (12/3/20): Adding support for Ada
+     AdaComponentClause.setFunctionPrototype ( "HEADER_ADA_COMPONENT_CLAUSE"     , "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************
@@ -1591,6 +1597,14 @@ Grammar::setUpNodes ()
      LambdaCaptureList.setDataPrototype ( "SgLambdaCapturePtrList", "capture_list", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     // PP: Ada Component Clause
+     AdaComponentClause.setDataPrototype("SgVarRefExp*", "component", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaComponentClause.setDataPrototype("SgExpression*", "offset", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaComponentClause.setDataPrototype("SgRangeExp*", "range", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // ***********************************************************************
   // ***********************************************************************
@@ -1630,6 +1644,9 @@ Grammar::setUpNodes ()
   // DQ (9/3/2014): Adding support for C++11 lambda expresions.
      LambdaCapture.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
+
+  // PP (12/3/20): Adding Ada
+     AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************

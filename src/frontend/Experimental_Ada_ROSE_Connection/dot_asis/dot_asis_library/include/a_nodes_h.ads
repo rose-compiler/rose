@@ -265,9 +265,8 @@ package a_nodes_h is
 
    type Pragma_Struct is record
       Pragma_Kind : aliased Pragma_Kinds;  -- a_nodes.h:233
-      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:234
-      Pragma_Name_Image : Program_Text;  -- a_nodes.h:235
-      Pragma_Argument_Associations : aliased Association_List;  -- a_nodes.h:236
+      Pragma_Name_Image : Program_Text;  -- a_nodes.h:234
+      Pragma_Argument_Associations : aliased Association_List;  -- a_nodes.h:235
    end record
    with Convention => C_Pass_By_Copy;  -- a_nodes.h:232
 
@@ -278,22 +277,22 @@ package a_nodes_h is
       A_Defining_Enumeration_Literal,
       A_Defining_Operator_Symbol,
       A_Defining_Expanded_Name)
-   with Convention => C;  -- a_nodes.h:247
+   with Convention => C;  -- a_nodes.h:246
 
    type Defining_Name_Struct is record
-      Defining_Name_Kind : aliased Defining_Name_Kinds;  -- a_nodes.h:258
-      Defining_Name_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:259
-      References : aliased Name_List;  -- a_nodes.h:260
-      Is_Referenced : aliased Extensions.bool;  -- a_nodes.h:261
-      Operator_Kind : aliased Operator_Kinds;  -- a_nodes.h:265
-      Position_Number_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:268
-      Representation_Value_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:269
-      Defining_Prefix : aliased Name_ID;  -- a_nodes.h:271
-      Defining_Selector : aliased Defining_Name_ID;  -- a_nodes.h:272
-      Corresponding_Constant_Declaration : aliased Declaration_ID;  -- a_nodes.h:274
-      Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:277
+      Defining_Name_Kind : aliased Defining_Name_Kinds;  -- a_nodes.h:257
+      Defining_Name_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:258
+      References : aliased Name_List;  -- a_nodes.h:259
+      Is_Referenced : aliased Extensions.bool;  -- a_nodes.h:260
+      Operator_Kind : aliased Operator_Kinds;  -- a_nodes.h:264
+      Position_Number_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:267
+      Representation_Value_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:268
+      Defining_Prefix : aliased Name_ID;  -- a_nodes.h:270
+      Defining_Selector : aliased Defining_Name_ID;  -- a_nodes.h:271
+      Corresponding_Constant_Declaration : aliased Declaration_ID;  -- a_nodes.h:273
+      Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:276
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:257
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:256
 
    type Declaration_Kinds is 
      (Not_A_Declaration,
@@ -362,14 +361,14 @@ package a_nodes_h is
       A_Formal_Function_Declaration,
       A_Formal_Package_Declaration,
       A_Formal_Package_Declaration_With_Box)
-   with Convention => C;  -- a_nodes.h:288
+   with Convention => C;  -- a_nodes.h:287
 
    type Declaration_Origins is 
      (Not_A_Declaration_Origin,
       An_Explicit_Declaration,
       An_Implicit_Predefined_Declaration,
       An_Implicit_Inherited_Declaration)
-   with Convention => C;  -- a_nodes.h:392
+   with Convention => C;  -- a_nodes.h:391
 
    type Mode_Kinds is 
      (Not_A_Mode,
@@ -377,7 +376,7 @@ package a_nodes_h is
       An_In_Mode,
       An_Out_Mode,
       An_In_Out_Mode)
-   with Convention => C;  -- a_nodes.h:408
+   with Convention => C;  -- a_nodes.h:407
 
    type Subprogram_Default_Kinds is 
      (Not_A_Default,
@@ -385,76 +384,76 @@ package a_nodes_h is
       A_Box_Default,
       A_Null_Default,
       A_Nil_Default)
-   with Convention => C;  -- a_nodes.h:418
+   with Convention => C;  -- a_nodes.h:417
 
    type Declaration_Struct is record
-      Declaration_Kind : aliased Declaration_Kinds;  -- a_nodes.h:431
-      Declaration_Origin : aliased Declaration_Origins;  -- a_nodes.h:432
-      Corresponding_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:433
-      Names : aliased Defining_Name_List;  -- a_nodes.h:434
-      Aspect_Specifications : aliased Element_ID_List;  -- a_nodes.h:435
-      Corresponding_Representation_Clauses : aliased Representation_Clause_List;  -- a_nodes.h:436
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:446
-      Has_Aliased : aliased Extensions.bool;  -- a_nodes.h:453
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:457
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:460
-      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:465
-      Has_Reverse : aliased Extensions.bool;  -- a_nodes.h:469
-      Has_Task : aliased Extensions.bool;  -- a_nodes.h:474
-      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:478
-      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:486
-      Mode_Kind : aliased Mode_Kinds;  -- a_nodes.h:489
-      Default_Kind : aliased Subprogram_Default_Kinds;  -- a_nodes.h:492
-      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:512
-      Corresponding_End_Name : aliased Element_ID;  -- a_nodes.h:525
-      Discriminant_Part : aliased Definition_ID;  -- a_nodes.h:534
+      Declaration_Kind : aliased Declaration_Kinds;  -- a_nodes.h:430
+      Declaration_Origin : aliased Declaration_Origins;  -- a_nodes.h:431
+      Corresponding_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:432
+      Names : aliased Defining_Name_List;  -- a_nodes.h:433
+      Aspect_Specifications : aliased Element_ID_List;  -- a_nodes.h:434
+      Corresponding_Representation_Clauses : aliased Representation_Clause_List;  -- a_nodes.h:435
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:445
+      Has_Aliased : aliased Extensions.bool;  -- a_nodes.h:452
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:456
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:459
+      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:464
+      Has_Reverse : aliased Extensions.bool;  -- a_nodes.h:468
+      Has_Task : aliased Extensions.bool;  -- a_nodes.h:473
+      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:477
+      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:485
+      Mode_Kind : aliased Mode_Kinds;  -- a_nodes.h:488
+      Default_Kind : aliased Subprogram_Default_Kinds;  -- a_nodes.h:491
+      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:511
+      Corresponding_End_Name : aliased Element_ID;  -- a_nodes.h:524
+      Discriminant_Part : aliased Definition_ID;  -- a_nodes.h:533
       Type_Declaration_View : aliased Definition_ID;  -- a_nodes.h:541
       Object_Declaration_View : aliased Definition_ID;  -- a_nodes.h:553
       Initialization_Expression : aliased Expression_ID;  -- a_nodes.h:563
       Corresponding_Type_Declaration : aliased Declaration_ID;  -- a_nodes.h:571
-      Corresponding_Type_Completion : aliased Declaration_ID;  -- a_nodes.h:576
-      Corresponding_Type_Partial_View : aliased Declaration_ID;  -- a_nodes.h:582
-      Corresponding_First_Subtype : aliased Declaration_ID;  -- a_nodes.h:590
-      Corresponding_Last_Constraint : aliased Declaration_ID;  -- a_nodes.h:591
-      Corresponding_Last_Subtype : aliased Declaration_ID;  -- a_nodes.h:592
-      Specification_Subtype_Definition : aliased Discrete_Subtype_Definition_ID;  -- a_nodes.h:595
-      Iteration_Scheme_Name : aliased Element_ID;  -- a_nodes.h:598
-      Subtype_Indication : aliased Element_ID;  -- a_nodes.h:600
-      Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:617
-      Result_Profile : aliased Element_ID;  -- a_nodes.h:625
-      Result_Expression : aliased Expression_ID;  -- a_nodes.h:627
-      Is_Overriding_Declaration : aliased Extensions.bool;  -- a_nodes.h:643
-      Is_Not_Overriding_Declaration : aliased Extensions.bool;  -- a_nodes.h:644
-      Body_Declarative_Items : aliased Element_ID_List;  -- a_nodes.h:650
-      Body_Statements : aliased Statement_List;  -- a_nodes.h:651
-      Body_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:652
-      Body_Block_Statement : aliased Declaration_ID;  -- a_nodes.h:653
-      Is_Name_Repeated : aliased Extensions.bool;  -- a_nodes.h:666
-      Corresponding_Declaration : aliased Declaration_ID;  -- a_nodes.h:702
-      Corresponding_Body : aliased Declaration_ID;  -- a_nodes.h:718
-      Corresponding_Subprogram_Derivation : aliased Declaration_ID;  -- a_nodes.h:721
-      Corresponding_Type : aliased Type_Definition_ID;  -- a_nodes.h:725
-      Corresponding_Equality_Operator : aliased Declaration_ID;  -- a_nodes.h:727
-      Visible_Part_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:730
-      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:731
-      Private_Part_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:732
-      Declaration_Interface_List : aliased Expression_List;  -- a_nodes.h:737
-      Renamed_Entity : aliased Expression_ID;  -- a_nodes.h:746
-      Corresponding_Base_Entity : aliased Expression_ID;  -- a_nodes.h:747
-      Protected_Operation_Items : aliased Declaration_List;  -- a_nodes.h:749
-      Entry_Family_Definition : aliased Discrete_Subtype_Definition_ID;  -- a_nodes.h:751
-      Entry_Index_Specification : aliased Declaration_ID;  -- a_nodes.h:753
-      Entry_Barrier : aliased Expression_ID;  -- a_nodes.h:754
-      Corresponding_Subunit : aliased Declaration_ID;  -- a_nodes.h:760
-      Is_Subunit : aliased Extensions.bool;  -- a_nodes.h:766
-      Corresponding_Body_Stub : aliased Declaration_ID;  -- a_nodes.h:767
-      Generic_Formal_Part : aliased Element_ID_List;  -- a_nodes.h:771
-      Generic_Unit_Name : aliased Expression_ID;  -- a_nodes.h:777
-      Generic_Actual_Part : aliased Association_List;  -- a_nodes.h:778
-      Formal_Subprogram_Default : aliased Expression_ID;  -- a_nodes.h:781
-      Is_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:792
+      Corresponding_Type_Completion : aliased Declaration_ID;  -- a_nodes.h:577
+      Corresponding_Type_Partial_View : aliased Declaration_ID;  -- a_nodes.h:584
+      Corresponding_First_Subtype : aliased Declaration_ID;  -- a_nodes.h:592
+      Corresponding_Last_Constraint : aliased Declaration_ID;  -- a_nodes.h:593
+      Corresponding_Last_Subtype : aliased Declaration_ID;  -- a_nodes.h:594
+      Specification_Subtype_Definition : aliased Discrete_Subtype_Definition_ID;  -- a_nodes.h:597
+      Iteration_Scheme_Name : aliased Element_ID;  -- a_nodes.h:600
+      Subtype_Indication : aliased Element_ID;  -- a_nodes.h:602
+      Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:619
+      Result_Profile : aliased Element_ID;  -- a_nodes.h:627
+      Result_Expression : aliased Expression_ID;  -- a_nodes.h:629
+      Is_Overriding_Declaration : aliased Extensions.bool;  -- a_nodes.h:645
+      Is_Not_Overriding_Declaration : aliased Extensions.bool;  -- a_nodes.h:646
+      Body_Declarative_Items : aliased Element_ID_List;  -- a_nodes.h:652
+      Body_Statements : aliased Statement_List;  -- a_nodes.h:653
+      Body_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:654
+      Body_Block_Statement : aliased Declaration_ID;  -- a_nodes.h:655
+      Is_Name_Repeated : aliased Extensions.bool;  -- a_nodes.h:668
+      Corresponding_Declaration : aliased Declaration_ID;  -- a_nodes.h:704
+      Corresponding_Body : aliased Declaration_ID;  -- a_nodes.h:720
+      Corresponding_Subprogram_Derivation : aliased Declaration_ID;  -- a_nodes.h:723
+      Corresponding_Type : aliased Type_Definition_ID;  -- a_nodes.h:727
+      Corresponding_Equality_Operator : aliased Declaration_ID;  -- a_nodes.h:729
+      Visible_Part_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:732
+      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:733
+      Private_Part_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:734
+      Declaration_Interface_List : aliased Expression_List;  -- a_nodes.h:739
+      Renamed_Entity : aliased Expression_ID;  -- a_nodes.h:748
+      Corresponding_Base_Entity : aliased Expression_ID;  -- a_nodes.h:749
+      Protected_Operation_Items : aliased Declaration_List;  -- a_nodes.h:751
+      Entry_Family_Definition : aliased Discrete_Subtype_Definition_ID;  -- a_nodes.h:753
+      Entry_Index_Specification : aliased Declaration_ID;  -- a_nodes.h:755
+      Entry_Barrier : aliased Expression_ID;  -- a_nodes.h:756
+      Corresponding_Subunit : aliased Declaration_ID;  -- a_nodes.h:762
+      Is_Subunit : aliased Extensions.bool;  -- a_nodes.h:768
+      Corresponding_Body_Stub : aliased Declaration_ID;  -- a_nodes.h:775
+      Generic_Formal_Part : aliased Element_ID_List;  -- a_nodes.h:779
+      Generic_Unit_Name : aliased Expression_ID;  -- a_nodes.h:785
+      Generic_Actual_Part : aliased Association_List;  -- a_nodes.h:786
+      Formal_Subprogram_Default : aliased Expression_ID;  -- a_nodes.h:789
+      Is_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:800
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:430
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:429
 
    type Definition_Kinds is 
      (Not_A_Definition,
@@ -480,7 +479,7 @@ package a_nodes_h is
       A_Protected_Definition,
       A_Formal_Type_Definition,
       An_Aspect_Specification)
-   with Convention => C;  -- a_nodes.h:803
+   with Convention => C;  -- a_nodes.h:811
 
    type u_Type_Kinds is 
      (Not_A_Type_Definition,
@@ -499,9 +498,9 @@ package a_nodes_h is
       A_Tagged_Record_Type_Definition,
       An_Interface_Type_Definition,
       An_Access_Type_Definition)
-   with Convention => C;  -- a_nodes.h:836
+   with Convention => C;  -- a_nodes.h:844
 
-   subtype Type_Kinds is u_Type_Kinds;  -- a_nodes.h:858
+   subtype Type_Kinds is u_Type_Kinds;  -- a_nodes.h:866
 
    type u_Constraint_Kinds is 
      (Not_A_Constraint,
@@ -511,9 +510,9 @@ package a_nodes_h is
       A_Delta_Constraint,
       An_Index_Constraint,
       A_Discriminant_Constraint)
-   with Convention => C;  -- a_nodes.h:860
+   with Convention => C;  -- a_nodes.h:868
 
-   subtype Constraint_Kinds is u_Constraint_Kinds;  -- a_nodes.h:868
+   subtype Constraint_Kinds is u_Constraint_Kinds;  -- a_nodes.h:876
 
    type u_Interface_Kinds is 
      (Not_An_Interface,
@@ -522,9 +521,9 @@ package a_nodes_h is
       A_Task_Interface,
       A_Protected_Interface,
       A_Synchronized_Interface)
-   with Convention => C;  -- a_nodes.h:870
+   with Convention => C;  -- a_nodes.h:878
 
-   subtype Interface_Kinds is u_Interface_Kinds;  -- a_nodes.h:877
+   subtype Interface_Kinds is u_Interface_Kinds;  -- a_nodes.h:885
 
    type u_Root_Type_Kinds is 
      (Not_A_Root_Type_Definition,
@@ -533,18 +532,18 @@ package a_nodes_h is
       A_Universal_Integer_Definition,
       A_Universal_Real_Definition,
       A_Universal_Fixed_Definition)
-   with Convention => C;  -- a_nodes.h:879
+   with Convention => C;  -- a_nodes.h:887
 
-   subtype Root_Type_Kinds is u_Root_Type_Kinds;  -- a_nodes.h:886
+   subtype Root_Type_Kinds is u_Root_Type_Kinds;  -- a_nodes.h:894
 
    type u_Discrete_Range_Kinds is 
      (Not_A_Discrete_Range,
       A_Discrete_Subtype_Indication,
       A_Discrete_Range_Attribute_Reference,
       A_Discrete_Simple_Expression_Range)
-   with Convention => C;  -- a_nodes.h:888
+   with Convention => C;  -- a_nodes.h:896
 
-   subtype Discrete_Range_Kinds is u_Discrete_Range_Kinds;  -- a_nodes.h:893
+   subtype Discrete_Range_Kinds is u_Discrete_Range_Kinds;  -- a_nodes.h:901
 
    type u_Formal_Type_Kinds is 
      (Not_A_Formal_Type_Definition,
@@ -561,9 +560,9 @@ package a_nodes_h is
       A_Formal_Unconstrained_Array_Definition,
       A_Formal_Constrained_Array_Definition,
       A_Formal_Access_Type_Definition)
-   with Convention => C;  -- a_nodes.h:895
+   with Convention => C;  -- a_nodes.h:903
 
-   subtype Formal_Type_Kinds is u_Formal_Type_Kinds;  -- a_nodes.h:915
+   subtype Formal_Type_Kinds is u_Formal_Type_Kinds;  -- a_nodes.h:923
 
    type u_Access_Type_Kinds is 
      (Not_An_Access_Type_Definition,
@@ -574,9 +573,9 @@ package a_nodes_h is
       An_Access_To_Protected_Procedure,
       An_Access_To_Function,
       An_Access_To_Protected_Function)
-   with Convention => C;  -- a_nodes.h:917
+   with Convention => C;  -- a_nodes.h:925
 
-   subtype Access_Type_Kinds is u_Access_Type_Kinds;  -- a_nodes.h:926
+   subtype Access_Type_Kinds is u_Access_Type_Kinds;  -- a_nodes.h:934
 
    type u_Access_Definition_Kinds is 
      (Not_An_Access_Definition,
@@ -586,307 +585,312 @@ package a_nodes_h is
       An_Anonymous_Access_To_Protected_Procedure,
       An_Anonymous_Access_To_Function,
       An_Anonymous_Access_To_Protected_Function)
-   with Convention => C;  -- a_nodes.h:928
+   with Convention => C;  -- a_nodes.h:936
 
-   subtype Access_Definition_Kinds is u_Access_Definition_Kinds;  -- a_nodes.h:936
+   subtype Access_Definition_Kinds is u_Access_Definition_Kinds;  -- a_nodes.h:944
 
    type u_Access_Type_Struct is record
-      Access_Type_Kind : aliased Access_Type_Kinds;  -- a_nodes.h:939
-      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:940
-      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:944
-      Access_To_Object_Definition : aliased Subtype_Indication;  -- a_nodes.h:948
-      Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:953
-      Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:956
+      Access_Type_Kind : aliased Access_Type_Kinds;  -- a_nodes.h:947
+      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:948
+      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:952
+      Access_To_Object_Definition : aliased Subtype_Indication;  -- a_nodes.h:956
+      Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:961
+      Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:964
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:938
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:946
 
-   subtype Access_Type_Struct is u_Access_Type_Struct;  -- a_nodes.h:957
+   subtype Access_Type_Struct is u_Access_Type_Struct;  -- a_nodes.h:965
 
    type u_Type_Definition_Struct is record
-      Type_Kind : aliased Type_Kinds;  -- a_nodes.h:960
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:961
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:962
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:963
-      Corresponding_Type_Operators : aliased Declaration_List;  -- a_nodes.h:964
-      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:967
-      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:968
-      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:970
-      Has_Task : aliased Extensions.bool;  -- a_nodes.h:972
-      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:977
-      Interface_Kind : aliased Interface_Kinds;  -- a_nodes.h:979
-      Root_Type_Kind : aliased Root_Type_Kinds;  -- a_nodes.h:981
-      Parent_Subtype_Indication : aliased Subtype_Indication;  -- a_nodes.h:984
-      Record_Definition : aliased Definition;  -- a_nodes.h:988
-      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:991
-      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:992
-      Corresponding_Parent_Subtype : aliased Declaration;  -- a_nodes.h:993
-      Corresponding_Root_Type : aliased Declaration;  -- a_nodes.h:994
-      Corresponding_Type_Structure : aliased Declaration;  -- a_nodes.h:995
-      Enumeration_Literal_Declarations : aliased Declaration_List;  -- a_nodes.h:997
-      Integer_Constraint : aliased Range_Constraint;  -- a_nodes.h:999
-      Mod_Static_Expression : aliased Expression;  -- a_nodes.h:1001
-      Digits_Expression : aliased Expression;  -- a_nodes.h:1004
-      Delta_Expression : aliased Expression;  -- a_nodes.h:1007
-      Real_Range_Constraint : aliased Range_Constraint;  -- a_nodes.h:1011
-      Index_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1013
-      Discrete_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1015
-      Array_Component_Definition : aliased Component_Definition;  -- a_nodes.h:1018
-      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1021
-      Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1023
+      Type_Kind : aliased Type_Kinds;  -- a_nodes.h:968
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:969
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:970
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:971
+      Corresponding_Type_Operators : aliased Declaration_List;  -- a_nodes.h:972
+      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:975
+      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:976
+      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:978
+      Has_Task : aliased Extensions.bool;  -- a_nodes.h:980
+      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:985
+      Interface_Kind : aliased Interface_Kinds;  -- a_nodes.h:987
+      Root_Type_Kind : aliased Root_Type_Kinds;  -- a_nodes.h:989
+      Parent_Subtype_Indication : aliased Subtype_Indication;  -- a_nodes.h:992
+      Record_Definition : aliased Definition;  -- a_nodes.h:996
+      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:999
+      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1000
+      Corresponding_Parent_Subtype : aliased Declaration;  -- a_nodes.h:1001
+      Corresponding_Root_Type : aliased Declaration;  -- a_nodes.h:1002
+      Corresponding_Type_Structure : aliased Declaration;  -- a_nodes.h:1003
+      Enumeration_Literal_Declarations : aliased Declaration_List;  -- a_nodes.h:1005
+      Integer_Constraint : aliased Range_Constraint;  -- a_nodes.h:1007
+      Mod_Static_Expression : aliased Expression;  -- a_nodes.h:1009
+      Digits_Expression : aliased Expression;  -- a_nodes.h:1012
+      Delta_Expression : aliased Expression;  -- a_nodes.h:1015
+      Real_Range_Constraint : aliased Range_Constraint;  -- a_nodes.h:1019
+      Index_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1021
+      Discrete_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1023
+      Array_Component_Definition : aliased Component_Definition;  -- a_nodes.h:1026
+      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1029
+      Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1031
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:959
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:967
 
-   subtype Type_Definition_Struct is u_Type_Definition_Struct;  -- a_nodes.h:1024
+   subtype Type_Definition_Struct is u_Type_Definition_Struct;  -- a_nodes.h:1032
 
    type u_Subtype_Indication_Struct is record
-      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:1027
-      Subtype_Mark : aliased Expression;  -- a_nodes.h:1028
-      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1029
+      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:1035
+      Subtype_Mark : aliased Expression;  -- a_nodes.h:1036
+      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1037
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1026
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1034
 
-   subtype Subtype_Indication_Struct is u_Subtype_Indication_Struct;  -- a_nodes.h:1030
+   subtype Subtype_Indication_Struct is u_Subtype_Indication_Struct;  -- a_nodes.h:1038
 
    type u_Constraint_Struct is record
-      Constraint_Kind : aliased Constraint_Kinds;  -- a_nodes.h:1033
-      Digits_Expression : aliased Expression;  -- a_nodes.h:1036
-      Delta_Expression : aliased Expression;  -- a_nodes.h:1038
-      Real_Range_Constraint : aliased Range_Constraint;  -- a_nodes.h:1041
-      Lower_Bound : aliased Expression;  -- a_nodes.h:1043
-      Upper_Bound : aliased Expression;  -- a_nodes.h:1044
-      Range_Attribute : aliased Expression;  -- a_nodes.h:1046
-      Discrete_Ranges : aliased Discrete_Range_List;  -- a_nodes.h:1048
-      Discriminant_Associations : aliased Discriminant_Association_List;  -- a_nodes.h:1050
+      Constraint_Kind : aliased Constraint_Kinds;  -- a_nodes.h:1041
+      Digits_Expression : aliased Expression;  -- a_nodes.h:1044
+      Delta_Expression : aliased Expression;  -- a_nodes.h:1046
+      Real_Range_Constraint : aliased Range_Constraint;  -- a_nodes.h:1049
+      Lower_Bound : aliased Expression;  -- a_nodes.h:1051
+      Upper_Bound : aliased Expression;  -- a_nodes.h:1052
+      Range_Attribute : aliased Expression;  -- a_nodes.h:1054
+      Discrete_Ranges : aliased Discrete_Range_List;  -- a_nodes.h:1056
+      Discriminant_Associations : aliased Discriminant_Association_List;  -- a_nodes.h:1058
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1032
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1040
 
-   subtype Constraint_Struct is u_Constraint_Struct;  -- a_nodes.h:1051
+   subtype Constraint_Struct is u_Constraint_Struct;  -- a_nodes.h:1059
 
    type u_Component_Definition_Struct is record
-      Component_Definition_View : aliased Definition;  -- a_nodes.h:1054
+      Has_Aliased : aliased Extensions.bool;  -- a_nodes.h:1062
+      Component_Subtype_Indication : aliased Definition;  -- a_nodes.h:1065
+      Component_Definition_View : aliased Definition;  -- a_nodes.h:1067
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1053
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1061
 
-   subtype Component_Definition_Struct is u_Component_Definition_Struct;  -- a_nodes.h:1055
+   subtype Component_Definition_Struct is u_Component_Definition_Struct;  -- a_nodes.h:1068
 
    type u_Discrete_Subtype_Definition_Struct is record
-      Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1058
-      Subtype_Mark : aliased Expression;  -- a_nodes.h:1061
-      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1062
+      Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1075
+      Subtype_Mark : aliased Expression;  -- a_nodes.h:1078
+      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1079
+      Lower_Bound : aliased Expression;  -- a_nodes.h:1081
+      Upper_Bound : aliased Expression;  -- a_nodes.h:1082
+      Range_Attribute : aliased Expression;  -- a_nodes.h:1084
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1057
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1074
 
-   subtype Discrete_Subtype_Definition_Struct is u_Discrete_Subtype_Definition_Struct;  -- a_nodes.h:1063
+   subtype Discrete_Subtype_Definition_Struct is u_Discrete_Subtype_Definition_Struct;  -- a_nodes.h:1085
 
    type u_Discrete_Range_Struct is record
-      Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1066
-      Subtype_Mark : aliased Expression;  -- a_nodes.h:1069
-      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1070
-      Lower_Bound : aliased Expression;  -- a_nodes.h:1072
-      Upper_Bound : aliased Expression;  -- a_nodes.h:1073
-      Range_Attribute : aliased Expression;  -- a_nodes.h:1075
-   end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1065
-
-   subtype Discrete_Range_Struct is u_Discrete_Range_Struct;  -- a_nodes.h:1076
-
-   type u_Known_Discriminant_Part_Struct is record
-      Discriminants : aliased Discriminant_Specification_List;  -- a_nodes.h:1079
-   end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1078
-
-   subtype Known_Discriminant_Part_Struct is u_Known_Discriminant_Part_Struct;  -- a_nodes.h:1080
-
-   type u_Record_Definition_Struct is record
-      Record_Components : aliased Record_Component_List;  -- a_nodes.h:1083
-      Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1084
-   end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1082
-
-   subtype Record_Definition_Struct is u_Record_Definition_Struct;  -- a_nodes.h:1085
-
-   type u_Variant_Part_Struct is record
-      Discriminant_Direct_Name : aliased Name;  -- a_nodes.h:1088
-      Variants : aliased Variant_List;  -- a_nodes.h:1089
+      Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1088
+      Subtype_Mark : aliased Expression;  -- a_nodes.h:1091
+      Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1092
+      Lower_Bound : aliased Expression;  -- a_nodes.h:1094
+      Upper_Bound : aliased Expression;  -- a_nodes.h:1095
+      Range_Attribute : aliased Expression;  -- a_nodes.h:1097
    end record
    with Convention => C_Pass_By_Copy;  -- a_nodes.h:1087
 
-   subtype Variant_Part_Struct is u_Variant_Part_Struct;  -- a_nodes.h:1090
+   subtype Discrete_Range_Struct is u_Discrete_Range_Struct;  -- a_nodes.h:1098
+
+   type u_Known_Discriminant_Part_Struct is record
+      Discriminants : aliased Discriminant_Specification_List;  -- a_nodes.h:1101
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1100
+
+   subtype Known_Discriminant_Part_Struct is u_Known_Discriminant_Part_Struct;  -- a_nodes.h:1102
+
+   type u_Record_Definition_Struct is record
+      Record_Components : aliased Record_Component_List;  -- a_nodes.h:1105
+      Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1106
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1104
+
+   subtype Record_Definition_Struct is u_Record_Definition_Struct;  -- a_nodes.h:1107
+
+   type u_Variant_Part_Struct is record
+      Discriminant_Direct_Name : aliased Name;  -- a_nodes.h:1110
+      Variants : aliased Variant_List;  -- a_nodes.h:1111
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1109
+
+   subtype Variant_Part_Struct is u_Variant_Part_Struct;  -- a_nodes.h:1112
 
    type u_Variant_Struct is record
-      Record_Components : aliased Record_Component_List;  -- a_nodes.h:1093
-      Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1094
-      Variant_Choices : aliased Element_ID_List;  -- a_nodes.h:1095
+      Record_Components : aliased Record_Component_List;  -- a_nodes.h:1115
+      Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1116
+      Variant_Choices : aliased Element_ID_List;  -- a_nodes.h:1117
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1092
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1114
 
-   subtype Variant_Struct is u_Variant_Struct;  -- a_nodes.h:1096
+   subtype Variant_Struct is u_Variant_Struct;  -- a_nodes.h:1118
 
    type u_Access_Definition_Struct is record
-      Access_Definition_Kind : aliased Access_Definition_Kinds;  -- a_nodes.h:1099
-      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:1100
-      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:1104
-      Anonymous_Access_To_Object_Subtype_Mark : aliased Expression;  -- a_nodes.h:1107
-      Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:1112
-      Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:1115
+      Access_Definition_Kind : aliased Access_Definition_Kinds;  -- a_nodes.h:1121
+      Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:1122
+      Is_Not_Null_Return : aliased Extensions.bool;  -- a_nodes.h:1126
+      Anonymous_Access_To_Object_Subtype_Mark : aliased Expression;  -- a_nodes.h:1129
+      Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:1134
+      Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:1137
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1098
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1120
 
-   subtype Access_Definition_Struct is u_Access_Definition_Struct;  -- a_nodes.h:1116
+   subtype Access_Definition_Struct is u_Access_Definition_Struct;  -- a_nodes.h:1138
 
    type u_Private_Type_Definition_Struct is record
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1119
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1120
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1121
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1141
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1142
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1143
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1118
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1140
 
-   subtype Private_Type_Definition_Struct is u_Private_Type_Definition_Struct;  -- a_nodes.h:1122
+   subtype Private_Type_Definition_Struct is u_Private_Type_Definition_Struct;  -- a_nodes.h:1144
 
    type u_Tagged_Private_Type_Definition_Struct is record
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1125
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1126
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1127
-      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:1128
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1147
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1148
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1149
+      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:1150
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1124
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1146
 
-   subtype Tagged_Private_Type_Definition_Struct is u_Tagged_Private_Type_Definition_Struct;  -- a_nodes.h:1129
+   subtype Tagged_Private_Type_Definition_Struct is u_Tagged_Private_Type_Definition_Struct;  -- a_nodes.h:1151
 
    type u_Private_Extension_Definition_Struct is record
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1132
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1133
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1134
-      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:1135
-      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:1136
-      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1137
-      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1138
-      Ancestor_Subtype_Indication : aliased Subtype_Indication;  -- a_nodes.h:1139
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1154
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1155
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1156
+      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:1157
+      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:1158
+      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1159
+      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1160
+      Ancestor_Subtype_Indication : aliased Subtype_Indication;  -- a_nodes.h:1161
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1131
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1153
 
-   subtype Private_Extension_Definition_Struct is u_Private_Extension_Definition_Struct;  -- a_nodes.h:1140
+   subtype Private_Extension_Definition_Struct is u_Private_Extension_Definition_Struct;  -- a_nodes.h:1162
 
    type u_Task_Definition_Struct is record
-      Has_Task : aliased Extensions.bool;  -- a_nodes.h:1143
-      Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1144
-      Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1145
-      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1146
+      Has_Task : aliased Extensions.bool;  -- a_nodes.h:1165
+      Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1166
+      Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1167
+      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1168
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1142
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1164
 
-   subtype Task_Definition_Struct is u_Task_Definition_Struct;  -- a_nodes.h:1147
+   subtype Task_Definition_Struct is u_Task_Definition_Struct;  -- a_nodes.h:1169
 
    type u_Protected_Definition_Struct is record
-      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:1150
-      Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1151
-      Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1152
-      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1153
+      Has_Protected : aliased Extensions.bool;  -- a_nodes.h:1172
+      Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1173
+      Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1174
+      Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1175
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1149
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1171
 
-   subtype Protected_Definition_Struct is u_Protected_Definition_Struct;  -- a_nodes.h:1154
+   subtype Protected_Definition_Struct is u_Protected_Definition_Struct;  -- a_nodes.h:1176
 
    type u_Formal_Type_Definition_Struct is record
-      Formal_Type_Kind : aliased Formal_Type_Kinds;  -- a_nodes.h:1157
-      Corresponding_Type_Operators : aliased Declaration_List;  -- a_nodes.h:1158
-      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1163
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1164
-      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1167
-      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:1169
-      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:1171
-      Interface_Kind : aliased Interface_Kinds;  -- a_nodes.h:1173
-      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:1175
-      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1176
-      Index_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1178
-      Discrete_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1180
-      Array_Component_Definition : aliased Component_Definition;  -- a_nodes.h:1183
-      Subtype_Mark : aliased Expression;  -- a_nodes.h:1185
-      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1188
-      Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1190
+      Formal_Type_Kind : aliased Formal_Type_Kinds;  -- a_nodes.h:1179
+      Corresponding_Type_Operators : aliased Declaration_List;  -- a_nodes.h:1180
+      Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1185
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1186
+      Has_Private : aliased Extensions.bool;  -- a_nodes.h:1189
+      Has_Synchronized : aliased Extensions.bool;  -- a_nodes.h:1191
+      Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:1193
+      Interface_Kind : aliased Interface_Kinds;  -- a_nodes.h:1195
+      Implicit_Inherited_Declarations : aliased Declaration_List;  -- a_nodes.h:1197
+      Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1198
+      Index_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1200
+      Discrete_Subtype_Definitions : aliased Expression_List;  -- a_nodes.h:1202
+      Array_Component_Definition : aliased Component_Definition;  -- a_nodes.h:1205
+      Subtype_Mark : aliased Expression;  -- a_nodes.h:1207
+      Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1210
+      Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1212
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1156
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1178
 
-   subtype Formal_Type_Definition_Struct is u_Formal_Type_Definition_Struct;  -- a_nodes.h:1191
+   subtype Formal_Type_Definition_Struct is u_Formal_Type_Definition_Struct;  -- a_nodes.h:1213
 
    type u_Aspect_Specification_Struct is record
-      Aspect_Mark : aliased Element_ID;  -- a_nodes.h:1194
-      Aspect_Definition : aliased Element_ID;  -- a_nodes.h:1195
+      Aspect_Mark : aliased Element_ID;  -- a_nodes.h:1216
+      Aspect_Definition : aliased Element_ID;  -- a_nodes.h:1217
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1193
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1215
 
-   subtype Aspect_Specification_Struct is u_Aspect_Specification_Struct;  -- a_nodes.h:1196
+   subtype Aspect_Specification_Struct is u_Aspect_Specification_Struct;  -- a_nodes.h:1218
 
-   subtype No_Struct is int;  -- a_nodes.h:1198
+   subtype No_Struct is int;  -- a_nodes.h:1220
 
-   subtype Unknown_Discriminant_Part_Struct is No_Struct;  -- a_nodes.h:1199
+   subtype Unknown_Discriminant_Part_Struct is No_Struct;  -- a_nodes.h:1221
 
-   subtype Null_Record_Definition_Struct is No_Struct;  -- a_nodes.h:1200
+   subtype Null_Record_Definition_Struct is No_Struct;  -- a_nodes.h:1222
 
-   subtype Null_Component_Struct is No_Struct;  -- a_nodes.h:1201
+   subtype Null_Component_Struct is No_Struct;  -- a_nodes.h:1223
 
-   subtype Others_Choice_Struct is No_Struct;  -- a_nodes.h:1202
+   subtype Others_Choice_Struct is No_Struct;  -- a_nodes.h:1224
 
    type u_Definition_Union (discr : unsigned := 0) is record
       case discr is
          when 0 =>
-            Dummy_Member : aliased int;  -- a_nodes.h:1205
+            Dummy_Member : aliased int;  -- a_nodes.h:1227
          when 1 =>
-            The_Type_Definition : aliased Type_Definition_Struct;  -- a_nodes.h:1206
+            The_Type_Definition : aliased Type_Definition_Struct;  -- a_nodes.h:1228
          when 2 =>
-            The_Subtype_Indication : aliased Subtype_Indication_Struct;  -- a_nodes.h:1207
+            The_Subtype_Indication : aliased Subtype_Indication_Struct;  -- a_nodes.h:1229
          when 3 =>
-            The_Constraint : aliased Constraint_Struct;  -- a_nodes.h:1208
+            The_Constraint : aliased Constraint_Struct;  -- a_nodes.h:1230
          when 4 =>
-            The_Component_Definition : aliased Component_Definition_Struct;  -- a_nodes.h:1209
+            The_Component_Definition : aliased Component_Definition_Struct;  -- a_nodes.h:1231
          when 5 =>
-            The_Discrete_Subtype_Definition : aliased Discrete_Subtype_Definition_Struct;  -- a_nodes.h:1210
+            The_Discrete_Subtype_Definition : aliased Discrete_Subtype_Definition_Struct;  -- a_nodes.h:1232
          when 6 =>
-            The_Discrete_Range : aliased Discrete_Range_Struct;  -- a_nodes.h:1211
+            The_Discrete_Range : aliased Discrete_Range_Struct;  -- a_nodes.h:1233
          when 7 =>
-            The_Unknown_Discriminant_Part : aliased Unknown_Discriminant_Part_Struct;  -- a_nodes.h:1212
+            The_Unknown_Discriminant_Part : aliased Unknown_Discriminant_Part_Struct;  -- a_nodes.h:1234
          when 8 =>
-            The_Known_Discriminant_Part : aliased Known_Discriminant_Part_Struct;  -- a_nodes.h:1213
+            The_Known_Discriminant_Part : aliased Known_Discriminant_Part_Struct;  -- a_nodes.h:1235
          when 9 =>
-            The_Record_Definition : aliased Record_Definition_Struct;  -- a_nodes.h:1214
+            The_Record_Definition : aliased Record_Definition_Struct;  -- a_nodes.h:1236
          when 10 =>
-            The_Null_Record_Definition : aliased Null_Record_Definition_Struct;  -- a_nodes.h:1215
+            The_Null_Record_Definition : aliased Null_Record_Definition_Struct;  -- a_nodes.h:1237
          when 11 =>
-            The_Null_Component : aliased Null_Component_Struct;  -- a_nodes.h:1216
+            The_Null_Component : aliased Null_Component_Struct;  -- a_nodes.h:1238
          when 12 =>
-            The_Variant_Part : aliased Variant_Part_Struct;  -- a_nodes.h:1217
+            The_Variant_Part : aliased Variant_Part_Struct;  -- a_nodes.h:1239
          when 13 =>
-            The_Variant : aliased Variant_Struct;  -- a_nodes.h:1218
+            The_Variant : aliased Variant_Struct;  -- a_nodes.h:1240
          when 14 =>
-            The_Others_Choice : aliased Others_Choice_Struct;  -- a_nodes.h:1219
+            The_Others_Choice : aliased Others_Choice_Struct;  -- a_nodes.h:1241
          when 15 =>
-            The_Access_Definition : aliased Access_Definition_Struct;  -- a_nodes.h:1220
+            The_Access_Definition : aliased Access_Definition_Struct;  -- a_nodes.h:1242
          when 16 =>
-            The_Private_Type_Definition : aliased Private_Type_Definition_Struct;  -- a_nodes.h:1221
+            The_Private_Type_Definition : aliased Private_Type_Definition_Struct;  -- a_nodes.h:1243
          when 17 =>
-            The_Tagged_Private_Type_Definition : aliased Tagged_Private_Type_Definition_Struct;  -- a_nodes.h:1222
+            The_Tagged_Private_Type_Definition : aliased Tagged_Private_Type_Definition_Struct;  -- a_nodes.h:1244
          when 18 =>
-            The_Private_Extension_Definition : aliased Private_Extension_Definition_Struct;  -- a_nodes.h:1223
+            The_Private_Extension_Definition : aliased Private_Extension_Definition_Struct;  -- a_nodes.h:1245
          when 19 =>
-            The_Task_Definition : aliased Task_Definition_Struct;  -- a_nodes.h:1224
+            The_Task_Definition : aliased Task_Definition_Struct;  -- a_nodes.h:1246
          when 20 =>
-            The_Protected_Definition : aliased Protected_Definition_Struct;  -- a_nodes.h:1225
+            The_Protected_Definition : aliased Protected_Definition_Struct;  -- a_nodes.h:1247
          when 21 =>
-            The_Formal_Type_Definition : aliased Formal_Type_Definition_Struct;  -- a_nodes.h:1226
+            The_Formal_Type_Definition : aliased Formal_Type_Definition_Struct;  -- a_nodes.h:1248
          when others =>
-            The_Aspect_Specification : aliased Aspect_Specification_Struct;  -- a_nodes.h:1227
+            The_Aspect_Specification : aliased Aspect_Specification_Struct;  -- a_nodes.h:1249
       end case;
    end record
    with Convention => C_Pass_By_Copy,
-        Unchecked_Union => True;  -- a_nodes.h:1204
+        Unchecked_Union => True;  -- a_nodes.h:1226
 
-   subtype Definition_Union is u_Definition_Union;  -- a_nodes.h:1228
+   subtype Definition_Union is u_Definition_Union;  -- a_nodes.h:1250
 
    type Definition_Struct is record
-      Definition_Kind : aliased Definition_Kinds;  -- a_nodes.h:1232
-      The_Union : aliased Definition_Union;  -- a_nodes.h:1233
+      Definition_Kind : aliased Definition_Kinds;  -- a_nodes.h:1254
+      The_Union : aliased Definition_Union;  -- a_nodes.h:1255
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1231
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1253
 
    type Expression_Kinds is 
      (Not_An_Expression,
@@ -923,7 +927,7 @@ package a_nodes_h is
       An_If_Expression,
       A_For_All_Quantified_Expression,
       A_For_Some_Quantified_Expression)
-   with Convention => C;  -- a_nodes.h:1244
+   with Convention => C;  -- a_nodes.h:1266
 
    type Attribute_Kinds is 
      (Not_An_Attribute,
@@ -1023,52 +1027,52 @@ package a_nodes_h is
       An_Overlaps_Storage_Attribute,
       An_Implementation_Defined_Attribute,
       An_Unknown_Attribute)
-   with Convention => C;  -- a_nodes.h:1289
+   with Convention => C;  -- a_nodes.h:1311
 
    type Expression_Struct is record
-      Expression_Kind : aliased Expression_Kinds;  -- a_nodes.h:1402
-      Is_Prefix_Notation : aliased Extensions.bool;  -- a_nodes.h:1403
-      Corresponding_Expression_Type : aliased Declaration_ID;  -- a_nodes.h:1404
-      Corresponding_Expression_Type_Definition : aliased Element_ID;  -- a_nodes.h:1405
-      Operator_Kind : aliased Operator_Kinds;  -- a_nodes.h:1409
-      Attribute_Kind : aliased Attribute_Kinds;  -- a_nodes.h:1414
-      Value_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1415
-      Name_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1420
-      Corresponding_Name_Definition : aliased Defining_Name_ID;  -- a_nodes.h:1421
-      Corresponding_Name_Definition_List : aliased Defining_Name_List;  -- a_nodes.h:1422
-      Corresponding_Name_Declaration : aliased Element_ID;  -- a_nodes.h:1423
-      Prefix : aliased Expression_ID;  -- a_nodes.h:1430
-      Index_Expressions : aliased Expression_List;  -- a_nodes.h:1432
-      Slice_Range : aliased Discrete_Range_ID;  -- a_nodes.h:1434
-      Selector : aliased Expression_ID;  -- a_nodes.h:1436
-      Attribute_Designator_Identifier : aliased Expression_ID;  -- a_nodes.h:1438
-      Attribute_Designator_Expressions : aliased Expression_List;  -- a_nodes.h:1447
-      Record_Component_Associations : aliased Association_List;  -- a_nodes.h:1450
-      Extension_Aggregate_Expression : aliased Expression_ID;  -- a_nodes.h:1452
-      Array_Component_Associations : aliased Association_List;  -- a_nodes.h:1455
-      Expression_Parenthesized : aliased Expression_ID;  -- a_nodes.h:1457
-      Is_Prefix_Call : aliased Extensions.bool;  -- a_nodes.h:1459
-      Corresponding_Called_Function : aliased Declaration_ID;  -- a_nodes.h:1462
-      Function_Call_Parameters : aliased Element_ID_List;  -- a_nodes.h:1464
-      Short_Circuit_Operation_Left_Expression : aliased Expression_ID;  -- a_nodes.h:1467
-      Short_Circuit_Operation_Right_Expression : aliased Expression_ID;  -- a_nodes.h:1468
-      Membership_Test_Expression : aliased Expression_ID;  -- a_nodes.h:1471
-      Membership_Test_Choices : aliased Element_ID_List;  -- a_nodes.h:1472
-      Converted_Or_Qualified_Subtype_Mark : aliased Expression_ID;  -- a_nodes.h:1475
-      Converted_Or_Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1476
-      Allocator_Subtype_Indication : aliased Subtype_Indication_ID;  -- a_nodes.h:1478
-      Allocator_Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1480
-      Expression_Paths : aliased Expression_Path_List;  -- a_nodes.h:1483
-      Is_Generalized_Indexing : aliased Extensions.bool;  -- a_nodes.h:1485
-      Is_Generalized_Reference : aliased Extensions.bool;  -- a_nodes.h:1487
-      Iterator_Specification : aliased Declaration_ID;  -- a_nodes.h:1490
-      Predicate : aliased Expression_ID;  -- a_nodes.h:1493
-      Subpool_Name : aliased Expression_ID;  -- a_nodes.h:1496
-      Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:1501
-      Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1503
-      Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1504
+      Expression_Kind : aliased Expression_Kinds;  -- a_nodes.h:1424
+      Is_Prefix_Notation : aliased Extensions.bool;  -- a_nodes.h:1425
+      Corresponding_Expression_Type : aliased Declaration_ID;  -- a_nodes.h:1426
+      Corresponding_Expression_Type_Definition : aliased Element_ID;  -- a_nodes.h:1427
+      Operator_Kind : aliased Operator_Kinds;  -- a_nodes.h:1431
+      Attribute_Kind : aliased Attribute_Kinds;  -- a_nodes.h:1436
+      Value_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1437
+      Name_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1442
+      Corresponding_Name_Definition : aliased Defining_Name_ID;  -- a_nodes.h:1443
+      Corresponding_Name_Definition_List : aliased Defining_Name_List;  -- a_nodes.h:1444
+      Corresponding_Name_Declaration : aliased Element_ID;  -- a_nodes.h:1445
+      Prefix : aliased Expression_ID;  -- a_nodes.h:1452
+      Index_Expressions : aliased Expression_List;  -- a_nodes.h:1454
+      Slice_Range : aliased Discrete_Range_ID;  -- a_nodes.h:1456
+      Selector : aliased Expression_ID;  -- a_nodes.h:1458
+      Attribute_Designator_Identifier : aliased Expression_ID;  -- a_nodes.h:1460
+      Attribute_Designator_Expressions : aliased Expression_List;  -- a_nodes.h:1469
+      Record_Component_Associations : aliased Association_List;  -- a_nodes.h:1472
+      Extension_Aggregate_Expression : aliased Expression_ID;  -- a_nodes.h:1474
+      Array_Component_Associations : aliased Association_List;  -- a_nodes.h:1477
+      Expression_Parenthesized : aliased Expression_ID;  -- a_nodes.h:1479
+      Is_Prefix_Call : aliased Extensions.bool;  -- a_nodes.h:1481
+      Corresponding_Called_Function : aliased Declaration_ID;  -- a_nodes.h:1484
+      Function_Call_Parameters : aliased Element_ID_List;  -- a_nodes.h:1486
+      Short_Circuit_Operation_Left_Expression : aliased Expression_ID;  -- a_nodes.h:1489
+      Short_Circuit_Operation_Right_Expression : aliased Expression_ID;  -- a_nodes.h:1490
+      Membership_Test_Expression : aliased Expression_ID;  -- a_nodes.h:1493
+      Membership_Test_Choices : aliased Element_ID_List;  -- a_nodes.h:1494
+      Converted_Or_Qualified_Subtype_Mark : aliased Expression_ID;  -- a_nodes.h:1497
+      Converted_Or_Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1498
+      Allocator_Subtype_Indication : aliased Subtype_Indication_ID;  -- a_nodes.h:1500
+      Allocator_Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1502
+      Expression_Paths : aliased Expression_Path_List;  -- a_nodes.h:1505
+      Is_Generalized_Indexing : aliased Extensions.bool;  -- a_nodes.h:1507
+      Is_Generalized_Reference : aliased Extensions.bool;  -- a_nodes.h:1509
+      Iterator_Specification : aliased Declaration_ID;  -- a_nodes.h:1512
+      Predicate : aliased Expression_ID;  -- a_nodes.h:1515
+      Subpool_Name : aliased Expression_ID;  -- a_nodes.h:1518
+      Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:1523
+      Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1525
+      Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1526
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1401
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1423
 
    type Association_Kinds is 
      (Not_An_Association,
@@ -1078,21 +1082,21 @@ package a_nodes_h is
       An_Array_Component_Association,
       A_Parameter_Association,
       A_Generic_Association)
-   with Convention => C;  -- a_nodes.h:1515
+   with Convention => C;  -- a_nodes.h:1537
 
    type Association_Struct is record
-      Association_Kind : aliased Association_Kinds;  -- a_nodes.h:1528
-      Array_Component_Choices : aliased Expression_List;  -- a_nodes.h:1531
-      Record_Component_Choices : aliased Expression_List;  -- a_nodes.h:1533
-      Component_Expression : aliased Expression_ID;  -- a_nodes.h:1536
-      Formal_Parameter : aliased Expression_ID;  -- a_nodes.h:1540
-      Actual_Parameter : aliased Expression_ID;  -- a_nodes.h:1541
-      Discriminant_Selector_Names : aliased Expression_List;  -- a_nodes.h:1543
-      Discriminant_Expression : aliased Expression_ID;  -- a_nodes.h:1544
-      Is_Normalized : aliased Extensions.bool;  -- a_nodes.h:1549
-      Is_Defaulted_Association : aliased Extensions.bool;  -- a_nodes.h:1553
+      Association_Kind : aliased Association_Kinds;  -- a_nodes.h:1550
+      Array_Component_Choices : aliased Expression_List;  -- a_nodes.h:1553
+      Record_Component_Choices : aliased Expression_List;  -- a_nodes.h:1555
+      Component_Expression : aliased Expression_ID;  -- a_nodes.h:1558
+      Formal_Parameter : aliased Expression_ID;  -- a_nodes.h:1562
+      Actual_Parameter : aliased Expression_ID;  -- a_nodes.h:1563
+      Discriminant_Selector_Names : aliased Expression_List;  -- a_nodes.h:1565
+      Discriminant_Expression : aliased Expression_ID;  -- a_nodes.h:1566
+      Is_Normalized : aliased Extensions.bool;  -- a_nodes.h:1571
+      Is_Defaulted_Association : aliased Extensions.bool;  -- a_nodes.h:1575
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1527
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1549
 
    type Statement_Kinds is 
      (Not_A_Statement,
@@ -1123,57 +1127,57 @@ package a_nodes_h is
       An_Abort_Statement,
       A_Raise_Statement,
       A_Code_Statement)
-   with Convention => C;  -- a_nodes.h:1564
+   with Convention => C;  -- a_nodes.h:1586
 
    type Statement_Struct is record
-      Statement_Kind : aliased Statement_Kinds;  -- a_nodes.h:1601
-      Corresponding_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1602
-      Label_Names : aliased Defining_Name_List;  -- a_nodes.h:1603
-      Is_Prefix_Notation : aliased Extensions.bool;  -- a_nodes.h:1607
-      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1614
-      Corresponding_End_Name : aliased Element_ID;  -- a_nodes.h:1620
-      Assignment_Variable_Name : aliased Expression_ID;  -- a_nodes.h:1622
-      Assignment_Expression : aliased Expression_ID;  -- a_nodes.h:1623
-      Statement_Paths : aliased Path_List;  -- a_nodes.h:1630
-      Case_Expression : aliased Expression_ID;  -- a_nodes.h:1632
-      Statement_Identifier : aliased Defining_Name_ID;  -- a_nodes.h:1637
-      Is_Name_Repeated : aliased Extensions.bool;  -- a_nodes.h:1641
-      While_Condition : aliased Expression_ID;  -- a_nodes.h:1643
-      For_Loop_Parameter_Specification : aliased Declaration_ID;  -- a_nodes.h:1645
-      Loop_Statements : aliased Statement_List;  -- a_nodes.h:1649
-      Is_Declare_Block : aliased Extensions.bool;  -- a_nodes.h:1651
-      Block_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:1652
-      Block_Statements : aliased Statement_List;  -- a_nodes.h:1653
-      Block_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:1654
-      Exit_Loop_Name : aliased Expression_ID;  -- a_nodes.h:1656
-      Exit_Condition : aliased Expression_ID;  -- a_nodes.h:1657
-      Corresponding_Loop_Exited : aliased Expression_ID;  -- a_nodes.h:1658
-      Return_Expression : aliased Expression_ID;  -- a_nodes.h:1660
-      Return_Object_Declaration : aliased Declaration_ID;  -- a_nodes.h:1663
-      Extended_Return_Statements : aliased Statement_List;  -- a_nodes.h:1664
-      Extended_Return_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:1665
-      Goto_Label : aliased Expression_ID;  -- a_nodes.h:1667
-      Corresponding_Destination_Statement : aliased Statement_ID;  -- a_nodes.h:1668
-      Called_Name : aliased Expression_ID;  -- a_nodes.h:1671
-      Corresponding_Called_Entity : aliased Declaration_ID;  -- a_nodes.h:1672
-      Call_Statement_Parameters : aliased Association_List;  -- a_nodes.h:1673
-      Accept_Entry_Index : aliased Expression_ID;  -- a_nodes.h:1676
-      Accept_Entry_Direct_Name : aliased Name_ID;  -- a_nodes.h:1677
-      Accept_Parameters : aliased Parameter_Specification_List;  -- a_nodes.h:1679
-      Accept_Body_Statements : aliased Statement_List;  -- a_nodes.h:1680
-      Accept_Body_Exception_Handlers : aliased Statement_List;  -- a_nodes.h:1681
-      Corresponding_Entry : aliased Declaration_ID;  -- a_nodes.h:1682
-      Requeue_Entry_Name : aliased Name_ID;  -- a_nodes.h:1685
-      Delay_Expression : aliased Expression_ID;  -- a_nodes.h:1688
-      Aborted_Tasks : aliased Expression_List;  -- a_nodes.h:1690
-      Raised_Exception : aliased Expression_ID;  -- a_nodes.h:1692
-      Associated_Message : aliased Expression_ID;  -- a_nodes.h:1693
-      Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1695
-      Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1697
-      Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1698
-      Corresponding_Called_Entity_Unwound : aliased Declaration;  -- a_nodes.h:1701
+      Statement_Kind : aliased Statement_Kinds;  -- a_nodes.h:1623
+      Corresponding_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1624
+      Label_Names : aliased Defining_Name_List;  -- a_nodes.h:1625
+      Is_Prefix_Notation : aliased Extensions.bool;  -- a_nodes.h:1629
+      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1636
+      Corresponding_End_Name : aliased Element_ID;  -- a_nodes.h:1642
+      Assignment_Variable_Name : aliased Expression_ID;  -- a_nodes.h:1644
+      Assignment_Expression : aliased Expression_ID;  -- a_nodes.h:1645
+      Statement_Paths : aliased Path_List;  -- a_nodes.h:1652
+      Case_Expression : aliased Expression_ID;  -- a_nodes.h:1654
+      Statement_Identifier : aliased Defining_Name_ID;  -- a_nodes.h:1659
+      Is_Name_Repeated : aliased Extensions.bool;  -- a_nodes.h:1663
+      While_Condition : aliased Expression_ID;  -- a_nodes.h:1665
+      For_Loop_Parameter_Specification : aliased Declaration_ID;  -- a_nodes.h:1667
+      Loop_Statements : aliased Statement_List;  -- a_nodes.h:1671
+      Is_Declare_Block : aliased Extensions.bool;  -- a_nodes.h:1673
+      Block_Declarative_Items : aliased Declarative_Item_List;  -- a_nodes.h:1674
+      Block_Statements : aliased Statement_List;  -- a_nodes.h:1675
+      Block_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:1676
+      Exit_Loop_Name : aliased Expression_ID;  -- a_nodes.h:1678
+      Exit_Condition : aliased Expression_ID;  -- a_nodes.h:1679
+      Corresponding_Loop_Exited : aliased Expression_ID;  -- a_nodes.h:1680
+      Return_Expression : aliased Expression_ID;  -- a_nodes.h:1682
+      Return_Object_Declaration : aliased Declaration_ID;  -- a_nodes.h:1685
+      Extended_Return_Statements : aliased Statement_List;  -- a_nodes.h:1686
+      Extended_Return_Exception_Handlers : aliased Exception_Handler_List;  -- a_nodes.h:1687
+      Goto_Label : aliased Expression_ID;  -- a_nodes.h:1689
+      Corresponding_Destination_Statement : aliased Statement_ID;  -- a_nodes.h:1690
+      Called_Name : aliased Expression_ID;  -- a_nodes.h:1693
+      Corresponding_Called_Entity : aliased Declaration_ID;  -- a_nodes.h:1694
+      Call_Statement_Parameters : aliased Association_List;  -- a_nodes.h:1695
+      Accept_Entry_Index : aliased Expression_ID;  -- a_nodes.h:1698
+      Accept_Entry_Direct_Name : aliased Name_ID;  -- a_nodes.h:1699
+      Accept_Parameters : aliased Parameter_Specification_List;  -- a_nodes.h:1701
+      Accept_Body_Statements : aliased Statement_List;  -- a_nodes.h:1702
+      Accept_Body_Exception_Handlers : aliased Statement_List;  -- a_nodes.h:1703
+      Corresponding_Entry : aliased Declaration_ID;  -- a_nodes.h:1704
+      Requeue_Entry_Name : aliased Name_ID;  -- a_nodes.h:1707
+      Delay_Expression : aliased Expression_ID;  -- a_nodes.h:1710
+      Aborted_Tasks : aliased Expression_List;  -- a_nodes.h:1712
+      Raised_Exception : aliased Expression_ID;  -- a_nodes.h:1714
+      Associated_Message : aliased Expression_ID;  -- a_nodes.h:1715
+      Qualified_Expression : aliased Expression_ID;  -- a_nodes.h:1717
+      Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1719
+      Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1720
+      Corresponding_Called_Entity_Unwound : aliased Declaration;  -- a_nodes.h:1723
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1600
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1622
 
    type Path_Kinds is 
      (Not_A_Path,
@@ -1188,17 +1192,17 @@ package a_nodes_h is
       An_If_Expression_Path,
       An_Elsif_Expression_Path,
       An_Else_Expression_Path)
-   with Convention => C;  -- a_nodes.h:1712
+   with Convention => C;  -- a_nodes.h:1734
 
    type Path_Struct is record
-      Path_Kind : aliased Path_Kinds;  -- a_nodes.h:1768
-      Sequence_Of_Statements : aliased Statement_List;  -- a_nodes.h:1769
-      Dependent_Expression : aliased Expression;  -- a_nodes.h:1770
-      Condition_Expression : aliased Expression_ID;  -- a_nodes.h:1775
-      Case_Path_Alternative_Choices : aliased Element_ID_List;  -- a_nodes.h:1778
-      Guard : aliased Expression_ID;  -- a_nodes.h:1781
+      Path_Kind : aliased Path_Kinds;  -- a_nodes.h:1790
+      Sequence_Of_Statements : aliased Statement_List;  -- a_nodes.h:1791
+      Dependent_Expression : aliased Expression;  -- a_nodes.h:1792
+      Condition_Expression : aliased Expression_ID;  -- a_nodes.h:1797
+      Case_Path_Alternative_Choices : aliased Element_ID_List;  -- a_nodes.h:1800
+      Guard : aliased Expression_ID;  -- a_nodes.h:1803
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1767
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1789
 
    type Clause_Kinds is 
      (Not_A_Clause,
@@ -1208,7 +1212,7 @@ package a_nodes_h is
       A_With_Clause,
       A_Representation_Clause,
       A_Component_Clause)
-   with Convention => C;  -- a_nodes.h:1792
+   with Convention => C;  -- a_nodes.h:1814
 
    type u_Representation_Clause_Kinds is 
      (Not_A_Representation_Clause,
@@ -1216,117 +1220,114 @@ package a_nodes_h is
       An_Enumeration_Representation_Clause,
       A_Record_Representation_Clause,
       An_At_Clause)
-   with Convention => C;  -- a_nodes.h:1804
+   with Convention => C;  -- a_nodes.h:1826
 
-   subtype Representation_Clause_Kinds is u_Representation_Clause_Kinds;  -- a_nodes.h:1810
+   subtype Representation_Clause_Kinds is u_Representation_Clause_Kinds;  -- a_nodes.h:1832
 
    type u_Representation_Clause_Struct is record
-      Representation_Clause_Kind : aliased Representation_Clause_Kinds;  -- a_nodes.h:1813
-      Representation_Clause_Name : aliased Name;  -- a_nodes.h:1814
-      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1818
-      Representation_Clause_Expression : aliased Expression;  -- a_nodes.h:1822
-      Mod_Clause_Expression : aliased Expression;  -- a_nodes.h:1824
-      Component_Clauses : aliased Component_Clause_List;  -- a_nodes.h:1825
+      Representation_Clause_Kind : aliased Representation_Clause_Kinds;  -- a_nodes.h:1835
+      Representation_Clause_Name : aliased Name;  -- a_nodes.h:1836
+      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1839
+      Representation_Clause_Expression : aliased Expression;  -- a_nodes.h:1843
+      Mod_Clause_Expression : aliased Expression;  -- a_nodes.h:1845
+      Component_Clauses : aliased Component_Clause_List;  -- a_nodes.h:1846
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1812
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1834
 
-   subtype Representation_Clause_Struct is u_Representation_Clause_Struct;  -- a_nodes.h:1826
+   subtype Representation_Clause_Struct is u_Representation_Clause_Struct;  -- a_nodes.h:1847
 
    type Clause_Struct is record
-      Clause_Kind : aliased Clause_Kinds;  -- a_nodes.h:1830
-      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1833
-      Clause_Names : aliased Name_List;  -- a_nodes.h:1838
-      Representation_Clause_Name : aliased Name_ID;  -- a_nodes.h:1840
-      Representation_Clause_Expression : aliased Expression_ID;  -- a_nodes.h:1841
-      Mod_Clause_Expression : aliased Expression_ID;  -- a_nodes.h:1842
-      Component_Clauses : aliased Element_ID_List;  -- a_nodes.h:1843
-      Component_Clause_Position : aliased Expression_ID;  -- a_nodes.h:1844
-      Component_Clause_Range : aliased Element_ID;  -- a_nodes.h:1845
-      Representation_Clause : aliased Representation_Clause_Struct;  -- a_nodes.h:1848
+      Clause_Kind : aliased Clause_Kinds;  -- a_nodes.h:1851
+      Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1854
+      Clause_Names : aliased Name_List;  -- a_nodes.h:1859
+      Representation_Clause_Name : aliased Name_ID;  -- a_nodes.h:1861
+      Component_Clause_Position : aliased Expression_ID;  -- a_nodes.h:1862
+      Component_Clause_Range : aliased Element_ID;  -- a_nodes.h:1863
+      Representation_Clause : aliased Representation_Clause_Struct;  -- a_nodes.h:1866
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1829
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1850
 
    type Exception_Handler_Struct is record
-      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1864
-      Choice_Parameter_Specification : aliased Declaration_ID;  -- a_nodes.h:1865
-      Exception_Choices : aliased Element_ID_List;  -- a_nodes.h:1866
-      Handler_Statements : aliased Statement_List;  -- a_nodes.h:1867
+      Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1882
+      Choice_Parameter_Specification : aliased Declaration_ID;  -- a_nodes.h:1883
+      Exception_Choices : aliased Element_ID_List;  -- a_nodes.h:1884
+      Handler_Statements : aliased Statement_List;  -- a_nodes.h:1885
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1863
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1881
 
    type Element_Union (discr : unsigned := 0) is record
       case discr is
          when 0 =>
-            Dummy_Member : aliased int;  -- a_nodes.h:1880
+            Dummy_Member : aliased int;  -- a_nodes.h:1898
          when 1 =>
-            The_Pragma : aliased Pragma_Struct;  -- a_nodes.h:1881
+            The_Pragma : aliased Pragma_Struct;  -- a_nodes.h:1899
          when 2 =>
-            Defining_Name : aliased Defining_Name_Struct;  -- a_nodes.h:1882
+            Defining_Name : aliased Defining_Name_Struct;  -- a_nodes.h:1900
          when 3 =>
-            Declaration : aliased Declaration_Struct;  -- a_nodes.h:1883
+            Declaration : aliased Declaration_Struct;  -- a_nodes.h:1901
          when 4 =>
-            Definition : aliased Definition_Struct;  -- a_nodes.h:1884
+            Definition : aliased Definition_Struct;  -- a_nodes.h:1902
          when 5 =>
-            Expression : aliased Expression_Struct;  -- a_nodes.h:1885
+            Expression : aliased Expression_Struct;  -- a_nodes.h:1903
          when 6 =>
-            Association : aliased Association_Struct;  -- a_nodes.h:1886
+            Association : aliased Association_Struct;  -- a_nodes.h:1904
          when 7 =>
-            Statement : aliased Statement_Struct;  -- a_nodes.h:1887
+            Statement : aliased Statement_Struct;  -- a_nodes.h:1905
          when 8 =>
-            Path : aliased Path_Struct;  -- a_nodes.h:1888
+            Path : aliased Path_Struct;  -- a_nodes.h:1906
          when 9 =>
-            Clause : aliased Clause_Struct;  -- a_nodes.h:1889
+            Clause : aliased Clause_Struct;  -- a_nodes.h:1907
          when others =>
-            Exception_Handler : aliased Exception_Handler_Struct;  -- a_nodes.h:1890
+            Exception_Handler : aliased Exception_Handler_Struct;  -- a_nodes.h:1908
       end case;
    end record
    with Convention => C_Pass_By_Copy,
-        Unchecked_Union => True;  -- a_nodes.h:1879
+        Unchecked_Union => True;  -- a_nodes.h:1897
 
    type Enclosing_Kinds is 
      (Not_Enclosing,
       Enclosing_Element,
       Enclosing_Unit)
-   with Convention => C;  -- a_nodes.h:1893
+   with Convention => C;  -- a_nodes.h:1911
 
    type Source_Location_Struct is record
-      Unit_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1901
-      First_Line : aliased int;  -- a_nodes.h:1902
-      First_Column : aliased int;  -- a_nodes.h:1903
-      Last_Line : aliased int;  -- a_nodes.h:1904
-      Last_Column : aliased int;  -- a_nodes.h:1905
+      Unit_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1919
+      First_Line : aliased int;  -- a_nodes.h:1920
+      First_Column : aliased int;  -- a_nodes.h:1921
+      Last_Line : aliased int;  -- a_nodes.h:1922
+      Last_Column : aliased int;  -- a_nodes.h:1923
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1900
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1918
 
-   subtype Unit_ID is int;  -- a_nodes.h:1909
+   subtype Unit_ID is int;  -- a_nodes.h:1927
 
    type u_Element_Struct is record
-      ID : aliased Element_ID;  -- a_nodes.h:1913
-      Element_Kind : aliased Element_Kinds;  -- a_nodes.h:1914
-      Enclosing_Compilation_Unit : aliased Unit_ID;  -- a_nodes.h:1915
-      Is_Part_Of_Implicit : aliased Extensions.bool;  -- a_nodes.h:1916
-      Is_Part_Of_Inherited : aliased Extensions.bool;  -- a_nodes.h:1917
-      Is_Part_Of_Instance : aliased Extensions.bool;  -- a_nodes.h:1918
-      Hash : aliased ASIS_Integer;  -- a_nodes.h:1919
-      Enclosing_Element_ID : aliased Element_ID;  -- a_nodes.h:1920
-      Enclosing_Kind : aliased Enclosing_Kinds;  -- a_nodes.h:1921
-      Source_Location : aliased Source_Location_Struct;  -- a_nodes.h:1922
-      Debug_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1923
-      The_Union : aliased Element_Union;  -- a_nodes.h:1924
+      ID : aliased Element_ID;  -- a_nodes.h:1931
+      Element_Kind : aliased Element_Kinds;  -- a_nodes.h:1932
+      Enclosing_Compilation_Unit : aliased Unit_ID;  -- a_nodes.h:1933
+      Is_Part_Of_Implicit : aliased Extensions.bool;  -- a_nodes.h:1934
+      Is_Part_Of_Inherited : aliased Extensions.bool;  -- a_nodes.h:1935
+      Is_Part_Of_Instance : aliased Extensions.bool;  -- a_nodes.h:1936
+      Hash : aliased ASIS_Integer;  -- a_nodes.h:1937
+      Enclosing_Element_ID : aliased Element_ID;  -- a_nodes.h:1938
+      Enclosing_Kind : aliased Enclosing_Kinds;  -- a_nodes.h:1939
+      Source_Location : aliased Source_Location_Struct;  -- a_nodes.h:1940
+      Debug_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1941
+      The_Union : aliased Element_Union;  -- a_nodes.h:1942
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1912
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1930
 
-   subtype Element_Struct is u_Element_Struct;  -- a_nodes.h:1925
+   subtype Element_Struct is u_Element_Struct;  -- a_nodes.h:1943
 
-   type Unit_ID_Ptr is access all Unit_ID;  -- a_nodes.h:1935
+   type Unit_ID_Ptr is access all Unit_ID;  -- a_nodes.h:1953
 
    type Unit_ID_Array_Struct is record
-      Length : aliased int;  -- a_nodes.h:1940
-      IDs : Unit_ID_Ptr;  -- a_nodes.h:1941
+      Length : aliased int;  -- a_nodes.h:1958
+      IDs : Unit_ID_Ptr;  -- a_nodes.h:1959
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1939
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1957
 
-   subtype Unit_List is Unit_ID_Array_Struct;  -- a_nodes.h:1943
+   subtype Unit_List is Unit_ID_Array_Struct;  -- a_nodes.h:1961
 
    type Unit_Kinds is 
      (Not_A_Unit,
@@ -1357,7 +1358,7 @@ package a_nodes_h is
       A_Nonexistent_Body,
       A_Configuration_Compilation,
       An_Unknown_Unit)
-   with Convention => C;  -- a_nodes.h:1945
+   with Convention => C;  -- a_nodes.h:1963
 
    type Unit_Classes is 
      (Not_A_Class,
@@ -1367,86 +1368,86 @@ package a_nodes_h is
       A_Private_Declaration,
       A_Private_Body,
       A_Separate_Body)
-   with Convention => C;  -- a_nodes.h:2012
+   with Convention => C;  -- a_nodes.h:2030
 
    type Unit_Origins is 
      (Not_An_Origin,
       A_Predefined_Unit,
       An_Implementation_Unit,
       An_Application_Unit)
-   with Convention => C;  -- a_nodes.h:2033
+   with Convention => C;  -- a_nodes.h:2051
 
    type u_Unit_Struct is record
-      ID : aliased Unit_ID;  -- a_nodes.h:2053
-      Unit_Kind : aliased Unit_Kinds;  -- a_nodes.h:2054
-      Unit_Class : aliased Unit_Classes;  -- a_nodes.h:2055
-      Unit_Origin : aliased Unit_Origins;  -- a_nodes.h:2056
-      Unit_Full_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2057
-      Unique_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2058
-      Exists : aliased Extensions.bool;  -- a_nodes.h:2059
-      Can_Be_Main_Program : aliased Extensions.bool;  -- a_nodes.h:2060
-      Is_Body_Required : aliased Extensions.bool;  -- a_nodes.h:2061
-      Text_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2062
-      Text_Form : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2063
-      Object_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2064
-      Object_Form : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2065
-      Compilation_Command_Line_Options : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2066
-      Debug_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2067
-      Unit_Declaration : aliased Declaration_ID;  -- a_nodes.h:2068
-      Context_Clause_Elements : aliased Context_Clause_List;  -- a_nodes.h:2069
-      Compilation_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:2070
-      Is_Standard : aliased Extensions.bool;  -- a_nodes.h:2071
-      Corresponding_Children : aliased Unit_List;  -- a_nodes.h:2077
-      Corresponding_Parent_Declaration : aliased Unit_ID;  -- a_nodes.h:2096
-      Corresponding_Declaration : aliased Unit_ID;  -- a_nodes.h:2101
-      Corresponding_Body : aliased Unit_ID;  -- a_nodes.h:2109
-      Subunits : aliased Unit_List;  -- a_nodes.h:2118
-      Corresponding_Subunit_Parent_Body : aliased Unit_ID;  -- a_nodes.h:2124
+      ID : aliased Unit_ID;  -- a_nodes.h:2071
+      Unit_Kind : aliased Unit_Kinds;  -- a_nodes.h:2072
+      Unit_Class : aliased Unit_Classes;  -- a_nodes.h:2073
+      Unit_Origin : aliased Unit_Origins;  -- a_nodes.h:2074
+      Unit_Full_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2075
+      Unique_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2076
+      Exists : aliased Extensions.bool;  -- a_nodes.h:2077
+      Can_Be_Main_Program : aliased Extensions.bool;  -- a_nodes.h:2078
+      Is_Body_Required : aliased Extensions.bool;  -- a_nodes.h:2079
+      Text_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2080
+      Text_Form : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2081
+      Object_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2082
+      Object_Form : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2083
+      Compilation_Command_Line_Options : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2084
+      Debug_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2085
+      Unit_Declaration : aliased Declaration_ID;  -- a_nodes.h:2086
+      Context_Clause_Elements : aliased Context_Clause_List;  -- a_nodes.h:2087
+      Compilation_Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:2088
+      Is_Standard : aliased Extensions.bool;  -- a_nodes.h:2089
+      Corresponding_Children : aliased Unit_List;  -- a_nodes.h:2095
+      Corresponding_Parent_Declaration : aliased Unit_ID;  -- a_nodes.h:2114
+      Corresponding_Declaration : aliased Unit_ID;  -- a_nodes.h:2119
+      Corresponding_Body : aliased Unit_ID;  -- a_nodes.h:2127
+      Subunits : aliased Unit_List;  -- a_nodes.h:2136
+      Corresponding_Subunit_Parent_Body : aliased Unit_ID;  -- a_nodes.h:2142
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2052
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2070
 
-   subtype Unit_Struct is u_Unit_Struct;  -- a_nodes.h:2125
+   subtype Unit_Struct is u_Unit_Struct;  -- a_nodes.h:2143
 
    type u_Context_Struct is record
-      name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2135
-      parameters : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2136
-      debug_image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2137
-   end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2134
-
-   subtype Context_Struct is u_Context_Struct;  -- a_nodes.h:2138
-
-   type u_Unit_Struct_List_Struct;
-   type u_Unit_Struct_List_Struct is record
-      Unit : aliased Unit_Struct;  -- a_nodes.h:2145
-      Next : access u_Unit_Struct_List_Struct;  -- a_nodes.h:2146
-      Next_Count : aliased int;  -- a_nodes.h:2147
-   end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2144
-
-   subtype Unit_Struct_List_Struct is u_Unit_Struct_List_Struct;  -- a_nodes.h:2148
-
-   type Unit_Structs_Ptr is access all Unit_Struct_List_Struct;  -- a_nodes.h:2150
-
-   type u_Element_Struct_List_Struct;
-   type u_Element_Struct_List_Struct is record
-      Element : aliased Element_Struct;  -- a_nodes.h:2153
-      Next : access u_Element_Struct_List_Struct;  -- a_nodes.h:2154
-      Next_Count : aliased int;  -- a_nodes.h:2155
+      name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2153
+      parameters : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2154
+      debug_image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2155
    end record
    with Convention => C_Pass_By_Copy;  -- a_nodes.h:2152
 
-   subtype Element_Struct_List_Struct is u_Element_Struct_List_Struct;  -- a_nodes.h:2156
+   subtype Context_Struct is u_Context_Struct;  -- a_nodes.h:2156
 
-   type Element_Structs_Ptr is access all Element_Struct_List_Struct;  -- a_nodes.h:2158
+   type u_Unit_Struct_List_Struct;
+   type u_Unit_Struct_List_Struct is record
+      Unit : aliased Unit_Struct;  -- a_nodes.h:2163
+      Next : access u_Unit_Struct_List_Struct;  -- a_nodes.h:2164
+      Next_Count : aliased int;  -- a_nodes.h:2165
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2162
+
+   subtype Unit_Struct_List_Struct is u_Unit_Struct_List_Struct;  -- a_nodes.h:2166
+
+   type Unit_Structs_Ptr is access all Unit_Struct_List_Struct;  -- a_nodes.h:2168
+
+   type u_Element_Struct_List_Struct;
+   type u_Element_Struct_List_Struct is record
+      Element : aliased Element_Struct;  -- a_nodes.h:2171
+      Next : access u_Element_Struct_List_Struct;  -- a_nodes.h:2172
+      Next_Count : aliased int;  -- a_nodes.h:2173
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2170
+
+   subtype Element_Struct_List_Struct is u_Element_Struct_List_Struct;  -- a_nodes.h:2174
+
+   type Element_Structs_Ptr is access all Element_Struct_List_Struct;  -- a_nodes.h:2176
 
    type u_Nodes_Struct is record
-      Context : aliased Context_Struct;  -- a_nodes.h:2161
-      Units : Unit_Structs_Ptr;  -- a_nodes.h:2162
-      Elements : Element_Structs_Ptr;  -- a_nodes.h:2163
+      Context : aliased Context_Struct;  -- a_nodes.h:2179
+      Units : Unit_Structs_Ptr;  -- a_nodes.h:2180
+      Elements : Element_Structs_Ptr;  -- a_nodes.h:2181
    end record
-   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2160
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2178
 
-   subtype Nodes_Struct is u_Nodes_Struct;  -- a_nodes.h:2164
+   subtype Nodes_Struct is u_Nodes_Struct;  -- a_nodes.h:2182
 
 end a_nodes_h;

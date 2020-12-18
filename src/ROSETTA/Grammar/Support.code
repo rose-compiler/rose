@@ -2068,7 +2068,7 @@ HEADER_BASECLASS_MODIFIER_END
 HEADER_ADA_TYPE_CONSTRAINT_START
           SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
           SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ASSERT_not_reachable("Pirkelbaur 2020-04-02"); return std::string(); };
+          virtual std::string displayString() const { ASSERT_not_reachable("PP 2020-04-02"); return std::string(); };
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 
@@ -2080,6 +2080,13 @@ HEADER_ADA_RANGE_CONSTRAINT_START
   //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_RANGE_CONSTRAINT_END
 
+HEADER_ADA_INDEX_CONSTRAINT_START
+  void post_construction_initialization() $ROSE_OVERRIDE;
+  std::string displayString() const $ROSE_OVERRIDE;
+  void display ( std::string label ) const;
+  friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
+  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+HEADER_ADA_INDEX_CONSTRAINT_END
 
 
 HEADER_ATTRIBUTE_SUPPORT_START
@@ -3162,12 +3169,10 @@ std::string SgAdaRangeConstraint::displayString() const
 
   ROSE_ASSERT(lb && ub);
 
-  std::string res(lb->unparseToString());
+  std::stringstream buf;
 
-  res += "..";
-  res += ub->unparseToString();
-
-  return res;
+  buf << lb->unparseToString() << ".." << ub->unparseToString();
+  return buf.str();
 }
 
 void SgAdaRangeConstraint::display ( std::string label ) const
@@ -3183,6 +3188,30 @@ std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c)
 }
 
 SOURCE_ADA_RANGE_CONSTRAINT_END
+
+SOURCE_ADA_INDEX_CONSTRAINT_START
+void SgAdaIndexConstraint::post_construction_initialization() {};
+
+std::string SgAdaIndexConstraint::displayString() const
+{
+  // \todo \pp
+  return "SgAdaIndexConstraint";
+}
+
+void SgAdaIndexConstraint::display ( std::string label ) const
+{
+  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+  mprintf ("%s \n",displayString().c_str());
+}
+
+
+std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c)
+{
+  return os << c.displayString();
+}
+
+SOURCE_ADA_INDEX_CONSTRAINT_END
+
 
 
 SOURCE_UPC_ACCESS_MODIFIER_START
@@ -14297,6 +14326,8 @@ Sg_File_Info::display( const std::string label ) const
         }
 
      printf ("     (computed) physical_file_id    = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     (internal) physical_file_id    = %d = %s \n",get_physical_file_id(),getFilenameFromID(get_physical_file_id()).c_str());
+     printf ("     (internal) physical_file_id    = %d = %s \n",p_physical_file_id,getFilenameFromID(p_physical_file_id).c_str());
      printf ("     (computed) physical_line       = %d \n",p_physical_line);
 
   // DQ (1/23/2013): Added support for source sequence numbering information.

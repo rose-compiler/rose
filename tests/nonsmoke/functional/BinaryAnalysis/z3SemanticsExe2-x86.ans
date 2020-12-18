@@ -5,6 +5,7 @@
 0x080482c8: push ebp
 registers:
  esp [writer=0x080482c8] read-before-write = {defs={0x080482c8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -20,6 +21,7 @@ memory:
 registers:
  esp [writer=0x080482c8] read-before-write = {defs={0x080482c8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x080482c9] read-before-write = {defs={0x080482c8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -35,6 +37,7 @@ memory:
 registers:
  esp [writer=0x080482cb] read-before-write = {defs={0x080482c8,0x080482cb}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080482c9] read-before-write = {defs={0x080482c8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -56,6 +59,7 @@ memory:
 registers:
  esp [writer=0x080482ce] read-before-write = {defs={0x080482c8,0x080482cb,0x080482ce}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x080482c9] read-before-write = {defs={0x080482c8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -83,6 +87,7 @@ memory:
 0x080482d3: call 0x080483d0<(func)frame_dummy>
 registers:
  esp [writer=0x080482d3] read-before-write = {defs={0x080482d3}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -100,6 +105,7 @@ memory:
 0x080482d8: call 0x08048580<(func)__do_global_ctors_aux>
 registers:
  esp [writer=0x080482d8] read-before-write = {defs={0x080482d8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -118,6 +124,7 @@ memory:
 registers:
  esp [writer=0x080482dd] = {defs={0x080482dd}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x080482dd] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -133,6 +140,7 @@ memory:
 registers:
  esp [writer=0x080482de] = {defs={0x080482dd,0x080482de}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x080482dd] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -154,6 +162,7 @@ memory:
 0x080482e0: push dword ds:[0x080496cc<.got.plt+4>]
 registers:
  esp [writer=0x080482e0] read-before-write = {defs={0x080482e0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -172,6 +181,7 @@ memory:
 0x080482e6: jmp dword ds:[0x080496d0<.got.plt+8>]
 registers:
  esp [writer=0x080482e0] read-before-write = {defs={0x080482e0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -196,6 +206,7 @@ memory:
 
 0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -212,6 +223,7 @@ memory:
 
 0x08048300: jmp dword ds:[0x080496d8<.got.plt+0x10>]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -228,6 +240,7 @@ memory:
 
 0x08048310: jmp dword ds:[0x080496dc<.got.plt+0x14>]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -244,6 +257,7 @@ memory:
 
 0x08048320: jmp dword ds:[0x080496e0<.got.plt+0x18>]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -260,6 +274,7 @@ memory:
 
 0x08048330: jmp dword ds:[0x080496e4<.got.plt+0x1c>]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -277,6 +292,7 @@ memory:
 0x08048340: xor ebp, ebp
 registers:
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -295,6 +311,7 @@ registers:
  esp [writer=0x08048342] read-before-write = {defs={0x08048342}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -318,6 +335,7 @@ registers:
  esp [writer=0x08048342] read-before-write = {defs={0x08048342}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -341,6 +359,7 @@ registers:
  esp [writer=0x08048345] read-before-write = {defs={0x08048342,0x08048345}, expr=(and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -364,6 +383,7 @@ registers:
  esp [writer=0x08048348] read-before-write = {defs={0x08048342,0x08048345,0x08048348}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -391,6 +411,7 @@ registers:
  esp [writer=0x08048349] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -422,6 +443,7 @@ registers:
  esp [writer=0x0804834a] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -457,6 +479,7 @@ registers:
  esp [writer=0x0804834b] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -496,6 +519,7 @@ registers:
  esp [writer=0x08048350] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffec<4294967276,-20>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -539,6 +563,7 @@ registers:
  esp [writer=0x08048355] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe8<4294967272,-24>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -586,6 +611,7 @@ registers:
  esp [writer=0x08048356] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe4<4294967268,-28>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -637,6 +663,7 @@ registers:
  esp [writer=0x08048357] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356,0x08048357}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe0<4294967264,-32>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -692,6 +719,7 @@ registers:
  esp [writer=0x0804835c] read-before-write = {defs={0x08048342,0x08048345,0x08048348,0x08048349,0x0804834a,0x0804834b,0x08048350,0x08048355,0x08048356,0x08048357,0x0804835c}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffdc<4294967260,-36>[u32])}
  ebp [writer=0x08048340] write-only = {defs={0x08048340}, expr=0x00000000[u32]}
  esi [writer=0x08048342] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -750,6 +778,7 @@ memory:
 
 0x08048361: hlt 
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -763,6 +792,7 @@ memory:
 0x08048364: push ebp
 registers:
  esp [writer=0x08048364] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -778,6 +808,7 @@ memory:
 registers:
  esp [writer=0x08048364] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048365] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -793,6 +824,7 @@ memory:
 registers:
  esp [writer=0x08048367] read-before-write = {defs={0x08048364,0x08048367}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x08048365] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -812,6 +844,7 @@ memory:
 registers:
  esp [writer=0x08048368] read-before-write = {defs={0x08048364,0x08048367,0x08048368}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048365] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -835,6 +868,7 @@ memory:
 registers:
  esp [writer=0x08048369] read-before-write = {defs={0x08048364,0x08048367,0x08048368,0x08048369}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048365] read-before-write = {defs={0x08048364}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -865,6 +899,7 @@ memory:
 registers:
  ebx [writer=0x0804836e] write-only = V1[u32]
  esp [writer=0x0804836e] read-before-write = {defs={0x0804836e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -880,6 +915,7 @@ memory:
 registers:
  ebx [writer=0x0804836f] = {defs={0x0804836f}, expr=(add[u32] V1[u32] 0x0000135a<4954>[u32])}
  esp [writer=0x0804836e] read-before-write = {defs={0x0804836e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -902,6 +938,7 @@ registers:
  edx [writer=0x08048375] write-only = V2[u32]
  ebx [writer=0x0804836f] = {defs={0x0804836f}, expr=(add[u32] V1[u32] 0x0000135a<4954>[u32])}
  esp [writer=0x0804836e] read-before-write = {defs={0x0804836e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -928,6 +965,7 @@ registers:
  edx [writer=0x08048375] = V2[u32]
  ebx [writer=0x0804836f] = {defs={0x0804836f}, expr=(add[u32] V1[u32] 0x0000135a<4954>[u32])}
  esp [writer=0x0804836e] read-before-write = {defs={0x0804836e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -954,6 +992,7 @@ registers:
  edx [writer=0x08048375] = V2[u32]
  ebx [writer=0x0804836f] = {defs={0x0804836f}, expr=(add[u32] V1[u32] 0x0000135a<4954>[u32])}
  esp [writer=0x0804836e] read-before-write = {defs={0x0804836e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -981,6 +1020,7 @@ memory:
 0x0804837f: call 0x08048330<__gmon_start__@plt>
 registers:
  esp [writer=0x0804837f] read-before-write = {defs={0x0804837f}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -999,6 +1039,7 @@ memory:
 registers:
  eax [writer=0x08048384] write-only = V1[u32]
  esp [writer=0x08048384] read-before-write = {defs={0x08048384}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1015,6 +1056,7 @@ registers:
  eax [writer=0x08048384] write-only = V1[u32]
  ebx [writer=0x08048385] write-only = V2[u32]
  esp [writer=0x08048385] read-before-write = {defs={0x08048384,0x08048385}, expr=(add[u32] esp_0[u32] 0x00000008[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1036,6 +1078,7 @@ registers:
  ebx [writer=0x08048385] write-only = V2[u32]
  esp [writer=0x08048386] read-before-write = {defs={0x08048386}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048386] read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1061,6 +1104,7 @@ registers:
  ebx [writer=0x08048385] write-only = V2[u32]
  esp [writer=0x08048387] read-before-write = {defs={0x08048386,0x08048387}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x08048386] read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1090,6 +1134,7 @@ memory:
 0x08048390: push ebp
 registers:
  esp [writer=0x08048390] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1105,6 +1150,7 @@ memory:
 registers:
  esp [writer=0x08048390] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048391] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1120,6 +1166,7 @@ memory:
 registers:
  esp [writer=0x08048393] read-before-write = {defs={0x08048390,0x08048393}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048391] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1141,6 +1188,7 @@ memory:
 registers:
  esp [writer=0x08048393] read-before-write = {defs={0x08048390,0x08048393}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048391] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1163,6 +1211,7 @@ memory:
 registers:
  esp [writer=0x08048393] read-before-write = {defs={0x08048390,0x08048393}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048391] read-before-write = {defs={0x08048390}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1187,6 +1236,7 @@ memory:
 0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
  eax [writer=0x0804839f] write-only = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1202,6 +1252,7 @@ memory:
 registers:
  eax [writer=0x0804839f] = V1[u32]
  edx [writer=0x080483a4] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1221,6 +1272,7 @@ memory:
 registers:
  eax [writer=0x0804839f] = V1[u32]
  edx [writer=0x080483a4] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1246,6 +1298,7 @@ memory:
 registers:
  eax [writer=0x0804839f] = V1[u32]
  edx [writer=0x080483a4] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1272,6 +1325,7 @@ memory:
 
 0x080483aa: lea esi, [esi + 0x00000000]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1282,6 +1336,7 @@ memory:
 0x080483b0: add eax, 0x04
 registers:
  eax [writer=0x080483b0] read-before-write = {defs={0x080483b0}, expr=(add[u32] eax_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1298,6 +1353,7 @@ memory:
 0x080483b3: mov dword ds:[0x080496f0<(data)p.0>], eax
 registers:
  eax [writer=0x080483b0] read-before-write = {defs={0x080483b0}, expr=(add[u32] eax_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1319,6 +1375,7 @@ memory:
 registers:
  eax [writer=0x080483b0] read-before-write = {defs={0x080483b0}, expr=(add[u32] eax_0[u32] 0x00000004[u32])}
  esp [writer=0x080483b8] read-before-write = {defs={0x080483b8}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1346,6 +1403,7 @@ memory:
 0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
  eax [writer=0x080483ba] write-only = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1361,6 +1419,7 @@ memory:
 registers:
  eax [writer=0x080483ba] = V1[u32]
  edx [writer=0x080483bf] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1380,6 +1439,7 @@ memory:
 registers:
  eax [writer=0x080483ba] = V1[u32]
  edx [writer=0x080483bf] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1405,6 +1465,7 @@ memory:
 registers:
  eax [writer=0x080483ba] = V1[u32]
  edx [writer=0x080483bf] = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1431,6 +1492,7 @@ memory:
 
 0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1443,6 +1505,7 @@ memory:
 registers:
  esp [writer=0x080483cc] = {defs={0x080483cc}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x080483cc] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1459,6 +1522,7 @@ memory:
 registers:
  esp [writer=0x080483cd] = {defs={0x080483cc,0x080483cd}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x080483cc] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1481,6 +1545,7 @@ memory:
 0x080483d0: push ebp
 registers:
  esp [writer=0x080483d0] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1496,6 +1561,7 @@ memory:
 registers:
  esp [writer=0x080483d0] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x080483d1] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1511,6 +1577,7 @@ memory:
 registers:
  esp [writer=0x080483d3] read-before-write = {defs={0x080483d0,0x080483d3}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080483d1] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1533,6 +1600,7 @@ registers:
  eax [writer=0x080483d6] write-only = V1[u32]
  esp [writer=0x080483d3] read-before-write = {defs={0x080483d0,0x080483d3}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080483d1] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1559,6 +1627,7 @@ registers:
  eax [writer=0x080483d6] = V1[u32]
  esp [writer=0x080483d3] read-before-write = {defs={0x080483d0,0x080483d3}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080483d1] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1585,6 +1654,7 @@ registers:
  eax [writer=0x080483d6] = V1[u32]
  esp [writer=0x080483d3] read-before-write = {defs={0x080483d0,0x080483d3}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080483d1] read-before-write = {defs={0x080483d0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1612,6 +1682,7 @@ memory:
 0x080483df: mov eax, 0x00000000
 registers:
  eax [writer=0x080483df] write-only = {defs={0x080483df}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1622,6 +1693,7 @@ memory:
 0x080483e4: test eax, eax
 registers:
  eax [writer=0x080483df] = {defs={0x080483df}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1638,6 +1710,7 @@ memory:
 0x080483e6: je 0x08048400<<BBlock>>
 registers:
  eax [writer=0x080483df] = {defs={0x080483df}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1655,6 +1728,7 @@ memory:
 registers:
  eax [writer=0x080483df] = {defs={0x080483df}, expr=0x00000000[u32]}
  esp [writer=0x08048400] write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1673,6 +1747,7 @@ registers:
  eax [writer=0x080483df] = {defs={0x080483df}, expr=0x00000000[u32]}
  esp [writer=0x08048402] = {defs={0x08048402}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048402] read-before-write = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1695,6 +1770,7 @@ registers:
  eax [writer=0x080483df] = {defs={0x080483df}, expr=0x00000000[u32]}
  esp [writer=0x08048403] = {defs={0x08048402,0x08048403}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x08048402] read-before-write = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1721,6 +1797,7 @@ memory:
 
 0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1735,6 +1812,7 @@ memory:
 0x080483ef: call 0x00000000
 registers:
  esp [writer=0x080483ef] read-before-write = {defs={0x080483ef}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1755,6 +1833,7 @@ memory:
 
 0x080483f4: lea esi, [esi + 0x00000000]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1764,6 +1843,7 @@ memory:
 
 0x080483fa: lea edi, [edi + 0x00000000]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1777,6 +1857,7 @@ memory:
 0x08048410: push ebp
 registers:
  esp [writer=0x08048410] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1792,6 +1873,7 @@ memory:
 registers:
  edx [writer=0x08048411] write-only = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x08048410] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1808,6 +1890,7 @@ registers:
  edx [writer=0x08048411] write-only = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x08048410] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1824,6 +1907,7 @@ registers:
  edx [writer=0x08048411] write-only = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x08048418] read-before-write = {defs={0x08048410,0x08048418}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1846,6 +1930,7 @@ registers:
  edx [writer=0x08048411] write-only = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x0804841b] read-before-write = {defs={0x08048410,0x08048418,0x0804841b}, expr=(and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1868,6 +1953,7 @@ registers:
  edx [writer=0x08048411] = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x0804841b] read-before-write = {defs={0x08048410,0x08048418,0x0804841b}, expr=(and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1894,6 +1980,7 @@ registers:
  edx [writer=0x08048411] = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x0804841b] read-before-write = {defs={0x08048410,0x08048418,0x0804841b}, expr=(and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1924,6 +2011,7 @@ registers:
  edx [writer=0x08048411] = {defs={0x08048411}, expr=0x08048480<134513792>[u32]}
  esp [writer=0x08048429] read-before-write = {defs={0x08048410,0x08048418,0x0804841b,0x08048429}, expr=(add[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048416] read-before-write = {defs={0x08048410}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1959,6 +2047,7 @@ memory:
 0x0804842e: mov esp, ebp
 registers:
  esp [writer=0x0804842e] write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1970,6 +2059,7 @@ memory:
 registers:
  eax [writer=0x08048430] write-only = {defs={0x08048430}, expr=0x00000000[u32]}
  esp [writer=0x0804842e] write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1988,6 +2078,7 @@ registers:
  eax [writer=0x08048430] write-only = {defs={0x08048430}, expr=0x00000000[u32]}
  esp [writer=0x08048432] = {defs={0x08048432}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048432] read-before-write = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2010,6 +2101,7 @@ registers:
  eax [writer=0x08048430] write-only = {defs={0x08048430}, expr=0x00000000[u32]}
  esp [writer=0x08048433] = {defs={0x08048432,0x08048433}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x08048432] read-before-write = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2037,6 +2129,7 @@ memory:
 0x08048440: push ebp
 registers:
  esp [writer=0x08048440] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2052,6 +2145,7 @@ memory:
 registers:
  esp [writer=0x08048440] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048441] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2067,6 +2161,7 @@ memory:
 registers:
  esp [writer=0x08048443] read-before-write = {defs={0x08048440,0x08048443}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048441] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2088,6 +2183,7 @@ memory:
 registers:
  esp [writer=0x08048443] read-before-write = {defs={0x08048440,0x08048443}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048441] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2113,6 +2209,7 @@ memory:
 registers:
  esp [writer=0x0804844d] read-before-write = {defs={0x08048440,0x08048443,0x0804844d}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048441] read-before-write = {defs={0x08048440}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2144,6 +2241,7 @@ memory:
 0x08048452: mov esp, ebp
 registers:
  esp [writer=0x08048452] write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2155,6 +2253,7 @@ memory:
 registers:
  esp [writer=0x08048454] = {defs={0x08048454}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x08048454] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2170,6 +2269,7 @@ memory:
 registers:
  esp [writer=0x08048455] = {defs={0x08048454,0x08048455}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x08048454] read-before-write = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2191,6 +2291,7 @@ memory:
 0x08048460: push ebp
 registers:
  esp [writer=0x08048460] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2206,6 +2307,7 @@ memory:
 registers:
  esp [writer=0x08048460] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048461] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2221,6 +2323,7 @@ memory:
 registers:
  esp [writer=0x08048463] read-before-write = {defs={0x08048460,0x08048463}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048461] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2242,6 +2345,7 @@ memory:
 registers:
  esp [writer=0x08048463] read-before-write = {defs={0x08048460,0x08048463}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048461] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2267,6 +2371,7 @@ memory:
 registers:
  esp [writer=0x0804846d] read-before-write = {defs={0x08048460,0x08048463,0x0804846d}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048461] read-before-write = {defs={0x08048460}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2297,6 +2402,7 @@ memory:
 
 0x08048472: mov dword ss:[esp], 0x00000000
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2311,6 +2417,7 @@ memory:
 0x08048479: call 0x08048320<_exit@plt>
 registers:
  esp [writer=0x08048479] read-before-write = {defs={0x08048479}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2332,6 +2439,7 @@ memory:
 0x08048480: push ebp
 registers:
  esp [writer=0x08048480] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2347,6 +2455,7 @@ memory:
 registers:
  esp [writer=0x08048480] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048481] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2362,6 +2471,7 @@ memory:
 registers:
  esp [writer=0x08048483] read-before-write = {defs={0x08048480,0x08048483}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048481] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2383,6 +2493,7 @@ memory:
 registers:
  esp [writer=0x08048483] read-before-write = {defs={0x08048480,0x08048483}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048481] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2412,6 +2523,7 @@ memory:
 registers:
  esp [writer=0x08048483] read-before-write = {defs={0x08048480,0x08048483}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048481] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2445,6 +2557,7 @@ memory:
 registers:
  esp [writer=0x08048493] read-before-write = {defs={0x08048480,0x08048483,0x08048493}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048481] read-before-write = {defs={0x08048480}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2483,6 +2596,7 @@ memory:
 
 0x08048498: mov dword ss:[esp], 0x00000000
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2497,6 +2611,7 @@ memory:
 0x0804849f: call 0x08048320<_exit@plt>
 registers:
  esp [writer=0x0804849f] read-before-write = {defs={0x0804849f}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2518,6 +2633,7 @@ memory:
 0x080484b0: push ebp
 registers:
  esp [writer=0x080484b0] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2533,6 +2649,7 @@ memory:
 registers:
  esp [writer=0x080484b0] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2548,6 +2665,7 @@ memory:
 registers:
  esp [writer=0x080484b3] read-before-write = {defs={0x080484b0,0x080484b3}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2567,6 +2685,7 @@ memory:
 registers:
  esp [writer=0x080484b4] read-before-write = {defs={0x080484b0,0x080484b3,0x080484b4}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2590,6 +2709,7 @@ memory:
 registers:
  esp [writer=0x080484b5] read-before-write = {defs={0x080484b0,0x080484b3,0x080484b4,0x080484b5}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2617,6 +2737,7 @@ memory:
 registers:
  esp [writer=0x080484b6] read-before-write = {defs={0x080484b0,0x080484b3,0x080484b4,0x080484b5,0x080484b6}, expr=(add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2650,6 +2771,7 @@ memory:
 registers:
  esp [writer=0x080484b9] read-before-write = {defs={0x080484b0,0x080484b3,0x080484b4,0x080484b5,0x080484b6,0x080484b9}, expr=(add[u32] esp_0[u32] 0xffffffe0<4294967264,-32>[u32])}
  ebp [writer=0x080484b1] read-before-write = {defs={0x080484b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2690,6 +2812,7 @@ memory:
 registers:
  ebx [writer=0x080484be] write-only = V1[u32]
  esp [writer=0x080484be] read-before-write = {defs={0x080484be}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2705,6 +2828,7 @@ memory:
 registers:
  ebx [writer=0x080484bf] = {defs={0x080484bf}, expr=(add[u32] V1[u32] 0x0000120a<4618>[u32])}
  esp [writer=0x080484be] read-before-write = {defs={0x080484be}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2725,6 +2849,7 @@ memory:
 0x080484c5: call 0x080482c8<(func)_init>
 registers:
  ebx [writer=0x080484bf] = {defs={0x080484bf}, expr=(add[u32] V1[u32] 0x0000120a<4618>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2752,6 +2877,7 @@ memory:
 0x080484ca: lea eax, [ebx + 0xffffff20<-224>]
 registers:
  eax [writer=0x080484ca] write-only = {defs={0x080484ca}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2763,6 +2889,7 @@ memory:
 registers:
  eax [writer=0x080484ca] write-only = {defs={0x080484ca}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
  edx [writer=0x080484d0] write-only = {defs={0x080484d0}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2774,6 +2901,7 @@ memory:
 registers:
  eax [writer=0x080484d6] = {defs={0x080484ca,0x080484d0,0x080484d6}, expr=(add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])}
  edx [writer=0x080484d0] = {defs={0x080484d0}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2791,6 +2919,7 @@ memory:
 registers:
  eax [writer=0x080484d8] = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))}
  edx [writer=0x080484d0] = {defs={0x080484d0}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2808,6 +2937,7 @@ memory:
 registers:
  eax [writer=0x080484d8] = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))}
  edx [writer=0x080484d0] = {defs={0x080484d0}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2829,6 +2959,7 @@ memory:
 registers:
  eax [writer=0x080484d8] = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))}
  edx [writer=0x080484d0] = {defs={0x080484d0}, expr=(add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2852,6 +2983,7 @@ memory:
 0x080484e0: add esp, 0x0c
 registers:
  esp [writer=0x080484e0] read-before-write = {defs={0x080484e0}, expr=(add[u32] esp_0[u32] 0x0000000c[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2869,6 +3001,7 @@ memory:
 registers:
  ebx [writer=0x080484e3] write-only = V1[u32]
  esp [writer=0x080484e3] read-before-write = {defs={0x080484e0,0x080484e3}, expr=(add[u32] esp_0[u32] 0x00000010[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2891,6 +3024,7 @@ registers:
  ebx [writer=0x080484e3] write-only = V1[u32]
  esp [writer=0x080484e4] read-before-write = {defs={0x080484e0,0x080484e3,0x080484e4}, expr=(add[u32] esp_0[u32] 0x00000014[u32])}
  esi [writer=0x080484e4] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2918,6 +3052,7 @@ registers:
  esp [writer=0x080484e5] read-before-write = {defs={0x080484e0,0x080484e3,0x080484e4,0x080484e5}, expr=(add[u32] esp_0[u32] 0x00000018[u32])}
  esi [writer=0x080484e4] write-only = V2[u32]
  edi [writer=0x080484e5] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2950,6 +3085,7 @@ registers:
  ebp [writer=0x080484e6] write-only = V4[u32]
  esi [writer=0x080484e4] write-only = V2[u32]
  edi [writer=0x080484e5] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2986,6 +3122,7 @@ registers:
  ebp [writer=0x080484e6] write-only = V4[u32]
  esi [writer=0x080484e4] write-only = V2[u32]
  edi [writer=0x080484e5] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3024,6 +3161,7 @@ memory:
 
 0x080484e8: nop 
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3033,6 +3171,7 @@ memory:
 
 0x080484e9: lea esi, [esi + 0x00000000]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3043,6 +3182,7 @@ memory:
 0x080484f0: xor edi, edi
 registers:
  edi [writer=0x080484f0] write-only = {defs={0x080484f0}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3060,6 +3200,7 @@ memory:
 registers:
  esi [writer=0x080484f2] read-before-write = edx_0[u32]
  edi [writer=0x080484f0] write-only = {defs={0x080484f0}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3077,6 +3218,7 @@ memory:
 registers:
  esi [writer=0x080484f4] read-before-write = {defs={0x080484f4}, expr=edx_0[u32]}
  edi [writer=0x080484f0] write-only = {defs={0x080484f0}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3094,6 +3236,7 @@ memory:
 registers:
  esi [writer=0x080484f4] read-before-write = {defs={0x080484f4}, expr=edx_0[u32]}
  edi [writer=0x080484fa] = {defs={0x080484f0,0x080484fa}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3112,6 +3255,7 @@ registers:
  esp [writer=0x08048500] read-before-write = {defs={0x08048500}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  esi [writer=0x080484f4] read-before-write = {defs={0x080484f4}, expr=edx_0[u32]}
  edi [writer=0x080484fa] = {defs={0x080484f0,0x080484fa}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -3139,6 +3283,7 @@ memory:
 0x08048502: inc edi
 registers:
  edi [writer=0x08048502] read-before-write = {defs={0x08048502}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3155,6 +3300,7 @@ memory:
 registers:
  esi [writer=0x08048503] read-before-write = {defs={0x08048503}, expr=(add[u32] esi_0[u32] 0x00000004[u32])}
  edi [writer=0x08048502] read-before-write = {defs={0x08048502}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3172,6 +3318,7 @@ memory:
 registers:
  esi [writer=0x08048503] read-before-write = {defs={0x08048503}, expr=(add[u32] esi_0[u32] 0x00000004[u32])}
  edi [writer=0x08048502] read-before-write = {defs={0x08048502}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3193,6 +3340,7 @@ memory:
 registers:
  esi [writer=0x08048503] read-before-write = {defs={0x08048503}, expr=(add[u32] esi_0[u32] 0x00000004[u32])}
  edi [writer=0x08048502] read-before-write = {defs={0x08048502}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3216,6 +3364,7 @@ memory:
 0x0804850b: add esp, 0x0c
 registers:
  esp [writer=0x0804850b] read-before-write = {defs={0x0804850b}, expr=(add[u32] esp_0[u32] 0x0000000c[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3233,6 +3382,7 @@ memory:
 registers:
  ebx [writer=0x0804850e] write-only = V1[u32]
  esp [writer=0x0804850e] read-before-write = {defs={0x0804850b,0x0804850e}, expr=(add[u32] esp_0[u32] 0x00000010[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3255,6 +3405,7 @@ registers:
  ebx [writer=0x0804850e] write-only = V1[u32]
  esp [writer=0x0804850f] read-before-write = {defs={0x0804850b,0x0804850e,0x0804850f}, expr=(add[u32] esp_0[u32] 0x00000014[u32])}
  esi [writer=0x0804850f] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3282,6 +3433,7 @@ registers:
  esp [writer=0x08048510] read-before-write = {defs={0x0804850b,0x0804850e,0x0804850f,0x08048510}, expr=(add[u32] esp_0[u32] 0x00000018[u32])}
  esi [writer=0x0804850f] write-only = V2[u32]
  edi [writer=0x08048510] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3314,6 +3466,7 @@ registers:
  ebp [writer=0x08048511] write-only = V4[u32]
  esi [writer=0x0804850f] write-only = V2[u32]
  edi [writer=0x08048510] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3350,6 +3503,7 @@ registers:
  ebp [writer=0x08048511] write-only = V4[u32]
  esi [writer=0x0804850f] write-only = V2[u32]
  edi [writer=0x08048510] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3389,6 +3543,7 @@ memory:
 0x08048520: push ebp
 registers:
  esp [writer=0x08048520] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3404,6 +3559,7 @@ memory:
 registers:
  esp [writer=0x08048520] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3419,6 +3575,7 @@ memory:
 registers:
  esp [writer=0x08048523] read-before-write = {defs={0x08048520,0x08048523}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3438,6 +3595,7 @@ memory:
 registers:
  esp [writer=0x08048524] read-before-write = {defs={0x08048520,0x08048523,0x08048524}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3461,6 +3619,7 @@ memory:
 registers:
  esp [writer=0x08048525] read-before-write = {defs={0x08048520,0x08048523,0x08048524,0x08048525}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3488,6 +3647,7 @@ memory:
 registers:
  esp [writer=0x08048526] read-before-write = {defs={0x08048520,0x08048523,0x08048524,0x08048525,0x08048526}, expr=(add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3521,6 +3681,7 @@ memory:
 registers:
  esp [writer=0x08048529] read-before-write = {defs={0x08048520,0x08048523,0x08048524,0x08048525,0x08048526,0x08048529}, expr=(add[u32] esp_0[u32] 0xffffffe0<4294967264,-32>[u32])}
  ebp [writer=0x08048521] read-before-write = {defs={0x08048520}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3561,6 +3722,7 @@ memory:
 registers:
  ebx [writer=0x0804852e] write-only = V1[u32]
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3576,6 +3738,7 @@ memory:
 registers:
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3598,6 +3761,7 @@ registers:
  eax [writer=0x08048535] write-only = {defs={0x0804852f,0x08048535}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3621,6 +3785,7 @@ registers:
  edx [writer=0x0804853b] write-only = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3644,6 +3809,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3667,6 +3833,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3690,6 +3857,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3717,6 +3885,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3744,6 +3913,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3771,6 +3941,7 @@ registers:
  edx [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[u32] V1[u32] 0x000010ba<4282>[u32])}
  ebx [writer=0x0804852f] = {defs={0x0804852f}, expr=(add[u32] V1[u32] 0x0000119a<4506>[u32])}
  esp [writer=0x0804852e] read-before-write = {defs={0x0804852e}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3798,6 +3969,7 @@ memory:
 0x0804854f: lea esi, [edx + eax*0x04]
 registers:
  esi [writer=0x0804854f] write-only = {defs={0x0804854f}, expr=(add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3809,6 +3981,7 @@ memory:
 registers:
  esi [writer=0x0804854f] write-only = {defs={0x0804854f}, expr=(add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])}
  edi [writer=0x08048552] write-only = {defs={0x08048552}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3826,6 +3999,7 @@ memory:
 registers:
  esi [writer=0x08048554] = {defs={0x0804854f,0x08048554}, expr=(add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])}
  edi [writer=0x08048552] write-only = {defs={0x08048552}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3843,6 +4017,7 @@ memory:
 registers:
  esi [writer=0x08048554] = {defs={0x0804854f,0x08048554}, expr=(add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])}
  edi [writer=0x0804855a] = {defs={0x08048552,0x0804855a}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3861,6 +4036,7 @@ registers:
  esp [writer=0x08048560] read-before-write = {defs={0x08048560}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  esi [writer=0x08048554] = {defs={0x0804854f,0x08048554}, expr=(add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])}
  edi [writer=0x0804855a] = {defs={0x08048552,0x0804855a}, expr=0x00000000[u32]}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -3888,6 +4064,7 @@ memory:
 0x08048562: inc edi
 registers:
  edi [writer=0x08048562] read-before-write = {defs={0x08048562}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3904,6 +4081,7 @@ memory:
 registers:
  esi [writer=0x08048563] read-before-write = {defs={0x08048563}, expr=(add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  edi [writer=0x08048562] read-before-write = {defs={0x08048562}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3921,6 +4099,7 @@ memory:
 registers:
  esi [writer=0x08048563] read-before-write = {defs={0x08048563}, expr=(add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  edi [writer=0x08048562] read-before-write = {defs={0x08048562}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3942,6 +4121,7 @@ memory:
 registers:
  esi [writer=0x08048563] read-before-write = {defs={0x08048563}, expr=(add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  edi [writer=0x08048562] read-before-write = {defs={0x08048562}, expr=(add[u32] edi_0[u32] 0x00000001[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3965,6 +4145,7 @@ memory:
 0x0804856b: call 0x080485b0<(func)_fini>
 registers:
  esp [writer=0x0804856b] read-before-write = {defs={0x0804856b}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3982,6 +4163,7 @@ memory:
 0x08048570: add esp, 0x0c
 registers:
  esp [writer=0x08048570] read-before-write = {defs={0x08048570}, expr=(add[u32] esp_0[u32] 0x0000000c[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3999,6 +4181,7 @@ memory:
 registers:
  ebx [writer=0x08048573] write-only = V1[u32]
  esp [writer=0x08048573] read-before-write = {defs={0x08048570,0x08048573}, expr=(add[u32] esp_0[u32] 0x00000010[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4021,6 +4204,7 @@ registers:
  ebx [writer=0x08048573] write-only = V1[u32]
  esp [writer=0x08048574] read-before-write = {defs={0x08048570,0x08048573,0x08048574}, expr=(add[u32] esp_0[u32] 0x00000014[u32])}
  esi [writer=0x08048574] write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4048,6 +4232,7 @@ registers:
  esp [writer=0x08048575] read-before-write = {defs={0x08048570,0x08048573,0x08048574,0x08048575}, expr=(add[u32] esp_0[u32] 0x00000018[u32])}
  esi [writer=0x08048574] write-only = V2[u32]
  edi [writer=0x08048575] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4080,6 +4265,7 @@ registers:
  ebp [writer=0x08048576] write-only = V4[u32]
  esi [writer=0x08048574] write-only = V2[u32]
  edi [writer=0x08048575] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4116,6 +4302,7 @@ registers:
  ebp [writer=0x08048576] write-only = V4[u32]
  esi [writer=0x08048574] write-only = V2[u32]
  edi [writer=0x08048575] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4155,6 +4342,7 @@ memory:
 0x08048580: push ebp
 registers:
  esp [writer=0x08048580] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4170,6 +4358,7 @@ memory:
 registers:
  esp [writer=0x08048580] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4185,6 +4374,7 @@ memory:
 registers:
  esp [writer=0x08048583] read-before-write = {defs={0x08048580,0x08048583}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4204,6 +4394,7 @@ memory:
 registers:
  esp [writer=0x08048584] read-before-write = {defs={0x08048580,0x08048583,0x08048584}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4230,6 +4421,7 @@ registers:
  ebx [writer=0x08048587] read-before-write = {defs={0x08048587}, expr=0x080495e8<134518248>[u32]}
  esp [writer=0x08048584] read-before-write = {defs={0x08048580,0x08048583,0x08048584}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4257,6 +4449,7 @@ registers:
  ebx [writer=0x08048587] read-before-write = {defs={0x08048587}, expr=0x080495e8<134518248>[u32]}
  esp [writer=0x08048584] read-before-write = {defs={0x08048580,0x08048583,0x08048584}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4288,6 +4481,7 @@ registers:
  ebx [writer=0x08048587] read-before-write = {defs={0x08048587}, expr=0x080495e8<134518248>[u32]}
  esp [writer=0x08048584] read-before-write = {defs={0x08048580,0x08048583,0x08048584}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4319,6 +4513,7 @@ registers:
  ebx [writer=0x08048587] read-before-write = {defs={0x08048587}, expr=0x080495e8<134518248>[u32]}
  esp [writer=0x08048584] read-before-write = {defs={0x08048580,0x08048583,0x08048584}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x08048581] read-before-write = {defs={0x08048580}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4349,6 +4544,7 @@ memory:
 
 0x08048596: lea esi, [esi + 0x00]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4358,6 +4554,7 @@ memory:
 
 0x08048599: lea edi, [edi + 0x00000000]
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4368,6 +4565,7 @@ memory:
 0x080485a0: sub ebx, 0x04
 registers:
  ebx [writer=0x080485a0] read-before-write = {defs={0x080485a0}, expr=(add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4385,6 +4583,7 @@ memory:
 registers:
  ebx [writer=0x080485a0] read-before-write = {defs={0x080485a0}, expr=(add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  esp [writer=0x080485a3] read-before-write = {defs={0x080485a3}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4408,6 +4607,7 @@ memory:
 0x080485a5: mov eax, dword ds:[ebx]
 registers:
  eax [writer=0x080485a5] write-only = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4422,6 +4622,7 @@ memory:
 0x080485a7: cmp eax, 0xff<-1>
 registers:
  eax [writer=0x080485a5] = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4442,6 +4643,7 @@ memory:
 0x080485aa: jne 0x080485a0<<BBlock>>
 registers:
  eax [writer=0x080485a5] = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4466,6 +4668,7 @@ memory:
 registers:
  eax [writer=0x080485ac] write-only = V1[u32]
  esp [writer=0x080485ac] read-before-write = {defs={0x080485ac}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4482,6 +4685,7 @@ registers:
  eax [writer=0x080485ac] write-only = V1[u32]
  ebx [writer=0x080485ad] write-only = V2[u32]
  esp [writer=0x080485ad] read-before-write = {defs={0x080485ac,0x080485ad}, expr=(add[u32] esp_0[u32] 0x00000008[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4503,6 +4707,7 @@ registers:
  ebx [writer=0x080485ad] write-only = V2[u32]
  esp [writer=0x080485ae] read-before-write = {defs={0x080485ac,0x080485ad,0x080485ae}, expr=(add[u32] esp_0[u32] 0x0000000c[u32])}
  ebp [writer=0x080485ae] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4528,6 +4733,7 @@ registers:
  ebx [writer=0x080485ad] write-only = V2[u32]
  esp [writer=0x080485af] read-before-write = {defs={0x080485ac,0x080485ad,0x080485ae,0x080485af}, expr=(add[u32] esp_0[u32] 0x00000010[u32])}
  ebp [writer=0x080485ae] write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4557,6 +4763,7 @@ memory:
 0x080485b0: push ebp
 registers:
  esp [writer=0x080485b0] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4572,6 +4779,7 @@ memory:
 registers:
  esp [writer=0x080485b0] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
  ebp [writer=0x080485b1] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4587,6 +4795,7 @@ memory:
 registers:
  esp [writer=0x080485b3] read-before-write = {defs={0x080485b0,0x080485b3}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
  ebp [writer=0x080485b1] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4606,6 +4815,7 @@ memory:
 registers:
  esp [writer=0x080485b4] read-before-write = {defs={0x080485b0,0x080485b3,0x080485b4}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])}
  ebp [writer=0x080485b1] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4629,6 +4839,7 @@ memory:
 registers:
  esp [writer=0x080485b5] read-before-write = {defs={0x080485b0,0x080485b3,0x080485b4,0x080485b5}, expr=(add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])}
  ebp [writer=0x080485b1] read-before-write = {defs={0x080485b0}, expr=(add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4659,6 +4870,7 @@ memory:
 registers:
  ebx [writer=0x080485ba] write-only = V1[u32]
  esp [writer=0x080485ba] read-before-write = {defs={0x080485ba}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4674,6 +4886,7 @@ memory:
 registers:
  ebx [writer=0x080485bb] = {defs={0x080485bb}, expr=(add[u32] V1[u32] 0x0000110e<4366>[u32])}
  esp [writer=0x080485ba] read-before-write = {defs={0x080485ba}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4694,6 +4907,7 @@ memory:
 0x080485c1: call 0x08048390<(func)__do_global_dtors_aux>
 registers:
  ebx [writer=0x080485bb] = {defs={0x080485bb}, expr=(add[u32] V1[u32] 0x0000110e<4366>[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4722,6 +4936,7 @@ memory:
 registers:
  eax [writer=0x080485c6] write-only = V1[u32]
  esp [writer=0x080485c6] read-before-write = {defs={0x080485c6}, expr=(add[u32] esp_0[u32] 0x00000004[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4738,6 +4953,7 @@ registers:
  eax [writer=0x080485c6] write-only = V1[u32]
  ebx [writer=0x080485c7] write-only = V2[u32]
  esp [writer=0x080485c7] read-before-write = {defs={0x080485c6,0x080485c7}, expr=(add[u32] esp_0[u32] 0x00000008[u32])}
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4759,6 +4975,7 @@ registers:
  ebx [writer=0x080485c7] write-only = V2[u32]
  esp [writer=0x080485c8] read-before-write = {defs={0x080485c8}, expr=(add[u32] ebp_0[u32] 0x00000004[u32])}
  ebp [writer=0x080485c8] read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4784,6 +5001,7 @@ registers:
  ebx [writer=0x080485c7] write-only = V2[u32]
  esp [writer=0x080485c9] read-before-write = {defs={0x080485c8,0x080485c9}, expr=(add[u32] ebp_0[u32] 0x00000008[u32])}
  ebp [writer=0x080485c8] read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]

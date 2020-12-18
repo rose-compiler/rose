@@ -1,0 +1,11 @@
+START 
+ITEM ITEM'1 U ; 
+ITEM ITEM'2 B ; 
+DEF PROC PROC'1 ; 
+   BEGIN 
+   IF ITEM'2 AND ITEM'1>0 AND ITEM'1>0 ; 
+      BEGIN 
+      STOP ; 
+      END 
+   END 
+TERM 

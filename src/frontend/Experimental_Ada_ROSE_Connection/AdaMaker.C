@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include "AdaMaker.h"
 
@@ -15,6 +16,11 @@
 namespace sb = SageBuilder;
 namespace si = SageInterface;
 
+
+
+namespace Ada_ROSE_Translation
+{
+
 // anonymous namespace for auxiliary functions
 namespace
 {
@@ -25,6 +31,16 @@ namespace
   mkTypeNode(Args... args)
   {
     return SG_DEREF(SageNode::createType(args...));
+  }
+
+  /// creates fresh type nodes since the containing elements (e.g., expressions)
+  ///   cannot be properly unified (
+  template <class SageNode, class ... Args>
+  inline
+  SageNode&
+  mkNonSharedTypeNode(Args... args)
+  {
+    return mkBareNode<SageNode>(args...);
   }
 
   /// \private
@@ -41,10 +57,6 @@ namespace
   }
 }
 
-
-
-namespace Ada_ROSE_Translation
-{
 
 //
 // file info related functions
@@ -95,28 +107,39 @@ mkAdaRangeConstraint(SgRangeExp& range)
   return mkBareNode<SgAdaRangeConstraint>(&range);
 }
 
+SgAdaIndexConstraint&
+mkAdaIndexConstraint(SgRangeExpPtrList&& ranges)
+{
+  SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
+
+  sgnode.get_indexRanges().swap(ranges);
+  // \todo shall the range pointers' parent point to sgnode?
+  return sgnode;
+}
+
+
 SgAdaSubtype&
 mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr)
 {
-  return mkTypeNode<SgAdaSubtype>(&superty, &constr);
+  return mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+}
+
+SgAdaModularType&
+mkAdaModularType(SgExpression& modexpr)
+{
+  return mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
 }
 
 SgAdaFloatType&
-mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint& range)
+mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
-  return mkTypeNode<SgAdaFloatType>(&digits, &range);
-}
-
-SgTypedefType&
-mkTypedefType(SgTypedefDeclaration& dcl)
-{
-  return mkTypeNode<SgTypedefType>(&dcl);
+  return mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
 }
 
 SgDeclType&
 mkExceptionType(SgExpression& n)
 {
-  return mkTypeNode<SgDeclType>(&n);
+  return mkNonSharedTypeNode<SgDeclType>(&n);
 }
 
 
@@ -129,7 +152,7 @@ mkOpaqueType()
 SgTypeTuple&
 mkTypeUnion(const std::vector<SgType*>& elemtypes)
 {
-  SgTypeTuple&   sgnode = mkTypeNode<SgTypeTuple>();
+  SgTypeTuple&   sgnode = mkNonSharedTypeNode<SgTypeTuple>();
   SgTypePtrList& lst    = sgnode.get_types();
 
   lst.insert(lst.end(), elemtypes.begin(), elemtypes.end());
@@ -162,10 +185,29 @@ SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
   return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
 }
 
-SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& indices)
+SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variableLength)
 {
-  return SG_DEREF(sb::buildArrayType(&comptype, &indices));
+  // in Ada, dim_info is used for dimensions, since it can directly represent multi-dimensional arrays
+  SgArrayType& sgnode = SG_DEREF(sb::buildArrayType(&comptype, &dimInfo));
+
+  sgnode.set_is_variable_length_array(variableLength);
+  //~ dimInfo.set_parent(&sgnode);
+  return sgnode;
 }
+
+SgType& mkIntegralType()
+{
+  return SG_DEREF(sb::buildLongLongType());
+}
+
+SgType& mkRealType()
+{
+  return SG_DEREF(sb::buildLongDoubleType());
+}
+
+
+//
+// Statements
 
 SgStatement&
 mkRaiseStmt(SgExpression& raised)
@@ -224,12 +266,21 @@ mkForStatement(SgBasicBlock& body)
 SgImportStatement&
 mkWithClause(const std::vector<SgExpression*>& imported)
 {
-  SgImportStatement&   sgnode = mkLocatedNode<SgImportStatement>(&mkFileInfo());
+  SgImportStatement&   sgnode = mkBareNode<SgImportStatement>(&mkFileInfo());
   SgExpressionPtrList& lst    = sgnode.get_import_list();
 
   lst.insert(lst.end(), imported.begin(), imported.end());
   return sgnode;
 }
+
+SgUsingDeclarationStatement&
+mkUseClause(SgDeclarationStatement& used)
+{
+  SgUsingDeclarationStatement& sgnode = mkBareNode<SgUsingDeclarationStatement>(&used, nullptr);
+
+  return sgnode;
+}
+
 
 SgAdaExitStmt&
 mkAdaExitStmt(SgStatement& loop, SgExpression& cond, bool explicitLoopName)
@@ -271,6 +322,16 @@ mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime)
   SgAdaDelayStmt& sgnode = mkBareNode<SgAdaDelayStmt>(&timeExp, relativeTime);
 
   sg::linkParentChild(sgnode, timeExp, &SgAdaDelayStmt::set_time);
+  return sgnode;
+}
+
+SgProcessControlStatement&
+mkAbortStmt(SgExprListExp& abortList)
+{
+  SgProcessControlStatement& sgnode = mkBareNode<SgProcessControlStatement>(&abortList);
+
+  abortList.set_parent(&sgnode);
+  sgnode.set_control_kind(SgProcessControlStatement::e_abort);
   return sgnode;
 }
 
@@ -705,9 +766,9 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
 }
 
 SgInitializedName&
-mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* varexpr)
+mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val)
 {
-  SgAssignInitializer* varinit = varexpr ? sb::buildAssignInitializer(varexpr) : nullptr;
+  SgAssignInitializer* varinit = val ? sb::buildAssignInitializer(val) : nullptr;
   SgInitializedName&   sgnode = SG_DEREF( sb::buildInitializedName(varname, &vartype, varinit) );
 
   //~ sgnode.set_type(&vartype);
@@ -805,6 +866,28 @@ mkExceptionDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& s
   return mkVarExceptionDeclInternal(vars.begin(), vars.end(), scope);
 }
 
+SgAdaComponentClause&
+mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range)
+{
+  SgAdaComponentClause& sgnode = mkBareNode<SgAdaComponentClause>(&field, &offset, &range);
+
+  field.set_parent(&sgnode);
+  offset.set_parent(&sgnode);
+  range.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgAdaRecordRepresentationClause&
+mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
+{
+  SgAdaRecordRepresentationClause& sgnode = mkLocatedNode<SgAdaRecordRepresentationClause>(&record, &align);
+
+  align.set_parent(&sgnode);
+  return sgnode;
+}
+
+
+
 SgBaseClass&
 mkRecordParent(SgClassDeclaration& n)
 {
@@ -820,6 +903,16 @@ mkRecordParent(SgClassDeclaration& n)
 //
 // Expression Makers
 
+SgDesignatedInitializer&
+mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val)
+{
+  SgAssignInitializer&     ini = SG_DEREF(sb::buildAssignInitializer(&val));
+  SgDesignatedInitializer& sgnode = mkBareNode<SgDesignatedInitializer>(&components, &ini);
+
+  return sgnode;
+}
+
+
 SgExpression&
 mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 {
@@ -832,9 +925,11 @@ mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 SgRangeExp&
 mkRangeExp(SgExpression& start, SgExpression& end)
 {
-  SgRangeExp& sgnode = SG_DEREF( sb::buildRangeExp(&start) );
+  SgExpression& stride = SG_DEREF(sb::buildIntVal(1));
+  SgRangeExp&   sgnode = SG_DEREF(sb::buildRangeExp(&stride));
 
-  sgnode.set_end(&end);
+  sg::linkParentChild(sgnode, start, &SgRangeExp::set_start);
+  sg::linkParentChild(sgnode, end,   &SgRangeExp::set_end);
   return sgnode;
 }
 
@@ -850,7 +945,7 @@ mkRangeExp()
 SgExpression&
 mkOthersExp()
 {
-  return SG_DEREF(sb::buildNullExpression());
+  return SG_DEREF(sb::buildVoidVal());
 }
 
 SgExpression&
@@ -865,6 +960,40 @@ mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
   return SG_DEREF( sb::buildDotExp(&prefix, &selector) );
 }
 
+SgAdaTaskRefExp&
+mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
+{
+  return mkBareNode<SgAdaTaskRefExp>(&task);
+}
+
+SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
+{
+  ROSE_ASSERT(choices.size() > 0);
+
+  return SG_DEREF( std::accumulate( choices.begin()+1, choices.end(),
+                                    choices.front(),
+                                    sb::buildCommaOpExp
+                                  ));
+}
+
+
+SgUnaryOp&
+mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
+{
+  SgVarRefExp& varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildUnaryAddOp(&varref))
+                                : sb::buildMinusOp(&varref)
+                                ;
+
+  return SG_DEREF(sgnode);
+}
+
+
+SgTypeTraitBuiltinOperator&
+mkAdaExprAttribute(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+{
+  return SG_DEREF(sb::buildTypeTraitBuiltinOperator(ident, { &expr, &args }));
+}
 
 //
 // specialized templates

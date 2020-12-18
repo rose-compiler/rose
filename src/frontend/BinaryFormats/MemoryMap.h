@@ -409,6 +409,16 @@ public:
     /** Documentation string for @ref insertData. */
     static std::string insertDataDocumentation();
 
+    /** Adjusts a memory map according to the locator string.
+     *
+     *  See --help output from tools that support this feature, or look at the implementation of @ref adjustMapDocumentation
+     *  for details about the syntax of the @p locatorString. */
+    void adjustMap(const std::string &locatorString);
+
+    /** Documentation string for @ref adjustMap. */
+    static std::string adjustMapDocumentation();
+
+
     /** Information about a process map. */
     struct ProcessMapRecord {
         AddressInterval interval;                       /** Mapped virtual addresses. */

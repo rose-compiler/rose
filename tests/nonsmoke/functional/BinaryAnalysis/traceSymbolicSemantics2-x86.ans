@@ -4,6 +4,7 @@
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080482c8: push ebp
 Symbolic: startInstruction(0x080482c8: push ebp)
@@ -23,6 +24,7 @@ Symbolic insn@0x080482c8[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x080482c8[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -47,6 +49,7 @@ Symbolic insn@0x080482c9[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -109,6 +112,7 @@ Symbolic insn@0x080482cb[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -149,6 +153,7 @@ Symbolic insn@0x080482ce[3]: finishInstruction(call 0x08048364<(func)call_gmon_s
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -176,6 +181,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080482d3: call 0x080483d0<(func)frame_dummy>
 Symbolic: startInstruction(0x080482d3: call 0x080483d0<(func)frame_dummy>)
@@ -199,6 +205,7 @@ Symbolic insn@0x080482d3[0]: writeRegister(eip, 0x080483d0<134513616>[u32])
 Symbolic insn@0x080482d3[0]: finishInstruction(call 0x080483d0<(func)frame_dummy>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -213,6 +220,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -239,6 +247,7 @@ Symbolic insn@0x080482d8[0]: writeRegister(eip, 0x08048580<134514048>[u32])
 Symbolic insn@0x080482d8[0]: finishInstruction(call 0x08048580<(func)__do_global_ctors_aux>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -253,6 +262,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -279,6 +289,7 @@ Symbolic insn@0x080482dd[0]: finishInstruction(leave)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -310,6 +321,7 @@ Symbolic insn@0x080482de[1]: finishInstruction(ret)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -328,6 +340,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -352,6 +365,7 @@ Symbolic insn@0x080482e0[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x080482e0[0]: finishInstruction(push dword ds:[0x080496cc<.got.plt+4>])
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -383,6 +397,7 @@ Symbolic insn@0x080482e6[1]: writeRegister(eip, V3[u32])
 Symbolic insn@0x080482e6[1]: finishInstruction(jmp dword ds:[0x080496d0<.got.plt+8>])
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -408,6 +423,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>]
 Symbolic: startInstruction(0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>])
@@ -424,6 +440,7 @@ Symbolic insn@0x080482f0[0]: filterIndirectJumpTarget(V1[u32]) = V1[u32]
 Symbolic insn@0x080482f0[0]: writeRegister(eip, V1[u32])
 Symbolic insn@0x080482f0[0]: finishInstruction(jmp dword ds:[0x080496d4<.got.plt+0x0c>])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -438,6 +455,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -457,6 +475,7 @@ Symbolic insn@0x08048300[0]: filterIndirectJumpTarget(V1[u32]) = V1[u32]
 Symbolic insn@0x08048300[0]: writeRegister(eip, V1[u32])
 Symbolic insn@0x08048300[0]: finishInstruction(jmp dword ds:[0x080496d8<.got.plt+0x10>])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -471,6 +490,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -490,6 +510,7 @@ Symbolic insn@0x08048310[0]: filterIndirectJumpTarget(V1[u32]) = V1[u32]
 Symbolic insn@0x08048310[0]: writeRegister(eip, V1[u32])
 Symbolic insn@0x08048310[0]: finishInstruction(jmp dword ds:[0x080496dc<.got.plt+0x14>])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -504,6 +525,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -523,6 +545,7 @@ Symbolic insn@0x08048320[0]: filterIndirectJumpTarget(V1[u32]) = V1[u32]
 Symbolic insn@0x08048320[0]: writeRegister(eip, V1[u32])
 Symbolic insn@0x08048320[0]: finishInstruction(jmp dword ds:[0x080496e0<.got.plt+0x18>])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -537,6 +560,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -556,6 +580,7 @@ Symbolic insn@0x08048330[0]: filterIndirectJumpTarget(V1[u32]) = V1[u32]
 Symbolic insn@0x08048330[0]: writeRegister(eip, V1[u32])
 Symbolic insn@0x08048330[0]: finishInstruction(jmp dword ds:[0x080496e4<.got.plt+0x1c>])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -570,6 +595,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -613,6 +639,7 @@ Symbolic insn@0x08048340[0]: writeRegister(cf, false[u1])
 Symbolic insn@0x08048340[0]: finishInstruction(xor ebp, ebp)
 registers:
  ebp write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -646,6 +673,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -678,6 +706,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -741,6 +770,7 @@ registers:
  esp read-before-write = (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -779,6 +809,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffffc<4294967292,-4>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -821,6 +852,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff8<4294967288,-8>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -867,6 +899,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff4<4294967284,-12>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -916,6 +949,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff0<4294967280,-16>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -969,6 +1003,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffec<4294967276,-20>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1027,6 +1062,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe8<4294967272,-24>[u32])
  ebp write-only = 0x00000000[u32]
  esi write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1089,6 +1125,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe4<4294967268,-28>[u32])
  ebp write-only = 0x00000000[u32]
  esi = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1154,6 +1191,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe0<4294967264,-32>[u32])
  ebp write-only = 0x00000000[u32]
  esi = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1228,6 +1266,7 @@ registers:
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffdc<4294967260,-36>[u32])
  ebp write-only = 0x00000000[u32]
  esi = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1287,6 +1326,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048361: hlt 
 Symbolic: startInstruction(0x08048361: hlt)
@@ -1299,6 +1339,7 @@ Symbolic insn@0x08048361[0]: number_(32, 134513505) = 0x08048361<134513505>[u32]
 Symbolic insn@0x08048361[0]: writeRegister(eip, 0x08048361<134513505>[u32])
 Symbolic insn@0x08048361[0]: finishInstruction(hlt)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1309,6 +1350,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -1331,6 +1373,7 @@ Symbolic insn@0x08048364[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048364[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1355,6 +1398,7 @@ Symbolic insn@0x08048365[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1385,6 +1429,7 @@ Symbolic insn@0x08048367[2]: finishInstruction(push ebx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1419,6 +1464,7 @@ Symbolic insn@0x08048368[3]: finishInstruction(push ecx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1461,6 +1507,7 @@ Symbolic insn@0x08048369[4]: finishInstruction(call 0x0804836e<<Insn>>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1490,6 +1537,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804836e: pop ebx
 Symbolic: startInstruction(0x0804836e: pop ebx)
@@ -1510,6 +1558,7 @@ Symbolic insn@0x0804836e[0]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1567,6 +1616,7 @@ Symbolic insn@0x0804836f[1]: finishInstruction(add ebx, 0x0000135a<4954>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000135a<4954>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1603,6 +1653,7 @@ registers:
  edx write-only = V5[u32]
  ebx = (add[u32] V2[u32] 0x0000135a<4954>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1668,6 +1719,7 @@ registers:
  edx = V5[u32]
  ebx = (add[u32] V2[u32] 0x0000135a<4954>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1708,6 +1760,7 @@ registers:
  edx = V5[u32]
  ebx = (add[u32] V2[u32] 0x0000135a<4954>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -1735,6 +1788,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804837f: call 0x08048330<__gmon_start__@plt>
 Symbolic: startInstruction(0x0804837f: call 0x08048330<__gmon_start__@plt>)
@@ -1758,6 +1812,7 @@ Symbolic insn@0x0804837f[0]: writeRegister(eip, 0x08048330<134513456>[u32])
 Symbolic insn@0x0804837f[0]: finishInstruction(call 0x08048330<__gmon_start__@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1772,6 +1827,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -1795,6 +1851,7 @@ Symbolic insn@0x08048384[0]: finishInstruction(pop eax)
 registers:
  eax write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1826,6 +1883,7 @@ registers:
  eax write-only = V2[u32]
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000008[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1865,6 +1923,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1906,6 +1965,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1935,6 +1995,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048390: push ebp
 Symbolic: startInstruction(0x08048390: push ebp)
@@ -1954,6 +2015,7 @@ Symbolic insn@0x08048390[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048390[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -1978,6 +2040,7 @@ Symbolic insn@0x08048391[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2040,6 +2103,7 @@ Symbolic insn@0x08048393[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2108,6 +2172,7 @@ Symbolic insn@0x08048396[3]: finishInstruction(cmp byte ds:[0x080496f4<_edata>],
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2145,6 +2210,7 @@ Symbolic insn@0x0804839d[4]: finishInstruction(jne 0x080483cc<<BBlock>>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2169,6 +2235,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>]
 Symbolic: startInstruction(0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>])
@@ -2184,6 +2251,7 @@ Symbolic insn@0x0804839f[0]: writeRegister(eax, V1[u32])
 Symbolic insn@0x0804839f[0]: finishInstruction(mov eax, dword ds:[0x080496f0<(data)p.0>])
 registers:
  eax write-only = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2211,6 +2279,7 @@ Symbolic insn@0x080483a4[1]: finishInstruction(mov edx, dword ds:[eax])
 registers:
  eax = V1[u32]
  edx write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2269,6 +2338,7 @@ Symbolic insn@0x080483a6[2]: finishInstruction(test edx, edx)
 registers:
  eax = V1[u32]
  edx = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2308,6 +2378,7 @@ Symbolic insn@0x080483a8[3]: finishInstruction(je 0x080483c5<<BBlock>>)
 registers:
  eax = V1[u32]
  edx = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2335,6 +2406,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483aa: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080483aa: lea esi, [esi + 0x00000000])
@@ -2350,6 +2422,7 @@ Symbolic insn@0x080483aa[0]: unsignedExtend(esi_0[u32], 32) = esi_0[u32]
 Symbolic insn@0x080483aa[0]: writeRegister(esi, esi_0[u32])
 Symbolic insn@0x080483aa[0]: finishInstruction(lea esi, [esi + 0x00000000])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2403,6 +2476,7 @@ Symbolic insn@0x080483b0[1]: writeRegister(eax, (add[u32] eax_0[u32] 0x00000004[
 Symbolic insn@0x080483b0[1]: finishInstruction(add eax, 0x04)
 registers:
  eax read-before-write = (add[u32] eax_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2430,6 +2504,7 @@ Symbolic insn@0x080483b3[2]: writeMemory(ds, 0x080496f0<134518512>[u32], (add[u3
 Symbolic insn@0x080483b3[2]: finishInstruction(mov dword ds:[0x080496f0<(data)p.0>], eax)
 registers:
  eax read-before-write = (add[u32] eax_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2471,6 +2546,7 @@ Symbolic insn@0x080483b8[3]: finishInstruction(call edx)
 registers:
  eax read-before-write = (add[u32] eax_0[u32] 0x00000004[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2498,6 +2574,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>]
 Symbolic: startInstruction(0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>])
@@ -2513,6 +2590,7 @@ Symbolic insn@0x080483ba[0]: writeRegister(eax, V1[u32])
 Symbolic insn@0x080483ba[0]: finishInstruction(mov eax, dword ds:[0x080496f0<(data)p.0>])
 registers:
  eax write-only = V1[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2540,6 +2618,7 @@ Symbolic insn@0x080483bf[1]: finishInstruction(mov edx, dword ds:[eax])
 registers:
  eax = V1[u32]
  edx write-only = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2598,6 +2677,7 @@ Symbolic insn@0x080483c1[2]: finishInstruction(test edx, edx)
 registers:
  eax = V1[u32]
  edx = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2638,6 +2718,7 @@ Symbolic insn@0x080483c3[3]: finishInstruction(jne 0x080483b0<<BBlock>>)
 registers:
  eax = V1[u32]
  edx = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2665,6 +2746,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01
 Symbolic: startInstruction(0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01)
@@ -2678,6 +2760,7 @@ Symbolic insn@0x080483c5[0]: boolean_(1) = true[u1]
 Symbolic insn@0x080483c5[0]: writeMemory(ds, 0x080496f4<134518516>[u32], 0x01[u8], true[u1])
 Symbolic insn@0x080483c5[0]: finishInstruction(mov byte ds:[0x080496f4<_edata>], 0x01)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2708,6 +2791,7 @@ Symbolic insn@0x080483cc[1]: finishInstruction(leave)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2740,6 +2824,7 @@ Symbolic insn@0x080483cd[2]: finishInstruction(ret)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2762,6 +2847,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483d0: push ebp
 Symbolic: startInstruction(0x080483d0: push ebp)
@@ -2781,6 +2867,7 @@ Symbolic insn@0x080483d0[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x080483d0[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2805,6 +2892,7 @@ Symbolic insn@0x080483d1[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2867,6 +2955,7 @@ Symbolic insn@0x080483d3[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -2900,6 +2989,7 @@ registers:
  eax write-only = V5[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -2965,6 +3055,7 @@ registers:
  eax = V5[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -3005,6 +3096,7 @@ registers:
  eax = V5[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -3032,6 +3124,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483df: mov eax, 0x00000000
 Symbolic: startInstruction(0x080483df: mov eax, 0x00000000)
@@ -3044,6 +3137,7 @@ Symbolic insn@0x080483df[0]: writeRegister(eax, 0x00000000[u32])
 Symbolic insn@0x080483df[0]: finishInstruction(mov eax, 0x00000000)
 registers:
  eax write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3093,6 +3187,7 @@ Symbolic insn@0x080483e4[1]: writeRegister(cf, false[u1])
 Symbolic insn@0x080483e4[1]: finishInstruction(test eax, eax)
 registers:
  eax = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3123,6 +3218,7 @@ Symbolic insn@0x080483e6[2]: writeRegister(eip, 0x08048400<134513664>[u32])
 Symbolic insn@0x080483e6[2]: finishInstruction(je 0x08048400<<BBlock>>)
 registers:
  eax = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3149,6 +3245,7 @@ Symbolic insn@0x08048400[3]: finishInstruction(mov esp, ebp)
 registers:
  eax = 0x00000000[u32]
  esp write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3182,6 +3279,7 @@ registers:
  eax = 0x00000000[u32]
  esp = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V8[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3220,6 +3318,7 @@ registers:
  eax = 0x00000000[u32]
  esp = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V8[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3247,6 +3346,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>
 Symbolic: startInstruction(0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>)
@@ -3261,6 +3361,7 @@ Symbolic insn@0x080483e8[0]: boolean_(1) = true[u1]
 Symbolic insn@0x080483e8[0]: writeMemory(ss, esp_0[u32], 0x080495f8<134518264>[u32], true[u1])
 Symbolic insn@0x080483e8[0]: finishInstruction(mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3294,6 +3395,7 @@ Symbolic insn@0x080483ef[1]: writeRegister(eip, 0x00000000[u32])
 Symbolic insn@0x080483ef[1]: finishInstruction(call 0x00000000)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3315,6 +3417,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080483f4: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080483f4: lea esi, [esi + 0x00000000])
@@ -3330,6 +3433,7 @@ Symbolic insn@0x080483f4[0]: unsignedExtend(esi_0[u32], 32) = esi_0[u32]
 Symbolic insn@0x080483f4[0]: writeRegister(esi, esi_0[u32])
 Symbolic insn@0x080483f4[0]: finishInstruction(lea esi, [esi + 0x00000000])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3351,6 +3455,7 @@ Symbolic insn@0x080483fa[1]: unsignedExtend(edi_0[u32], 32) = edi_0[u32]
 Symbolic insn@0x080483fa[1]: writeRegister(edi, edi_0[u32])
 Symbolic insn@0x080483fa[1]: finishInstruction(lea edi, [edi + 0x00000000])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3361,6 +3466,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -3383,6 +3489,7 @@ Symbolic insn@0x08048410[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048410[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3406,6 +3513,7 @@ Symbolic insn@0x08048411[1]: finishInstruction(mov edx, 0x08048480<(func)handler
 registers:
  edx write-only = 0x08048480<134513792>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3431,6 +3539,7 @@ registers:
  edx write-only = 0x08048480<134513792>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3494,6 +3603,7 @@ registers:
  edx write-only = 0x08048480<134513792>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3556,6 +3666,7 @@ registers:
  edx write-only = 0x08048480<134513792>[u32]
  esp read-before-write = (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3593,6 +3704,7 @@ registers:
  edx = 0x08048480<134513792>[u32]
  esp read-before-write = (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3630,6 +3742,7 @@ registers:
  edx = 0x08048480<134513792>[u32]
  esp read-before-write = (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3679,6 +3792,7 @@ registers:
  edx = 0x08048480<134513792>[u32]
  esp read-before-write = (add[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3714,6 +3828,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804842e: mov esp, ebp
 Symbolic: startInstruction(0x0804842e: mov esp, ebp)
@@ -3727,6 +3842,7 @@ Symbolic insn@0x0804842e[0]: writeRegister(esp, ebp_0[u32])
 Symbolic insn@0x0804842e[0]: finishInstruction(mov esp, ebp)
 registers:
  esp write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3774,6 +3890,7 @@ Symbolic insn@0x08048430[1]: finishInstruction(xor eax, eax)
 registers:
  eax write-only = 0x00000000[u32]
  esp write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3807,6 +3924,7 @@ registers:
  eax write-only = 0x00000000[u32]
  esp = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V4[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3845,6 +3963,7 @@ registers:
  eax write-only = 0x00000000[u32]
  esp = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V4[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3872,6 +3991,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048440: push ebp
 Symbolic: startInstruction(0x08048440: push ebp)
@@ -3891,6 +4011,7 @@ Symbolic insn@0x08048440[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048440[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3915,6 +4036,7 @@ Symbolic insn@0x08048441[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -3977,6 +4099,7 @@ Symbolic insn@0x08048443[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4009,6 +4132,7 @@ Symbolic insn@0x08048446[3]: finishInstruction(mov dword ss:[esp], 0x080485d4<"H
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4053,6 +4177,7 @@ Symbolic insn@0x0804844d[4]: finishInstruction(call 0x08048300<puts@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4084,6 +4209,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048452: mov esp, ebp
 Symbolic: startInstruction(0x08048452: mov esp, ebp)
@@ -4097,6 +4223,7 @@ Symbolic insn@0x08048452[0]: writeRegister(esp, ebp_0[u32])
 Symbolic insn@0x08048452[0]: finishInstruction(mov esp, ebp)
 registers:
  esp write-only = ebp_0[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4123,6 +4250,7 @@ Symbolic insn@0x08048454[1]: finishInstruction(pop ebp)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4154,6 +4282,7 @@ Symbolic insn@0x08048455[2]: finishInstruction(ret)
 registers:
  esp = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V3[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4172,6 +4301,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -4194,6 +4324,7 @@ Symbolic insn@0x08048460[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048460[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4218,6 +4349,7 @@ Symbolic insn@0x08048461[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4280,6 +4412,7 @@ Symbolic insn@0x08048463[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4312,6 +4445,7 @@ Symbolic insn@0x08048466[3]: finishInstruction(mov dword ss:[esp], 0x080485d4<"H
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4356,6 +4490,7 @@ Symbolic insn@0x0804846d[4]: finishInstruction(call 0x08048300<puts@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4387,6 +4522,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048472: mov dword ss:[esp], 0x00000000
 Symbolic: startInstruction(0x08048472: mov dword ss:[esp], 0x00000000)
@@ -4401,6 +4537,7 @@ Symbolic insn@0x08048472[0]: boolean_(1) = true[u1]
 Symbolic insn@0x08048472[0]: writeMemory(ss, esp_0[u32], 0x00000000[u32], true[u1])
 Symbolic insn@0x08048472[0]: finishInstruction(mov dword ss:[esp], 0x00000000)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4434,6 +4571,7 @@ Symbolic insn@0x08048479[1]: writeRegister(eip, 0x08048320<134513440>[u32])
 Symbolic insn@0x08048479[1]: finishInstruction(call 0x08048320<_exit@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4452,6 +4590,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -4474,6 +4613,7 @@ Symbolic insn@0x08048480[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048480[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4498,6 +4638,7 @@ Symbolic insn@0x08048481[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4560,6 +4701,7 @@ Symbolic insn@0x08048483[2]: finishInstruction(sub esp, 0x08)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4626,6 +4768,7 @@ Symbolic insn@0x08048486[3]: finishInstruction(inc dword ds:[0x080496f8<(data)nc
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4666,6 +4809,7 @@ Symbolic insn@0x0804848c[4]: finishInstruction(mov dword ss:[esp], 0x080485d4<"H
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4718,6 +4862,7 @@ Symbolic insn@0x08048493[5]: finishInstruction(call 0x08048300<puts@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -4757,6 +4902,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048498: mov dword ss:[esp], 0x00000000
 Symbolic: startInstruction(0x08048498: mov dword ss:[esp], 0x00000000)
@@ -4771,6 +4917,7 @@ Symbolic insn@0x08048498[0]: boolean_(1) = true[u1]
 Symbolic insn@0x08048498[0]: writeMemory(ss, esp_0[u32], 0x00000000[u32], true[u1])
 Symbolic insn@0x08048498[0]: finishInstruction(mov dword ss:[esp], 0x00000000)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4804,6 +4951,7 @@ Symbolic insn@0x0804849f[1]: writeRegister(eip, 0x08048320<134513440>[u32])
 Symbolic insn@0x0804849f[1]: finishInstruction(call 0x08048320<_exit@plt>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4822,6 +4970,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -4844,6 +4993,7 @@ Symbolic insn@0x080484b0[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x080484b0[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4868,6 +5018,7 @@ Symbolic insn@0x080484b1[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4898,6 +5049,7 @@ Symbolic insn@0x080484b3[2]: finishInstruction(push edi)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4932,6 +5084,7 @@ Symbolic insn@0x080484b4[3]: finishInstruction(push esi)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -4970,6 +5123,7 @@ Symbolic insn@0x080484b5[4]: finishInstruction(push ebx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5044,6 +5198,7 @@ Symbolic insn@0x080484b6[5]: finishInstruction(sub esp, 0x0c)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5096,6 +5251,7 @@ Symbolic insn@0x080484b9[6]: finishInstruction(call 0x080484be<<Insn>>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xffffffe0<4294967264,-32>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5135,6 +5291,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080484be: pop ebx
 Symbolic: startInstruction(0x080484be: pop ebx)
@@ -5155,6 +5312,7 @@ Symbolic insn@0x080484be[0]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5212,6 +5370,7 @@ Symbolic insn@0x080484bf[1]: finishInstruction(add ebx, 0x0000120a<4618>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000120a<4618>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5251,6 +5410,7 @@ Symbolic insn@0x080484c5[2]: writeRegister(eip, 0x080482c8<134513352>[u32])
 Symbolic insn@0x080484c5[2]: finishInstruction(call 0x080482c8<(func)_init>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000120a<4618>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5278,6 +5438,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080484ca: lea eax, [ebx + 0xffffff20<-224>]
 Symbolic: startInstruction(0x080484ca: lea eax, [ebx + 0xffffff20<-224>])
@@ -5294,6 +5455,7 @@ Symbolic insn@0x080484ca[0]: writeRegister(eax, (add[u32] ebx_0[u32] 0xffffff20<
 Symbolic insn@0x080484ca[0]: finishInstruction(lea eax, [ebx + 0xffffff20<-224>])
 registers:
  eax write-only = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5317,6 +5479,7 @@ Symbolic insn@0x080484d0[1]: finishInstruction(lea edx, [ebx + 0xffffff20<-224>]
 registers:
  eax write-only = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
  edx write-only = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5375,6 +5538,7 @@ Symbolic insn@0x080484d6[2]: finishInstruction(sub eax, edx)
 registers:
  eax = (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])
  edx = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5466,6 +5630,7 @@ Symbolic insn@0x080484d8[3]: finishInstruction(sar eax, 0x02)
 registers:
  eax = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
  edx = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5498,6 +5663,7 @@ Symbolic insn@0x080484db[4]: finishInstruction(mov dword ss:[ebp + 0xf0<-16>], e
 registers:
  eax = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
  edx = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5534,6 +5700,7 @@ Symbolic insn@0x080484de[5]: finishInstruction(jne 0x080484f0<<BBlock>>)
 registers:
  eax = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
  edx = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5554,6 +5721,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -5604,6 +5772,7 @@ Symbolic insn@0x080484e0[0]: writeRegister(esp, (add[u32] esp_0[u32] 0x0000000c[
 Symbolic insn@0x080484e0[0]: finishInstruction(add esp, 0x0c)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x0000000c[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5636,6 +5805,7 @@ Symbolic insn@0x080484e3[1]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000010[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5673,6 +5843,7 @@ registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000014[u32])
  esi write-only = V5[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5715,6 +5886,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x00000018[u32])
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5762,6 +5934,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5814,6 +5987,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5853,6 +6027,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080484e8: nop 
 Symbolic: startInstruction(0x080484e8: nop)
@@ -5862,6 +6037,7 @@ Symbolic insn@0x080484e8[0]: add(0x080484e8<134513896>[u32], 0x00000001[u32]) = 
 Symbolic insn@0x080484e8[0]: writeRegister(eip, 0x080484e9<134513897>[u32])
 Symbolic insn@0x080484e8[0]: finishInstruction(nop)
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5883,6 +6059,7 @@ Symbolic insn@0x080484e9[1]: unsignedExtend(esi_0[u32], 32) = esi_0[u32]
 Symbolic insn@0x080484e9[1]: writeRegister(esi, esi_0[u32])
 Symbolic insn@0x080484e9[1]: finishInstruction(lea esi, [esi + 0x00000000])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5929,6 +6106,7 @@ Symbolic insn@0x080484f0[2]: writeRegister(cf, false[u1])
 Symbolic insn@0x080484f0[2]: finishInstruction(xor edi, edi)
 registers:
  edi write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5955,6 +6133,7 @@ Symbolic insn@0x080484f2[3]: finishInstruction(mov esi, edx)
 registers:
  esi read-before-write = edx_0[u32]
  edi write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -5984,6 +6163,7 @@ Symbolic insn@0x080484f4[4]: finishInstruction(lea esi, [esi + 0x00000000])
 registers:
  esi read-before-write = edx_0[u32]
  edi write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6013,6 +6193,7 @@ Symbolic insn@0x080484fa[5]: finishInstruction(lea edi, [edi + 0x00000000])
 registers:
  esi read-before-write = edx_0[u32]
  edi = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6054,6 +6235,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  esi read-before-write = edx_0[u32]
  edi = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -6078,6 +6260,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -6126,6 +6309,7 @@ Symbolic insn@0x08048502[0]: writeRegister(edi, (add[u32] edi_0[u32] 0x00000001[
 Symbolic insn@0x08048502[0]: finishInstruction(inc edi)
 registers:
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6185,6 +6369,7 @@ Symbolic insn@0x08048503[1]: finishInstruction(add esi, 0x04)
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0x00000004[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6254,6 +6439,7 @@ Symbolic insn@0x08048506[2]: finishInstruction(cmp edi, dword ss:[ebp + 0xf0<-16
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0x00000004[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6289,6 +6475,7 @@ Symbolic insn@0x08048509[3]: finishInstruction(jb 0x08048500<<BBlock>>)
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0x00000004[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6309,6 +6496,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -6359,6 +6547,7 @@ Symbolic insn@0x0804850b[0]: writeRegister(esp, (add[u32] esp_0[u32] 0x0000000c[
 Symbolic insn@0x0804850b[0]: finishInstruction(add esp, 0x0c)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x0000000c[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6391,6 +6580,7 @@ Symbolic insn@0x0804850e[1]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000010[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6428,6 +6618,7 @@ registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000014[u32])
  esi write-only = V5[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6470,6 +6661,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x00000018[u32])
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6517,6 +6709,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6569,6 +6762,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6608,6 +6802,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048520: push ebp
 Symbolic: startInstruction(0x08048520: push ebp)
@@ -6627,6 +6822,7 @@ Symbolic insn@0x08048520[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048520[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6651,6 +6847,7 @@ Symbolic insn@0x08048521[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6681,6 +6878,7 @@ Symbolic insn@0x08048523[2]: finishInstruction(push edi)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6715,6 +6913,7 @@ Symbolic insn@0x08048524[3]: finishInstruction(push esi)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6753,6 +6952,7 @@ Symbolic insn@0x08048525[4]: finishInstruction(push ebx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6827,6 +7027,7 @@ Symbolic insn@0x08048526[5]: finishInstruction(sub esp, 0x0c)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6879,6 +7080,7 @@ Symbolic insn@0x08048529[6]: finishInstruction(call 0x0804852e<<Insn>>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xffffffe0<4294967264,-32>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6918,6 +7120,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804852e: pop ebx
 Symbolic: startInstruction(0x0804852e: pop ebx)
@@ -6938,6 +7141,7 @@ Symbolic insn@0x0804852e[0]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -6995,6 +7199,7 @@ Symbolic insn@0x0804852f[1]: finishInstruction(add ebx, 0x0000119a<4506>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7029,6 +7234,7 @@ registers:
  eax write-only = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7064,6 +7270,7 @@ registers:
  edx write-only = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7134,6 +7341,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7231,6 +7439,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7269,6 +7478,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7338,6 +7548,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7411,6 +7622,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7452,6 +7664,7 @@ registers:
  edx = (add[u32] V2[u32] 0x000010ba<4282>[u32])
  ebx = (add[u32] V2[u32] 0x0000119a<4506>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7479,6 +7692,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x0804854f: lea esi, [edx + eax*0x04]
 Symbolic: startInstruction(0x0804854f: lea esi, [edx + eax*0x04])
@@ -7500,6 +7714,7 @@ Symbolic insn@0x0804854f[0]: writeRegister(esi, (add[u32] (extract[u32] 0x000000
 Symbolic insn@0x0804854f[0]: finishInstruction(lea esi, [edx + eax*0x04])
 registers:
  esi write-only = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7547,6 +7762,7 @@ Symbolic insn@0x08048552[1]: finishInstruction(xor edi, edi)
 registers:
  esi write-only = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
  edi write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7576,6 +7792,7 @@ Symbolic insn@0x08048554[2]: finishInstruction(lea esi, [esi + 0x00000000])
 registers:
  esi = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
  edi write-only = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7605,6 +7822,7 @@ Symbolic insn@0x0804855a[3]: finishInstruction(lea edi, [edi + 0x00000000])
 registers:
  esi = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
  edi = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7646,6 +7864,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  esi = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
  edi = 0x00000000[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -7670,6 +7889,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -7718,6 +7938,7 @@ Symbolic insn@0x08048562[0]: writeRegister(edi, (add[u32] edi_0[u32] 0x00000001[
 Symbolic insn@0x08048562[0]: finishInstruction(inc edi)
 registers:
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7781,6 +8002,7 @@ Symbolic insn@0x08048563[1]: finishInstruction(sub esi, 0x04)
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7850,6 +8072,7 @@ Symbolic insn@0x08048566[2]: finishInstruction(cmp dword ss:[ebp + 0xf0<-16>], e
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7886,6 +8109,7 @@ Symbolic insn@0x08048569[3]: finishInstruction(jne 0x08048560<<BBlock>>)
 registers:
  esi read-before-write = (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])
  edi read-before-write = (add[u32] edi_0[u32] 0x00000001[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7906,6 +8130,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -7932,6 +8157,7 @@ Symbolic insn@0x0804856b[0]: writeRegister(eip, 0x080485b0<134514096>[u32])
 Symbolic insn@0x0804856b[0]: finishInstruction(call 0x080485b0<(func)_fini>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -7946,6 +8172,7 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
+Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
@@ -7996,6 +8223,7 @@ Symbolic insn@0x08048570[0]: writeRegister(esp, (add[u32] esp_0[u32] 0x0000000c[
 Symbolic insn@0x08048570[0]: finishInstruction(add esp, 0x0c)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x0000000c[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8028,6 +8256,7 @@ Symbolic insn@0x08048573[1]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000010[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8065,6 +8294,7 @@ registers:
  ebx write-only = V3[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000014[u32])
  esi write-only = V5[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8107,6 +8337,7 @@ registers:
  esp read-before-write = (add[u32] esp_0[u32] 0x00000018[u32])
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8154,6 +8385,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8206,6 +8438,7 @@ registers:
  ebp write-only = V9[u32]
  esi write-only = V5[u32]
  edi write-only = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8245,6 +8478,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048580: push ebp
 Symbolic: startInstruction(0x08048580: push ebp)
@@ -8264,6 +8498,7 @@ Symbolic insn@0x08048580[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x08048580[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8288,6 +8523,7 @@ Symbolic insn@0x08048581[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8318,6 +8554,7 @@ Symbolic insn@0x08048583[2]: finishInstruction(push ebx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8384,6 +8621,7 @@ Symbolic insn@0x08048584[3]: finishInstruction(sub esp, 0x04)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8418,6 +8656,7 @@ registers:
  ebx read-before-write = 0x080495e8<134518248>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8456,6 +8695,7 @@ registers:
  ebx read-before-write = 0x080495e8<134518248>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8533,6 +8773,7 @@ registers:
  ebx read-before-write = 0x080495e8<134518248>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8578,6 +8819,7 @@ registers:
  ebx read-before-write = 0x080495e8<134518248>[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8609,6 +8851,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048596: lea esi, [esi + 0x00]
 Symbolic: startInstruction(0x08048596: lea esi, [esi + 0x00])
@@ -8625,6 +8868,7 @@ Symbolic insn@0x08048596[0]: unsignedExtend(esi_0[u32], 32) = esi_0[u32]
 Symbolic insn@0x08048596[0]: writeRegister(esi, esi_0[u32])
 Symbolic insn@0x08048596[0]: finishInstruction(lea esi, [esi + 0x00])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8646,6 +8890,7 @@ Symbolic insn@0x08048599[1]: unsignedExtend(edi_0[u32], 32) = edi_0[u32]
 Symbolic insn@0x08048599[1]: writeRegister(edi, edi_0[u32])
 Symbolic insn@0x08048599[1]: finishInstruction(lea edi, [edi + 0x00000000])
 registers:
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8703,6 +8948,7 @@ Symbolic insn@0x080485a0[2]: writeRegister(ebx, (add[u32] ebx_0[u32] 0xfffffffc<
 Symbolic insn@0x080485a0[2]: finishInstruction(sub ebx, 0x04)
 registers:
  ebx read-before-write = (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8740,6 +8986,7 @@ Symbolic insn@0x080485a3[3]: finishInstruction(call eax)
 registers:
  ebx read-before-write = (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8763,6 +9010,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080485a5: mov eax, dword ds:[ebx]
 Symbolic: startInstruction(0x080485a5: mov eax, dword ds:[ebx])
@@ -8779,6 +9027,7 @@ Symbolic insn@0x080485a5[0]: writeRegister(eax, V2[u32])
 Symbolic insn@0x080485a5[0]: finishInstruction(mov eax, dword ds:[ebx])
 registers:
  eax write-only = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8839,6 +9088,7 @@ Symbolic insn@0x080485a7[1]: writeRegister(of, (xor[u1] (extract[u1] 0x0000001f[
 Symbolic insn@0x080485a7[1]: finishInstruction(cmp eax, 0xff<-1>)
 registers:
  eax = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8874,6 +9124,7 @@ Symbolic insn@0x080485aa[2]: writeRegister(eip, (ite[u32] (zerop[u1] (add[u32] V
 Symbolic insn@0x080485aa[2]: finishInstruction(jne 0x080485a0<<BBlock>>)
 registers:
  eax = V2[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
@@ -8897,6 +9148,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080485ac: pop eax
 Symbolic: startInstruction(0x080485ac: pop eax)
@@ -8917,6 +9169,7 @@ Symbolic insn@0x080485ac[0]: finishInstruction(pop eax)
 registers:
  eax write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8948,6 +9201,7 @@ registers:
  eax write-only = V2[u32]
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000008[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -8984,6 +9238,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x0000000c[u32])
  ebp write-only = V6[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9025,6 +9280,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000010[u32])
  ebp write-only = V6[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9054,6 +9310,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080485b0: push ebp
 Symbolic: startInstruction(0x080485b0: push ebp)
@@ -9073,6 +9330,7 @@ Symbolic insn@0x080485b0[0]: writeMemory(ss, (add[u32] esp_0[u32] 0xfffffffc<429
 Symbolic insn@0x080485b0[0]: finishInstruction(push ebp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9097,6 +9355,7 @@ Symbolic insn@0x080485b1[1]: finishInstruction(mov ebp, esp)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9127,6 +9386,7 @@ Symbolic insn@0x080485b3[2]: finishInstruction(push ebx)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9161,6 +9421,7 @@ Symbolic insn@0x080485b4[3]: finishInstruction(push eax)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9203,6 +9464,7 @@ Symbolic insn@0x080485b5[4]: finishInstruction(call 0x080485ba<<Insn>>)
 registers:
  esp read-before-write = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
  ebp read-before-write = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9232,6 +9494,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080485ba: pop ebx
 Symbolic: startInstruction(0x080485ba: pop ebx)
@@ -9252,6 +9515,7 @@ Symbolic insn@0x080485ba[0]: finishInstruction(pop ebx)
 registers:
  ebx write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9309,6 +9573,7 @@ Symbolic insn@0x080485bb[1]: finishInstruction(add ebx, 0x0000110e<4366>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000110e<4366>[u32])
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9348,6 +9613,7 @@ Symbolic insn@0x080485c1[2]: writeRegister(eip, 0x08048390<134513552>[u32])
 Symbolic insn@0x080485c1[2]: finishInstruction(call 0x08048390<(func)__do_global_dtors_aux>)
 registers:
  ebx = (add[u32] V2[u32] 0x0000110e<4366>[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9375,6 +9641,7 @@ Symbolic: operators destroyed
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
 Symbolic: number_(16, 0) = 0x0000[u16]
+Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080485c6: pop eax
 Symbolic: startInstruction(0x080485c6: pop eax)
@@ -9395,6 +9662,7 @@ Symbolic insn@0x080485c6[0]: finishInstruction(pop eax)
 registers:
  eax write-only = V2[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000004[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9426,6 +9694,7 @@ registers:
  eax write-only = V2[u32]
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] esp_0[u32] 0x00000008[u32])
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9465,6 +9734,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] ebp_0[u32] 0x00000004[u32])
  ebp read-before-write = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
@@ -9506,6 +9776,7 @@ registers:
  ebx write-only = V4[u32]
  esp read-before-write = (add[u32] ebp_0[u32] 0x00000008[u32])
  ebp read-before-write = V7[u32]
+ es = 0x0000[u16]
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]

@@ -1684,6 +1684,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Traverse back through a node's parents to find the enclosing global scope
   ROSE_DLL_API SgGlobal* getGlobalScope( const SgNode* astNode);
 
+ // DQ (12/7/2020): This is supporting the recognition of functions in header files from two different AST.
+ //! This is supporting the recognition of functions in header files from two different ASTs
+  ROSE_DLL_API bool hasSameGlobalScope ( SgStatement* statement_1, SgStatement* statement_2 );
 
   //! Find the function definition
   ROSE_DLL_API SgFunctionDefinition* getEnclosingProcedure(SgNode* n, const bool includingSelf=false);
@@ -1861,6 +1864,11 @@ struct DeferredTransformation
         };
 
      TransformationKind deferredTransformationKind;
+
+  // DQ (12/12/2020): Adding a string label so that we can name the different kinds of transformations.
+  // E.g. moving pattern matched function from header file to dynamic library, vs. replacing function 
+  // definitions in the dynamic library file with function prototypes. 
+     std::string transformationLabel;
 
   // Remove sets statementToRemove, replace sets statementToRemove and StatementToAdd.
      SgStatement* statementToRemove;

@@ -145,9 +145,26 @@ private
      (This  : in out Class;
       Value : in     String);
 
-   -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
+   type Ada_Versions is
+     (Ada_83,
+      Ada_95,
+      Ada_2005,
+      Ada_2012,
+      Ada_2020);
+   pragma Ordered (Ada_Versions);
+
+   Supported_Ada_Version : constant Ada_Versions := Ada_95;
+
+   -- If Ada_Version <= Supported_Ada_Version then:
+   --    Add to dot label: ASIS_PROCESSING =>
+   --      "NOT_IMPLEMENTED_COMPLETELY"
+   --    and increment the Not_Implemented count
+   -- Otherwise:
+   --    Add to dot label: ASIS_PROCESSING =>
+   --      Ada_Version & "_FEATURE_NOT_IMPLEMENTED_IN_" & Supported_Ada_Version
    procedure Add_Not_Implemented
-     (This : in out Class);
+     (This        : in out Class;
+      Ada_Version : in     Ada_Versions := Supported_Ada_Version);
 
    procedure Add_Dot_Edge
      (This  : in out Class;

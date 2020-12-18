@@ -7,7 +7,8 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 FORTRAN_TESTCODES = \
-  tiny.f90
+  tiny.f90          \
+  expressions.f90
 
 TEST_FORTRAN_Objects = ${FORTRAN_TESTCODES:.f90=.o}
 TEST_FORTRAN_Sources = ${FORTRAN_TESTCODES:.f90=.f90.passed}

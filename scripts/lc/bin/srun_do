@@ -1,0 +1,142 @@
+#!/bin/bash
+# Will run a command on one compute node of the current cluster, in the 
+# current directory.  
+#
+# Usage: 
+#   srun_do <command> [parameters]
+# To get a log file:
+#   srun_do run_and_log <command> [parameters]
+# To use all the cores on the node:
+#   srun_do -c <cores/node> <command> [parameters]
+# or:
+#   srun_do -c <cores/node> run_and_log <command> [parameters]
+#
+# Depends on:
+#   utility_functions.sh
+#
+# Note:
+# $*, $@ - all args
+# "$*"   - all args quoted in one string
+# "$@"   - all args quoted individually
+
+export SRUN_DO_SCRIPT_DIR="`dirname $0`"
+# Sets strict mode, defines log_ functions:
+source ${SRUN_DO_SCRIPT_DIR}/utility_functions.sh
+
+log_start
+# Too wordy:
+#log_invocation "$@"
+
+case ${HOSTNAME} in
+  rzalastor*)
+    # 4 hour social limit
+    # 20 cores/node
+    # 80 cores/user
+    max_srun_time="4:00:00"
+  ;;
+  rzgenie*)
+    # 4 hour social limit
+    # 36 cores/node
+    # 144 cores/user
+    max_srun_time="4:00:00"
+  ;;
+  cab*)
+    # 30 min limit 6AM to 6PM M-F, 2hr otherwise
+    # 16 cores/node
+    # 16 nodes/user
+    # 256 cores/user
+    max_srun_time="30:00"
+  ;;
+  *)
+    # Unknown cluster    
+    max_srun_time="30:00"
+    log_separator_3
+    log "Unknown host ${HOSTNAME} - setting max_srun_time to ${max_srun_time}"
+    log_separator_3
+  ;;
+esac
+
+# From https://slurm.schedmd.com/srun.html:
+# -c, --cpus-per-task=<ncpus>
+#     Request that ncpus be allocated per process. This may be useful if the 
+#     job is multithreaded and requires more than one CPU per task for optimal 
+#     performance. The default is one CPU per process. If -c is specified 
+#     without -n, as many tasks will be allocated per node as possible while 
+#     satisfying the -c restriction.
+# -l: Prepend task number to lines of stdout/err
+#     CAUTION: -l causes long lines to be wrapped with an extra newline
+# --mpibind=<on|off|v>
+#     2020-01-30 - Now defaults to "on" onRZGenie, RZAlastor, and Catalyst. 
+#     From Ryan Day, LC Hotline: We have rolled out a new version of LC's 
+#     affinity and binding scripts (mpibind) on RZGenie, RZAlastor, and Catalyst...
+#     ...mpibind is turned on by default for jobs that request whole nodes with 
+#     either --exclusive or by requesting 36 tasks per node. Mpibind will 
+#     continue to be off by default for jobs that do not request full nodes. 
+#     Users can also still explicitly turn mpibind on or off with 'srun 
+#     --mpibind=on' or 'srun --mpibind=off'. You can also see details of 
+#     how the binding script is setting task affinity and binding with 'srun 
+#     --mpibind=v'. 
+# -N, --nodes=<minnodes[-maxnodes]>
+#     Request that a minimum of minnodes nodes be allocated to this job. A 
+#     maximum node count may also be specified with maxnodes. If only one 
+#     number is specified, this is used as both the minimum and maximum node 
+#     count.  If -N is not specified, the default behavior is to allocate 
+#     enough nodes to satisfy the requirements of the -n and -c options.  If 
+#     -n is given and -N is also given, the number of nodes used will be 
+#     reduced to match that of the number of tasks if the number of nodes in 
+#     the request > the number of tasks. 
+# -n, --ntasks=<number>
+#     Specify the number of tasks to run. Request that srun allocate resources 
+#     for ntasks tasks. The default is one task per node.
+# -p, --partition=<partition_names>
+#     Request a specific partition for the resource allocation. 
+# -t, --time=<time>
+#     Set a limit on the total run time of the job allocation. If the requested 
+#     time limit exceeds the partition's time limit, the job will be left in a 
+#     PENDING state (possibly indefinitely)... A time limit of zero requests 
+#     that no time limit be imposed. 
+#     Format summary: m, m:s, h:m:s, d-h, d-h:m, d-h:m:s
+# -v, --verbose
+#     Increase the verbosity of srun's informational messages. Multiple -v's 
+#     will further increase srun's verbosity.
+
+# Numbers below are for the -pdebug pool/partition/queue:
+case ${HOSTNAME} in
+  rzalastor*)
+    # 4 hour social limit
+    # 20 cores/node
+    # 80 cores/user
+    max_srun_time="4:00:00"
+  ;;
+  rzgenie*)
+    # 4 hour social limit
+    # 36 cores/node
+    # 144 cores/user
+    max_srun_time="4:00:00"
+  ;;
+  quartz*)
+    # 30 min limit
+    # 36 cores/node
+    # 8 nodes/288 cores/user
+    max_srun_time="30:00"
+  ;;
+  *)
+    # Unknown cluster    
+    max_srun_time="30:00"
+    log_separator_3
+    log "Unknown host ${HOSTNAME} - setting max_srun_time to ${max_srun_time}"
+    log_separator_3
+  ;;
+esac
+
+# Use all cores in one node from the command line thus:
+# $ srun_do -c [cores/node] [mycommand]
+
+unset_strict
+log_then_run srun --mpibind=off -n 1 -p pdebug -t ${max_srun_time} "$@"
+#log_then_run srun --mpibind=off -N 1 -n 1 -p pdebug -t ${max_srun_time} "$@"
+srun_status=$?
+set_strict
+
+log_end ${srun_status}
+
