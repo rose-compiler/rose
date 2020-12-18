@@ -1,0 +1,8 @@
+with "libadalang";
+with "gnatcoll";
+
+project LAL_Test is
+   for Main use ("main.adb");
+   for Object_Dir use "obj";
+end LAL_Test;
+

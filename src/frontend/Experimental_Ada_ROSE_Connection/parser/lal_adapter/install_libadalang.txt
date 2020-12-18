@@ -1,0 +1,12 @@
+See http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/
+
+- Install the GNAT tools and compiler
+- Build and install the GNATcoll library (core, plus Iconv and GMP bindings)
+- Install every Python dependency.
+
+2020-06-03 - Installed GNAT 2020 GPL, which includes libadalang, at: /collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2020
+
+Simple example works.  Need to install gnatcoll for more functionality.
+
+Gnatcoll is installed.
+
