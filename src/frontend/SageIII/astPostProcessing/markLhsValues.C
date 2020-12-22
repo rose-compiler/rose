@@ -68,6 +68,13 @@ MarkLhsValues::visit(SgNode* node)
                          SgExpression* lhs = binaryOperator->get_lhs_operand();
                          ROSE_ASSERT(lhs != NULL);
                          SgExpression* rhs = binaryOperator->get_rhs_operand();
+
+                      // DQ (12/16/2020): Added debugging info (was a problem for preliminary transformation for the code segregation).
+                         if (rhs == NULL)
+                            {
+                              printf ("ERROR: rhs == NULL: expression = %p = %s \n",expression,expression->class_name().c_str());
+                              printf (" --- lhs = %p = %s \n",lhs,lhs->class_name().c_str());
+                            }
                          ROSE_ASSERT(rhs != NULL);
 
                       // This is violated by the ROSE/tests/nonsmoke/functional/roseTests/astInliningTests/pass16.C test code!

@@ -7079,6 +7079,8 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    ROSE_ASSERT(func_call);
    setSourcePosition(func_call, term);
 
+   func_call->set_lvalue(true);
+
    return ATtrue;
 }
 
@@ -7547,9 +7549,6 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
-#endif
       if (traverse_CharacterFormula(t_formula, character_formula)) {
          // MATCHED CharacterFormula
       } else return ATfalse;

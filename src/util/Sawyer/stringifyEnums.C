@@ -9,14 +9,19 @@ static const char *purpose = "generate enum-to-string functions";
 static const char *description =
     "Scans the specified source files and generates functions that convert enum values into enum name strings.";
 
+#include <Sawyer/BitFlags.h>
 #include <Sawyer/Clexer.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Map.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <ctype.h>
 #include <errno.h>
+#include <fstream>
 #include <iostream>
 #include <stdint.h>
 #include <sstream>
@@ -26,12 +31,94 @@ static const char *description =
 using namespace Sawyer::Language::Clexer;
 using namespace Sawyer::Message::Common;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Types
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// What kind of output to generate
+enum Generate {
+    GENERATE_NOTHING,
+    GENERATE_DECLARATIONS,
+    GENERATE_DEFINITIONS
+};
+
+// Flags for enums and enum members
+enum Flag {
+    NO_STRINGIFY        = 0x00000001,                   // do not generate enum-to-string function
+    NO_CHECK            = 0x00000002                    // do not check backward compatibility
+};
+typedef Sawyer::BitFlags<Flag> Flags;
+
+// Location within a source code file
+typedef std::pair<size_t /*line*/, size_t /*col*/> Location;
+
+// Location in source code: file and position within file.
+struct NameAndLocation {
+    std::string fileName;
+    Location location;
+
+    NameAndLocation() {}
+    NameAndLocation(const std::string &fileName, const Location &location)
+        : fileName(fileName), location(location) {}
+};
+
+// Mapping from enum name to source location
+typedef Sawyer::Container::Map<std::string, NameAndLocation> NamedLocationMap;
+
+// Name of a C++ scope (usually something with curly braces such as a namespace)
+struct Scope {
+    std::string name;
+    Location location;
+
+    Scope() {}
+    Scope(const std::string &name, const Location &location)
+        : name(name), location(location) {}
+    explicit Scope(const Location &location)
+        : location(location) {}
+};
+
+// Integer values for global symbols, such as "false", "true", etc.
+typedef Sawyer::Container::Map<std::string, int64_t> SymbolValues;
+
+// An enum value is the concrete integer value and flags associated with a member of an enum type.
+struct EnumValue {
+    int64_t value;                                      // concrete value of enum member
+    Flags flags;                                        // various properties of the enum member
+
+    explicit EnumValue(int64_t v)
+        : value(v) {}
+    EnumValue(int64_t v, Flags flags)
+        : value(v), flags(flags) {}
+};
+
+// Enum members of an enum type.
+typedef Sawyer::Container::Map<std::string /*member_name*/, EnumValue> EnumMembers;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Global variables
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static SymbolValues globalSymbols;
+static EnumMembers currentEnumMembers;
+static NamedLocationMap emittedEnums;
+static EnumMembers oldEnumMembers;
+
+typedef Sawyer::Container::Graph<std::string> NamespaceLattice;
+typedef Sawyer::Container::Map<std::string, NamespaceLattice::VertexIterator> NamespaceLatticeRoots;
+static NamespaceLattice namespaceLattice;
+static NamespaceLatticeRoots namespaceLatticeRoots;
+
+typedef std::vector<Scope> Scopes;
 static Sawyer::Message::Facility mlog;
-static bool emitImplementations = false;
+static Generate generate = GENERATE_DECLARATIONS;
 static std::string outerNamespace = "stringify";
 static bool emitCompatible = false;
 static bool deprecateCompatible = true;
-std::string relativeBase;
+static std::string relativeBase;
+static boost::filesystem::path checkCompatibility;      // check compatibility against these old definitions
+static bool hadCompatibilityErrors = false;             // true if any compatibility errors were detected
+static bool updateCompatibilityDatabase = false;        // update compatibility database if no check errors
+static bool quiet = false;                              // suppress warnings and most errors
 
 static std::vector<boost::filesystem::path>
 parseCommandLine(int argc, char *argv[]) {
@@ -51,18 +138,31 @@ parseCommandLine(int argc, char *argv[]) {
                 .whichValue(SAVE_ALL)
                 .doc("Configures diagnostics."));
 
+    //--- Switches affecting warnings and errors ---
+
+    parser.with(Switch("quiet", 'q')
+                .intrinsicValue(true, quiet)
+                .doc("Suppress all warnings."));
+    parser.with(Switch("no-quiet")
+                .intrinsicValue(false, quiet)
+                .hidden(true));
+
+    //--- Switches affecting generated code ---
+
+    parser.with(Switch("emit")
+                .argument("code", enumParser<Generate>(generate)
+                          ->with("declarations", GENERATE_DECLARATIONS)
+                          ->with("definitions", GENERATE_DEFINITIONS)
+                          ->with("nothing", GENERATE_NOTHING))
+                .doc("What kind of C++ code to generate. The choices are:"
+                     "@named{declarations}{Generate C++ declarations, i.e., a header file.}"
+                     "@named{definitions}{Generate C++ definitions, i.e., a *.C file.}"
+                     "@named{nothing}{Do not generate any C++ code. This is useful for running checks.}"
+                     "The default is to generate declarations."));
+
     parser.with(Switch("namespace")
                 .argument("name", anyParser(outerNamespace))
                 .doc("Namespace in which to enclose everything. Defaults to \"" + outerNamespace + "\"."));
-
-    parser.with(Switch("implementations")
-                .longName("implementation")
-                .intrinsicValue(true, emitImplementations)
-                .doc("Generate function implementations.\n"));
-    parser.with(Switch("declarations")
-                .longName("declaration")
-                .intrinsicValue(false, emitImplementations)
-                .doc("Generate function declarations.\n"));
 
     parser.with(Switch("compatible")
                 .intrinsicValue(true, emitCompatible)
@@ -80,38 +180,37 @@ parseCommandLine(int argc, char *argv[]) {
     parser.with(Switch("root")
                 .argument("directory", anyParser(relativeBase))
                 .doc("Strip @v{directory} from file names in the documentation."));
-    
+
+    //--- Switches for checking backward compatibility ---
+
+    parser.with(Switch("check")
+                .argument("file", anyParser(checkCompatibility))
+                .doc("Check compatibility against the old definitions stored in this file. Errors will be "
+                     "generated for any new enum member whose value has changed."));
+
+    parser.with(Switch("update")
+                .intrinsicValue(true, updateCompatibilityDatabase)
+                .doc("Update the compatibility database if there are no compatibility errors."));
+
+    //--- Backward compatibility with old versions of this tool ---
+
+    parser.with(Switch("implementations")
+                .longName("implementation")
+                .intrinsicValue(GENERATE_DEFINITIONS, generate)
+                .hidden(true));
+    parser.with(Switch("declarations")
+                .longName("declaration")
+                .intrinsicValue(GENERATE_DECLARATIONS, generate)
+                .hidden(true));
+
+
+    // Do the parsing
     std::vector<boost::filesystem::path> retval;
     BOOST_FOREACH (const boost::filesystem::path &path, parser.parse(argc, argv).apply().unreachedArgs())
         retval.push_back(path);
     return retval;
 }
 
-typedef std::pair<size_t /*line*/, size_t /*col*/> Location;
-
-struct NameAndLocation {
-    std::string fileName;
-    Location location;
-
-    NameAndLocation() {}
-    NameAndLocation(const std::string &fileName, const Location &location)
-        : fileName(fileName), location(location) {}
-};
-
-typedef Sawyer::Container::Map<std::string, NameAndLocation> NamedLocationMap;
-
-struct Scope {
-    std::string name;
-    Location location;
-
-    Scope() {}
-    Scope(const std::string &name, const Location &location)
-        : name(name), location(location) {}
-    explicit Scope(const Location &location)
-        : location(location) {}
-};
-
-typedef std::vector<Scope> Scopes;
 
 std::ostream&
 operator<<(std::ostream &out, const Scopes &scopes) {
@@ -121,18 +220,6 @@ operator<<(std::ostream &out, const Scopes &scopes) {
     }
     return out;
 }
-
-typedef Sawyer::Container::Map<std::string, int64_t> SymbolValues;
-typedef SymbolValues EnumMembers;
-
-static SymbolValues globalSymbols;
-static EnumMembers currentEnumMembers;
-static NamedLocationMap emittedEnums;
-
-typedef Sawyer::Container::Graph<std::string> NamespaceLattice;
-typedef Sawyer::Container::Map<std::string, NamespaceLattice::VertexIterator> NamespaceLatticeRoots;
-static NamespaceLattice namespaceLattice;
-static NamespaceLatticeRoots namespaceLatticeRoots;
 
 static std::string
 where(const boost::filesystem::path &filename, const std::pair<size_t, size_t> &location) {
@@ -206,7 +293,7 @@ parseClass(TokenStream &tokens, Scopes &scopes) {
     // If we're not at an opening brace then this isn't a class definition.
     if (!tokens.matches(tokens[0], "{"))
         return;
-    
+
     scopes.push_back(Scope(name, loc));
     SAWYER_MESG(mlog[DEBUG]) <<where(tokens.fileName(), loc) <<": enter class " <<scopes <<"\n";
     tokens.consume();                                   // the opening brace
@@ -223,7 +310,8 @@ parseIntegralConstant(TokenStream &tokens) {
             } else if (s[i] == '1') {
                 retval = (retval << 1) | 1;
             } else {
-                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: invalid integer literal\n";
+                if (!quiet)
+                    std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: invalid integer literal\n";
                 break;
             }
         }
@@ -231,7 +319,7 @@ parseIntegralConstant(TokenStream &tokens) {
         char *rest = NULL;
         errno = 0;
         retval = (int64_t) strtoul(s.c_str(), &rest, 0);
-        if (errno != 0 || *rest)
+        if ((errno != 0 || *rest) && !quiet)
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: invalid integer literal\n";
     }
     tokens.consume();
@@ -246,20 +334,25 @@ parseTermExpr(TokenStream &tokens) {
     int64_t retval = 0;
     if (tokens[0].type() == TOK_NUMBER) {
         retval = parseIntegralConstant(tokens);
-    } else if (currentEnumMembers.getOptional(tokens.lexeme(tokens[0])).assignTo(retval)) {
+    } else if (Sawyer::Optional<EnumValue> v = currentEnumMembers.getOptional(tokens.lexeme(tokens[0]))) {
+        retval = v->value;
         tokens.consume();
     } else if (globalSymbols.getOptional(tokens.lexeme(tokens[0])).assignTo(retval)) {
         tokens.consume();
     } else if (tokens[0].type() == TOK_WORD) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: symbol or variable \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: symbol or variable \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+        }
         tokens.consume();
     } else if (tokens[0].type() == TOK_CHAR && tokens.lexeme(tokens[0]).size()==3) {
         retval = tokens.lexeme(tokens[0])[1];
         tokens.consume();
     } else {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: number or name expected\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: number or name expected\n";
+        }
         tokens.consume();
     }
     return retval;
@@ -272,7 +365,7 @@ parseParenExpr(TokenStream &tokens) {
         int64_t retval = parseCommaExpr(tokens);
         if (tokens.matches(tokens[0], ")")) {
             tokens.consume();
-        } else {
+        } else if (!quiet) {
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                       <<": error: \")\" expected\n";
         }
@@ -286,8 +379,10 @@ static int64_t
 parseScopeExpr(TokenStream &tokens) {
     int64_t retval = parseParenExpr(tokens);
     while (tokens.matches(tokens[0], "::")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: \"::\" is not supported\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: \"::\" is not supported\n";
+        }
         tokens.consume();
         (void) parseParenExpr(tokens);
     }
@@ -299,35 +394,43 @@ parseSuffixExpr(TokenStream &tokens) {
     int64_t retval = parseScopeExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "++") || tokens.matches(tokens[0], "--")) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+            if (!quiet) {
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                          <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+            }
             tokens.consume();
             (void) parseScopeExpr(tokens);
         } else if (tokens.matches(tokens[0], "(")) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                      <<": error: function calls and type casts not supported\n";
+            if (!quiet) {
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                          <<": error: function calls and type casts not supported\n";
+            }
             tokens.consume();
             (void) parseCommaExpr(tokens);
             if (tokens.matches(tokens[0], ")")) {
                 tokens.consume();
-            } else {
+            } else if (!quiet) {
                 std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                           <<": error: expected \")\"\n";
             }
         } else if (tokens.matches(tokens[0], "[")) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                      <<": error: an array reference cannot appear in a constant-expression\n";
+            if (!quiet) {
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                          <<": error: an array reference cannot appear in a constant-expression\n";
+            }
             tokens.consume();
             (void) parseConstExpr(tokens);
             if (tokens.matches(tokens[0], "]")) {
                 tokens.consume();
-            } else {
+            } else if (!quiet) {
                 std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                           <<": error: expected \"]\"\n";
             }
         } else if (tokens.matches(tokens[0], ".") || tokens.matches(tokens[0], "->")) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+            if (!quiet) {
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                          <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+            }
             tokens.consume();
             (void) parseScopeExpr(tokens);
         } else {
@@ -341,15 +444,19 @@ static int64_t
 parsePrefixExpr(TokenStream &tokens) {
     if ((tokens.matches(tokens[0], "delete") || tokens.matches(tokens[0], "new")) &&
         tokens.matches(tokens[1], "[") && tokens.matches(tokens[2], "]")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: \"" <<tokens.lexeme(tokens[0]) <<"[]\" cannot appear in a constant-expression\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"[]\" cannot appear in a constant-expression\n";
+        }
         tokens.consume(3);
         return parsePrefixExpr(tokens);
     } else if (tokens.matches(tokens[0], "delete") || tokens.matches(tokens[0], "new") || tokens.matches(tokens[0], "sizeof") ||
                tokens.matches(tokens[0], "&") || tokens.matches(tokens[0], "*") || false/*C-style-type-case*/ ||
                tokens.matches(tokens[0], "++") || tokens.matches(tokens[0], "--")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" cannot appear in a constant-expression\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" cannot appear in a constant-expression\n";
+        }
         tokens.consume();
         return parsePrefixExpr(tokens);
     } else if (tokens.matches(tokens[0], "+")) {
@@ -373,8 +480,10 @@ static int64_t
 parsePointerExpr(TokenStream &tokens) {
     int64_t retval = parsePrefixExpr(tokens);
     while (tokens.matches(tokens[0], ".*") || tokens.matches(tokens[0], "->*")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
+        }
         tokens.consume();
         (void) parsePrefixExpr(tokens);
     }
@@ -550,8 +659,10 @@ parseAssignExpr(TokenStream &tokens) {
         tokens.matches(tokens[0], "*=") || tokens.matches(tokens[0], "/=") || tokens.matches(tokens[0], "%=") ||
         tokens.matches(tokens[0], "<<=") || tokens.matches(tokens[0], ">>=") || tokens.matches(tokens[0], "&=") ||
         tokens.matches(tokens[0], "^=") || tokens.matches(tokens[0], "|=")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" cannot appear in a constant-expression\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" cannot appear in a constant-expression\n";
+        }
         tokens.consume();
         retval = parseAssignExpr(tokens);
     } else if (tokens.matches(tokens[0], "?")) {
@@ -561,7 +672,7 @@ parseAssignExpr(TokenStream &tokens) {
             tokens.consume();
             int64_t b = parseAssignExpr(tokens);
             retval = retval ? a : b;
-        } else {
+        } else if (!quiet) {
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: \":\" expected\n";
         }
     }
@@ -577,8 +688,10 @@ static int64_t
 parseCommaExpr(TokenStream &tokens) {
     int64_t retval = parseConstExpr(tokens);
     while (tokens.matches(tokens[0], ",")) {
-        std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
-                  <<": error: comma operator cannot appear in a constant-expression\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
+                      <<": error: comma operator cannot appear in a constant-expression\n";
+        }
         tokens.consume();
         retval = parseConstExpr(tokens);
     }
@@ -604,7 +717,7 @@ static size_t
 generateNamespaces(const std::string initial, const Scopes &scopes, size_t nOmit) {
     size_t nns = 0;
     NamespaceLattice::VertexIterator parent = namespaceLattice.vertices().end();
-    
+
     if (!initial.empty()) {
         std::cout <<"namespace " <<initial <<" {";
         if (!namespaceLatticeRoots.getOptional(initial).assignTo(parent)) {
@@ -682,8 +795,10 @@ generateImplementation(const std::string &fileName, const Location &loc,
 
     typedef Sawyer::Container::Map<int64_t, std::string> ReverseMembers;
     ReverseMembers reverseMembers;
-    BOOST_FOREACH (const EnumMembers::Node &node, members.nodes())
-        reverseMembers.insert(node.value(), node.key());
+    BOOST_FOREACH (const EnumMembers::Node &member, members.nodes()) {
+        if (member.value().flags.isClear(NO_STRINGIFY))
+            reverseMembers.insert(member.value().value, member.key());
+    }
 
     std::cout <<"// DO NOT EDIT -- This implementation was automatically generated for the enum defined at\n"
               <<"// ";
@@ -732,6 +847,64 @@ generateImplementation(const std::string &fileName, const Location &loc,
               <<"\n";
 
     std::cout <<std::string(nns, '}') <<"\n\n";
+}
+
+// Read old enum member information from a text file.  Each line contains a fully qualified enum member name, horizontal white
+// space (usually a TAB) and the integer value. Additional horizontal white space is ignored. After removing extra horizontal
+// white space, blank lines and lines beginning with "#" are ignored.
+static EnumMembers
+readOldMembers(const boost::filesystem::path &fileName) {
+    EnumMembers retval;
+    std::ifstream in(fileName.c_str());
+    if (!in) {
+        std::cerr <<fileName.string() <<": cannot read old definitions from file\n";
+        return retval;
+    }
+    size_t lineNumber = 0;
+    std::string line;
+    boost::regex re("\\s*(\\S+)\\s+(\\S+)\\s*|\\s*(#.*)?");
+    while (std::getline(in, line)) {
+        ++lineNumber;
+        boost::smatch found;
+        if (boost::regex_match(line, found, re)) {
+            std::string name = found.str(1);
+            if (!name.empty()) {
+                int64_t value = boost::lexical_cast<int64_t>(found.str(2));
+                retval.insert(name, EnumValue(value));
+            }
+        } else if (!quiet) {
+            std::cerr <<fileName.string() <<":" <<lineNumber <<": syntax error\n";
+        }
+    }
+    return retval;
+}
+
+
+
+// Compare the new enum members with the old members. The `oldMembers` map contains the fully qualified member names of
+// all the enums (not just the enum whose data is in `members`).
+static void
+checkBackwardCompatibility(const std::string &fileName, const Location &loc,
+                           const Scopes &scopes, const EnumMembers &members) {
+    if (isAnonymous(scopes))
+        return;
+
+    std::string enumName = fullyQualifiedEnumName(scopes);
+    BOOST_FOREACH (const EnumMembers::Node &member, members.nodes()) {
+        if (member.value().flags.isClear(NO_CHECK)) {
+            std::string memberName = enumName + "::" + member.key();
+            if (Sawyer::Optional<EnumValue> old = oldEnumMembers.getOptional(memberName)) {
+                if (old->value != member.value().value) {
+                    std::cerr <<where(fileName, loc) <<": error: '" <<memberName <<"'"
+                              <<" value changed from " <<old->value <<" to " <<member.value().value <<"\n";
+                    hadCompatibilityErrors = true;
+                }
+            } else {
+                // Save the new value in case we want to update the database later.
+                oldEnumMembers.insert(memberName, member.value());
+            }
+        }
+    }
 }
 
 static std::string
@@ -791,14 +964,24 @@ generateCompatibleImplementation(const Scopes &scopes) {
               <<"}\n\n";
 }
 
+static Flags
+readFlags(TokenStream &tokens, const Token &token) {
+    Flags flags;
+    if (boost::contains(tokens.line(tokens[0]), "NO_STRINGIFY"))
+        flags.set(NO_STRINGIFY);
+    if (boost::contains(tokens.line(tokens[0]), "NO_CHECK"))
+        flags.set(NO_CHECK);
+    return flags;
+}
+
 static void
 parseEnum(TokenStream &tokens, Scopes &scopes) {
     ASSERT_require(tokens.matches(tokens[0], "enum"));
     Location enumLocation = tokens.location(tokens[0]);
-    bool skipEnum = boost::contains(tokens.line(tokens[0]), "NO_STRINGIFY");
+
+    // Flags for the enum as a whole, which become the default flags for each member.
+    Flags enumFlags = readFlags(tokens, tokens[0]);
     tokens.consume();
-    if (skipEnum)
-        return;
 
     // Advance past the opening brace while picking up the enum name. If there is no enum
     // name then skip it. We don't support "typedef enum {...} name".
@@ -818,12 +1001,14 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
     const std::string enumName = fullyQualifiedEnumName(scopes);
     NameAndLocation firstLocation;
     if (emittedEnums.getOptional(enumName).assignTo(firstLocation)) {
-        std::cerr <<where(tokens.fileName(), enumLocation) <<": error: enum '" <<enumName <<"' is already defined\n";
-        std::cerr <<where(firstLocation.fileName, firstLocation.location) <<": info: previous definition\n";
+        if (!quiet) {
+            std::cerr <<where(tokens.fileName(), enumLocation) <<": error: enum '" <<enumName <<"' is already defined\n";
+            std::cerr <<where(firstLocation.fileName, firstLocation.location) <<": info: previous definition\n";
+        }
         return;
     }
     emittedEnums.insert(enumName, NameAndLocation(tokens.fileName(), enumLocation));
-    
+
     // Parse the enum members
     currentEnumMembers.clear();
     EnumMembers members;
@@ -831,11 +1016,12 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
     while (tokens[0].type() != TOK_EOF && !tokens.matches(tokens[0], "}")) {
         // The enum member name
         if (tokens[0].type() != TOK_WORD) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: expected an enum constant\n";
+            if (!quiet)
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: expected an enum constant\n";
             break;
         }
         std::string memberName = tokens.lexeme(tokens[0]);
-        bool skipEnumMember = boost::contains(tokens.line(tokens[0]), "NO_STRINGIFY");
+        Flags memberFlags = enumFlags | readFlags(tokens, tokens[0]);
         tokens.consume();
 
         // The optional member value
@@ -848,30 +1034,42 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
         if (tokens.matches(tokens[0], ",")) {
             tokens.consume();
         } else if (!tokens.matches(tokens[0], "}")) {
-            std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: expected comma enum separator\n";
+            if (!quiet)
+                std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: expected comma enum separator\n";
             break;
         }
 
-        if (!skipEnumMember)
-            members.insert(memberName, memberValue);
-        currentEnumMembers.insert(memberName, memberValue);
+        members.insert(memberName, EnumValue(memberValue, memberFlags));
+        currentEnumMembers.insert(memberName, EnumValue(memberValue, memberFlags));
 
         ++memberValue;
     }
 
     // Closing brace
-    if (!tokens.matches(tokens[0], "}"))
+    if (!tokens.matches(tokens[0], "}") && !quiet)
         std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: expected enum closing brace\n";
 
-    if (emitImplementations) {
-        generateImplementation(tokens.fileName(), enumLocation, scopes, members);
-        if (emitCompatible)
-            generateCompatibleImplementation(scopes);
-    } else {
-        generateDeclaration(tokens.fileName(), enumLocation, scopes);
-        if (emitCompatible)
-            generateCompatibleDeclaration(scopes);
+    switch (generate) {
+        case GENERATE_DECLARATIONS:
+            if (enumFlags.isClear(NO_STRINGIFY)) {
+                generateDeclaration(tokens.fileName(), enumLocation, scopes);
+                if (emitCompatible)
+                    generateCompatibleDeclaration(scopes);
+            }
+            break;
+        case GENERATE_DEFINITIONS:
+            if (enumFlags.isClear(NO_STRINGIFY)) {
+                generateImplementation(tokens.fileName(), enumLocation, scopes, members);
+                if (emitCompatible)
+                    generateCompatibleImplementation(scopes);
+            }
+            break;
+        case GENERATE_NOTHING:
+            break;
     }
+
+    if (!checkCompatibility.empty())
+        checkBackwardCompatibility(tokens.fileName(), enumLocation, scopes, members);
 }
 
 static void
@@ -942,18 +1140,32 @@ main(int argc, char *argv[]) {
 
     std::vector<boost::filesystem::path> inputNames = parseCommandLine(argc, argv);
 
+    // Load old definitions
+    if (!checkCompatibility.empty())
+        oldEnumMembers = readOldMembers(checkCompatibility);
+
     // File prologue
-    if (!emitImplementations) {
-        generateOnce();
-        if (emitCompatible && deprecateCompatible)
-            std::cout <<"#include <Sawyer/Sawyer.h> // for SAWYER_DEPRECATED\n";
+    switch (generate) {
+        case GENERATE_DECLARATIONS:
+            generateOnce();
+            if (emitCompatible && deprecateCompatible)
+                std::cout <<"#include <Sawyer/Sawyer.h> // for SAWYER_DEPRECATED\n";
+            std::cout <<"#include <boost/algorithm/string/predicate.hpp>\n"
+                      <<"#include <boost/lexical_cast.hpp>\n"
+                      <<"#include <string>\n"
+                      <<"#include <vector>\n\n";
+            if (emitCompatible)
+                generateStringifierClass();
+            break;
+        case GENERATE_DEFINITIONS:
+            std::cout <<"#include <boost/algorithm/string/predicate.hpp>\n"
+                      <<"#include <boost/lexical_cast.hpp>\n"
+                      <<"#include <string>\n"
+                      <<"#include <vector>\n\n";
+            break;
+        case GENERATE_NOTHING:
+            break;
     }
-    std::cout <<"#include <boost/algorithm/string/predicate.hpp>\n"
-              <<"#include <boost/lexical_cast.hpp>\n"
-              <<"#include <string>\n"
-              <<"#include <vector>\n\n";
-    if (!emitImplementations && emitCompatible)
-        generateStringifierClass();
 
     // Declarations or implementations
     BOOST_FOREACH (const boost::filesystem::path &inputName, inputNames) {
@@ -987,7 +1199,8 @@ main(int argc, char *argv[]) {
                     if (tokens.matches(tokens[0], "}")) {
                         SAWYER_MESG(mlog[DEBUG]) <<where(inputName, tokens.location(tokens[0])) <<": leave " <<scopes <<"\n";
                         if (scopes.empty()) {
-                            std::cerr <<where(inputName, tokens.location(tokens[0])) <<": error: unbalanced closing brace\n";
+                            if (!quiet)
+                                std::cerr <<where(inputName, tokens.location(tokens[0])) <<": error: unbalanced closing brace\n";
                         } else {
                             scopes.pop_back();
                         }
@@ -1016,18 +1229,32 @@ main(int argc, char *argv[]) {
         }
 
         if (!scopes.empty()) {
-            std::cerr <<where(inputName, tokens.location(tokens[0])) <<": error: unbalanced braces encountered\n";
+            if (!quiet)
+                std::cerr <<where(inputName, tokens.location(tokens[0])) <<": error: unbalanced braces encountered\n";
             while (!scopes.empty()) {
-                std::cerr <<where(inputName, scopes.back().location)
-                          <<": error: no close brace for this open brace\n";
+                if (!quiet) {
+                    std::cerr <<where(inputName, scopes.back().location)
+                              <<": error: no close brace for this open brace\n";
+                }
                 scopes.pop_back();
             }
         }
     }
 
     // File epilogue
-    if (!emitImplementations) {
+    if (GENERATE_DECLARATIONS == generate) {
         generateDocumentation();
         std::cout <<"\n#endif\n";
+    }
+    if (!checkCompatibility.empty() && updateCompatibilityDatabase) {
+        if (hadCompatibilityErrors) {
+            std::cerr <<checkCompatibility.string() <<": not updating database due to previous compatibility errors\n";
+        } else {
+            std::ofstream out(checkCompatibility.c_str());
+            BOOST_FOREACH (const EnumMembers::Node &old, oldEnumMembers.nodes()) {
+                if (old.value().flags.isClear(NO_CHECK))
+                    out <<old.key() <<"\t" <<old.value().value <<"\n";
+            }
+        }
     }
 }
