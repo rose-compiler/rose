@@ -155,7 +155,7 @@ namespace
 
     void handle(SgAdaFloatType& n)
     {
-      prn(" is ");
+      prn("digits ");
       expr(n.get_digits());
 
       support_opt(n.get_constraint());
