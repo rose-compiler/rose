@@ -32,6 +32,7 @@
 #include "ReachabilityAnalysis.h"
 //#include "EquivalenceChecking.h"
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
@@ -70,6 +71,7 @@ using namespace Sawyer::Message;
 
 // required for createSolver function
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
@@ -96,6 +98,9 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   switch(ctOpt.solver) {
   case 5 :  {  
     solver = new Solver5(); break;
+  }
+  case 16 :  {  
+    solver = new Solver16(); break; // variant of solver5
   }
   case 8 :  {  
     solver = new Solver8(); break;
