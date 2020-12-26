@@ -352,6 +352,13 @@ namespace Ada_ROSE_Translation
                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                 );
 
+  SgAdaFunctionRenamingDecl&
+  mkAdaFunctionRenamingDecl( const std::string& name,
+                             SgScopeStatement& scope,
+                             SgType& retty,
+                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                             );
+
 
   /// creates an Ada entry declaration
   /// \param name     the entry name
