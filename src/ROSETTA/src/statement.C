@@ -456,12 +456,14 @@ Grammar::setUpStatements ()
 
   // PP 08/05/20 Ada Nodes
      NEW_TERMINAL_MACRO (AdaEntryDecl,            "AdaEntryDecl",            "ADA_ENTRY_DECL_STMT" );
+  // MS 12/20/20 Ada Nodes
+     NEW_TERMINAL_MACRO (AdaFunctionRenamingDecl, "AdaFunctionRenamingDecl", "ADA_FUNCTION_RENAMING_DECL_STMT" );
 
   // DQ (3/20/2007): ProgramHeaderStatement and ProcedureHeaderStatement are derived from FunctionDeclaration
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (FunctionDeclaration,
           TemplateFunctionDeclaration | MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement |
-          ProcedureHeaderStatement    | EntryStatement            | AdaEntryDecl,
+          ProcedureHeaderStatement    | EntryStatement            | AdaEntryDecl                      | AdaFunctionRenamingDecl ,
           "FunctionDeclaration","FUNC_DECL_STMT", true);
 
 #if 0
@@ -4458,6 +4460,12 @@ Grammar::setUpStatements ()
 
      AdaEntryDecl.setFunctionSource ( "SOURCE_ADA_ENTRY_DECL_STMT", "../Grammar/Statement.code");
 
+     AdaFunctionRenamingDecl.setFunctionPrototype ( "HEADER_ADA_FUNCTION_RENAMING_DECL_STMT", "../Grammar/Statement.code" );
+
+     AdaFunctionRenamingDecl.setDataPrototype ( "SgFunctionDeclaration*", "renamed_function", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaFunctionRenamingDecl.setFunctionSource ( "SOURCE_ADA_FUNCTION_RENAMING_DECL_STMT", "../Grammar/Statement.code" );
 
      MatlabForStatement.setFunctionSource         ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
 

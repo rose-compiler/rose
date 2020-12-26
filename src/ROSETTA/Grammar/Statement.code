@@ -3631,6 +3631,12 @@ HEADER_ADA_ENTRY_DECL_STMT_START
 
 HEADER_ADA_ENTRY_DECL_STMT_END
 
+HEADER_ADA_FUNCTION_RENAMING_DECL_STMT_START
+
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_ADA_FUNCTION_RENAMING_DECL_STMT_END
+
 HEADER_FORTRAN_DO_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
@@ -18877,7 +18883,18 @@ SgAdaEntryDecl::get_mangled_name() const
 
 SOURCE_ADA_ENTRY_DECL_STMT_END
 
+SOURCE_ADA_FUNCTION_RENAMING_DECL_STMT_START
 
+void
+SgAdaFunctionRenamingDecl::post_construction_initialization() {}
+
+SgName
+SgAdaFunctionRenamingDecl::get_mangled_name() const
+{
+  return SgFunctionDeclaration::get_mangled_name();
+}
+
+SOURCE_ADA_FUNCTION_RENAMING_DECL_STMT_END
 
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_START
 
