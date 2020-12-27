@@ -8980,6 +8980,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while(i != classChain.end())
         {
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf ("******** TOP OF WHILE LOOP ******** \n");
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
@@ -9029,6 +9030,9 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
                   }
              }
 
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf ("******** BOTTOM OF WHILE LOOP ******** \n");
+#endif
           i++;
 
        // Also increment the save_iter.
