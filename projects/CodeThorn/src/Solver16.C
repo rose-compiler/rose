@@ -21,6 +21,18 @@ int Solver16::getId() {
   return 16;
 }
     
+void Solver16::recordTransition(const EState* currentEStatePtr0,const EState* currentEStatePtr,Edge e, const EState* newEStatePtr) {
+  _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+  if(currentEStatePtr0!=currentEStatePtr) {
+    // also add transition edge for the state from
+    // worklist if it is different to the summary state
+    // (to which an edge must exist in the STS)
+    Edge e0(currentEStatePtr0->label(),e.getTypes(),newEStatePtr->label());
+    e0.setAnnotation(e.getAnnotation());
+    _analyzer->recordTransition(currentEStatePtr0,e0,newEStatePtr);
+  }
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -207,13 +219,13 @@ void Solver16::run() {
               } else {
                 //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
               }
-              _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+              recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=_analyzer->processNewOrExisting(newEState);
-              _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+              recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
 
               if(_analyzer->isVerificationErrorEState(&newEState)) {
 #pragma omp critical

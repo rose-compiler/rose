@@ -858,6 +858,11 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
+check-viz:
+	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM201_rand_loop.C --context-sensitive --normalize-all --viz --exploration-mode=topologic-sort && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf cfg.dot -ocfg.pdf
+
+
+
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
