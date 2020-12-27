@@ -11306,7 +11306,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     std::list<SgClassType*> classChain = SageInterface::getClassTypeChainForMemberReference(memberFunctionRefExp);
 
 #if DEBUG_MEMBER_FUNCTION_REF
-                    mfprintf(mlog [ WARN ] ) ("classChain.size() = %zu \n",classChain.size());
+                    mfprintf(mlog [ WARN ] ) ("case SgMemberFunctionRefExp: classChain.size() = %zu \n",classChain.size());
                     std::list<SgClassType*>::iterator classChain_iterator = classChain.begin();
                     while (classChain_iterator != classChain.end())
                        {
@@ -12063,7 +12063,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     std::list<SgClassType*> classChain = SageInterface::getClassTypeChainForMemberReference(varRefExp);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    mfprintf(mlog [ WARN ] ) ("classChain.size() = %zu \n",classChain.size());
+                    mfprintf(mlog [ WARN ] ) ("case SgVarRefExp: classChain.size() = %zu \n",classChain.size());
                     std::list<SgClassType*>::iterator classChain_iterator = classChain.begin();
                     while (classChain_iterator != classChain.end())
                        {
@@ -17941,7 +17941,12 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
 #define DEBUG_HAS_AMBIGUITY 0
 
 #if DEBUG_HAS_AMBIGUITY
-     mfprintf(mlog [ WARN ] ) ("In SgScopeStatement::hasAmbiguity(): name = %s symbol = %p = %s \n",name.str(),symbol,symbol->class_name().c_str());
+     mfprintf(mlog [ WARN ] ) ("\nIn SgScopeStatement::hasAmbiguity(): name = %s symbol = %p = %s \n",name.str(),symbol,symbol->class_name().c_str());
+#endif
+
+#if DEBUG_HAS_AMBIGUITY
+     mfprintf(mlog [ WARN ] ) ("Print the symbol table for the current scope = %p = %s \n",this,this->class_name().c_str());
+     this->get_symbol_table()->print();
 #endif
 
   // DQ (2/23/2019): This might be a possible alternative way (maybe a better way) to detect possible ambiguity.
@@ -17971,6 +17976,10 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
 
           rose_hash_multimap * internal_table = this->get_symbol_table()->get_table();
           ASSERT_not_null(internal_table);
+
+#if DEBUG_HAS_AMBIGUITY
+               mfprintf(mlog [ WARN ] ) ("Before loop over symbols \n");
+#endif
           std::pair<rose_hash_multimap::iterator, rose_hash_multimap::iterator> range = internal_table->equal_range (name);
           for (rose_hash_multimap::iterator i = range.first; i != range.second; ++i)
              {
@@ -17978,16 +17987,25 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                ASSERT_not_null(orig_current_symbol);
 
 #if DEBUG_HAS_AMBIGUITY
+               mfprintf(mlog [ WARN ] ) ("Top of loop over symbols \n");
                mfprintf(mlog [ WARN ] ) ("@@@@@@ orig_current_symbol = %p = %s \n",orig_current_symbol,orig_current_symbol->class_name().c_str());
 #endif
                SgAliasSymbol* aliasSymbol = isSgAliasSymbol(orig_current_symbol);
                if (aliasSymbol != NULL)
                   {
                     size_t causalNodeCount = aliasSymbol->get_causal_nodes().size();
+#if DEBUG_HAS_AMBIGUITY
+                    mfprintf(mlog [ WARN ] ) (" --- causalNodeCount = %zu \n",causalNodeCount);
+#endif
                     if (causalNodeCount == 1)
                        {
                       // We need to know if each of the alias symbols has a different causal node.
                          SgNode* causalNode = aliasSymbol->get_causal_nodes()[0];
+#if DEBUG_HAS_AMBIGUITY
+                         mfprintf(mlog [ WARN ] ) (" --- causalNode = %p \n",causalNode);
+                         mfprintf(mlog [ WARN ] ) (" --- find(causalNodeList.begin(),causalNodeList.end(),causalNode) == causalNodeList.end() = %s \n",
+                              find(causalNodeList.begin(),causalNodeList.end(),causalNode) == causalNodeList.end() ? "true" : "false");
+#endif
                          if (find(causalNodeList.begin(),causalNodeList.end(),causalNode) == causalNodeList.end())
                             {
                               causalNodeList.push_back(causalNode);
@@ -17998,7 +18016,9 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                       // We have identified an ambiguity.
 
                          ROSE_ASSERT (causalNodeCount > 1);
-
+#if DEBUG_HAS_AMBIGUITY
+                         mfprintf(mlog [ WARN ] ) (" --- We have identified an ambiguity (causalNodeCount > 1): causalNodeCount = %zu \n",causalNodeCount);
+#endif
                          ambiguityDetected = true;
                        }
                   }
@@ -18014,10 +18034,13 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                          orig_current_symbol,orig_current_symbol->class_name().c_str());
 #endif
                   }
+#if DEBUG_HAS_AMBIGUITY
+               mfprintf(mlog [ WARN ] ) ("Bottom of loop over symbols: causalNodeList.size() = %zu \n",causalNodeList.size());
+#endif
              }
 
 #if DEBUG_HAS_AMBIGUITY
-          mfprintf(mlog [ WARN ] ) ("causalNodeList.size() = %zu \n",causalNodeList.size());
+          mfprintf(mlog [ WARN ] ) ("After loop over symbols: causalNodeList.size() = %zu \n",causalNodeList.size());
 #endif
 
           if (causalNodeList.size() > 1)
