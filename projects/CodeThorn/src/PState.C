@@ -93,6 +93,21 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
       ss<<"->";
       ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
       ss<<";"<<endl;
+    } else if(v2.isPtrSet()) {
+      // nodes
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      AbstractValueSet* avTargetSet=(*j).second.getAbstractValueSet();
+      for(auto av : *avTargetSet) {
+        ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping)<<"\"];"<<endl;
+      }
+      //endl; // target label intentionally not generated
+      // edge
+      for(auto av : *avTargetSet) {
+        ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
+        ss<<"->";
+        ss<<"\""<<dotNodeIdString(prefix,av)<<"\" [weight=\"0.0\"]";
+        ss<<";"<<endl;
+      }
     } else {
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
     }

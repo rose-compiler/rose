@@ -859,7 +859,7 @@ check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
 check-vis:
-	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM201_rand_loop.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf cfg.dot -ocfg.pdf
+	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM200_pointers_merge.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort --tg1-estate-memory-subgraphs --pointer-sets && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf transitiongraph2.dot -otg2.pdf && dot -Tpdf cfg.dot -ocfg.pdf
 
 
 
