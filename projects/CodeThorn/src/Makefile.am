@@ -631,7 +631,7 @@ REGRESSION_DATA_DIR=regressiondata
 addressTakenAnalysis_SOURCES = \
   addressTakenAnalysisDriver.C
 
-.PHONY: codethorn-dist viz bsps test checkdemos
+.PHONY: codethorn-dist vis bsps test checkdemos
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -742,7 +742,7 @@ check-domain-old:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
-	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/intertest14.C --vis && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -826,7 +826,7 @@ check-ltl-cegpra:
 
 # not used
 check-arrays:
-	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --vis=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 # not used
 check-array-bounds: ./codethorn
@@ -849,7 +849,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
@@ -858,8 +858,8 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
-check-viz:
-	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM201_rand_loop.C --context-sensitive --normalize-all --viz --exploration-mode=topologic-sort && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf cfg.dot -ocfg.pdf
+check-vis:
+	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM201_rand_loop.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf cfg.dot -ocfg.pdf
 
 
 
@@ -874,7 +874,7 @@ clean-local:
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg
-	rm -f viz/*
+	rm -f vis/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++

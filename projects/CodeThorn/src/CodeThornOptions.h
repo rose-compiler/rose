@@ -45,8 +45,8 @@ struct CodeThornOptions : public CodeThorn::Options {
     bool tg2EStateProperties=false;
     bool tg2EStatePredicate=false;
     bool visualizeRWSets=false;
-    bool viz=false;
-    bool vizTg2=false;
+    bool vis=false;
+    bool visTg2=false;
     std::string icfgFileName;
     std::string callGraphFileName;
   } visualization;

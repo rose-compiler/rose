@@ -256,10 +256,10 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   // visualizer for in-depth model outputs (.dot files)
   Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(),
                           _analyzer->getFlow(),_analyzer->getPStateSet(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
-  string vizFilenamePrefix = "";
-  if(args.isDefined("viz-cegpra-detailed")) {
-    vizFilenamePrefix=args.getString("viz-cegpra-detailed");
-    string filename = vizFilenamePrefix + "_cegpra_init.dot";
+  string visFilenamePrefix = "";
+  if(args.isDefined("vis-cegpra-detailed")) {
+    visFilenamePrefix=args.getString("vis-cegpra-detailed");
+    string filename = visFilenamePrefix + "_cegpra_init.dot";
     writeDotGraphToDisk(filename, visualizer);
   }
   // OVERVIEW
@@ -322,9 +322,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
        }
     }
     model->setIsPrecise(true);
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // (2) add a trace to the prefix according to the most recent counterexample. Analyze the counterexample while adding the trace.
@@ -345,9 +345,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     } else {
       assert(0);  //counterexample analysis not successfully completed
     }
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // (3) reconnect both parts of the model
@@ -370,9 +370,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       }
     }
     model->setIsComplete(true);
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // if falsified: after reconnecting, leave the analysis loop, report size of the model and return the results
