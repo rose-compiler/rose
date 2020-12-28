@@ -18,6 +18,7 @@
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
 #include "Copy.hh"
+#include "RoseAst.h"
 
 // =====================================================================
 
@@ -929,7 +930,10 @@ isProtPrivMember (SgVarRefExp* v)
 /*!
  *  \brief Returns 'true' if the given type was declared as a
  *  'protected' or 'private' class member.
+ *  This function need to be recursive. It may involves a chain of base types and some types in the middle are private class types. 
+ *  The deepest base type may not be a private type.
  */
+#if 0
 static
 SgClassDefinition *
 isProtPrivType (SgType* t)
@@ -948,6 +952,48 @@ isProtPrivType (SgType* t)
           if (isProtPriv (decl))
             return isSgClassDefinition (decl->get_parent ());
         }
+    }
+
+// DQ (11/3/2015): Fixed compiler warning.
+// return false;
+   return NULL;
+}
+#endif 
+static
+SgClassDefinition *
+isProtPrivType (SgType* t)
+{
+  if (t)
+    {
+      // check self 
+      if (t && isSgNamedType (t))
+        {
+          SgNamedType* named = isSgNamedType (t);
+          ROSE_ASSERT (named);
+          SgDeclarationStatement* decl = named->get_declaration ();
+          if (decl)
+            if (decl->get_definingDeclaration ())
+              decl = decl->get_definingDeclaration ();
+          if (isProtPriv (decl))
+          {
+            //if any type in the type chain is private, we return immediately.
+            if (SgClassDefinition* c_d= isSgClassDefinition (decl->get_parent ()))
+              return c_d; 
+            // if c_d is NULL, we go further to check its base type's access control; 
+          }
+        }
+
+      // recursively check base type if any
+      if (SgModifierType* m_type= isSgModifierType(t))
+         return isProtPrivType (m_type->get_base_type());
+      else if (SgPointerType* p_type =  isSgPointerType(t))
+         return isProtPrivType (p_type->get_base_type());
+      else if (SgArrayType* a_type = isSgArrayType(t))
+         return isProtPrivType (a_type->get_base_type());
+      else if (SgReferenceType* r_type = isSgReferenceType(t))
+         return isProtPrivType (r_type->get_base_type());
+      else if (SgTypedefType* t_type = isSgTypedefType(t))
+         return isProtPrivType (t_type->get_base_type());
     }
 
 // DQ (11/3/2015): Fixed compiler warning.
@@ -1025,6 +1071,27 @@ insertFriendDecls (SgFunctionDeclaration* func,
       typedef set<SgClassDefinition *> ClassDefSet_t;
       ClassDefSet_t classes;
       
+      // better algorithm in one pass to find all types of nodes
+      RoseAst ast (func);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+         SgNode* cur_node= *i; 
+         SgClassDefinition* cl_def = NULL; 
+         // variable declarations may use some private types.
+         if (SgInitializedName* init_name= isSgInitializedName(cur_node))
+         {
+            cl_def = isProtPrivType (init_name->get_type());
+            if (enable_debug)
+              printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
+         }
+
+          if (cl_def != NULL)
+          {
+            if (enable_debug)
+              printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+            classes.insert (cl_def);
+          }
+      }
+
    // First, look for references to private variables.
       typedef Rose_STL_Container<SgNode *> NodeList_t;
       NodeList_t var_refs = NodeQuery::querySubTree (func, V_SgVarRefExp);
