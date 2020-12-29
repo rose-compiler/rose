@@ -8245,6 +8245,13 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgAdaFunctionRenamingDecl:
+             {
+               const SgAdaFunctionRenamingDecl* dcl = isSgAdaFunctionRenamingDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
           case V_SgNonrealDecl:
              {
                const SgNonrealDecl* nrdecl = isSgNonrealDecl(node);
