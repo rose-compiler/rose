@@ -201,11 +201,11 @@ void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind
 /// \param primaryHandler true if this is the primary handler
-//~ void logKind(const char* kind, bool primaryHandler = true);
+void logKind(const char* kind, bool primaryHandler = true);
 
 /// non-tracing alternative
-static inline
-void logKind(const char*, bool = false) {}
+//~ static inline
+//~ void logKind(const char*, bool = false) {}
 
 /// anonymous namespace for auxiliary templates and functions
 namespace
@@ -384,7 +384,7 @@ namespace
     return nullptr;
   }
 
-  /// tries a number of keys to find a declaration from map \ref m
+  /// tries one or more keys to find a declaration from map \ref m
   /// returns nullptr if none of the keys can be found.
   template <class KeyT, class DclT, class Key0T, class... KeysT>
   inline

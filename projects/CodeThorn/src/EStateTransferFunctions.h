@@ -6,7 +6,7 @@
 #include "CTIOLabeler.h"
 
 namespace CodeThorn {
-  class Analyzer;
+  class CTAnalysis;
   class ExprAnalyzer;
   
   class EStateTransferFunctions : public DFTransferFunctions {
@@ -14,8 +14,8 @@ namespace CodeThorn {
     EStateTransferFunctions();
     static void initDiagnostics();
     // must be set
-    void setAnalyzer(CodeThorn::Analyzer* analyzer);
-    Analyzer* getAnalyzer();
+    void setAnalyzer(CodeThorn::CTAnalysis* analyzer);
+    CTAnalysis* getAnalyzer();
     // obtained from analyzer
     ExprAnalyzer* getExprAnalyzer();
     // obtained from analyzer
@@ -51,7 +51,7 @@ namespace CodeThorn {
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
   protected:
-    CodeThorn::Analyzer* _analyzer;
+    CodeThorn::CTAnalysis* _analyzer;
     std::string _rersHybridOutputFunctionName="calculate_output"; // only used if rersmode is active
   };
 }

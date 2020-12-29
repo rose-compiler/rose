@@ -625,6 +625,8 @@ package body Asis_Tool_2.Unit is
 
       Finish_Output;
       Process_Element_Trees (This, Unit);
+      Log ("Not_Implemented count: " &
+             This.Outputs.A_Nodes.Get_Not_Implemented'Image);
       Log ("DONE Processing " & To_String (Unit_Full_Name) & " " &
              To_String (To_Wide_String (Unit_Class)));
    end Process_Unit;

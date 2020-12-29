@@ -35,6 +35,11 @@ package A_Nodes is
    procedure Add_Not_Implemented
      (This : access Class);
 
+   -- Returns the count of not-implemented nodes encountered:
+   function Get_Not_Implemented
+     (This : access Class)
+      return Natural;
+
    -- Returns pointers to the nodes at the top of the lists:
    function Get_Nodes
      (This : access Class)

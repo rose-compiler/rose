@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "EStateTransferFunctions.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "AstUtility.h"
 
 using namespace std;
@@ -33,11 +33,11 @@ void EStateTransferFunctions::initDiagnostics() {
     return _analyzer->getOptionOutputWarnings();
   }
 
-  void EStateTransferFunctions::setAnalyzer(Analyzer* analyzer) {
+  void EStateTransferFunctions::setAnalyzer(CTAnalysis* analyzer) {
     _analyzer=analyzer;
   }
 
-  Analyzer* EStateTransferFunctions::getAnalyzer() {
+  CTAnalysis* EStateTransferFunctions::getAnalyzer() {
     return _analyzer;
   }
 
@@ -280,8 +280,9 @@ std::list<EState> EStateTransferFunctions::transferReturnStmt(Edge edge, const E
   CallString cs=currentEState.callString;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
-
-  SgNode* nextNodeToAnalyze1=_analyzer->cfanalyzer->getNode(edge.source());
+  ROSE_ASSERT(_analyzer);
+  ROSE_ASSERT(_analyzer->getCFAnalyzer());
+  SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
   SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
 
@@ -349,7 +350,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 
   // 1. handle the edge as outgoing edge
-  SgNode* nextNodeToAnalyze1=_analyzer->cfanalyzer->getNode(edge.source());
+  SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
 
   if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
@@ -529,7 +530,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edg
   ConstraintSet cset=*currentEState.constraints();
 
   // 1. we handle the edge as outgoing edge
-  SgNode* nextNodeToAnalyze1=_analyzer->cfanalyzer->getNode(edge.source());
+  SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
 
   SAWYER_MESG(logger[TRACE]) << "transferFunctionCallExternal: "<<nextNodeToAnalyze1->unparseToString()<<endl;
@@ -946,7 +947,7 @@ list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* 
 
 
 std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-  logger[TRACE] << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE]) << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
   auto pList=_analyzer->evalAssignOp(nextNodeToAnalyze2, edge, estate);
   std::list<EState> estateList;
   for (auto p : pList) {
@@ -963,7 +964,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
     CallString cs=estate.callString;
     estateList.push_back(createEState(edge.target(),cs,newPState,cset));
   }
-  logger[TRACE] << "transferAssignOp: finished"<<endl;
+  SAWYER_MESG(logger[TRACE]) << "transferAssignOp: finished"<<endl;
   return estateList;
 }
 

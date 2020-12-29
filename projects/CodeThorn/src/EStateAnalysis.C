@@ -26,12 +26,6 @@ CodeThorn::EStateAnalysis::~EStateAnalysis() {
   delete _transferFunctions->getInitialElementFactory();
 }
 
-void CodeThorn::EStateAnalysis::initialize(SgProject* root) {
-  ProgramAbstractionLayer* pal=new ProgramAbstractionLayer();
-  pal->initialize(root);
-  DFAnalysisBase::initialize(root, pal);
-}
-
 void CodeThorn::EStateAnalysis::initializeExtremalValue(Lattice* element) {
   _transferFunctions->initializeExtremalValue(*element);
   cout<<"INFO: initialized extremal value."<<endl;

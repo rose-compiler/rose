@@ -21,7 +21,7 @@ using namespace std;
 
 namespace CodeThorn {
 
-  class Analyzer;
+  class CTAnalysis;
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -66,7 +66,7 @@ namespace CodeThorn {
   public:
     enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
     ExprAnalyzer();
-    void setAnalyzer(Analyzer* analyzer);
+    void setAnalyzer(CTAnalysis* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
     list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate);
@@ -131,7 +131,7 @@ namespace CodeThorn {
     bool getOptionOutputWarnings();
 
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
-    bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by Analyzer
+    bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by CTAnalysis
 
     list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
@@ -358,7 +358,7 @@ namespace CodeThorn {
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
     bool _ignoreFunctionPointers=false;
-    Analyzer* _analyzer=nullptr;
+    CTAnalysis* _analyzer=nullptr;
     bool _printDetectedViolations=false;
     enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;

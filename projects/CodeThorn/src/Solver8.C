@@ -34,7 +34,7 @@ void Solver8::run() {
     }
     ROSE_ASSERT(currentEStatePtr);
 
-    Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
+    Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       list<EState> newEStateList;
@@ -42,7 +42,7 @@ void Solver8::run() {
       // solver 8: keep track of the input state where the input sequence ran out of elements (where solver8 stops)
       if (newEStateList.size()== 0) {
         if(e.isType(EDGE_EXTERNAL)) {
-          SgNode* nextNodeToAnalyze1=_analyzer->cfanalyzer->getNode(e.source());
+          SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(e.source());
           InputOutput newio;
           Label lab=_analyzer->getLabeler()->getLabel(nextNodeToAnalyze1);
           VariableId varId;

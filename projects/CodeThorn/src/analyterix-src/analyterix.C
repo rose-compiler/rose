@@ -478,15 +478,19 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 #endif
   }
   
+  FunctionIdMapping fim;
+  fim.computeFunctionSymbolMapping(root);
+
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
     CodeThorn::IntervalAnalysis* intervalAnalyzer=new CodeThorn::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->setNoTopologicalSort(option_no_topological_sort);
-    intervalAnalyzer->initialize(root,nullptr);
+    CodeThornOptions dummyCTOpt;
+    intervalAnalyzer->initialize(dummyCTOpt,root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), &fim, root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);
@@ -530,10 +534,11 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
     lvAnalysis->setNoTopologicalSort(option_no_topological_sort);
-    lvAnalysis->initialize(root,nullptr);
+    CodeThornOptions dummyCtOpt;
+    lvAnalysis->initialize(dummyCtOpt,root,nullptr);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
-    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), &fim, root);
     fipa->initialize();
     fipa->run();
     lvAnalysis->setPointerAnalysis(fipa);
@@ -580,7 +585,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       CodeThorn::RDAnalysis* rdAnalysis=new CodeThorn::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->setNoTopologicalSort(option_no_topological_sort);
-      rdAnalysis->initialize(root);
+      CodeThornOptions dummyCtOpt;
+      rdAnalysis->initialize(dummyCtOpt,root,nullptr);
       cout << "STATUS: initializing RD transfer functions."<<endl;
       rdAnalysis->initializeTransferFunctions();
       cout << "STATUS: initializing RD global variables."<<endl;
@@ -887,7 +893,8 @@ int main(int argc, char* argv[]) {
     cerr<<"Error: inlining option selected without option 'normalize'."<<endl;
     exit(1);
   }
-  programAbstractionLayer->initialize(root);
+  CodeThornOptions dummyCtOpt;
+  programAbstractionLayer->initialize(dummyCtOpt,root);
   if (args.isDefined("print-varid-mapping-array")) {
     //programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
   }

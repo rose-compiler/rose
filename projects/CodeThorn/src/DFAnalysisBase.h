@@ -10,7 +10,7 @@
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "PAFAnalysisBase.h"
+#include "DFAnalysisBaseWithoutData.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
@@ -23,41 +23,45 @@ namespace CodeThorn {
 
 #include "PropertyState.h"
 
-  class DFAnalysisBase : public PAFAnalysisBase {
- public:  
-  DFAnalysisBase();
-  virtual ~DFAnalysisBase();
-  void initializeSolver();
+  class DFAnalysisBase : public DFAnalysisBaseWithoutData {
+  public:  
+    DFAnalysisBase();
+    virtual ~DFAnalysisBase();
 
-  void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
+    virtual Lattice* getPreInfo(Label lab);
+    virtual Lattice* getPostInfo(Label lab);
+    virtual void setPostInfo(Label lab,Lattice*);
+ 
+    void initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
 
-  void initializeAnalyzerDataInfo();
-  void run();
+    void run();
 
-  void attachInInfoToAst(string attributeName);
-  void attachOutInfoToAst(string attributeName);
+    void attachInInfoToAst(string attributeName);
+    void attachOutInfoToAst(string attributeName);
 
-  virtual void setPostInfo(Label lab,Lattice*);
+    void attachInfoToAst(string attributeName,bool inInfo);
+    void setSolverTrace(bool trace) { _solver->setTrace(trace); }
+
+    void setSkipUnknownFunctionCalls(bool defer);
+
+    WorkListSeq<Edge>* getWorkList();
   
-  void attachInfoToAst(string attributeName,bool inInfo);
-  void setSolverTrace(bool trace) { _solver->setTrace(trace); }
-
-  void setSkipUnknownFunctionCalls(bool defer);
-
-  DFTransferFunctions* _transferFunctions=nullptr;
-
-  Lattice* getPreInfo(Label lab);
-  Lattice* getPostInfo(Label lab);
-
-  
+    virtual void initializeSolver();
   protected:
-  virtual DFAstAttribute* createDFAstAttribute(Lattice*);
-  std::vector<Lattice*> _analyzerDataPreInfo;
-  std::vector<Lattice*> _analyzerDataPostInfo;
-  WorkListSeq<Edge> _workList;
+    virtual void initializeAnalyzerDataInfo();
+    virtual void computeAllPreInfo();
+    virtual void computeAllPostInfo();
+    virtual void solve();
 
- private:
-  bool _skipSelectedFunctionCalls=false;
+    bool _preInfoIsValid=false;
+    bool _postInfoIsValid=false;
+
+    virtual DFAstAttribute* createDFAstAttribute(Lattice*);
+    std::vector<Lattice*> _analyzerDataPreInfo;
+    std::vector<Lattice*> _analyzerDataPostInfo;
+    WorkListSeq<Edge> _workList;
+  private:
+    bool _skipSelectedFunctionCalls=false;
   };
 
 } // end of namespace

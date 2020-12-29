@@ -103,10 +103,11 @@ namespace
       operator_symbols[V_SgNotOp] =            "not";
       operator_symbols[V_SgAbsOp] =            "abs";
       operator_symbols[V_SgRemOp] =            "rem";
-      // not an official operator
-      operator_symbols[V_SgDotExp] =           ".";
       // not really in Ada (when clause separator)
       operator_symbols[V_SgCommaOpExp] =       "|";
+      // not an operator in Ada
+      operator_symbols[V_SgMembershipOp] =     "in";
+      operator_symbols[V_SgNonMembershipOp] =  "not in";
     }
 
     operator_symbols_map::const_iterator pos = operator_symbols.find(n.variantT());
@@ -156,22 +157,47 @@ namespace
     }
     */
 
+    void handle(SgVoidVal&)
+    {
+      prn("others");
+    }
+
+    void handle(SgPntrArrRefExp& n)
+    {
+      SgExpression* lhs    = n.get_lhs_operand();
+      SgExpression* rhs    = n.get_rhs_operand();
+
+      expr(lhs);
+      prn("(");
+      expr(rhs);
+      prn(")");
+    }
+
     void handle(SgDotExp& n)
     {
       SgExpression* lhs    = n.get_lhs_operand();
       SgExpression* rhs    = n.get_rhs_operand();
 
       expr(lhs);
-      //~ prn(operator_sym(n));
       prn(".");
       expr(rhs, false /* no need to scope qual right hand side */);
+    }
+
+    void handle(SgCommaOpExp& n)
+    {
+      SgExpression* lhs    = n.get_lhs_operand();
+      SgExpression* rhs    = n.get_rhs_operand();
+
+      expr(lhs);
+      prn(" | ");
+      expr(rhs);
     }
 
 
     void handle(SgRangeExp& n)
     {
       expr(n.get_start());
-      prn("..");
+      prn(" .. ");
       expr(n.get_end());
     }
 
@@ -180,14 +206,21 @@ namespace
       SgExprListExp& args = SG_DEREF(n.get_args());
 
       expr(n.get_function());
+      arglst_opt(args);
+    }
 
-      // print () only if there are arguments to the call
-      if (args.get_expressions().size())
-      {
-        prn("(");
-        expr(&args);
-        prn(")");
-      }
+    // unparse expression attributes
+    void handle(SgTypeTraitBuiltinOperator& n)
+    {
+      SgNodePtrList& args = n.get_args();
+      ROSE_ASSERT(args.size() == 2);
+
+      expr(isSgExpression(args.front()));
+      prn("'");
+      prn(n.get_name());
+
+      SgExprListExp& attrargs = SG_DEREF(isSgExprListExp(args.back()));
+      arglst_opt(attrargs);
     }
 
     void handle(SgCastExp& n)
@@ -196,6 +229,11 @@ namespace
       prn("(");
       expr(n.get_operand());
       prn(")");
+    }
+
+    void handle(SgTypeExpression& n)
+    {
+      type(n.get_type(), n);
     }
 
     void handle(SgStringVal& n)
@@ -221,11 +259,32 @@ namespace
 
     void handle(SgVarRefExp& n)
     {
+      // \todo scope qualify if needed
       prn(nameOf(n));
+    }
+
+    void handle(SgAggregateInitializer& n)
+    {
+      prn("(");
+      exprlst(SG_DEREF(n.get_initializers()));
+      prn(")");
+    }
+
+    void handle(SgDesignatedInitializer& n)
+    {
+      exprlst(SG_DEREF(n.get_designatorList()));
+      prn(" => ");
+      expr(n.get_memberInit());
+    }
+
+    void handle(SgAssignInitializer& n)
+    {
+      expr(n.get_operand());
     }
 
     void handle(SgNullExpression& n)
     {
+      // \todo should not be reached
       prn("<null>");
     }
 
@@ -239,32 +298,17 @@ namespace
       prn(nameOf(n));
     }
 
+    void handle(SgAdaTaskRefExp& n)
+    {
+      SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
+
+      prn(scopeQual(n, tskdcl.get_scope()));
+      prn(tskdcl.get_name());
+    }
+
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-
-    void handle(SgAssignInitializer& n)
-    {
-      expr(n.get_operand());
-    }
-
-    void expr(SgExprListExp* exp)
-    {
-      SgExpressionPtrList& lst = exp->get_expressions();
-      bool                 first = true;
-
-      //~ for (SgExpression* exp : lst)
-      for (size_t i = 0; i < lst.size(); ++i)
-      {
-        SgExpression* exp = lst[i];
-        if (!first)
-        {
-          prn(", ");
-        }
-        else
-          first = false;
-
-        expr(exp);
-      }
-    }
+    void exprlst(SgExprListExp& exp);
+    void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
     {
@@ -273,7 +317,7 @@ namespace
 
     void type(SgType* t, SgExpression& ctx)
     {
-      unparser.unparseType(t, &sg::ancestor<SgScopeStatement>(ctx), info);
+      unparser.unparseType(t, sg::ancestor<SgScopeStatement>(&ctx), info);
     }
 
     Unparse_Ada&    unparser;
@@ -290,6 +334,7 @@ namespace
   void AdaExprUnparser::handle(SgExpression& n)
   {
     // if not handled here, have the language independent parser handle it..
+    //~ std::cerr << "XXXXXXX " << typeid(n).name() << std::endl;
     unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
   }
 
@@ -299,7 +344,11 @@ namespace
     //~ unparser.unparseExpression(exp, info);
 
     // or just handle everything
+    const bool withParens = exp->get_need_paren();
+
+    if (withParens) prn("(");
     sg::dispatch(AdaExprUnparser{unparser, info, os, requiresScopeQual}, exp);
+    if (withParens) prn(")");
   }
 
   void AdaExprUnparser::handle(SgBinaryOp& n)
@@ -336,6 +385,30 @@ namespace
     if (isprefix) { prn(operator_sym(n)); prn(" "); }
     expr(n.get_operand());
     if (!isprefix) prn(operator_sym(n));
+  }
+
+  void AdaExprUnparser::exprlst(SgExprListExp& exp)
+  {
+    SgExpressionPtrList& lst = exp.get_expressions();
+
+    if (lst.empty()) return;
+
+    expr(lst[0]);
+
+    for (size_t i = 1; i < lst.size(); ++i)
+    {
+      prn(", ");
+      expr(lst[i]);
+    }
+  }
+
+  void AdaExprUnparser::arglst_opt(SgExprListExp& args)
+  {
+    if (args.get_expressions().empty()) return;
+
+    prn("(");
+    exprlst(args);
+    prn(")");
   }
 
   std::string

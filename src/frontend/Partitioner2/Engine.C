@@ -183,7 +183,9 @@ Engine::loaderSwitches(LoaderSettings &settings) {
 
     sg.insert(Switch("executable")
               .intrinsicValue(true, settings.memoryIsExecutable)
-              .doc("Adds execute permission to the entire memory map, aside from regions excluded by @s{remove-zeros}. "
+              .doc("This switch is for backward compatibility. It is equivalent to adding \"meta:0:perm+x\" to the end "
+                   "of the command line.\n\n"
+                   "Adds execute permission to the entire memory map, aside from regions excluded by @s{remove-zeros}. "
                    "The executable bit determines whether the partitioner is allowed to make instructions at some address, "
                    "so using this switch is an easy way to make the disassembler think that all of memory may contain "
                    "instructions.  The default is to not add executable permission to all of memory."));
@@ -919,6 +921,9 @@ Engine::specimenNameDocumentation() {
             "no equal sign is specified is read, write, and execute.  The only file attribute recognized at this time is "
             "\"version=@v{v}\" where @v{v} is a version number, and ROSE currently supports only version 1.}"
 
+            "@bullet{If the name begins with the string \"meta:\" then it adjusts meta information about the memory "
+            "map, such as permissions. " + MemoryMap::adjustMapDocumentation() + "}"
+
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
@@ -998,6 +1003,7 @@ Engine::isNonContainer(const std::string &name) {
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
             boost::starts_with(name, "vxcore:") ||      // Jim Lee's format of a VxWorks core dump
+            boost::starts_with(name, "meta:") ||        // Adjust meta information about the map
             isRbaFile(name));                           // ROSE Binary Analysis file
 }
 
@@ -1251,8 +1257,11 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map_->insertFile(resource);
         } else if (boost::starts_with(fileName, "data:")) {
-            std::string resource = fileName.substr(4);  // remove "data:", leaving colon and the rest of the string
+            std::string resource = fileName.substr(4);  // remove "data", leaving colon and the rest of the string
             map_->insertData(resource);
+        } else if (boost::starts_with(fileName, "meta:")) {
+            std::string resource = fileName.substr(4);  // "remove "meta", leaving the colon and the rest of the string
+            map_->adjustMap(resource);
         } else if (boost::starts_with(fileName, "proc:")) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_->insertProcess(resource);
@@ -1586,6 +1595,7 @@ Engine::createTunedPartitioner() {
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
+        p.basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
         return boost::move(p);
     }
 

@@ -208,6 +208,7 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       if test $IS_APPLE_GCC -ne 0; then
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
         BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=`${srcdir}/config/getAppleClangPatchVersionNumber.sh`
 
         AC_MSG_NOTICE([(g++ but really clang) C++ back-end compiler major version number = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
         AC_MSG_NOTICE([(g++ but really clang) C++ back-end compiler minor version number = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
@@ -216,22 +217,20 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
         # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
         # version number of XCode (not clang).  So either we map from the version of the OS to the version 
         # of Clang used in it's version of XCode, or we map from the version of XCode (defined by the current 
-        # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).  Below I have used the 
-        # version of the OS, but I'm not certain that is the best solution.  Perhaps we can asset that
-        # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
-        # of Clang version number, or take it directly from the XCode version number if that is a better solution.
+        # values of (CXX_VERSION_MAJOR,CXX_VERSION_MINOR, and CXX_VERSION_PATCH).
+        #
+        # Rasmussen (12/21//2020): For mapping between Xcode, clang --version, and LLVM see
+        # https://en.wikipedia.org/wiki/Xcode#Toolchain_versions
 
           XCODE_VERSION_MAJOR=$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
           XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
           XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
 
-        # I think the clang versions all have patch level equal to zero.
-          BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-
           if test $XCODE_VERSION_MAJOR -eq 7; then
 
             # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
               BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+              BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
               case "$XCODE_VERSION_MINOR" in
                   0)
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=7
@@ -245,6 +244,7 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
               esac
           elif test $XCODE_VERSION_MAJOR -eq 8; then
               BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+              BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
             # DQ (3/3//2017): Added latest version information from Craig.
               case "$XCODE_VERSION_MINOR" in
                   0|1)
@@ -263,37 +263,58 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                   0|1)
                       BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=4
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
                   3|4)
                       BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=5
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=2
                       ;;
                   *)
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
               esac
           elif test $XCODE_VERSION_MAJOR -eq 10; then
-              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=6
-            # Rasmussen (11/21/2018): Added results for clang --version 10.0.0
-            # see https://gist.github.com/yamaya/2924292
-            # see also https://github.com/apple/swift-llvm/blob/swift-4.2-branch/CMakeLists.txt
-            # NOTE that this is very tentative and don't know if it will work
-              case "$XCODE_VERSION_MINOR" in
-                  0|1)
+            # Rasmussen (11/21/2018): Fixed results for clang --version 10.0.0
+              case "$XCODE_VERSION_PATCH" in
+                  0)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=6
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=1
+                      ;;
+                  1)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=7
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
                   *)
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
               esac
           elif test $XCODE_VERSION_MAJOR -eq 11; then
-              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=8
-            # Rasmussen (11/18/2019): Added results for clang --version 11.0.0
-            # see https://en.wikipedia.org/wiki/Xcode#11.x_series
-            # NOTE that this is very tentative and don't know if it will work
-              case "$XCODE_VERSION_MINOR" in
-                  0|2)
+            # Rasmussen (12/21/2020): Fixed results for clang --version 11.0.0
+              case "$XCODE_VERSION_PATCH" in
+                  0)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=8
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                      ;;
+                  3)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=9
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                      ;;
+                  *)
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
+                      ;;
+              esac
+          elif test $XCODE_VERSION_MAJOR -eq 12; then
+            # Rasmussen (12/21/2020): Added results for clang --version 12.0.0
+              case "$XCODE_VERSION_PATCH" in
+                  0)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=10
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
                   *)
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])

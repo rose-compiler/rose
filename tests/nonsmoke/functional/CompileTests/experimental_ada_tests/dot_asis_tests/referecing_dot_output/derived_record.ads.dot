@@ -97,6 +97,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 3:26 .. 5:13</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_TAGGED_RECORD_TYPE_DEFINITION</TD></TR>
+          <TR><TD ALIGN="LEFT">Has_Tagged   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Record_Definition     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310192</TD></TR>
           </TABLE>> ];
   Element_2310192 -> Element_2321099
@@ -139,7 +140,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Component_1"</TD></TR>
           </TABLE>> ];
   Element_2322183 -> Element_2320176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2322183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2322183</TD></TR>
@@ -148,7 +149,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2321099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 4:21 .. 4:27</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320176</TD></TR>
           </TABLE>> ];
   Element_2320176 -> Element_2320237
       [ label=Subtype_Mark ];
@@ -172,7 +173,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 4:21 .. 4:27</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Integer"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Integer</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -213,6 +214,8 @@ digraph "derived_record.adt" {
       [ label=Parent_Subtype_Indication ];
   Element_2332148 -> Element_2334192
       [ label=Record_Definition ];
+  Element_2332148 -> Element_2321099
+      [ label="Implicit_Inherited_Declarations ( 1)" ];
   Element_2332148
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2332148</TD></TR>
@@ -251,7 +254,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 7:31 .. 7:43</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Tagged_Record"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Tagged_Record</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324082</TD></TR>
@@ -296,7 +299,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Component_2"</TD></TR>
           </TABLE>> ];
   Element_2346183 -> Element_2344176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2346183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2346183</TD></TR>
@@ -305,7 +308,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2345099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 8:21 .. 8:27</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2344176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2344176</TD></TR>
           </TABLE>> ];
   Element_2344176 -> Element_2344237
       [ label=Subtype_Mark ];
@@ -329,7 +332,7 @@ digraph "derived_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Derived_Record.ads - 8:21 .. 8:27</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Integer"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Integer</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>

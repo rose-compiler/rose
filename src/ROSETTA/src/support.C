@@ -89,9 +89,10 @@ Grammar::setUpSupport ()
           DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
      NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
+     NEW_TERMINAL_MACRO (AdaIndexConstraint, "AdaIndexConstraint", "AdaIndexConstraintTag");
 
      NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
-          AdaRangeConstraint,
+          AdaRangeConstraint | AdaIndexConstraint,
           "AdaTypeConstraint", "AdaTypeConstraintTag", false);
 
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
@@ -407,6 +408,7 @@ Grammar::setUpSupport ()
 
      AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
      AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
+     AdaIndexConstraint.setFunctionPrototype      ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
@@ -2553,6 +2555,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // PP: Ada Constraints
      AdaRangeConstraint.setDataPrototype("SgRangeExp*", "range", "",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+/*
+     AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgRangeExpPtrList" );
+     AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
+     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
+     AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
+*/
+     AdaIndexConstraint.setDataPrototype("SgRangeExpPtrList", "indexRanges", "",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // File_Info.setDataPrototype("char*","filename","= NULL",
@@ -2965,6 +2978,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");
      AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
      AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
+     AdaIndexConstraint.setFunctionSource      ( "SOURCE_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionSource       ( "SOURCE_FILE_INFORMATION", "../Grammar/Support.code");
 

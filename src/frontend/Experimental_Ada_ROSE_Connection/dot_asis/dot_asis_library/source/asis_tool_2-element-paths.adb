@@ -62,13 +62,13 @@ package body Asis_Tool_2.Element.Paths is
       begin
          State.Add_To_Dot_Label ("Path_Kind", Path_Kind'Image);
          Result.Path_Kind := anhS.To_Path_Kinds (Path_Kind);
-         Add_Sequence_Of_Statements;
+         Add_Sequence_Of_Statements; -- Has Add_Not_Implemented
       end Add_Common_Items;
 
       use all type Asis.Path_Kinds;
    begin
       If Path_Kind /= Not_A_Path then
-         Add_Common_Items;
+         Add_Common_Items; -- Has Add_Not_Implemented
       end if;
 
       case Path_Kind is
@@ -89,13 +89,13 @@ package body Asis_Tool_2.Element.Paths is
             Add_Guard;
          when A_Then_Abort_Path =>
             null; -- No more info
-         when A_Case_Expression_Path =>
+         when A_Case_Expression_Path => -- A2012
             Add_Case_Path_Alternative_Choices;
-         when An_If_Expression_Path =>
+         when An_If_Expression_Path => -- A2012
             Add_Condition_Expression;
-         when An_Elsif_Expression_Path =>
+         when An_Elsif_Expression_Path => -- A2012
             Add_Condition_Expression;
-         when An_Else_Expression_Path =>
+         when An_Else_Expression_Path => -- A2012
             null; -- No more info
       end case;
 

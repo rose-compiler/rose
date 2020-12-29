@@ -1,0 +1,11 @@
+START 
+ITEM AA S ; 
+ITEM BB S ; 
+ITEM RR B ; 
+DEF PROC MYPROC RENT ; 
+   BEGIN 
+   RR=TRUE 
+   AND TRUE 
+   AND AA<>BB ; 
+   END 
+TERM 

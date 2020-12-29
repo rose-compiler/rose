@@ -160,15 +160,15 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 	    echo "$(CONTACT_INFO)" >&2;									\
 	    exit 1;											\
 	fi
-	
+
 	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then								\
 	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";		\
 	else													\
 	    $(MAKE) check-network || exit 1;									\
 	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
 	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then		\
-	        echo "The needed EDG binary is unavailable." >&2;						\ 
-	        echo "This is likely because there is not a binary distributed for your current compiler." >&2;	\ 
+	        echo "The needed EDG binary is unavailable." >&2;						\
+	        echo "This is likely because there is not a binary distributed for your current compiler." >&2;	\
 	        echo "For more information on EDG binaries visit" >&2;						\
 	        echo "$(EDG_HELP_URL)" >&2;									\
 	        echo "$(CONTACT_INFO)" >&2;									\

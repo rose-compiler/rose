@@ -127,6 +127,14 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"POWER"</TD></TR>
           </TABLE>> ];
+  Element_2309149 -> Element_2310097
+      [ label="Enumeration_Literal_Declarations ( 1)" ];
+  Element_2309149 -> Element_2317097
+      [ label="Enumeration_Literal_Declarations ( 2)" ];
+  Element_2309149 -> Element_2324097
+      [ label="Enumeration_Literal_Declarations ( 3)" ];
+  Element_2309149 -> Element_2331097
+      [ label="Enumeration_Literal_Declarations ( 4)" ];
   Element_2309149
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2309149</TD></TR>
@@ -136,7 +144,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 3:18 .. 3:43</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 2)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 3)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324097</TD></TR>
+          <TR><TD ALIGN="LEFT">Enumeration_Literal_Declarations ( 4)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331097</TD></TR>
           </TABLE>> ];
   Element_2310097 -> Element_2310059
       [ label="Names ( 1)" ];
@@ -272,6 +283,8 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"VEHICLE"</TD></TR>
           </TABLE>> ];
+  Element_2475191 -> Element_2356098
+      [ label="Discriminants ( 1)" ];
   Element_2475191
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2475191</TD></TR>
@@ -280,7 +293,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 5:17 .. 5:40</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_KNOWN_DISCRIMINANT_PART</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discriminants ( 1)     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2356098</TD></TR>
           </TABLE>> ];
   Element_2356098 -> Element_2348057
       [ label="Names ( 1)" ];
@@ -323,7 +336,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 5:27 .. 5:31</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"POWER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">POWER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
@@ -337,7 +350,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 5:36 .. 5:39</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"NONE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">NONE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331097</TD></TR>
@@ -401,7 +414,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Model_Year"</TD></TR>
           </TABLE>> ];
   Element_2370183 -> Element_2375176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2370183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2370183</TD></TR>
@@ -410,7 +423,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2369099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 7:23 .. 7:46</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2375176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2375176</TD></TR>
           </TABLE>> ];
   Element_2375176 -> Element_2368237
       [ label=Subtype_Mark ];
@@ -436,7 +449,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 7:23 .. 7:29</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"INTEGER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">INTEGER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -507,7 +520,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Wheels"</TD></TR>
           </TABLE>> ];
   Element_2385183 -> Element_2390176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2385183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2385183</TD></TR>
@@ -516,7 +529,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2384099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 8:23 .. 8:41</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2390176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2390176</TD></TR>
           </TABLE>> ];
   Element_2390176 -> Element_2383237
       [ label=Subtype_Mark ];
@@ -542,7 +555,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 8:23 .. 8:29</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"INTEGER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">INTEGER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -585,6 +598,16 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">18</TD></TR>
           </TABLE>> ];
+  Element_2391195 -> Element_2392237
+      [ label=Discriminant_Direct_Name ];
+  Element_2391195 -> Element_2394196
+      [ label="Variants ( 1)" ];
+  Element_2391195 -> Element_2413196
+      [ label="Variants ( 2)" ];
+  Element_2391195 -> Element_2442196
+      [ label="Variants ( 3)" ];
+  Element_2391195 -> Element_2456196
+      [ label="Variants ( 4)" ];
   Element_2391195
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2391195</TD></TR>
@@ -593,7 +616,11 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2358192</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 9:10 .. 15:18</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIANT_PART</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Discriminant_Direct_Name       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2392237</TD></TR>
+          <TR><TD ALIGN="LEFT">Variants ( 1)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2394196</TD></TR>
+          <TR><TD ALIGN="LEFT">Variants ( 2)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2413196</TD></TR>
+          <TR><TD ALIGN="LEFT">Variants ( 3)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2442196</TD></TR>
+          <TR><TD ALIGN="LEFT">Variants ( 4)    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2456196</TD></TR>
           </TABLE>> ];
   Element_2392237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -604,11 +631,15 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 9:15 .. 9:20</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Engine"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Engine</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2348057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2348057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2356098</TD></TR>
           </TABLE>> ];
+  Element_2394196 -> Element_2405099
+      [ label="Record_Components ( 1)" ];
+  Element_2394196 -> Element_2393260
+      [ label="Variant_Choices ( 1)" ];
   Element_2394196
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2394196</TD></TR>
@@ -617,7 +648,8 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2391195</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 10:13 .. 10:61</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIANT</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Components ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2405099</TD></TR>
+          <TR><TD ALIGN="LEFT">Variant_Choices ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2393260</TD></TR>
           </TABLE>> ];
   Element_2393260
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -628,7 +660,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 10:18 .. 10:20</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"GAS"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">GAS</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310097</TD></TR>
@@ -661,7 +693,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Cylinders"</TD></TR>
           </TABLE>> ];
   Element_2406183 -> Element_2411176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2406183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2406183</TD></TR>
@@ -670,7 +702,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2405099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 10:42 .. 10:60</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2411176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2411176</TD></TR>
           </TABLE>> ];
   Element_2411176 -> Element_2404237
       [ label=Subtype_Mark ];
@@ -696,7 +728,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 10:42 .. 10:48</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"INTEGER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">INTEGER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -739,6 +771,12 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">16</TD></TR>
           </TABLE>> ];
+  Element_2413196 -> Element_2424099
+      [ label="Record_Components ( 1)" ];
+  Element_2413196 -> Element_2439099
+      [ label="Record_Components ( 2)" ];
+  Element_2413196 -> Element_2412260
+      [ label="Variant_Choices ( 1)" ];
   Element_2413196
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2413196</TD></TR>
@@ -747,7 +785,9 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2391195</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 11:13 .. 12:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIANT</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Components ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2424099</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Components ( 2)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2439099</TD></TR>
+          <TR><TD ALIGN="LEFT">Variant_Choices ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2412260</TD></TR>
           </TABLE>> ];
   Element_2412260
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -758,7 +798,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 11:18 .. 11:22</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"STEAM"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">STEAM</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317097</TD></TR>
@@ -791,7 +831,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Boiler_Size"</TD></TR>
           </TABLE>> ];
   Element_2425183 -> Element_2430176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2425183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2425183</TD></TR>
@@ -800,7 +840,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2424099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 11:42 .. 11:60</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2430176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2430176</TD></TR>
           </TABLE>> ];
   Element_2430176 -> Element_2423237
       [ label=Subtype_Mark ];
@@ -826,7 +866,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 11:42 .. 11:48</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"INTEGER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">INTEGER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -897,7 +937,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Coal_Burner"</TD></TR>
           </TABLE>> ];
   Element_2440183 -> Element_2438176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2440183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2440183</TD></TR>
@@ -906,7 +946,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2439099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 12:42 .. 12:48</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2438176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2438176</TD></TR>
           </TABLE>> ];
   Element_2438176 -> Element_2438237
       [ label=Subtype_Mark ];
@@ -930,11 +970,15 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 12:42 .. 12:48</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"BOOLEAN"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">BOOLEAN</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_16057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_16057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
           </TABLE>> ];
+  Element_2442196 -> Element_2453099
+      [ label="Record_Components ( 1)" ];
+  Element_2442196 -> Element_2441260
+      [ label="Variant_Choices ( 1)" ];
   Element_2442196
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2442196</TD></TR>
@@ -943,7 +987,8 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2391195</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 13:13 .. 13:49</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIANT</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Components ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453099</TD></TR>
+          <TR><TD ALIGN="LEFT">Variant_Choices ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2441260</TD></TR>
           </TABLE>> ];
   Element_2441260
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -954,7 +999,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 13:18 .. 13:23</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"DIESEL"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">DIESEL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324097</TD></TR>
@@ -987,7 +1032,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Fuel_Inject"</TD></TR>
           </TABLE>> ];
   Element_2454183 -> Element_2452176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2454183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2454183</TD></TR>
@@ -996,7 +1041,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 13:42 .. 13:48</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2452176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2452176</TD></TR>
           </TABLE>> ];
   Element_2452176 -> Element_2452237
       [ label=Subtype_Mark ];
@@ -1020,11 +1065,15 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 13:42 .. 13:48</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"BOOLEAN"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">BOOLEAN</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_16057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_16057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
           </TABLE>> ];
+  Element_2456196 -> Element_2467099
+      [ label="Record_Components ( 1)" ];
+  Element_2456196 -> Element_2455260
+      [ label="Variant_Choices ( 1)" ];
   Element_2456196
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2456196</TD></TR>
@@ -1033,7 +1082,8 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2391195</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 14:13 .. 14:61</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_VARIANT</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Components ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2467099</TD></TR>
+          <TR><TD ALIGN="LEFT">Variant_Choices ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2455260</TD></TR>
           </TABLE>> ];
   Element_2455260
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1044,7 +1094,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 14:18 .. 14:21</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"NONE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">NONE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331097</TD></TR>
@@ -1077,7 +1127,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Speeds"</TD></TR>
           </TABLE>> ];
   Element_2468183 -> Element_2473176
-      [ label=Component_Definition_View ];
+      [ label=Component_Subtype_Indication ];
   Element_2468183
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2468183</TD></TR>
@@ -1086,7 +1136,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2467099</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 14:42 .. 14:60</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_COMPONENT_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Definition_View       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2473176</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Subtype_Indication        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2473176</TD></TR>
           </TABLE>> ];
   Element_2473176 -> Element_2466237
       [ label=Subtype_Mark ];
@@ -1112,7 +1162,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 14:42 .. 14:48</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"INTEGER"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">INTEGER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
@@ -1230,7 +1280,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 18:27 .. 18:33</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"VEHICLE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">VEHICLE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
@@ -1286,11 +1336,13 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 19:27 .. 19:33</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"VEHICLE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">VEHICLE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
           </TABLE>> ];
+  Element_2514182 -> Element_2515382
+      [ label="Discriminant_Associations ( 1)" ];
   Element_2514182
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2514182</TD></TR>
@@ -1323,7 +1375,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 19:35 .. 19:39</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"STEAM"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">STEAM</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317097</TD></TR>
@@ -1352,11 +1404,19 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 23:4 .. 23:7</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Ford"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Ford</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2740362 -> Element_2520383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2740362 -> Element_2522383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2740362 -> Element_2523383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2740362 -> Element_2524383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2740362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2740362</TD></TR>
@@ -1366,7 +1426,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 23:12 .. 23:28</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2520383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2522383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2523383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2524383</TD></TR>
           </TABLE>> ];
   Element_2520383 -> Element_2520260
       [ label=Component_Expression ];
@@ -1389,7 +1452,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 23:13 .. 23:15</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"GAS"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">GAS</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310097</TD></TR>
@@ -1487,11 +1550,19 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:4 .. 24:7</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Ford"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Ford</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2476057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2798362 -> Element_2527383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2798362 -> Element_2529383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2798362 -> Element_2531383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2798362 -> Element_2534383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2798362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2798362</TD></TR>
@@ -1501,7 +1572,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:12 .. 24:59</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2527383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2529383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2531383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2534383</TD></TR>
           </TABLE>> ];
   Element_2527383 -> Element_2527260
       [ label=Component_Expression ];
@@ -1524,7 +1598,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:13 .. 24:18</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"DIESEL"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">DIESEL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324097</TD></TR>
@@ -1576,7 +1650,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:27 .. 24:37</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Fuel_Inject"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Fuel_Inject</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2445057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2445057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453099</TD></TR>
@@ -1590,7 +1664,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:42 .. 24:45</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"TRUE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_156059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_156059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_156097</TD></TR>
@@ -1619,7 +1693,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 24:48 .. 24:53</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Wheels"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Wheels</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2384099</TD></TR>
@@ -1659,11 +1733,19 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 26:4 .. 26:8</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Truck"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Truck</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
           </TABLE>> ];
+  Element_2856362 -> Element_2538383
+      [ label="Record_Component_Associations ( 1)" ];
+  Element_2856362 -> Element_2540383
+      [ label="Record_Component_Associations ( 2)" ];
+  Element_2856362 -> Element_2541383
+      [ label="Record_Component_Associations ( 3)" ];
+  Element_2856362 -> Element_2542383
+      [ label="Record_Component_Associations ( 4)" ];
   Element_2856362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2856362</TD></TR>
@@ -1673,7 +1755,10 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 26:13 .. 26:36</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">NOT_IMPLEMENTED_COMPLETELY</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2538383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2540383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 3)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2541383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 4)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2542383</TD></TR>
           </TABLE>> ];
   Element_2538383 -> Element_2538260
       [ label=Component_Expression ];
@@ -1696,7 +1781,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 26:14 .. 26:19</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"DIESEL"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">DIESEL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2324097</TD></TR>
@@ -1768,7 +1853,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 26:32 .. 26:35</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"TRUE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_156059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_156059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_156097</TD></TR>
@@ -1813,7 +1898,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 27:4 .. 27:8</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Truck"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Truck</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
@@ -1827,7 +1912,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 27:10 .. 27:19</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Model_Year"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Model_Year</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2369099</TD></TR>
@@ -1883,7 +1968,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 28:4 .. 28:8</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Truck"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Truck</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
@@ -1897,7 +1982,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 28:10 .. 28:20</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Fuel_Inject"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Fuel_Inject</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2445057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2445057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2453099</TD></TR>
@@ -1911,7 +1996,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 28:25 .. 28:29</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"FALSE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">FALSE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_149059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_149059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_149097</TD></TR>
@@ -1956,7 +2041,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 30:4 .. 30:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Stanley"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Stanley</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513090</TD></TR>
@@ -1970,7 +2055,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 30:12 .. 30:21</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Model_Year"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Model_Year</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2369099</TD></TR>
@@ -2026,7 +2111,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 31:4 .. 31:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Stanley"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Stanley</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513090</TD></TR>
@@ -2040,7 +2125,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 31:12 .. 31:17</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Wheels"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Wheels</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2384099</TD></TR>
@@ -2096,7 +2181,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 32:4 .. 32:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Stanley"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Stanley</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513090</TD></TR>
@@ -2110,7 +2195,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 32:12 .. 32:22</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Boiler_Size"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Boiler_Size</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2416057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2416057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2424099</TD></TR>
@@ -2166,7 +2251,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 33:4 .. 33:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Stanley"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Stanley</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2505057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2513090</TD></TR>
@@ -2180,7 +2265,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 33:12 .. 33:22</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Coal_Burner"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Coal_Burner</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2431057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2431057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2439099</TD></TR>
@@ -2194,7 +2279,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 33:27 .. 33:31</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ENUMERATION_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_914082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"FALSE"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">FALSE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_149059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_149059</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_149097</TD></TR>
@@ -2239,7 +2324,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 35:4 .. 35:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Schwinn"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Schwinn</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
@@ -2253,7 +2338,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 35:12 .. 35:17</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Speeds"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Speeds</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2459057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2459057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2467099</TD></TR>
@@ -2309,7 +2394,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 36:4 .. 36:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Schwinn"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Schwinn</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
@@ -2323,7 +2408,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 36:12 .. 36:17</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Wheels"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Wheels</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2376057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2384099</TD></TR>
@@ -2379,7 +2464,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 37:4 .. 37:10</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2475082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Schwinn"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Schwinn</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2490057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2498090</TD></TR>
@@ -2393,7 +2478,7 @@ digraph "variable_variant_record.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Variant2.adb - 37:12 .. 37:21</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
-          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">"Model_Year"</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Model_Year</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2361057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2369099</TD></TR>
