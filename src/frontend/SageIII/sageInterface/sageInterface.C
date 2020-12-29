@@ -9564,7 +9564,7 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
    }
 
 SageInterface::DeferredTransformation
-SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
+SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfo/* = false*/)
    {
 #if 0
      printf ("In SageInterface::DeferredTransformation constructor for replaceStatement called \n");
@@ -10249,7 +10249,7 @@ void SageInterface::deepDelete(SgNode* root)
 #endif
 
 //! Replace a statement with another
-void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
+void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfoValue/* = false*/)
 {
   ROSE_ASSERT(oldStmt);
   ROSE_ASSERT(newStmt);
@@ -10273,12 +10273,25 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
     p->replace_statement(oldStmt,newStmt);
 
 // Some translators have their own handling for this (e.g. the outliner)
-  if (movePreprocessinInfo)
+  if (movePreprocessingInfoValue)
      {
 #if 0
-       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() \n");
+       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
 #endif
+
+    // DQ (12/28/2020): I think this should be movePreprocessingInfo instead of moveUpPreprocessingInfo 
+    // (which has a collection of defaults that are not appropriate).
+    // moveUpPreprocessingInfo(newStmt, oldStmt);
+#if 1
+    // DQ (12/28/2020): Since this works we will leave it in place (it appears to not be required to call this with: usePrepend == true).
        moveUpPreprocessingInfo(newStmt, oldStmt);
+#else
+    // void SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
+    //                                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
+       bool usePrepend = true;
+    // movePreprocessingInfo ( newStmt, oldStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+       movePreprocessingInfo ( oldStmt, newStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+#endif
      }
 }
 
@@ -16384,13 +16397,27 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
      AttachedPreprocessingInfoType* dst_infoList = stmt_dst->getAttachedPreprocessingInfo();
      printf ("   --- dst_infoList                    = %p \n",dst_infoList);
 #endif
+#if 0
+     printf ("****************************************************************** \n");
+     printf ("In SageInterface::movePreprocessingInfo(): Attached comments and CPP directives: stmt_src \n");
+     SageInterface::printOutComments (stmt_src);
+     printf ("In SageInterface::movePreprocessingInfo(): Attached comments and CPP directives: stmt_dst \n");
+     SageInterface::printOutComments (stmt_dst);
+     printf ("****************************************************************** \n");
+#endif
 
   // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
   // This is a bug in the support for building a new prototype from a defining function declaration 
   // and caused this problem. This assertion will prevent this sort of error from happening again.
      ROSE_ASSERT(infoList == NULL || stmt_src->getAttachedPreprocessingInfo() != stmt_dst->getAttachedPreprocessingInfo());
 
-     if (infoList == NULL) return;
+     if (infoList == NULL)
+        {
+#if 0
+          printf ("In SageInterface::movePreprocessingInfo(): infoList == NULL: exiting movePreprocessingInfo() \n");
+#endif
+          return;
+        }
 
 #if 0
      printf ("   --- infoList->size()                = %zu \n",infoList->size());
@@ -16436,6 +16463,8 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 #if 0
           printf ("   --- TOP of loop: infoList->size()                = %zu \n",infoList->size());
           printf ("   --- TOP of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
+          printf ("   --- TOP of loop: info->getTypeOfDirective()      = %s \n",PreprocessingInfo::directiveTypeName(info->getTypeOfDirective()).c_str());
+          printf ("   --- TOP of loop: info->getRelativePosition()     = %s \n",PreprocessingInfo::relativePositionName(info->getRelativePosition()).c_str());
 #endif
           if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
                (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
@@ -16455,7 +16484,10 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration ) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorLineDeclaration) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorErrorDeclaration) ||
-               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration)
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration) ||
+            // DQ (12/28/2020): Added support for C linkage specifications.
+               (info->getTypeOfDirective()==PreprocessingInfo::ClinkageSpecificationStart) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::ClinkageSpecificationEnd)
              )
              {
 #if 0
@@ -16608,14 +16640,20 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
         } // end for
 
 #if 0
-     printf ("In SageInterface::movePreprocessingInfo(): Remove the element from the list of comments at the current astNode \n");
+     printf ("In SageInterface::movePreprocessingInfo(): Remove the element transfered to the new statement from the old statement list \n");
 #endif
 
   // Remove the element from the list of comments at the current astNode
      AttachedPreprocessingInfoType::iterator j;
      for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
+        {
+#if 0
+          printf ("In SageInterface::movePreprocessingInfo(): Remove the element from the list of comments at the current astNode \n");
+#endif
           infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+        }
    }
+
 
 //----------------------------
 // Sometimes, the preprocessing info attached to a declaration has to be
@@ -26257,6 +26295,13 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
         }
 #endif
 
+#if 0
+     printf ("****************************************************************** \n");
+     printf ("Attached comments and CPP directives: defining functionDeclaration \n");
+     SageInterface::printOutComments (functionDeclaration);
+     printf ("****************************************************************** \n");
+#endif
+
   // DQ (10/15/2019): Find the file_id associated with the current file, and make the transformation with the same file_id value so that it will be unparsed.
 
   // DQ (10/29/2020): This is the refactored code.
@@ -26434,6 +26479,12 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
             // DQ (11/15/2020): Note that the default is false, and we need true.
                bool movePreprocessingInfo = true;
                replaceStatement(functionDeclaration,nondefiningFunctionDeclaration,movePreprocessingInfo);
+#if 0
+               printf ("******************************************************************** \n");
+               printf ("Attached comments and CPP directives: nondefiningFunctionDeclaration \n");
+               SageInterface::printOutComments (nondefiningFunctionDeclaration);
+               printf ("******************************************************************** \n");
+#endif
 
             // DQ (11/25/2020): This is the cause of a problem in the outliner caught in the resetParentPointer.C (definingDeclaration->get_parent() != __null).
             // DQ (11/24/2020): Maybe we should set the parent of the functionDeclaration to NULL, so that we will know to set it properly later.
