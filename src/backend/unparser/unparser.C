@@ -5319,7 +5319,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("Skipping unparsing of non-header files (will be unparsed as the original source file) \n");
 #endif
 #if 0
