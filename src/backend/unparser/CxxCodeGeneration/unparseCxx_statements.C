@@ -5191,6 +5191,8 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint("/* Inside of unparseFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
 #if 0
+            // DQ (12/27/2020): Uncommented this code to track and debug test_123.cpp (codeSegregation tool).
+
             // DQ (11/12/2020): When using braces, these are output from the comment and CPP directive handling.
             // DQ (8/16/2020): I think that this is redundant with the use of braces on the class containing such extern c declarations.
             // These extern brace cases are handled via the CPP preprocessor support.
@@ -5404,15 +5406,23 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        {
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
-                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
-                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
-                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",
+                              funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",
+                              firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",
+                              funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",
+                              funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",
+                              firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",
+                              firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
 
-                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",
+                              funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",
+                              firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
 #endif
 
@@ -5433,12 +5443,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
                          printf ("firstNondefiningFunction = %s \n",firstNondefiningFunction->get_name().str());
                          printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
-                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
-                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
-                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
-                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",
+                              funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",
+                              firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",
+                              funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",
+                              funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",
+                              firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",
+                              firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
 #endif
 
@@ -6506,7 +6522,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (mfuncdecl_stmt->isExternBrace())
              {
-#if 0
+#if 1
                printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
                curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
@@ -6990,7 +7006,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
                   {
-#if 0
+#if 1
                     printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
                     curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
