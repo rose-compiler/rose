@@ -206,6 +206,7 @@ namespace sg
     GEN_VISIT(SgAdaExitStmt)
     GEN_VISIT(SgAdaFloatType)
     GEN_VISIT(SgAdaFloatVal)
+    GEN_VISIT(SgAdaFunctionRenamingDecl)
     GEN_VISIT(SgAdaIndexConstraint)
     GEN_VISIT(SgAdaLoopStmt)
     GEN_VISIT(SgAdaModularType)
