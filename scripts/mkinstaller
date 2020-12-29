@@ -7,7 +7,7 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#   Copyright 1985-99,2000-20 James Frederick Reus
+#   Copyright 1985-99,2000-21 James Frederick Reus
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "5";
-$mkinstaller_ver_patch = "4";
-$mkinstaller_ver_name  = "2.6.5.4";
-$mkinstaller_ver_time  = "19Oct2020,19:33:29z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.5.4 - 19Oct2020,19:33:29z";
+$mkinstaller_ver_build = "7";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.7";
+$mkinstaller_ver_time  = " 2Dec2020,01:06:10z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.7 -  2Dec2020,01:06:10z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
-$perl_library_ver_build = "2";
-$perl_library_ver_patch = "";
-$perl_library_ver_name  = "2.0.2";
-$perl_library_ver_time  = "13Oct2020,16:47:23z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.2 - 13Oct2020,16:47:23z";
+$perl_library_ver_build = "3";
+$perl_library_ver_patch = "1";
+$perl_library_ver_name  = "2.0.3.1";
+$perl_library_ver_time  = " 2Dec2020,21:58:18z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.3.1 -  2Dec2020,21:58:18z";
 
 #{------------------------------------------------------------------------------
 #
@@ -84,7 +84,7 @@ $TBG_LIB_PFX    = "lib";
 #}------------------------------------------------------------------------------
 
 @defaultCopyrightOwners
-  = ( "Copyright 1985-99,2000-20 James Frederick Reus\n"
+  = ( "Copyright 1985-99,2000-21 James Frederick Reus\n"
     );
 
 @defaultCopyrightStatement

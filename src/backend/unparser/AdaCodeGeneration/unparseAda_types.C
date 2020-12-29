@@ -45,12 +45,14 @@ namespace
     void handle(SgAdaRangeConstraint& n)
     {
       prn(" range ");
+      expr(n.get_range());
+    }
 
-      SgRangeExp& range = SG_DEREF(n.get_range());
-
-      expr(range.get_start());
-      prn(" .. ");
-      expr(range.get_end());
+    void handle(SgAdaIndexConstraint& n)
+    {
+      prn(" (");
+      rangeList(n.get_indexRanges());
+      prn(")");
     }
 
     //
@@ -69,7 +71,13 @@ namespace
     void handle(SgAdaSubtype& n)
     {
       type(n.get_base_type());
-      support(n.get_constraint());
+      support_opt(n.get_constraint());
+    }
+
+    void handle(SgAdaModularType& n)
+    {
+      prn("mod ");
+      expr(n.get_modexpr());
     }
 
     void handle(SgModifierType& n)
@@ -90,9 +98,18 @@ namespace
       /* print nothing - used for Integer and Real Number constants */
     }
 
+    void setCtxIfNeeded(SgDeclarationStatement& dcl)
+    {
+      if (ctx) return;
+
+      ctx = &sg::ancestor<SgScopeStatement>(dcl);
+    }
+
 
     void handle(SgNamedType& n)
     {
+      setCtxIfNeeded(SG_DEREF(n.get_declaration()));
+
       prn(" ");
       prn(scopeQual(SG_DEREF(ctx), n.get_declaration()));
       prn(n.get_name());
@@ -120,7 +137,9 @@ namespace
     void handle(SgArrayType& n)
     {
       prn(" array");
-      // \todo add range
+      prn("(");
+      arrayDimList(SG_DEREF(n.get_dim_info()), (n.get_is_variable_length_array() ? " range <>" : ""));
+      prn(")");
       prn(" of");
       type(n.get_base_type());
     }
@@ -136,8 +155,10 @@ namespace
 
     void handle(SgAdaFloatType& n)
     {
-      prn(" is ");
+      prn("digits ");
       expr(n.get_digits());
+
+      support_opt(n.get_constraint());
     }
 
     void type(SgType* ty)
@@ -145,9 +166,9 @@ namespace
       sg::dispatch(*this, ty);
     }
 
-    void support(SgNode* n)
+    void support_opt(SgNode* n)
     {
-      sg::dispatch(*this, n);
+      if (n) sg::dispatch(*this, n);
     }
 
     void expr(SgExpression* e)
@@ -155,6 +176,34 @@ namespace
       unparser.unparseExpression(e, info);
     }
 
+    void arrayDimList(SgExprListExp& dims, const std::string& constraintSuffix)
+    {
+      SgExpressionPtrList& lst = dims.get_expressions();
+      if (lst.empty()) return;
+
+      expr(lst[0]);
+      prn(constraintSuffix);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+      {
+        prn(", ");
+        expr(lst[i]);
+        prn(constraintSuffix);
+      }
+    }
+
+    void rangeList(SgRangeExpPtrList& lst)
+    {
+      if (lst.empty()) return;
+
+      expr(lst[0]);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+      {
+        prn(", ");
+        expr(lst[i]);
+      }
+    }
 
     Unparse_Ada&      unparser;
     SgScopeStatement* ctx;

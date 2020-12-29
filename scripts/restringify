@@ -46,17 +46,30 @@ fi
 # override using LD_LIBRARY_PATH
 export LD_LIBRARY_PATH="$top_blddir/src/util/Sawyer:$LD_LIBRARY_PATH"
 
-# Generate the declarations as well as diagnostics
-"$stringifier" --declarations --compatible --no-deprecate --root="$top_srcdir" \
-	       $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
-	       $(find "$top_blddir/src" -name '*.h') \
-	       > "$top_srcdir/src/roseSupport/stringify.h"
+# If $CHECK_ENUMS is non-empty (the name of the enum database), then
+# instead of generating any code, check that the current enums are
+# compatible with previous enums in the database, and update the
+# database if so.
+if [ -n "$CHECK_ENUMS" ]; then
 
-# Generate the implementations, but we can discard the diagnostics since they're identical to above
-"$stringifier" --implementations --compatible --no-deprecate --root="$top_srcdir" \
-	       $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
-	       $(find "$top_blddir/src" -name '*.h') \
-	       > "$top_srcdir/src/roseSupport/stringify.C" \
-	       2> /dev/null
+    # NOTE: I'm TEMPORARILY adding --quiet to suppress the usual warnings about malformed code (usually
+    # caused by unbalanced braces across #if blocks) and duplicate enums (usually caused by cut-n-pasted
+    # source code).
+    "$stringifier" --emit=nothing --check="$CHECK_ENUMS" --update --quiet \
+		   $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
+		   $(find "$top_blddir/src" -name '*.h')
+else
+    # Generate the declarations as well as diagnostics
+    "$stringifier" --emit=declarations --compatible --no-deprecate --root="$top_srcdir" \
+		   $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
+		   $(find "$top_blddir/src" -name '*.h') \
+		   > "$top_srcdir/src/roseSupport/stringify.h"
+
+    # Generate the implementations, but we can discard the diagnostics since they're identical to above
+    "$stringifier" --emit=definitions --quiet --compatible --no-deprecate --root="$top_srcdir" \
+		   $(find "$top_srcdir/src" \( -name '*.[hcC]' -o -name '*.hpp' -o -name '*.cpp' \)) \
+		   $(find "$top_blddir/src" -name '*.h') \
+		   > "$top_srcdir/src/roseSupport/stringify.C"
+fi
 
 exit 0

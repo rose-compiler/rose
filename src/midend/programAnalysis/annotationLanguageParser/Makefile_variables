@@ -70,26 +70,16 @@ mpaAnnotationLanguageParser_extraDist=\
 
 
 language-parser.cc: $(mpaAnnotationLanguageParserPath)/language.y
-	bison -d -pann -o ./tempBisonOutput.c \
+	bison --defines=language.tab.h  -pann -o ./language-parser.cc \
 		$(mpaAnnotationLanguageParserPath)/language.y
-	mv \
-		tempBisonOutput.c \
-		language-parser.cc
-	mv \
-		tempBisonOutput.h \
-		language.tab.h
 
 
 # TOO (12/03/2010): added -o option to flex to ensure that generated files are output
 # into the correct directory -- this target is called from the "top-level" Makefile
 # flex: can't open lex.ann.c if "flex -o lex.ann.c"...note the space between -o and lex.ann.c
 language-lexer.cc: $(mpaAnnotationLanguageParserPath)/language.l language-parser.cc
-	flex -olex.ann.c \
+	flex -o language-lexer.cc \
 		$(mpaAnnotationLanguageParserPath)/language.l
-	mv \
-		lex.ann.c \
-		language-lexer.cc
-
 
 language.tab.h: language-parser.cc
 
