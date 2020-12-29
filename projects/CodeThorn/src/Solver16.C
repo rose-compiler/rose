@@ -33,6 +33,20 @@ void Solver16::recordTransition(const EState* currentEStatePtr0,const EState* cu
   }
 }
 
+void Solver16::initializeSummaryStatesFromWorkList() {
+  // pop all states from worklist (can contain more than one state)
+  list<const EState*> tmpWL;
+  while(!_analyzer->isEmptyWorkList()) {
+    tmpWL.push_back(_analyzer->popWorkList());
+  }
+  for(auto s : tmpWL) {
+    // initialize summarystate and push back to work list
+    _analyzer->setSummaryState(s->label(),s->callString,s);
+    _analyzer->addToWorkList(s);
+  }
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -43,7 +57,13 @@ void Solver16::run() {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
   }
-  //_analyzer->_analysisTimer.start(); // is started in runSolver now
+  if(_analyzer->_ctOpt.explorationMode!="topologic-sort") {
+    cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->_ctOpt.explorationMode<<endl;
+    exit(1);
+  }
+
+  initializeSummaryStatesFromWorkList();
+
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -104,6 +124,9 @@ void Solver16::run() {
             workVector[threadNum]=true;
         }
       }
+      // currentEStatePtr0 is not merged, because it must already be present in a summary state. Here only the (label,callstring) is used to obtain the summary state.
+      // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
+      // note: initial summary states are set in initializeSummaryStatesFromWorkList()
       const EState* currentEStatePtr0=_analyzer->popWorkList();
       // difference to Solver5: always obtain abstract state
       const EState* currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
@@ -155,11 +178,6 @@ void Solver16::run() {
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
-                case 0:
-                  // no abstraction
-                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
-                  _analyzer->addToWorkList(newEStatePtr);
-                  break;
                 case 1:
                   {
                   // performing merge
@@ -233,7 +251,7 @@ void Solver16::run() {
                   SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
-		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+                  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
                   terminateEarly=true;
                 }
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
