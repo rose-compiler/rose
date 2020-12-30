@@ -8,7 +8,6 @@ SgAdaEntryDecl
 SgAdaExitStmt
 SgAdaFloatType
 SgAdaFloatVal
-SgAdaFunctionRenamingDecl
 SgAdaLoopStmt
 SgAdaPackageBody
 SgAdaPackageBodyDecl
@@ -968,4 +967,5 @@ SgAdaComponentClause
 SgAdaIndexConstraint
 SgAdaModularType
 SgAdaRecordRepresentationClause
+SgAdaFunctionRenamingDecl
 
