@@ -18,7 +18,9 @@ procedure Main is
 
    --  If Node is an object declaration, print its text. Always continue the
    --  traversal.
-   function Process_Node (Node : LAL.Ada_Node'Class) return LALCO.Visit_Status
+   function Process_Node 
+     (Node : LAL.Ada_Node'Class) 
+      return LALCO.Visit_Status
    is
      use type LALCO.Ada_Node_Kind_Type;
    begin
@@ -31,13 +33,7 @@ procedure Main is
       return LALCO.Into;
    end Process_Node;
    
-   function Load_Project return LAL.Unit_Provider_Reference;
    --  Load the project file designated by the first command-line argument
-
-   ------------------
-   -- Load_Project --
-   ------------------
-
    function Load_Project return LAL.Unit_Provider_Reference is
       package GPR renames GNATCOLL.Projects;
       package LAL_GPR renames Libadalang.Project_Provider;
