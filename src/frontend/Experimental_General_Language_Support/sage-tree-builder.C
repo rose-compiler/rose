@@ -1377,20 +1377,26 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
 
    ROSE_ASSERT(enum_decl);
    SgEnumType* enum_type = enum_decl->get_type();
+   SgScopeStatement* scope = enum_decl->get_scope();
 
-   enum_val = SageBuilder::buildEnumVal(value, enum_decl, name);
-   SageInterface::setSourcePosition(enum_val);
+   SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
+   ROSE_ASSERT(def_decl);
+   SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(enum_decl->get_firstNondefiningDeclaration());
+   ROSE_ASSERT(nondef_decl);
+
+   enum_val = SageBuilder::buildEnumVal_nfi(value, nondef_decl, name);
 
    SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(enum_val, enum_type);
    SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, enum_type, initializer);
-   SageInterface::setSourcePosition(init_name);
 
-   enum_decl->append_enumerator(init_name);
-   init_name->set_scope(enum_decl->get_scope());
+   def_decl->get_enumerators().push_back(init_name);
+   init_name->set_scope(scope);
+   init_name->set_declptr(def_decl);
 
+   // Add an associated field symbol to the symbol table
    SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(init_name);
    ROSE_ASSERT(enum_field_symbol);
-   enum_decl->get_scope()->insert_symbol(name, enum_field_symbol);
+   scope->insert_symbol(name,enum_field_symbol);
 }
 
 void SageTreeBuilder::
