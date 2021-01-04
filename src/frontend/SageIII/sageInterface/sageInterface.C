@@ -21021,7 +21021,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
       }
-      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt))
+      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
         // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
         // The issues are fixed in the switch statement below but this test is needed
@@ -21129,6 +21129,16 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
           def_decl->set_parent(targetBlock);
           def_decl->set_scope(targetBlock);
+
+          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
+          if (enum_decl) // Rasmussen (12/23/2020)
+            {
+              // Set the scope of the enumerators
+              BOOST_FOREACH (SgInitializedName* name, enum_decl->get_enumerators())
+                {
+                  name->set_scope(targetBlock);
+                }
+            }
           break;
         }
       case V_SgJovialTableStatement:
