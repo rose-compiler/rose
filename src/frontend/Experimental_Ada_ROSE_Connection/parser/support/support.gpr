@@ -1,6 +1,4 @@
-with "../asis_adapter/asis_adapter";
-
-project Ada_Main is
+project Support is
 
    for Source_Dirs use
      ("./source");
@@ -8,7 +6,8 @@ project Ada_Main is
    for Object_Dir use "./obj";
 
    for Main use
-     ("run_parser_adapter.adb");
+     ("demo_dot.adb",
+      "test_gnat_command_line.adb");
 
    package Compiler is
       for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
@@ -26,5 +25,4 @@ project Ada_Main is
       for Switches ("ada") use ("-E");
    end Binder;
 
-end Ada_Main;
-
+end Support;
