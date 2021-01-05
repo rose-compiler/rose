@@ -79,6 +79,7 @@ namespace CodeThorn {
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;
   private:
+    void rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue);
     static bool combineConsistencyCheck;
   };
   

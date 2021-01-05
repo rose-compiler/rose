@@ -82,6 +82,8 @@ namespace CodeThorn {
     const CodeThorn::ConstraintSet* _constraints;
   public:
     CodeThorn::InputOutput io;
+    void setCallString(CallString cs);
+    CallString getCallString() const;
     CallString callString;
     
   };

@@ -21,4 +21,4 @@ ps  : PostScript,
 pdf : (Adobe's) Portable Document Format
 dot : dot is a tool for hierarchical layout (part of AT&T's graphviz package)
     : the language accepted by dot is the DOT language
-    : http://www.research.att.com/~erg/graphviz/info/lang.html
+    : https://graphviz.org/doc/info/lang.html

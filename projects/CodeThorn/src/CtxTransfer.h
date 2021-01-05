@@ -117,7 +117,7 @@ struct CtxTransfer : DFTransferFunctions
     CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis)
     : base(), component(comptrans), analysis(ctxanalysis), initialElement(&mkCtxLattice(analysis, component))
     {}
-    
+
     ~CtxTransfer()
     {
       delete initialElement;
@@ -179,31 +179,36 @@ struct CtxTransfer : DFTransferFunctions
       if (!root) return cloneLattice(analysis.factory(), *initialElement);
 
       ctx_lattice_t& elem = dynamic_cast<ctx_lattice_t&>(SG_DEREF(base::initializeGlobalVariables(root)));
-      
+
       ROSE_ASSERT(elem.size() <= 1);
-      
+
       // \todo remove workaround when CFG has return nodes for function calls
       //       in global variable initialization.
       if (elem.size())
       {
         // replace initial element with lattice from global variable analysis
         delete initialElement;
-      
+
         initialElement = &mkCtxLattice(analysis, elem);
       }
 
       //~ dbgPrintCtx(std::cerr, SG_DEREF(analysis.getLabeler()), elem);
       return &elem;
     }
-    
+
     DFTransferFunctions& componentTransfer() { return component; }
+
+    void addParameterPassingVariables() override
+    {
+      component.addParameterPassingVariables();
+    }
 
   private:
     DFTransferFunctions&      component;       ///< The component transfer
     CtxAnalysis<CallContext>& analysis;        ///< The analysis objects
     //~ const ctx_lattice_t&      initialElement;  ///< prototype lattice for extremal value
-    ctx_lattice_t*            initialElement;  ///< prototype lattice for extremal value 
-    
+    ctx_lattice_t*            initialElement;  ///< prototype lattice for extremal value
+
     CtxTransfer() = delete;
 };
 
@@ -242,7 +247,7 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 {
   ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-  this->transfer(edge.source(), lat);  
+  this->transfer(edge.source(), lat);
   std::for_each(lat.begin(), lat.end(), subTransfer(component, edge));
 
   //~ std::cerr << "# tr'd " << getLabeler()->getNode(edge.source())->unparseToString();

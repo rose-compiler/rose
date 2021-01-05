@@ -1042,10 +1042,23 @@ Leave(SgJovialDirectiveStatement* directive)
 
    switch (directive->get_directive_type())
      {
-       case SgJovialDirectiveStatement::e_compool:
-       // A compool directive reads in the compool file and pushes its scope to the scope stack
+       case SgJovialDirectiveStatement::e_compool: {
+       // Save and then pop the scope of the compool module loaded by the compool directive
+          SgScopeStatement* compool_scope = SageBuilder::topScopeStack();
           SageBuilder::popScopeStack();
+
+       // Insert aliases for all symbols in the compool scope into the current scope
+          SgSymbolTable* symbol_table = compool_scope->get_symbol_table();
+          SgScopeStatement* current_scope = SageBuilder::topScopeStack();
+          BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
+            SgSymbol* symbol = isSgSymbol(node);
+            ROSE_ASSERT(symbol);
+            SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
+            ROSE_ASSERT(alias_symbol);
+            current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+          }
           break;
+       }
        case SgJovialDirectiveStatement::e_unknown:
           mlog[ERROR] << "SageTreeBuilder::Leave(SgJovialDirectiveStatement*) directive_type is unknown \n";
           break;
@@ -1144,9 +1157,6 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 
       compool_decl->set_definingDeclaration(compool_decl);
       compool_decl->set_firstNondefiningDeclaration(compool_decl);
-
-   // TODO?
-   // SageBuilder::pushScopeStack(compool_defn);
 
       SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
    }

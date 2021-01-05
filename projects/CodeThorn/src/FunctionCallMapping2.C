@@ -88,7 +88,8 @@ namespace
     
     // no result indicates an error, which is logged in the caller
     //~ ROSE_ASSERT(targets.size());
-    return std::move(targets);
+    //return std::move(targets); MS: pessimizing move
+    return targets;
   }
   
   std::string typeRep(SgExpression& targetexp)
