@@ -98,6 +98,7 @@ protected:
     RegisterDescriptor instructionPointerRegister() const override;
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
+    void set_register_dictionary(const RegisterDictionary*) override;
 };
 
 } // namespace

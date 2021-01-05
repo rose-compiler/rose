@@ -69,7 +69,7 @@ DisassemblerAarch64::unparser() const {
 }
 
 SgAsmInstruction*
-DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=NULL*/) {
+DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;
@@ -90,18 +90,8 @@ DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
 
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
-    if (0 == r.nInsns) {
-#if 0 // DEBGUGGING: show the disassembly string from capstone itself
-        std::cerr <<"ROBB: capstone disassembly:"
-                  <<" " <<StringUtility::addrToString(va) <<":"
-                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
-                  <<" unknown\n";
-#endif
+    if (0 == r.nInsns)
         return makeUnknownInstruction(Exception("unable to decode instruction", va, SgUnsignedCharList(bytes+0, bytes+nRead), 0));
-    }
 
     ASSERT_require(1 == r.nInsns);
     ASSERT_not_null(r.csi);
@@ -122,7 +112,7 @@ DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
 #endif
     auto operands = new SgAsmOperandList;
     for (uint8_t i = 0; i < detail.op_count; ++i) {
-        auto operand = makeOperand(*r.csi, detail.operands[i]);
+        SgAsmExpression *operand = makeOperand(*r.csi, detail.operands[i]);
         ASSERT_not_null(operand);
         ASSERT_not_null(operand->get_type());
         operands->get_operands().push_back(operand);
@@ -130,9 +120,8 @@ DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     }
     wrapPrePostIncrement(operands, detail);
     auto insn = new SgAsmAarch64Instruction(va, r.csi->mnemonic, (Aarch64InstructionKind)r.csi->id, detail.cc);
-    insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
+    insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
     insn->set_operandList(operands);
-    insn->set_condition(detail.cc);
     insn->set_updatesFlags(detail.update_flags);
     operands->set_parent(insn);
     retval = insn;
@@ -188,9 +177,9 @@ DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     }
     ASSERT_not_null(retval);
 
-    /* Note successors if necessary */
+    // Note successors if necessary
     if (successors) {
-        bool complete;
+        bool complete = false;
         *successors |= retval->getSuccessors(complete/*out*/);
     }
 
@@ -529,13 +518,13 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
                     ASSERT_not_null(type);
                     SgAsmExpression *lhs = add->get_lhs();
                     ASSERT_require(isSgAsmDirectRegisterExpression(lhs));
-                    add->set_lhs(NULL);
-                    lhs->set_parent(NULL);
+                    add->set_lhs(nullptr);
+                    lhs->set_parent(nullptr);
                     SgAsmExpression *rhs = add->get_rhs();
-                    add->set_rhs(NULL);
-                    rhs->set_parent(NULL);
-                    mre->set_address(NULL);
-                    add->set_parent(NULL);
+                    add->set_rhs(nullptr);
+                    rhs->set_parent(nullptr);
+                    mre->set_address(nullptr);
+                    add->set_parent(nullptr);
 #if 0 // FIXME: Deleting parts of an AST is unsafe because ROSE has no formal ownership rules for its nodes.
                     delete add;
 #else // instead, we'll just drop it
@@ -552,11 +541,11 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
                     // address must be a register reference. First unlink things from the tree...
                     ASSERT_require(i + 2 == operands->get_operands().size());
                     SgAsmExpression *lhs = mre->get_address();
-                    mre->set_address(NULL);
-                    lhs->set_parent(NULL);
+                    mre->set_address(nullptr);
+                    lhs->set_parent(nullptr);
                     SgAsmExpression *rhs = operands->get_operands()[i+1];
                     operands->get_operands().erase(operands->get_operands().begin() + i + 1);
-                    rhs->set_parent(NULL);
+                    rhs->set_parent(nullptr);
 
                     // Construct the replacement and link it into the tree
                     auto newNode = SageBuilderAsm::buildAddPostupdateExpression(lhs, rhs, lhs->get_type());

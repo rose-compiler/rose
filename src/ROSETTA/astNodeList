@@ -972,4 +972,4 @@ SgAdaSelectStmt
 SgAdaSelectAlternativeStmt
 SgAdaTerminateStmt
 SgAsmAarch32Instruction
-
+SgAsmAarch32Coprocessor

@@ -6,7 +6,8 @@ ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 ###############################################################################################################################
 # Utilities to test whether certain features are enabled, thus whether certain tests need to be run.
 ###############################################################################################################################
-run $(tool_compile_linkexe) isA64Disabled.C
+run $(tool_compile_linkexe) isAarch64Disabled.C
+run $(tool_compile_linkexe) isAarch32Disabled.C
 
 ###############################################################################################################################
 # Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
@@ -493,7 +494,7 @@ run $(test) testLazyInitialStates \
 # Test disassembling random input data for various architectures.
 #############################################################################################
 run $(tool_compile_linkexe) testRandomInput.C
-testRandomInput_ISA = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
+testRandomInput_ISA = a32 t32 a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 
 run for isa in $(testRandomInput_ISA); do \
         $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \
@@ -569,10 +570,20 @@ run $(test) testDisassembler -o ppc64a-be --input=testDisassembler-ppc32.txt --a
 run $(test) testDisassembler -o ppc64b-be --input=testDisassembler-ppc64.txt --answer=testDisassembler-ppc64b.ans \
     ./testDisassembler --isa=ppc64-be ./testDisassembler-ppc64.txt
 
-# ARM AArch A64
-run $(test) testDisassembler -o a64 --input=isA64Disabled --disabled-by=./isA64Disabled \
+# ARM AArch64 A64
+run $(test) testDisassembler -o a64 --input=isAarch64Disabled --disabled-by=./isAarch64Disabled \
     --input=testDisassembler-a64.txt --answer=testDisassembler-a64.ans \
     ./testDisassembler --isa=a64 ./testDisassembler-a64.txt
+
+# ARM AArch32 A32
+run $(test) testDisassembler -o a32 --input=isAarch32Disabled --disabled-by=./isAarch32Disabled \
+    --input=testDisassembler-a32.txt --answer=testDisassembler-a32.ans \
+    ./testDisassembler --isa=a32 ./testDisassembler-a32.txt
+
+# ARM AArch32 T32
+run $(test) testDisassembler -o t32 --input=isAarch32Disabled --disabled-by=./isAarch32Disabled \
+    --input=testDisassembler-t32.txt --answer=testDisassembler-t32.ans \
+    ./testDisassembler --isa=t32 ./testDisassembler-t32.txt
 
 ########################################################################################################################
 # Native semantics

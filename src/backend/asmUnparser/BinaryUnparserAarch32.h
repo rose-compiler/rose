@@ -34,6 +34,14 @@ public:
 
     const Aarch32Settings& settings() const ROSE_OVERRIDE { return settings_; }
     Aarch32Settings& settings() ROSE_OVERRIDE { return settings_; }
+
+protected:
+    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
+
+protected:
+    void outputExpr(std::ostream&, SgAsmExpression*, State &) const;
+    void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
 };
 
 } // namespace

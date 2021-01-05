@@ -8,6 +8,7 @@
 #include <AsmUnparser_compat.h>
 #include <Diagnostics.h>
 #include <DisassemblerPowerpc.h>
+#include <DisassemblerAarch32.h>
 #include <DisassemblerAarch64.h>
 #include <DisassemblerM68k.h>
 #include <DisassemblerMips.h>
@@ -79,6 +80,10 @@ operator<<(std::ostream &o, const Disassembler::Exception &e)
 void
 Disassembler::initclassHelper()
 {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    registerSubclass(DisassemblerAarch32::instanceA32());
+    registerSubclass(DisassemblerAarch32::instanceT32());
+#endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
     registerSubclass(new DisassemblerAarch64());
 #endif
@@ -180,8 +185,12 @@ std::vector<std::string>
 Disassembler::isaNames() {
     std::vector<std::string> v;
     v.push_back("amd64");
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    v.push_back("a32");                                 // AArch32 A32
+    v.push_back("t32");                                 // AArch32 T32
+#endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    v.push_back("AArch64");
+    v.push_back("a64");                                 // AArch64 A64
 #endif
     v.push_back("coldfire");
     v.push_back("i386");
@@ -206,6 +215,18 @@ Disassembler::lookup(const std::string &name)
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
+    } else if (name == "a32") {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        retval = DisassemblerAarch32::instanceA32();
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
+    } else if (name == "t32") {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        retval = DisassemblerAarch32::instanceT32();
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
     } else if (name == "a64") {
 #ifdef ROSE_ENABLE_ASM_AARCH64
         retval = new DisassemblerAarch64();

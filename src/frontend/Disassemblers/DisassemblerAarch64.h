@@ -64,7 +64,7 @@ public:
     bool canDisassemble(SgAsmGenericHeader*) const override;
     Disassembler* clone() const override;
     Unparser::BasePtr unparser() const override;
-    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=NULL) override;
+    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:
@@ -86,8 +86,9 @@ private:
 //    // Extract a particular element out of the expression and return a new expression.
 //    SgAsmExpression* extractElement(SgAsmExpression*, arm64_vess elmtSizeSpec, int idx);
 
-    // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender function, generate a new expression (if necessary)
-    // that represents the ARM extender function. This may consist of an truncation and/or a signed or unsigned extend operation.
+    // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender
+    // function, generate a new expression (if necessary) that represents the ARM extender function. This may consist of an
+    // truncation and/or a signed or unsigned extend operation.
     SgAsmExpression* extendOperand(SgAsmExpression*, const cs_insn&, arm64_extender, SgAsmType*, arm64_shifter, unsigned shiftAmount) const;
 
     // Return a type for register.
@@ -97,7 +98,8 @@ private:
     // partially decode instructions ourselves to get this information.
     SgAsmType* typeForMemoryRead(const cs_insn&);
 
-    // Change a memory reference expresson's address by wrapping it in a SgAsmPreIncrementExpression or SgAsmPostIncrementExpression if necessary.
+    // Change a memory reference expresson's address by wrapping it in a SgAsmPreIncrementExpression or
+    // SgAsmPostIncrementExpression if necessary.
     void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm64&);
 };
 

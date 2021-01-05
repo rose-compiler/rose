@@ -15,11 +15,11 @@ namespace BinaryAnalysis {
 class DisassemblerAarch32: public Disassembler {
 public:
     /** Capstone "Mode type", limited to those related to AArch32. Warning: these are non-orthogonal concepts. */
-    enum Mode {
-        MODE_ARM32 = CS_MODE_ARM,                       /**< Capstone: "32-bit ARM". */ // probably zero, not really a bit flag
-        MODE_THUMB = CS_MODE_THUMB,                     /**< Capstone: "ARM's Thumb mode, including Thumb-2". */
-        MODE_MCLASS = CS_MODE_MCLASS,                   /**< Capstone: "ARM's Cortex-M series". */
-        MODE_V8 = CS_MODE_V8                            /**< Capstone: "ARMv8 A32 encodngs for ARM". */
+    enum class Mode {
+        ARM32 = CS_MODE_ARM,                            /**< Capstone: "32-bit ARM". */ // probably zero, not really a bit flag
+        THUMB = CS_MODE_THUMB,                          /**< Capstone: "ARM's Thumb mode, including Thumb-2". */
+        MCLASS = CS_MODE_MCLASS,                        /**< Capstone: "ARM's Cortex-M series". */
+        V8 = CS_MODE_V8                                 /**< Capstone: "ARMv8 A32 encodngs for ARM". */
     };
 
     /** Collection of Modes. */
@@ -37,17 +37,55 @@ public:
         init();
     }
 
+    static DisassemblerAarch32* instanceA32() {
+        return new DisassemblerAarch32(Modes(Mode::ARM32));
+    }
+
+    static DisassemblerAarch32* instanceT32() {
+        return new DisassemblerAarch32(Modes(Mode::THUMB));
+    }
+
     ~DisassemblerAarch32();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
     Disassembler* clone() const override;
     Unparser::BasePtr unparser() const override;
-    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=NULL) override;
+    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:
     void init();
+
+    // Make a ROSE instruction operand from a Capstone operand
+    SgAsmExpression* makeOperand(const cs_insn&, const cs_arm_op&);
+
+    // Change a memory reference expression's address by wrapping it in a SgAsmPreIncrementExpression or SgAsmPostIncrement
+    // expression if necessary.
+    void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm&);
+
+    // Convert a Capstone register number to a ROSE register descriptor. ROSE's register descriptor are a lot more than just an
+    // ID number.
+    RegisterDescriptor makeRegister(arm_reg);
+
+    // Convert a Capstone system register number to a ROSE register descriptor.
+    RegisterDescriptor makeSystemRegister(arm_sysreg);
+
+    // Create a register descriptor for a coprocessor register.
+    RegisterDescriptor makeCoprocRegister(int registerNumber);
+
+    // Restrict a register to just part of a register
+    RegisterDescriptor subRegister(RegisterDescriptor, int idx);
+
+    // Return a type for register.
+    SgAsmType* registerType(RegisterDescriptor);
+
+    // Capstone doesn't return information about how much memory is read for a memory read operand. Therefore, we need to
+    // partially decode instructions ourselves to get this information.
+    SgAsmType* typeForMemoryRead(const cs_insn&);
+
+    // Returns the opcode as a 32-bit value.
+    uint32_t opcode(const cs_insn&);
 };
 
 } // namespace

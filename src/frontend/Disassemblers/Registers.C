@@ -883,12 +883,29 @@ RegisterDictionary::dictionary_aarch32() {
     if (!regs) {
         regs = new RegisterDictionary("AArch32");
 
-        // 15 general purpose registers R0-R12, "sp" (stack pointer), and "lr" (link register). The stack pointer and link
-        // register are banked; that is, there are more than one stack register and link register but only one is visible
-        // at a time depending on the current "system level view".
+        // 16 general purpose registers R0-R12, "sp" (stack pointer), "lr" (link register), and "pc" (program counter). The
+        // stack pointer and link register are banked; that is, there are more than one stack register and link register but
+        // only one is visible at a time depending on the current "system level view".
         for (unsigned i = 0; i < 13; ++i)
             regs->insert("r" + boost::lexical_cast<std::string>(i), aarch32_regclass_gpr, i, 0, 32);
         regs->insert("sp", aarch32_regclass_gpr, aarch32_gpr_sp, 0, 32); // the normal user stack pointer
+        regs->insert("lr", aarch32_regclass_gpr, aarch32_gpr_lr, 0, 32); // the normal user link register
+        regs->insert("pc", aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32); // program counter, aka. insn pointer
+
+        // Banked R8-R12
+        regs->insert("r8_usr",  aarch32_regclass_sys, aarch32_sys_r8_usr,  0, 32);
+        regs->insert("r8_fiq",  aarch32_regclass_sys, aarch32_sys_r8_fiq,  0, 32);
+        regs->insert("r9_usr",  aarch32_regclass_sys, aarch32_sys_r9_usr,  0, 32);
+        regs->insert("r9_fiq",  aarch32_regclass_sys, aarch32_sys_r9_fiq,  0, 32);
+        regs->insert("r10_usr", aarch32_regclass_sys, aarch32_sys_r10_usr, 0, 32);
+        regs->insert("r10_fiq", aarch32_regclass_sys, aarch32_sys_r10_fiq, 0, 32);
+        regs->insert("r11_usr", aarch32_regclass_sys, aarch32_sys_r11_usr, 0, 32);
+        regs->insert("r11_fiq", aarch32_regclass_sys, aarch32_sys_r11_fiq, 0, 32);
+        regs->insert("r12_usr", aarch32_regclass_sys, aarch32_sys_r12_usr, 0, 32);
+        regs->insert("r12_fiq", aarch32_regclass_sys, aarch32_sys_r12_fiq, 0, 32);
+
+        // Banked stack pointers
+        regs->insert("sp_usr", aarch32_regclass_sys, aarch32_sys_sp_usr, 0, 32);
         regs->insert("sp_hyp", aarch32_regclass_sys, aarch32_sys_sp_hyp, 0, 32);
         regs->insert("sp_svc", aarch32_regclass_sys, aarch32_sys_sp_svc, 0, 32);
         regs->insert("sp_abt", aarch32_regclass_sys, aarch32_sys_sp_abt, 0, 32);
@@ -896,7 +913,9 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("sp_mon", aarch32_regclass_sys, aarch32_sys_sp_mon, 0, 32);
         regs->insert("sp_irq", aarch32_regclass_sys, aarch32_sys_sp_irq, 0, 32);
         regs->insert("sp_fiq", aarch32_regclass_sys, aarch32_sys_sp_fiq, 0, 32);
-        regs->insert("lr", aarch32_regclass_gpr, aarch32_gpr_lr, 0, 32); // the normal user link register
+
+        // Banked link pointers
+        regs->insert("lr_usr", aarch32_regclass_sys, aarch32_sys_lr_usr, 0, 32);
         regs->insert("lr_svc", aarch32_regclass_sys, aarch32_sys_lr_svc, 0, 32);
         regs->insert("lr_abt", aarch32_regclass_sys, aarch32_sys_lr_abt, 0, 32);
         regs->insert("lr_und", aarch32_regclass_sys, aarch32_sys_lr_und, 0, 32);
@@ -904,13 +923,38 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("lr_irq", aarch32_regclass_sys, aarch32_sys_lr_irq, 0, 32);
         regs->insert("lr_fiq", aarch32_regclass_sys, aarch32_sys_lr_fiq, 0, 32);
 
-        // One program counter.
-        regs->insert("pc", aarch32_regclass_pc, 0, 0, 32);
+        // One "cpsr" or "current program status register", which holds condition code flags, interrupt disable bits, current
+        // processor mode, and other status and control information.
+        regs->insert("cpsr",       aarch32_regclass_sys, aarch32_sys_cpsr, 0, 32);
+        regs->insert("cpsr_nzcv",  aarch32_regclass_sys, aarch32_sys_cpsr, 28, 4); // n, z, c, and v bits
+        regs->insert("cpsr_nzcvq", aarch32_regclass_sys, aarch32_sys_cpsr, 27, 5); // n, z, c, v, and q bits
+        regs->insert("cpsr_n",     aarch32_regclass_sys, aarch32_sys_cpsr, 31, 1); // negative condition flag
+        regs->insert("cpsr_z",     aarch32_regclass_sys, aarch32_sys_cpsr, 30, 1); // zero condition flag
+        regs->insert("cpsr_c",     aarch32_regclass_sys, aarch32_sys_cpsr, 29, 1); // carry condition flag
+        regs->insert("cpsr_v",     aarch32_regclass_sys, aarch32_sys_cpsr, 28, 1); // overflow condition flag
+        regs->insert("cpsr_q",     aarch32_regclass_sys, aarch32_sys_cpsr, 27, 1); // cumulative saturation bit
+        regs->insert("cpsr_j",     aarch32_regclass_sys, aarch32_sys_cpsr, 24, 1); // Java state
+        regs->insert("cpsr_ssbs",  aarch32_regclass_sys, aarch32_sys_cpsr, 23, 1); // speculative store bypass safe (ARMv8.0-SSBS)
+        regs->insert("cpsr_pan",   aarch32_regclass_sys, aarch32_sys_cpsr, 22, 1); // privileged access never (ARMv8.1-PAN)
+        regs->insert("cpsr_dit",   aarch32_regclass_sys, aarch32_sys_cpsr, 21, 1); // data independent timing (ARMv8.4-DIT)
+        regs->insert("cpsr_ge",    aarch32_regclass_sys, aarch32_sys_cpsr, 16, 4); // greater than or equal flags for || add sub
+        regs->insert("cpsr_e",     aarch32_regclass_sys, aarch32_sys_cpsr, 9, 1);  // endianness state bit
+        regs->insert("cpsr_a",     aarch32_regclass_sys, aarch32_sys_cpsr, 8, 1);  // SError interrupt mask bit
+        regs->insert("cpsr_i",     aarch32_regclass_sys, aarch32_sys_cpsr, 7, 1);  // IRQ mask bit
+        regs->insert("cpsr_f",     aarch32_regclass_sys, aarch32_sys_cpsr, 6, 1);  // FIQ mask bit
+        regs->insert("cpsr_t",     aarch32_regclass_sys, aarch32_sys_cpsr, 5, 1);  // Thumb
+        regs->insert("cpsr_m",     aarch32_regclass_sys, aarch32_sys_cpsr, 0, 4);  // current PE mode
 
-        // One application program status register. Also called "cpsr" or "current program status register", which holds the
-        // APSR flags, the processor mode, the interrupt disable flags, the instruction set state (A32 or T32), the endianness
-        // state, and the execution state bits for the IT block. Only the APSR flags are accessible in all modes.
-        regs->insert("apsr", aarch32_regclass_sys, aarch32_sys_apsr, 0, 32);
+        // Holds program status and control information, a subset of the CPSR.
+        regs->insert("apsr",        aarch32_regclass_sys, aarch32_sys_apsr, 0, 32);
+        regs->insert("apsr_nzcv",   aarch32_regclass_sys, aarch32_sys_apsr, 28, 4); // n, z, c, and v bits
+        regs->insert("apsr_nzcvq",  aarch32_regclass_sys, aarch32_sys_apsr, 27, 5); // n, z, c, v, and q bits
+        regs->insert("apsr_n",      aarch32_regclass_sys, aarch32_sys_apsr, 31, 1);
+        regs->insert("apsr_z",      aarch32_regclass_sys, aarch32_sys_apsr, 30, 1);
+        regs->insert("apsr_c",      aarch32_regclass_sys, aarch32_sys_apsr, 29, 1);
+        regs->insert("apsr_v",      aarch32_regclass_sys, aarch32_sys_apsr, 28, 1);
+        regs->insert("apsr_q",      aarch32_regclass_sys, aarch32_sys_apsr, 27, 1);
+        regs->insert("apsr_ge",     aarch32_regclass_sys, aarch32_sys_apsr, 16, 4);
 
         // banked SPSR "saved program status register". The SPSR stores the value of the CPSR "current program status register"
         // when an exception is taken so that it can be restored after handling the exception.  Each exception handling mode
@@ -923,6 +967,45 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("spsr_mon", aarch32_regclass_sys, aarch32_sys_spsr_mon, 0, 32);
         regs->insert("spsr_irq", aarch32_regclass_sys, aarch32_sys_spsr_irq, 0, 32);
         regs->insert("spsr_fiq", aarch32_regclass_sys, aarch32_sys_spsr_fiq, 0, 32);
+
+        // I don't know what these are, but they're vaguely documented for the MSR instruction.
+        regs->insert("ipsr",    aarch32_regclass_sys, aarch32_sys_ipsr,    0, 32);
+        regs->insert("iepsr",   aarch32_regclass_sys, aarch32_sys_iepsr,   0, 32);
+        regs->insert("iapsr",   aarch32_regclass_sys, aarch32_sys_iapsr,   0, 32);
+        regs->insert("eapsr",   aarch32_regclass_sys, aarch32_sys_eapsr,   0, 32);
+        regs->insert("psr",     aarch32_regclass_sys, aarch32_sys_psr,     0, 32);
+        regs->insert("msp",     aarch32_regclass_sys, aarch32_sys_msp,     0, 32);
+        regs->insert("psp",     aarch32_regclass_sys, aarch32_sys_psp,     0, 32);
+        regs->insert("primask", aarch32_regclass_sys, aarch32_sys_primask, 0, 32);
+        regs->insert("control", aarch32_regclass_sys, aarch32_sys_control, 0, 32);
+
+        // NEON and VFP use the same extension register bank. This is distinct from the ARM register bank. The extension
+        // register bank is a colleciton of registers which can be accesed as either 32-bit, 64-bit, or 128-bit registers,
+        // depending on whether the instruction is NEON or VFP.
+        //
+        // VFP views of the extension register bank. In VFPv3 and VFPv3-FP16 you can view the extension register bank as:
+        //   * Thirty-two 64-bit registers, D0-D31
+        //   * Thirty-two 32-bit registers, S0-S31. Only half of the register bank is accessible in this view.
+        //   * A combination of registers from teh above views.
+        //
+        // In VFPv2, VFPv3-D16, and VFPv3-D16-FP16, you can view the extension reigster bank as:
+        //   * Sixteen 64-bit registers, D0-D15
+        //   * Thirty-two 32-bit registers, S0-S31
+        //   A A combination of registers from the above views
+        //
+        // In VFP, 64-bit registers are called double-precison registers and can contain double-precision floating-point
+        // values. 32-bit registers are called single-precision registers and can contain either a single-precision or two
+        // half-precision floating-point values.
+        //
+        for (size_t i = 0; i < 32; ++i) {
+            regs->insert("q" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 128);
+            regs->insert("d" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 64);
+            regs->insert("s" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 32);
+        }
+
+        // Coprocessor registers named "cr0" through "cr15", although these names don't actually appear in the documentation.
+        for (unsigned i = 0; i < 16; ++i)
+            regs->insert("cr" + boost::lexical_cast<std::string>(i), aarch32_regclass_coproc, i, 0, 32);
     }
     return regs;
 }
