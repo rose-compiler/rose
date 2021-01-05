@@ -202,6 +202,33 @@ void Grammar::setUpBinaryInstructions() {
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: ARM AArch32 instruction condition.
+         *
+         *  This property indicates when the instruction is executed.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::Aarch32InstructionCondition get_condition() const;
+        void set_condition(Rose::BinaryAnalysis::Aarch32InstructionCondition);
+        /** @} */
+#else
+        AsmAarch32Instruction.setDataPrototype("Rose::BinaryAnalysis::Aarch32InstructionCondition", "condition",
+                                               "= Rose::BinaryAnalysis::Aarch32InstructionCondition::ARM_CC_INVALID",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Whether this instruction updates N, Z, C, and/or V status flags.
+         *
+         * @{ */
+        bool get_updatesFlags() const;
+        void set_updatesFlags(bool);
+        /** @} */
+#else
+        AsmAarch32Instruction.setDataPrototype("bool", "updatesFlags", "= false",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
         DECLARE_OTHERS(AsmAarch32Instruction);
 #if defined(SgAsmAarch32Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1996,6 +2023,50 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    DECLARE_LEAF_CLASS(AsmAarch32Coprocessor);
+    IS_SERIALIZABLE(AsmAarch32Coprocessor);
+
+#ifdef DOCUMENTATION
+    /** Operand referencing a Co-processor. */
+    class SgAsmAarch32Coprocessor: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmAarch32Coprocessor);
+#if defined(SgAsmAarch32Coprocessor_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(coprocessor_);
+        }
+#endif
+
+    private:
+        int coprocessor_;
+
+    public:
+        explicit SgAsmAarch32Coprocessor(int coprocessor)
+            : coprocessor_(coprocessor) {}
+
+        /** Property: Coprocessor number.
+         *
+         * @{ */
+        int coprocessor() const { return coprocessor_; }
+        void coprocessor(int n) { coprocessor_ = n; }
+        /** @} */
+#endif // SgAsmAarch32Coprocessor_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
     DECLARE_LEAF_CLASS(AsmAarch64AtOperand);
@@ -2261,6 +2332,9 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef ROSE_ENABLE_ASM_AARCH64
                           | AsmAarch64AtOperand | AsmAarch64PrefetchOperand | AsmAarch64SysMoveOperand
                           | AsmAarch64CImmediateOperand | AsmAarch64BarrierOperand
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+                          | AsmAarch32Coprocessor
 #endif
                           , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
