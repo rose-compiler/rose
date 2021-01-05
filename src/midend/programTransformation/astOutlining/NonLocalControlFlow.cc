@@ -315,7 +315,7 @@ class NormalizeReturn
       if (needNormalization)
       { 
         // introduce a new variable declaration   TYPE _temp_orig_var_1 ;
-        string temp_name= "__rt_temp_"+to_string(temp_count);
+        string temp_name= "__rt_temp_"+ Rose::StringUtility::numberToString(temp_count);
         SgVariableDeclaration* temp_decl =  buildVariableDeclaration( SgName(temp_name), stmt->get_expression()->get_type(), NULL, scope);
         prependStatement (temp_decl, scope);
 
