@@ -50,7 +50,7 @@ namespace CodeThorn {
       cout << "STATUS: done (LTLs not added yet)." << endl;
     }
 
-    if (ctOpt.visualization.viz) {
+    if (ctOpt.visualization.vis) {
       int counter = 0;
       for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
         Flow cfg = *i;
@@ -175,7 +175,7 @@ namespace CodeThorn {
       }
     }
 
-    if (ctOpt.visualization.viz) {
+    if (ctOpt.visualization.vis) {
       explorer.setVisualize(true);
     }
 

@@ -563,7 +563,7 @@ string Visualizer::transitionGraphWithIOToDot() {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();
-        num+='A'-1;
+        num+='A'-1; // TODO: introduce RERS mapping 2020
         char numc=num;
         stringstream ss;
         ss<<numc;
