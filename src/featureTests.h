@@ -10,6 +10,10 @@
 #ifndef ROSE_FeatureTests_H
 #define ROSE_FeatureTests_H
 
+// DO NOT INCLUDE LARGE HEADERS HERE! These headers should generally be only C preprocessor directives, not any substantial
+// amount of C++ code. This means no sage3basic.h or rose.h, among others. This <featureTests.h> file is meant to be as small
+// and fast as possible because its purpose is to be able to quickly compile (by skipping over) source code that's not
+// necessary in a particular ROSE configuration.
 #include <rosePublicConfig.h>
 #include <boost/version.hpp>
 
