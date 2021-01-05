@@ -5304,11 +5304,11 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // This might be a better solution.
                     if (isSgGlobal(header_file_associated_scope) != NULL)
                        {
-#if 1
+#if 0
                          printf ("isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
 #endif
                          unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, NULL);
-#if 1
+#if 0
                          printf ("DONE: isSgGlobal(header_file_associated_scope) != NULL: calling unparseFile() \n");
 #endif
                        }
@@ -5346,7 +5346,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 // DQ (9/7/2018): END OF OLD CODE
 // #endif
 
-#if 1
+#if 0
                printf ("In unparseIncludedFiles(): End of loop over unparseMapEntries: originalFileName = %s \n",originalFileName.c_str());
 #endif
 #if 0
@@ -5549,7 +5549,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              {
             // #if 1
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 2)
                   {
                     printf ("In unparseProject(): loop over all files: calling computeNameQualification() for sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
                   }

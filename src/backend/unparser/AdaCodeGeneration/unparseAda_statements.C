@@ -1085,6 +1085,18 @@ namespace
       type(n.get_orig_return_type(), n);
     }
 
+    // MS 12/22/20 : if this is actually a function renaming declaration,
+    // print the renaming syntax after the function/procedure declaration
+    // and immediately return.
+    SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n);
+    if (renaming != NULL)
+    {
+      prn(" renames ");
+      prn(renaming->get_renamed_function()->get_name());
+      prn(STMT_SEP);
+      return;
+    }
+
     SgFunctionDefinition* def = n.get_definition();
 
     if (!def)
@@ -1122,6 +1134,7 @@ namespace
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
+    void handle(SgAdaFloatType&)   { res = ReturnType("type",    ""); }
   };
 
   std::pair<std::string, std::string>
