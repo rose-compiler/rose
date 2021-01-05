@@ -383,7 +383,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        //
        // Liao, 2021/1/4: outliner will build a lib file from input file. The introduced transformation should be preserved.
        // 
-          bool isTransformation    = stmt->get_file_info()->isTransformation();
+       //   bool isTransformation    = stmt->get_file_info()->isTransformation();
        // if (isCompilerGenerated || isTransformation)
           if (stmt->get_file_info() == NULL)
              {
@@ -445,7 +445,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                printf ("sourceFile->get_unparseHeaderFiles()                = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
 #endif
                if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() &&
-                   sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false && isTransformation == false)
+                   sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false) // isTransformation == false
                   {
 #if 0
                     printf ("########## Forcing isOutputInCodeGeneration == false and forceOutputOfGeneratedCode == false \n");
