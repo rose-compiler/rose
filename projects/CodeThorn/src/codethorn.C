@@ -178,7 +178,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
     //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
@@ -201,6 +200,7 @@ int main( int argc, char * argv[] ) {
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
     
     runSolver(ctOpt,analyzer,sageProject,tc);
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);

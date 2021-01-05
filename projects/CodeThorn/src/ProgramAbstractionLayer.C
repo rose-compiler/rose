@@ -24,15 +24,21 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 
 void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root) {
   _root=root;
+  if(ctOpt.status) cout<<"Phase: normalization"<<endl;
   normalizationPass(ctOpt,root);
+
+  if(ctOpt.status) cout<<"Phase: variable-id mapping"<<endl;
   _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
+  if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
   _labeler=createLabeler(root,_variableIdMapping);
   
+  if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
   _functionCallMapping=nullptr; 
   _functionCallMapping2=nullptr;
 
+  if(ctOpt.status) cout<<"Phase: function call mapping"<<endl;
   if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
   {
     // another function resolution mode
@@ -53,16 +59,19 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
   }
   
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-  //cout << "INIT: Building CFG for each function."<<endl;
+  if(ctOpt.status) cout<<"Phase: CFG construction"<<endl;
+  if(ctOpt.status) cout<<"  - creating inter-procedural CFGs"<<endl;
   _fwFlow = _cfanalyzer->flow(root);
-  //cout << "STATUS: Building CFGs finished."<<endl;
-  //cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  if(ctOpt.status) cout<<"    CFG edges: " << _fwFlow.size()<<endl;
+  if(ctOpt.status) cout<<"  - creating inter-procedural control flow"<<endl;
   _interFlow=_cfanalyzer->interFlow(_fwFlow);
-  //cout << "INIT: Inter-Flow OK. (size: " << _interFlow.size()*2 << " edges)"<<endl;
+  if(ctOpt.status) cout<<"    Call edges: " << _interFlow.size() <<endl;
+  if(ctOpt.status) cout<<"  - Creating ICFG"<<endl;
   _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
-  //cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
-
+  if(ctOpt.status) cout<<"  - ICFG total size: " << _fwFlow.size() << " edges"<<endl;
+  if(ctOpt.status) cout<<"Phase: generating reverse ICFG"<<endl;
   _bwFlow = _fwFlow.reverseFlow();
+  if(ctOpt.status) cout<<"STATUS: Abstraction layer established."<<endl;
 }
 
 CodeThorn::InterFlow* CodeThorn::ProgramAbstractionLayer::getInterFlow() {
