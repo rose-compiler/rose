@@ -111,7 +111,7 @@ namespace CodeThorn {
   public:
     
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);
+    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);

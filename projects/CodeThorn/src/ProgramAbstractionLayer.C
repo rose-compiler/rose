@@ -21,23 +21,36 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
 }
 
-
 void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root) {
+  TimingCollector tc; // dummy object if no timing info is requested
+  initialize(ctOpt,root,tc);
+}
+
+
+void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
   _root=root;
+
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: normalization"<<endl;
   normalizationPass(ctOpt,root);
-
+  tc.stopTimer(TimingCollector::normalization);
+ 
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: variable-id mapping"<<endl;
   _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
   if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
   _labeler=createLabeler(root,_variableIdMapping);
+  tc.stopTimer(TimingCollector::variableIdMapping);
   
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
   _classHierarchy=new ClassHierarchyWrapper(root);
   _cfanalyzer=new CFAnalysis(_labeler);
   _functionCallMapping=nullptr; 
   _functionCallMapping2=nullptr;
+  tc.stopTimer(TimingCollector::classHierarchyAnalysis);
 
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: function call mapping"<<endl;
   if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
   {
@@ -57,21 +70,25 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
     getFunctionCallMapping2()->computeFunctionCallMapping(root);
     _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
   }
+  tc.stopTimer(TimingCollector::functionCallMapping);
   
-  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: CFG construction"<<endl;
-  if(ctOpt.status) cout<<"  - creating inter-procedural CFGs"<<endl;
   _fwFlow = _cfanalyzer->flow(root);
-  if(ctOpt.status) cout<<"    CFG edges: " << _fwFlow.size()<<endl;
-  if(ctOpt.status) cout<<"  - creating inter-procedural control flow"<<endl;
+  if(ctOpt.status) cout<<"    intra-procedural edges: " << _fwFlow.size()<<endl;
   _interFlow=_cfanalyzer->interFlow(_fwFlow);
-  if(ctOpt.status) cout<<"    Call edges: " << _interFlow.size() <<endl;
-  if(ctOpt.status) cout<<"  - Creating ICFG"<<endl;
+  if(ctOpt.status) cout<<"    inter-procedural edges: " << _interFlow.size() <<endl;
   _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
   if(ctOpt.status) cout<<"  - ICFG total size: " << _fwFlow.size() << " edges"<<endl;
+  tc.stopTimer(TimingCollector::icfgConstruction);
+
+  tc.startTimer();
   if(ctOpt.status) cout<<"Phase: generating reverse ICFG"<<endl;
   _bwFlow = _fwFlow.reverseFlow();
+  tc.stopTimer(TimingCollector::reverseIcfgConstruction);
+
   if(ctOpt.status) cout<<"STATUS: Abstraction layer established."<<endl;
+
 }
 
 CodeThorn::InterFlow* CodeThorn::ProgramAbstractionLayer::getInterFlow() {

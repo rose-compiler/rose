@@ -23,10 +23,10 @@ void ReadWriteAnalyzer::initDiagnostics() {
   }
 }
 
-void ReadWriteAnalyzer::initializeSolver2(std::string functionToStartAt,SgProject* root) {
+void ReadWriteAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
 
   ROSE_ASSERT(false);
-  IOAnalyzer::initializeSolver2(functionToStartAt,root);
+  IOAnalyzer::initializeSolver3(functionToStartAt,root,tc);
   /////////////////////////////////////////////////////////////////////
 
 #if 0

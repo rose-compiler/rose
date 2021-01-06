@@ -661,18 +661,16 @@ void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analy
 }
 
 void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc) {
-  TimeMeasurement& timer=tc.timer;
+  tc.startTimer();
   bool withCe=ltlOpt.withCounterExamples || ltlOpt.withAssertCounterExamples;
   if(withCe) {
     SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
-    timer.start();
     analyzer->extractRersIOAssertionTraces();
-    tc.extractAssertionTracesTime = timer.getTimeDurationAndStop().milliSeconds();
   }
+  tc.stopTimer(TimingCollector::extractAssertionTraces);
   
-  tc.determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
+  //tc.determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
   //int inputSeqLengthCovered = -1;
-  tc.totalInputTracesTime = tc.extractAssertionTracesTime + tc.determinePrefixDepthTime;
 
   if(ctOpt.status) {
     analyzer->printStatusMessageLine("==============================================================");
@@ -724,16 +722,16 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
 
   void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc) {
   tc.startTimer();
-  SAWYER_MESG(logger[INFO])<< "Iinitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
+  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
   string startFunctionName;
   if(ctOpt.startFunctionName.size()>0) {
     startFunctionName = ctOpt.startFunctionName;
   } else {
     startFunctionName = "main";
   }
-  analyzer->initializeSolver2(startFunctionName,root);
+  tc.stopTimer(TimingCollector::init);
+  analyzer->initializeSolver3(startFunctionName,root,tc);
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
-  tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 
 void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
@@ -754,17 +752,12 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
       exit(0);
     }
   }
-  tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
+  tc.stopTimer(TimingCollector::transitionSystemAnalysis);
 }
-
-  SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]) {
-    TimingCollector timingCollector;
-    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,timingCollector);
-    return project;
-  }
 
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
     CodeThorn::Normalization normalization;
+    normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     normalization.setInliningOption(ctOpt.inlineFunctions);
     int normalizationLevel=0;
     if(ctOpt.normalizeFCalls)

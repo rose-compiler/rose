@@ -1264,12 +1264,17 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             } else {
               ROSE_ASSERT(res.size()==1);
               SingleEvalResultConstInt evalResult=*res.begin();
-              SAWYER_MESG(logger[TRACE])<<"rhs eval result: "<<evalResult.result.toString()<<endl;
+              cout<<"DEBUG: P0"<<endl;
+              SAWYER_MESG(logger[TRACE])<<"rhs eval result 2: "<<evalResult.result.toString()<<endl;
+              cout<<"DEBUG: P1"<<endl;
               
               EState estate=evalResult.estate;
               PState newPState=*estate.pstate();
+              cout<<"DEBUG: P2"<<endl;
               AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
+              cout<<"DEBUG: P3"<<endl;
               getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
+              cout<<"DEBUG: P4"<<endl;
               ConstraintSet cset=*estate.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }
@@ -1396,7 +1401,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           }
           ROSE_ASSERT(res.size()==1);
           SingleEvalResultConstInt evalResult=*res.begin();
-          SAWYER_MESG(logger[TRACE])<<"rhs eval result: "<<evalResult.result.toString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"rhs eval result 1: "<<evalResult.result.toString()<<endl;
 
           EState estate=evalResult.estate;
           PState newPState=*estate.pstate();
@@ -1881,8 +1886,8 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   // TODO
 }
 
-void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgProject* root) {
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver2 started."<<endl;
+void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
+  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
 
@@ -1892,19 +1897,16 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     programAbstractionLayer->setNormalizationLevel(1);
   if(_ctOpt.normalizeAll)
     programAbstractionLayer->setNormalizationLevel(2);
-  programAbstractionLayer->initialize(_ctOpt,root);
+  programAbstractionLayer->initialize(_ctOpt,root,tc);
   initialize(_ctOpt,root,programAbstractionLayer);
   _programAbstractionLayer=programAbstractionLayer;
   _programAbstractionLayerOwner=true;
 
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3a."<<endl;
   resetInputSequenceIterator();
   RoseAst completeast(root);
 
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3b."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3c."<<endl;
 
   // START_INIT 2
   if(_ctOpt.getInterProceduralFlag()) {
@@ -1920,8 +1922,7 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     // temporary to remain compatible
     _startFunRoot=completeast.findFunctionByName(functionToStartAt);
   }
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3e."<<endl;
-    
+   
   SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
@@ -1931,12 +1932,8 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
 
   CallString::setMaxLength(_ctOpt.callStringLength);
 
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3f."<<endl;
   initializeSolver();
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3g."<<endl;
-
   initializeTransferFunctions();
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h."<<endl;
   
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
@@ -1961,7 +1958,6 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     getCFAnalyzer()->forkJoinConsistencyChecks(*getFlow());
   }
 
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3j."<<endl;
   if(_ctOpt.reduceCfg) {
     int cnt=getCFAnalyzer()->optimizeFlow(*getFlow());
     SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
@@ -1987,7 +1983,6 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     }
   }
 
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3k."<<endl;
   // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
@@ -2016,13 +2011,11 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #endif
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h2."<<endl;
 
     // START_INIT 6
     SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h3_i."<<endl;
       VariableId globalVarId=getVariableIdMapping()->variableId(*i);
       if(!globalVarId.isValid()) {
         cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
@@ -2043,7 +2036,6 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
         filteredVars++;
       }
     }
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h4."<<endl;
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
     if(_variablesToIgnore.size()>0)
       SAWYER_MESG(logger[TRACE])<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
@@ -2052,7 +2044,6 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
   }
 
   //initializeGlobalVariables(root);
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3l."<<endl;
   setWorkLists(_explorationMode);
   
   estate.io.recordNone(); // ensure that extremal value is different to bot
