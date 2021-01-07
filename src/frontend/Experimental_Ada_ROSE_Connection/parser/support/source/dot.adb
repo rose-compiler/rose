@@ -536,8 +536,9 @@ package body Dot is
         (This : access Class;
          File : in     ATI.File_Type) is
       package AD renames Ada.Directories;
-      Full_File_Name   : constant String := AD.Full_Name (To_String(This.ID));
-      Simple_File_Name : aliased String := '"' & AD.Simple_Name (Full_File_Name);
+         Full_File_Name   : constant String := AD.Full_Name (To_String(This.ID));
+         -- Result has double quotes:
+         Simple_File_Name : aliased String := AD.Simple_Name (Full_File_Name);
       begin
          if This.Strict then
             Indented.Put (File, "strict ");

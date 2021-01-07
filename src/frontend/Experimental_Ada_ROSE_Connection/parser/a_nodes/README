@@ -1,0 +1,4 @@
+This directory contains a_nodes related files used by both the ASIS and the 
+libadalang (LAL) parser adapters.  These files are referred to directly by the 
+lal_adapter and asis_adapter projects, and have no project of their own.
+

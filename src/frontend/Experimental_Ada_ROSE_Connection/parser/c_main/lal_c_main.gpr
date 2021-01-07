@@ -1,0 +1,23 @@
+with "../lal_adapter/lal_adapter";
+
+project LAL_C_Main is
+
+   for Source_Dirs use
+     ("./source");
+
+   for Source_Files use
+     ("run_lal_adapter.c");
+
+   for Object_Dir use "./obj";
+
+   for Languages use ("C");
+
+   for Main use
+     ("run_lal_adapter.c");
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+end LAL_C_Main;
+
