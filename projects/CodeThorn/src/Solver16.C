@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Solver5.h"
+#include "Solver16.h"
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 
@@ -9,25 +9,61 @@ using namespace Sawyer::Message;
 
 #include "CTAnalysis.h"
 
-Sawyer::Message::Facility Solver5::logger;
+Sawyer::Message::Facility Solver16::logger;
 // initialize static member flag
-bool Solver5::_diagnosticsInitialized = false;
+bool Solver16::_diagnosticsInitialized = false;
 
-Solver5::Solver5() {
+Solver16::Solver16() {
   initDiagnostics();
 }
 
-int Solver5::getId() {
-  return 5;
+int Solver16::getId() {
+  return 16;
 }
     
+void Solver16::recordTransition(const EState* currentEStatePtr0,const EState* currentEStatePtr,Edge e, const EState* newEStatePtr) {
+  _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+  if(currentEStatePtr0!=currentEStatePtr) {
+    // also add transition edge for the state from
+    // worklist if it is different to the summary state
+    // (to which an edge must exist in the STS)
+    Edge e0(currentEStatePtr0->label(),e.getTypes(),newEStatePtr->label());
+    e0.setAnnotation(e.getAnnotation());
+    _analyzer->recordTransition(currentEStatePtr0,e0,newEStatePtr);
+  }
+}
+
+void Solver16::initializeSummaryStatesFromWorkList() {
+  // pop all states from worklist (can contain more than one state)
+  list<const EState*> tmpWL;
+  while(!_analyzer->isEmptyWorkList()) {
+    tmpWL.push_back(_analyzer->popWorkList());
+  }
+  for(auto s : tmpWL) {
+    // initialize summarystate and push back to work list
+    _analyzer->setSummaryState(s->label(),s->callString,s);
+    _analyzer->addToWorkList(s);
+  }
+}
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-void Solver5::run() {
+void Solver16::run() {
   logger[INFO]<<"Running solver "<<getId()<<endl;
-  //_analyzer->_analysisTimer.start(); // is started in runSolver now
+  if(_analyzer->_ctOpt.abstractionMode==0) {
+    cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
+    exit(1);
+  }
+  if(_analyzer->_ctOpt.explorationMode!="topologic-sort") {
+    cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->_ctOpt.explorationMode<<endl;
+    exit(1);
+  }
+
+  initializeSummaryStatesFromWorkList();
+
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
@@ -51,7 +87,7 @@ void Solver5::run() {
     ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
-  SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver "<<getId()<<" with "<<workers<<" threads."<<endl;
   _analyzer->printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)
   {
@@ -88,7 +124,16 @@ void Solver5::run() {
             workVector[threadNum]=true;
         }
       }
-      const EState* currentEStatePtr=_analyzer->popWorkList();
+      // currentEStatePtr0 is not merged, because it must already be present in a summary state. Here only the (label,callstring) is used to obtain the summary state.
+      // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
+      // note: initial summary states are set in initializeSummaryStatesFromWorkList()
+      const EState* currentEStatePtr0=_analyzer->popWorkList();
+      // difference to Solver5: always obtain abstract state
+      const EState* currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+      if(currentEStatePtr0!=currentEStatePtr) {
+        //cout<<"DEBUG: deleting obsolete state "<<currentEStatePtr0<<endl;
+        //delete currentEStatePtr0; // can be deleted because it is no longer used, instead the summary state is used
+      }
       // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
@@ -133,11 +178,6 @@ void Solver5::run() {
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
-                case 0:
-                  // no abstraction
-                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
-                  _analyzer->addToWorkList(newEStatePtr);
-                  break;
                 case 1:
                   {
                   // performing merge
@@ -197,13 +237,13 @@ void Solver5::run() {
               } else {
                 //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
               }
-              _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+              recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=_analyzer->processNewOrExisting(newEState);
-              _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
+              recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
 
               if(_analyzer->isVerificationErrorEState(&newEState)) {
 #pragma omp critical
@@ -211,7 +251,7 @@ void Solver5::run() {
                   SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
-		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+                  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
                   terminateEarly=true;
                 }
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
@@ -260,7 +300,7 @@ void Solver5::run() {
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }
 
-void Solver5::initDiagnostics() {
+void Solver16::initDiagnostics() {
   if (!_diagnosticsInitialized) {
     _diagnosticsInitialized = true;
     Solver::initDiagnostics(logger, getId());

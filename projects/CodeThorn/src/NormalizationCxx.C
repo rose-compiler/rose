@@ -1301,7 +1301,7 @@ namespace
       }
     }
     
-    return std::move(res);
+    return res;
   }
   
   auto getMemberVars = memoizer(extractNonStaticMemberVars);
@@ -1319,7 +1319,7 @@ namespace
                            res.push_back(cand);
                        }
                                                    
-                       return std::move(res);
+                       return res;
                      } 
                    );
                    
@@ -1336,7 +1336,7 @@ namespace
                            res.push_back(cand);
                        }
                                                    
-                       return std::move(res);
+                       return res;
                      }
                    );
   
@@ -1670,7 +1670,7 @@ namespace
   
     sg::dispatch(CxxTransformer(transformations, nodes), root); 
   
-    return std::move(transformations);
+    return transformations;
   }      
 } // anonymous namespace
 

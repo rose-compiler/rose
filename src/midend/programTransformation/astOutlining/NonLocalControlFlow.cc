@@ -20,7 +20,10 @@
 #include "PreprocessingInfo.hh"
 #include "Copy.hh"
 #include "StmtRewrite.hh"
+#include "RoseAst.h"
 
+using namespace SageBuilder;
+using namespace SageInterface;
 // =====================================================================
 
 using namespace std;
@@ -223,6 +226,130 @@ convertJumpsToGotos (SgVariableSymbol* jump_var,
       jump_par->replace_statement (jump_stmt, new_block);
     }
 }
+/*
+Transformation to replace a local variable used by return with a variable with higher scope.
+
+Return the number of return statements being processed. 
+
+The assumption is that the type is assignable and copy-constructible. 
+TODO: what if it is not?  We should not outline code blocks with such return statements.
+
+// original code: return with a local variable
+
+bool foobar()
+   {
+     int* abvar;
+#pragma rose_outline
+     if (abvar != 0L)
+        {
+          bool rose_result = false;
+          return rose_result;
+        }  
+   }
+
+// normalize the return statement
+// introduce a higher scoped variable, copy value to it. 
+
+bool foobar()
+   {
+     int* abvar;
+     bool _temp_rose_result; 
+#pragma rose_outline
+     if (abvar != 0L)
+        {
+          bool rose_result = false;         
+          _temp_rose_result = rose_result; 
+           return _temp_rose_result;       
+         }    
+   }
+
+ * */
+
+class NormalizeReturn
+{
+  public: 
+    NormalizeReturn(SgScopeStatement * scope): _scope(scope)
+    {
+    
+    }
+
+    // return the number of return statements normalized.
+    int process()
+    {
+      int count=0;
+      ROSE_ASSERT (_scope);
+      vector <SgReturnStmt*> stmts; 
+      collectReturnStmts(_scope, stmts);
+
+      for (size_t i=0; i<stmts.size(); i++)
+        if (normalizeReturnStatement( stmts[i], _scope )) count++;
+
+      return count;
+    }
+
+  private: 
+    SgScopeStatement* _scope; 
+
+    bool normalizeReturnStatement(SgReturnStmt * stmt, SgScopeStatement* scope)
+    {
+      static int temp_count=0; 
+      temp_count++;
+
+      bool needNormalization=false;
+
+      // iterate all nodes within RHS expression, find scopes lower than the reference scope
+      RoseAst ast (stmt->get_expression());
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        if (SgVarRefExp* var_ref = isSgVarRefExp(*i))
+        {
+          SgInitializedName * i_name= var_ref->get_symbol()->get_declaration();
+          SgScopeStatement* iname_scope= i_name->get_scope();
+          // if equal, we don't need to introduce the normalization, scope here mostly is the BB to be outlined. 
+          // and preprocessed to support non-local jumps.
+          if (isAncestor (scope, iname_scope)) // strict ancestor, equal scopes are not considered strict ancestor-descendant relation
+            needNormalization = true; 
+        }
+
+      } // end for
+
+      if (needNormalization)
+      { 
+        // introduce a new variable declaration   TYPE _temp_orig_var_1 ;
+        string temp_name= "__rt_temp_"+ Rose::StringUtility::numberToString(temp_count);
+        SgVariableDeclaration* temp_decl =  buildVariableDeclaration( SgName(temp_name), stmt->get_expression()->get_type(), NULL, scope);
+        prependStatement (temp_decl, scope);
+
+        //
+        // for the return statement, we change it two be two statements:
+        // __temp_orig_var_1 = orig_var_1 ;
+        //  return __temp_orig_var_1;
+        SgExprStatement* assign_stmt= buildAssignStatement (buildVarRefExp(temp_decl), deepCopy(stmt->get_expression()) );
+        insertStatementBefore (stmt, assign_stmt);
+
+        replaceExpression (stmt->get_expression(), buildVarRefExp(temp_decl) );
+      }
+
+      return needNormalization;
+    }
+
+    // reverse order of pre-order to collect all return statements within n
+    void collectReturnStmts(SgNode* n, vector <SgReturnStmt*> & res)
+    {
+      if (!n) return;
+
+      // reverse-pre-order traversal to find all return statements
+      std::vector<SgNode* > children = n->get_traversalSuccessorContainer();
+      for (int i =children.size()-1; i>=0; i--)
+        collectReturnStmts (children[i], res);
+
+      if (SgReturnStmt* stmt = isSgReturnStmt (n))
+        res.push_back(stmt);
+    }
+
+
+}; 
+
+
 
 // =====================================================================
 
@@ -244,6 +371,11 @@ Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
   SgBasicBlock* b_gotos = ASTtools::transformToBlockShell (b_orig);
   ROSE_ASSERT (b_gotos);
   ASTtools::moveUpPreprocInfo (b_gotos, b_orig);
+
+
+  // Normalize return x; to use visible x instead of locally declared x
+  NormalizeReturn nr (b_orig); 
+  nr.process();
 
   // Create a declaration for 'EXIT_TAKEN__'
   SgName var_exit_name ("EXIT_TAKEN__");

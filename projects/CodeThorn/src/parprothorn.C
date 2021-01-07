@@ -1217,8 +1217,8 @@ int main( int argc, char * argv[] ) {
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(ctOpt.visualization.viz) {
-        cout << "generating graphviz files:"<<endl;
+      if(ctOpt.visualization.vis) {
+        cout << "generating graphvis files:"<<endl;
         visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
@@ -1236,21 +1236,21 @@ int main( int argc, char * argv[] ) {
         //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
         analyzer->generateAstNodeInfo(sageProject);
         cout << "generating AST node info ... "<<endl;
         dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
         write_file("ast.dot", dotFile);
         cout << "generated ast.dot."<<endl;
 
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
         write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(ctOpt.visualization.vizTg2) {
+      if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;

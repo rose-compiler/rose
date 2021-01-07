@@ -11,7 +11,7 @@ for mybench in "stencils/jacobi-2d-imper"; do
         
   variant=""
   fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
-  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  ./codethorn --vis=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
   outputname="${mybenchpath}_${variant}${shortbenchname}"
   echo "Generating ${outputname}.pdf"
   cp transitiongraph2.dot ${outputname}.dot
@@ -19,7 +19,7 @@ for mybench in "stencils/jacobi-2d-imper"; do
 
   variant="1st_tile_"
   fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
-  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  ./codethorn --vis=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
   outputname="${mybenchpath}_${variant}${shortbenchname}"
   echo "Generating ${outputname}.pdf"
   cp transitiongraph2.dot ${outputname}.dot
@@ -27,7 +27,7 @@ for mybench in "stencils/jacobi-2d-imper"; do
 
   variant="2nd_tile_"
   fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
-  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  ./codethorn --vis=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
   outputname="${mybenchpath}_${variant}${shortbenchname}"
   echo "Generating ${outputname}.pdf"
   cp transitiongraph2.dot ${outputname}.dot
@@ -35,7 +35,7 @@ for mybench in "stencils/jacobi-2d-imper"; do
 
   variant="nest_tile_"
   fullfilename="${FULLPATHNAME}/${variant}${shortbenchname}.c"
-  ./codethorn --viz=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
+  ./codethorn --vis=yes -DARRAYSIZE=16 -DSTEPSIZE=2 -I$FULLPATHNAME $fullfilename #>& /dev/null
   outputname="${mybenchpath}_${variant}${shortbenchname}"
   echo "Generating ${outputname}.pdf"
   cp transitiongraph2.dot ${outputname}.dot

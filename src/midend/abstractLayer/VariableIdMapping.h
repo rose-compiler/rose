@@ -34,13 +34,16 @@ namespace CodeThorn {
     virtual ~VariableIdMapping();
     typedef std::set<VariableId> VariableIdSet;
 
-    /*
-      create the mapping between symbols in the AST and associated
-      variable-ids. Each variable in the project is assigned one
-      variable-id (including global variables, local variables,
-      class/struct/union data members)
+    /**
+     * create the mapping between symbols in the AST and associated
+     * variable-ids. Each variable in the project is assigned one
+     * variable-id (including global variables, local variables,
+     * class/struct/union data members)
+     * 
+     * param[in] project: The Rose AST we're going to act on
+     * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
-    virtual void computeVariableSymbolMapping(SgProject* project);
+    virtual void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3);
     
     /* create a new unique variable symbol (should be used together with
        deleteUniqueVariableSymbol) this is useful if additional

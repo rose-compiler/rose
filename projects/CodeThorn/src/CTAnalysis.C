@@ -429,7 +429,7 @@ const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString
 }
 
 void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored,
-                                                  const CodeThorn::ConstraintSet* emptycsetstored) {
+                                                    const CodeThorn::ConstraintSet* emptycsetstored) {
   _initialPStateStored=initialPStateStored;
   _emptycsetstored=emptycsetstored;
 #if 0
@@ -1046,6 +1046,21 @@ const EState* CodeThorn::CTAnalysis::popWorkList() {
   return estate;
 }
 
+std::pair<CallString,const EState*> CodeThorn::CTAnalysis::popWorkListCS() {
+  const EState* eState=popWorkList();
+  return std::make_pair(eState->getCallString(),eState);
+}
+
+std::pair<CallString,const EState*> CodeThorn::CTAnalysis::topWorkListCS() {
+  const EState* eState=topWorkList();
+  return std::make_pair(eState->getCallString(),eState);
+}
+
+void CodeThorn::CTAnalysis::pushWorkListCS(CallString cs,const EState* eState) {
+  //eState->setCallString(cs); (eState is const and contains cs)
+  addToWorkList(eState);
+}
+  
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::CTAnalysis::swapWorkLists() {
@@ -1867,7 +1882,7 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
 }
 
 void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgProject* root) {
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
+  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver2 started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
 
@@ -2045,7 +2060,7 @@ void CodeThorn::CTAnalysis::initializeSolver2(std::string functionToStartAt, SgP
     const EState* initialEState=processNew(estate); // START_INIT 6
     ROSE_ASSERT(initialEState);
     variableValueMonitor.init(initialEState);
-    addToWorkList(initialEState); // START_INIT 7: ADD TO WORKLIST HERE!!!
+    addToWorkList(initialEState);
     SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
   } else {
     LabelSet startLabels=getFlow()->getStartLabelSet();
