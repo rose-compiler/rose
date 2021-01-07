@@ -8,8 +8,10 @@ private with Ada.Exceptions;
 private with Ada.Text_IO;
 private with Ada.Wide_Text_IO;
 private with Asis;
+private with Asis.Set_Get;
 private with Interfaces.C.Extensions;
 private with Interfaces.C.Strings;
+private with Unchecked_Conversion;
 
 -- GNAT-specific:
 private with A4G.A_Types;
@@ -137,5 +139,108 @@ private
       To        : in     IC.int;
       To_Kind   : in     ID_Kind;
       Label     : in     String);
+
+   -- Order below is alphabetical:
+   function To_Access_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Access_Type_Kinds,
+      Target => a_nodes_h.Access_Type_Kinds);
+
+   function To_Association_Kinds is new Unchecked_Conversion
+     (Source => Asis.Association_Kinds,
+      Target => a_nodes_h.Association_Kinds);
+
+   function To_Attribute_Kinds is new Unchecked_Conversion
+     (Source => Asis.Attribute_Kinds,
+      Target => a_nodes_h.Attribute_Kinds);
+
+   function To_Clause_Kinds is new Unchecked_Conversion
+     (Source => Asis.Clause_Kinds,
+      Target => a_nodes_h.Clause_Kinds);
+
+   function To_Representation_Clause_Kinds is new Unchecked_Conversion
+     (Source => Asis.Representation_Clause_Kinds,
+      Target => a_nodes_h.Representation_Clause_Kinds);
+
+   function To_Constraint_Kinds is new Unchecked_Conversion
+     (Source => Asis.Constraint_Kinds,
+      Target => a_nodes_h.Constraint_Kinds);
+
+   function To_Declaration_Kinds is new Unchecked_Conversion
+     (Source => Asis.Declaration_Kinds,
+      Target => a_nodes_h.Declaration_Kinds);
+
+   function To_Declaration_Origins is new Unchecked_Conversion
+     (Source => Asis.Declaration_Origins,
+      Target => a_nodes_h.Declaration_Origins);
+
+   function To_Defining_Name_Kinds is new Unchecked_Conversion
+     (Source => Asis.Defining_Name_Kinds,
+      Target => a_nodes_h.Defining_Name_Kinds);
+
+   function To_Definition_Kinds is new Unchecked_Conversion
+     (Source => Asis.Definition_Kinds,
+      Target => a_nodes_h.Definition_Kinds);
+
+   function To_Discrete_Range_Kinds is new Unchecked_Conversion
+     (Source => Asis.Discrete_Range_Kinds,
+      Target => a_nodes_h.Discrete_Range_Kinds);
+
+   function To_Element_Kinds is new Unchecked_Conversion
+     (Source => Asis.Element_Kinds,
+      Target => a_nodes_h.Element_Kinds);
+
+   function To_Expression_Kinds is new Unchecked_Conversion
+     (Source => Asis.Expression_Kinds,
+      Target => a_nodes_h.Expression_Kinds);
+
+   function To_Formal_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Formal_Type_Kinds,
+      Target => a_nodes_h.Formal_Type_Kinds);
+
+   function To_Mode_Kinds is new Unchecked_Conversion
+     (Source => Asis.Mode_Kinds,
+      Target => a_nodes_h.Mode_Kinds);
+
+   function To_Operator_Kinds is new Unchecked_Conversion
+     (Source => Asis.Operator_Kinds,
+      Target => a_nodes_h.Operator_Kinds);
+
+   function To_Path_Kinds is new Unchecked_Conversion
+     (Source => Asis.Path_Kinds,
+      Target => a_nodes_h.Path_Kinds);
+
+   function To_Pragma_Kinds is new Unchecked_Conversion
+     (Source => Asis.Pragma_Kinds,
+      Target => a_nodes_h.Pragma_Kinds);
+
+   function To_Root_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Root_Type_Kinds,
+      Target => a_nodes_h.Root_Type_Kinds);
+
+   function To_Statement_Kinds is new Unchecked_Conversion
+     (Source => Asis.Statement_Kinds,
+      Target => a_nodes_h.Statement_Kinds);
+
+   function To_Subprogram_Default_Kinds is new Unchecked_Conversion
+     (Source => Asis.Subprogram_Default_Kinds,
+      Target => a_nodes_h.Subprogram_Default_Kinds);
+
+   function To_Type_Kinds is new Unchecked_Conversion
+     (Source => Asis.Type_Kinds,
+      Target => a_nodes_h.Type_Kinds);
+
+   function To_Unit_Classes is new Unchecked_Conversion
+     (Source => Asis.Unit_Classes,
+      Target => a_nodes_h.Unit_Classes);
+
+   function To_Unit_Kinds is new Unchecked_Conversion
+     (Source => Asis.Unit_Kinds,
+      Target => a_nodes_h.Unit_Kinds);
+
+   function To_Unit_Origins is new Unchecked_Conversion
+     (Source => Asis.Unit_Origins,
+      Target => a_nodes_h.Unit_Origins);
+
+   -- End alphabetical order
 
 end Asis_Adapter;
