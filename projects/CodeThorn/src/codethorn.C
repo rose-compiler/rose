@@ -184,7 +184,23 @@ int main( int argc, char * argv[] ) {
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
 
+    ProgramInfo originalProgramInfo(sageProject);
+    originalProgramInfo.compute();
+    
+    if(ctOpt.programStatsOnly) {
+      originalProgramInfo.printDetailed();
+      exit(0);
+    }
+
     initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
+
+    if(ctOpt.programStats) {
+      analyzer->printStatusMessageLine("==============================================================");
+      ProgramInfo normalizedProgramInfo(sageProject);
+      normalizedProgramInfo.compute();
+      originalProgramInfo.printCompared(&normalizedProgramInfo);
+    }
+
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(sageProject,analyzer);

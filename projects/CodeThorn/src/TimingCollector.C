@@ -31,18 +31,18 @@ namespace CodeThorn {
   
   string TimingCollector::toString() {
     stringstream ss;
-    ss<<"Front end                     : "<<runtime(t[frontEnd])<<endl;
-    ss<<"Normalization                 : "<<runtime(t[normalization])<<endl;
-    ss<<"VariableIdMapping             : "<<runtime(t[variableIdMapping])<<endl;
-    ss<<"FunctionCallMapping           : "<<runtime(t[functionCallMapping])<<endl;
-    ss<<"Class hierarchy analysis      : "<<runtime(t[classHierarchyAnalysis])<<endl;
-    ss<<"ICFG construction             : "<<runtime(t[icfgConstruction])<<endl;
-    ss<<"RevICFG construction          : "<<runtime(t[reverseIcfgConstruction])<<endl;
-    ss<<"Transition system analysis    : "<<runtime(t[transitionSystemAnalysis])<<endl;
-    ss<<"Report generation time        : "<<runtime(t[reportGeneration])<<endl;
-    ss<<"Call Graph DOT file    n      : "<<runtime(t[callGraphDotFile])<<endl;
-    ss<<"Visualization generation      : "<<runtime(t[visualization])<<endl;
-    ss<<"Total time                    : "<<runtime(getTotalRunTime())<<endl;
+    ss<<"Front end                      : "<<runtime(t[frontEnd])<<endl;
+    ss<<"Normalization                  : "<<runtime(t[normalization])<<endl;
+    ss<<"VariableIdMapping              : "<<runtime(t[variableIdMapping])<<endl;
+    ss<<"FunctionCallMapping            : "<<runtime(t[functionCallMapping])<<endl;
+    ss<<"Class hierarchy analysis       : "<<runtime(t[classHierarchyAnalysis])<<endl;
+    ss<<"ICFG construction              : "<<runtime(t[icfgConstruction])<<endl;
+    ss<<"RevICFG construction           : "<<runtime(t[reverseIcfgConstruction])<<endl;
+    ss<<"Transition system analysis     : "<<runtime(t[transitionSystemAnalysis])<<endl;
+    ss<<"Report generation time         : "<<runtime(t[reportGeneration])<<endl;
+    ss<<"Call Graph DOT file    n       : "<<runtime(t[callGraphDotFile])<<endl;
+    ss<<"Visualization generation       : "<<runtime(t[visualization])<<endl;
+    ss<<"Total time                     : "<<runtime(getTotalRunTime())<<endl;
     return ss.str();
   }
 

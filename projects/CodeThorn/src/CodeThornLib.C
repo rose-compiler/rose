@@ -422,12 +422,6 @@ void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject*
     if(unknownFunctionsFile) {
       programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
     }
-    if(showProgramStats||showProgramStatsOnly) {
-      programInfo.printDetailed();
-    }
-    if(showProgramStatsOnly) {
-      exit(0);
-    }
   }
 }
 
@@ -578,7 +572,7 @@ SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, Tim
     argvList.push_back("-rose:ast:merge");
   }
   SgProject* project=frontend(argvList);
-  timingCollector.stopFrontEndTimer();
+  timingCollector.stopTimer(TimingCollector::frontEnd);
   return project;
 }
 
@@ -620,7 +614,7 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
     //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
     normalization.normalizeAst(sageProject,2);
   }
-  timingCollector.stopNormalizationTimer();
+  timingCollector.stopTimer(TimingCollector::normalization);
   CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
 }
 

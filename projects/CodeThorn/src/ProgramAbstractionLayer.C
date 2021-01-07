@@ -73,13 +73,13 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
   tc.stopTimer(TimingCollector::functionCallMapping);
   
   tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: CFG construction"<<endl;
+  if(ctOpt.status) cout<<"Phase: ICFG construction"<<endl;
   _fwFlow = _cfanalyzer->flow(root);
   if(ctOpt.status) cout<<"    intra-procedural edges: " << _fwFlow.size()<<endl;
   _interFlow=_cfanalyzer->interFlow(_fwFlow);
   if(ctOpt.status) cout<<"    inter-procedural edges: " << _interFlow.size() <<endl;
   _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
-  if(ctOpt.status) cout<<"  - ICFG total size: " << _fwFlow.size() << " edges"<<endl;
+  if(ctOpt.status) cout<<"    ICFG total size       : " << _fwFlow.size() << " edges"<<endl;
   tc.stopTimer(TimingCollector::icfgConstruction);
 
   tc.startTimer();
