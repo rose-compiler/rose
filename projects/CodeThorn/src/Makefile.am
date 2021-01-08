@@ -182,6 +182,7 @@ CODETHORN_HEADER_FILES=\
   Specialization.h \
   SvcompWitness.h \
   TimeMeasurement.h \
+  TimingCollector.h \
   TopologicalSort.h \
   TransitionGraph.h \
   TransitionGraphReducer.h \
@@ -310,6 +311,7 @@ CODETHORN_SOURCE_FILES=\
   Specialization.C \
   SvcompWitness.C \
   TimeMeasurement.C \
+  TimingCollector.C \
   TopologicalSort.C \
   TransitionGraph.C \
   TransitionGraphReducer.C \

@@ -68,8 +68,10 @@ namespace CodeThorn {
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                  AbstractValue abstractValue);  
+    // strong update overwrites (destructive), if false then it is a weak update and combines with existing values
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
-                               AbstractValue abstractValue);
+                               AbstractValue abstractValue,
+                               bool strongUpdate=true);
     size_t stateSize() const;
     PState::iterator begin();
     PState::iterator end();

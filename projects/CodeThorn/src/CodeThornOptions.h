@@ -99,7 +99,9 @@ struct CodeThornOptions : public CodeThorn::Options {
   int precisionLevel=1;
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
   std::string csvReportModeString="generate";
-  std::string forkFunction1="!undefined:forkFunction1!";
+
+  bool forkFunctionEnabled=false;
+  std::string forkFunctionName="";
   
   // RERS C-subset program options
   struct Rers {
