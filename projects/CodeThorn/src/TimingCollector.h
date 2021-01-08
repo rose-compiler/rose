@@ -31,7 +31,7 @@ namespace CodeThorn {
     std::string runtime(TimeDuration t);
   private:
     TimeMeasurement timer;
-    TimeDuration t[TimeDurationName::NUM+1]; // TimeDuration objects are default initialized with 0
+    TimeDuration t[TimeDurationName::NUM]; // TimeDuration objects are default initialized with 0
   };
 
 }

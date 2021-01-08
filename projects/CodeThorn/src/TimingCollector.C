@@ -19,7 +19,7 @@ namespace CodeThorn {
 
   TimeDuration  TimingCollector::getTotalRunTime() {
     TimeDuration sum;
-    for(int i=0;i<TimingCollector::TimeDurationName::NUM+1;i++) {
+    for(int i=0;i<TimingCollector::TimeDurationName::NUM;i++) {
       sum+=t[i];
     }
     return sum;
