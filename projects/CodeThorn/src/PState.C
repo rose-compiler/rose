@@ -381,17 +381,25 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
 }
 
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
-                                   AbstractValue abstractValue) {
+                                   AbstractValue abstractValue,
+                                   bool strongUpdate) {
   if(abstractValue.isBot()) {
     // writing bot to memory (bot->top conversion)
     abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
-  }
-  if(abstractMemLoc.isTop()) {
+  } else if(abstractMemLoc.isTop()) {
     combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    return;
+  } else if(abstractMemLoc.isPtrSet()) {
+    // call recursively for all values in the set
+    //cout<<"DEBUG: ptr set recursion."<<endl;
+    AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
+    for (auto av : avSet) {
+      writeToMemoryLocation(av,abstractValue,false);
+    }
     return;
   } else {
     if(AbstractValue::byteMode) {
-      // POINTERTODO
+      ROSE_ASSERT(!abstractMemLoc.isPtrSet());
       VariableId varId=abstractMemLoc.getVariableId();
       long int offset=abstractMemLoc.getIndexIntValue();
       ROSE_ASSERT(AbstractValue::_variableIdMapping);

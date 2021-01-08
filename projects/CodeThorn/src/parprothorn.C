@@ -45,6 +45,7 @@
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
+#include "TimingCollector.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -681,8 +682,9 @@ int main( int argc, char * argv[] ) {
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
+    TimingCollector tc; // new feature, other timers can be removed
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver2(option_specialize_fun_name,sageProject);
+      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,tc);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -708,7 +710,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver2(startFunction,sageProject);
+      analyzer->initializeSolver3(startFunction,sageProject,tc);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 

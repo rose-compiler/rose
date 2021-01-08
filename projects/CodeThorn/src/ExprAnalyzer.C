@@ -994,9 +994,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
             return listify(res);
           }
           if(_variableIdMapping->isAggregateWithInitializerList(arrayVarId)) {
-            cout<<"DEBUG: WE ARE HERE!!!!!!"<<endl;
             SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
-            cout<<"DEBUG: WE ARE HERE 22222 !!!!!!"<<endl;
             int elemIndex=0;
             // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
             for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
@@ -2160,18 +2158,22 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
 
 void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
   // inspect everything here
-  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation:"<<memLoc.toString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1:started"<<endl;
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1:"<<memLoc.toString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1:cont"<<endl;
   if(memLoc.isTop()) {
     SAWYER_MESG(logger[WARN])<<"writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     recordPotentialOutOfBoundsAccessLocation(lab);
   } else if(!pstate->memLocExists(memLoc)) {
+    SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1: memloc does not exist"<<endl;
     if(!newValue.isUndefined()) {
       recordPotentialOutOfBoundsAccessLocation(lab);
       SAWYER_MESG(logger[WARN])<<"writing defined value to memloc not in state: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
     }
   }
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1: before write"<<endl;
   pstate->writeToMemoryLocation(memLoc,newValue);
-  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation:done"<<endl;
+  SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1:done"<<endl;
 }
 
 AbstractValue ExprAnalyzer::readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
@@ -2185,8 +2187,11 @@ void ExprAnalyzer::writeToReferenceMemoryLocation(Label lab, PState* pstate, Abs
 }
 
 void ExprAnalyzer::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+  SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:start"<<endl;
   reserveMemoryLocation(lab,pstate,memLoc);
+  SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:p0"<<endl;
   writeToMemoryLocation(lab,pstate,memLoc,newValue);
+  SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:end"<<endl;
  }
 
 void ExprAnalyzer::reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
