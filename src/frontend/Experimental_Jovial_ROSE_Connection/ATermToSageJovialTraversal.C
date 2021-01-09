@@ -7891,6 +7891,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    SgExpression* argument;
    std::string function_name;
    std::string var_name;
+   SgExpression* param  = nullptr;
 
    func_call = nullptr;
 
@@ -7916,9 +7917,22 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    }
    else return ATfalse;
 
-// build the parameter list
-   SgExpression*  param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+// Build the parameter list and then the variable reference or type expression
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+
+// The variable may be a status type
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+   if (symbol) {
+      SgEnumType* type = isSgEnumType(symbol->get_type());
+      if (type) {
+         param = SageBuilder::buildTypeExpression(type);
+      }
+   }
+   if (!param) {
+      // Parameter is not a type expression so it must be a variable
+      param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+   }
+   ROSE_ASSERT(param);
    params->append_expression(param);
 
    SgType* return_type = SageBuilder::buildIntType();
