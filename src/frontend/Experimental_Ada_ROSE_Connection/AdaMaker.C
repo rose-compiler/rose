@@ -185,6 +185,11 @@ SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
   return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
 }
 
+SgFunctionType& mkAdaFunctionRenamingDeclType(SgType& retty, SgFunctionParameterList& lst)
+{
+  return SG_DEREF(sb::buildFunctionType(&retty, &lst));
+}
+
 SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variableLength)
 {
   // in Ada, dim_info is used for dimensions, since it can directly represent multi-dimensional arrays
@@ -693,6 +698,39 @@ mkProcedureDef( const std::string& nm,
   SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
 
   return mkProcedureDef(ndef, scope, retty, std::move(complete));
+}
+
+// MS: 12/20/2020 Ada function renaming declaration maker
+SgAdaFunctionRenamingDecl&
+mkAdaFunctionRenamingDecl( const std::string& name,
+                           SgScopeStatement& scope,
+                           SgType& retty,
+                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                           )
+{
+  SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
+  SgFunctionParameterList&   lst    = SG_DEREF(sgnode.get_parameterList());
+  SgFunctionParameterScope&  psc    = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+  ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+
+  sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
+  complete(lst, psc);
+
+  SgFunctionType& funty = mkAdaFunctionRenamingDeclType(retty, lst);
+  sgnode.set_type(&funty);
+  ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+
+  SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
+  ROSE_ASSERT(funsy == nullptr);
+
+  funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
+  scope.insert_symbol(name, funsy);
+  sgnode.set_scope(&scope);
+  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.unsetForward();
+
+  markCompilerGenerated(lst);
+  return sgnode;
 }
 
 SgAdaEntryDecl&
