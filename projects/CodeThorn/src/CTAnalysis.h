@@ -111,7 +111,7 @@ namespace CodeThorn {
   public:
     
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);
+    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -350,6 +350,10 @@ namespace CodeThorn {
     const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
+
+    std::pair<CallString,const EState*> popWorkListCS();
+    std::pair<CallString,const EState*> topWorkListCS();
+    void pushWorkListCS(CallString,const EState*);
 
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.

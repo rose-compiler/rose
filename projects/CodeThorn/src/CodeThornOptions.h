@@ -45,8 +45,8 @@ struct CodeThornOptions : public CodeThorn::Options {
     bool tg2EStateProperties=false;
     bool tg2EStatePredicate=false;
     bool visualizeRWSets=false;
-    bool viz=false;
-    bool vizTg2=false;
+    bool vis=false;
+    bool visTg2=false;
     std::string icfgFileName;
     std::string callGraphFileName;
   } visualization;
@@ -97,8 +97,11 @@ struct CodeThornOptions : public CodeThorn::Options {
   int testSelector=0;
   bool intraProcedural=false;
   int precisionLevel=1;
+  bool pointerSetsEnabled=false; // used in more precise pointer analysis
   std::string csvReportModeString="generate";
-  std::string forkFunction1="!undefined:forkFunction1!";
+
+  bool forkFunctionEnabled=false;
+  std::string forkFunctionName="";
   
   // RERS C-subset program options
   struct Rers {

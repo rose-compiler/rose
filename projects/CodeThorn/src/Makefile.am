@@ -176,11 +176,13 @@ CODETHORN_HEADER_FILES=\
   RewriteSystem.h \
   RWState.h \
   Solver5.h \
+  Solver16.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
   SvcompWitness.h \
   TimeMeasurement.h \
+  TimingCollector.h \
   TopologicalSort.h \
   TransitionGraph.h \
   TransitionGraphReducer.h \
@@ -303,11 +305,13 @@ CODETHORN_SOURCE_FILES=\
   RewriteSystem.C \
   RWState.C \
   Solver5.C \
+  Solver16.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
   SvcompWitness.C \
   TimeMeasurement.C \
+  TimingCollector.C \
   TopologicalSort.C \
   TransitionGraph.C \
   TransitionGraphReducer.C \
@@ -629,7 +633,7 @@ REGRESSION_DATA_DIR=regressiondata
 addressTakenAnalysis_SOURCES = \
   addressTakenAnalysisDriver.C
 
-.PHONY: codethorn-dist viz bsps test checkdemos
+.PHONY: codethorn-dist vis bsps test checkdemos
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -740,7 +744,7 @@ check-domain-old:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
-	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/intertest14.C --vis && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -824,7 +828,7 @@ check-ltl-cegpra:
 
 # not used
 check-arrays:
-	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --vis=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 # not used
 check-array-bounds: ./codethorn
@@ -847,7 +851,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
@@ -855,6 +859,11 @@ check-deadcode:
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
+
+check-vis:
+	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM200_pointers_merge.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort --tg1-estate-memory-subgraphs --pointer-sets && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf transitiongraph2.dot -otg2.pdf && dot -Tpdf cfg.dot -ocfg.pdf
+
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -867,7 +876,7 @@ clean-local:
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg
-	rm -f viz/*
+	rm -f vis/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++

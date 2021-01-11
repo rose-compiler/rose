@@ -32,6 +32,7 @@
 #include "ReachabilityAnalysis.h"
 //#include "EquivalenceChecking.h"
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
@@ -70,12 +71,13 @@ using namespace Sawyer::Message;
 
 // required for createSolver function
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.16";
+const std::string versionString="1.12.17";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -96,6 +98,9 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   switch(ctOpt.solver) {
   case 5 :  {  
     solver = new Solver5(); break;
+  }
+  case 16 :  {  
+    solver = new Solver16(); break; // variant of solver5
   }
   case 8 :  {  
     solver = new Solver8(); break;
@@ -149,7 +154,6 @@ int main( int argc, char * argv[] ) {
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
-    cout<<roseGlobalVariantNameList[V_SgTypeShort]<<endl;
     TimingCollector tc;
 
     tc.startTimer();
@@ -170,11 +174,9 @@ int main( int argc, char * argv[] ) {
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
 
-    //optionallyRunNormalization(ctOpt,sageProject,tc); done by PAL now
     optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
     //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
@@ -182,7 +184,25 @@ int main( int argc, char * argv[] ) {
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
 
+    ProgramInfo originalProgramInfo(sageProject);
+    originalProgramInfo.compute();
+    
+    if(ctOpt.programStatsOnly) {
+      originalProgramInfo.printDetailed();
+      exit(0);
+    }
+
     initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
+
+    if(ctOpt.programStats) {
+      analyzer->printStatusMessageLine("==============================================================");
+      ProgramInfo normalizedProgramInfo(sageProject);
+      normalizedProgramInfo.compute();
+      originalProgramInfo.printCompared(&normalizedProgramInfo);
+    }
+
+    tc.startTimer();tc.stopTimer();
+
     setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
     optionallyEliminateCompoundStatements(ctOpt, analyzer, sageProject);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
@@ -194,20 +214,35 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
-
+    AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+    
     runSolver(ctOpt,analyzer,sageProject,tc);
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
     optionallyRunZ3AndExit(ctOpt,analyzer);
+
+    tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::reportGeneration);
+
+    tc.startTimer();
     optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::callGraphDotFile);
+
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
+
+    tc.startTimer();
     optionallyRunVisualizer(ctOpt,analyzer,sageProject);
+    tc.stopTimer(TimingCollector::visualization);
+
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
+
+    if(ctOpt.status) cout<<tc.toString()<<endl;
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch

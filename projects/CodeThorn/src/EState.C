@@ -440,3 +440,12 @@ void EState::combine(PropertyState& other0) {
   
 }
 
+void EState::setCallString(CallString cs) {
+  callString=cs;
+}
+
+CallString EState::getCallString() const {
+  return callString;
+}
+
+

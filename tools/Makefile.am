@@ -60,7 +60,7 @@ Checker_Output_Files=$(Checker_Test_Files:.cpp=.cpp.output)
 Checker_Output_Diff_Files=$(Checker_Test_Files:.cpp=.cpp.diff)
 
 $(Checker_Output_Files): rajaChecker
-	./rajaChecker --debug --report report.txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:%.output=%) &>$(@:%.output=%).screen.log
+	./rajaChecker --debug --report report-$(@:%.output=%).txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:%.output=%) &>$(@:%.output=%).screen.log
 
 #  each diff file depends on its own output file, not all generated examples!!
 $(Checker_Output_Diff_Files): %.diff:%.output

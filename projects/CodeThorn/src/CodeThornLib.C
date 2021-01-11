@@ -353,8 +353,8 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
     ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
     cout << "generated "<<cfgFileName<<endl;
   }
-  if(ctOpt.visualization.viz) {
-    cout << "generating graphviz files:"<<endl;
+  if(ctOpt.visualization.vis) {
+    cout << "generating graphvis files:"<<endl;
     visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
     string dotFile="digraph G {\n";
     dotFile+=visualizer.transitionGraphToDot();
@@ -371,21 +371,21 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
 
     //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-    SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
     analyzer->generateAstNodeInfo(root);
     cout << "generating AST node info ... "<<endl;
     dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
     write_file("ast.dot", dotFile);
     cout << "generated ast.dot."<<endl;
 
-    SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
     write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
     DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
     ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
     cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
     cout << "=============================================================="<<endl;
   }
-  if(ctOpt.visualization.vizTg2) {
+  if(ctOpt.visualization.visTg2) {
     string dotFile3=visualizer.foldedTransitionGraphToDot();
     write_file("transitiongraph2.dot", dotFile3);
     cout << "generated transitiongraph2.dot."<<endl;
@@ -421,12 +421,6 @@ void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject*
     programInfo.compute();
     if(unknownFunctionsFile) {
       programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
-    }
-    if(showProgramStats||showProgramStatsOnly) {
-      programInfo.printDetailed();
-    }
-    if(showProgramStatsOnly) {
-      exit(0);
     }
   }
 }
@@ -578,7 +572,7 @@ SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, Tim
     argvList.push_back("-rose:ast:merge");
   }
   SgProject* project=frontend(argvList);
-  timingCollector.stopFrontEndTimer();
+  timingCollector.stopTimer(TimingCollector::frontEnd);
   return project;
 }
 
@@ -620,7 +614,7 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
     //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
     normalization.normalizeAst(sageProject,2);
   }
-  timingCollector.stopNormalizationTimer();
+  timingCollector.stopTimer(TimingCollector::normalization);
   CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
 }
 
@@ -661,18 +655,16 @@ void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analy
 }
 
 void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc) {
-  TimeMeasurement& timer=tc.timer;
+  tc.startTimer();
   bool withCe=ltlOpt.withCounterExamples || ltlOpt.withAssertCounterExamples;
   if(withCe) {
     SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
-    timer.start();
     analyzer->extractRersIOAssertionTraces();
-    tc.extractAssertionTracesTime = timer.getTimeDurationAndStop().milliSeconds();
   }
+  tc.stopTimer(TimingCollector::extractAssertionTraces);
   
-  tc.determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
+  //tc.determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
   //int inputSeqLengthCovered = -1;
-  tc.totalInputTracesTime = tc.extractAssertionTracesTime + tc.determinePrefixDepthTime;
 
   if(ctOpt.status) {
     analyzer->printStatusMessageLine("==============================================================");
@@ -724,16 +716,16 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
 
   void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc) {
   tc.startTimer();
-  SAWYER_MESG(logger[INFO])<< "Iinitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
+  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
   string startFunctionName;
   if(ctOpt.startFunctionName.size()>0) {
     startFunctionName = ctOpt.startFunctionName;
   } else {
     startFunctionName = "main";
   }
-  analyzer->initializeSolver2(startFunctionName,root);
+  tc.stopTimer(TimingCollector::init);
+  analyzer->initializeSolver3(startFunctionName,root,tc);
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
-  tc.initRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
 }
 
 void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
@@ -754,17 +746,12 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
       exit(0);
     }
   }
-  tc.analysisRunTime=tc.timer.getTimeDurationAndStop().milliSeconds();
+  tc.stopTimer(TimingCollector::transitionSystemAnalysis);
 }
-
-  SgProject* parsingPass(CodeThornOptions& ctOpt, int argc, char * argv[]) {
-    TimingCollector timingCollector;
-    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,timingCollector);
-    return project;
-  }
 
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
     CodeThorn::Normalization normalization;
+    normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     normalization.setInliningOption(ctOpt.inlineFunctions);
     int normalizationLevel=0;
     if(ctOpt.normalizeFCalls)

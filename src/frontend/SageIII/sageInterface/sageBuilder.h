@@ -860,7 +860,7 @@ ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 
-//! Build noecept operator expression with an expression parameter
+//! Build noexcept operator expression with an expression parameter
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp_nfi(SgExpression* exp);
 
