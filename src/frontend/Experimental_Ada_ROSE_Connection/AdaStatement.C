@@ -604,36 +604,6 @@ namespace
   };
 
 
-  /// creates a sequence of type declarations in ROSE from a
-  ///   a single Asis declarations with multiple names.
-  struct DeclarePrivateType
-  {
-      DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
-      : ty(tyrep), scope(astctx.scope()), privateElems(privateItems)
-      {}
-
-      void operator()(const NameData& nameelem)
-      {
-        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
-
-        const std::string&      name = nameelem.fullName;
-        Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
-        ROSE_ASSERT(dcl);
-
-        markCompilerGenerated(*dcl);
-        privatize(*dcl, privateElems);
-        scope.append_statement(dcl);
-        recordNode(asisTypes(), id, *dcl);
-        ROSE_ASSERT(dcl->get_parent() == &scope);
-      }
-
-    private:
-      SgType&           ty;
-      SgScopeStatement& scope;
-      bool              privateElems;
-  };
-
 
   /// creates a ROSE declaration depending on the provided type/definition
   struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
@@ -1638,6 +1608,28 @@ namespace
       AstContext                       ctx;
   };
 
+  SgDeclarationStatement&
+  handlePartialTypeDecl(Element_Struct& elem, AstContext ctx)
+  {
+    SgType&                 opaque = mkOpaqueType();
+    SgScopeStatement&       scope  = astctx.scope();
+    const std::string&      name   = adaname.fullName;
+    Element_ID              id     = adaname.id();
+    SgDeclarationStatement& sgnode = mkTypeDecl(name, opaque, scope);
+
+    markCompilerGenerated(sgnode);
+    privatize(sgnode, isPrivate);
+    scope.append_statement(sgnode);
+    recordNode(asisTypes(), id, sgnode);
+    ROSE_ASSERT(sgnode.get_parent() == &scope);
+  }
+
+
+  SgDeclarationStatement&
+  handlePartialTypeDeclID(Element_ID id, AstContext ctx)
+  {
+    return handlePartialTypeDecl(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  }
 } // anonymous
 
 
@@ -1828,7 +1820,6 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
       logWarn() << "unhandled definition kind: " << def.Definition_Kind << std::endl;
       ROSE_ASSERT(!FAIL_ON_ERROR);
   }
-
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
@@ -2088,13 +2079,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // \todo this may only declare one name
         //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
-        ElemIdRange     range  = idRange(decl.Names);
-        ROSE_ASSERT(range.size() == 1);
-        name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
-        SgType&         opaque = mkOpaqueType();
+        //~ NameData                adaname = singleName(decl, ctx);
+        //~ ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
+        SgDeclarationStatement& sgnode = handlePartialTypeDeclID(decl.Corresponding_Type_Declaration, ctx);
 
         /*
           bool                           Has_Abstract;
@@ -2109,7 +2097,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           Declaration_ID                 Corresponding_Last_Constraint;
           Declaration_ID                 Corresponding_Last_Subtype;
         */
-
         break;
       }
 
