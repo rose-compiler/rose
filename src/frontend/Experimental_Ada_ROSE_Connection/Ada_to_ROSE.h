@@ -210,24 +210,6 @@ void logKind(const char* kind, bool primaryHandler = true);
 /// anonymous namespace for auxiliary templates and functions
 namespace
 {
-  /// converts a value of type V to a value of type U via streaming
-  /// \tparam  V input value type
-  /// \tparam  U return value type
-  /// \param   val the value to be converted
-  /// \returns \ref val converted to type \ref U
-  template <class U, class V>
-  inline
-  U conv(const V& val)
-  {
-    U                 res;
-    std::stringstream buf;
-
-    buf << val;
-    buf >> res;
-
-    return res;
-  }
-
   /// upcasts an object of type Derived to an object of type Base
   /// \note useful mainly in the context of overloaded functions
   template <class Base, class Derived>

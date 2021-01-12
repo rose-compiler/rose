@@ -509,6 +509,41 @@ namespace Ada_ROSE_Translation
   SgAbsOp*
   buildAbsOp(SgExpression* op);
 
+  /// converts a value of type V to a value of type U via streaming
+  /// \tparam  V input value type
+  /// \tparam  U return value type
+  /// \param   val the value to be converted
+  /// \returns \ref val converted to type \ref U
+  template <class U, class V>
+  inline
+  U conv(V& img)
+  {
+    U                 res;
+    std::stringstream buf;
+
+    buf << img;
+    buf >> res;
+
+    return res;
+  }
+
+  /// converts text to constant values
+  /// @{
+  template <class T>
+  inline
+  T convAdaLiteral(const char* img)
+  {
+    return conv<T>(img);
+  }
+
+  template <>
+  int convAdaLiteral<int>(const char* img);
+
+  template <>
+  long double convAdaLiteral<long double>(const char* img);
+  /// @}
+
+
   /// creates a value representation of type \ref SageValue for the string \ref textrep.
   /// \tparam SageValue the AST node type to be created
   /// \pre SageValue is derived from SgValueExp
@@ -523,7 +558,7 @@ namespace Ada_ROSE_Translation
     typedef decltype(std::declval<SageValue>().get_value()) rose_rep_t;
 
     ROSE_ASSERT(textrep);
-    return mkLocatedNode<SageValue>(conv<rose_rep_t>(textrep), textrep);
+    return mkLocatedNode<SageValue>(convAdaLiteral<rose_rep_t>(textrep), textrep);
   }
 
   /// \overload
