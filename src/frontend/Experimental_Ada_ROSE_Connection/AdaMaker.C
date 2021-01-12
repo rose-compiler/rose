@@ -3,6 +3,9 @@
 
 #include <algorithm>
 #include <numeric>
+#include <cmath>
+
+#include <boost/algorithm/string/replace.hpp>
 
 #include "AdaMaker.h"
 
@@ -1047,6 +1050,206 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
   lit.pop_back();
 
   return mkLocatedNode<SgStringVal>(lit);
+}
+
+namespace
+{
+/*
+  template<class T>
+  T powInt(T num, size_t exp, size_t res = 1)
+  {
+    if (exp == 0)
+      return res;
+
+    if ((exp % 2) == 0)
+      return powInt(num*num, exp/2, res);
+
+    return powInt(num, exp-1, num*res);
+  }
+*/
+
+  size_t char2Val(char c)
+  {
+    if ((c >= '0') && (c <= '9'))
+      return c - '0';
+
+    if ((c >= 'A') && (c <= 'F'))
+      return c - 'A' + 10;
+
+    ROSE_ASSERT((c >= 'a') && (c <= 'f'));
+    return c - 'a' + 10;
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseDec(const char* buf, size_t base = 10, char delim = 0)
+  {
+    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+
+    T res = 0;
+
+    while ((*buf != 0) && (*buf != '#') && (*buf != delim))
+    {
+      const size_t v = char2Val(*buf);
+
+      ROSE_ASSERT(v < base);
+      res = res*base + v;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseFrac(const char* buf, size_t base = 10)
+  {
+    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+
+    T      res = 0;
+    size_t divisor = 1*base;
+
+    while ((*buf != 0) && (*buf != '#'))
+    {
+      T v = char2Val(*buf);
+
+      ROSE_ASSERT(v < base);
+      res += v/divisor;
+      divisor = divisor*base;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+
+  std::pair<int, const char*>
+  parseExp(const char* buf)
+  {
+    if (*buf == 0)
+      return std::make_pair(0, buf);
+
+    long int exp = 0;
+
+    if ((*buf == 'e') || (*buf == 'E'))
+    {
+      ++buf;
+      const bool positiveE = (*buf != '-');
+
+      // skip sign
+      if (!positiveE || (*buf == '+')) ++buf;
+
+      std::tie(exp, buf) = parseDec<long int>(buf, 10);
+
+      if (!positiveE) exp = -exp;
+    }
+
+    return std::make_pair(exp, buf);
+  }
+}
+
+
+
+template <>
+int convAdaLiteral<int>(const char* img)
+{
+  long int    res  = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(res, cur) = parseDec<long int>(cur);
+
+  // we just parsed the base
+  if (*cur == '#')
+  {
+    ++cur;
+    base = res;
+
+    std::tie(res, cur) = parseDec<long int>(cur, base);
+  }
+
+  if (*cur == '#')
+  {
+    ++cur;
+
+    std::tie(exp, cur) = parseExp(cur);
+  }
+
+  //~ base = powInt(base, exp);
+  base = std::pow(base, exp);
+
+  /*
+  logWarn() << "i: "
+            << res << ' ' << base << ' ' << exp << '\n'
+            << res * base
+            << std::endl;
+  */
+  return res * base;
+}
+
+
+template <>
+long double convAdaLiteral<long double>(const char* img)
+{
+  std::string litText{img};
+
+  boost::replace_all(litText, "_", "");
+
+  // handle 'normal' real literals
+  if (litText.find('#') == std::string::npos)
+  {
+    // logWarn() << "R: " << conv<long double>(litText) << std::endl;
+    return conv<long double>(litText);
+  }
+
+  // handle based real literals
+  long double dec  = 0;
+  long double frac = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(base, cur) = parseDec<long int>(cur);
+  ROSE_ASSERT(*cur == '#');
+
+  ++cur;
+  std::tie(dec, cur) = parseDec<long double>(cur, base, '.');
+
+  if (*cur == '.')
+  {
+    ++cur;
+    std::tie(frac, cur) = parseFrac<long double>(cur, base);
+  }
+
+  long double res = dec + frac;
+
+  ROSE_ASSERT(*cur == '#');
+  ++cur;
+
+  std::tie(exp, cur) = parseExp(cur);
+
+  base = std::pow(base, exp);
+
+/*
+  logWarn() << "r: "
+            << res << ' ' << dec << '+' << frac << ' ' << base << ' ' << exp << '\n'
+            << res * base
+            << std::endl;
+*/
+  return res * base;
 }
 
 
