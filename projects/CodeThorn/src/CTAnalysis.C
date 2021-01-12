@@ -397,6 +397,11 @@ void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*)
   ROSE_ASSERT(0);
 }
 
+bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
+  // requires set of states at the same label
+  return false;
+}
+
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   // cs not used yet
   //return _summaryStateMap[lab.getId()];

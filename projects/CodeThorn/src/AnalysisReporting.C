@@ -13,7 +13,7 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
+  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED, UNREACHABLE };
 
   LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
@@ -164,6 +164,10 @@ namespace CodeThorn {
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     std::map<Label,VerificationResult> fMap;
     for(auto entryLabel : functionEntryLabels) {
+      if(analyzer->isUnreachableLabel(entryLabel)) {
+        fMap[entryLabel]=UNREACHABLE;
+        continue;
+      }
       // todo: function is
       // falsified: if at least one label is falsified (=0)
       // unverified: if at least one is unverified (=top)
@@ -210,7 +214,8 @@ namespace CodeThorn {
       case FALSIFIED: nodeColor="red";numFalsifiedFunctions++;break;
       case UNVERIFIED: nodeColor="orange";numUnverifiedFunctions++;break;
       case VERIFIED: nodeColor="green";numVerifiedFunctions++;break;
-      case INCONSISTENT: nodeColor="gray";break;
+      case INCONSISTENT: nodeColor="orchid1";break;
+      case UNREACHABLE: nodeColor="gray";break;
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+":"+functionName+"\"";
@@ -225,11 +230,12 @@ namespace CodeThorn {
       case FALSIFIED: nodeColor="red";break;
       case UNVERIFIED: nodeColor="orange";break;
       case VERIFIED: nodeColor="green";break;
-      case INCONSISTENT: nodeColor="gray";break;
+      case INCONSISTENT: nodeColor="orchid1";break;
+      case UNREACHABLE: nodeColor="gray";break;
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+"\"";
-      if(nodeColor!="gray")
+      if(nodeColor!="orchid1")
         cgNodes2<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
     }
 

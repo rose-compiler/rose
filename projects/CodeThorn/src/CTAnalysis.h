@@ -248,6 +248,7 @@ namespace CodeThorn {
         not supported yet) */
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
+    bool isUnreachableLabel(Label lab);
   protected:
     using super = CTAnalysis; // allows use of super like in Java without repeating the class name
   public:
