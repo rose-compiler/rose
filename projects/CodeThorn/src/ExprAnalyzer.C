@@ -2153,6 +2153,10 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
   if(val.isUndefined()) {
     recordPotentialUninitializedAccessLocation(lab);
   }
+  if(_readWriteListener) {
+    _readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc,val);
+  }
+
   return val;
 }
 
@@ -2172,6 +2176,9 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
     }
   }
   SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1: before write"<<endl;
+  if(_readWriteListener) {
+    _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
+  }
   pstate->writeToMemoryLocation(memLoc,newValue);
   SAWYER_MESG(logger[TRACE])<<"ExprAnalyzer::writeToMemoryLocation1:done"<<endl;
 }
@@ -2228,4 +2235,8 @@ void ExprAnalyzer::printLoggerWarning(EState& estate) {
   } else {
     SAWYER_MESG(logger[WARN]) << "at label "<<lab<<": "<<": this pointer set to top."<<endl;
   }
+}
+
+void ExprAnalyzer::setReadWriteListener(ReadWriteListener* rwl) {
+  _readWriteListener=rwl;
 }
