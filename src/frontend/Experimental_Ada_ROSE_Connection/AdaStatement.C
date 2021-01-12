@@ -604,6 +604,36 @@ namespace
   };
 
 
+  /// creates a sequence of type declarations in ROSE from a
+  ///   a single Asis declarations with multiple names.
+  struct DeclarePrivateType
+  {
+      DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
+      : ty(tyrep), scope(astctx.scope()), privateElems(privateItems)
+      {}
+
+      void operator()(const NameData& nameelem)
+      {
+        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
+
+        const std::string&      name = nameelem.fullName;
+        Element_ID              id   = nameelem.id();
+        SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
+        ROSE_ASSERT(dcl);
+
+        markCompilerGenerated(*dcl);
+        privatize(*dcl, privateElems);
+        scope.append_statement(dcl);
+        recordNode(asisTypes(), id, *dcl);
+        ROSE_ASSERT(dcl->get_parent() == &scope);
+      }
+
+    private:
+      SgType&           ty;
+      SgScopeStatement& scope;
+      bool              privateElems;
+  };
+
 
   /// creates a ROSE declaration depending on the provided type/definition
   struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
@@ -2084,6 +2114,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ ROSE_ASSERT(adaname.fullName == adaname.ident);
 
         //~ SgDeclarationStatement& sgnode = handlePartialTypeDeclID(decl.Corresponding_Type_Declaration, ctx);
+
+
+        ROSE_ASSERT(range.size() == 1);
+        name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
+        SgType&         opaque = mkOpaqueType();
+
+        ROSE_ASSERT(ctx.scope().get_parent());
+        std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
+
 
         /*
           bool                           Has_Abstract;
