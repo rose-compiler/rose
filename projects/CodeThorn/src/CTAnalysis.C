@@ -377,9 +377,9 @@ EState CodeThorn::CTAnalysis::combine(const EState* es1, const EState* es2) {
   return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
 }
 
-size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
-  return _summaryCSStateMap.size();
-}
+//size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
+//  return _summaryCSStateMapMap.size();
+//}
 
 Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
   return const_cast<EState*>(getSummaryState(lab,context));
@@ -397,15 +397,23 @@ void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*)
   ROSE_ASSERT(0);
 }
 
+bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
+  // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+}
+
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
-  // cs not used yet
-  //return _summaryStateMap[lab.getId()];
-  pair<int,CallString> p(lab.getId(),cs);
-  auto iter=_summaryCSStateMap.find(p);
-  if(iter==_summaryCSStateMap.end()) {
+  auto iter1=_summaryCSStateMapMap.find(lab.getId());
+  if(iter1==_summaryCSStateMapMap.end()) {
     return getBottomSummaryState(lab,cs);
   } else {
-    return (*iter).second;
+    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+    auto iter2=summaryCSStateMap.find(cs);
+    if(iter2==summaryCSStateMap.end()) {
+      return getBottomSummaryState(lab,cs);
+    } else {
+      return (*iter2).second;
+    }
   }
 }
 
@@ -413,8 +421,20 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
-  pair<int,CallString> p(lab.getId(),cs);
-  _summaryCSStateMap[p]=estate;
+
+  //pair<int,CallString> p(lab.getId(),cs);
+  //_summaryCSStateMap[p]=estate;
+
+  auto iter1=_summaryCSStateMapMap.find(lab.getId());
+  if(iter1==_summaryCSStateMapMap.end()) {
+    // create new
+    SummaryCSStateMap newSummaryCSStateMap;
+    newSummaryCSStateMap[cs]=estate;
+    _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+  } else {
+    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+    summaryCSStateMap[cs]=estate;
+  }
 }
 
 
@@ -1264,17 +1284,12 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             } else {
               ROSE_ASSERT(res.size()==1);
               SingleEvalResultConstInt evalResult=*res.begin();
-              cout<<"DEBUG: P0"<<endl;
               SAWYER_MESG(logger[TRACE])<<"rhs eval result 2: "<<evalResult.result.toString()<<endl;
-              cout<<"DEBUG: P1"<<endl;
               
               EState estate=evalResult.estate;
               PState newPState=*estate.pstate();
-              cout<<"DEBUG: P2"<<endl;
               AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-              cout<<"DEBUG: P3"<<endl;
               getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
-              cout<<"DEBUG: P4"<<endl;
               ConstraintSet cset=*estate.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }

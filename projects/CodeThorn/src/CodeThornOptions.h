@@ -77,6 +77,8 @@ struct CodeThornOptions : public CodeThorn::Options {
   std::string nullPointerAnalysisFileName;
   std::string outOfBoundsAnalysisFileName;
   std::string uninitializedMemoryAnalysisFileName;
+  std::string deadCodeAnalysisFileName;
+  std::string deadFunctionsAnalysisFileName;
   bool programStatsOnly=false;
   bool programStats=false;
   bool inStateStringLiterals=false;
