@@ -77,7 +77,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.17";
+const std::string versionString="1.12.18";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
