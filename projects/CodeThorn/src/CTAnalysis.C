@@ -398,12 +398,11 @@ void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*)
 }
 
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
-  // requires set of states at the same label
-  return false;
+  // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
 }
 
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
-  pair<int,CallString> p(lab.getId(),cs);
   auto iter1=_summaryCSStateMapMap.find(lab.getId());
   if(iter1==_summaryCSStateMapMap.end()) {
     return getBottomSummaryState(lab,cs);
@@ -1285,17 +1284,12 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             } else {
               ROSE_ASSERT(res.size()==1);
               SingleEvalResultConstInt evalResult=*res.begin();
-              cout<<"DEBUG: P0"<<endl;
               SAWYER_MESG(logger[TRACE])<<"rhs eval result 2: "<<evalResult.result.toString()<<endl;
-              cout<<"DEBUG: P1"<<endl;
               
               EState estate=evalResult.estate;
               PState newPState=*estate.pstate();
-              cout<<"DEBUG: P2"<<endl;
               AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-              cout<<"DEBUG: P3"<<endl;
               getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
-              cout<<"DEBUG: P4"<<endl;
               ConstraintSet cset=*estate.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }
