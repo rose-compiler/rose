@@ -1608,6 +1608,7 @@ namespace
       AstContext                       ctx;
   };
 
+/*
   SgDeclarationStatement&
   handlePartialTypeDecl(Element_Struct& elem, AstContext ctx)
   {
@@ -1624,12 +1625,12 @@ namespace
     ROSE_ASSERT(sgnode.get_parent() == &scope);
   }
 
-
   SgDeclarationStatement&
   handlePartialTypeDeclID(Element_ID id, AstContext ctx)
   {
     return handlePartialTypeDecl(retrieveAs<Element_Struct>(elemMap(), id), ctx);
   }
+*/
 } // anonymous
 
 
@@ -2082,7 +2083,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ NameData                adaname = singleName(decl, ctx);
         //~ ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        SgDeclarationStatement& sgnode = handlePartialTypeDeclID(decl.Corresponding_Type_Declaration, ctx);
+        //~ SgDeclarationStatement& sgnode = handlePartialTypeDeclID(decl.Corresponding_Type_Declaration, ctx);
 
         /*
           bool                           Has_Abstract;
@@ -2450,6 +2451,43 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
+    case A_Function_Renaming_Declaration:          // 8.5.4(2)
+      {
+        logKind(decl.Declaration_Kind == A_Function_Renaming_Declaration ?
+                "A_Function_Renaming_Declaration" : "A_Procedure_Renaming_Declaration");
+
+        const bool        isFuncRename = decl.Declaration_Kind == A_Function_Renaming_Declaration;
+        SgScopeStatement& outer        = ctx.scope();
+        NameData          adaname      = singleName(decl, ctx);
+        ElemIdRange       range        = idRange(decl.Parameter_Profile);
+        SgType&           rettype      = isFuncRename ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                      : SG_DEREF(sb::buildVoidType());
+
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaFunctionRenamingDecl& sgnode  = mkAdaFunctionRenamingDecl(adaname.fullName,
+                                                                       outer,
+                                                                       rettype,
+                                                                       ParameterCompletion{range, ctx});
+        setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        // find declaration for the thing being renamed
+        auto re = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        auto renamed_entity = re.The_Union.Expression;
+        SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamed_entity, ctx));
+        ROSE_ASSERT(renamedDecl != nullptr);
+        sgnode.set_renamed_function(renamedDecl);
+
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &outer);
+
+        break;
+      }
+
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
         logKind("An_Exception_Renaming_Declaration");
@@ -2509,8 +2547,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Return_Constant_Specification:          // 6.5
     case A_Null_Procedure_Declaration:             // 6.7
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
-    case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
-    case A_Function_Renaming_Declaration:          // 8.5.4(2)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
     case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
     case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
