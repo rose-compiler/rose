@@ -500,9 +500,10 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
+// TODO: DEPRECATED: Always build a namespace
+#if 0
 // Only build a namespace if currently not loading a compool module
    if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
-
       namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
       SageInterface::setSourcePosition(namespace_decl);
 
@@ -521,6 +522,22 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
    else {
       namespace_decl = nullptr;
    }
+#else
+   namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
+   SageInterface::setSourcePosition(namespace_decl);
+
+   SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
+   ROSE_ASSERT(namespace_defn);
+   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+
+   // TEMPORARY: fix in SageBuilder
+   namespace_defn->setCaseInsensitive(true);
+   ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+
+   // Append before push (so that symbol lookup will work)
+   SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(namespace_defn);
+#endif
 }
 
 void SageTreeBuilder::
@@ -528,12 +545,17 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
+// TODO: DEPRECATED: Always build a namespace
+#if 0
 // Make sure that a compool module is not being loaded because, if so, there won't
 // be a namespace on the stack.
 //
    if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
       SageBuilder::popScopeStack();  // namespace definition
    }
+#else
+   SageBuilder::popScopeStack();  // namespace definition
+#endif
 }
 
 void SageTreeBuilder::
@@ -1042,10 +1064,39 @@ Leave(SgJovialDirectiveStatement* directive)
 
    switch (directive->get_directive_type())
      {
-       case SgJovialDirectiveStatement::e_compool:
-       // A compool directive reads in the compool file and pushes its scope to the scope stack
+       case SgJovialDirectiveStatement::e_compool: {
+       // Save and then pop the scope of the compool module loaded by the compool directive
+          SgScopeStatement* compool_scope = SageBuilder::topScopeStack();
           SageBuilder::popScopeStack();
+
+       // Insert aliases for all symbols in the compool scope into the current scope
+          SgSymbolTable* symbol_table = compool_scope->get_symbol_table();
+          SgScopeStatement* current_scope = SageBuilder::topScopeStack();
+          BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
+            SgSymbol* symbol = isSgSymbol(node);
+            ROSE_ASSERT(symbol);
+            SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
+            ROSE_ASSERT(alias_symbol);
+            current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+         // Also insert aliases for any namespace symbols
+            if (SgNamespaceSymbol* namespace_symbol = isSgNamespaceSymbol(node)) {
+              SgNamespaceDeclarationStatement* namespace_decl = nullptr;
+              SgNamespaceDefinitionStatement* namespace_defn = nullptr;
+              SgSymbolTable* namespace_symbol_table = nullptr;
+              namespace_decl = isSgNamespaceDeclarationStatement(namespace_symbol->get_declaration());
+              namespace_defn = isSgNamespaceDefinitionStatement(namespace_decl->get_definition());
+              namespace_symbol_table = namespace_defn->get_symbol_table();
+              BOOST_FOREACH(SgNode* node, namespace_symbol_table->get_symbols()) {
+                SgSymbol* symbol = isSgSymbol(node);
+                ROSE_ASSERT(symbol);
+                SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
+                ROSE_ASSERT(alias_symbol);
+                current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+              }
+            }
+          }
           break;
+       }
        case SgJovialDirectiveStatement::e_unknown:
           mlog[ERROR] << "SageTreeBuilder::Leave(SgJovialDirectiveStatement*) directive_type is unknown \n";
           break;
@@ -1135,6 +1186,8 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
+// TODO: DEPRECATED: Always build a namespace
+#if 0
 // Make sure that a compool module is not being loaded because, if so, there won't
 // be a namespace on the stack.
 //
@@ -1145,14 +1198,20 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
       compool_decl->set_definingDeclaration(compool_decl);
       compool_decl->set_firstNondefiningDeclaration(compool_decl);
 
-   // TODO?
-   // SageBuilder::pushScopeStack(compool_defn);
-
       SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
    }
    else {
       compool_decl = nullptr;
    }
+#else
+   compool_decl = new SgJovialCompoolStatement(name);
+   SageInterface::setSourcePosition(compool_decl);
+
+   compool_decl->set_definingDeclaration(compool_decl);
+   compool_decl->set_firstNondefiningDeclaration(compool_decl);
+
+   SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+#endif
 }
 
 void SageTreeBuilder::
@@ -1308,8 +1367,6 @@ Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<
          SgVariableSymbol* var_sym = new SgVariableSymbol(init_name);
          ROSE_ASSERT(var_sym);
          SageBuilder::topScopeStack()->insert_symbol(SgName(name), var_sym);
-         //ROSE_ASSERT(init_name->get_symbol_from_symbol_table() != nullptr);
-         SgSymbol* sym = SageInterface::lookupSymbolInParentScopes(name);
       }
    }
 }
@@ -1367,20 +1424,26 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
 
    ROSE_ASSERT(enum_decl);
    SgEnumType* enum_type = enum_decl->get_type();
+   SgScopeStatement* scope = enum_decl->get_scope();
 
-   enum_val = SageBuilder::buildEnumVal(value, enum_decl, name);
-   SageInterface::setSourcePosition(enum_val);
+   SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
+   ROSE_ASSERT(def_decl);
+   SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(enum_decl->get_firstNondefiningDeclaration());
+   ROSE_ASSERT(nondef_decl);
+
+   enum_val = SageBuilder::buildEnumVal_nfi(value, nondef_decl, name);
 
    SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(enum_val, enum_type);
    SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, enum_type, initializer);
-   SageInterface::setSourcePosition(init_name);
 
-   enum_decl->append_enumerator(init_name);
-   init_name->set_scope(enum_decl->get_scope());
+   def_decl->get_enumerators().push_back(init_name);
+   init_name->set_scope(scope);
+   init_name->set_declptr(def_decl);
 
+   // Add an associated field symbol to the symbol table
    SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(init_name);
    ROSE_ASSERT(enum_field_symbol);
-   enum_decl->get_scope()->insert_symbol(name, enum_field_symbol);
+   scope->insert_symbol(name,enum_field_symbol);
 }
 
 void SageTreeBuilder::
@@ -1406,6 +1469,8 @@ void SageTreeBuilder::
 importModule(const std::string &module_name)
 {
    mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
+
+   // NOTE: The following comments need to be updated.
 
    // Compool declarations must be loaded into global scope. A compool directive may only follow a
    // START so we should expect to be in global scope here. The compool directive should be appended

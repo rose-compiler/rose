@@ -110,6 +110,8 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_37_2020.cpp \
 	ft_cfftz.cpp \
 	test_61_2020.cpp \
+	test_119_2021.cpp \
+	test_120_2020.cpp \
 	test_121_2020.cpp \
 	test_52.cpp
 

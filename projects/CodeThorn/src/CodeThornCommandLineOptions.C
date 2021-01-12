@@ -113,7 +113,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr)->default_value(-1),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
     ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations)->default_value(-1),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
-    ("viz-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
+    ("vis-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
     ;
 
   visualizationOptions.add_options()
@@ -132,8 +132,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("tg2-estate-properties", po::value< bool >(&ctOpt.visualization.tg2EStateProperties)->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >(&ctOpt.visualization.tg2EStatePredicate)->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >(&ctOpt.visualization.visualizeRWSets)->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
-    ("viz", po::value< bool >(&ctOpt.visualization.viz)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
-    ("viz-tg2", po::value< bool >(&ctOpt.visualization.vizTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
+    ("vis", po::value< bool >(&ctOpt.visualization.vis)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
+    ("vis-tg2", po::value< bool >(&ctOpt.visualization.visTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
     ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "same as --icfg.")
     ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
     ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
@@ -215,7 +215,10 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
-    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.");
+    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.")
+    ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
+    ("fork-function-enabled",po::value< bool >(&ctOpt.forkFunctionEnabled),"sets fork function name (also requires --set-fork-function-name)")
+    ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
     ;
 
   rersOptions.add_options()

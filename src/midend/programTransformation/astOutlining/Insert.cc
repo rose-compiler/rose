@@ -18,6 +18,7 @@
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
 #include "Copy.hh"
+#include "RoseAst.h"
 
 // =====================================================================
 
@@ -929,7 +930,10 @@ isProtPrivMember (SgVarRefExp* v)
 /*!
  *  \brief Returns 'true' if the given type was declared as a
  *  'protected' or 'private' class member.
+ *  This function need to be recursive. It may involves a chain of base types and some types in the middle are private class types. 
+ *  The deepest base type may not be a private type.
  */
+#if 0
 static
 SgClassDefinition *
 isProtPrivType (SgType* t)
@@ -948,6 +952,48 @@ isProtPrivType (SgType* t)
           if (isProtPriv (decl))
             return isSgClassDefinition (decl->get_parent ());
         }
+    }
+
+// DQ (11/3/2015): Fixed compiler warning.
+// return false;
+   return NULL;
+}
+#endif 
+static
+SgClassDefinition *
+isProtPrivType (SgType* t)
+{
+  if (t)
+    {
+      // check self 
+      if (t && isSgNamedType (t))
+        {
+          SgNamedType* named = isSgNamedType (t);
+          ROSE_ASSERT (named);
+          SgDeclarationStatement* decl = named->get_declaration ();
+          if (decl)
+            if (decl->get_definingDeclaration ())
+              decl = decl->get_definingDeclaration ();
+          if (isProtPriv (decl))
+          {
+            //if any type in the type chain is private, we return immediately.
+            if (SgClassDefinition* c_d= isSgClassDefinition (decl->get_parent ()))
+              return c_d; 
+            // if c_d is NULL, we go further to check its base type's access control; 
+          }
+        }
+
+      // recursively check base type if any
+      if (SgModifierType* m_type= isSgModifierType(t))
+         return isProtPrivType (m_type->get_base_type());
+      else if (SgPointerType* p_type =  isSgPointerType(t))
+         return isProtPrivType (p_type->get_base_type());
+      else if (SgArrayType* a_type = isSgArrayType(t))
+         return isProtPrivType (a_type->get_base_type());
+      else if (SgReferenceType* r_type = isSgReferenceType(t))
+         return isProtPrivType (r_type->get_base_type());
+      else if (SgTypedefType* t_type = isSgTypedefType(t))
+         return isProtPrivType (t_type->get_base_type());
     }
 
 // DQ (11/3/2015): Fixed compiler warning.
@@ -1025,13 +1071,16 @@ insertFriendDecls (SgFunctionDeclaration* func,
       typedef set<SgClassDefinition *> ClassDefSet_t;
       ClassDefSet_t classes;
       
-   // First, look for references to private variables.
-      typedef Rose_STL_Container<SgNode *> NodeList_t;
-      NodeList_t var_refs = NodeQuery::querySubTree (func, V_SgVarRefExp);
-      for (NodeList_t::iterator v = var_refs.begin (); v != var_refs.end (); ++v)
+      // better algorithm in one pass to find all types of nodes
+      RoseAst ast (func);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        SgClassDefinition* cl_def = NULL; 
+        // variable declarations may use some private types.
+        if (SgInitializedName* init_name= isSgInitializedName(*i))
+          cl_def = isProtPrivType (init_name->get_type());
+        else if (SgVarRefExp* v_ref = isSgVarRefExp (*i))
         {
-          SgVarRefExp* v_ref = isSgVarRefExp (*v);
-          SgClassDefinition* cl_def = isProtPrivMember (v_ref);
+          cl_def = isProtPrivMember (v_ref);
 
           if (enable_debug)
           {
@@ -1043,7 +1092,6 @@ insertFriendDecls (SgFunctionDeclaration* func,
             printf ("In insertFriendDecls(): v_ref = %p = %s initializedName name = %s \n",v_ref,v_ref->class_name().c_str(), initializedName->get_name().str());
             printf ("In insertFriendDecls(): cl_def = %p \n",cl_def);
           }
-       // if (!cl_def)
           if (cl_def == NULL)
           {
             if (enable_debug)
@@ -1052,35 +1100,45 @@ insertFriendDecls (SgFunctionDeclaration* func,
               printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
             }
             cl_def = isProtPrivType (v_ref->get_type());
-            if (enable_debug)
-              printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
           }
-
-       // if (cl_def)
-          if (cl_def != NULL)
-          {
-            if (enable_debug)
-              printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-            classes.insert (cl_def);
-          }
-        }
-
-      // EnumVal may have a private type: TODO: all expressions should be check against private type
-       NodeList_t enum_val = NodeQuery::querySubTree (func, V_SgEnumVal);
-      for (NodeList_t::iterator v = enum_val.begin (); v != enum_val.end (); ++v)
-      {
-        SgEnumVal* v_ref = isSgEnumVal(*v);
-        SgClassDefinition* cl_def ; 
-
-        if (enable_debug)
+        } 
+        else if (SgEnumVal* v_ref = isSgEnumVal(*i))
         {
-          ROSE_ASSERT(v_ref->get_type() != NULL);
-          printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
-        }
+          // EnumVal may have a private type: TODO: all expressions should be check against private type
+          if (enable_debug)
+          {
+            ROSE_ASSERT(v_ref->get_type() != NULL);
+            printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
+          }
+          cl_def = isProtPrivType (v_ref->get_type());
+        } else if (SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*i))
+          cl_def = isProtPrivMember (f_ref);
+        else if (SgConstructorInitializer* ctor = isSgConstructorInitializer(*i))
+        {
+          //C++ constructors are called through SgConstructorInitializer, not SgMemberFunctionRefExp.
+          SgMemberFunctionDeclaration * fuc_decl = ctor->get_declaration();
+          SgClassDeclaration* cls_decl= ctor->get_class_decl();
+          if (!cls_decl)
+          { 
+            printf ("Warning: calling classes.insert() friend decl: constructor has no class declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+            continue;
+          }
+          else
+          { 
+            SgClassDeclaration * def_cls_decl = isSgClassDeclaration(cls_decl->get_definingDeclaration());
+            if (!def_cls_decl)
+            { 
+              printf ("Calling classes.insert(): constructor's class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+              continue;
+            }
 
-        cl_def = isProtPrivType (v_ref->get_type());
-        if (enable_debug)
-          printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
+            if (isProtPriv(fuc_decl))
+            {
+              if (def_cls_decl->get_definition()) 
+                cl_def = def_cls_decl->get_definition();
+            }
+          }
+        }
 
         if (cl_def != NULL)
         {
@@ -1088,58 +1146,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
             printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
           classes.insert (cl_def);
         }
-      }
-           
-   // Get a list of all function reference expressions.
-      NodeList_t func_refs = NodeQuery::querySubTree (func,V_SgMemberFunctionRefExp);
-      if (enable_debug)
-         printf ("Calling classes.insert(): found member function ref exps count= %zu \n",func_refs.size());
-      for (NodeList_t::iterator f = func_refs.begin (); f != func_refs.end ();
-           ++f)
-        {
-          SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*f);
-          SgClassDefinition* cl_def = isProtPrivMember (f_ref);
-          if (cl_def)
-          {
-            if (enable_debug)
-              printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-            classes.insert (cl_def);
-          }
-        }
-
-    //C++ constructors are called through SgConstructorInitializer, not SgMemberFunctionRefExp.
-   // Get a list of all SgConstructorInitializer nodes
-      NodeList_t ctor_init = NodeQuery::querySubTree (func,V_SgConstructorInitializer);
-      if (enable_debug)
-         printf ("Calling classes.insert(): found SgConstructorInitializer count= %zu \n",ctor_init.size());
-      for (NodeList_t::iterator f = ctor_init.begin (); f != ctor_init.end (); ++f)
-        {
-          SgConstructorInitializer* ctor = isSgConstructorInitializer(*f);
-          SgMemberFunctionDeclaration * fuc_decl = ctor->get_declaration();
-          SgClassDeclaration* cls_decl= ctor->get_class_decl();
-          if (!cls_decl)
-          {
-            printf ("Warning: calling classes.insert() friend decl: constructor has no class declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
-            continue; 
-          }
-          else
-          {
-            SgClassDeclaration * def_cls_decl = isSgClassDeclaration(cls_decl->get_definingDeclaration());
-            if (!def_cls_decl)
-            {
-              printf ("Calling classes.insert(): constructor's class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
-              continue; 
-            }
-            SgClassDefinition* cl_def = def_cls_decl->get_definition();
-            if (isProtPriv(fuc_decl) && cl_def)
-            {
-              if (enable_debug)
-                printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-              classes.insert (cl_def);
-            }
-          }
-        }
-
+      } // end for RoseAst iterator
 
    // DQ (8/13/2019): Set the target classes.
       if (enable_debug)

@@ -210,6 +210,12 @@ InitializeExplicitScopes::visit ( SgNode *node)
                                 break;
                             }
 
+                         case V_SgEnumDeclaration:
+                            {
+                                scope = SageInterface::getEnclosingScope(parentNode);
+                                break;
+                            }
+
                          default:
                             {
                            // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.

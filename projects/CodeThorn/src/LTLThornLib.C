@@ -92,7 +92,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
 #endif
 
-  double totalRunTime=tc.frontEndRunTime+tc.initRunTime+tc.analysisRunTime;
+  //double totalRunTime=tc.frontEndRunTime+tc.initRunTime+tc.analysisRunTime;
 
   long pstateSetSizeInf = 0;
   long eStateSetSizeInf = 0;
@@ -102,7 +102,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   double stdIoOnlyTime = 0;
 
  
-  TimeMeasurement& timer=tc.timer;
+  TimeMeasurement timer;
   if(ltlOpt.stdIOOnly) {
     SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
     timer.start();
@@ -263,8 +263,8 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   /* Data race detection */
   optionallyRunDataRaceDetection(ctOpt,analyzer);
 
-  double overallTime=totalRunTime + tc.totalInputTracesTime + totalLtlRunTime;
-  analyzer->printAnalyzerStatistics(totalRunTime, "STG generation and assertion analysis complete");
+  double overallTime=0.0; //totalRunTime + tc.totalInputTracesTime + totalLtlRunTime;
+  analyzer->printAnalyzerStatistics(overallTime, "STG generation and assertion analysis complete");
 
   if(ctOpt.csvStatsFileName.size()>0) {
     string filename=ctOpt.csvStatsFileName;
@@ -283,42 +283,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
         <<transitionGraphBytes<<", "
         <<constraintSetsBytes<<", "
         <<totalMemory<<endl;
-    text<<"Runtime(readable),"
-        <<CodeThorn::readableruntime(tc.frontEndRunTime)<<", "
-        <<CodeThorn::readableruntime(tc.initRunTime)<<", "
-        <<CodeThorn::readableruntime(tc.normalizationRunTime)<<", "
-        <<CodeThorn::readableruntime(tc.analysisRunTime)<<", "
-        <<CodeThorn::readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
-        <<CodeThorn::readableruntime(arrayUpdateExtractionRunTime)<<", "
-        <<CodeThorn::readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
-        <<CodeThorn::readableruntime(sortingAndIORunTime)<<", "
-        <<CodeThorn::readableruntime(totalRunTime)<<", "
-        <<CodeThorn::readableruntime(tc.extractAssertionTracesTime)<<", "
-        <<CodeThorn::readableruntime(tc.determinePrefixDepthTime)<<", "
-        <<CodeThorn::readableruntime(tc.totalInputTracesTime)<<", "
-        <<CodeThorn::readableruntime(infPathsOnlyTime)<<", "
-        <<CodeThorn::readableruntime(stdIoOnlyTime)<<", "
-        <<CodeThorn::readableruntime(spotLtlAnalysisTime)<<", "
-        <<CodeThorn::readableruntime(totalLtlRunTime)<<", "
-        <<CodeThorn::readableruntime(overallTime)<<endl;
-    text<<"Runtime(ms),"
-        <<tc.frontEndRunTime<<", "
-        <<tc.initRunTime<<", "
-        <<tc.normalizationRunTime<<", "
-        <<tc.analysisRunTime<<", "
-        <<verifyUpdateSequenceRaceConditionRunTime<<", "
-        <<arrayUpdateExtractionRunTime<<", "
-        <<arrayUpdateSsaNumberingRunTime<<", "
-        <<sortingAndIORunTime<<", "
-        <<totalRunTime<<", "
-        <<tc.extractAssertionTracesTime<<", "
-        <<tc.determinePrefixDepthTime<<", "
-        <<tc.totalInputTracesTime<<", "
-        <<infPathsOnlyTime<<", "
-        <<stdIoOnlyTime<<", "
-        <<spotLtlAnalysisTime<<", "
-        <<totalLtlRunTime<<", "
-        <<overallTime<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
         <<eStateSetMaxCollisions<<", "

@@ -32,8 +32,8 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver2(std::string functionToStartAt,SgProject* root) {
-  super::initializeSolver2(functionToStartAt, root);
+void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
+  super::initializeSolver3(functionToStartAt, root, tc);
   const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
@@ -285,9 +285,9 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
     ss << "Number of iterations           : "<<getIterations()<<"-"<<getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
-  ss << "=============================================================="<<endl;
+  // ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  //ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  //ss << "=============================================================="<<endl;
   ss <<color("normal");
   printStatusMessage(ss.str());
 }

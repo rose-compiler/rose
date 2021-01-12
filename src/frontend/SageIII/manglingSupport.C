@@ -549,7 +549,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 SgName
 mangleQualifiers( const SgScopeStatement* scope )
    {
-  // DQ (3/14/2012): I think we have top assert this here, though it appears to have been commented out.
+  // DQ (3/14/2012): I think we have to assert this here, though it appears to have been commented out.
   // This may become a part of a future set of language dependent assertions in the AST Build Interface
   // since it is more relevant for C++ than for other languges.
   // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.

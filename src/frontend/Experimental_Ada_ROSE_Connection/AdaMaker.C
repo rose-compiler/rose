@@ -3,6 +3,9 @@
 
 #include <algorithm>
 #include <numeric>
+#include <cmath>
+
+#include <boost/algorithm/string/replace.hpp>
 
 #include "AdaMaker.h"
 
@@ -185,6 +188,11 @@ SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
   return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
 }
 
+SgFunctionType& mkAdaFunctionRenamingDeclType(SgType& retty, SgFunctionParameterList& lst)
+{
+  return SG_DEREF(sb::buildFunctionType(&retty, &lst));
+}
+
 SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variableLength)
 {
   // in Ada, dim_info is used for dimensions, since it can directly represent multi-dimensional arrays
@@ -256,11 +264,7 @@ mkLoopStmt(SgBasicBlock& body)
 SgForStatement&
 mkForStatement(SgBasicBlock& body)
 {
-  SgStatement&    test   = SG_DEREF( sb::buildNullStatement() );
-  SgExpression&   incr   = SG_DEREF( sb::buildNullExpression() );
-  SgForStatement& sgnode = SG_DEREF( sb::buildForStatement(nullptr, &test, &incr, &body) );
-
-  return sgnode;
+  return SG_DEREF( sb::buildForStatement(nullptr, nullptr, nullptr, &body) );
 }
 
 SgImportStatement&
@@ -695,6 +699,39 @@ mkProcedureDef( const std::string& nm,
   return mkProcedureDef(ndef, scope, retty, std::move(complete));
 }
 
+// MS: 12/20/2020 Ada function renaming declaration maker
+SgAdaFunctionRenamingDecl&
+mkAdaFunctionRenamingDecl( const std::string& name,
+                           SgScopeStatement& scope,
+                           SgType& retty,
+                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                           )
+{
+  SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
+  SgFunctionParameterList&   lst    = SG_DEREF(sgnode.get_parameterList());
+  SgFunctionParameterScope&  psc    = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+  ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+
+  sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
+  complete(lst, psc);
+
+  SgFunctionType& funty = mkAdaFunctionRenamingDeclType(retty, lst);
+  sgnode.set_type(&funty);
+  ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+
+  SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
+  ROSE_ASSERT(funsy == nullptr);
+
+  funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
+  scope.insert_symbol(name, funsy);
+  sgnode.set_scope(&scope);
+  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.unsetForward();
+
+  markCompilerGenerated(lst);
+  return sgnode;
+}
+
 SgAdaEntryDecl&
 mkAdaEntryDecl( const std::string& name,
                 SgScopeStatement& scope,
@@ -980,9 +1017,11 @@ SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
 SgUnaryOp&
 mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
 {
+  static constexpr SgUnaryOp::Sgop_mode mode = SgUnaryOp::prefix;
+
   SgVarRefExp& varref = SG_DEREF( sb::buildVarRefExp(&var) );
-  SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildUnaryAddOp(&varref))
-                                : sb::buildMinusOp(&varref)
+  SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildPlusPlusOp(&varref, mode))
+                                : sb::buildMinusMinusOp(&varref, mode)
                                 ;
 
   return SG_DEREF(sgnode);
@@ -1009,6 +1048,206 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
   lit.pop_back();
 
   return mkLocatedNode<SgStringVal>(lit);
+}
+
+namespace
+{
+/*
+  template<class T>
+  T powInt(T num, size_t exp, size_t res = 1)
+  {
+    if (exp == 0)
+      return res;
+
+    if ((exp % 2) == 0)
+      return powInt(num*num, exp/2, res);
+
+    return powInt(num, exp-1, num*res);
+  }
+*/
+
+  size_t char2Val(char c)
+  {
+    if ((c >= '0') && (c <= '9'))
+      return c - '0';
+
+    if ((c >= 'A') && (c <= 'F'))
+      return c - 'A' + 10;
+
+    ROSE_ASSERT((c >= 'a') && (c <= 'f'));
+    return c - 'a' + 10;
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseDec(const char* buf, size_t base = 10, char delim = 0)
+  {
+    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+
+    T res = 0;
+
+    while ((*buf != 0) && (*buf != '#') && (*buf != delim))
+    {
+      const size_t v = char2Val(*buf);
+
+      ROSE_ASSERT(v < base);
+      res = res*base + v;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseFrac(const char* buf, size_t base = 10)
+  {
+    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+
+    T      res = 0;
+    size_t divisor = 1*base;
+
+    while ((*buf != 0) && (*buf != '#'))
+    {
+      T v = char2Val(*buf);
+
+      ROSE_ASSERT(v < base);
+      res += v/divisor;
+      divisor = divisor*base;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+
+  std::pair<int, const char*>
+  parseExp(const char* buf)
+  {
+    if (*buf == 0)
+      return std::make_pair(0, buf);
+
+    long int exp = 0;
+
+    if ((*buf == 'e') || (*buf == 'E'))
+    {
+      ++buf;
+      const bool positiveE = (*buf != '-');
+
+      // skip sign
+      if (!positiveE || (*buf == '+')) ++buf;
+
+      std::tie(exp, buf) = parseDec<long int>(buf, 10);
+
+      if (!positiveE) exp = -exp;
+    }
+
+    return std::make_pair(exp, buf);
+  }
+}
+
+
+
+template <>
+int convAdaLiteral<int>(const char* img)
+{
+  long int    res  = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(res, cur) = parseDec<long int>(cur);
+
+  // we just parsed the base
+  if (*cur == '#')
+  {
+    ++cur;
+    base = res;
+
+    std::tie(res, cur) = parseDec<long int>(cur, base);
+  }
+
+  if (*cur == '#')
+  {
+    ++cur;
+
+    std::tie(exp, cur) = parseExp(cur);
+  }
+
+  //~ base = powInt(base, exp);
+  base = std::pow(base, exp);
+
+  /*
+  logWarn() << "i: "
+            << res << ' ' << base << ' ' << exp << '\n'
+            << res * base
+            << std::endl;
+  */
+  return res * base;
+}
+
+
+template <>
+long double convAdaLiteral<long double>(const char* img)
+{
+  std::string litText{img};
+
+  boost::replace_all(litText, "_", "");
+
+  // handle 'normal' real literals
+  if (litText.find('#') == std::string::npos)
+  {
+    // logWarn() << "R: " << conv<long double>(litText) << std::endl;
+    return conv<long double>(litText);
+  }
+
+  // handle based real literals
+  long double dec  = 0;
+  long double frac = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(base, cur) = parseDec<long int>(cur);
+  ROSE_ASSERT(*cur == '#');
+
+  ++cur;
+  std::tie(dec, cur) = parseDec<long double>(cur, base, '.');
+
+  if (*cur == '.')
+  {
+    ++cur;
+    std::tie(frac, cur) = parseFrac<long double>(cur, base);
+  }
+
+  long double res = dec + frac;
+
+  ROSE_ASSERT(*cur == '#');
+  ++cur;
+
+  std::tie(exp, cur) = parseExp(cur);
+
+  base = std::pow(base, exp);
+
+/*
+  logWarn() << "r: "
+            << res << ' ' << dec << '+' << frac << ' ' << base << ' ' << exp << '\n'
+            << res * base
+            << std::endl;
+*/
+  return res * base;
 }
 
 
