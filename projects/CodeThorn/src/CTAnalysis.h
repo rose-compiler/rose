@@ -519,7 +519,7 @@ namespace CodeThorn {
     // this is used in abstract mode to hold a pointer to the
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
-    size_t getSummaryStateMapSize();
+    //size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
     bool isLTLRelevantEState(const EState* estate);
 
@@ -532,8 +532,12 @@ namespace CodeThorn {
     ExternalFunctionsContainerType externalFunctions;
 
   private:
+
     //std::unordered_map<int,const EState*> _summaryStateMap;
-    std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
+    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
+
     const CodeThorn::PState* _initialPStateStored=nullptr;
     const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;

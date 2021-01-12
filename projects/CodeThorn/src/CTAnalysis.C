@@ -377,9 +377,9 @@ EState CodeThorn::CTAnalysis::combine(const EState* es1, const EState* es2) {
   return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
 }
 
-size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
-  return _summaryCSStateMap.size();
-}
+//size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
+//  return _summaryCSStateMapMap.size();
+//}
 
 Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
   return const_cast<EState*>(getSummaryState(lab,context));
@@ -403,14 +403,18 @@ bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
 }
 
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
-  // cs not used yet
-  //return _summaryStateMap[lab.getId()];
   pair<int,CallString> p(lab.getId(),cs);
-  auto iter=_summaryCSStateMap.find(p);
-  if(iter==_summaryCSStateMap.end()) {
+  auto iter1=_summaryCSStateMapMap.find(lab.getId());
+  if(iter1==_summaryCSStateMapMap.end()) {
     return getBottomSummaryState(lab,cs);
   } else {
-    return (*iter).second;
+    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+    auto iter2=summaryCSStateMap.find(cs);
+    if(iter2==summaryCSStateMap.end()) {
+      return getBottomSummaryState(lab,cs);
+    } else {
+      return (*iter2).second;
+    }
   }
 }
 
@@ -418,8 +422,20 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
-  pair<int,CallString> p(lab.getId(),cs);
-  _summaryCSStateMap[p]=estate;
+
+  //pair<int,CallString> p(lab.getId(),cs);
+  //_summaryCSStateMap[p]=estate;
+
+  auto iter1=_summaryCSStateMapMap.find(lab.getId());
+  if(iter1==_summaryCSStateMapMap.end()) {
+    // create new
+    SummaryCSStateMap newSummaryCSStateMap;
+    newSummaryCSStateMap[cs]=estate;
+    _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+  } else {
+    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+    summaryCSStateMap[cs]=estate;
+  }
 }
 
 
