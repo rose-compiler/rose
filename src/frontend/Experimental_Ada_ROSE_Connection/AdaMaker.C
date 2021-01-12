@@ -966,11 +966,11 @@ mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 SgRangeExp&
 mkRangeExp(SgExpression& start, SgExpression& end)
 {
+  SgRangeExp&   sgnode = SG_DEREF(sb::buildRangeExp(&start));
   SgExpression& stride = SG_DEREF(sb::buildIntVal(1));
-  SgRangeExp&   sgnode = SG_DEREF(sb::buildRangeExp(&stride));
 
-  sg::linkParentChild(sgnode, start, &SgRangeExp::set_start);
-  sg::linkParentChild(sgnode, end,   &SgRangeExp::set_end);
+  sg::linkParentChild(sgnode, stride, &SgRangeExp::set_stride);
+  sg::linkParentChild(sgnode, end,    &SgRangeExp::set_end);
   return sgnode;
 }
 
