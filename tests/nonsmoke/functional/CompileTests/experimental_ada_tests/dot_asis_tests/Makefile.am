@@ -44,9 +44,11 @@ ASIS_SPEC_PASS_TESTS := \
 	task_type_declaration.ads \
 	task_with_body.ads \
 	test_unit.ads \
-        unconstrained_array_definition.ads 
+        unconstrained_array_definition.ads \
+        unknown_discriminant.ads \
 	unit_2.ads \
-	variable_declaration.ads 
+	variable_declaration.ads \
+        variant_record.ads
 
 
 
