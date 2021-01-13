@@ -43,6 +43,7 @@ PASSING_TESTS :=                       \
   task_with_body.adb                   \
   task_with_body.ads                   \
   task_with_abort.adb                  \
+  task_with_abort_v2.adb               \
   function_declaration.ads             \
   function_declaration.adb             \
   gototest.ads                         \
@@ -68,6 +69,6 @@ PASSING_TESTS :=                       \
   array_declare_2.ads                  \
   for_loop_statement.adb               \
   for_loop.adb                         \
-  floating_point_definitions.ads       \
+  floating_point_definition.ads        \
   based_numbers.ads                    \
   EndOfList
