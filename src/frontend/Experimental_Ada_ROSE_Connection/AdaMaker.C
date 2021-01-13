@@ -264,7 +264,9 @@ mkLoopStmt(SgBasicBlock& body)
 SgForStatement&
 mkForStatement(SgBasicBlock& body)
 {
-  return SG_DEREF( sb::buildForStatement(nullptr, nullptr, nullptr, &body) );
+  SgNullStatement& test = SG_DEREF( sb::buildNullStatement() );
+
+  return SG_DEREF( sb::buildForStatement(nullptr, &test, nullptr, &body) );
 }
 
 SgImportStatement&

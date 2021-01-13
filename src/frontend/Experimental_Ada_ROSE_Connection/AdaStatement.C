@@ -15,6 +15,7 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
+static constexpr bool NEW_PARTIAL_TYPE_HANDLING = 1; // \todo rm after refactoring
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -1638,29 +1639,28 @@ namespace
       AstContext                       ctx;
   };
 
-/*
+
   SgDeclarationStatement&
-  handlePartialTypeDecl(Element_Struct& elem, AstContext ctx)
+  handlePartialTypeDecl(const NameData& adaname, Element_Struct& elem, AstContext ctx, bool isPrivate)
   {
     SgType&                 opaque = mkOpaqueType();
-    SgScopeStatement&       scope  = astctx.scope();
+    SgScopeStatement&       scope  = ctx.scope();
     const std::string&      name   = adaname.fullName;
     Element_ID              id     = adaname.id();
     SgDeclarationStatement& sgnode = mkTypeDecl(name, opaque, scope);
 
     markCompilerGenerated(sgnode);
     privatize(sgnode, isPrivate);
-    scope.append_statement(sgnode);
+    scope.append_statement(&sgnode);
     recordNode(asisTypes(), id, sgnode);
     ROSE_ASSERT(sgnode.get_parent() == &scope);
   }
 
   SgDeclarationStatement&
-  handlePartialTypeDeclID(Element_ID id, AstContext ctx)
+  handlePartialTypeDeclID(const NameData& adaname, Element_ID id, AstContext ctx, bool isPrivate)
   {
-    return handlePartialTypeDecl(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+    return handlePartialTypeDecl(adaname, retrieveAs<Element_Struct>(elemMap(), id), ctx, isPrivate);
   }
-*/
 } // anonymous
 
 
@@ -2108,21 +2108,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  private: " << decl.Has_Private
                    << std::endl;
 
-        // \todo this may only declare one name
-        //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
-        //~ NameData                adaname = singleName(decl, ctx);
-        //~ ROSE_ASSERT(adaname.fullName == adaname.ident);
+        if (NEW_PARTIAL_TYPE_HANDLING)
+        {
+          NameData                adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        //~ SgDeclarationStatement& sgnode = handlePartialTypeDeclID(decl.Corresponding_Type_Declaration, ctx);
+          SgDeclarationStatement& sgnode = handlePartialTypeDeclID(adaname, decl.Corresponding_Type_Declaration, ctx, isPrivate);
+        }
+        else /* use old code */
+        {
+          // \todo this may only declare one name
+          //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
+          ElemIdRange     range  = idRange(decl.Names);
+          ROSE_ASSERT(range.size() == 1);
+          name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
+          SgType&         opaque = mkOpaqueType();
 
-
-        ROSE_ASSERT(range.size() == 1);
-        name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
-        SgType&         opaque = mkOpaqueType();
-
-        ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
-
+          ROSE_ASSERT(ctx.scope().get_parent());
+          std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
+        }
 
         /*
           bool                           Has_Abstract;
