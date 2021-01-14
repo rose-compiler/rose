@@ -359,7 +359,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     res.result=AbstractValue::createTop();
     return listify(res);
   }
-
   
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     return evalConditionalExpr(condExp,estate,mode);
@@ -1099,18 +1098,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
   logger[TRACE]<<"evalSizeofOp(6):"<<node->unparseToString()<<endl;
 
   // determines sizeValue based on typesize
-    if(typeSize==0) {
-      SAWYER_MESG(logger[WARN])<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
-      sizeValue=AbstractValue::createTop();
-    } else {
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
-      sizeValue=AbstractValue(typeSize);
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
-    }
-    SingleEvalResultConstInt res;
-    res.init(estate,sizeValue);
-    SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
-    return listify(res);
+  if(typeSize==0) {
+    SAWYER_MESG(logger[WARN])<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+    sizeValue=AbstractValue::createTop();
+  } else {
+    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
+    sizeValue=AbstractValue(typeSize);
+    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
+  }
+  SingleEvalResultConstInt res;
+  res.init(estate,sizeValue);
+  SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
+  return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
@@ -2239,4 +2238,8 @@ void ExprAnalyzer::printLoggerWarning(EState& estate) {
 
 void ExprAnalyzer::setReadWriteListener(ReadWriteListener* rwl) {
   _readWriteListener=rwl;
+}
+
+ReadWriteListener* ExprAnalyzer::getReadWriteListener() {
+  return _readWriteListener;
 }

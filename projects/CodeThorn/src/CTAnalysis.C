@@ -2741,6 +2741,10 @@ std::list<EState> CodeThorn::CTAnalysis::transferFunctionExit(Edge edge, const E
 
 std::list<EState> CodeThorn::CTAnalysis::transferFunctionCallExternal(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
+  ROSE_ASSERT(getExprAnalyzer());
+  if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
+    listener->functionCallExternal(edge,estate);
+  }
   return _estateTransferFunctions->transferFunctionCallExternal(edge,estate);
 }
 
@@ -2835,6 +2839,10 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
 #if 0
       // merge with collected constraints of expr (exprConstraints)
       if(edge.isType(EDGE_TRUE)) {

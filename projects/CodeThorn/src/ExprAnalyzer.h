@@ -65,6 +65,9 @@ namespace CodeThorn {
     // memLoc. (*pstate).writeToMemoryLocation(memloc,result) gives
     // state after write
     virtual void writingToMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
+    // evalResult.value() holds AbstractValue of boolean value
+    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResultConstInt evalResult , const EState* estate) {}
+    virtual void functionCallExternal(Edge edge, const EState* estate) {}
   };
   
   /*! 
@@ -182,6 +185,7 @@ namespace CodeThorn {
 
     // if set to 0 then no listner active. By default it is 0.
     void setReadWriteListener(ReadWriteListener* listener);
+    ReadWriteListener* getReadWriteListener();
     
   protected:
     static Sawyer::Message::Facility logger;
