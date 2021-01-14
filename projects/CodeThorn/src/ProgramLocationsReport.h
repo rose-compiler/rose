@@ -19,7 +19,9 @@ namespace CodeThorn {
     size_t numTotalRecordedLocations();
 
     // provide set of all locations
-    void setAllLocationsOfInterest(LabelSet loc);
+    void setReachableLocations(LabelSet loc);
+    void setUnreachableLocations(LabelSet loc);
+
     LabelSet verifiedLocations();
     LabelSet falsifiedLocations();
     LabelSet unverifiedLocations();
@@ -44,12 +46,14 @@ namespace CodeThorn {
   private:
     std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
-    // provide set of all locations
+
+    // provide set of all locations (unused function)
     LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow);
 
     CodeThorn::LabelSet definitiveLocations;
     CodeThorn::LabelSet potentialLocations;
-    CodeThorn::LabelSet allLocations;
+    CodeThorn::LabelSet reachableLocations;
+    CodeThorn::LabelSet unreachableLocations;
     CodeThorn::LabelSet definitiveFunctionEntryLocations;
     CodeThorn::LabelSet potentialFunctionEntryLocations;
     CodeThorn::LabelSet allFunctionEntryLocations;

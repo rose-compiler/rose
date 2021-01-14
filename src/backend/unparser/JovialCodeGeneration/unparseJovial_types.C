@@ -259,22 +259,23 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
      std::string type_name = table_type->get_name();
 
   // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
+  // TODO: Should be able to use get_use_base_type_name() instead, check with rose-issue-rc-410.jov (rc410.cpl)
      bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
 
      SgExprListExp* dim_info = table_type->get_dim_info();
      if (dim_info != NULL)
         {
-           unparseDimInfo(dim_info, info);
+          unparseDimInfo(dim_info, info);
         }
 
-     if (info.inVarDecl() && is_anonymous == false)
+     if (info.inVarDecl() && table_type->get_use_base_type_name() == false && is_anonymous == false)
         {
-           curprint(type_name);
+          curprint(table_type->get_name());
         }
      else if (base_type != NULL)
         {
-        // Unparse base type directly if present and not in a variable declaration context
-           unparseType(base_type, info);
+       // Unparse base type directly if present and not in a variable declaration context
+          unparseType(base_type, info);
         }
   }
 
