@@ -10749,8 +10749,7 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 // Used to replace shared variables with the dereference expression of their addresses
 // e.g. to replace shared1 with (*__pp_shared1)
 
-void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
-{
+void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/) {
   SgExpression* parentExp;
 
   ROSE_ASSERT(oldExp);
@@ -10780,6 +10779,16 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       matlabFor->set_index(newExp);
     else if(matlabFor->get_range() == oldExp)
       matlabFor->set_range(newExp);
+    else
+      ROSE_ASSERT(!"sub-expression not found");
+  }
+  else if(SgJovialForThenStatement *jovFor = isSgJovialForThenStatement(parent)) {
+    if(jovFor->get_initialization() == oldExp)
+      jovFor->set_initialization(newExp);
+    else if(jovFor->get_while_expression() == oldExp)
+      jovFor->set_while_expression(newExp);
+    else if(jovFor->get_by_or_then_expression() == oldExp)
+      jovFor->set_by_or_then_expression(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
   }

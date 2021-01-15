@@ -1460,7 +1460,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgExprListExp* dim_info = nullptr;
    SgExpression* preset = nullptr;
    std::string table_var_name, table_type_name, anon_type_name;
-   bool is_type_inherited = false;
 
    TableSpecifier table_spec;
    Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
@@ -1510,7 +1509,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
          table_type = SageBuilder::buildJovialTableType(table_type_name, table_type, dim_info, SageBuilder::topScopeStack());
          table_type->set_use_base_type_name(true);
          type = table_type;
-         is_type_inherited = true;
       }
       else {
          // This is essentially a TableDescriptionType
@@ -1597,10 +1595,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    ROSE_ASSERT(decl);
    SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
    ROSE_ASSERT(def_decl);
-
-   if (is_type_inherited == false) {
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
-   }
+   SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
 
    if (constant) {
    // This is a ConstantTableDeclaration
