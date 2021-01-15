@@ -130,7 +130,7 @@ $(DOT_BODY_PASS_FILES): %.adb.dot: $(ASIS_TESTS_DIR)/%.adb  $(RUN_ASIS_TOOL)
 	$(RUN_ASIS_TOOL) --file=$< --gnat_home=$(GNAT_HOME) --output_dir=$(builddir) 2> /dev/null | (! grep -i "ASIS Error") || (echo "$< failed $?"; exit 1)
 
 PASSING_DOT_DIFF=$(addsuffix .diff, $(DOT_FILES))
-REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/tests/referecing_dot_output
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/tests/reference/parser_adapter/dot_graphs
 
 $(PASSING_DOT_DIFF): %.dot.diff: %.dot
 	@echo "Comparing dot file:" $<
