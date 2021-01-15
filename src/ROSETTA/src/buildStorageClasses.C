@@ -837,6 +837,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTemplateDeclaration::template_type_enum" ) ||
                  ( varTypeString == "SgBaseClassModifier::baseclass_modifier_enum" ) ||
                  ( varTypeString == "SgLinkageModifier::linkage_modifier_enum" ) ||
+                 ( varTypeString == "SgAdaSelectStmt::select_type_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
                  ( varTypeString == "SgImplicitStatement::implicit_spec_enum" ) ||
