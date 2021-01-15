@@ -968,4 +968,6 @@ SgAdaIndexConstraint
 SgAdaModularType
 SgAdaRecordRepresentationClause
 SgAdaFunctionRenamingDecl
-
+SgAdaSelectStmt
+SgAdaSelectAlternativeStmt
+SgAdaTerminateStmt

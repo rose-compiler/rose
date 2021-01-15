@@ -118,6 +118,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaExitStmt,               "AdaExitStmt",               "ADA_EXIT_STMT" );
      NEW_TERMINAL_MACRO (AdaLoopStmt,               "AdaLoopStmt",               "ADA_LOOP_STMT" );
      NEW_TERMINAL_MACRO (AdaDelayStmt,              "AdaDelayStmt",              "ADA_DELAY_STMT" );
+     NEW_TERMINAL_MACRO (AdaSelectStmt,             "AdaSelectStmt",             "ADA_SELECT_STMT" );
+     NEW_TERMINAL_MACRO (AdaSelectAlternativeStmt,  "AdaSelectAlternativeStmt",  "ADA_SELECT_ALTERNATIVE_STMT" );
+     NEW_TERMINAL_MACRO (AdaTerminateStmt,          "AdaTerminateStmt",          "ADA_TERMINATE_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
   // DQ (10/14/2014): Added template typedef as part of C++11 support.
@@ -584,7 +587,8 @@ Grammar::setUpStatements ()
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
              AtomicStmt                | WhenStmt               | ImageControlStatement | /* JavaPackageDeclaration | */
-             AdaExitStmt               | AdaDelayStmt           | AdaLoopStmt            ,
+             AdaExitStmt               | AdaDelayStmt           | AdaLoopStmt                     | AdaSelectStmt         |
+             AdaSelectAlternativeStmt  | AdaTerminateStmt,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -2637,7 +2641,31 @@ Grammar::setUpStatements ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaDelayStmt.setDataPrototype     ( "bool", "isRelative", "= false",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-   // Ada end
+
+  // Rasmussen (11/09/2020)
+     AdaSelectStmt.setFunctionPrototype            ( "HEADER_ADA_SELECT_STATEMENT", "../Grammar/Statement.code" );
+     AdaSelectStmt.setDataPrototype                ( "SgAdaSelectAlternativeStmt*", "select_path", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectStmt.setDataPrototype                ( "SgAdaSelectAlternativeStmt*", "or_path", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectStmt.setDataPrototype                ( "SgBasicBlock*", "else_path", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectStmt.setDataPrototype                ( "SgBasicBlock*", "abort_path", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectStmt.setDataPrototype                ( "SgAdaSelectStmt::select_type_enum",
+                                                     "select_type", "= SgAdaSelectStmt::e_unknown",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,  NO_DELETE);
+     AdaSelectAlternativeStmt.setFunctionPrototype ( "HEADER_ADA_SELECT_ALTERNATIVE_STATEMENT", "../Grammar/Statement.code" );
+     AdaSelectAlternativeStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectAlternativeStmt.setDataPrototype     ( "SgExpression*", "guard", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaSelectAlternativeStmt.setDataPrototype     ( "SgAdaSelectAlternativeStmt*", "next", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaTerminateStmt.setFunctionPrototype ( "HEADER_ADA_TERMINATE_STATEMENT", "../Grammar/Statement.code" );
+
+     // Ada end
 
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
 
@@ -4154,6 +4182,9 @@ Grammar::setUpStatements ()
      AdaExitStmt.setFunctionSource          ( "SOURCE_ADA_EXIT_STATEMENT", "../Grammar/Statement.code" );
      AdaLoopStmt.setFunctionSource          ( "SOURCE_ADA_LOOP_STATEMENT", "../Grammar/Statement.code" );
      AdaDelayStmt.setFunctionSource         ( "SOURCE_ADA_DELAY_STATEMENT", "../Grammar/Statement.code" );
+     AdaSelectStmt.setFunctionSource        ( "SOURCE_ADA_SELECT_STATEMENT", "../Grammar/Statement.code" );
+     AdaSelectAlternativeStmt.setFunctionSource ( "SOURCE_ADA_SELECT_ALTERNATIVE_STATEMENT", "../Grammar/Statement.code" );
+     AdaTerminateStmt.setFunctionSource     ( "SOURCE_ADA_TERMINATE_STATEMENT", "../Grammar/Statement.code" );
      AsmStmt.setFunctionSource              ( "SOURCE_ASM_STATEMENT", "../Grammar/Statement.code" );
      SpawnStmt.setFunctionSource            ( "SOURCE_SPAWN_STATEMENT", "../Grammar/Statement.code" );
 

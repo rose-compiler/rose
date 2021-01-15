@@ -1067,6 +1067,223 @@ namespace
       IfStmtCreator() = delete;
   };
 
+  // MS 11/17/2020 : builders not in sageBuilder (yet)
+  SgAdaSelectAlternativeStmt* buildAdaSelectAlternativeStmt(SgExpression *guard,
+                                                            SgBasicBlock *body)
+  {
+    ROSE_ASSERT(body);
+
+    SgAdaSelectAlternativeStmt *stmt =
+      new SgAdaSelectAlternativeStmt();
+    ROSE_ASSERT(stmt);
+
+    stmt->set_guard(guard);
+    stmt->set_body(body);
+
+    body->set_parent(stmt);
+    guard->set_parent(stmt);
+
+    markCompilerGenerated(*stmt);
+    return stmt;
+  }
+
+  SgAdaSelectStmt* buildAdaSelectStmt()
+  {
+    SgAdaSelectStmt *stmt = new SgAdaSelectStmt();
+    ROSE_ASSERT(stmt);
+
+    markCompilerGenerated(*stmt);
+    return stmt;
+  }
+
+  // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
+  struct SelectStmtCreator
+  {
+    typedef SgAdaSelectAlternativeStmt*  alternative;
+    typedef std::vector<alternative>     alternative_container;
+
+    explicit
+    SelectStmtCreator(AstContext astctx, SgAdaSelectStmt::select_type_enum sty)
+      : ctx(astctx), ty(sty)
+    {
+      abort_path = nullptr;
+      else_path = nullptr;
+      select_path = nullptr;
+    }
+
+    SgAdaSelectAlternativeStmt *commonAltStmt(Path_Struct& path) {
+      // create body of alternative
+      SgBasicBlock& block    = mkBasicBlock();
+      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
+
+      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
+
+      // create guard
+      SgExpression* guard = &getExprID_opt(path.Guard, ctx);
+
+      // instantiate SgAdaSelectAlternativeStmt node and return it
+      SgAdaSelectAlternativeStmt* stmt = buildAdaSelectAlternativeStmt(guard, &block);
+
+      return stmt;
+    }
+
+    SgBasicBlock *commonMakeBlock(Path_Struct& path) {
+      SgBasicBlock& block    = mkBasicBlock();
+      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
+      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
+      return &block;
+    }
+
+    void orAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == An_Or_Path);
+      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
+      or_paths.emplace_back(alt);
+    }
+
+    void selectAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == A_Select_Path);
+      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
+      select_path = alt;
+    }
+
+    void elseAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == An_Else_Path);
+      SgBasicBlock* alt = commonMakeBlock(path);
+      else_path = alt;
+    }
+
+    void abortAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == A_Then_Abort_Path);
+      SgBasicBlock* alt = commonMakeBlock(path);
+      abort_path = alt;
+    }
+
+    void operator()(Element_Struct& elem)
+    {
+      Path_Struct& path = elem.The_Union.Path;
+
+      switch (path.Path_Kind)
+        {
+        case A_Select_Path:
+          {
+            selectAlternative(path);
+            break;
+          }
+
+        case An_Or_Path:
+          {
+            orAlternative(path);
+            break;
+          }
+
+        case An_Else_Path:
+          {
+            elseAlternative(path);
+            break;
+          }
+
+        case A_Then_Abort_Path:
+          {
+            abortAlternative(path);
+            break;
+          }
+
+        default:
+          ROSE_ASSERT(false);
+        }
+    }
+
+    SgAdaSelectAlternativeStmt*
+    chainOr()
+    {
+      SgAdaSelectAlternativeStmt *cur = NULL;
+
+      for (SgAdaSelectAlternativeStmt* s : or_paths) {
+        if (cur == NULL)
+          {
+            cur = s;
+          }
+        else
+          {
+            cur->set_next(s);
+            s->set_parent(cur);
+            cur = s;
+          }
+      }
+
+      return or_paths.front();
+    }
+
+    operator SgStatement&()
+    {
+      SgAdaSelectStmt *stmt = buildAdaSelectStmt();
+      stmt->set_select_type(ty);
+      switch (ty)
+        {
+        case SgAdaSelectStmt::e_selective_accept:
+          {
+            stmt->set_select_path(select_path);
+            select_path->set_parent(stmt);
+
+            SgAdaSelectAlternativeStmt* orRoot = chainOr();
+            stmt->set_or_path(orRoot);
+            orRoot->set_parent(stmt);
+
+            stmt->set_else_path(else_path);
+            if (else_path != nullptr) {
+              else_path->set_parent(stmt);
+            }
+            break;
+          }
+
+        case SgAdaSelectStmt::e_timed_entry:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          // require only one or path
+          ROSE_ASSERT(or_paths.size() == 1);
+          stmt->set_or_path(or_paths.front());
+          or_paths.front()->set_parent(stmt);
+          break;
+
+        case SgAdaSelectStmt::e_conditional_entry:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          stmt->set_else_path(else_path);
+          else_path->set_parent(stmt);
+          break;
+
+        case SgAdaSelectStmt::e_asynchronous:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          stmt->set_abort_path(abort_path);
+          abort_path->set_parent(stmt);
+          break;
+
+        default:
+          ROSE_ASSERT(false);
+        }
+      return SG_DEREF( stmt );
+    }
+
+  private:
+    AstContext                        ctx;
+    SgAdaSelectStmt::select_type_enum ty;
+    alternative_container             or_paths;
+    alternative                       select_path;
+    SgBasicBlock*                     abort_path;
+    SgBasicBlock*                     else_path;
+
+    SelectStmtCreator() = delete;
+  };
+
+
   bool isForwardLoop(Element_Struct& forvar)
   {
     ROSE_ASSERT (forvar.Element_Kind == A_Declaration);
@@ -1418,7 +1635,38 @@ namespace
           */
           break;
         }
-
+      case A_Selective_Accept_Statement:        // 9.7.1
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_selective_accept});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case A_Timed_Entry_Call_Statement:        // 9.7.2
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_timed_entry});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case A_Conditional_Entry_Call_Statement:  // 9.7.3
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_conditional_entry});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case An_Asynchronous_Select_Statement:    // 9.7.4
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_asynchronous});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
       case An_Abort_Statement:                  // 9.8
         {
           logKind("An_Abort_Statement");
@@ -1443,10 +1691,6 @@ namespace
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
       case A_Terminate_Alternative_Statement:   // 9.7.1
-      case A_Selective_Accept_Statement:        // 9.7.1
-      case A_Timed_Entry_Call_Statement:        // 9.7.2
-      case A_Conditional_Entry_Call_Statement:  // 9.7.3
-      case An_Asynchronous_Select_Statement:    // 9.7.4
       case A_Code_Statement:                    // 13.8 assembly
       default:
         logWarn() << "Unhandled statement " << stmt.Statement_Kind << std::endl;
