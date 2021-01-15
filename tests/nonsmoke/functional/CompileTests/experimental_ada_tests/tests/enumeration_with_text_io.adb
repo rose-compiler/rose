@@ -1,6 +1,6 @@
 with Ada.Text_IO;
 
-procedure Enumeration is
+procedure Enumeration_With_Text_IO is
   type MyColor is (Blue, Red, Green, Yellow);
   for MyColor use (Blue    => 11,
                  Red     => 22,
@@ -16,4 +16,4 @@ begin
       when others =>
          Ada.Text_IO.Put_Line ("Oh, man, the colors!!");
    end case;
-end Enumeration;
+end Enumeration_With_Text_IO;
