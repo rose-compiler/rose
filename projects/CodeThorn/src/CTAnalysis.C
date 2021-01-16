@@ -1678,30 +1678,6 @@ SgFunctionDefinition* CodeThorn::CTAnalysis::getFunctionDefinitionOfEntryLabel(L
   return funDef;
 }
 
-LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {
-  Flow& flow=*getFlow();
-  LabelSet functionEntryLabels=getCFAnalyzer()->functionEntryLabels(flow);
-  return functionEntryLabels;
-}
-
-LabelSet CodeThorn::CTAnalysis::reachableFunctionEntryLabels() {
-  LabelSet funEntryLabs=functionEntryLabels();
-  LabelSet reachable;
-  for(auto lab : funEntryLabs) {
-    if(isReachableLabel(lab))
-      reachable.insert(lab);
-  }
-  return reachable;
-}
-
-SgFunctionDefinition* CodeThorn::CTAnalysis::getFunctionDefinitionOfEntryLabel(Label lab) {
-  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(lab));
-  SgNode* node=getLabeler()->getNode(lab);
-  SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
-  ROSE_ASSERT(funDef);
-  return funDef;
-}
-
 std::string CodeThorn::CTAnalysis::analyzedFunctionsToString() {
   ostringstream ss;
   LabelSet reachableFunLabels=reachableFunctionEntryLabels();
