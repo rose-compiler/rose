@@ -245,14 +245,16 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-461.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
- rc410.pre.cpl
+ rc410.pre.cpl                          \
+ rc515.cpl
 
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
  rose-issue-rc-79b.cpl                  \
  rose-issue-rc-92b.cpl                  \
- rose-issue-rc-119b.cpl
+ rose-issue-rc-119b.cpl                 \
+ rose-issue-rc-515.cpl
 
 # proc_refs.cpl                          
 
