@@ -156,7 +156,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("inline", po::value< bool >(&ctOpt.inlineFunctions)->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >(&ctOpt.inlineFunctionsDepth)->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
-    ("eliminate-compound-assignments", po::value< bool >(&ctOpt.eliminateCompoundStatements)->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >(&ctOpt.annotateTerms)->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >(&ctOpt.eliminateSTGBackEdges)->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions", po::value< bool >(&ctOpt.generateAssertions)->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")

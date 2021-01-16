@@ -403,18 +403,23 @@ bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
 }
 
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
-  auto iter1=_summaryCSStateMapMap.find(lab.getId());
-  if(iter1==_summaryCSStateMapMap.end()) {
-    return getBottomSummaryState(lab,cs);
-  } else {
-    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-    auto iter2=summaryCSStateMap.find(cs);
-    if(iter2==summaryCSStateMap.end()) {
-      return getBottomSummaryState(lab,cs);
+  const CodeThorn::EState* res;
+#pragma omp critical(SUMMARY_STATES)
+  {
+    auto iter1=_summaryCSStateMapMap.find(lab.getId());
+    if(iter1==_summaryCSStateMapMap.end()) {
+      res=getBottomSummaryState(lab,cs);
     } else {
-      return (*iter2).second;
+      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+      auto iter2=summaryCSStateMap.find(cs);
+      if(iter2==summaryCSStateMap.end()) {
+        res=getBottomSummaryState(lab,cs);
+      } else {
+        res=(*iter2).second;
+      }
     }
   }
+  return res;
 }
 
 void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, CodeThorn::EState const* estate) {
@@ -424,16 +429,18 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
 
   //pair<int,CallString> p(lab.getId(),cs);
   //_summaryCSStateMap[p]=estate;
-
-  auto iter1=_summaryCSStateMapMap.find(lab.getId());
-  if(iter1==_summaryCSStateMapMap.end()) {
-    // create new
-    SummaryCSStateMap newSummaryCSStateMap;
-    newSummaryCSStateMap[cs]=estate;
-    _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
-  } else {
-    SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-    summaryCSStateMap[cs]=estate;
+#pragma omp critical(SUMMARY_STATES)
+  {
+    auto iter1=_summaryCSStateMapMap.find(lab.getId());
+    if(iter1==_summaryCSStateMapMap.end()) {
+      // create new
+      SummaryCSStateMap newSummaryCSStateMap;
+      newSummaryCSStateMap[cs]=estate;
+      _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+    } else {
+      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+      summaryCSStateMap[cs]=estate;
+    }
   }
 }
 
@@ -2734,6 +2741,10 @@ std::list<EState> CodeThorn::CTAnalysis::transferFunctionExit(Edge edge, const E
 
 std::list<EState> CodeThorn::CTAnalysis::transferFunctionCallExternal(Edge edge, const EState* estate) {
   ROSE_ASSERT(_estateTransferFunctions);
+  ROSE_ASSERT(getExprAnalyzer());
+  if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
+    listener->functionCallExternal(edge,estate);
+  }
   return _estateTransferFunctions->transferFunctionCallExternal(edge,estate);
 }
 
@@ -2828,6 +2839,10 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
 #if 0
       // merge with collected constraints of expr (exprConstraints)
       if(edge.isType(EDGE_TRUE)) {

@@ -652,16 +652,6 @@ int main( int argc, char * argv[] ) {
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
-    if(ctOpt.eliminateCompoundStatements) {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-      set<AbstractValue> compoundIncVarsSet=AstUtility::determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-      rewriteSystem.resetStatistics();
-      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
-    }
-
     if(ctOpt.rers.eliminateArrays) {
       Specialization speci;
       speci.transformArrayProgram(sageProject, analyzer);

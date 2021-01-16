@@ -150,7 +150,6 @@ int main( int argc, char * argv[] ) {
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
     SgNode* root=sageProject;ROSE_ASSERT(root);
     setAssertConditionVariablesInAnalyzer(root,analyzer);
-    optionallyEliminateCompoundStatements(ctOpt, analyzer, root);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
     initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
     analyzer->initLabeledAssertNodes(sageProject);

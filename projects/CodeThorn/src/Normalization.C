@@ -16,6 +16,9 @@
 #include "Diagnostics.h"
 #include "sageGeneric.h"
 
+// required for rewriteCompoundAssignmentStatementsInAst
+#include "RewriteSystem.h"
+
 using namespace Sawyer::Message;
 
 // Author: Markus Schordan, 2018
@@ -179,6 +182,10 @@ namespace CodeThorn {
     printNormalizationPhase();
     if(options.normalizeExpressions) {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+    }
+    printNormalizationPhase();
+    if(options.normalizeCompoundAssignments) {
+      normalizeCompoundAssignmentsInAst(root);
     }
     printNormalizationPhase();
     if(options.normalizeVariableDeclarations) {
@@ -668,7 +675,17 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
     }
   }
 
-  /***************************************************************************
+
+void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
+  if(isSgCompoundAssignOp(node)) {
+    cout<<"Error: compound assignment normalization: tree has compound assignment as root:"<<node->unparseToString()<<endl;
+    exit(1);
+  }
+  RewriteSystem rewriteSystem;
+  rewriteSystem.rewriteCompoundAssignmentsInAst(node);
+}
+
+/***************************************************************************
    * NORMALIZE EXPRESSIONS
    **************************************************************************/
 
