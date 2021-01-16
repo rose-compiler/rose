@@ -363,6 +363,70 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaSelectStmt& n)
+    {
+      switch (n.get_select_type()) {
+      case SgAdaSelectStmt::e_selective_accept:
+        // 9.7.1
+        prn("select\n");
+        stmt(n.get_select_path());
+        if (n.get_or_path() != NULL) {
+          prn("or\n");
+          stmt(n.get_or_path());
+        }
+        if (n.get_else_path() != NULL) {
+          prn("else\n");
+          stmt(n.get_else_path());
+        }
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_asynchronous:
+        // 9.7.4
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("then abort\n");
+        stmt(n.get_abort_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_conditional_entry:
+        // 9.7.3
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("else\n");
+        stmt(n.get_else_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_timed_entry:
+        // 9.7.2
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("or\n");
+        stmt(n.get_or_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      default:
+        ROSE_ASSERT(false);
+      }
+    }
+
+    void handle(SgAdaSelectAlternativeStmt& n)
+    {
+      if (isSgNullExpression(n.get_guard()) == NULL) {
+        prn("when ");
+        expr(n.get_guard());
+        prn(" =>\n");
+      }
+      stmt(n.get_body());
+      if (n.get_next() != NULL) {
+        prn("or\n");
+        stmt(n.get_next());
+      }
+    }
+
     void handle(SgAdaTaskTypeDecl& n)
     {
       prn("task type ");

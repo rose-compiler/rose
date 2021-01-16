@@ -9,12 +9,15 @@
 using namespace std;
 using namespace CodeThorn;
 
-void CodeThorn::ProgramLocationsReport::setAllLocationsOfInterest(LabelSet loc) {
-  allLocations=loc;
+void CodeThorn::ProgramLocationsReport::setReachableLocations(LabelSet loc) {
+  reachableLocations=loc;
+}
+void CodeThorn::ProgramLocationsReport::setUnreachableLocations(LabelSet loc) {
+  unreachableLocations=loc;
 }
 
 LabelSet CodeThorn::ProgramLocationsReport::verifiedLocations(){
-  LabelSet a=allLocations;
+  LabelSet a=reachableLocations;
   a-=definitiveLocations;
   a-=potentialLocations;
   return a;
@@ -90,6 +93,7 @@ bool CodeThorn::ProgramLocationsReport::isRecordedLocation(Label lab) {
   return definitiveLocations.isElement(lab)||potentialLocations.isElement(lab);
 }
 
+// unused function
 LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow) {
   LabelSet funEntries=cfAnalyzer.functionEntryLabels(flow);
   LabelSet verifiedFunctions;
@@ -184,7 +188,7 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
 }
 
 void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, Labeler* labeler) {
-  int int_n=allLocations.size();
+  int int_n=reachableLocations.size();
   double n=(double)int_n;
   LabelSet verified=verifiedLocations();
   int v=verified.size();
@@ -192,12 +196,16 @@ void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, 
   int f=falsified.size();
   LabelSet unverified=unverifiedLocations();
   int u=unverified.size();
+  int d=unreachableLocations.size();
+  int t=int_n+d;
   os<<std::fixed<<std::setprecision(2);
-  os<<"Proven     locations: "<<setw(6)<<f+v<<" ["<<setw(6)<<(f+v)/n*100.0<<"%]"<<endl;
-  os<<" Verified  locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
-  os<<" Falsified locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
-  os<<"Unproven   locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
-  os<<"Total      locations: "<<setw(6)<<int_n<<endl;
+  os<<"Reachable verified locations  : "<<setw(6)<<f+v<<" ["<<setw(6)<<(f+v)/n*100.0<<"%]"<<endl;
+  os<<" Safe  locations              : "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
+  os<<" Unsafe locations             : "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
+  os<<"Reachable unverified locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
+  os<<"Total reachable locations     : "<<setw(6)<<int_n<<" ["<<setw(6)<<n/t*100.0<<"%]"<<endl;
+  os<<"Total unreachable locations   : "<<setw(6)<<d<<"["<<setw(6)<<(double)d/t*100.0<<"%]"<<endl;
+  os<<"Total             locations   : "<<setw(6)<<t<<endl;
 #if 0
   os<<"Detected Errors:"<<endl;
   if(f==0) {

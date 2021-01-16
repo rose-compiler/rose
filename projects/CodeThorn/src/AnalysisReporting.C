@@ -13,7 +13,7 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
+  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED, UNREACHABLE };
 
   LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
@@ -49,7 +49,19 @@ namespace CodeThorn {
 #else
         LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(ctOpt, analyzer);
 #endif
-        report.setAllLocationsOfInterest(labelsOfInterest2);
+        // compute partioning
+        LabelSet reachableLabels;
+        LabelSet unreachableLabels;
+        for(auto lab : labelsOfInterest2) {
+          if(analyzer->isUnreachableLabel(lab)) {
+            unreachableLabels.insert(lab);
+          } else {
+            reachableLabels.insert(lab);
+          }
+        }
+
+        report.setReachableLocations(reachableLabels);
+        report.setUnreachableLocations(unreachableLabels);
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
         cout<<"-----------------------------------------------"<<endl;
         // generate verification call graph
@@ -164,6 +176,10 @@ namespace CodeThorn {
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     std::map<Label,VerificationResult> fMap;
     for(auto entryLabel : functionEntryLabels) {
+      if(analyzer->isUnreachableLabel(entryLabel)) {
+        fMap[entryLabel]=UNREACHABLE;
+        continue;
+      }
       // todo: function is
       // falsified: if at least one label is falsified (=0)
       // unverified: if at least one is unverified (=top)
@@ -210,7 +226,8 @@ namespace CodeThorn {
       case FALSIFIED: nodeColor="red";numFalsifiedFunctions++;break;
       case UNVERIFIED: nodeColor="orange";numUnverifiedFunctions++;break;
       case VERIFIED: nodeColor="green";numVerifiedFunctions++;break;
-      case INCONSISTENT: nodeColor="gray";break;
+      case INCONSISTENT: nodeColor="orchid1";break;
+      case UNREACHABLE: nodeColor="gray";break;
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+":"+functionName+"\"";
@@ -225,11 +242,12 @@ namespace CodeThorn {
       case FALSIFIED: nodeColor="red";break;
       case UNVERIFIED: nodeColor="orange";break;
       case VERIFIED: nodeColor="green";break;
-      case INCONSISTENT: nodeColor="gray";break;
+      case INCONSISTENT: nodeColor="orchid1";break;
+      case UNREACHABLE: nodeColor="gray";break;
       }
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+"\"";
-      if(nodeColor!="gray")
+      if(nodeColor!="orchid1")
         cgNodes2<<entryLabel.toString()<<" [style=filled, fillcolor="<<nodeColor<<","<<dotFunctionName<<"]"<<endl;
     }
 
@@ -258,10 +276,13 @@ namespace CodeThorn {
     LabelSet unverified=report.unverifiedLocations();
     
     Flow& flow=*analyzer->getFlow();
-    enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED };
     std::map<Label,VerificationResult> fMap;
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     for(auto entryLabel : functionEntryLabels) {
+      if(analyzer->isUnreachableLabel(entryLabel)) {
+        fMap[entryLabel]=UNREACHABLE;
+        continue;
+      }
       LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
       VerificationResult funVer=INCONSISTENT;
       size_t count=0;
@@ -289,12 +310,14 @@ namespace CodeThorn {
     int numUnverifiedFunctions=0;
     int numVerifiedFunctions=0;
     int numInconsistentFunctions=0;
+    int numUnreachableFunctions=0;
     for (auto entryLabel : functionEntryLabels ) {
       switch(fMap[entryLabel]) {
       case FALSIFIED: nodeColor="violated";numFalsifiedFunctions++;break;
       case UNVERIFIED: nodeColor="unverified";numUnverifiedFunctions++;break;
       case VERIFIED: nodeColor="verified";numVerifiedFunctions++;break;
       case INCONSISTENT: nodeColor="inconsistent";numInconsistentFunctions++;break;
+      case UNREACHABLE: nodeColor="unreachable";numUnreachableFunctions++;break;
       }
       SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
@@ -305,14 +328,18 @@ namespace CodeThorn {
 
     // print stats
     int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
-    int numTotalFunctions=numProvenFunctions+numUnverifiedFunctions+numInconsistentFunctions;
-    cout<<"Proven       functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<" Verified    functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<" Violated    functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Unproven     functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    int numTotalReachableFunctions=numProvenFunctions+numUnverifiedFunctions+numInconsistentFunctions;
+    int numTotalUnreachableFunctions=numUnreachableFunctions;
+    int numTotalFunctions=numTotalReachableFunctions+numTotalUnreachableFunctions;
+    cout<<"Reachable verified   functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+    cout<<" Safe                functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+    cout<<" Unsafe              functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
+    cout<<"Reachable unverified functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+    cout<<"Total reachable      functions: "<<numTotalReachableFunctions<<" [ "<<numTotalReachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Total unreachable    functions: "<<numTotalUnreachableFunctions<<" [ "<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Total                functions: "<<numTotalFunctions<<endl;
     if(numInconsistentFunctions>0)
-      cout<<"Inconsistent functions: "<<numInconsistentFunctions<<" [ "<<numInconsistentFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total        functions: "<<numTotalFunctions<<endl;
+      cout<<"Inconsistent functions: "<<numInconsistentFunctions<<" [ "<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
     
     std::string dotFileString1=cgNodes.str();
     if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName1, dotFileString1)) {
