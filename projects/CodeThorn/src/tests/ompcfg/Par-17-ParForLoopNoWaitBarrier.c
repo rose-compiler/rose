@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 #pragma omp barrier
 #pragma omp for nowait
   for (int i = 0; i < 4; ++i) {
-    a[i] += a[i];
+    a[i] = a[i] + a[i];
   }
   }
 
