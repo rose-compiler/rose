@@ -16,7 +16,7 @@ namespace CodeThorn {
     static void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
     static void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
-    static CodeThorn::LabelSet functionLabels(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    static CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
   };
 }
 #endif

@@ -15,10 +15,10 @@ namespace CodeThorn {
 
   enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED, UNREACHABLE };
 
-  LabelSet AnalysisReporting::functionLabels(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+  LabelSet AnalysisReporting::functionLabels(CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
+    LabelSet functionEntryLabels=analyzer->functionEntryLabels();
     Flow& flow=*analyzer->getFlow();
-    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     for(auto entryLabel : functionEntryLabels) {
       LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
       allFunctionLabels+=funLabSet;
@@ -47,7 +47,7 @@ namespace CodeThorn {
               labelsOfInterest2.insert(lab);
         }
 #else
-        LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(ctOpt, analyzer);
+        LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(analyzer);
 #endif
         // compute partioning
         LabelSet reachableLabels;

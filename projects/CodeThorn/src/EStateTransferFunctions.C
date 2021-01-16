@@ -210,7 +210,6 @@ void EStateTransferFunctions::initDiagnostics() {
     // check for function pointer label
 
     SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
-    _analyzer->recordAnalyzedFunction(funDef);
     SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
     ROSE_ASSERT(funDef);
     // ad 3)
