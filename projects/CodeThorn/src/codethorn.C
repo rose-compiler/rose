@@ -204,7 +204,6 @@ int main( int argc, char * argv[] ) {
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
-    optionallyEliminateCompoundStatements(ctOpt, analyzer, sageProject);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
     if(analyzer->getFlow()->getStartLabelSet().size()==0) {
       // exit early

@@ -626,19 +626,6 @@ void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer) {
   analyzer->setAssertCondVarsSet(varsInAssertConditions);
 }
 
-void optionallyEliminateCompoundStatements(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-  if(ctOpt.eliminateCompoundStatements) {
-    RewriteSystem rewriteSystem;
-    SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-    set<AbstractValue> compoundIncVarsSet=AstUtility::determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-    analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-    SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-    rewriteSystem.resetStatistics();
-    rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
-  }
-}
-
 void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
   if(ctOpt.rers.eliminateArrays) {
     Specialization speci;

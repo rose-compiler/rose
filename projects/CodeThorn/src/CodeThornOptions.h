@@ -60,7 +60,6 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;
-  bool eliminateCompoundStatements=false;
   bool annotateTerms=false; // unparsing
   bool eliminateSTGBackEdges=false;
   bool generateAssertions=false; // unparsing
