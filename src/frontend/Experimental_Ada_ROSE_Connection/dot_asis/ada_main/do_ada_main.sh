@@ -21,9 +21,8 @@ gnat_home=`dirname ${gnat_bin}`
 # The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main:
 repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
 test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
-#test_dir="${test_base_dir}/tests"
-test_dir="${test_base_dir}/dot_asis_tests/test_units"
-reference_dot_file_dir="${test_base_dir}/dot_asis_tests/referecing_dot_output"
+test_dir="${test_base_dir}/tests"
+reference_dot_file_dir="${test_dir}/reference/parser_adapter/dot_graphs"
 
 target_dir="${test_dir}"
 #target_units="minimal.adb"
@@ -34,9 +33,22 @@ target_dir="${test_dir}"
 #target_units="requeue_statement_2.adb"
 #target_units="hello_world.adb"
 #target_units="ordinary_type_declaration.ads"
+#target_units="all_modes.ads"
 target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 output_dir="${reference_dot_file_dir}"
+
+# RC-487:
+#test_dir="/usr/workspace/wsrzd/charles/code/JACCEL/Ada/GROUP_2/Livermore/CDU_9.1.2_Source_Code/cdu_prep.ss"
+#target_dir="${test_dir}"
+#target_units="\
+#algebraic_types.2.ada \
+#dp_bus_1553_if.2.ada \
+#string_handler.2.ada \
+#generic_shared_memory.2.ada \
+#generic_semaphores.2.ada \
+#ipcs_keys.2.ada"
+#output_dir="${target_dir}/../dot_files"
 
 obj_dir=${base_dir}/obj
 
