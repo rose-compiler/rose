@@ -327,9 +327,9 @@ namespace CodeThorn {
     LabelSet functionEntryLabels();
     LabelSet reachableFunctionEntryLabels();
     SgFunctionDefinition* getFunctionDefinitionOfEntryLabel(Label lab);
-    
     std::string analyzedFunctionsToString();
     std::string analyzedFilesToString();
+
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
