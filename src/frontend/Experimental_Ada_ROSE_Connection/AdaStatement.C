@@ -15,7 +15,7 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
-static constexpr bool NEW_PARTIAL_TYPE_HANDLING = 1; // \todo rm after refactoring
+static constexpr bool NEW_PARTIAL_TYPE_HANDLING = true; // \todo rm after refactoring
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -636,13 +636,29 @@ namespace
   };
 
 
+  SgClassDeclaration&
+  createRecordDecl( const std::string& name,
+                    SgClassDefinition& def,
+                    SgScopeStatement& scope,
+                    SgDeclarationStatement* nondefdcl
+                  )
+  {
+    if (SgClassDeclaration* recdcl = isSgClassDeclaration(nondefdcl))
+      return mkRecordDecl(*recdcl, def, scope);
+
+    // if nondefdcl is set, it must be a SgClassDeclaration
+    ROSE_ASSERT(!nondefdcl);
+    return mkRecordDecl(name, def, scope);
+  }
+
+
   /// creates a ROSE declaration depending on the provided type/definition
   struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
   {
       typedef sg::DispatchHandler<SgDeclarationStatement*> base;
 
-      MakeDeclaration(const std::string& name, SgScopeStatement& scope, TypeData basis)
-      : base(), dclname(name), dclscope(scope), foundation(basis)
+      MakeDeclaration(const std::string& name, SgScopeStatement& scope, TypeData basis, SgDeclarationStatement* incompl)
+      : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
@@ -658,7 +674,7 @@ namespace
 
       void handle(SgClassDefinition& n)
       {
-        SgClassDeclaration&    rec = mkRecordDecl(dclname, n, dclscope);
+        SgClassDeclaration&    rec = createRecordDecl(dclname, n, dclscope, incomplDecl);
         SgDeclarationModifier& mod = rec.get_declarationModifier();
 
         if (foundation.hasAbstract) mod.setAdaAbstract();
@@ -669,9 +685,10 @@ namespace
       }
 
     private:
-      std::string       dclname;
-      SgScopeStatement& dclscope;
-      TypeData          foundation;
+      std::string             dclname;
+      SgScopeStatement&       dclscope;
+      TypeData                foundation;
+      SgDeclarationStatement* incomplDecl;
   };
 
 
@@ -688,9 +705,10 @@ namespace
       {
         ROSE_ASSERT(nameelem.fullName == nameelem.ident);
 
-        const std::string&      name = nameelem.fullName;
         Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl  = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
+        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
+        const std::string&      name = nameelem.fullName;
+        SgDeclarationStatement* dcl  = sg::dispatch(MakeDeclaration(name, scope, foundation, nondef), foundation.n);
         ROSE_ASSERT(dcl);
 
         markCompilerGenerated(*dcl);
@@ -698,7 +716,7 @@ namespace
         scope.append_statement(dcl);
 
         // \todo double check that recorded types are consistent with ROSE representation
-        recordNode(asisTypes(), id, *dcl);
+        recordNode(asisTypes(), id, *dcl, nondef != nullptr);
         ROSE_ASSERT(dcl->get_parent() == &scope);
       }
 
@@ -1639,28 +1657,78 @@ namespace
       AstContext                       ctx;
   };
 
-
-  SgDeclarationStatement&
-  handlePartialTypeDecl(const NameData& adaname, Element_Struct& elem, AstContext ctx, bool isPrivate)
+  std::pair<Element_ID, Type_Kinds>
+  queryDefinitionData(Element_ID completeElementId, AstContext ctx)
   {
-    SgType&                 opaque = mkOpaqueType();
-    SgScopeStatement&       scope  = ctx.scope();
-    const std::string&      name   = adaname.fullName;
-    Element_ID              id     = adaname.id();
-    SgDeclarationStatement& sgnode = mkTypeDecl(name, opaque, scope);
+    Element_Struct&     complElem = retrieveAs<Element_Struct>(elemMap(), completeElementId);
 
-    markCompilerGenerated(sgnode);
-    privatize(sgnode, isPrivate);
-    scope.append_statement(&sgnode);
-    recordNode(asisTypes(), id, sgnode);
-    ROSE_ASSERT(sgnode.get_parent() == &scope);
+    ROSE_ASSERT(complElem.Element_Kind == A_Declaration);
+
+    Declaration_Struct& complDecl = complElem.The_Union.Declaration;
+    NameData            declname  = singleName(complDecl, ctx);
+
+    ROSE_ASSERT(complDecl.Declaration_Kind == An_Ordinary_Type_Declaration);
+
+    Element_Struct&     typeElem = retrieveAs<Element_Struct>(elemMap(), complDecl.Type_Declaration_View);
+    ROSE_ASSERT(typeElem.Element_Kind == A_Definition);
+
+    Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
+    ROSE_ASSERT(typeDefn.Definition_Kind == A_Type_Definition);
+
+    return std::make_pair(declname.id(), typeDefn.The_Union.The_Type_Definition.Type_Kind);
   }
 
   SgDeclarationStatement&
-  handlePartialTypeDeclID(const NameData& adaname, Element_ID id, AstContext ctx, bool isPrivate)
+  createOpaqueDecl(NameData adaname, SgScopeStatement& scope, Type_Kinds tyKind, AstContext)
   {
-    return handlePartialTypeDecl(adaname, retrieveAs<Element_Struct>(elemMap(), id), ctx, isPrivate);
+    SgDeclarationStatement* res = nullptr;
+
+    switch (tyKind)
+    {
+      case A_Signed_Integer_Type_Definition:
+      case A_Modular_Type_Definition:
+      case A_Floating_Point_Definition:
+      case An_Ordinary_Fixed_Point_Definition:
+      case A_Decimal_Fixed_Point_Definition:
+        {
+          res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+          break;
+        }
+
+      case A_Record_Type_Definition:
+      case A_Tagged_Record_Type_Definition:
+        {
+          res = &mkRecordDecl(adaname.ident, scope);
+          break;
+        }
+
+  /*
+  Not_A_Type_Definition,                 // An unexpected element
+  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+  An_Enumeration_Type_Definition,        // 3.5.1(2)
+  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
+  //                                               -> Root_Type_Kinds
+  An_Unconstrained_Array_Definition,     // 3.6(2)
+  A_Constrained_Array_Definition,        // 3.6(2)
+
+  //  //|A2005 start
+  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+  //  //|A2005 end
+
+  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
+  */
+
+      default:
+        logWarn() << "unhandled opaque type declaration: " << tyKind
+                  << std::endl;
+        ROSE_ASSERT(!FAIL_ON_ERROR);
+        res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+    }
+
+    return SG_DEREF(res);
   }
+
 } // anonymous
 
 
@@ -2110,10 +2178,41 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (NEW_PARTIAL_TYPE_HANDLING)
         {
+          typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
+
+          DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
           NameData                adaname = singleName(decl, ctx);
           ROSE_ASSERT(adaname.fullName == adaname.ident);
+          Element_ID              id     = adaname.id();
+          SgScopeStatement&       scope  = ctx.scope();
+          SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, scope, defdata.second, ctx);
 
-          SgDeclarationStatement& sgnode = handlePartialTypeDeclID(adaname, decl.Corresponding_Type_Declaration, ctx, isPrivate);
+          markCompilerGenerated(sgnode);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          recordNode(asisTypes(), id, sgnode);
+          recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+/*
+  Type_Kinds
+  queryTypeDefinitionKind(Element_ID completeElementId)
+
+
+  SgDeclarationStatement&
+  handlePartialTypeDecl(const NameData& adaname, Element_Struct& elem, AstContext ctx, bool isPrivate)
+  {
+
+  }
+
+  SgDeclarationStatement&
+  handlePartialTypeDeclID(const NameData& adaname, Element_ID id, AstContext ctx, bool isPrivate)
+  {
+    return handlePartialTypeDecl(adaname, retrieveAs<Element_Struct>(elemMap(), id), ctx, isPrivate);
+  }
+
+  SgDeclarationStatement& sgnode = handlePartialTypeDeclID(adaname, decl.Corresponding_Type_Declaration, ctx, isPrivate);
+*/
+
         }
         else /* use old code */
         {

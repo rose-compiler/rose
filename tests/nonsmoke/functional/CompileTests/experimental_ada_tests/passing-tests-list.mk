@@ -43,7 +43,6 @@ PASSING_TESTS :=                       \
   task_with_body.adb                   \
   task_with_body.ads                   \
   task_with_abort.adb                  \
-  task_with_abort_v2.adb               \
   function_declaration.ads             \
   function_declaration.adb             \
   gototest.ads                         \
@@ -71,4 +70,8 @@ PASSING_TESTS :=                       \
   for_loop.adb                         \
   floating_point_definition.ads        \
   based_numbers.ads                    \
+  task_with_abort_v2.adb               \
+  short_circuit.adb                    \
+  short_circuit_v2.adb                 \
+  complex.ads                          \
   EndOfList
