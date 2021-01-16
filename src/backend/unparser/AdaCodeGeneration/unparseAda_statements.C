@@ -833,6 +833,10 @@ namespace
           prn("end record");
         }
       }
+      else
+      {
+        prn(" is private");
+      }
 
       prn(STMT_SEP);
     }

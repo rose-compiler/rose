@@ -292,16 +292,22 @@ namespace
 #endif /* USE_SIMPLE_STD_LOGGER */
 
   /// records a node (value) \ref val with key \ref key in map \ref m.
+  /// \param m       the map
+  /// \param key     the record key
+  /// \param val     the new value
+  /// \param replace true, if the key is already in the map, false otherwise
+  ///        (this is used for consistency checks).
   /// \pre key is not in the map yet
   template <class KeyT, class DclT, class ValT>
   inline
   void
-  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    ROSE_ASSERT(m.find(key) == m.end());
+    ROSE_ASSERT(replace || m.find(key) == m.end());
 
     m[key] = &val;
   }
+
 
   /// records the first mapping that appears in the translation
   /// secondary mappings are ignored, but do not trigger an error.

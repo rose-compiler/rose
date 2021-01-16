@@ -243,13 +243,21 @@ namespace Ada_ROSE_Translation
   SgTypedefDeclaration&
   mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope);
 
-  /// creates a record declaration with name \ref name for record \ref def
+  /// creates a defining record declaration with name \ref name for record \ref def
   ///   in scope \ref scope.
   ///   This function builds both the nondefining and defining declarations
   ///   and returns the defining declarations.
-  // \todo check with Dan
   SgClassDeclaration&
   mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& scope);
+
+  /// creates a defining record declaration for the non-defining declaration \ref nondef,
+  ///   and the body \ref body in scope \ref scope.
+  SgClassDeclaration&
+  mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& body, SgScopeStatement& scope);
+
+  /// creates a non defining record decl with name \ref name
+  SgClassDeclaration&
+  mkRecordDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates an Ada package declaration
   SgAdaPackageSpecDecl&

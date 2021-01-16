@@ -132,7 +132,7 @@ namespace
       ArrayAggregateCreator(ArrayAggregateCreator&&)                 = default;
       ArrayAggregateCreator& operator=(ArrayAggregateCreator&&)      = default;
 
-      // \todo the following copying functions should be removed post C++17
+      // \todo the following copying functions should be deleted post C++17
       // @{
       ArrayAggregateCreator(const ArrayAggregateCreator&)            = default;
       ArrayAggregateCreator& operator=(const ArrayAggregateCreator&) = default;
@@ -180,6 +180,53 @@ namespace
     attachSourceLocation(*sgnode, el, ctx);
     elems.push_back(sgnode);
   }
+
+
+  struct RecordAggregateCreator
+  {
+      explicit
+      RecordAggregateCreator(AstContext astctx)
+      : ctx(astctx), elems()
+      {}
+
+      RecordAggregateCreator(RecordAggregateCreator&&)                 = default;
+      RecordAggregateCreator& operator=(RecordAggregateCreator&&)      = default;
+
+      // \todo the following copying functions should be deleted post C++17
+      // @{
+      RecordAggregateCreator(const RecordAggregateCreator&)            = default;
+      RecordAggregateCreator& operator=(const RecordAggregateCreator&) = default;
+      // @}
+
+      void operator()(Element_Struct& el);
+
+      /// result read-out
+      operator std::vector<SgExpression*> () &&
+      {
+        return std::move(elems);
+      }
+
+    private:
+      AstContext                 ctx;
+      std::vector<SgExpression*> elems;
+
+      RecordAggregateCreator() = delete;
+  };
+
+  void RecordAggregateCreator::operator()(Element_Struct& el)
+  {
+    ROSE_ASSERT(el.Element_Kind == An_Association);
+
+    Association_Struct&        assoc = el.The_Union.Association;
+    ROSE_ASSERT(assoc.Association_Kind == A_Record_Component_Association);
+    logKind("A_Record_Component_Association");
+
+    SgExpression&              sgnode = getExprID(assoc.Component_Expression, ctx);
+
+    attachSourceLocation(sgnode, el, ctx);
+    elems.push_back(&sgnode);
+  }
+
 
 
   typedef SgExpression* (*mk_wrapper_fun)();
@@ -757,6 +804,18 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_Record_Aggregate:                        // 4.3
+      {
+        logKind("A_Record_Aggregate");
+        ElemIdRange                range  = idRange(expr.Record_Component_Associations);
+        std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
+        SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(components));
+
+        attachSourceLocation(explst, elem, ctx);
+        res = sb::buildAggregateInitializer(&explst);
+        break;
+      }
+
     case An_And_Then_Short_Circuit:                 // 4.4
       {
         logKind("An_And_Then_Short_Circuit");
@@ -839,7 +898,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case An_Explicit_Dereference:                   // 4.1
 
-    case A_Record_Aggregate:                        // 4.3
     case An_Extension_Aggregate:                    // 4.3
 
     case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)

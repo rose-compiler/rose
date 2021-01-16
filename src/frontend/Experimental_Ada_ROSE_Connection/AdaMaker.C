@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 
 #include <algorithm>
@@ -389,16 +388,9 @@ mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope)
 }
 
 SgClassDeclaration&
-mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& scope)
+mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& def, SgScopeStatement& scope)
 {
-  SgClassDeclaration& nondef = SG_DEREF( sb::buildNondefiningClassDeclaration_nfi( name,
-                                                                                   SgClassDeclaration::e_struct,
-                                                                                   &scope,
-                                                                                   false /* template instance */,
-                                                                                   nullptr /* template parameter list */
-                                                                                 ));
-
-  SgClassDeclaration& sgnode = SG_DEREF( sb::buildNondefiningClassDeclaration_nfi( name,
+  SgClassDeclaration& sgnode = SG_DEREF( sb::buildNondefiningClassDeclaration_nfi( nondef.get_name(),
                                                                                    SgClassDeclaration::e_struct,
                                                                                    &scope,
                                                                                    false /* template instance */,
@@ -410,9 +402,29 @@ mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& 
   sgnode.set_definingDeclaration(&sgnode);
   nondef.set_definingDeclaration(&sgnode);
   sgnode.set_firstNondefiningDeclaration(&nondef);
-  nondef.set_firstNondefiningDeclaration(&nondef);
   return sgnode;
 }
+
+SgClassDeclaration&
+mkRecordDecl(const std::string& name, SgScopeStatement& scope)
+{
+  SgClassDeclaration& sgnode = SG_DEREF( sb::buildNondefiningClassDeclaration_nfi( name,
+                                                                                   SgClassDeclaration::e_struct,
+                                                                                   &scope,
+                                                                                   false /* template instance */,
+                                                                                   nullptr /* template parameter list */
+                                                                                 ));
+
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+  return sgnode;
+}
+
+SgClassDeclaration&
+mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& scope)
+{
+  return mkRecordDecl(mkRecordDecl(name, scope), def, scope);
+}
+
 
 SgAdaPackageSpecDecl&
 mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
