@@ -402,6 +402,10 @@ bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
   return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
 }
 
+bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
+  return !isUnreachableLabel(lab);
+}
+
 const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   const CodeThorn::EState* res;
 #pragma omp critical(SUMMARY_STATES)
@@ -1650,21 +1654,42 @@ list<EState> CodeThorn::CTAnalysis::evaluateFunctionCallArguments(Edge edge, SgF
   return elistify(createEState(edge.target(),cs,newPState,cset));
 }
 
-void CodeThorn::CTAnalysis::recordAnalyzedFunction(SgFunctionDefinition* funDef) {
-#pragma omp critical(functionrecording)
-  {
-    analyzedFunctions.insert(funDef);
+LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {
+  Flow& flow=*getFlow();
+  LabelSet functionEntryLabels=getCFAnalyzer()->functionEntryLabels(flow);
+  return functionEntryLabels;
+}
+
+LabelSet CodeThorn::CTAnalysis::reachableFunctionEntryLabels() {
+  LabelSet funEntryLabs=functionEntryLabels();
+  LabelSet reachable;
+  for(auto lab : funEntryLabs) {
+    if(isReachableLabel(lab))
+      reachable.insert(lab);
   }
+  return reachable;
+}
+
+SgFunctionDefinition* CodeThorn::CTAnalysis::getFunctionDefinitionOfEntryLabel(Label lab) {
+  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(lab));
+  SgNode* node=getLabeler()->getNode(lab);
+  SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
+  ROSE_ASSERT(funDef);
+  return funDef;
 }
 
 std::string CodeThorn::CTAnalysis::analyzedFunctionsToString() {
   ostringstream ss;
-  for (auto funDef : analyzedFunctions)  {
-    ss<<SgNodeHelper::getFunctionName(funDef)
+  LabelSet reachableFunLabels=reachableFunctionEntryLabels();
+  for (auto funLab : reachableFunLabels)  {
+    SgFunctionDefinition* funDef=getFunctionDefinitionOfEntryLabel(funLab);
+    auto funDecl=funDef->get_declaration();
+    ss
+      <<SgNodeHelper::sourceFilenameToString(funDecl)
       <<","
-      <<SgNodeHelper::sourceLineColumnToString(funDef)
+      <<SgNodeHelper::sourceLineColumnToString(funDecl)
       <<","
-      <<SgNodeHelper::sourceFilenameToString(funDef)
+      <<SgNodeHelper::getFunctionName(funDecl)
       <<endl;
   }
   return ss.str();
@@ -1672,7 +1697,9 @@ std::string CodeThorn::CTAnalysis::analyzedFunctionsToString() {
 
 std::string CodeThorn::CTAnalysis::analyzedFilesToString() {
   unordered_set<string> fileNameSet;
-  for (auto funDef : analyzedFunctions)  {
+  LabelSet reachableFunLabels=reachableFunctionEntryLabels();
+  for (auto funLab : reachableFunLabels)  {
+    SgFunctionDefinition* funDef=getFunctionDefinitionOfEntryLabel(funLab);
     fileNameSet.insert(SgNodeHelper::sourceFilenameToString(funDef));
   }
   ostringstream ss;

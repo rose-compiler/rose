@@ -248,6 +248,7 @@ namespace CodeThorn {
         not supported yet) */
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
+    bool isReachableLabel(Label lab);
     bool isUnreachableLabel(Label lab);
   protected:
     using super = CTAnalysis; // allows use of super like in Java without repeating the class name
@@ -323,7 +324,10 @@ namespace CodeThorn {
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 
-    void recordAnalyzedFunction(SgFunctionDefinition* funDef);
+    LabelSet functionEntryLabels();
+    LabelSet reachableFunctionEntryLabels();
+    SgFunctionDefinition* getFunctionDefinitionOfEntryLabel(Label lab);
+    
     std::string analyzedFunctionsToString();
     std::string analyzedFilesToString();
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
