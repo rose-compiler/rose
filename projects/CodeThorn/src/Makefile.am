@@ -97,6 +97,7 @@ CODETHORN_HEADER_FILES=\
   DFAnalysisBase.h \
   CSDFAnalysisBase.h \
   CSDFAnalysisBaseWithoutData.h \
+  ConstantConditionAnalysis.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
   EState.h \
@@ -228,6 +229,7 @@ CODETHORN_SOURCE_FILES=\
   DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
   CSDFAnalysisBase.C \
+  ConstantConditionAnalysis.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
   EState.C \

@@ -195,6 +195,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("uninitialized-analysis-file",po::value< string >(&ctOpt.uninitializedMemoryAnalysisFileName),"Perform uninitialized analysis and write results to file [arg].")
     ("dead-functions-file",po::value< string >(&ctOpt.deadFunctionsAnalysisFileName),"Report dead functions to CSV file [arg].")
     ("dead-code-file",po::value< string >(&ctOpt.deadCodeAnalysisFileName),"Report dead code to CSV file [arg].")
+    ("const-cond-file",po::value< string >(&ctOpt.constantConditionAnalysisFileName),"Report constant conditions to CSV file [arg]")
     ("program-stats-only",po::value< bool >(&ctOpt.programStatsOnly)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs and exit.")
     ("program-stats",po::value< bool >(&ctOpt.programStats)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >(&ctOpt.inStateStringLiterals)->default_value(false)->implicit_value(true),"create string literals in initial state.")

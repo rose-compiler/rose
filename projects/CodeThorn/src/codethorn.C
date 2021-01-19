@@ -57,6 +57,7 @@
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
 
+#include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
@@ -214,7 +215,10 @@ int main( int argc, char * argv[] ) {
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
-    
+
+    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
+      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
+    }
     runSolver(ctOpt,analyzer,sageProject,tc);
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 

@@ -689,9 +689,9 @@ void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* anal
   std::string fileName=ctOpt.visualization.callGraphFileName;
   if(fileName.size()>0) {
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(*analyzer->getFlow());
-    cout<<"DEBUG: labeltofunctionmap size:"<<map.size()<<endl;
+    //cout<<"DEBUG: labeltofunctionmap size:"<<map.size()<<endl;
     std::string dotFileString=analyzer->getInterFlow()->dotCallGraph(map);
-    cout<<"DEBUG: interflow size:"<<analyzer->getInterFlow()->size()<<endl;
+    //cout<<"DEBUG: interflow size:"<<analyzer->getInterFlow()->size()<<endl;
     if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
       cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
       exit(1);
