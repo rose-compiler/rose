@@ -234,6 +234,9 @@ namespace Ada_ROSE_Translation
   SgTryStmt&
   mkTryStmt(SgBasicBlock& blk);
 
+  /// creates an Ada Terminate alternative statement
+  SgAdaTerminateStmt&
+  mkTerminateStmt();
 
   //
   // Declaration Makers

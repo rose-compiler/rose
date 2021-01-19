@@ -375,6 +375,12 @@ mkTryStmt(SgBasicBlock& blk)
   return sgnode;
 }
 
+SgAdaTerminateStmt&
+mkTerminateStmt()
+{
+  return mkLocatedNode<SgAdaTerminateStmt>();
+}
+
 
 //
 // declarations
