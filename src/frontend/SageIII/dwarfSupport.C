@@ -2830,22 +2830,21 @@ readDwarf ( SgAsmGenericFile* asmFile )
   // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.
   // This make the DOT files easier to manage since there can be thousands of symbols.  This also
   // makes it easer to debug the ROSE dwarf AST.
-     SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(asmFile);
-     ROSE_ASSERT (binary != NULL);
+     if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(asmFile)) {
+      // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
+         if (binary->get_visualize_executable_file_format_skip_symbols() == true)
+            {
+              printf ("Calling commentOutSymbolsFromDotGraph() (for visualization of binary file format withouth symbols) \n");
+              commentOutSymbolsFromDotGraph(asmFile);
+            }
 
-  // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
-     if (binary->get_visualize_executable_file_format_skip_symbols() == true)
-        {
-          printf ("Calling commentOutSymbolsFromDotGraph() (for visualization of binary file format withouth symbols) \n");
-          commentOutSymbolsFromDotGraph(asmFile);
-        }
-
-  // Nothing but dwarf!
-     if (binary->get_visualize_dwarf_only() == true)
-        {
-          printf ("Calling commentOutEvertythingButDwarf() (for visualization of Dwarf) \n");
-          commentOutEvertythingButDwarf(asmFile);
-        }
+      // Nothing but dwarf!
+         if (binary->get_visualize_dwarf_only() == true)
+            {
+              printf ("Calling commentOutEvertythingButDwarf() (for visualization of Dwarf) \n");
+              commentOutEvertythingButDwarf(asmFile);
+            }
+     }
    }
 
 
