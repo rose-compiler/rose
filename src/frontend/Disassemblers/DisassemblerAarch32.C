@@ -596,20 +596,38 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
         case ARM_SYSREG_SPSR_X:
         case ARM_SYSREG_SPSR_S:
         case ARM_SYSREG_SPSR_F:
-
+            ASSERT_not_implemented("spsr_*");           // need to find documentation
 
 	// CPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
 	// register.
-	case ARM_SYSREG_CPSR_C:
-            retval = dict.find("cpsr_c");
+	case ARM_SYSREG_CPSR_C:                         // this is not the C (carry) bit, but rather the control bits [0,7].
+            retval = dict.find("cpsr_control");
             break;
         case ARM_SYSREG_CPSR_X:
-            ASSERT_not_implemented("what is cpsr_x?");  // undocumented?
-	case ARM_SYSREG_CPSR_S:
-            ASSERT_not_implemented("what is cpsr_s?");  // undocumented?
-	case ARM_SYSREG_CPSR_F:
-            retval = dict.find("cpsr_f");
+            retval = dict.find("cpsr_extension");
             break;
+	case ARM_SYSREG_CPSR_S:
+            retval = dict.find("cpsr_status");          // status bits [16,23], not to be confused with the "status flags"
+            break;
+	case ARM_SYSREG_CPSR_F:                         // this is not the F (FIQ mask) bit, but rather flags bits [24,31]
+            retval = dict.find("cpsr_flags");
+            break;
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 0, 16);
+            break;
+        case ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 8, 16);
+            break;
+        case ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 16, 16);
+            break;
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 0, 24);
+            break;
+        case ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 8, 24);
+
+        // Application program status register
         case ARM_SYSREG_APSR:
             retval = dict.find("apsr");
             break;
@@ -620,6 +638,8 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             ASSERT_not_implemented("apsr_nzcvqg");      // undocumented
         case ARM_SYSREG_APSR_G:
             ASSERT_not_implemented("apsr_g");           // undocumented
+
+        // IAPSR (not sure what this is)
 	case ARM_SYSREG_IAPSR:
             retval = dict.find("iapsr");
             break;
@@ -629,6 +649,8 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             ASSERT_not_implemented("iapsr_nzcvqg");     // undocumented
         case ARM_SYSREG_IAPSR_NZCVQ:
             ASSERT_not_implemented("iapsr*");           // undocumented
+
+        // EAPSR (not sure what this is)
 	case ARM_SYSREG_EAPSR:
             retval = dict.find("eapsr");
             break;
@@ -638,11 +660,15 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             ASSERT_not_implemented("eapsr_nzcvqg");     // undocumented
         case ARM_SYSREG_EAPSR_NZCVQ:
             ASSERT_not_implemented("eapsr_nzcvq");      // undocumented
+
+        // XPSR (not sure what this is)
         case ARM_SYSREG_XPSR:
         case ARM_SYSREG_XPSR_G:
         case ARM_SYSREG_XPSR_NZCVQG:
         case ARM_SYSREG_XPSR_NZCVQ:
             ASSERT_not_implemented("xpsr");             // undocumented
+
+        // Other registers with unclear purposes
         case ARM_SYSREG_IPSR:
             retval = dict.find("ipsr");
             break;
@@ -670,6 +696,8 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
 	case ARM_SYSREG_CONTROL:
             retval = dict.find("control");
             break;
+
+        // Banked registers
         case ARM_SYSREG_R8_USR:
             retval = dict.find("r8_usr");
             break;
@@ -769,6 +797,7 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
         case ARM_SYSREG_SPSR_HYP:
             retval = dict.find("spsr_hyp");
             break;
+
         default:
             ASSERT_not_reachable("register not handled; reg = " + boost::lexical_cast<std::string>(reg));
     }
@@ -793,6 +822,7 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
         case Kind::ARM_INS_STR:
         case Kind::ARM_INS_STREX:
         case Kind::ARM_INS_STRT:
+        case Kind::ARM_INS_SWP:
             return SageBuilderAsm::buildTypeU32();
 
         case Kind::ARM_INS_LDAB:
@@ -807,6 +837,7 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
         case Kind::ARM_INS_STRB:
         case Kind::ARM_INS_STRBT:
         case Kind::ARM_INS_STREXB:
+        case Kind::ARM_INS_SWPB:
             return SageBuilderAsm::buildTypeU8();
 
         case Kind::ARM_INS_LDAEXH:
@@ -847,14 +878,12 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
         case Kind::ARM_INS_VLD4:
         case Kind::ARM_INS_VLDMDB:
         case Kind::ARM_INS_VLDMIA:
-        case Kind::ARM_INS_VLDR:
         case Kind::ARM_INS_VST1:
         case Kind::ARM_INS_VST2:
         case Kind::ARM_INS_VST3:
         case Kind::ARM_INS_VST4:
         case Kind::ARM_INS_VSTMDB:
         case Kind::ARM_INS_VSTMIA:
-        case Kind::ARM_INS_VSTR:
             ASSERT_not_implemented("kind=" + boost::lexical_cast<std::string>(insn.id));
 
         case Kind::ARM_INS_LDC:
@@ -868,6 +897,20 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
             // These access an unknown amount of memory based on the coprocessor. The best we can do here is to say that access
             // at least one byte.
             return SageBuilderAsm::buildTypeU32();
+
+        case Kind::ARM_INS_VLDR:
+        case Kind::ARM_INS_VSTR:
+            switch (bits(code, 8, 9)) {                 // size field for both A32 and T32
+                case 1:
+                    return SageBuilderAsm::buildTypeU16();
+                case 2:
+                    return SageBuilderAsm::buildTypeU32();
+                case 3:
+                    return SageBuilderAsm::buildTypeU64();
+                default:
+                    ASSERT_require("invalid size field in bits 8 and 9: 0b00");
+            }
+            break;
 
         default:
             ASSERT_not_reachable("memory read instruction not handled");
@@ -885,7 +928,9 @@ DisassemblerAarch32::opcode(const cs_insn &insn) {
 
 RegisterDescriptor
 DisassemblerAarch32::subRegister(RegisterDescriptor reg, int idx) {
-    ASSERT_require2(-1 == idx, "not implemented");
+    // This isn't really complete yet, just stubbed out to return something that doesn't crash ROSE.
+    if (idx >= 0)
+        mlog[WARN] <<"register indexing not supported yet for A32/T32\n";
     return reg;
 }
 

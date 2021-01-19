@@ -21,6 +21,16 @@ class DispatcherAarch32: public BaseSemantics::Dispatcher {
 public:
     using Super = BaseSemantics::Dispatcher;
 
+public:
+    /** Cached register.
+     *
+     *  This register is cached so that there are not so amny calls to @ref Dispatcher::findRegister. Changing the register
+     *  dictionary via @ref set_register_dictionary updates all entries of this cache.
+     *
+     * @{ */
+    RegisterDescriptor REG_PC, REG_SP, REG_LR;
+    /** @} */
+
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;

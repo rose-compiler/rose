@@ -25,9 +25,12 @@ public:
     /** Cached register.
      *
      *  This register is cached so that there are not so amny calls to @ref Dispatcher::findRegister. Changing the register
-     *  dictionary via @ref set_register_dictionary updates all entries of this cache. */
+     *  dictionary via @ref set_register_dictionary updates all entries of this cache.
+     *
+     *  @{ */
     RegisterDescriptor REG_PC, REG_SP, REG_LR;
     RegisterDescriptor REG_CPSR_N, REG_CPSR_Z, REG_CPSR_C, REG_CPSR_V;
+    /** @} */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:

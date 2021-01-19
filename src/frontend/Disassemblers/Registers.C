@@ -945,6 +945,15 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("cpsr_t",     aarch32_regclass_sys, aarch32_sys_cpsr, 5, 1);  // Thumb
         regs->insert("cpsr_m",     aarch32_regclass_sys, aarch32_sys_cpsr, 0, 4);  // current PE mode
 
+        // These CPSR parts have special names in ARM assembly that conflict with the fields listed above. ROSE names the fields
+        // using underscores for all architectures and tries to produce a consistent assembly style across all architectures. This
+        // means that the names used by the ARM assembler, which conflict with the names above, need to be changed. We'll choose
+        // something more descriptive than single letters.
+        regs->insert("cpsr_control", aarch32_regclass_sys, aarch32_sys_cpsr, 0, 8); // control bits, called "CPSR_c" in ARM assembly,
+        regs->insert("cpsr_extension", aarch32_regclass_sys, aarch32_sys_cpsr, 8, 8); // extension bits, called "CPSR_x" in ARM assembly.
+        regs->insert("cpsr_status", aarch32_regclass_sys, aarch32_sys_cpsr, 16, 8); // status bits, called "CPSR_s" in ARM assembly.
+        regs->insert("cpsr_flags", aarch32_regclass_sys, aarch32_sys_cpsr, 24, 8); // flag bits N, Z, C, and V, called "CPSR_f" in ARM
+
         // Holds program status and control information, a subset of the CPSR.
         regs->insert("apsr",        aarch32_regclass_sys, aarch32_sys_apsr, 0, 32);
         regs->insert("apsr_nzcv",   aarch32_regclass_sys, aarch32_sys_apsr, 28, 4); // n, z, c, and v bits
