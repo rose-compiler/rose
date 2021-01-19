@@ -807,6 +807,12 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaTerminateStmt& n)
+    {
+      prn("terminate");
+      prn(STMT_SEP);
+    }
+
     void handle(SgExprStatement& n)
     {
       expr(n.get_expression());
