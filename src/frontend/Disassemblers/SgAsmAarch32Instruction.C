@@ -294,8 +294,8 @@ SgAsmAarch32Instruction::description() const {
 	case Kind::ARM_INS_SUB:         return "subtract";
 	case Kind::ARM_INS_SUBW:        return "subtract";
 	case Kind::ARM_INS_SVC:         return "supervisor call";
-	//case Kind::ARM_INS_SWP:
-	//case Kind::ARM_INS_SWPB:
+	case Kind::ARM_INS_SWP:         return "swap between registers and memory";
+        case Kind::ARM_INS_SWPB:        return "swap byte between registers and memory";
 	case Kind::ARM_INS_SXTAB:       return "sign extend and add byte";
 	case Kind::ARM_INS_SXTAB16:     return "sign extend and add byte 16";
 	case Kind::ARM_INS_SXTAH:       return "sign extend and add half-word";
