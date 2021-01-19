@@ -590,26 +590,49 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
     RegisterDescriptor retval;
 
     switch (reg) {
-	// SPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
-	// register.
+        // SPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
+        // register. Each exception handling mode has its own SPSR, so the instruction for which this register is being built
+        // probably doesn't know which SPSR is actually being referenced.
         case ARM_SYSREG_SPSR_C:
+            retval = dict.find("spsr_control");
+            break;
         case ARM_SYSREG_SPSR_X:
+            retval = dict.find("spsr_extension");
+            break;
         case ARM_SYSREG_SPSR_S:
+            retval = dict.find("spsr_status");
+            break;
         case ARM_SYSREG_SPSR_F:
-            ASSERT_not_implemented("spsr_*");           // need to find documentation
+            retval = dict.find("spsr_flags");
+            break;
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 0, 16);
+            break;
+        case ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 8, 16);
+            break;
+        case ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 16, 16);
+            break;
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 0, 24);
+            break;
+        case ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F:
+            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 8, 24);
+            break;
 
-	// CPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
-	// register.
-	case ARM_SYSREG_CPSR_C:                         // this is not the C (carry) bit, but rather the control bits [0,7].
+        // CPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
+        // register.
+        case ARM_SYSREG_CPSR_C:                         // this is not the C (carry) bit, but rather the control bits [0,7].
             retval = dict.find("cpsr_control");
             break;
         case ARM_SYSREG_CPSR_X:
             retval = dict.find("cpsr_extension");
             break;
-	case ARM_SYSREG_CPSR_S:
+        case ARM_SYSREG_CPSR_S:
             retval = dict.find("cpsr_status");          // status bits [16,23], not to be confused with the "status flags"
             break;
-	case ARM_SYSREG_CPSR_F:                         // this is not the F (FIQ mask) bit, but rather flags bits [24,31]
+        case ARM_SYSREG_CPSR_F:                         // this is not the F (FIQ mask) bit, but rather flags bits [24,31]
             retval = dict.find("cpsr_flags");
             break;
         case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X:
@@ -640,7 +663,7 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             ASSERT_not_implemented("apsr_g");           // undocumented
 
         // IAPSR (not sure what this is)
-	case ARM_SYSREG_IAPSR:
+        case ARM_SYSREG_IAPSR:
             retval = dict.find("iapsr");
             break;
         case ARM_SYSREG_IAPSR_G:
@@ -651,7 +674,7 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             ASSERT_not_implemented("iapsr*");           // undocumented
 
         // EAPSR (not sure what this is)
-	case ARM_SYSREG_EAPSR:
+        case ARM_SYSREG_EAPSR:
             retval = dict.find("eapsr");
             break;
         case ARM_SYSREG_EAPSR_G:
@@ -678,10 +701,10 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
         case ARM_SYSREG_IEPSR:
             retval = dict.find("iepsr");
             break;
-	case ARM_SYSREG_MSP:
+        case ARM_SYSREG_MSP:
             retval = dict.find("msp");
             break;
-	case ARM_SYSREG_PSP:
+        case ARM_SYSREG_PSP:
             retval = dict.find("psp");
             break;
         case ARM_SYSREG_PRIMASK:
@@ -689,11 +712,11 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
             break;
         case ARM_SYSREG_BASEPRI:
             ASSERT_not_implemented("basepri");          // undocumented
-	case ARM_SYSREG_BASEPRI_MAX:
+        case ARM_SYSREG_BASEPRI_MAX:
             ASSERT_not_implemented("basepri_max");      // undocumented
-	case ARM_SYSREG_FAULTMASK:
+        case ARM_SYSREG_FAULTMASK:
             ASSERT_not_implemented("faultmask");        // undocumented
-	case ARM_SYSREG_CONTROL:
+        case ARM_SYSREG_CONTROL:
             retval = dict.find("control");
             break;
 

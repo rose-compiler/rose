@@ -58,6 +58,7 @@ enum Aarch32SystemRegister {
     aarch32_sys_lr_usr,
     aarch32_sys_cpsr,
     aarch32_sys_apsr,
+    aarch32_sys_spsr,                                   // not really a hardware register: stand in for aarch32_sys_spsr_*
     aarch32_sys_spsr_hyp,
     aarch32_sys_spsr_svc,
     aarch32_sys_spsr_abt,

@@ -949,10 +949,10 @@ RegisterDictionary::dictionary_aarch32() {
         // using underscores for all architectures and tries to produce a consistent assembly style across all architectures. This
         // means that the names used by the ARM assembler, which conflict with the names above, need to be changed. We'll choose
         // something more descriptive than single letters.
-        regs->insert("cpsr_control", aarch32_regclass_sys, aarch32_sys_cpsr, 0, 8); // control bits, called "CPSR_c" in ARM assembly,
-        regs->insert("cpsr_extension", aarch32_regclass_sys, aarch32_sys_cpsr, 8, 8); // extension bits, called "CPSR_x" in ARM assembly.
-        regs->insert("cpsr_status", aarch32_regclass_sys, aarch32_sys_cpsr, 16, 8); // status bits, called "CPSR_s" in ARM assembly.
-        regs->insert("cpsr_flags", aarch32_regclass_sys, aarch32_sys_cpsr, 24, 8); // flag bits N, Z, C, and V, called "CPSR_f" in ARM
+        regs->insert("cpsr_control",   aarch32_regclass_sys, aarch32_sys_cpsr,  0, 8); // control bits, called "CPSR_c" in ARM assembly,
+        regs->insert("cpsr_extension", aarch32_regclass_sys, aarch32_sys_cpsr,  8, 8); // extension bits, called "CPSR_x" in ARM assembly.
+        regs->insert("cpsr_status",    aarch32_regclass_sys, aarch32_sys_cpsr, 16, 8); // status bits, called "CPSR_s" in ARM assembly.
+        regs->insert("cpsr_flags",     aarch32_regclass_sys, aarch32_sys_cpsr, 24, 8); // flag bits N, Z, C, and V, called "CPSR_f" in ARM
 
         // Holds program status and control information, a subset of the CPSR.
         regs->insert("apsr",        aarch32_regclass_sys, aarch32_sys_apsr, 0, 32);
@@ -976,6 +976,15 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("spsr_mon", aarch32_regclass_sys, aarch32_sys_spsr_mon, 0, 32);
         regs->insert("spsr_irq", aarch32_regclass_sys, aarch32_sys_spsr_irq, 0, 32);
         regs->insert("spsr_fiq", aarch32_regclass_sys, aarch32_sys_spsr_fiq, 0, 32);
+
+        // When an instruction is being decoded and the AST is being produced, we don't know what exception handling mode the
+        // processor will be in when the instruction is executed. Therefore, ROSE creates a special "spsr" register whose read
+        // and write operations will require translation to the correct SPSR hardware register later.
+        regs->insert("spsr",           aarch32_regclass_sys, aarch32_sys_spsr,  0, 32);
+        regs->insert("spsr_control",   aarch32_regclass_sys, aarch32_sys_spsr,  0,  8); // control bits, called "SPSR_c" in ARM assembly,
+        regs->insert("spsr_extension", aarch32_regclass_sys, aarch32_sys_spsr,  8,  8); // extension bits, called "SPSR_x" in ARM assembly.
+        regs->insert("spsr_status",    aarch32_regclass_sys, aarch32_sys_spsr, 16,  8); // status bits, called "SPSR_s" in ARM assembly.
+        regs->insert("spsr_flags",     aarch32_regclass_sys, aarch32_sys_spsr, 24,  8); // flag bits N, Z, C, and V, called "SPSR_f" in ARM
 
         // I don't know what these are, but they're vaguely documented for the MSR instruction.
         regs->insert("ipsr",    aarch32_regclass_sys, aarch32_sys_ipsr,    0, 32);
