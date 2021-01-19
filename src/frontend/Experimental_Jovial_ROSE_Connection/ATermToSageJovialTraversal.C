@@ -6708,19 +6708,16 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
      // Look for a function call first (function need not be declared yet)
      //
-     if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
+     if (isSgFunctionSymbol(symbol)) {
        SgFunctionCallExp* func_call = nullptr;
        sage_tree_builder.Enter(func_call, std::string(name), nullptr);
        sage_tree_builder.Leave(func_call);
        var = func_call;
      }
-
-     // Depending on traversal context (e.g., an initialization expression), it may not be
-     // appropriate to build an implicitly declared function (the case of symbol==nullptr)
-     if (var == nullptr) {
-       var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+     // This probably should be "else" rather than "else if" but want to know what symbols are used
+     else if (isSgVariableSymbol(symbol) || isSgEnumSymbol(symbol) || symbol == nullptr) {
+       var = sage_tree_builder.buildVarRefExp_nfi(std::string(name));
      }
-
      ROSE_ASSERT(var);
      setSourcePosition(var, term);
 

@@ -228,6 +228,7 @@ private:
 
    LanguageEnum language_;
    TraversalContext context_;
+   std::map<const std::string, SgVarRefExp*> forward_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
@@ -248,6 +249,9 @@ public:
      {
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
+
+// Builder function manages implicitly declared references
+   SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
 
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);
