@@ -92,7 +92,6 @@ const std::string versionString="0.8.0";
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {

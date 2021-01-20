@@ -2039,7 +2039,9 @@ std::string ExprAnalyzer::analysisSelectorToString(AnalysisSelector sel) {
   switch(sel) {
   case ANALYSIS_NULL_POINTER: return "null-pointer";
   case ANALYSIS_OUT_OF_BOUNDS: return "out-of-bounds";
-  case ANALYSIS_UNINITIALIZED: return "unitialized-value";
+  case ANALYSIS_UNINITIALIZED: return "unitialized";
+  case ANALYSIS_DEAD_CODE: return "dead-code";
+  case ANALYSIS_OPAQUE_PREDICATE: return "opaque-predicate";
   default:
     SAWYER_MESG(logger[FATAL])<<"ExprAnalyzer::analysisSelectorToString: unknown selector."<<endl;
     exit(1);

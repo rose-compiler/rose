@@ -295,7 +295,6 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
 void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                        CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {

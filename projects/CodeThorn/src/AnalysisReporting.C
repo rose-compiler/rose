@@ -36,6 +36,15 @@ namespace CodeThorn {
         cout<<"-----------------------------------------------"<<endl;
         cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
         cout<<"-----------------------------------------------"<<endl;
+        if(analysisSel==ANALYSIS_DEAD_CODE) {
+          cout<<"TODO: DEAD CODE REPORT!"<<endl;
+          continue;
+        }
+        if(analysisSel==ANALYSIS_OPAQUE_PREDICATE) {
+          AnalysisReporting::generateConstantConditionVerificationReport(ctOpt, analyzer, reportDetectedErrorLines);
+          cout<<"TODO: OPAQUE PREDICTE REPORT!"<<endl;
+          continue;
+        }
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
 #if 0
         LabelSet labelsOfInterest1=analyzer->getCFAnalyzer()->labelsOfInterestSet();
@@ -66,8 +75,8 @@ namespace CodeThorn {
         report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
         cout<<"-----------------------------------------------"<<endl;
         // generate verification call graph
-        AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
         AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report);
+        AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
         //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
         cout<<"-----------------------------------------------"<<endl;
         if(reportDetectedErrorLines) {
@@ -87,7 +96,6 @@ namespace CodeThorn {
         cout<<"-----------------------------------------------"<<endl;
       }
     }
-    AnalysisReporting::generateConstantConditionVerificationReport(ctOpt, analyzer, reportDetectedErrorLines);
   }
 
   void AnalysisReporting::generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, bool reportDetectedErrorLines) {
