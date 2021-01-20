@@ -32,6 +32,14 @@ procedure Simple_Select_Accept(Ch : Character) is
       null;
     end select;
 
+    select                           -- Selective accept with terminate
+      accept Do_this do
+	null;
+      end Do_This;
+    or
+      terminate;
+    end select;
+
     accept Do_Nothing;
   end Callee;
 

@@ -1701,7 +1701,13 @@ namespace
           */
           break;
         }
+      case A_Terminate_Alternative_Statement:   // 9.7.1
+        {
+          logKind("A_Terminate_Alternative_Statement");
 
+          completeStmt(mkTerminateStmt(), elem, ctx);
+          break;
+        }
 
       case Not_A_Statement: /* break; */        // An unexpected element
       //|A2005 start
@@ -1709,7 +1715,6 @@ namespace
       //|A2005 end
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
-      case A_Terminate_Alternative_Statement:   // 9.7.1
       case A_Code_Statement:                    // 13.8 assembly
       default:
         logWarn() << "Unhandled statement " << stmt.Statement_Kind << std::endl;
