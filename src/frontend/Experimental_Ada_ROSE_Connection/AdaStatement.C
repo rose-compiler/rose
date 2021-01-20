@@ -1706,8 +1706,6 @@ namespace
           logKind("A_Terminate_Alternative_Statement");
 
           completeStmt(mkTerminateStmt(), elem, ctx);
-
-          ROSE_ASSERT(!FAIL_ON_ERROR);
           break;
         }
 
