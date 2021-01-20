@@ -70,15 +70,21 @@ struct CodeThornOptions : public CodeThorn::Options {
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
   bool ssa=false; // transformation
+
   bool nullPointerAnalysis=false;
   bool outOfBoundsAnalysis=false;
   bool uninitializedMemoryAnalysis=false;
+  bool deadCodeAnalysis=false;
+  bool constantConditionAnalysis=false;
+
+  std::string reportFileName;
+  std::string functionReportFileName;
   std::string nullPointerAnalysisFileName;
   std::string outOfBoundsAnalysisFileName;
   std::string uninitializedMemoryAnalysisFileName;
   std::string deadCodeAnalysisFileName;
-  std::string deadFunctionsAnalysisFileName;
   std::string constantConditionAnalysisFileName;
+
   bool programStatsOnly=false;
   bool programStats=false;
   bool inStateStringLiterals=false;
@@ -92,9 +98,9 @@ struct CodeThornOptions : public CodeThorn::Options {
   int interpreterMode=0;
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
-  bool printViolations=false;
-  int optionsSet=0;
-  int callStringLength=-1; // not used yet
+  //bool printViolations=false;
+  int optionsSet=0; // obsolete
+  int callStringLength=-1;
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
   bool intraProcedural=false;

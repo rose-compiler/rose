@@ -522,6 +522,18 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
   }
 }
 
+// called from transferForkFunction
+std::list<EState> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall) {
+  //_analyzer->recordExternalFunctionCall(funCall); funcall would be forkFunction
+  // arg5 is expression with functino pointer to external function
+  list<EState> estateList;
+  EState estate1=*estate;
+  estate1.setLabel(edge.target());
+  // no forked state
+  estateList.push_back(estate1);
+  return estateList;
+}
+
 std::list<EState> EStateTransferFunctions::transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall) {
   EState currentEState=*estate;
   CallString cs=currentEState.callString;
@@ -552,7 +564,11 @@ std::list<EState> EStateTransferFunctions::transferForkFunction(Edge edge, const
   }
   AbstractValue arg5Value=evalResult.value();
   // this result value has to be a function pointer value, create a state (representing the fork), and continue with current state
-  ROSE_ASSERT(arg5Value.isFunctionPtr());
+  if(!arg5Value.isFunctionPtr()) {
+    // case where no source exists for function pointer
+    // handle like any other external function call
+    return transferForkFunctionWithExternalTargetFunction(edge,estate,funCall);
+  }
   // TODO: create state with this function label as start state
   EState forkedEState=*estate;
   // set target label in new state to function pointer label

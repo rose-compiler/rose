@@ -7,6 +7,7 @@
 #include "CppStdUtilities.h"
 #include "ProgramLocationsAnalysis.h"
 #include "BoolLattice.h"
+#include "ConstantConditionAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -85,6 +86,24 @@ namespace CodeThorn {
         }
         cout<<"-----------------------------------------------"<<endl;
       }
+    }
+    AnalysisReporting::generateConstantConditionVerificationReport(ctOpt, analyzer, reportDetectedErrorLines);
+  }
+
+  void AnalysisReporting::generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, bool reportDetectedErrorLines) {
+    ROSE_ASSERT(analyzer->getExprAnalyzer());
+    if(ReadWriteListener* readWriteListener=analyzer->getExprAnalyzer()->getReadWriteListener()) {
+      ROSE_ASSERT(readWriteListener);
+      ConstantConditionAnalysis* constCondAnalysis=dynamic_cast<ConstantConditionAnalysis*>(readWriteListener);
+      ROSE_ASSERT(constCondAnalysis);
+      ConstantConditionAnalysis::ConstConditionsMap& map=*constCondAnalysis->getResultMapPtr();
+      cout<<"Opaque Predicate Analysis"<<endl;
+      for(auto p : map) {
+        Label lab=p.first;
+        bool value=p.second;
+        cout<<lab.toString()<<":"<<value<<endl;
+      }
+      cout<<"---------------------------"<<endl;
     }
   }
   
