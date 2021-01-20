@@ -1152,6 +1152,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         {
           switch(parent_declaration->variantT())
              {
+               case V_SgFunctionParameterList:
                case V_SgVariableDeclaration:
                   {
                     if (isSgVariableSymbol((*it).second)!=NULL)
