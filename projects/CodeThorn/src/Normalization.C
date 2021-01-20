@@ -141,7 +141,7 @@ namespace CodeThorn {
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=12;
+    normPhaseNrLast=13;
     printNormalizationPhase();
     if (options.normalizeCplusplus) {
       // \todo reconsider when to run C++ normalization
