@@ -1891,6 +1891,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgJavaForEachStatement:
 
           case V_SgAdaPackageSpec:
+          case V_SgAdaPackageBody:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
@@ -20966,7 +20967,7 @@ static void moveSymbolTableBetweenBlocks(SgScopeStatement* sourceBlock, SgScopeS
     SgSymbol* symbol = s_table->find(iname);
     ROSE_ASSERT (symbol != NULL);
   }
-
+  // entirely move source block's symbol table to target block
   targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
   ROSE_ASSERT(sourceBlock != NULL);
@@ -21014,11 +21015,17 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
     if (stmt->get_scope() != targetBlock)
     {
       if (SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt))
-      { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+      { 
+
+        // why only move if it is a first nondefining declaration?
+        // We have a case to move both defining and nondefining function declarations of Ada package body to namespace definition.
+         // comment out the if condition for now. 1/20/2021
+        //
+        // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
         // The func declaration should be moved along with the call site.
         // The scope should be set to the new block also
         // Liao 1/14/2011
-        if (func->get_firstNondefiningDeclaration() == func)
+        // if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
       }
       else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
@@ -21228,7 +21235,7 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
   ROSE_ASSERT (sourceBlock && targetBlock);
-  if (sourceBlock == targetBlock)
+  if ((void*)sourceBlock == (void*)targetBlock)
   {
     cerr<<"warning: SageInterface::moveStatementsBetweenScopes() is skipped, "<<endl;
     cerr<<"         since program is trying to move statements from and to the identical scoped block. "<<endl;
@@ -21281,11 +21288,24 @@ static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
   }   
 }
 
+//TODO: now with more types, we need to use template functions
 void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
 {
   moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
   //create alias symbols in its global definition 
   createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveStatementsBetweenScopes(sourceBlock, targetBlock); 
+  //create alias symbols in its global definition 
+  createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
 }
 
 void
