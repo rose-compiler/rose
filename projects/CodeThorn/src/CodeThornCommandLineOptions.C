@@ -191,8 +191,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("null-pointer",po::value< bool >(&ctOpt.nullPointerAnalysis)->default_value(false)->implicit_value(true),"Perform null pointer analysis and print results.")
     ("out-of-bounds",po::value< bool >(&ctOpt.outOfBoundsAnalysis)->default_value(false)->implicit_value(true),"Perform out-of-bounds analysis and print results.")
     ("uninitialized",po::value< bool >(&ctOpt.uninitializedMemoryAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
-    ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(true)->implicit_value(true),"Perform uninitialized analysis and print results.")
-    ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(true)->implicit_value(true),"Perform uninitialized analysis and print results.")
+    ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
+    ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
 
     ("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
     ("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")

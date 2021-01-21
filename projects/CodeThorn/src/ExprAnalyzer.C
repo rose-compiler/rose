@@ -923,7 +923,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else {
         cerr<<"Error: unknown type of array or pointer."<<endl;
-        cerr<<node->unparseToString()<<endl;
+        cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
         exit(1);
       }
       AbstractValue indexExprResultValue=indexExprResult.value();

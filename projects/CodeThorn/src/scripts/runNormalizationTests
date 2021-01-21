@@ -18,7 +18,8 @@ function NormalizationTests {
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/NORM${testNumber};
-        for benchmark in ${benchmarkprefix}*.[cC]; do
+        # do not allow for re-compiling as C anymore (because references are always introduced)
+        for benchmark in ${benchmarkprefix}*.[C]; do
             benchmarkname=$(basename $benchmark)
             if [[ $benchmark = *.c ]]; then
                 echo -n "Testing C $benchmarkname: "

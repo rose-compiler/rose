@@ -202,6 +202,7 @@ int main( int argc, char * argv[] ) {
       originalProgramInfo.printCompared(&normalizedProgramInfo);
     }
 
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
@@ -220,7 +221,6 @@ int main( int argc, char * argv[] ) {
       analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
     }
     runSolver(ctOpt,analyzer,sageProject,tc);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);

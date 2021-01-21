@@ -176,6 +176,10 @@ namespace CodeThorn {
       hoistBranchInitStatementsInAst(root);
     }
     printNormalizationPhase();
+    if(options.normalizeCompoundAssignments) {
+      normalizeCompoundAssignmentsInAst(root);
+    }
+    printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,options.restrictToFunCallExpressions);
     }
@@ -184,19 +188,18 @@ namespace CodeThorn {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
     }
     printNormalizationPhase();
-    if(options.normalizeCompoundAssignments) {
-      normalizeCompoundAssignmentsInAst(root);
-    }
-    printNormalizationPhase();
+    // obsolete, done as part of expression normalization, off by default
     if(options.normalizeVariableDeclarations) {
       normalizeAllVariableDeclarations(root,false);
     }
     printNormalizationPhase();
+    // obsolete, done as part of expression normalization, off by default
     if(options.normalizeVariableDeclarationsWithFunctionCalls) {
       bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
       normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
     }
     printNormalizationPhase();
+    // off by default
     if(options.inlining) {
       InlinerBase* inliner=getInliner();
       ROSE_ASSERT(inliner);
@@ -1520,7 +1523,16 @@ void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
     //MS 06/24/2020: If the expression is an assignment then ensure
     //that tmp var is of reference type. In case of array use base
     //type.
-    if (isSgAssignOp(expression))
+    //MS 01/21/21 also consider cases where copying may require
+    //reference semantics in case of destructive updates of referred
+    //field or pointer dereference - but exclude all type-cases where
+    //copying is guaranteed to be sufficient
+    if (
+        isSgAssignOp(expression)
+        ||( (isSgDotExp(expression)||isSgArrowExp(expression)||isSgPointerDerefExp(expression))
+            && !isSgPointerType(expressionType)
+            && !isSgReferenceType(expressionType) )
+        )
     {
       if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
@@ -1542,7 +1554,7 @@ void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
 
     /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
      copy semantics which would make assignments to the members of the struct not having any effect on the original data */
-    if(isSgClassType(variableType)) {
+    if(isSgClassType(variableType) && !isSgReferenceType(variableType)) {
       variableType = SageBuilder::buildReferenceType(variableType);
     }
 
