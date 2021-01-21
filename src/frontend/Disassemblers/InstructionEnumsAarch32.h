@@ -74,7 +74,8 @@ enum Aarch32SystemRegister {
     aarch32_sys_msp,
     aarch32_sys_psp,
     aarch32_sys_primask,
-    aarch32_sys_control
+    aarch32_sys_control,
+    aarch32_sys_fpsid
 };
 
 } // namespace

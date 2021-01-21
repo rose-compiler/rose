@@ -68,8 +68,8 @@ private:
     // ID number.
     RegisterDescriptor makeRegister(arm_reg);
 
-    // Convert a Capstone system register number to a ROSE register descriptor.
-    RegisterDescriptor makeSystemRegister(arm_sysreg);
+    // Convert a Capstone system register number to a ROSE expression.
+    SgAsmExpression* makeSystemRegister(arm_sysreg);
 
     // Create a register descriptor for a coprocessor register.
     RegisterDescriptor makeCoprocRegister(int registerNumber);

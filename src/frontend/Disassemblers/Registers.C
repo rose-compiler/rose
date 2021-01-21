@@ -997,6 +997,10 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("primask", aarch32_regclass_sys, aarch32_sys_primask, 0, 32);
         regs->insert("control", aarch32_regclass_sys, aarch32_sys_control, 0, 32);
 
+        // The FPSID provides top-level information about floating-pointimplementation. This register largely duplicates
+        // information held in the MIDR. Its use is deprecated.
+        regs->insert("fpsid", aarch32_regclass_sys, aarch32_sys_fpsid, 0, 32);
+
         // NEON and VFP use the same extension register bank. This is distinct from the ARM register bank. The extension
         // register bank is a colleciton of registers which can be accesed as either 32-bit, 64-bit, or 128-bit registers,
         // depending on whether the instruction is NEON or VFP.

@@ -226,9 +226,7 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
             ASSERT_not_implemented("[Robb Matzke 2021-01-04]");
 
         case ARM_OP_SYSREG: {
-            RegisterDescriptor reg = makeSystemRegister((arm_sysreg)op.reg);
-            retval = new SgAsmDirectRegisterExpression(reg);
-            retval->set_type(registerType(reg));
+            retval = makeSystemRegister((arm_sysreg)op.reg);
             break;
         }
     }
@@ -553,12 +551,14 @@ DisassemblerAarch32::makeRegister(arm_reg reg) {
         case ARM_REG_S31:
             retval = dict.find("s31");
             break;
+        case ARM_REG_FPSID:
+            retval = dict.find("fpsid");
+            break;
 
         //      ARM_REG_FPEXC,
         //      ARM_REG_FPINST,
         //      ARM_REG_FPSCR,
         //      ARM_REG_FPSCR_NZCV,
-        //      ARM_REG_FPSID,
         //      ARM_REG_ITSTATE,
         //
         //      ARM_REG_SPSR,
@@ -583,88 +583,153 @@ DisassemblerAarch32::makeRegister(arm_reg reg) {
     return retval;
 }
 
-RegisterDescriptor
-DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
+SgAsmExpression*
+DisassemblerAarch32::makeSystemRegister(arm_sysreg capreg) {
     ASSERT_not_null(registerDictionary());
     const RegisterDictionary &dict = *registerDictionary();
-    RegisterDescriptor retval;
+    SgAsmExpression *retval = nullptr;
 
-    switch (reg) {
-        // SPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
-        // register. Each exception handling mode has its own SPSR, so the instruction for which this register is being built
-        // probably doesn't know which SPSR is actually being referenced.
+    RegisterDescriptor reg;
+    switch (capreg) {
+        // ARM_SYSREG_SPSR_* registers can be OR combined. Also, when decoding an instruction we don't yet know which hardware
+        // register "spsr" refers to -- that's only known when the instruction is executed. Therefore, ROSE has a special
+        // "spsr" register and the instruction semantics will resolve it later.
         case ARM_SYSREG_SPSR_C:
-            retval = dict.find("spsr_control");
+            reg = dict.find("spsr_control");
             break;
         case ARM_SYSREG_SPSR_X:
-            retval = dict.find("spsr_extension");
+            reg = dict.find("spsr_extension");
             break;
         case ARM_SYSREG_SPSR_S:
-            retval = dict.find("spsr_status");
+            reg = dict.find("spsr_status");
             break;
         case ARM_SYSREG_SPSR_F:
-            retval = dict.find("spsr_flags");
+            reg = dict.find("spsr_flags");
             break;
         case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 0, 16);
-            break;
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_S:
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_F:
         case ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 8, 16);
-            break;
+        case ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_F:
         case ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 16, 16);
-            break;
         case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 0, 24);
-            break;
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_F:
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F:
         case ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_spsr, 8, 24);
+        case ARM_SYSREG_SPSR_C | ARM_SYSREG_SPSR_X | ARM_SYSREG_SPSR_S | ARM_SYSREG_SPSR_F: {
+            auto regList = new SgAsmRegisterNames;
+            if ((capreg & ARM_SYSREG_SPSR_C) != 0) {
+                reg = dict.find("spsr_control");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_SPSR_X) != 0) {
+                reg = dict.find("spsr_extension");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_SPSR_S) != 0) {
+                reg = dict.find("spsr_status");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_SPSR_F) != 0) {
+                reg = dict.find("spsr_flags");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            retval = regList;
             break;
+        }
 
-        // CPSR* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a hardware
-        // register.
-        case ARM_SYSREG_CPSR_C:                         // this is not the C (carry) bit, but rather the control bits [0,7].
-            retval = dict.find("cpsr_control");
+        // ARM_SYSREG_CPSR_* registers can be OR combined, but a RegisterDescriptor can only represent a contiguous region of a
+        // hardware register, so we'll use SgAsmRegisterNames to hold more than one.
+        case ARM_SYSREG_CPSR_C:
+            reg = dict.find("cpsr_control");
             break;
         case ARM_SYSREG_CPSR_X:
-            retval = dict.find("cpsr_extension");
+            reg = dict.find("cpsr_extension");
             break;
         case ARM_SYSREG_CPSR_S:
-            retval = dict.find("cpsr_status");          // status bits [16,23], not to be confused with the "status flags"
+            reg = dict.find("cpsr_status");
             break;
-        case ARM_SYSREG_CPSR_F:                         // this is not the F (FIQ mask) bit, but rather flags bits [24,31]
-            retval = dict.find("cpsr_flags");
+        case ARM_SYSREG_CPSR_F:
+            reg = dict.find("cpsr_flags");
             break;
         case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 0, 16);
-            break;
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_S:
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_F:
         case ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 8, 16);
-            break;
+        case ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_F:
         case ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 16, 16);
-            break;
         case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 0, 24);
-            break;
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_F:
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F:
         case ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F:
-            retval = RegisterDescriptor(aarch32_regclass_sys, aarch32_sys_cpsr, 8, 24);
+        case ARM_SYSREG_CPSR_C | ARM_SYSREG_CPSR_X | ARM_SYSREG_CPSR_S | ARM_SYSREG_CPSR_F: {
+            auto regList = new SgAsmRegisterNames;
+            if ((capreg & ARM_SYSREG_CPSR_C) != 0) {
+                reg = dict.find("cpsr_control");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_CPSR_X) != 0) {
+                reg = dict.find("cpsr_extension");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_CPSR_S) != 0) {
+                reg = dict.find("cpsr_status");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            if ((capreg & ARM_SYSREG_CPSR_F) != 0) {
+                reg = dict.find("cpsr_flags");
+                auto regExpr = new SgAsmDirectRegisterExpression(reg);
+                regExpr->set_type(registerType(reg));
+                regList->get_registers().push_back(regExpr);
+            }
+            retval = regList;
+            break;
+        }
 
         // Application program status register
         case ARM_SYSREG_APSR:
-            retval = dict.find("apsr");
+            reg = dict.find("apsr");
             break;
         case ARM_SYSREG_APSR_NZCVQ:
-            retval = dict.find("apsr_nzcvq");
+            reg = dict.find("apsr_nzcvq");
             break;
-        case ARM_SYSREG_APSR_NZCVQG:
-            ASSERT_not_implemented("apsr_nzcvqg");      // undocumented
+        case ARM_SYSREG_APSR_NZCVQG: {                  // undocumented in capstone, but perhaps N, Z, C, V, Q, and GE
+            // These are discontiguous parts of the register, so we need to create a list of register parts.
+            RegisterDescriptor reg = dict.find("apsr_nzcvq");
+            auto nzcvq = new SgAsmDirectRegisterExpression(reg);
+            nzcvq->set_type(registerType(reg));
+
+            reg = dict.find("apsr_ge");
+            auto ge = new SgAsmDirectRegisterExpression(reg);
+            ge->set_type(registerType(reg));
+
+            auto regList = new SgAsmRegisterNames;
+            regList->get_registers().push_back(nzcvq);
+            regList->get_registers().push_back(ge);
+            retval = regList;
+            break;
+        }
+
         case ARM_SYSREG_APSR_G:
             ASSERT_not_implemented("apsr_g");           // undocumented
 
         // IAPSR (not sure what this is)
         case ARM_SYSREG_IAPSR:
-            retval = dict.find("iapsr");
+            reg = dict.find("iapsr");
             break;
         case ARM_SYSREG_IAPSR_G:
             ASSERT_not_implemented("iapsr_g");          // undocumented
@@ -675,7 +740,7 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
 
         // EAPSR (not sure what this is)
         case ARM_SYSREG_EAPSR:
-            retval = dict.find("eapsr");
+            reg = dict.find("eapsr");
             break;
         case ARM_SYSREG_EAPSR_G:
             ASSERT_not_implemented("eapsr_g");          // undocumented
@@ -693,22 +758,22 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
 
         // Other registers with unclear purposes
         case ARM_SYSREG_IPSR:
-            retval = dict.find("ipsr");
+            reg = dict.find("ipsr");
             break;
         case ARM_SYSREG_EPSR:
-            retval = dict.find("epsr");
+            reg = dict.find("epsr");
             break;
         case ARM_SYSREG_IEPSR:
-            retval = dict.find("iepsr");
+            reg = dict.find("iepsr");
             break;
         case ARM_SYSREG_MSP:
-            retval = dict.find("msp");
+            reg = dict.find("msp");
             break;
         case ARM_SYSREG_PSP:
-            retval = dict.find("psp");
+            reg = dict.find("psp");
             break;
         case ARM_SYSREG_PRIMASK:
-            retval = dict.find("primask");
+            reg = dict.find("primask");
             break;
         case ARM_SYSREG_BASEPRI:
             ASSERT_not_implemented("basepri");          // undocumented
@@ -717,114 +782,123 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg reg) {
         case ARM_SYSREG_FAULTMASK:
             ASSERT_not_implemented("faultmask");        // undocumented
         case ARM_SYSREG_CONTROL:
-            retval = dict.find("control");
+            reg = dict.find("control");
             break;
 
         // Banked registers
         case ARM_SYSREG_R8_USR:
-            retval = dict.find("r8_usr");
+            reg = dict.find("r8_usr");
             break;
         case ARM_SYSREG_R9_USR:
-            retval = dict.find("r9_usr");
+            reg = dict.find("r9_usr");
             break;
         case ARM_SYSREG_R10_USR:
-            retval = dict.find("r10_usr");
+            reg = dict.find("r10_usr");
             break;
         case ARM_SYSREG_R11_USR:
-            retval = dict.find("r11_usr");
+            reg = dict.find("r11_usr");
             break;
         case ARM_SYSREG_R12_USR:
-            retval = dict.find("r12_usr");
+            reg = dict.find("r12_usr");
             break;
         case ARM_SYSREG_SP_USR:
-            retval = dict.find("sp_usr");
+            reg = dict.find("sp_usr");
             break;
         case ARM_SYSREG_LR_USR:
-            retval = dict.find("lr_usr");
+            reg = dict.find("lr_usr");
             break;
         case ARM_SYSREG_R8_FIQ:
-            retval = dict.find("r8_fiq");
+            reg = dict.find("r8_fiq");
             break;
         case ARM_SYSREG_R9_FIQ:
-            retval = dict.find("r9_fiz");
+            reg = dict.find("r9_fiz");
             break;
         case ARM_SYSREG_R10_FIQ:
-            retval = dict.find("r10_fiq");
+            reg = dict.find("r10_fiq");
             break;
         case ARM_SYSREG_R11_FIQ:
-            retval = dict.find("r11_fiq");
+            reg = dict.find("r11_fiq");
             break;
         case ARM_SYSREG_R12_FIQ:
-            retval = dict.find("r12_fiq");
+            reg = dict.find("r12_fiq");
             break;
         case ARM_SYSREG_SP_FIQ:
-            retval = dict.find("sp_fiq");
+            reg = dict.find("sp_fiq");
             break;
         case ARM_SYSREG_LR_FIQ:
-            retval = dict.find("lr_fiq");
+            reg = dict.find("lr_fiq");
             break;
         case ARM_SYSREG_LR_IRQ:
-            retval = dict.find("lr_irq");
+            reg = dict.find("lr_irq");
             break;
         case ARM_SYSREG_SP_IRQ:
-            retval = dict.find("sp_irq");
+            reg = dict.find("sp_irq");
             break;
         case ARM_SYSREG_LR_SVC:
-            retval = dict.find("lr_svc");
+            reg = dict.find("lr_svc");
             break;
         case ARM_SYSREG_SP_SVC:
-            retval = dict.find("sp_svc");
+            reg = dict.find("sp_svc");
             break;
         case ARM_SYSREG_LR_ABT:
-            retval = dict.find("lr_abt");
+            reg = dict.find("lr_abt");
             break;
         case ARM_SYSREG_SP_ABT:
-            retval = dict.find("sp_abt");
+            reg = dict.find("sp_abt");
             break;
         case ARM_SYSREG_LR_UND:
-            retval = dict.find("lr_und");
+            reg = dict.find("lr_und");
             break;
         case ARM_SYSREG_SP_UND:
-            retval = dict.find("sp_und");
+            reg = dict.find("sp_und");
             break;
         case ARM_SYSREG_LR_MON:
-            retval = dict.find("lr_mon");
+            reg = dict.find("lr_mon");
             break;
         case ARM_SYSREG_SP_MON:
-            retval = dict.find("sp_mon");
+            reg = dict.find("sp_mon");
             break;
         case ARM_SYSREG_ELR_HYP:
-            retval = dict.find("sp_hyp");
+            reg = dict.find("sp_hyp");
             break;
         case ARM_SYSREG_SP_HYP:
-            retval = dict.find("sp_hyp");
+            reg = dict.find("sp_hyp");
             break;
         case ARM_SYSREG_SPSR_FIQ:
-            retval = dict.find("spsr_fiq");
+            reg = dict.find("spsr_fiq");
             break;
         case ARM_SYSREG_SPSR_IRQ:
-            retval = dict.find("spsr_irq");
+            reg = dict.find("spsr_irq");
             break;
         case ARM_SYSREG_SPSR_SVC:
-            retval = dict.find("spsr_svc");
+            reg = dict.find("spsr_svc");
             break;
         case ARM_SYSREG_SPSR_ABT:
-            retval = dict.find("spsr_abt");
+            reg = dict.find("spsr_abt");
             break;
         case ARM_SYSREG_SPSR_UND:
-            retval = dict.find("spsr_und");
+            reg = dict.find("spsr_und");
             break;
         case ARM_SYSREG_SPSR_MON:
-            retval = dict.find("spsr_mon");
+            reg = dict.find("spsr_mon");
             break;
         case ARM_SYSREG_SPSR_HYP:
-            retval = dict.find("spsr_hyp");
+            reg = dict.find("spsr_hyp");
             break;
 
         default:
-            ASSERT_not_reachable("register not handled; reg = " + boost::lexical_cast<std::string>(reg));
+            ASSERT_not_reachable("register not handled; reg = " + boost::lexical_cast<std::string>(capreg));
     }
-    ASSERT_require(retval);
+
+    if (!retval) {
+        ASSERT_require(reg);
+        retval = new SgAsmDirectRegisterExpression(reg);
+    }
+    if (!retval->get_type()) {
+        ASSERT_require(reg);
+        retval->set_type(registerType(reg));
+    }
+
     return retval;
 }
 
@@ -895,19 +969,21 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
         case Kind::ARM_INS_STMDA:
         case Kind::ARM_INS_STMDB:
         case Kind::ARM_INS_STMIB:
+        case Kind::ARM_INS_VLDMDB:
+        case Kind::ARM_INS_VLDMIA:
+        case Kind::ARM_INS_VSTMDB:
+        case Kind::ARM_INS_VSTMIA:
+            ASSERT_not_implemented("kind=" + boost::lexical_cast<std::string>(insn.id));
+
         case Kind::ARM_INS_VLD1:
         case Kind::ARM_INS_VLD2:
         case Kind::ARM_INS_VLD3:
         case Kind::ARM_INS_VLD4:
-        case Kind::ARM_INS_VLDMDB:
-        case Kind::ARM_INS_VLDMIA:
         case Kind::ARM_INS_VST1:
         case Kind::ARM_INS_VST2:
         case Kind::ARM_INS_VST3:
         case Kind::ARM_INS_VST4:
-        case Kind::ARM_INS_VSTMDB:
-        case Kind::ARM_INS_VSTMIA:
-            ASSERT_not_implemented("kind=" + boost::lexical_cast<std::string>(insn.id));
+            return SageBuilderAsm::buildTypeU(insn.detail->arm.vector_size); // "scalar size for vector instruction"
 
         case Kind::ARM_INS_LDC:
         case Kind::ARM_INS_LDC2:
@@ -919,6 +995,11 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
         case Kind::ARM_INS_STCL:
             // These access an unknown amount of memory based on the coprocessor. The best we can do here is to say that access
             // at least one byte.
+            return SageBuilderAsm::buildTypeU32();
+
+        case Kind::ARM_INS_PLD:
+        case Kind::ARM_INS_PLDW:
+            // These are only hints that memory will be accessed sometime in the near future. The type doesn't actually matter.
             return SageBuilderAsm::buildTypeU32();
 
         case Kind::ARM_INS_VLDR:

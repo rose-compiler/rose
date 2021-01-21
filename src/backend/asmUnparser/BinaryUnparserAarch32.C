@@ -117,6 +117,13 @@ Aarch32::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
     } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
         out <<"p" <<op->coprocessor();
 
+    } else if (SgAsmRegisterNames *op = isSgAsmRegisterNames(expr)) {
+        for (size_t i = 0; i < op->get_registers().size(); ++i) {
+            out <<(0 == i ? "{" : ", ");
+            outputExpr(out, op->get_registers()[i], state);
+        }
+        out <<"}";
+
     } else {
         ASSERT_not_implemented(expr->class_name());
     }
