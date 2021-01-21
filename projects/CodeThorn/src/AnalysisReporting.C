@@ -15,8 +15,6 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED, UNREACHABLE };
-
   LabelSet AnalysisReporting::functionLabels(CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
     LabelSet functionEntryLabels=analyzer->functionEntryLabels();
@@ -74,7 +72,7 @@ namespace CodeThorn {
           report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
           printSeparationLine();
           // generate verification call graph
-          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report);
+          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,true);
           AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
           //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
           printSeparationLine();
@@ -243,50 +241,12 @@ namespace CodeThorn {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
     //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
-    LabelSet verified=report.verifiedLocations();
-    LabelSet falsified=report.falsifiedLocations();
-    LabelSet unverified=report.unverifiedLocations();
-    //cout<<"Verified  :"<<verified.toString()<<endl;
-    //cout<<"Falsified :"<<falsified.toString()<<endl;
-    //cout<<"Unverified:"<<unverified.toString()<<endl;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     std::map<Label,VerificationResult> fMap;
-    for(auto entryLabel : functionEntryLabels) {
-      if(analyzer->isUnreachableLabel(entryLabel)) {
-        fMap[entryLabel]=UNREACHABLE;
-        continue;
-      }
-      // todo: function is
-      // falsified: if at least one label is falsified (=0)
-      // unverified: if at least one is unverified (=top)
-      // verified: all labels are verified (=1)
-      LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
-      //cout<<"Function label set:"<<funLabSet.toString()<<endl;
-      //for(auto lab : funLabSet) {
-      //  cout<<lab.toString()<<":"<<analyzer->getLabeler()->getNode(lab)->class_name()<<endl;
-      //}
-      VerificationResult funVer=INCONSISTENT;
-      size_t count=0;
-      for(auto lab : funLabSet) {
-        if(falsified.isElement(lab)) {
-          funVer=FALSIFIED;
-          break;
-        }
-        if(unverified.isElement(lab)) {
-          funVer=UNVERIFIED;
-        }
-        if(verified.isElement(lab)) {
-          count++;
-        }
-      }
-      //cout<<"Function verification: "<<SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel))<<":"<<funLabSet.size()<<" vs "<<count<<endl;
-      if(funLabSet.size()==count) {
-        funVer=VERIFIED;
-      }
-      fMap[entryLabel]=funVer;
-      //cout<<"DEBUG:entrylabel:"<<entryLabel.toString()<<" : "<<funVer<<" : "<< analyzer->getLabeler()->getNode(entryLabel)->unparseToString()<<endl;
-    }
+
+    calculatefMap(fMap,analyzer,functionEntryLabels,flow,report);
+
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
 
     std::string cgBegin="digraph G {\n";
@@ -346,42 +306,54 @@ namespace CodeThorn {
 
   }
 
-
-  
-  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting) {
-    string fileName1=analysisName+"-functions.csv";
+  void AnalysisReporting::calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report) {
     LabelSet verified=report.verifiedLocations();
     LabelSet falsified=report.falsifiedLocations();
     LabelSet unverified=report.unverifiedLocations();
-    
-    Flow& flow=*analyzer->getFlow();
-    std::map<Label,VerificationResult> fMap;
-    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+
     for(auto entryLabel : functionEntryLabels) {
       if(analyzer->isUnreachableLabel(entryLabel)) {
         fMap[entryLabel]=UNREACHABLE;
         continue;
       }
       LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
+      //cout<<"Function label set:"<<funLabSet.toString()<<endl;
+      //for(auto lab : funLabSet) {
+      //  cout<<lab.toString()<<":"<<analyzer->getLabeler()->getNode(lab)->class_name()<<endl;
+      //}
       VerificationResult funVer=INCONSISTENT;
       size_t count=0;
+      size_t unreachableCount=0;
       for(auto lab : funLabSet) {
         if(falsified.isElement(lab)) {
           funVer=FALSIFIED;
           break;
-        }
-        if(unverified.isElement(lab)) {
+        } else if(analyzer->isUnreachableLabel(lab)) {
+          unreachableCount++;
+        } else if(unverified.isElement(lab)) {
           funVer=UNVERIFIED;
-        }
-        if(verified.isElement(lab)) {
+        } else if(verified.isElement(lab)) {
           count++;
         }
       }
-      if(funLabSet.size()==count) {
+      //cout<<"DEBUG: Function verification: "<<SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel))<<":"<<funLabSet.size()<<" vs "<<count<<" + "<<unreachableCount<<endl;
+      if(funLabSet.size()==count+unreachableCount) {
         funVer=VERIFIED;
       }
       fMap[entryLabel]=funVer;
+      //cout<<"DEBUG:entrylabel:"<<entryLabel.toString()<<" : "<<funVer<<" : "<< analyzer->getLabeler()->getNode(entryLabel)->unparseToString()<<endl;
     }
+  }
+  
+  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting) {
+    string fileName1=analysisName+"-functions.csv";
+    
+    Flow& flow=*analyzer->getFlow();
+    std::map<Label,VerificationResult> fMap;
+    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+
+    calculatefMap(fMap,analyzer,functionEntryLabels,flow,report);
+
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
     stringstream cgNodes;
     string nodeColor;
