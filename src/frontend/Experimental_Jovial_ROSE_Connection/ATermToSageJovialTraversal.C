@@ -1497,37 +1497,19 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
       // MATCHED OptDimensionList
    } else return ATfalse;
 
-// 1. Look for a type name first (type will have already been declared by this point).
-//    The type name is the name of the base type (this declaration inherits from the base/parent class)
+// 1. Look for a type name first (there will exist a TYPE declaration for the base type)
+//    The type name is the name of the base type.
 //
-   if (traverse_TableDescriptionName(t_table_desc, table_type_name, type, preset)) {
-      table_type = isSgJovialTableType(type);
-      if (table_type) {
-      // Use the declared table type as the base type and mangle the table type name so that the
-      // symbol for the type is unique.
-         table_type_name = "_" + table_type_name + "_" + table_var_name;
-         table_type = SageBuilder::buildJovialTableType(table_type_name, table_type, dim_info, SageBuilder::topScopeStack());
-         table_type->set_use_base_type_name(true);
-         type = table_type;
-      }
-      else {
-         // This is essentially a TableDescriptionType
-         table_type = SageBuilder::buildJovialTableType(table_type_name, type, dim_info, SageBuilder::topScopeStack());
-         type = table_type;
-      }
+   if (traverse_TableDescriptionName(t_table_desc, table_type_name, base_type, preset)) {
+      table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
+      type = table_type;
    }
 
-// 2. Otherwise look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
+// 2. Otherwise look for a primitive base type (similar to the base type of an array type).
 //    The base type is the table description and there will be no body.
 //
    else if (traverse_TableDescriptionType(t_table_desc, base_type, preset, attr_list, table_spec)) {
-      ROSE_ASSERT(base_type);
-
-   // Mangle the name but use base type name for unparsing
-      SgName name("_array_" + table_var_name);
-
-      table_type = SageBuilder::buildJovialTableType(name, base_type, dim_info, SageBuilder::topScopeStack());
-      table_type->set_use_base_type_name(true);
+      table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
       type = table_type;
    }
 
