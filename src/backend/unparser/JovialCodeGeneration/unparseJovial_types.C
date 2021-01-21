@@ -268,19 +268,11 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
   // The base type will need to be unparsed (not just the base type name) if
   // it is a primitive type (e.g., U 32, where get_name() won't exist) or if
   // it is anonymous (where again, there won't be a proper name)
-     SgJovialTableType* table_base_type = isSgJovialTableType(base_type);
-     bool is_primitive_base_type = table_type->get_use_base_type_name() && (table_base_type == NULL);
-     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
-     bool unparse_base_type = is_anonymous || is_primitive_base_type;
+     SgNamedType* named_type = isSgNamedType(base_type);
 
-     if (info.inVarDecl() && unparse_base_type == false)
+     if (info.inVarDecl() && named_type)
         {
-          if (table_type->get_use_base_type_name()) {
-            curprint(table_base_type->get_name());
-          }
-          else {
-            curprint(table_type->get_name());
-          }
+          curprint(named_type->get_name());
         }
      else if (base_type != NULL)
         {
