@@ -1832,10 +1832,8 @@ FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
     for (/*void*/; idx <= goalIdx; ++idx) {
         state = state->clone();                         // need to make a copy before we modify it
         sem.ops->currentState(state);
-        bool pathProcessed = false;
         try {
             processVertex(sem.cpu, path.vertices()[idx], incomingStepCount(path, idx));
-            pathProcessed = true;
         } catch (...) {
             SAWYER_MESG(debug) <<"    path semantics failed, path idx = " <<idx <<"\n";
             state = BaseSemantics::StatePtr();
