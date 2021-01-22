@@ -930,7 +930,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         }
-        cout<<"DEBUG: array reference value: "<<arrayPtrValue.toString()<<endl;
+        //cout<<"DEBUG: array reference value: "<<arrayPtrValue.toString()<<endl;
         //cout<<"PSTATE:"<<pstate2.toString(_variableIdMapping)<<endl;
         //cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
       } else {
@@ -940,7 +940,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
-      cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+      //cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
       if(arrayPtrPlusIndexValue.isNullPtr()) {
         recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
         // there is no state following a definitive null pointer
