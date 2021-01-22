@@ -681,6 +681,7 @@ void CodeThorn::CTAnalysis::runSolver() {
   CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
   ROSE_ASSERT(ctSolver);
   //_solver->run();
+  cout<<"STATUS: running solver "<<ctSolver->getId()<<endl;
   ctSolver->run();
   stopAnalysisTimer();
 }
@@ -2821,37 +2822,7 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
   Label newLabel;
   PState newPState;
   ConstraintSet newCSet;
-  // MS: the use of contraints is necessary here (for LTL verification). The evaluation of conditions is the only necessary case.
-#ifndef CONSTR_ELIM_DEBUG
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState);
-#else
-  list<SingleEvalResultConstInt> evalResultListF=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,false);
-  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
-  //  if(evalResultListF.size()!=evalResultList.size()) {
-  //cout<<"DEBUG: different evalresultList sizes (false vs true):"<<evalResultList.size()<<":"<<evalResultListF.size()<<endl;
-    for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
-        i!=evalResultList.end();
-        ++i) {
-      SingleEvalResultConstInt evalResult=*i;
-      if(evalResult.isBot()) cout <<" bot";
-      if(evalResult.isTop()) cout <<" top";
-      if(evalResult.isTrue()) cout <<" true";
-      if(evalResult.isFalse()) cout <<" false";
-    }
-    cout <<" vs ";
-    for(list<SingleEvalResultConstInt>::iterator i=evalResultListF.begin();
-        i!=evalResultListF.end();
-        ++i) {
-      SingleEvalResultConstInt evalResult=*i;
-      if(evalResult.isBot()) cout <<" bot";
-      if(evalResult.isTop()) cout <<" top";
-      if(evalResult.isTrue()) cout <<" true";
-      if(evalResult.isFalse()) cout <<" false";
-    }
-    cout<<" @ "<<nextNodeToAnalyze2->unparseToString();
-    cout<<endl;
-    //}
-#endif
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
@@ -2870,26 +2841,6 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
         readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
       }
-#if 0
-      // merge with collected constraints of expr (exprConstraints)
-      if(edge.isType(EDGE_TRUE)) {
-        newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
-      } else if(edge.isType(EDGE_FALSE)) {
-        ConstraintSet s1=*evalResult.estate.constraints();
-        ConstraintSet s2=evalResult.exprConstraints;
-        newCSet=s1+s2;
-      } else {
-        SAWYER_MESG(logger[ERROR])<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
-        exit(1);
-      }
-#endif
-#if 0
-      // make check-ltl-rers-topify (topify => constraints are collected)
-      if(newCSet.size()>0) {
-        cout<<"DEBUG: cset: "<<newCSet.toString()<<endl;
-        cout<<"DEBUG: pstate: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
-      }
-#endif
       // use new empty cset instead of computed cset
       ROSE_ASSERT(newCSet.size()==0);
       EState newEstate=createEState(newLabel,cs,newPState,newCSet);

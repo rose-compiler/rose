@@ -70,7 +70,8 @@ struct CodeThornOptions : public CodeThorn::Options {
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
   bool ssa=false; // transformation
-
+  bool traceMode=false; // trace mode in solver 16
+  
   bool nullPointerAnalysis=false;
   bool outOfBoundsAnalysis=false;
   bool uninitializedMemoryAnalysis=false;
