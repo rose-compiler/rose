@@ -53,8 +53,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   
   // experimental options
   bool ompAst=false;
-  bool normalizeAll=false;
-  bool normalizeFCalls=false;
+  int normalizeLevel=0;
   bool normalizePhaseInfo=false;
   bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness

@@ -161,11 +161,11 @@ void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   SgProject* sageProject=frontend(argc,argv);
   Normalization normalization;
-  if(ctOpt.normalizeAll) {
+  if(ctOpt.normalizeLevel>0) {
     if(ctOpt.quiet==false) {
       cout<<"STATUS: normalizing program."<<endl;
     }
-    normalization.normalizeAst(sageProject,2);
+    normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
   }
   ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
   VariableIdMappingExtended* vid=new VariableIdMappingExtended();
@@ -602,17 +602,12 @@ void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, 
   timingCollector.startTimer();
   Normalization normalization;
   normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
-  if(ctOpt.normalizeFCalls) {
-    normalization.normalizeAst(sageProject,1);
-    SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
-  }
-  
-  if(ctOpt.normalizeAll) {
+  if(ctOpt.normalizeLevel>0) {
     if(ctOpt.quiet==false) {
-      cout<<"STATUS: normalizing program."<<endl;
+      cout<<"STATUS: normalizing program (level "<<ctOpt.normalizeLevel<<")"<<endl;
     }
     //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-    normalization.normalizeAst(sageProject,2);
+    normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
   }
   timingCollector.stopTimer(TimingCollector::normalization);
   CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
@@ -740,12 +735,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
     CodeThorn::Normalization normalization;
     normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
     normalization.setInliningOption(ctOpt.inlineFunctions);
-    int normalizationLevel=0;
-    if(ctOpt.normalizeFCalls)
-      normalizationLevel=1;
-    if(ctOpt.normalizeAll)
-      normalizationLevel=2;
-    normalization.normalizeAst(project,normalizationLevel);
+    normalization.normalizeAst(project,ctOpt.normalizeLevel);
   }
 
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {

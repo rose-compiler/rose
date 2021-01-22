@@ -170,8 +170,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   experimentalOptions.add_options()
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
-    ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
-    ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
+    ("normalize-level", po::value< int >(&ctOpt.normalizeLevel)->default_value(0),"Normalize all expressions (2), only fcalls (1), turn off (0).")
     ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
     ("normalize-phase-info", po::value<bool > (&ctOpt.normalizePhaseInfo)->default_value(false)->implicit_value(true),"Print phase progression info on stdout during normalization.")
     ("strict-checking", po::value<bool >(&ctOpt.strictChecking)->default_value(false)->implicit_value(true),"Perform strict checking in semantics (mostly useful for testing), otherwise compute conservative value.")

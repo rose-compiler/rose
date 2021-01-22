@@ -181,7 +181,7 @@ namespace CodeThorn {
     }
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {
-      hoistConditionsInAst(root,options.restrictToFunCallExpressions);
+      hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
     }
     printNormalizationPhase();
     if(options.normalizeExpressions) {
@@ -268,7 +268,7 @@ namespace CodeThorn {
   bool Normalization::hasFunctionCall(SgExpression* expr) {
     RoseAst ast(expr);
     for(auto node:ast) {
-      if(isSgFunctionCallExp(node)) {
+      if(isSgFunctionCallExp(node)||isSgConditionalExp(node)) {
         return true;
       }
     }

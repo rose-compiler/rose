@@ -1946,11 +1946,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   ROSE_ASSERT(root);
 
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
-  programAbstractionLayer->setNormalizationLevel(0);
-  if(_ctOpt.normalizeFCalls)
-    programAbstractionLayer->setNormalizationLevel(1);
-  if(_ctOpt.normalizeAll)
-    programAbstractionLayer->setNormalizationLevel(2);
+  programAbstractionLayer->setNormalizationLevel(_ctOpt.normalizeLevel);
   programAbstractionLayer->initialize(_ctOpt,root,tc);
   initialize(_ctOpt,root,programAbstractionLayer);
   _programAbstractionLayer=programAbstractionLayer;

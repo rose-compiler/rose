@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS="--normalize-fcalls --ignore-unknown-functions --report-only-file-name"
+OPTIONS="--normalize-level=1 --ignore-unknown-functions --report-only-file-name"
 
 # test 1-9: normalization: YES
 # test 10:  normalization: NO
