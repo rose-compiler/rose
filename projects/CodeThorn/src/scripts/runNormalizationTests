@@ -45,7 +45,7 @@ function NormalizationTests {
                 exit 1
             else
 	        echo "PASS"
-		rm -f rose_${benchmarkname}
+		    rm -f rose_${benchmarkname}
             fi
         done
     done

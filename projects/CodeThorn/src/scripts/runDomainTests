@@ -54,8 +54,7 @@ function DomainTests {
                 DIFF=$(diff $GCC_OUTPUT_FILE $CT_OUTPUT_FILE) 
                 if [ "$DIFF" != "" ] 
                 then
-                    DIFF1=`echo $DIFF | head -n 1`
-                    echo "$COLORED_WARN : $DIFF1"
+                    echo $COLORED_WARN
                 else
                     echo $COLORED_PASS
                 fi
