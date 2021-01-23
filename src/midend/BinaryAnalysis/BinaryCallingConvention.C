@@ -39,7 +39,14 @@ initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Dictionary&
-dictionaryArm64() {
+dictionaryAarch32() {
+    static Dictionary dict;
+    // FIXME[Robb Matzke 2020-12-23]: none defined yet
+    return dict;
+}
+
+const Dictionary&
+dictionaryAarch64() {
     static Dictionary dict;
     // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
     return dict;

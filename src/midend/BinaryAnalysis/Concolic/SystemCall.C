@@ -20,19 +20,27 @@ SystemCall::instance() {
     return Ptr(new SystemCall);
 }
 
-TestCase::Ptr
-SystemCall::testCase() {
-    ASSERT_not_implemented("[Robb Matzke 2020-10-14]");
+// class method
+SystemCall::Ptr
+SystemCall::instance(const SystemCall::Ptr &orig) {
+    SystemCall::Ptr retval = instance();
+    retval->callSequenceNumber(orig->callSequenceNumber());
+    retval->functionId(orig->functionId());
+    retval->callSite(orig->callSite());
+    retval->returnValue(orig->returnValue());
+    return retval;
 }
 
-void
-SystemCall::testCase(TestCaseId tcid) {
-    ASSERT_not_implemented("[Robb Matzke 2020-10-14]");
+TestCase::Ptr
+SystemCall::testCase() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return testCase_;
 }
 
 void
 SystemCall::testCase(const TestCase::Ptr &tc) {
-    ASSERT_not_implemented("[Robb Matzke 2020-10-14]");
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    testCase_ = tc;
 }
 
 std::string

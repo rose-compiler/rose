@@ -66,12 +66,12 @@ std::string unparseM68kExpression(SgAsmExpression*, const Rose::BinaryAnalysis::
                                   const Rose::BinaryAnalysis::RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
- * A64
+ * ARM A64
  *-------------------------------------------------------------------------------------------------------------------------------*/
-#ifdef ROSE_ENABLE_ASM_A64
-std::string unparseA64Mnemonic(SgAsmA64Instruction*);
-std::string unparseA64Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
-                                 const Rose::BinaryAnalysis::RegisterDictionary*);
+#ifdef ROSE_ENABLE_ASM_AARCH64
+std::string unparseAarch64Mnemonic(SgAsmAarch64Instruction*);
+std::string unparseAarch64Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                                     const Rose::BinaryAnalysis::RegisterDictionary*);
 #endif
 
 #endif

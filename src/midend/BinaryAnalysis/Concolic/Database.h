@@ -155,9 +155,12 @@ public:
     /** Erase all system calls associated with a test case. */
     void eraseSystemCalls(TestCaseId);
 
-    /** Append a system call to a test case. */
-    void appendSystemCall(TestCaseId, SystemCallId);
-    
+    /** Replace all system calls associated with a test case.
+     *
+     *  All existing calls are removed from the specified test case and the new system calls are inserted in their
+     *  place. Returns the new system call IDs in the database. */
+    std::vector<SystemCallId> systemCalls(TestCaseId, const std::vector<SystemCallPtr>&);
+
     //------------------------------------------------------------------------------------------------------------------------
     // Overloaded methods for all objects.
     //------------------------------------------------------------------------------------------------------------------------
@@ -201,8 +204,42 @@ public:
      *  This is a more self-documenting name for calling @ref id for the sole purpose of saving (creating or updating) an
      *  object's database representation. */
     template<class ObjectPointer>
-    typename ObjectTraits<typename ObjectPointer::Pointee>::Id save(const ObjectPointer &obj) {
+    typename ObjectTraits<typename ObjectPointer::Pointee>::Id
+    save(const ObjectPointer &obj) {
         return id(obj);
+    }
+
+    /** Save multiple objects.
+     *
+     *  This is just a shortcut for calling @ref save in a loop. */
+    template<class ObjectPointer>
+    void save(const std::vector<ObjectPointer> &objects) {
+        for (auto object: objects)
+            save(object);
+    }
+
+    /** Obtains multiple objects from multiple IDs.
+     *
+     *  This is just a shortcut for calling @ref object in a loop. */
+    template<class Id>
+    std::vector<typename Id::Pointer>
+    objects(const std::vector<Id> &ids, Update::Flag update = Update::YES) {
+        std::vector<typename Id::Pointer> retval;
+        for (auto id: ids)
+            retval.push_back(object(id, update));
+        return retval;
+    }
+
+    /** Obtains multiple IDs from multiple objects.
+     *
+     *  This is just a shortcut for calling @ref id in a loop. */
+    template<class ObjectPointer>
+    std::vector<typename ObjectTraits<ObjectPointer>::Id>
+    ids(const std::vector<ObjectPointer> &objects, Update::Flag update = Update::YES) {
+        std::vector<typename ObjectTraits<ObjectPointer>::Id> retval;
+        for (auto object: objects)
+            retval.push_back(id(object, update));
+        return retval;
     }
 
 #if ROSE_CONCOLIC_DB_VERSION == 1

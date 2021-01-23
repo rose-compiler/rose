@@ -78,9 +78,10 @@ class ConcreteExecutorResult;
 template <class Tag>
 class ObjectId: public Sawyer::Optional<size_t> {
 public:
-    typedef size_t                  Value;         /**< Type of ID. */
-    typedef Sawyer::Optional<Value> Super;         /**< Supertype of this class. */
-    typedef Tag                     Object;        /**< Type of object to which this ID refers. */
+    using Value = size_t;                               /**< Type of ID. */
+    using Super = Sawyer::Optional<Value>;              /**< Supertype of this class. */
+    using Object = Tag;                                 /**< Type of object to which this ID refers. */
+    using Pointer = Sawyer::SharedPointer<Tag>;         /**< Type of object pointer. */
 
     ObjectId() {}
 

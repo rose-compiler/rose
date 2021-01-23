@@ -153,11 +153,11 @@ private:
                                         rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
     SgAsmInstruction* matchIndirectJumpEbx(const Partitioner&, rose_addr_t va,
                                            rose_addr_t &offsetFromEbx /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchA64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
-    SgAsmInstruction* matchA64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
-                                  rose_addr_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchA64Add(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchA64Br(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchAarch64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
+    SgAsmInstruction* matchAarch64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                                      rose_addr_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchAarch64Add(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchAarch64Br(const Partitioner&, rose_addr_t va);
 };
 
 /** Build may-return white and black lists. */

@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <boost/filesystem.hpp>
 #include <Disassembler.h>
 #include <MemoryMap.h>
 #include <Partitioner2/Engine.h>
@@ -12,6 +13,14 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 static const rose_addr_t startingVa = 0;
+
+static void
+showUsageAndExit(int exitValue, const boost::filesystem::path arg0) {
+    std::cerr <<"usage: " <<arg0.filename().string() <<" ISA BYTES...\n"
+              <<"where ISA is one of \"a64\", \"a32\", or \"t32\" and BYTES are two or four hexadecimal "
+              <<"arguments with or without leading \"0x\" specifying the machine instruction in big endian order\n";
+    exit(exitValue);
+}
 
 static MemoryMap::Ptr
 parseBytes(int argc, char *argv[]) {
@@ -33,9 +42,20 @@ parseBytes(int argc, char *argv[]) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    MemoryMap::Ptr memory = parseBytes(argc, argv);
+
+    // Parse command-line
+    MemoryMap::Ptr memory;
+    if ((argc == 6 && (!strcmp(argv[1], "a64") || !strcmp(argv[1], "a32"))) ||
+        (argc == 4 && !strcmp(argv[1], "t32"))) {
+        memory = parseBytes(argc-1, argv+1);
+    } else {
+        showUsageAndExit(1, argv[0]);
+    }
+    std::string isa = argv[1];
+
+    // Create the decoder and semantics
     P2::Engine engine;
-    engine.settings().disassembler.isaName = "a64";
+    engine.settings().disassembler.isaName = isa;
     engine.memoryMap(memory);
     P2::Partitioner p = engine.createTunedPartitioner();
     auto symOps = S2::SymbolicSemantics::RiscOperators::promote(p.newOperators());
@@ -44,11 +64,14 @@ main(int argc, char *argv[]) {
     auto ops = S2::TraceSemantics::RiscOperators::instance(symOps);
     S2::BaseSemantics::Dispatcher::Ptr cpu = p.newDispatcher(ops);
 
+    // Decode and process the instruction
     size_t va = memory->hull().least();
     while (SgAsmInstruction *insn = p.instructionProvider()[va]) {
         std::cerr <<p.unparse(insn) <<"\n";
-        cpu->processInstruction(insn);
-        std::cerr <<*ops->currentState();
+        if (cpu) {
+            cpu->processInstruction(insn);
+            std::cerr <<*ops->currentState();
+        }
         va += insn->get_size();
     }
 }
