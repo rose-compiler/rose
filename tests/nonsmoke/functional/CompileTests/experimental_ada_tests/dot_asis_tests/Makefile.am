@@ -22,7 +22,9 @@ ASIS_SPEC_PASS_TESTS := \
 	component_declaration.ads \
 	constant_declaration.ads \
         constrained_array_definition.ads \
+        defining_operator_symbol.ads \
 	derived_record.ads \
+        discriminant_specification.ads \
 	empty_package.ads \
 	entry_declaration.ads \
 	exception_declaration.ads \
@@ -35,9 +37,12 @@ ASIS_SPEC_PASS_TESTS := \
         package_pragma.ads \
 	package_with_body.ads \
 	parameter_declaration.ads \
+        private_extension_declaration.ads \
 	procedure_declaration.ads \
+        protected_type_declaration.ads \
         representation_clause.ads \
 	selected_component.ads \
+        single_protected_declaration.ads \
         signed_integer_type_definition.ads \
 	simple_expression_range.ads \
 	tagged_definition.ads \
@@ -49,7 +54,6 @@ ASIS_SPEC_PASS_TESTS := \
 	unit_2.ads \
 	variable_declaration.ads \
         variant_record.ads
-
 
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
@@ -70,6 +74,8 @@ ASIS_BODY_PASS_TESTS := \
 	block_statement.adb \
 	case_statement.adb \
 	choice_parameter_specification.adb \
+        defining_character_literal.adb \
+        defining_enumeration_literal.adb \
 	delay_relative.adb \
 	delay_until.adb \
         discriminant.adb \
@@ -85,8 +91,10 @@ ASIS_BODY_PASS_TESTS := \
 	goto_loop_v2.adb \
 	hello_world.adb \
 	if_statement.adb \
+        loop_parameter_specification.adb \
 	loop_statement.adb \
 	minimal.adb \
+        object_renaming_declaration.adb \
 	operator.adb \
 	package_with_body.adb \
 	pragmas.adb \
