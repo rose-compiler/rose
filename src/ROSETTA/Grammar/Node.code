@@ -464,8 +464,8 @@ typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclara
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
-#ifdef ROSE_ENABLE_ASM_A64
-typedef Rose_STL_Container<SgAsmA64Instruction*> SgAsmA64InstructionPtrList;
+#ifdef ROSE_ENABLE_ASM_AARCH64
+typedef Rose_STL_Container<SgAsmAarch64Instruction*> SgAsmAarch64InstructionPtrList;
 #endif
 #endif
 

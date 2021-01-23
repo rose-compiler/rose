@@ -6130,75 +6130,75 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsA64.h line 39
+// /src/frontend/Disassemblers/InstructionEnumsAarch64.h line 39
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
-    /** Convert Rose::BinaryAnalysis::A64RegisterClass enum constant to a string. */
-    const char* A64RegisterClass(int64_t);
+    /** Convert Rose::BinaryAnalysis::Aarch64RegisterClass enum constant to a string. */
+    const char* Aarch64RegisterClass(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::A64RegisterClass enum constant to a string. */
-    std::string A64RegisterClass(int64_t, const std::string &strip);
+    /** Convert Rose::BinaryAnalysis::Aarch64RegisterClass enum constant to a string. */
+    std::string Aarch64RegisterClass(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::A64RegisterClass member values as a vector. */
-    const std::vector<int64_t>& A64RegisterClass();
+    /** Return all Rose::BinaryAnalysis::Aarch64RegisterClass member values as a vector. */
+    const std::vector<int64_t>& Aarch64RegisterClass();
 }}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisA64RegisterClass(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisA64RegisterClass();
+    std::string stringifyBinaryAnalysisAarch64RegisterClass(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisAarch64RegisterClass();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsA64.h line 54
+// /src/frontend/Disassemblers/InstructionEnumsAarch64.h line 54
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
-    /** Convert Rose::BinaryAnalysis::A64SystemRegisters enum constant to a string. */
-    const char* A64SystemRegisters(int64_t);
+    /** Convert Rose::BinaryAnalysis::Aarch64SystemRegisters enum constant to a string. */
+    const char* Aarch64SystemRegisters(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::A64SystemRegisters enum constant to a string. */
-    std::string A64SystemRegisters(int64_t, const std::string &strip);
+    /** Convert Rose::BinaryAnalysis::Aarch64SystemRegisters enum constant to a string. */
+    std::string Aarch64SystemRegisters(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::A64SystemRegisters member values as a vector. */
-    const std::vector<int64_t>& A64SystemRegisters();
+    /** Return all Rose::BinaryAnalysis::Aarch64SystemRegisters member values as a vector. */
+    const std::vector<int64_t>& Aarch64SystemRegisters();
 }}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisA64SystemRegisters(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisA64SystemRegisters();
+    std::string stringifyBinaryAnalysisAarch64SystemRegisters(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisAarch64SystemRegisters();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/DisassemblerA64.h line 39
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerArm {
-    /** Convert Rose::BinaryAnalysis::DisassemblerArm::Architecture enum constant to a string. */
+// /src/frontend/Disassemblers/DisassemblerAarch64.h line 39
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerAarch64 {
+    /** Convert Rose::BinaryAnalysis::DisassemblerAarch64::Architecture enum constant to a string. */
     const char* Architecture(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::DisassemblerArm::Architecture enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::DisassemblerAarch64::Architecture enum constant to a string. */
     std::string Architecture(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::DisassemblerArm::Architecture member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::DisassemblerAarch64::Architecture member values as a vector. */
     const std::vector<int64_t>& Architecture();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisDisassemblerArmArchitecture(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerArmArchitecture();
+    std::string stringifyBinaryAnalysisDisassemblerAarch64Architecture(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerAarch64Architecture();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/DisassemblerA64.h line 45
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerArm {
-    /** Convert Rose::BinaryAnalysis::DisassemblerArm::Mode enum constant to a string. */
+// /src/frontend/Disassemblers/DisassemblerAarch64.h line 45
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerAarch64 {
+    /** Convert Rose::BinaryAnalysis::DisassemblerAarch64::Mode enum constant to a string. */
     const char* Mode(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::DisassemblerArm::Mode enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::DisassemblerAarch64::Mode enum constant to a string. */
     std::string Mode(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::DisassemblerArm::Mode member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::DisassemblerAarch64::Mode member values as a vector. */
     const std::vector<int64_t>& Mode();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisDisassemblerArmMode(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerArmMode();
+    std::string stringifyBinaryAnalysisDisassemblerAarch64Mode(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerAarch64Mode();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -18426,19 +18426,19 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
 namespace stringify {
-    /** Convert E_SgAsmA64Instruction enum constant to a string. */
-    const char* E_SgAsmA64Instruction(int64_t);
+    /** Convert E_SgAsmAarch64Instruction enum constant to a string. */
+    const char* E_SgAsmAarch64Instruction(int64_t);
 
-    /** Convert E_SgAsmA64Instruction enum constant to a string. */
-    std::string E_SgAsmA64Instruction(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64Instruction enum constant to a string. */
+    std::string E_SgAsmAarch64Instruction(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64Instruction member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64Instruction();
+    /** Return all E_SgAsmAarch64Instruction member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64Instruction();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64Instruction(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64Instruction();
+    std::string stringifyE_SgAsmAarch64Instruction(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64Instruction();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -18984,91 +18984,91 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
 namespace stringify {
-    /** Convert E_SgAsmA64AtOperand enum constant to a string. */
-    const char* E_SgAsmA64AtOperand(int64_t);
+    /** Convert E_SgAsmAarch64AtOperand enum constant to a string. */
+    const char* E_SgAsmAarch64AtOperand(int64_t);
 
-    /** Convert E_SgAsmA64AtOperand enum constant to a string. */
-    std::string E_SgAsmA64AtOperand(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64AtOperand enum constant to a string. */
+    std::string E_SgAsmAarch64AtOperand(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64AtOperand member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64AtOperand();
+    /** Return all E_SgAsmAarch64AtOperand member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64AtOperand();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64AtOperand(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64AtOperand();
+    std::string stringifyE_SgAsmAarch64AtOperand(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64AtOperand();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
 namespace stringify {
-    /** Convert E_SgAsmA64PrefetchOperand enum constant to a string. */
-    const char* E_SgAsmA64PrefetchOperand(int64_t);
+    /** Convert E_SgAsmAarch64PrefetchOperand enum constant to a string. */
+    const char* E_SgAsmAarch64PrefetchOperand(int64_t);
 
-    /** Convert E_SgAsmA64PrefetchOperand enum constant to a string. */
-    std::string E_SgAsmA64PrefetchOperand(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64PrefetchOperand enum constant to a string. */
+    std::string E_SgAsmAarch64PrefetchOperand(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64PrefetchOperand member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64PrefetchOperand();
+    /** Return all E_SgAsmAarch64PrefetchOperand member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64PrefetchOperand();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64PrefetchOperand(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64PrefetchOperand();
+    std::string stringifyE_SgAsmAarch64PrefetchOperand(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64PrefetchOperand();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
 namespace stringify {
-    /** Convert E_SgAsmA64SysMoveOperand enum constant to a string. */
-    const char* E_SgAsmA64SysMoveOperand(int64_t);
+    /** Convert E_SgAsmAarch64SysMoveOperand enum constant to a string. */
+    const char* E_SgAsmAarch64SysMoveOperand(int64_t);
 
-    /** Convert E_SgAsmA64SysMoveOperand enum constant to a string. */
-    std::string E_SgAsmA64SysMoveOperand(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64SysMoveOperand enum constant to a string. */
+    std::string E_SgAsmAarch64SysMoveOperand(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64SysMoveOperand member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64SysMoveOperand();
+    /** Return all E_SgAsmAarch64SysMoveOperand member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64SysMoveOperand();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64SysMoveOperand(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64SysMoveOperand();
+    std::string stringifyE_SgAsmAarch64SysMoveOperand(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64SysMoveOperand();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
 namespace stringify {
-    /** Convert E_SgAsmA64CImmediateOperand enum constant to a string. */
-    const char* E_SgAsmA64CImmediateOperand(int64_t);
+    /** Convert E_SgAsmAarch64CImmediateOperand enum constant to a string. */
+    const char* E_SgAsmAarch64CImmediateOperand(int64_t);
 
-    /** Convert E_SgAsmA64CImmediateOperand enum constant to a string. */
-    std::string E_SgAsmA64CImmediateOperand(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64CImmediateOperand enum constant to a string. */
+    std::string E_SgAsmAarch64CImmediateOperand(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64CImmediateOperand member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64CImmediateOperand();
+    /** Return all E_SgAsmAarch64CImmediateOperand member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64CImmediateOperand();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64CImmediateOperand(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64CImmediateOperand();
+    std::string stringifyE_SgAsmAarch64CImmediateOperand(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64CImmediateOperand();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
 namespace stringify {
-    /** Convert E_SgAsmA64BarrierOperand enum constant to a string. */
-    const char* E_SgAsmA64BarrierOperand(int64_t);
+    /** Convert E_SgAsmAarch64BarrierOperand enum constant to a string. */
+    const char* E_SgAsmAarch64BarrierOperand(int64_t);
 
-    /** Convert E_SgAsmA64BarrierOperand enum constant to a string. */
-    std::string E_SgAsmA64BarrierOperand(int64_t, const std::string &strip);
+    /** Convert E_SgAsmAarch64BarrierOperand enum constant to a string. */
+    std::string E_SgAsmAarch64BarrierOperand(int64_t, const std::string &strip);
 
-    /** Return all E_SgAsmA64BarrierOperand member values as a vector. */
-    const std::vector<int64_t>& E_SgAsmA64BarrierOperand();
+    /** Return all E_SgAsmAarch64BarrierOperand member values as a vector. */
+    const std::vector<int64_t>& E_SgAsmAarch64BarrierOperand();
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64BarrierOperand(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgAsmA64BarrierOperand();
+    std::string stringifyE_SgAsmAarch64BarrierOperand(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64BarrierOperand();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -22441,7 +22441,7 @@ namespace stringify {
             namespace DisassemblerX86 {
             }
             /** Stringification. */
-            namespace DisassemblerArm {
+            namespace DisassemblerAarch64 {
             }
             /** Stringification. */
             namespace ManagedInstruction {
