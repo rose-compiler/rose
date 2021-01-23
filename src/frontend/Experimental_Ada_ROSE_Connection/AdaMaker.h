@@ -90,6 +90,11 @@ namespace Ada_ROSE_Translation
   SgDeclType&
   mkExceptionType(SgExpression& n);
 
+  /// returns the type produced by an attribute expression
+  // \todo consider returning an SgTypeOfType instead of SgDeclType
+  SgDeclType&
+  mkAttributeType(SgTypeTraitBuiltinOperator& n);
+
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
   mkOpaqueType();
