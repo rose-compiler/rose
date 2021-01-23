@@ -1160,6 +1160,12 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+                    case V_SgTypeTraitBuiltinOperator: // PP (01/22/21) as used by Ada Attributes
+                       {
+                         ROSE_ASSERT(SageInterface::is_Ada_language());
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
@@ -1237,6 +1243,12 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                          printf ("Warning: EDG 4.x specific case, found unusual case of SgDeclType returned from SgFunctionCallExp::get_type() member function \n");
 #endif
+                         break;
+                       }
+
+                    case V_SgTypeBool: // PP (01/22/21) used in Ada
+                       {
+                         ROSE_ASSERT(SageInterface::is_Ada_language());
                          break;
                        }
 

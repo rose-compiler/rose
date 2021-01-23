@@ -77,4 +77,5 @@ PASSING_TESTS :=                       \
   async_transfer_select.adb            \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
+  scopequal.adb                        \
   EndOfList
