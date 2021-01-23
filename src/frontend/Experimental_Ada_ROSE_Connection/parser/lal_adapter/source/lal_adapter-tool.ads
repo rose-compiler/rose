@@ -1,6 +1,6 @@
 -- This is the main Lal_Adapter class.
 
---  private with Lal_Adapter.Context;
+private with Lal_Adapter.Context;
 with a_nodes_h;
 
 package Lal_Adapter.Tool is
@@ -36,7 +36,7 @@ private
 
    type Class is tagged limited -- Initialized
       record
-         --  My_Context : Lal_Adapter.Context.Class; -- Initialized
+         My_Context : Lal_Adapter.Context.Class; -- Initialized
          Outputs    : Outputs_Record; -- Initializeditialized
       end record;
 

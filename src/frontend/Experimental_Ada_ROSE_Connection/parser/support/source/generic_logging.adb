@@ -35,4 +35,30 @@ package body Generic_Logging is
       Log (GNAT.Traceback.Symbolic.Symbolic_Traceback (X));
    end Log_Exception;
 
+   ----------------------
+   -- EXPORTED (private):
+   ----------------------
+   procedure Initialize (Self : in out Auto_Logger) is
+   begin
+      Log ("BEGIN");
+   exception
+      when X: others =>
+         Log_Exception (X);
+         Log ("Reraising exception in Initialize procedure.  Should cause Program_Error");
+         raise;
+   end Initialize;
+
+   ----------------------
+   -- EXPORTED (private):
+   ----------------------
+   procedure Finalize (Self : in out Auto_Logger) is
+   begin
+      Log ("END");
+   exception
+      when X: others =>
+         Log_Exception (X);
+         Log ("Reraising exception in Initialize procedure.  Should cause Program_Error");
+         raise;
+   end Finalize;
+   
 end Generic_Logging;
