@@ -1549,14 +1549,19 @@ injectAliasSymbol(const std::string &name)
       SgVariableSymbol*
         var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
       ROSE_ASSERT(var_sym);
-      SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
-      ROSE_ASSERT(alias_sym);
 
       SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
       ROSE_ASSERT(table_decl);
-      SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
-      ROSE_ASSERT(global_scope);
-      global_scope->insert_symbol(SgName(name), alias_sym);
+      SgScopeStatement* decl_scope = table_decl->get_scope();
+      ROSE_ASSERT(decl_scope);
+
+      if (!isSgFunctionParameterScope(decl_scope)) {
+        SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
+        ROSE_ASSERT(alias_sym);
+        SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
+        ROSE_ASSERT(global_scope);
+        global_scope->insert_symbol(SgName(name), alias_sym);
+      }
    }
 }
 
