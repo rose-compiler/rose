@@ -41350,30 +41350,30 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsA64.h line 39
+// /src/frontend/Disassemblers/InstructionEnumsAarch64.h line 39
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
-    const char* A64RegisterClass(int64_t i) {
+    const char* Aarch64RegisterClass(int64_t i) {
         switch (i) {
-            case 0L: return "arm_regclass_gpr";
-            case 1L: return "arm_regclass_sp";
-            case 2L: return "arm_regclass_ext";
-            case 3L: return "arm_regclass_pc";
-            case 4L: return "arm_regclass_cc";
-            case 5L: return "arm_regclass_system";
+            case 0L: return "aarch64_regclass_gpr";
+            case 1L: return "aarch64_regclass_sp";
+            case 2L: return "aarch64_regclass_ext";
+            case 3L: return "aarch64_regclass_pc";
+            case 4L: return "aarch64_regclass_cc";
+            case 5L: return "aarch64_regclass_system";
             default: return "";
         }
     }
 
-    std::string A64RegisterClass(int64_t i, const std::string &strip) {
-        std::string s = A64RegisterClass(i);
+    std::string Aarch64RegisterClass(int64_t i, const std::string &strip) {
+        std::string s = Aarch64RegisterClass(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::A64RegisterClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Aarch64RegisterClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& A64RegisterClass() {
+    const std::vector<int64_t>& Aarch64RegisterClass() {
         static const int64_t values[] = {
             0L,
             1L,
@@ -41389,73 +41389,73 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis {
 }}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisA64RegisterClass(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::A64RegisterClass(i);
+    std::string stringifyBinaryAnalysisAarch64RegisterClass(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Aarch64RegisterClass(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::A64RegisterClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Aarch64RegisterClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::A64RegisterClass::" + retval;
+                retval = "Rose::BinaryAnalysis::Aarch64RegisterClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisA64RegisterClass() {
-        return stringify::Rose::BinaryAnalysis::A64RegisterClass();
+    const std::vector<int64_t>& stringifyBinaryAnalysisAarch64RegisterClass() {
+        return stringify::Rose::BinaryAnalysis::Aarch64RegisterClass();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/InstructionEnumsA64.h line 54
+// /src/frontend/Disassemblers/InstructionEnumsAarch64.h line 54
 namespace stringify { namespace Rose { namespace BinaryAnalysis {
-    const char* A64SystemRegisters(int64_t i) {
+    const char* Aarch64SystemRegisters(int64_t i) {
         switch (i) {
-            case 0L: return "arm_system_actlr";
-            case 4L: return "arm_system_ccsidr";
-            case 8L: return "arm_system_clidr";
-            case 12L: return "arm_system_cntfrq";
-            case 16L: return "arm_system_cntpct";
-            case 20L: return "arm_system_cntkctl";
-            case 24L: return "arm_system_cntp_cval";
-            case 28L: return "arm_system_cpacr";
-            case 32L: return "arm_system_csselr";
-            case 36L: return "arm_system_cntp_ctl";
-            case 40L: return "arm_system_ctr";
-            case 44L: return "arm_system_dczid";
-            case 48L: return "arm_system_elr";
-            case 52L: return "arm_system_esr";
-            case 56L: return "arm_system_far";
-            case 60L: return "arm_system_hcr";
-            case 64L: return "arm_system_mair";
-            case 68L: return "arm_system_midr";
-            case 72L: return "arm_system_mpidr";
-            case 76L: return "arm_system_scr";
-            case 80L: return "arm_system_sctlr";
-            case 84L: return "arm_system_spsr";
-            case 88L: return "arm_system_tcr";
-            case 92L: return "arm_system_tpidr";
-            case 96L: return "arm_system_tpidrr0";
-            case 100L: return "arm_system_ttbr0";
-            case 104L: return "arm_system_ttbr1";
-            case 108L: return "arm_system_vbar";
-            case 112L: return "arm_system_vtcr";
-            case 116L: return "arm_system_vttbr";
+            case 0L: return "aarch64_system_actlr";
+            case 4L: return "aarch64_system_ccsidr";
+            case 8L: return "aarch64_system_clidr";
+            case 12L: return "aarch64_system_cntfrq";
+            case 16L: return "aarch64_system_cntpct";
+            case 20L: return "aarch64_system_cntkctl";
+            case 24L: return "aarch64_system_cntp_cval";
+            case 28L: return "aarch64_system_cpacr";
+            case 32L: return "aarch64_system_csselr";
+            case 36L: return "aarch64_system_cntp_ctl";
+            case 40L: return "aarch64_system_ctr";
+            case 44L: return "aarch64_system_dczid";
+            case 48L: return "aarch64_system_elr";
+            case 52L: return "aarch64_system_esr";
+            case 56L: return "aarch64_system_far";
+            case 60L: return "aarch64_system_hcr";
+            case 64L: return "aarch64_system_mair";
+            case 68L: return "aarch64_system_midr";
+            case 72L: return "aarch64_system_mpidr";
+            case 76L: return "aarch64_system_scr";
+            case 80L: return "aarch64_system_sctlr";
+            case 84L: return "aarch64_system_spsr";
+            case 88L: return "aarch64_system_tcr";
+            case 92L: return "aarch64_system_tpidr";
+            case 96L: return "aarch64_system_tpidrr0";
+            case 100L: return "aarch64_system_ttbr0";
+            case 104L: return "aarch64_system_ttbr1";
+            case 108L: return "aarch64_system_vbar";
+            case 112L: return "aarch64_system_vtcr";
+            case 116L: return "aarch64_system_vttbr";
             default: return "";
         }
     }
 
-    std::string A64SystemRegisters(int64_t i, const std::string &strip) {
-        std::string s = A64SystemRegisters(i);
+    std::string Aarch64SystemRegisters(int64_t i, const std::string &strip) {
+        std::string s = Aarch64SystemRegisters(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::A64SystemRegisters)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Aarch64SystemRegisters)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& A64SystemRegisters() {
+    const std::vector<int64_t>& Aarch64SystemRegisters() {
         static const int64_t values[] = {
             0L,
             4L,
@@ -41495,27 +41495,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis {
 }}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisA64SystemRegisters(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::A64SystemRegisters(i);
+    std::string stringifyBinaryAnalysisAarch64SystemRegisters(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Aarch64SystemRegisters(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::A64SystemRegisters)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Aarch64SystemRegisters)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::A64SystemRegisters::" + retval;
+                retval = "Rose::BinaryAnalysis::Aarch64SystemRegisters::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisA64SystemRegisters() {
-        return stringify::Rose::BinaryAnalysis::A64SystemRegisters();
+    const std::vector<int64_t>& stringifyBinaryAnalysisAarch64SystemRegisters() {
+        return stringify::Rose::BinaryAnalysis::Aarch64SystemRegisters();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/DisassemblerA64.h line 39
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerArm {
+// /src/frontend/Disassemblers/DisassemblerAarch64.h line 39
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerAarch64 {
     const char* Architecture(int64_t i) {
         switch (i) {
             case 0L: return "ARCH_ARM64";
@@ -41526,7 +41526,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Disa
     std::string Architecture(int64_t i, const std::string &strip) {
         std::string s = Architecture(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::DisassemblerArm::Architecture)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::DisassemblerAarch64::Architecture)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41543,27 +41543,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Disa
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisDisassemblerArmArchitecture(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::DisassemblerArm::Architecture(i);
+    std::string stringifyBinaryAnalysisDisassemblerAarch64Architecture(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::DisassemblerAarch64::Architecture(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::DisassemblerArm::Architecture)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::DisassemblerAarch64::Architecture)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::DisassemblerArm::Architecture::" + retval;
+                retval = "Rose::BinaryAnalysis::DisassemblerAarch64::Architecture::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerArmArchitecture() {
-        return stringify::Rose::BinaryAnalysis::DisassemblerArm::Architecture();
+    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerAarch64Architecture() {
+        return stringify::Rose::BinaryAnalysis::DisassemblerAarch64::Architecture();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Disassemblers/DisassemblerA64.h line 45
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerArm {
+// /src/frontend/Disassemblers/DisassemblerAarch64.h line 45
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace DisassemblerAarch64 {
     const char* Mode(int64_t i) {
         switch (i) {
             case 0L: return "MODE_V8";
@@ -41574,7 +41574,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Disa
     std::string Mode(int64_t i, const std::string &strip) {
         std::string s = Mode(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::DisassemblerArm::Mode)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::DisassemblerAarch64::Mode)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -41591,21 +41591,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Disa
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisDisassemblerArmMode(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::DisassemblerArm::Mode(i);
+    std::string stringifyBinaryAnalysisDisassemblerAarch64Mode(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::DisassemblerAarch64::Mode(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::DisassemblerArm::Mode)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::DisassemblerAarch64::Mode)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::DisassemblerArm::Mode::" + retval;
+                retval = "Rose::BinaryAnalysis::DisassemblerAarch64::Mode::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerArmMode() {
-        return stringify::Rose::BinaryAnalysis::DisassemblerArm::Mode();
+    const std::vector<int64_t>& stringifyBinaryAnalysisDisassemblerAarch64Mode() {
+        return stringify::Rose::BinaryAnalysis::DisassemblerAarch64::Mode();
     }
 }
 
@@ -79446,24 +79446,24 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1476
 namespace stringify {
-    const char* E_SgAsmA64Instruction(int64_t i) {
+    const char* E_SgAsmAarch64Instruction(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64Instruction_operandList";
-            case 1L: return "SgAsmA64Instruction_semantics";
+            case 0L: return "SgAsmAarch64Instruction_operandList";
+            case 1L: return "SgAsmAarch64Instruction_semantics";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64Instruction(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64Instruction(i);
+    std::string E_SgAsmAarch64Instruction(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64Instruction(i);
         if (s.empty())
-            s = "(E_SgAsmA64Instruction)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64Instruction)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64Instruction() {
+    const std::vector<int64_t>& E_SgAsmAarch64Instruction() {
         static const int64_t values[] = {
             0L,
             1L
@@ -79475,21 +79475,21 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64Instruction(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64Instruction(i);
+    std::string stringifyE_SgAsmAarch64Instruction(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64Instruction(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64Instruction)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64Instruction)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64Instruction::" + retval;
+                retval = "E_SgAsmAarch64Instruction::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64Instruction() {
-        return stringify::E_SgAsmA64Instruction();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64Instruction() {
+        return stringify::E_SgAsmAarch64Instruction();
     }
 }
 
@@ -80976,23 +80976,23 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1569
 namespace stringify {
-    const char* E_SgAsmA64AtOperand(int64_t i) {
+    const char* E_SgAsmAarch64AtOperand(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64AtOperand_operand";
+            case 0L: return "SgAsmAarch64AtOperand_operand";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64AtOperand(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64AtOperand(i);
+    std::string E_SgAsmAarch64AtOperand(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64AtOperand(i);
         if (s.empty())
-            s = "(E_SgAsmA64AtOperand)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64AtOperand)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64AtOperand() {
+    const std::vector<int64_t>& E_SgAsmAarch64AtOperand() {
         static const int64_t values[] = {
             0L
         };
@@ -81003,44 +81003,44 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64AtOperand(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64AtOperand(i);
+    std::string stringifyE_SgAsmAarch64AtOperand(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64AtOperand(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64AtOperand)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64AtOperand)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64AtOperand::" + retval;
+                retval = "E_SgAsmAarch64AtOperand::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64AtOperand() {
-        return stringify::E_SgAsmA64AtOperand();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64AtOperand() {
+        return stringify::E_SgAsmAarch64AtOperand();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1572
 namespace stringify {
-    const char* E_SgAsmA64PrefetchOperand(int64_t i) {
+    const char* E_SgAsmAarch64PrefetchOperand(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64PrefetchOperand_operand";
+            case 0L: return "SgAsmAarch64PrefetchOperand_operand";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64PrefetchOperand(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64PrefetchOperand(i);
+    std::string E_SgAsmAarch64PrefetchOperand(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64PrefetchOperand(i);
         if (s.empty())
-            s = "(E_SgAsmA64PrefetchOperand)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64PrefetchOperand)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64PrefetchOperand() {
+    const std::vector<int64_t>& E_SgAsmAarch64PrefetchOperand() {
         static const int64_t values[] = {
             0L
         };
@@ -81051,44 +81051,44 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64PrefetchOperand(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64PrefetchOperand(i);
+    std::string stringifyE_SgAsmAarch64PrefetchOperand(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64PrefetchOperand(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64PrefetchOperand)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64PrefetchOperand)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64PrefetchOperand::" + retval;
+                retval = "E_SgAsmAarch64PrefetchOperand::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64PrefetchOperand() {
-        return stringify::E_SgAsmA64PrefetchOperand();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64PrefetchOperand() {
+        return stringify::E_SgAsmAarch64PrefetchOperand();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1575
 namespace stringify {
-    const char* E_SgAsmA64SysMoveOperand(int64_t i) {
+    const char* E_SgAsmAarch64SysMoveOperand(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64SysMoveOperand_operand";
+            case 0L: return "SgAsmAarch64SysMoveOperand_operand";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64SysMoveOperand(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64SysMoveOperand(i);
+    std::string E_SgAsmAarch64SysMoveOperand(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64SysMoveOperand(i);
         if (s.empty())
-            s = "(E_SgAsmA64SysMoveOperand)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64SysMoveOperand)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64SysMoveOperand() {
+    const std::vector<int64_t>& E_SgAsmAarch64SysMoveOperand() {
         static const int64_t values[] = {
             0L
         };
@@ -81099,44 +81099,44 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64SysMoveOperand(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64SysMoveOperand(i);
+    std::string stringifyE_SgAsmAarch64SysMoveOperand(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64SysMoveOperand(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64SysMoveOperand)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64SysMoveOperand)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64SysMoveOperand::" + retval;
+                retval = "E_SgAsmAarch64SysMoveOperand::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64SysMoveOperand() {
-        return stringify::E_SgAsmA64SysMoveOperand();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64SysMoveOperand() {
+        return stringify::E_SgAsmAarch64SysMoveOperand();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1578
 namespace stringify {
-    const char* E_SgAsmA64CImmediateOperand(int64_t i) {
+    const char* E_SgAsmAarch64CImmediateOperand(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64CImmediateOperand_operand";
+            case 0L: return "SgAsmAarch64CImmediateOperand_operand";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64CImmediateOperand(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64CImmediateOperand(i);
+    std::string E_SgAsmAarch64CImmediateOperand(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64CImmediateOperand(i);
         if (s.empty())
-            s = "(E_SgAsmA64CImmediateOperand)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64CImmediateOperand)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64CImmediateOperand() {
+    const std::vector<int64_t>& E_SgAsmAarch64CImmediateOperand() {
         static const int64_t values[] = {
             0L
         };
@@ -81147,44 +81147,44 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64CImmediateOperand(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64CImmediateOperand(i);
+    std::string stringifyE_SgAsmAarch64CImmediateOperand(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64CImmediateOperand(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64CImmediateOperand)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64CImmediateOperand)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64CImmediateOperand::" + retval;
+                retval = "E_SgAsmAarch64CImmediateOperand::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64CImmediateOperand() {
-        return stringify::E_SgAsmA64CImmediateOperand();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64CImmediateOperand() {
+        return stringify::E_SgAsmAarch64CImmediateOperand();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1581
 namespace stringify {
-    const char* E_SgAsmA64BarrierOperand(int64_t i) {
+    const char* E_SgAsmAarch64BarrierOperand(int64_t i) {
         switch (i) {
-            case 0L: return "SgAsmA64BarrierOperand_operand";
+            case 0L: return "SgAsmAarch64BarrierOperand_operand";
             default: return "";
         }
     }
 
-    std::string E_SgAsmA64BarrierOperand(int64_t i, const std::string &strip) {
-        std::string s = E_SgAsmA64BarrierOperand(i);
+    std::string E_SgAsmAarch64BarrierOperand(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmAarch64BarrierOperand(i);
         if (s.empty())
-            s = "(E_SgAsmA64BarrierOperand)" + boost::lexical_cast<std::string>(i);
+            s = "(E_SgAsmAarch64BarrierOperand)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
     }
 
-    const std::vector<int64_t>& E_SgAsmA64BarrierOperand() {
+    const std::vector<int64_t>& E_SgAsmAarch64BarrierOperand() {
         static const int64_t values[] = {
             0L
         };
@@ -81195,21 +81195,21 @@ namespace stringify {
 }
 
 namespace Rose {
-    std::string stringifyE_SgAsmA64BarrierOperand(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgAsmA64BarrierOperand(i);
+    std::string stringifyE_SgAsmAarch64BarrierOperand(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmAarch64BarrierOperand(i);
         if (retval.empty()) {
-            retval = "(E_SgAsmA64BarrierOperand)" + boost::lexical_cast<std::string>(i);
+            retval = "(E_SgAsmAarch64BarrierOperand)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "E_SgAsmA64BarrierOperand::" + retval;
+                retval = "E_SgAsmAarch64BarrierOperand::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyE_SgAsmA64BarrierOperand() {
-        return stringify::E_SgAsmA64BarrierOperand();
+    const std::vector<int64_t>& stringifyE_SgAsmAarch64BarrierOperand() {
+        return stringify::E_SgAsmAarch64BarrierOperand();
     }
 }
 
@@ -85543,12 +85543,12 @@ namespace stringify {
             case 37L: return "T_ARRAY";
             case 38L: return "POINTST_OP";
             case 39L: return "ARROWSTAR_OP";
-            case 40L: return "AsmA64AtOperandTag";
-            case 41L: return "AsmA64BarrierOperandTag";
-            case 42L: return "AsmA64CImmediateOperandTag";
-            case 43L: return "AsmA64InstructionTag";
-            case 44L: return "AsmA64PrefetchOperandTag";
-            case 45L: return "AsmA64SysMoveOperandTag";
+            case 40L: return "AsmAarch64AtOperandTag";
+            case 41L: return "AsmAarch64BarrierOperandTag";
+            case 42L: return "AsmAarch64CImmediateOperandTag";
+            case 43L: return "AsmAarch64InstructionTag";
+            case 44L: return "AsmAarch64PrefetchOperandTag";
+            case 45L: return "AsmAarch64SysMoveOperandTag";
             case 46L: return "AsmBasicStringTag";
             case 47L: return "AsmBinaryAddTag";
             case 48L: return "AsmBinaryAddPostupdateTag";
@@ -87513,12 +87513,12 @@ namespace stringify {
             case 37L: return "V_SgArrayType";
             case 38L: return "V_SgArrowExp";
             case 39L: return "V_SgArrowStarOp";
-            case 40L: return "V_SgAsmA64AtOperand";
-            case 41L: return "V_SgAsmA64BarrierOperand";
-            case 42L: return "V_SgAsmA64CImmediateOperand";
-            case 43L: return "V_SgAsmA64Instruction";
-            case 44L: return "V_SgAsmA64PrefetchOperand";
-            case 45L: return "V_SgAsmA64SysMoveOperand";
+            case 40L: return "V_SgAsmAarch64AtOperand";
+            case 41L: return "V_SgAsmAarch64BarrierOperand";
+            case 42L: return "V_SgAsmAarch64CImmediateOperand";
+            case 43L: return "V_SgAsmAarch64Instruction";
+            case 44L: return "V_SgAsmAarch64PrefetchOperand";
+            case 45L: return "V_SgAsmAarch64SysMoveOperand";
             case 46L: return "V_SgAsmBasicString";
             case 47L: return "V_SgAsmBinaryAdd";
             case 48L: return "V_SgAsmBinaryAddPostupdate";

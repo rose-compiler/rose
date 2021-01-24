@@ -933,8 +933,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     ASSERT_not_null(cpu);
 
     // More return value stuff, continued from above
-#ifdef ROSE_ENABLE_ASM_A64
-    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
         REG_RETURN_ = registers_->find("x0");
     }
 #endif
@@ -1101,8 +1101,8 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
                          returnTarget->get_width() / 8;
             stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
-#ifdef ROSE_ENABLE_ASM_A64
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());

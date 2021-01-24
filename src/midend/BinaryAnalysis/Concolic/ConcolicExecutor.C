@@ -6,6 +6,7 @@
 #include <CommandLine.h>
 #include <Concolic/Database.h>
 #include <Concolic/Specimen.h>
+#include <Concolic/SystemCall.h>
 #include <Concolic/TestCase.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Partitioner.h>
@@ -306,6 +307,7 @@ RiscOperators::systemCall() {
     // registers are always present, and there's a maximum number of arguments possible, we'll just save all possible arguments
     // even if the syscall uses only some.  Linux system calls have at most six arguments.
     SystemCall sc;
+    sc.callSite = currentInstruction()->get_address();
     sc.functionNumber = systemCallFunctionNumber();
     for (size_t i = 0; i < 6; ++i)
         sc.arguments.push_back(systemCallArgument(i));
@@ -874,6 +876,23 @@ ConcolicExecutor::updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr 
 }
 
 void
+ConcolicExecutor::saveSystemCall(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::SystemCall &sc) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+    auto systemCall = SystemCall::instance();
+    systemCall->testCase(testCase);
+    ASSERT_not_null(sc.functionNumber);
+    ASSERT_require2(sc.functionNumber->is_number(), "non-concrete system calls not implemented yet");
+    systemCall->functionId(sc.functionNumber->get_number());
+    systemCall->callSite(sc.callSite);
+
+    // We don't have a concrete return value yet because we're treating the return value as a program input.
+    //systemCall->returnValue(...);
+
+    db->save(systemCall);
+}
+
+void
 ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::DispatcherPtr &cpu) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
@@ -938,6 +957,7 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         if (ops->systemCalls().size() != oldNSysCalls) {
             ASSERT_require(oldNSysCalls + 1 == ops->systemCalls().size());
             updateSystemCallSideEffects(ops, ops->systemCalls().back());
+            saveSystemCall(db, testCase, ops->systemCalls().back());
         }
 
         if (settings_.showingStates.exists(executionVa))
@@ -961,14 +981,20 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     Sawyer::Message::Stream error(mlog[ERROR]);
     SAWYER_MESG(debug) <<"generating new test case...\n";
 
-    std::vector<std::string> args = oldTestCase->args();   // like argv, but excluding argv[argc]
-    std::vector<SystemCallId> syscalls = db->systemCalls(db->id(oldTestCase, Update::NO));
+    // Get the initial argc, argv, envp for the new test case, to be modified below.
+    std::vector<std::string> args = oldTestCase->args(); // like argv, but excluding argv[argc]
     args.insert(args.begin(), oldTestCase->specimen()->name());
     Sawyer::Optional<size_t> maxArgvAdjusted;           // max index of any adjusted argument
-    Sawyer::Optional<size_t> adjustedArgc;                 // whether we have a new argc value from the solver
+    Sawyer::Optional<size_t> adjustedArgc;              // whether we have a new argc value from the solver
     std::vector<EnvValue> env = oldTestCase->env();
-    bool hadError = false;
 
+    // Get the initial system call information for the new test case by copying the system calls from the old test case.
+    std::vector<SystemCall::Ptr> oldSyscalls = db->objects(db->systemCalls(db->id(oldTestCase, Update::NO)));
+    std::vector<SystemCall::Ptr> newSyscalls;
+    for (SystemCall::Ptr oldSyscall: oldSyscalls)
+        newSyscalls.push_back(SystemCall::instance(oldSyscall));
+
+    bool hadError = false;
     BOOST_FOREACH (const std::string &solverVar, solver->evidenceNames()) {
         InputVariables::Variable inputVar = inputVariables_.get(solverVar);
         SymbolicExpr::Ptr value = solver->evidenceForName(solverVar);
@@ -1042,8 +1068,26 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 // argv.
                 ASSERT_not_implemented("[Robb Matzke 2019-12-18]");
 
-            case InputVariables::Variable::SYSTEM_CALL_RETVAL:
-                ASSERT_not_implemented("[Robb Matzke 2020-08-28]");
+            case InputVariables::Variable::SYSTEM_CALL_RETVAL: {
+                if (!value->isIntegerConstant()) {
+                    error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
+                          <<"not an integer\n";
+                    hadError = true;
+                } else {
+                    size_t idx = inputVar.serialNumber();
+                    if (idx >= newSyscalls.size()) {
+                        error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
+                              <<"syscall index " <<idx <<" is out of range "
+                              <<"(only " <<StringUtility::plural(newSyscalls.size(), "system calls") <<" encountered so far\n";
+                        hadError = true;
+                    } else {
+                        // Modify the system call return value
+                        newSyscalls[idx]->returnValue(value->toUnsigned().get());
+                        SAWYER_MESG(debug) <<"adjusting \"" <<inputVar <<"\" to " <<newSyscalls[idx]->returnValue() <<"\n";
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -1072,29 +1116,28 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         args.erase(args.begin()); // argv[0] is not to be included
         newTestCase->args(args);
         newTestCase->env(env);
-    }
 
-    // Save the test case if the database doesn't already have one that's the same.
-    // FIXME[Robb Matzke 2020-01-16]: This could be much improved.
-    if (newTestCase) {
-        TestCase::Ptr similarTestCase;
-        BOOST_FOREACH (TestCaseId tid, db->testCases()) {
-            TestCase::Ptr otherTestCase = db->object(tid);
-            if (areSimilar(newTestCase, otherTestCase)) {
-                similarTestCase = otherTestCase;
-                break;
+        if (newTestCase) {
+            TestCase::Ptr similarTestCase;
+            BOOST_FOREACH (TestCaseId tid, db->testCases()) {
+                TestCase::Ptr otherTestCase = db->object(tid);
+                if (areSimilar(newTestCase, otherTestCase)) {
+                    similarTestCase = otherTestCase;
+                    break;
+                }
             }
-        }
 
-        if (similarTestCase) {
-            debug <<"new test case not saved to DB because similar " <<similarTestCase->printableName(db) <<" already exists\n";
-        } else {
-            db->save(newTestCase);
-            if (debug) {
-                debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
-                debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
-                for (size_t i = 0; i < args.size(); ++i)
-                    debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+            if (similarTestCase) {
+                debug <<"new test case not saved to DB because similar " <<similarTestCase->printableName(db) <<" already exists\n";
+            } else {
+                TestCaseId newTestCaseId = db->id(newTestCase);
+                db->systemCalls(newTestCaseId, newSyscalls);
+                if (debug) {
+                    debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
+                    debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
+                    for (size_t i = 0; i < args.size(); ++i)
+                        debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+                }
             }
         }
     }

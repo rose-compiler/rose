@@ -1,8 +1,8 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <sage3basic.h>
-#include <DispatcherA64.h>
+#include <DispatcherAarch64.h>
 
 #include <BitOps.h>
 #include <Diagnostics.h>
@@ -18,22 +18,22 @@ namespace InstructionSemantics2 {
 //                                      Functors that handle individual A64 instruction kinds
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace A64 {
+namespace Aarch64 {
 
 // Base class for processing each instruction kind.
 class P: public BaseSemantics::InsnProcessor {
 public:
-    using D = DispatcherA64*;
+    using D = DispatcherAarch64*;
     using Ops = BaseSemantics::RiscOperators*;
-    using I = SgAsmA64Instruction*;
+    using I = SgAsmAarch64Instruction*;
     using A = const SgAsmExpressionPtrList&;
 
     virtual void p(D, Ops, I, A) = 0;
 
     virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
-        DispatcherA64Ptr dispatcher = DispatcherA64::promote(dispatcher_);
+        DispatcherAarch64Ptr dispatcher = DispatcherAarch64::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
-        SgAsmA64Instruction *insn = isSgAsmA64Instruction(insn_);
+        SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
@@ -245,7 +245,7 @@ struct IP_brk: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         size_t imm = d->read(args[0])->get_number();
-        ops->interrupt((int)A64Exception::brk, imm);
+        ops->interrupt((int)Aarch64Exception::brk, imm);
     }
 };
 
@@ -282,7 +282,7 @@ struct IP_ccmn: P {
         SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, b, ops->boolean_(false), carryOut);
-        DispatcherA64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
+        DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
         ops->writeRegister(d->REG_CPSR_N, ops->ite(cond, flagsComputed.n, ops->extract(flagsSpecified, 3, 4)));
         ops->writeRegister(d->REG_CPSR_Z, ops->ite(cond, flagsComputed.z, ops->extract(flagsSpecified, 2, 3)));
         ops->writeRegister(d->REG_CPSR_C, ops->ite(cond, flagsComputed.c, ops->extract(flagsSpecified, 1, 2)));
@@ -299,7 +299,7 @@ struct IP_ccmp: P {
         SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, ops->invert(b), ops->boolean_(true), carryOut);
-        DispatcherA64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
+        DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
         ops->writeRegister(d->REG_CPSR_N, ops->ite(cond, flagsComputed.n, ops->extract(flagsSpecified, 3, 4)));
         ops->writeRegister(d->REG_CPSR_Z, ops->ite(cond, flagsComputed.z, ops->extract(flagsSpecified, 2, 3)));
         ops->writeRegister(d->REG_CPSR_C, ops->ite(cond, flagsComputed.c, ops->extract(flagsSpecified, 1, 2)));
@@ -1792,157 +1792,157 @@ struct IP_yield: P {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-DispatcherA64::initializeInsnDispatchTable() {
-    iproc_set(ARM64_INS_ADD,    new A64::IP_add);
-    iproc_set(ARM64_INS_ADDP,   new A64::IP_addp);
-    //iproc_set(ARM64_INS_ADDS,   new A64::IP_adds); -- see ARM64_INS_ADD
-    iproc_set(ARM64_INS_ADR,    new A64::IP_adr);
-    iproc_set(ARM64_INS_ADRP,   new A64::IP_adrp);
-    iproc_set(ARM64_INS_AND,    new A64::IP_and);
-    iproc_set(ARM64_INS_ASR,    new A64::IP_asr);
-    //iproc_set(ARM64_INS_ASRV,   new A64::IP_asrv); -- see ARM64_INS_ASR
-    iproc_set(ARM64_INS_B,      new A64::IP_b);
-    iproc_set(ARM64_INS_BFM,    new A64::IP_bfm);
-    iproc_set(ARM64_INS_BFXIL,  new A64::IP_bfxil);
-    iproc_set(ARM64_INS_BIC,    new A64::IP_bic);
-    iproc_set(ARM64_INS_BL,     new A64::IP_bl);
-    iproc_set(ARM64_INS_BLR,    new A64::IP_blr);
-    iproc_set(ARM64_INS_BR,     new A64::IP_br);
-    iproc_set(ARM64_INS_BRK,    new A64::IP_brk);
-    iproc_set(ARM64_INS_CBNZ,   new A64::IP_cbnz);
-    iproc_set(ARM64_INS_CBZ,    new A64::IP_cbz);
-    iproc_set(ARM64_INS_CCMN,   new A64::IP_ccmn);
-    iproc_set(ARM64_INS_CCMP,   new A64::IP_ccmp);
-    iproc_set(ARM64_INS_CINC,   new A64::IP_cinc);
-    iproc_set(ARM64_INS_CINV,   new A64::IP_cinv);
-    iproc_set(ARM64_INS_CLS,    new A64::IP_cls);
-    iproc_set(ARM64_INS_CLZ,    new A64::IP_clz);
-    iproc_set(ARM64_INS_CMEQ,   new A64::IP_cmeq);
-    iproc_set(ARM64_INS_CMGE,   new A64::IP_cmge);
-    iproc_set(ARM64_INS_CMGT,   new A64::IP_cmgt);
-    iproc_set(ARM64_INS_CMHI,   new A64::IP_cmhi);
-    iproc_set(ARM64_INS_CMHS,   new A64::IP_cmhs);
-    iproc_set(ARM64_INS_CMLE,   new A64::IP_cmle);
-    iproc_set(ARM64_INS_CMLT,   new A64::IP_cmlt);
-    iproc_set(ARM64_INS_CMN,    new A64::IP_cmn);
-    iproc_set(ARM64_INS_CMP,    new A64::IP_cmp);
-    iproc_set(ARM64_INS_CNEG,   new A64::IP_cneg);
-    iproc_set(ARM64_INS_CSEL,   new A64::IP_csel);
-    iproc_set(ARM64_INS_CSET,   new A64::IP_cset);
-    iproc_set(ARM64_INS_CSETM,  new A64::IP_csetm);
-    iproc_set(ARM64_INS_CSINC,  new A64::IP_csinc);
-    iproc_set(ARM64_INS_CSINV,  new A64::IP_csinv);
-    iproc_set(ARM64_INS_CSNEG,  new A64::IP_csneg);
-    iproc_set(ARM64_INS_DMB,    new A64::IP_dmb);
-    iproc_set(ARM64_INS_DUP,    new A64::IP_dup);
-    iproc_set(ARM64_INS_EON,    new A64::IP_eon);
-    iproc_set(ARM64_INS_EOR,    new A64::IP_eor);
-    iproc_set(ARM64_INS_EXTR,   new A64::IP_extr);
-    iproc_set(ARM64_INS_HINT,   new A64::IP_hint);
-    iproc_set(ARM64_INS_INS,    new A64::IP_ins);
-    iproc_set(ARM64_INS_LDAR,   new A64::IP_ldar);
-    iproc_set(ARM64_INS_LDARB,  new A64::IP_ldarb);
-    iproc_set(ARM64_INS_LDARH,  new A64::IP_ldarh);
-    iproc_set(ARM64_INS_LDAXR,  new A64::IP_ldaxr);
-    iproc_set(ARM64_INS_LDAXRB, new A64::IP_ldaxrb);
-    iproc_set(ARM64_INS_LDAXRH, new A64::IP_ldaxrh);
-    iproc_set(ARM64_INS_LDP,    new A64::IP_ldp);
-    iproc_set(ARM64_INS_LDPSW,  new A64::IP_ldpsw);
-    iproc_set(ARM64_INS_LDR,    new A64::IP_ldr);
-    iproc_set(ARM64_INS_LDRB,   new A64::IP_ldrb);
-    iproc_set(ARM64_INS_LDRH,   new A64::IP_ldrh);
-    iproc_set(ARM64_INS_LDRSB,  new A64::IP_ldrsb);
-    iproc_set(ARM64_INS_LDRSH,  new A64::IP_ldrsh);
-    iproc_set(ARM64_INS_LDRSW,  new A64::IP_ldrsw);
-    iproc_set(ARM64_INS_LDUR,   new A64::IP_ldur);
-    iproc_set(ARM64_INS_LDURB,  new A64::IP_ldurb);
-    iproc_set(ARM64_INS_LDURH,  new A64::IP_ldurh);
-    iproc_set(ARM64_INS_LDURSB, new A64::IP_ldursb);
-    iproc_set(ARM64_INS_LDURSH, new A64::IP_ldursh);
-    iproc_set(ARM64_INS_LDURSW, new A64::IP_ldursw);
-    iproc_set(ARM64_INS_LDXR,   new A64::IP_ldxr);
-    iproc_set(ARM64_INS_LDXRB,  new A64::IP_ldxrb);
-    iproc_set(ARM64_INS_LDXRH,  new A64::IP_ldxrh);
-    iproc_set(ARM64_INS_LSL,    new A64::IP_lsl);
-    iproc_set(ARM64_INS_LSR,    new A64::IP_lsr);
-    iproc_set(ARM64_INS_MADD,   new A64::IP_madd);
-    iproc_set(ARM64_INS_MOV,    new A64::IP_mov);
-    iproc_set(ARM64_INS_MOVI,   new A64::IP_movi);
-    iproc_set(ARM64_INS_MOVK,   new A64::IP_movk);
-    iproc_set(ARM64_INS_MOVN,   new A64::IP_movn);
-    iproc_set(ARM64_INS_MOVZ,   new A64::IP_movz);
-    iproc_set(ARM64_INS_MSUB,   new A64::IP_msub);
-    iproc_set(ARM64_INS_MUL,    new A64::IP_mul);
-    iproc_set(ARM64_INS_MVN,    new A64::IP_mvn);
-    iproc_set(ARM64_INS_NEG,    new A64::IP_neg);
-    iproc_set(ARM64_INS_NEGS,   new A64::IP_negs);
-    iproc_set(ARM64_INS_NGC,    new A64::IP_ngc);
-    iproc_set(ARM64_INS_NGCS,   new A64::IP_ngcs);
-    iproc_set(ARM64_INS_NOP,    new A64::IP_nop);
-    iproc_set(ARM64_INS_NOT,    new A64::IP_not);
-    iproc_set(ARM64_INS_ORN,    new A64::IP_orn);
-    iproc_set(ARM64_INS_ORR,    new A64::IP_orr);
-    iproc_set(ARM64_INS_RBIT,   new A64::IP_rbit);
-    iproc_set(ARM64_INS_RET,    new A64::IP_ret);
-    iproc_set(ARM64_INS_REV,    new A64::IP_rev);
-    iproc_set(ARM64_INS_REV16,  new A64::IP_rev16);
-    iproc_set(ARM64_INS_ROR,    new A64::IP_ror);
-    //iproc_set(ARM64_INS_RORV,   new A64::IP_rorv); -- see AMD64_INS_ROR
-    iproc_set(ARM64_INS_SBC,    new A64::IP_sbc);
-    iproc_set(ARM64_INS_SBFIZ,  new A64::IP_sbfiz);
-    iproc_set(ARM64_INS_SBFM,   new A64::IP_sbfm);
-    iproc_set(ARM64_INS_SBFX,   new A64::IP_sbfx);
-    iproc_set(ARM64_INS_SDIV,   new A64::IP_sdiv);
-    iproc_set(ARM64_INS_SMADDL, new A64::IP_smaddl);
-    iproc_set(ARM64_INS_SMULH,  new A64::IP_smulh);
-    iproc_set(ARM64_INS_SMULL,  new A64::IP_smull);
-    iproc_set(ARM64_INS_STLR,   new A64::IP_stlr);
-    iproc_set(ARM64_INS_STLRB,  new A64::IP_stlrb);
-    iproc_set(ARM64_INS_STLRH,  new A64::IP_stlrh);
+DispatcherAarch64::initializeInsnDispatchTable() {
+    iproc_set(ARM64_INS_ADD,    new Aarch64::IP_add);
+    iproc_set(ARM64_INS_ADDP,   new Aarch64::IP_addp);
+    //iproc_set(ARM64_INS_ADDS,   new Aarch64::IP_adds); -- see ARM64_INS_ADD
+    iproc_set(ARM64_INS_ADR,    new Aarch64::IP_adr);
+    iproc_set(ARM64_INS_ADRP,   new Aarch64::IP_adrp);
+    iproc_set(ARM64_INS_AND,    new Aarch64::IP_and);
+    iproc_set(ARM64_INS_ASR,    new Aarch64::IP_asr);
+    //iproc_set(ARM64_INS_ASRV,   new Aarch64::IP_asrv); -- see ARM64_INS_ASR
+    iproc_set(ARM64_INS_B,      new Aarch64::IP_b);
+    iproc_set(ARM64_INS_BFM,    new Aarch64::IP_bfm);
+    iproc_set(ARM64_INS_BFXIL,  new Aarch64::IP_bfxil);
+    iproc_set(ARM64_INS_BIC,    new Aarch64::IP_bic);
+    iproc_set(ARM64_INS_BL,     new Aarch64::IP_bl);
+    iproc_set(ARM64_INS_BLR,    new Aarch64::IP_blr);
+    iproc_set(ARM64_INS_BR,     new Aarch64::IP_br);
+    iproc_set(ARM64_INS_BRK,    new Aarch64::IP_brk);
+    iproc_set(ARM64_INS_CBNZ,   new Aarch64::IP_cbnz);
+    iproc_set(ARM64_INS_CBZ,    new Aarch64::IP_cbz);
+    iproc_set(ARM64_INS_CCMN,   new Aarch64::IP_ccmn);
+    iproc_set(ARM64_INS_CCMP,   new Aarch64::IP_ccmp);
+    iproc_set(ARM64_INS_CINC,   new Aarch64::IP_cinc);
+    iproc_set(ARM64_INS_CINV,   new Aarch64::IP_cinv);
+    iproc_set(ARM64_INS_CLS,    new Aarch64::IP_cls);
+    iproc_set(ARM64_INS_CLZ,    new Aarch64::IP_clz);
+    iproc_set(ARM64_INS_CMEQ,   new Aarch64::IP_cmeq);
+    iproc_set(ARM64_INS_CMGE,   new Aarch64::IP_cmge);
+    iproc_set(ARM64_INS_CMGT,   new Aarch64::IP_cmgt);
+    iproc_set(ARM64_INS_CMHI,   new Aarch64::IP_cmhi);
+    iproc_set(ARM64_INS_CMHS,   new Aarch64::IP_cmhs);
+    iproc_set(ARM64_INS_CMLE,   new Aarch64::IP_cmle);
+    iproc_set(ARM64_INS_CMLT,   new Aarch64::IP_cmlt);
+    iproc_set(ARM64_INS_CMN,    new Aarch64::IP_cmn);
+    iproc_set(ARM64_INS_CMP,    new Aarch64::IP_cmp);
+    iproc_set(ARM64_INS_CNEG,   new Aarch64::IP_cneg);
+    iproc_set(ARM64_INS_CSEL,   new Aarch64::IP_csel);
+    iproc_set(ARM64_INS_CSET,   new Aarch64::IP_cset);
+    iproc_set(ARM64_INS_CSETM,  new Aarch64::IP_csetm);
+    iproc_set(ARM64_INS_CSINC,  new Aarch64::IP_csinc);
+    iproc_set(ARM64_INS_CSINV,  new Aarch64::IP_csinv);
+    iproc_set(ARM64_INS_CSNEG,  new Aarch64::IP_csneg);
+    iproc_set(ARM64_INS_DMB,    new Aarch64::IP_dmb);
+    iproc_set(ARM64_INS_DUP,    new Aarch64::IP_dup);
+    iproc_set(ARM64_INS_EON,    new Aarch64::IP_eon);
+    iproc_set(ARM64_INS_EOR,    new Aarch64::IP_eor);
+    iproc_set(ARM64_INS_EXTR,   new Aarch64::IP_extr);
+    iproc_set(ARM64_INS_HINT,   new Aarch64::IP_hint);
+    iproc_set(ARM64_INS_INS,    new Aarch64::IP_ins);
+    iproc_set(ARM64_INS_LDAR,   new Aarch64::IP_ldar);
+    iproc_set(ARM64_INS_LDARB,  new Aarch64::IP_ldarb);
+    iproc_set(ARM64_INS_LDARH,  new Aarch64::IP_ldarh);
+    iproc_set(ARM64_INS_LDAXR,  new Aarch64::IP_ldaxr);
+    iproc_set(ARM64_INS_LDAXRB, new Aarch64::IP_ldaxrb);
+    iproc_set(ARM64_INS_LDAXRH, new Aarch64::IP_ldaxrh);
+    iproc_set(ARM64_INS_LDP,    new Aarch64::IP_ldp);
+    iproc_set(ARM64_INS_LDPSW,  new Aarch64::IP_ldpsw);
+    iproc_set(ARM64_INS_LDR,    new Aarch64::IP_ldr);
+    iproc_set(ARM64_INS_LDRB,   new Aarch64::IP_ldrb);
+    iproc_set(ARM64_INS_LDRH,   new Aarch64::IP_ldrh);
+    iproc_set(ARM64_INS_LDRSB,  new Aarch64::IP_ldrsb);
+    iproc_set(ARM64_INS_LDRSH,  new Aarch64::IP_ldrsh);
+    iproc_set(ARM64_INS_LDRSW,  new Aarch64::IP_ldrsw);
+    iproc_set(ARM64_INS_LDUR,   new Aarch64::IP_ldur);
+    iproc_set(ARM64_INS_LDURB,  new Aarch64::IP_ldurb);
+    iproc_set(ARM64_INS_LDURH,  new Aarch64::IP_ldurh);
+    iproc_set(ARM64_INS_LDURSB, new Aarch64::IP_ldursb);
+    iproc_set(ARM64_INS_LDURSH, new Aarch64::IP_ldursh);
+    iproc_set(ARM64_INS_LDURSW, new Aarch64::IP_ldursw);
+    iproc_set(ARM64_INS_LDXR,   new Aarch64::IP_ldxr);
+    iproc_set(ARM64_INS_LDXRB,  new Aarch64::IP_ldxrb);
+    iproc_set(ARM64_INS_LDXRH,  new Aarch64::IP_ldxrh);
+    iproc_set(ARM64_INS_LSL,    new Aarch64::IP_lsl);
+    iproc_set(ARM64_INS_LSR,    new Aarch64::IP_lsr);
+    iproc_set(ARM64_INS_MADD,   new Aarch64::IP_madd);
+    iproc_set(ARM64_INS_MOV,    new Aarch64::IP_mov);
+    iproc_set(ARM64_INS_MOVI,   new Aarch64::IP_movi);
+    iproc_set(ARM64_INS_MOVK,   new Aarch64::IP_movk);
+    iproc_set(ARM64_INS_MOVN,   new Aarch64::IP_movn);
+    iproc_set(ARM64_INS_MOVZ,   new Aarch64::IP_movz);
+    iproc_set(ARM64_INS_MSUB,   new Aarch64::IP_msub);
+    iproc_set(ARM64_INS_MUL,    new Aarch64::IP_mul);
+    iproc_set(ARM64_INS_MVN,    new Aarch64::IP_mvn);
+    iproc_set(ARM64_INS_NEG,    new Aarch64::IP_neg);
+    iproc_set(ARM64_INS_NEGS,   new Aarch64::IP_negs);
+    iproc_set(ARM64_INS_NGC,    new Aarch64::IP_ngc);
+    iproc_set(ARM64_INS_NGCS,   new Aarch64::IP_ngcs);
+    iproc_set(ARM64_INS_NOP,    new Aarch64::IP_nop);
+    iproc_set(ARM64_INS_NOT,    new Aarch64::IP_not);
+    iproc_set(ARM64_INS_ORN,    new Aarch64::IP_orn);
+    iproc_set(ARM64_INS_ORR,    new Aarch64::IP_orr);
+    iproc_set(ARM64_INS_RBIT,   new Aarch64::IP_rbit);
+    iproc_set(ARM64_INS_RET,    new Aarch64::IP_ret);
+    iproc_set(ARM64_INS_REV,    new Aarch64::IP_rev);
+    iproc_set(ARM64_INS_REV16,  new Aarch64::IP_rev16);
+    iproc_set(ARM64_INS_ROR,    new Aarch64::IP_ror);
+    //iproc_set(ARM64_INS_RORV,   new Aarch64::IP_rorv); -- see AMD64_INS_ROR
+    iproc_set(ARM64_INS_SBC,    new Aarch64::IP_sbc);
+    iproc_set(ARM64_INS_SBFIZ,  new Aarch64::IP_sbfiz);
+    iproc_set(ARM64_INS_SBFM,   new Aarch64::IP_sbfm);
+    iproc_set(ARM64_INS_SBFX,   new Aarch64::IP_sbfx);
+    iproc_set(ARM64_INS_SDIV,   new Aarch64::IP_sdiv);
+    iproc_set(ARM64_INS_SMADDL, new Aarch64::IP_smaddl);
+    iproc_set(ARM64_INS_SMULH,  new Aarch64::IP_smulh);
+    iproc_set(ARM64_INS_SMULL,  new Aarch64::IP_smull);
+    iproc_set(ARM64_INS_STLR,   new Aarch64::IP_stlr);
+    iproc_set(ARM64_INS_STLRB,  new Aarch64::IP_stlrb);
+    iproc_set(ARM64_INS_STLRH,  new Aarch64::IP_stlrh);
 #if 0 // [Robb Matzke 2020-09-03]: not present in capstone
-    iproc_set(ARM64_INS_STLUR,  new A64::IP_stlur);
-    iproc_set(ARM64_INS_STLURB, new A64::IP_stlurb);
-    iproc_set(ARM64_INS_STLURH, new A64::IP_stlurh);
+    iproc_set(ARM64_INS_STLUR,  new Aarch64::IP_stlur);
+    iproc_set(ARM64_INS_STLURB, new Aarch64::IP_stlurb);
+    iproc_set(ARM64_INS_STLURH, new Aarch64::IP_stlurh);
 #endif
-    iproc_set(ARM64_INS_STLXR,  new A64::IP_stlxr);
-    iproc_set(ARM64_INS_STLXRB, new A64::IP_stlxrb);
-    iproc_set(ARM64_INS_STLXRH, new A64::IP_stlxrh);
-    iproc_set(ARM64_INS_STP,    new A64::IP_stp);
-    iproc_set(ARM64_INS_STR,    new A64::IP_str);
-    iproc_set(ARM64_INS_STRB,   new A64::IP_strb);
-    iproc_set(ARM64_INS_STRH,   new A64::IP_strh);
-    iproc_set(ARM64_INS_STUR,   new A64::IP_stur);
-    iproc_set(ARM64_INS_STURB,  new A64::IP_sturb);
-    iproc_set(ARM64_INS_STURH,  new A64::IP_sturh);
-    iproc_set(ARM64_INS_STXR,   new A64::IP_stxr);
-    iproc_set(ARM64_INS_STXRB,  new A64::IP_stxrb);
-    iproc_set(ARM64_INS_STXRH,  new A64::IP_stxrh);
-    iproc_set(ARM64_INS_SUB,    new A64::IP_sub);
-    //iproc_set(ARM64_INS_SUBS,   new A64::IP_subs); -- see ARM64_INS_SUB
-    iproc_set(ARM64_INS_SXTB,   new A64::IP_sxtb);
-    iproc_set(ARM64_INS_SXTH,   new A64::IP_sxth);
-    iproc_set(ARM64_INS_SXTW,   new A64::IP_sxtw);
-    iproc_set(ARM64_INS_TBNZ,   new A64::IP_tbnz);
-    iproc_set(ARM64_INS_TBZ,    new A64::IP_tbz);
-    iproc_set(ARM64_INS_TST,    new A64::IP_tst);
-    iproc_set(ARM64_INS_UBFIZ,  new A64::IP_ubfiz);
-    iproc_set(ARM64_INS_UBFM,   new A64::IP_ubfm);
-    iproc_set(ARM64_INS_UBFX,   new A64::IP_ubfx);
-    iproc_set(ARM64_INS_UDIV,   new A64::IP_udiv);
-    iproc_set(ARM64_INS_UMADDL, new A64::IP_umaddl);
-    iproc_set(ARM64_INS_UMOV,   new A64::IP_umov);
-    iproc_set(ARM64_INS_UMSUBL, new A64::IP_umsubl);
-    iproc_set(ARM64_INS_UMULH,  new A64::IP_umulh);
-    iproc_set(ARM64_INS_UMULL,  new A64::IP_umull);
-    iproc_set(ARM64_INS_UXTB,   new A64::IP_uxtb);
-    iproc_set(ARM64_INS_UXTH,   new A64::IP_uxth);
-    iproc_set(ARM64_INS_XTN,    new A64::IP_xtn);
-    iproc_set(ARM64_INS_XTN2,   new A64::IP_xtn2);
-    iproc_set(ARM64_INS_YIELD,  new A64::IP_yield);
+    iproc_set(ARM64_INS_STLXR,  new Aarch64::IP_stlxr);
+    iproc_set(ARM64_INS_STLXRB, new Aarch64::IP_stlxrb);
+    iproc_set(ARM64_INS_STLXRH, new Aarch64::IP_stlxrh);
+    iproc_set(ARM64_INS_STP,    new Aarch64::IP_stp);
+    iproc_set(ARM64_INS_STR,    new Aarch64::IP_str);
+    iproc_set(ARM64_INS_STRB,   new Aarch64::IP_strb);
+    iproc_set(ARM64_INS_STRH,   new Aarch64::IP_strh);
+    iproc_set(ARM64_INS_STUR,   new Aarch64::IP_stur);
+    iproc_set(ARM64_INS_STURB,  new Aarch64::IP_sturb);
+    iproc_set(ARM64_INS_STURH,  new Aarch64::IP_sturh);
+    iproc_set(ARM64_INS_STXR,   new Aarch64::IP_stxr);
+    iproc_set(ARM64_INS_STXRB,  new Aarch64::IP_stxrb);
+    iproc_set(ARM64_INS_STXRH,  new Aarch64::IP_stxrh);
+    iproc_set(ARM64_INS_SUB,    new Aarch64::IP_sub);
+    //iproc_set(ARM64_INS_SUBS,   new Aarch64::IP_subs); -- see ARM64_INS_SUB
+    iproc_set(ARM64_INS_SXTB,   new Aarch64::IP_sxtb);
+    iproc_set(ARM64_INS_SXTH,   new Aarch64::IP_sxth);
+    iproc_set(ARM64_INS_SXTW,   new Aarch64::IP_sxtw);
+    iproc_set(ARM64_INS_TBNZ,   new Aarch64::IP_tbnz);
+    iproc_set(ARM64_INS_TBZ,    new Aarch64::IP_tbz);
+    iproc_set(ARM64_INS_TST,    new Aarch64::IP_tst);
+    iproc_set(ARM64_INS_UBFIZ,  new Aarch64::IP_ubfiz);
+    iproc_set(ARM64_INS_UBFM,   new Aarch64::IP_ubfm);
+    iproc_set(ARM64_INS_UBFX,   new Aarch64::IP_ubfx);
+    iproc_set(ARM64_INS_UDIV,   new Aarch64::IP_udiv);
+    iproc_set(ARM64_INS_UMADDL, new Aarch64::IP_umaddl);
+    iproc_set(ARM64_INS_UMOV,   new Aarch64::IP_umov);
+    iproc_set(ARM64_INS_UMSUBL, new Aarch64::IP_umsubl);
+    iproc_set(ARM64_INS_UMULH,  new Aarch64::IP_umulh);
+    iproc_set(ARM64_INS_UMULL,  new Aarch64::IP_umull);
+    iproc_set(ARM64_INS_UXTB,   new Aarch64::IP_uxtb);
+    iproc_set(ARM64_INS_UXTH,   new Aarch64::IP_uxth);
+    iproc_set(ARM64_INS_XTN,    new Aarch64::IP_xtn);
+    iproc_set(ARM64_INS_XTN2,   new Aarch64::IP_xtn2);
+    iproc_set(ARM64_INS_YIELD,  new Aarch64::IP_yield);
 }
 
 void
-DispatcherA64::initializeRegisterDescriptors() {
+DispatcherAarch64::initializeRegisterDescriptors() {
     if (regdict) {
         REG_PC = findRegister("pc", 64);
         REG_SP = findRegister("sp", 64);
@@ -1955,14 +1955,14 @@ DispatcherA64::initializeRegisterDescriptors() {
 }
 
 void
-DispatcherA64::initializeMemory() {
+DispatcherAarch64::initializeMemory() {
     if (BaseSemantics::StatePtr state = currentState()) {
         if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;
                 case ByteOrder::ORDER_MSB:
-                    mlog[WARN] <<"A64 memory state is using big-endian byte order\n";
+                    mlog[WARN] <<"Aarch64 memory state is using big-endian byte order\n";
                     break;
                 case ByteOrder::ORDER_UNSPECIFIED:
                     memory->set_byteOrder(ByteOrder::ORDER_LSB);
@@ -1973,39 +1973,39 @@ DispatcherA64::initializeMemory() {
 }
 
 RegisterDescriptor
-DispatcherA64::instructionPointerRegister() const {
+DispatcherAarch64::instructionPointerRegister() const {
     return REG_PC;
 }
 
 RegisterDescriptor
-DispatcherA64::stackPointerRegister() const {
+DispatcherAarch64::stackPointerRegister() const {
     return REG_SP;
 }
 
 RegisterDescriptor
-DispatcherA64::callReturnRegister() const {
+DispatcherAarch64::callReturnRegister() const {
     return REG_LR;
 }
 
 void
-DispatcherA64::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherAarch64::set_register_dictionary(const RegisterDictionary *regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     initializeRegisterDescriptors();
 }
 
 int
-DispatcherA64::iproc_key(SgAsmInstruction *insn_) const {
-    auto insn = isSgAsmA64Instruction(insn_);
+DispatcherAarch64::iproc_key(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch64Instruction(insn_);
     ASSERT_not_null(insn);
     return insn->get_kind();
 }
 
 SValuePtr
-DispatcherA64::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/) {
+DispatcherAarch64::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/) {
     // Reading from general purpose register 31 always returns zero
     if (auto rre = isSgAsmRegisterReferenceExpression(e)) {
         RegisterDescriptor reg = rre->get_descriptor();
-        if (reg.majorNumber() == arm_regclass_gpr && reg.minorNumber() == 31) {
+        if (reg.majorNumber() == aarch64_regclass_gpr && reg.minorNumber() == 31) {
             if (0 == value_nbits)
                 value_nbits = reg.nBits();
             return operators()->number_(value_nbits, 0);
@@ -2015,18 +2015,18 @@ DispatcherA64::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nb
 }
 
 void
-DispatcherA64::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/) {
+DispatcherAarch64::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/) {
     // Writes to general purpose register 31 are always discarded
     if (auto rre = isSgAsmRegisterReferenceExpression(e)) {
         RegisterDescriptor reg = rre->get_descriptor();
-        if (reg.majorNumber() == arm_regclass_gpr && reg.minorNumber() == 31)
+        if (reg.majorNumber() == aarch64_regclass_gpr && reg.minorNumber() == 31)
             return;
     }
     BaseSemantics::Dispatcher::write(e, value, addr_nbits);
 }
 
 SValuePtr
-DispatcherA64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
+DispatcherAarch64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
     ASSERT_not_null(type);
     ASSERT_not_null(imm);
     auto vectorType = isSgAsmVectorType(type);
@@ -2041,8 +2041,8 @@ DispatcherA64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
     return result;
 }
 
-DispatcherA64::NZCV
-DispatcherA64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
+DispatcherAarch64::NZCV
+DispatcherAarch64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     ASSERT_not_null(sum);
     ASSERT_require(sum->get_width() > 1);
     ASSERT_not_null(carries);
@@ -2058,7 +2058,7 @@ DispatcherA64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
 }
 
 void
-DispatcherA64::updateNZCV(const SValuePtr &sum, const SValuePtr &carries) {
+DispatcherAarch64::updateNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     NZCV nzcv = computeNZCV(sum, carries);
 
     operators()->writeRegister(REG_CPSR_N, nzcv.n);
@@ -2068,34 +2068,34 @@ DispatcherA64::updateNZCV(const SValuePtr &sum, const SValuePtr &carries) {
 }
 
 SValuePtr
-DispatcherA64::conditionHolds(A64InstructionCondition cond) {
+DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
     // WARNING: ARM documentation is inconsistent and sometimes wrong when it describes how these flags are set.
     switch (cond) {
-        case A64InstructionCondition::ARM64_CC_INVALID: // occurs for "B" instruction
+        case Aarch64InstructionCondition::ARM64_CC_INVALID: // occurs for "B" instruction
             return operators()->boolean_(true);
-        case A64InstructionCondition::ARM64_CC_EQ:      // equal (z set)
+        case Aarch64InstructionCondition::ARM64_CC_EQ:      // equal (z set)
             return operators()->readRegister(REG_CPSR_Z);
-        case A64InstructionCondition::ARM64_CC_NE:      // not equal: not equal, or unordered (z clear)
+        case Aarch64InstructionCondition::ARM64_CC_NE:      // not equal: not equal, or unordered (z clear)
             return operators()->invert(operators()->readRegister(REG_CPSR_Z));
-        case A64InstructionCondition::ARM64_CC_HS:      // unsigned higher or same: >, ==, or unordered (c set)
+        case Aarch64InstructionCondition::ARM64_CC_HS:      // unsigned higher or same: >, ==, or unordered (c set)
             return operators()->readRegister(REG_CPSR_C);
-        case A64InstructionCondition::ARM64_CC_LO:      // unsigned lower or same: less than (c clear)
+        case Aarch64InstructionCondition::ARM64_CC_LO:      // unsigned lower or same: less than (c clear)
             return operators()->invert(operators()->readRegister(REG_CPSR_C));
-        case A64InstructionCondition::ARM64_CC_MI:      // minus, negative: less than (n set)
+        case Aarch64InstructionCondition::ARM64_CC_MI:      // minus, negative: less than (n set)
             return operators()->readRegister(REG_CPSR_N);
-        case A64InstructionCondition::ARM64_CC_PL:      // plus, positive or zero: >, ==, or unordered (n clear)
+        case Aarch64InstructionCondition::ARM64_CC_PL:      // plus, positive or zero: >, ==, or unordered (n clear)
             return operators()->invert(operators()->readRegister(REG_CPSR_N));
-        case A64InstructionCondition::ARM64_CC_VS:      // overflow: unordered (v set)
+        case Aarch64InstructionCondition::ARM64_CC_VS:      // overflow: unordered (v set)
             return operators()->readRegister(REG_CPSR_V);
-        case A64InstructionCondition::ARM64_CC_VC:      // no overflow: ordered (v clear)
+        case Aarch64InstructionCondition::ARM64_CC_VC:      // no overflow: ordered (v clear)
             return operators()->invert(operators()->readRegister(REG_CPSR_V));
-        case A64InstructionCondition::ARM64_CC_HI: {    // unsigned higher: greater than, or unordered
+        case Aarch64InstructionCondition::ARM64_CC_HI: {    // unsigned higher: greater than, or unordered
             // WARNING: The ARM definition reads "c set and z clear", but see LS below.
             SValuePtr c = operators()->readRegister(REG_CPSR_C);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
             return operators()->and_(c, operators()->invert(z));
         }
-        case A64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
+        case Aarch64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
             // WARNING: The ARM definition, which reads "c clear and z set" is not the inverse of the description for HI which
             // reads "c set and z clear", although it should be since HI and LS are inverses. The inverse of HI would be
             // "c clear or z set".
@@ -2103,17 +2103,17 @@ DispatcherA64::conditionHolds(A64InstructionCondition cond) {
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
             return operators()->and_(operators()->invert(c), z);
         }
-        case A64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
+        case Aarch64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             return operators()->invert(operators()->xor_(n, v));
         }
-        case A64InstructionCondition::ARM64_CC_LT: {    // less than: less than, or unordered (n != v)
+        case Aarch64InstructionCondition::ARM64_CC_LT: {    // less than: less than, or unordered (n != v)
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             return operators()->xor_(n, v);
         }
-        case A64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
+        case Aarch64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
             // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below.
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
@@ -2121,7 +2121,7 @@ DispatcherA64::conditionHolds(A64InstructionCondition cond) {
             SValuePtr nEqV = operators()->invert(operators()->xor_(n, v));
             return operators()->and_(operators()->invert(z), nEqV);
         }
-        case A64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
+        case Aarch64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
             // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description
             // that reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
             // inverse of "z clear and n == v" is "z set or n != v".
@@ -2131,15 +2131,15 @@ DispatcherA64::conditionHolds(A64InstructionCondition cond) {
             SValuePtr nNeV = operators()->xor_(n, v);
             return operators()->or_(z, nNeV);
         }
-        case A64InstructionCondition::ARM64_CC_AL:      // always (unconditional): always (unconditional)
-        case A64InstructionCondition::ARM64_CC_NV:      // always (unconditional): always (unconditional)
+        case Aarch64InstructionCondition::ARM64_CC_AL:      // always (unconditional): always (unconditional)
+        case Aarch64InstructionCondition::ARM64_CC_NV:      // always (unconditional): always (unconditional)
             return operators()->boolean_(true);
     }
     ASSERT_not_reachable("invalid condition");
 }
 
 std::pair<uint64_t/* m bits */, uint64_t/*m bits*/>
-DispatcherA64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, uint64_t immR/*6 bits*/, bool immediate) {
+DispatcherAarch64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, uint64_t immR/*6 bits*/, bool immediate) {
 #if 0 // DEBUGGING [Robb Matzke 2020-07-24]
     std::cerr <<"ROBB: (bits(" <<m <<"), bits(" <<m <<")) DecodeBitMask(bit immN=" <<(immN?1:0)
               <<", bits(6) imms=" <<StringUtility::toBinary(immS, 6)
@@ -2183,7 +2183,7 @@ DispatcherA64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, uint
 }
 
 void
-DispatcherA64::bitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
+DispatcherAarch64::bitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
                             uint64_t immR, uint64_t immS) {
     ASSERT_not_null(dstExpr);
     ASSERT_not_null(srcExpr);
@@ -2211,8 +2211,8 @@ DispatcherA64::bitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmE
 }
 
 void
-DispatcherA64::unsignedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
-                                    uint64_t immR, uint64_t immS) {
+DispatcherAarch64::unsignedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
+                                        uint64_t immR, uint64_t immS) {
     ASSERT_not_null(dstExpr);
     ASSERT_not_null(srcExpr);
     ASSERT_require(dstExpr->get_nBits() == srcExpr->get_nBits());
@@ -2234,8 +2234,8 @@ DispatcherA64::unsignedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr
 }
 
 void
-DispatcherA64::signedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
-                                    uint64_t immR, uint64_t immS) {
+DispatcherAarch64::signedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, SgAsmExpression *srcExpr, bool n,
+                                      uint64_t immR, uint64_t immS) {
     ASSERT_not_null(dstExpr);
     ASSERT_not_null(srcExpr);
     ASSERT_require(dstExpr->get_nBits() == srcExpr->get_nBits());
@@ -2269,7 +2269,7 @@ DispatcherA64::signedBitfieldMove(RiscOperators *ops, SgAsmExpression *dstExpr, 
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherA64);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherAarch64);
 #endif
 
 #endif

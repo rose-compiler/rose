@@ -1,11 +1,11 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <sage3basic.h>
 #include <BitOps.h>
-#include <DisassemblerA64.h>
-#include <BinaryUnparserArm.h>
-#include <DispatcherA64.h>
+#include <DisassemblerAarch64.h>
+#include <BinaryUnparserAarch64.h>
+#include <DispatcherAarch64.h>
 
 using namespace Rose::Diagnostics;
 
@@ -13,55 +13,34 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 Disassembler*
-DisassemblerArm::clone() const {
-    return new DisassemblerArm(*this);
+DisassemblerAarch64::clone() const {
+    return new DisassemblerAarch64(*this);
 }
 
 bool
-DisassemblerArm::canDisassemble(SgAsmGenericHeader *header) const {
+DisassemblerAarch64::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
             header->get_exec_format()->get_word_size() == 8);
 }
 
 void
-DisassemblerArm::init() {
+DisassemblerAarch64::init() {
     // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
-    cs_arch arch = (cs_arch)arch_;
     cs_mode mode = (cs_mode)modes_.vector();
 
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
-    std::string name;
-    switch (arch_) {
-        case Architecture::ARCH_ARM:
-#if 0
-            name = "a32";
-            wordSizeBytes(4);
-            byteOrder(ByteOrder::ORDER_LSB);
-            registerDictionary(RegisterDictionary::dictionary_arm7()); // only a default
-            callingConventions(CallingConvention::dictionaryArm());
-#else
-            ASSERT_not_reachable("AArch32 is not implemented yet");
-#endif
-            break;
-        case Architecture::ARCH_ARM64:
-            name = "a64";
-            wordSizeBytes(8);
-            byteOrder(ByteOrder::ORDER_LSB);
-            registerDictionary(RegisterDictionary::dictionary_a64());
-            callingConventions(CallingConvention::dictionaryArm64());
-            p_proto_dispatcher = InstructionSemantics2::DispatcherA64::instance();
-            break;
-    }
+    std::string name = "a64";
+    wordSizeBytes(8);
+    byteOrder(ByteOrder::ORDER_LSB);
+    registerDictionary(RegisterDictionary::dictionary_aarch64());
+    callingConventions(CallingConvention::dictionaryAarch64());
+    p_proto_dispatcher = InstructionSemantics2::DispatcherAarch64::instance();
     instructionAlignment_ = 4;
-    if (name.empty())
-        throw Exception("invalid ARM architecture");
-    if (modes_.isSet(Mode::MODE_THUMB))
-        name += "_thumb"; // according to capston: "Thumb, Thumb-2", whatever that comma means, but apparently not ThumbEE/Jazelle
+
+    ASSERT_forbid(modes_.isAnySet(~Mode::MODE_MCLASS));
     if (modes_.isSet(Mode::MODE_MCLASS))
         name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
-    if (modes_.isSet(Mode::MODE_V8))
-        name += "_a32"; // capstone: "ARMv8 A32 encodings for ARM"
     this->name(name);
 
     // Architecture independent ROSE disassembler properties
@@ -70,14 +49,14 @@ DisassemblerArm::init() {
     REG_LINK = registerDictionary()->findOrThrow("lr");
 
     // Build the Capstone context object, which must be explicitly closed in the destructor.
-    if (CS_ERR_OK != cs_open(arch, mode, &capstone_))
+    if (CS_ERR_OK != cs_open(CS_ARCH_ARM64, mode, &capstone_))
         throw Exception("capstone cs_open failed");
     capstoneOpened_ = true;
     if (CS_ERR_OK != cs_option(capstone_, CS_OPT_DETAIL, CS_OPT_ON))
         throw Exception("capstone cs_option failed");
 }
 
-DisassemblerArm::~DisassemblerArm() {
+DisassemblerAarch64::~DisassemblerAarch64() {
     if (capstoneOpened_) {
         cs_err err = cs_close(&capstone_);
         ASSERT_always_require2(CS_ERR_OK == err, "capstone cs_close failed");
@@ -85,12 +64,12 @@ DisassemblerArm::~DisassemblerArm() {
 }
 
 Unparser::BasePtr
-DisassemblerArm::unparser() const {
-    return Unparser::Arm::instance();
+DisassemblerAarch64::unparser() const {
+    return Unparser::Aarch64::instance();
 }
 
 SgAsmInstruction*
-DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=NULL*/) {
+DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;
@@ -104,8 +83,6 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
     // Read the encoded instruction bytes into a temporary buffer to be used by capstone
     if (va % instructionAlignment_ != 0)
         throw Exception("instruction pointer not aligned", va);
-    if (ARCH_ARM == arch_ && va > 0xfffffffc)
-        throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
     size_t nRead = map->at(va).limit(sizeof bytes).require(MemoryMap::EXECUTABLE).read(bytes).size();
     if (0 == nRead)
@@ -113,18 +90,8 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
 
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
-    if (0 == r.nInsns) {
-#if 0 // DEBGUGGING: show the disassembly string from capstone itself
-        std::cerr <<"ROBB: capstone disassembly:"
-                  <<" " <<StringUtility::addrToString(va) <<":"
-                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
-                  <<" unknown\n";
-#endif
+    if (0 == r.nInsns)
         return makeUnknownInstruction(Exception("unable to decode instruction", va, SgUnsignedCharList(bytes+0, bytes+nRead), 0));
-    }
 
     ASSERT_require(1 == r.nInsns);
     ASSERT_not_null(r.csi);
@@ -133,96 +100,86 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
 
     // Convert disassembled capstone instruction to ROSE AST
     SgAsmInstruction *retval = nullptr;
-    if (Architecture::ARCH_ARM == arch_) {
-        //const cs_arm &detail = r.csi->detail->arm;
-        ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
-    } else if (Architecture::ARCH_ARM64 == arch_) {
-        const cs_arm64 &detail = r.csi->detail->arm64;
+    const cs_arm64 &detail = r.csi->detail->arm64;
 #if 0 // DEBGUGGING: show the disassembly string from capstone itself
-        std::cerr <<"ROBB: capstone disassembly:"
-                  <<" " <<StringUtility::addrToString(va) <<":"
-                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
-                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
-                  <<" " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
+    std::cerr <<"ROBB: capstone disassembly:"
+              <<" " <<StringUtility::addrToString(va) <<":"
+              <<" " <<StringUtility::toHex2(bytes[0], 8, false, false).substr(2)
+              <<" " <<StringUtility::toHex2(bytes[1], 8, false, false).substr(2)
+              <<" " <<StringUtility::toHex2(bytes[2], 8, false, false).substr(2)
+              <<" " <<StringUtility::toHex2(bytes[3], 8, false, false).substr(2)
+              <<" " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
 #endif
-        auto operands = new SgAsmOperandList;
-        for (uint8_t i = 0; i < detail.op_count; ++i) {
-            auto operand = makeOperand(*r.csi, detail.operands[i]);
-            ASSERT_not_null(operand);
-            ASSERT_not_null(operand->get_type());
-            operands->get_operands().push_back(operand);
-            operand->set_parent(operands);
-        }
-        wrapPrePostIncrement(operands, detail);
-        auto insn = new SgAsmA64Instruction(va, r.csi->mnemonic, (A64InstructionKind)r.csi->id, detail.cc);
-        insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
-        insn->set_operandList(operands);
-        insn->set_condition(detail.cc);
-        insn->set_updatesFlags(detail.update_flags);
-        operands->set_parent(insn);
-        retval = insn;
+    auto operands = new SgAsmOperandList;
+    for (uint8_t i = 0; i < detail.op_count; ++i) {
+        SgAsmExpression *operand = makeOperand(*r.csi, detail.operands[i]);
+        ASSERT_not_null(operand);
+        ASSERT_not_null(operand->get_type());
+        operands->get_operands().push_back(operand);
+        operand->set_parent(operands);
+    }
+    wrapPrePostIncrement(operands, detail);
+    auto insn = new SgAsmAarch64Instruction(va, r.csi->mnemonic, (Aarch64InstructionKind)r.csi->id, detail.cc);
+    insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
+    insn->set_operandList(operands);
+    insn->set_updatesFlags(detail.update_flags);
+    operands->set_parent(insn);
+    retval = insn;
 
-        // Capstone doesn't provide a condition argument for some instructions, nor does it indicate the condition as part of
-        // the mnemonic like it does for the B.cond instructions. Therefore, we adjust the mnemonic ourselves.
-        if (insn->get_kind() != A64InstructionKind::ARM64_INS_B && insn->get_condition() != A64InstructionCondition::ARM64_CC_INVALID) {
-            std::string cond;
-            switch (insn->get_condition()) {
-                case ARM64_CC_INVALID: ASSERT_not_reachable("impossible");
-                case ARM64_CC_EQ: cond = ".eq"; break;
-                case ARM64_CC_NE: cond = ".ne"; break;
-                case ARM64_CC_HS: cond = ".hs"; break;
-                case ARM64_CC_LO: cond = ".lo"; break;
-                case ARM64_CC_MI: cond = ".mi"; break;
-                case ARM64_CC_PL: cond = ".pl"; break;
-                case ARM64_CC_VS: cond = ".vs"; break;
-                case ARM64_CC_VC: cond = ".vc"; break;
-                case ARM64_CC_HI: cond = ".hi"; break;
-                case ARM64_CC_LS: cond = ".ls"; break;
-                case ARM64_CC_GE: cond = ".ge"; break;
-                case ARM64_CC_LT: cond = ".lt"; break;
-                case ARM64_CC_GT: cond = ".gt"; break;
-                case ARM64_CC_LE: cond = ".le"; break;
-                case ARM64_CC_AL: cond = ".al"; break;
-                case ARM64_CC_NV: cond = ".nv"; break;
-            }
-            if (!boost::ends_with(insn->get_mnemonic(), cond))
-                insn->set_mnemonic(insn->get_mnemonic() + cond);
+    // Capstone doesn't provide a condition argument for some instructions, nor does it indicate the condition as part of the
+    // mnemonic like it does for the B.cond instructions. Therefore, we adjust the mnemonic ourselves.
+    if (insn->get_kind() != Aarch64InstructionKind::ARM64_INS_B && insn->get_condition() != Aarch64InstructionCondition::ARM64_CC_INVALID) {
+        std::string cond;
+        switch (insn->get_condition()) {
+            case ARM64_CC_INVALID: ASSERT_not_reachable("impossible");
+            case ARM64_CC_EQ: cond = ".eq"; break;
+            case ARM64_CC_NE: cond = ".ne"; break;
+            case ARM64_CC_HS: cond = ".hs"; break;
+            case ARM64_CC_LO: cond = ".lo"; break;
+            case ARM64_CC_MI: cond = ".mi"; break;
+            case ARM64_CC_PL: cond = ".pl"; break;
+            case ARM64_CC_VS: cond = ".vs"; break;
+            case ARM64_CC_VC: cond = ".vc"; break;
+            case ARM64_CC_HI: cond = ".hi"; break;
+            case ARM64_CC_LS: cond = ".ls"; break;
+            case ARM64_CC_GE: cond = ".ge"; break;
+            case ARM64_CC_LT: cond = ".lt"; break;
+            case ARM64_CC_GT: cond = ".gt"; break;
+            case ARM64_CC_LE: cond = ".le"; break;
+            case ARM64_CC_AL: cond = ".al"; break;
+            case ARM64_CC_NV: cond = ".nv"; break;
         }
+        if (!boost::ends_with(insn->get_mnemonic(), cond))
+            insn->set_mnemonic(insn->get_mnemonic() + cond);
+    }
 
-        // Work around capstone bugs
-        if (BitOps::bits(opcode(insn), 24, 31) == 0b10011000) {
-            // LDRSW (literal) is decoded incorrectly. The second operand should be a 32-bit memory read, not an immediate
-            // value.
-            if (auto ival = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[1])) {
-                auto memref = new SgAsmMemoryReferenceExpression;
-                memref->set_address(ival);
-                memref->set_type(SageBuilderAsm::buildTypeU32());
-                insn->get_operandList()->get_operands()[1] = memref;
-            }
-        } else if (insn->get_kind() == A64InstructionKind::ARM64_INS_XTN) {
-            // The XTN instruction is disassembled incorrectly: the type of the destination argument is wrong.  XTN reads the
-            // elements of the source vector, truncates each to half its width, packs the half-sizes together, and writes them
-            // to the low half of the destination register while clearing the upper half of the destination.  I.e., it writes
-            // as many bits as it reads. However, the destination type is only half as wide as the source type. In contrast,
-            // the XTN2 instruction which is the same except it writes the result to the upper half of the destination while
-            // clearing the lower half, has the correct type.
-            ASSERT_require(insn->nOperands() == 2);
-            ASSERT_require(insn->operand(0)->get_nBits() * 2 == insn->operand(1)->get_nBits());
-            SgAsmVectorType *dstType = isSgAsmVectorType(insn->operand(0)->get_type());
-            ASSERT_not_null(dstType);
-            insn->operand(0)->set_type(SageBuilderAsm::buildTypeVector(2 * dstType->get_nElmts(), dstType->get_elmtType()));
+    // Work around capstone bugs
+    if (BitOps::bits(opcode(insn), 24, 31) == 0b10011000) {
+        // LDRSW (literal) is decoded incorrectly. The second operand should be a 32-bit memory read, not an immediate value.
+        if (auto ival = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[1])) {
+            auto memref = new SgAsmMemoryReferenceExpression;
+            memref->set_address(ival);
+            memref->set_type(SageBuilderAsm::buildTypeU32());
+            insn->get_operandList()->get_operands()[1] = memref;
         }
-
-    } else {
-        ASSERT_not_reachable("invalid ARM architecture");
+    } else if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_XTN) {
+        // The XTN instruction is disassembled incorrectly: the type of the destination argument is wrong.  XTN reads the
+        // elements of the source vector, truncates each to half its width, packs the half-sizes together, and writes them to
+        // the low half of the destination register while clearing the upper half of the destination.  I.e., it writes as many
+        // bits as it reads. However, the destination type is only half as wide as the source type. In contrast, the XTN2
+        // instruction which is the same except it writes the result to the upper half of the destination while clearing the
+        // lower half, has the correct type.
+        ASSERT_require(insn->nOperands() == 2);
+        ASSERT_require(insn->operand(0)->get_nBits() * 2 == insn->operand(1)->get_nBits());
+        SgAsmVectorType *dstType = isSgAsmVectorType(insn->operand(0)->get_type());
+        ASSERT_not_null(dstType);
+        insn->operand(0)->set_type(SageBuilderAsm::buildTypeVector(2 * dstType->get_nElmts(), dstType->get_elmtType()));
     }
     ASSERT_not_null(retval);
 
-    /* Note successors if necessary */
+    // Note successors if necessary
     if (successors) {
-        bool complete;
+        bool complete = false;
         *successors |= retval->getSuccessors(complete/*out*/);
     }
 
@@ -230,8 +187,8 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
 }
 
 SgAsmInstruction*
-DisassemblerArm::makeUnknownInstruction(const Exception &e) {
-    SgAsmA64Instruction *insn = new SgAsmA64Instruction(e.ip, "unknown", ARM64_INS_INVALID, ARM64_CC_INVALID);
+DisassemblerAarch64::makeUnknownInstruction(const Exception &e) {
+    SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, "unknown", ARM64_INS_INVALID, ARM64_CC_INVALID);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);
@@ -240,7 +197,7 @@ DisassemblerArm::makeUnknownInstruction(const Exception &e) {
 }
 
 SgAsmExpression*
-DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
+DisassemblerAarch64::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
     SgAsmExpression *retval = nullptr;
 
     switch (op.type) {
@@ -320,7 +277,7 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
             break;
 
         case ARM64_OP_CIMM:                             // C-immediate
-            retval = new SgAsmA64CImmediateOperand(op.sys);
+            retval = new SgAsmAarch64CImmediateOperand(op.sys);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
@@ -332,7 +289,7 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
 #else
             uint32_t reg = op.reg;
 #endif
-            retval = new SgAsmA64SysMoveOperand(reg);
+            retval = new SgAsmAarch64SysMoveOperand(reg);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
         }
@@ -341,17 +298,17 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
             break;
 
         case ARM64_OP_SYS:                              // SYS operand for IC/DC/AT/TLBI
-            retval = new SgAsmA64AtOperand((A64AtOperation)op.sys);
+            retval = new SgAsmAarch64AtOperand((Aarch64AtOperation)op.sys);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_PREFETCH:                         // prefetch operand
-            retval = new SgAsmA64PrefetchOperand(op.prefetch);
+            retval = new SgAsmAarch64PrefetchOperand(op.prefetch);
             retval->set_type(SageBuilderAsm::buildTypeU(1)); // FIXME: not sure what the type should be, but probably not this
             break;
 
         case ARM64_OP_BARRIER:                          // memory barrier operand for ISB/DMB/DSB instruction
-            retval = new SgAsmA64BarrierOperand(op.barrier);
+            retval = new SgAsmAarch64BarrierOperand(op.barrier);
             retval->set_type(SageBuilderAsm::buildTypeU(4)); // the operation is just a constant from 0 through 16
             break;
     }
@@ -361,7 +318,7 @@ DisassemblerArm::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
 }
 
 RegisterDescriptor
-DisassemblerArm::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize) {
+DisassemblerAarch64::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize) {
     size_t nBits = reg.nBits();
     switch (elmtSize) {
         case ARM64_VESS_INVALID:
@@ -389,7 +346,7 @@ DisassemblerArm::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSiz
 }
 
 //SgAsmExpression*
-//DisassemblerArm::extractElement(SgAsmExpression *expr, arm64_vess elmtSizeSpec, int idx) {
+//DisassemblerAarch64::extractElement(SgAsmExpression *expr, arm64_vess elmtSizeSpec, int idx) {
 //    ASSERT_not_null(expr);
 //    ASSERT_not_null(expr->get_type());
 //    if (idx < 0)
@@ -428,8 +385,8 @@ DisassemblerArm::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSiz
 //}
 
 SgAsmExpression*
-DisassemblerArm::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
-                               arm64_shifter shifter, unsigned shiftAmount) const {
+DisassemblerAarch64::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
+                                   arm64_shifter shifter, unsigned shiftAmount) const {
     using namespace ::Rose::BitOps;
 
     ASSERT_not_null(expr);
@@ -520,11 +477,11 @@ DisassemblerArm::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64
 }
 
 void
-DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_detail) {
+DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_detail) {
     ASSERT_not_null(operands);
 
     if (cs_detail.writeback) {
-        // This A64 instruction must have a memory reference operand and is either pre-update or post-update.  A pre-update
+        // This AArch64 instruction must have a memory reference operand and is either pre-update or post-update.  A pre-update
         // instruction will have both the register and the increment within the memory address expression, such as:
         //
         //    Opcode:      95 9d 87 ad
@@ -561,13 +518,13 @@ DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64
                     ASSERT_not_null(type);
                     SgAsmExpression *lhs = add->get_lhs();
                     ASSERT_require(isSgAsmDirectRegisterExpression(lhs));
-                    add->set_lhs(NULL);
-                    lhs->set_parent(NULL);
+                    add->set_lhs(nullptr);
+                    lhs->set_parent(nullptr);
                     SgAsmExpression *rhs = add->get_rhs();
-                    add->set_rhs(NULL);
-                    rhs->set_parent(NULL);
-                    mre->set_address(NULL);
-                    add->set_parent(NULL);
+                    add->set_rhs(nullptr);
+                    rhs->set_parent(nullptr);
+                    mre->set_address(nullptr);
+                    add->set_parent(nullptr);
 #if 0 // FIXME: Deleting parts of an AST is unsafe because ROSE has no formal ownership rules for its nodes.
                     delete add;
 #else // instead, we'll just drop it
@@ -584,11 +541,11 @@ DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64
                     // address must be a register reference. First unlink things from the tree...
                     ASSERT_require(i + 2 == operands->get_operands().size());
                     SgAsmExpression *lhs = mre->get_address();
-                    mre->set_address(NULL);
-                    lhs->set_parent(NULL);
+                    mre->set_address(nullptr);
+                    lhs->set_parent(nullptr);
                     SgAsmExpression *rhs = operands->get_operands()[i+1];
                     operands->get_operands().erase(operands->get_operands().begin() + i + 1);
-                    rhs->set_parent(NULL);
+                    rhs->set_parent(nullptr);
 
                     // Construct the replacement and link it into the tree
                     auto newNode = SageBuilderAsm::buildAddPostupdateExpression(lhs, rhs, lhs->get_type());
@@ -603,13 +560,13 @@ DisassemblerArm::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64
 }
 
 uint32_t
-DisassemblerArm::opcode(const cs_insn &insn) {
+DisassemblerAarch64::opcode(const cs_insn &insn) {
     uint32_t code = insn.bytes[0] | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
     return ByteOrder::disk_to_host(byteOrder(), code);
 }
 
 uint32_t
-DisassemblerArm::opcode(SgAsmInstruction *insn) {
+DisassemblerAarch64::opcode(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     const std::vector<uint8_t> &bytes = insn->get_raw_bytes();
     ASSERT_require(bytes.size() == 4);
@@ -618,9 +575,9 @@ DisassemblerArm::opcode(SgAsmInstruction *insn) {
 }
 
 SgAsmType*
-DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
+DisassemblerAarch64::typeForMemoryRead(const cs_insn &insn) {
     using namespace ::Rose::BitOps;
-    using Kind = ::Rose::BinaryAnalysis::A64InstructionKind;
+    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     uint32_t code = opcode(insn);
 
     switch ((Kind)insn.id) {
@@ -963,7 +920,7 @@ DisassemblerArm::typeForMemoryRead(const cs_insn &insn) {
 }
 
 SgAsmType*
-DisassemblerArm::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
+DisassemblerAarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
     SgAsmType *type = nullptr;
     switch (arrangement) {
         case ARM64_VAS_INVALID:
@@ -1002,7 +959,7 @@ DisassemblerArm::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
 }
 
 RegisterDescriptor
-DisassemblerArm::makeRegister(arm64_reg reg) {
+DisassemblerAarch64::makeRegister(arm64_reg reg) {
     ASSERT_not_null(registerDictionary());
     const RegisterDictionary &dict = *registerDictionary();
     RegisterDescriptor retval;

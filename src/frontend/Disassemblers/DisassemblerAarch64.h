@@ -1,18 +1,21 @@
-#ifndef ROSE_DISASSEMBLER_ARM_H
-#define ROSE_DISASSEMBLER_ARM_H
+#ifndef ROSE_BinaryAnalysis_DisassemblerAarch64_H
+#define ROSE_BinaryAnalysis_DisassemblerAarch64_H
 #include <Disassembler.h>
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <capstone/capstone.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** ARM instruction decoder.
+/** ARM instruction decoder for AArch64.
  *
- * Most of the useful disassembly methods can be found in the @ref Disassembler superclass.  Some of the constants
- * have the same ill-defined meanings as they do in the Capstone library. */
-class DisassemblerArm: public Disassembler {
+ *  This is the decoder for the A64 instruction set of the AArch64 architecture. At the time of this writing, A64 is the only
+ *  instruction set for this architecture.
+ *
+ *  Most of the useful disassembly methods can be found in the @ref Disassembler superclass.  Some of the constants have the
+ *  same ill-defined meanings as they do in the Capstone library. */
+class DisassemblerAarch64: public Disassembler {
 public:
     // <rant>
     //
@@ -35,43 +38,33 @@ public:
     //
     // </rant>
 
-    /** Capstone "Architecture type" limited to those related to ARM. */
-    enum Architecture {
-        ARCH_ARM = CS_ARCH_ARM,                         /**< Capstone: "ARM architecture (including Thumb, Thumb)". */
-        ARCH_ARM64 = CS_ARCH_ARM64                      /**< Capstone: "ARM-64, also called AArch64." */
-    };
-
-    /** Capstone "Mode type", limited to those related to ARM. Warning: these are non-orthogonal concepts. */
+    /** Capstone "Mode type", limited to those related to AArch64. */
     enum Mode {
-        MODE_ARM32 = CS_MODE_ARM,                       /**< Capstone: "32-bit ARM". */ // probably zero, not really a bit flag
-        MODE_THUMB = CS_MODE_THUMB,                     /**< Capstone: "ARM's Thumb mode, including Thumb-2". */
         MODE_MCLASS = CS_MODE_MCLASS,                   /**< Capstone: "ARM's Cortex-M series". */
-        MODE_V8 = CS_MODE_V8                            /**< Capstone: "ARMv8 A32 encodngs for ARM". */
     };
 
     /** Collection of Modes. */
     using Modes = BitFlags<Mode>;
 
 private:
-    Architecture arch_;                                 // a subset of Capstone's cs_arch constants
     Modes modes_;                                       // a subset of Capstone's cs_mode constants (warning: nonorthoganal concepts)
     csh capstone_;                                      // the capstone handle
     bool capstoneOpened_;                               // whether capstone_ is initialized
 
 public:
     /** Constructor for specific architecture. */
-    DisassemblerArm(Architecture arch, Modes modes = Modes())
-        : arch_(arch), modes_(modes), capstoneOpened_(false) {
+    explicit DisassemblerAarch64(Modes modes = Modes())
+        : modes_(modes), capstoneOpened_(false) {
         init();
     }
 
-    ~DisassemblerArm();
+    ~DisassemblerAarch64();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
     Disassembler* clone() const override;
     Unparser::BasePtr unparser() const override;
-    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=NULL) override;
+    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:
@@ -93,8 +86,9 @@ private:
 //    // Extract a particular element out of the expression and return a new expression.
 //    SgAsmExpression* extractElement(SgAsmExpression*, arm64_vess elmtSizeSpec, int idx);
 
-    // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender function, generate a new expression (if necessary)
-    // that represents the ARM extender function. This may consist of an truncation and/or a signed or unsigned extend operation.
+    // Extend an expression. Given an expression of some integer type, and given a destination type and an ARM extender
+    // function, generate a new expression (if necessary) that represents the ARM extender function. This may consist of an
+    // truncation and/or a signed or unsigned extend operation.
     SgAsmExpression* extendOperand(SgAsmExpression*, const cs_insn&, arm64_extender, SgAsmType*, arm64_shifter, unsigned shiftAmount) const;
 
     // Return a type for register.
@@ -104,7 +98,8 @@ private:
     // partially decode instructions ourselves to get this information.
     SgAsmType* typeForMemoryRead(const cs_insn&);
 
-    // Change a memory reference expresson's address by wrapping it in a SgAsmPreIncrementExpression or SgAsmPostIncrementExpression if necessary.
+    // Change a memory reference expresson's address by wrapping it in a SgAsmPreIncrementExpression or
+    // SgAsmPostIncrementExpression if necessary.
     void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm64&);
 };
 

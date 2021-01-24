@@ -195,6 +195,7 @@ public:
 /** Description of a system call. */
 class SystemCall {
 public:
+    rose_addr_t callSite = (rose_addr_t)(-1);
     InstructionSemantics2::BaseSemantics::SValuePtr functionNumber;
     std::vector<InstructionSemantics2::BaseSemantics::SValuePtr> arguments;
     InstructionSemantics2::BaseSemantics::SValuePtr returnValue;
@@ -521,6 +522,9 @@ private:
 
     // After processing a system call, update the symbolic state with any necessary system call side effects.
     void updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr&, Emulation::SystemCall&);
+
+    // Save info about a single system call in the database.
+    void saveSystemCall(const DatabasePtr&, const TestCasePtr&, const Emulation::SystemCall&);
 
 public:
     // TODO: Lots of properties to control the finer aspects of executing a test case!

@@ -596,8 +596,11 @@ typedef std::vector<Definition::Ptr> Dictionary;
 /** Common calling conventions for amd64 (x86-64). */
 const Dictionary& dictionaryAmd64();
 
-/** Common calling conventions for ARM. */
-const Dictionary& dictionaryArm64();
+/** Common calling conventions for ARM AArch32. */
+const Dictionary& dictionaryAarch32();
+
+/** Common calling conventions for ARM AArch64. */
+const Dictionary& dictionaryAarch64();
 
 /** Common calling conventions for m68k. */
 const Dictionary& dictionaryM68k();
