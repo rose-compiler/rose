@@ -117,6 +117,7 @@ SgAsmBinaryAsr* buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, S
 SgAsmBinaryRor* buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmUnaryRrx* buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type=NULL);
 SgAsmUnaryTruncate* buildTruncateExpression(SgAsmExpression*, SgAsmType*);
+SgAsmBinaryConcat* buildConcatExpression(SgAsmExpression *moreSignificant, SgAsmExpression *lessSignificant);
 SgAsmUnarySignedExtend* buildSignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmUnaryUnsignedExtend* buildUnsignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmExprListExp* buildExprListExpression();

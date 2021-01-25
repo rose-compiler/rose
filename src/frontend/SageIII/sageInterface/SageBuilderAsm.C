@@ -688,6 +688,22 @@ buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
+SgAsmBinaryConcat*
+buildConcatExpression(SgAsmExpression *msb, SgAsmExpression *lsb) {
+    ASSERT_not_null(msb);
+    ASSERT_not_null(lsb);
+    ASSERT_not_null(msb->get_type());
+    ASSERT_not_null(lsb->get_type());
+    ASSERT_forbid(msb->get_parent());
+    ASSERT_forbid(lsb->get_parent());
+
+    SgAsmBinaryConcat *a = new SgAsmBinaryConcat(msb, lsb);
+    msb->set_parent(a);
+    lsb->set_parent(a);
+    a->set_type(buildTypeU(msb->get_type()->get_nBits() + lsb->get_type()->get_nBits()));
+    return a;
+}
+
 SgAsmUnaryRrx*
 buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type) {
     SgAsmUnaryRrx *a = new SgAsmUnaryRrx(lhs);

@@ -1783,12 +1783,40 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmBinaryConcat);
+    IS_SERIALIZABLE(AsmBinaryConcat);
+
+#ifdef DOCUMENTATION
+    /** Expression that concatenates two values to form a wider value. */
+    class SgAsmBinaryConcat: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryConcat);
+#if defined(SgAsmBinaryConcat_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        }
+#endif
+#endif // SgAsmBinaryConcat_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmBinaryExpression,
                           AsmBinaryAdd               | AsmBinarySubtract      | AsmBinaryMultiply           |
                           AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
                           AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate |
                           AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
-                          AsmBinaryRor               | AsmBinaryMsl,
+                          AsmBinaryRor               | AsmBinaryMsl           | AsmBinaryConcat,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);
     AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmBinaryExpression);
