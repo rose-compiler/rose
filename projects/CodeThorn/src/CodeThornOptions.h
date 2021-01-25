@@ -7,7 +7,7 @@
 #include <list>
 
 namespace CodeThorn {
-  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
+  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_DEAD_CODE, ANALYSIS_OPAQUE_PREDICATE, ANALYSIS_NUM };
 }
 
 
@@ -53,8 +53,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   
   // experimental options
   bool ompAst=false;
-  bool normalizeAll=false;
-  bool normalizeFCalls=false;
+  int normalizeLevel=0;
   bool normalizePhaseInfo=false;
   bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
@@ -70,14 +69,22 @@ struct CodeThornOptions : public CodeThorn::Options {
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
   bool ssa=false; // transformation
+  bool traceMode=false; // trace mode in solver 16
+  
   bool nullPointerAnalysis=false;
   bool outOfBoundsAnalysis=false;
   bool uninitializedMemoryAnalysis=false;
+  bool deadCodeAnalysis=false;
+  bool constantConditionAnalysis=false;
+
+  std::string reportFileName;
+  std::string functionReportFileName;
   std::string nullPointerAnalysisFileName;
   std::string outOfBoundsAnalysisFileName;
   std::string uninitializedMemoryAnalysisFileName;
   std::string deadCodeAnalysisFileName;
-  std::string deadFunctionsAnalysisFileName;
+  std::string constantConditionAnalysisFileName;
+
   bool programStatsOnly=false;
   bool programStats=false;
   bool inStateStringLiterals=false;
@@ -91,9 +98,9 @@ struct CodeThornOptions : public CodeThorn::Options {
   int interpreterMode=0;
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
-  bool printViolations=false;
-  int optionsSet=0;
-  int callStringLength=-1; // not used yet
+  //bool printViolations=false;
+  int optionsSet=0; // obsolete
+  int callStringLength=-1;
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
   bool intraProcedural=false;
