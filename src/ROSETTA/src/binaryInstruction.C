@@ -2897,9 +2897,51 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    DECLARE_LEAF_CLASS(AsmByteOrder);
+    IS_SERIALIZABLE(AsmByteOrder);
+
+#ifdef DOCUMENTATION
+    /** Byte order specification. */
+    class SgAsmByteOrder: public SgAsmConstantExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmByteOrder);
+#if defined(SgAsmByteOrder_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
+            s & BOOST_SERIALIZATION_NVP(byteOrder_);
+        }
+#endif
+
+    private:
+        ByteOrder::Endianness byteOrder_;
+
+    public:
+        explicit SgAsmByteOrder(ByteOrder::Endianness byteOrder)
+            : byteOrder_(byteOrder) {}
+
+        /** Property: Byte order.
+         *
+         * @{ */
+        int byteOrder() const { return byteOrder_; }
+        void byteOrder(int n) { byteOrder_ = n; }
+        /** @} */
+#endif // SgAsmByteOrder_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmConstantExpression,
-                          AsmIntegerValueExpression | AsmFloatValueExpression,
+                          AsmIntegerValueExpression | AsmFloatValueExpression | AsmByteOrder,
                           "AsmConstantExpression", "AsmConstantExpressionTag", false);
     AsmConstantExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmConstantExpression);
