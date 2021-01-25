@@ -96,7 +96,7 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     if (va > 0xfffffffc)
         throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
-    ASSERT_require(sizeof bytes <= instructionAlignment_);
+    ASSERT_require(sizeof bytes >= instructionAlignment_);
     size_t nRead = map->at(va).limit(instructionAlignment_).require(MemoryMap::EXECUTABLE).read(bytes).size();
     if (0 == nRead)
         throw Exception("short read", va);
@@ -227,7 +227,18 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
             break;
 
         case ARM_OP_SETEND:
-            ASSERT_not_implemented("[Robb Matzke 2021-01-04]");
+            switch (op.setend) {
+                case ARM_SETEND_BE:
+                    retval = new SgAsmByteOrder(ByteOrder::ORDER_MSB);
+                    break;
+                case ARM_SETEND_LE:
+                    retval = new SgAsmByteOrder(ByteOrder::ORDER_LSB);
+                    break;
+                case ARM_SETEND_INVALID:
+                    ASSERT_not_reachable("invalid endianness = " + boost::lexical_cast<std::string>(op.setend));
+            }
+            retval->set_type(SageBuilderAsm::buildTypeU1()); // the type doesn't really matter here
+            break;
 
         case ARM_OP_SYSREG: {
             retval = makeSystemRegister((arm_sysreg)op.reg);
