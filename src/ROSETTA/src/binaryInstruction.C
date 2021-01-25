@@ -2051,50 +2051,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_ENABLE_ASM_AARCH32
-    DECLARE_LEAF_CLASS(AsmAarch32Coprocessor);
-    IS_SERIALIZABLE(AsmAarch32Coprocessor);
-
-#ifdef DOCUMENTATION
-    /** Operand referencing a Co-processor. */
-    class SgAsmAarch32Coprocessor: public SgAsmUnaryExpression {
-    public:
-#endif
-
-        DECLARE_OTHERS(AsmAarch32Coprocessor);
-#if defined(SgAsmAarch32Coprocessor_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S & s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
-            s & BOOST_SERIALIZATION_NVP(coprocessor_);
-        }
-#endif
-
-    private:
-        int coprocessor_;
-
-    public:
-        explicit SgAsmAarch32Coprocessor(int coprocessor)
-            : coprocessor_(coprocessor) {}
-
-        /** Property: Coprocessor number.
-         *
-         * @{ */
-        int coprocessor() const { return coprocessor_; }
-        void coprocessor(int n) { coprocessor_ = n; }
-        /** @} */
-#endif // SgAsmAarch32Coprocessor_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-#endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
     DECLARE_LEAF_CLASS(AsmAarch64AtOperand);
@@ -2102,7 +2058,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Operand for an ARM AArch64 A64 AT instruction. */
-    class SgAsmAarch64AtOperand: public SgAsmUnaryExpression {
+    class SgAsmAarch64AtOperand: public SgAsmExpression {
     public:
 #endif
 
@@ -2114,7 +2070,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(operation_);
         }
 #endif
@@ -2154,7 +2110,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Operand for an ARM AArch64 A64 prefetch instruction. */
-    class SgAsmAarch64PrefetchOperand: public SgAsmUnaryExpression {
+    class SgAsmAarch64PrefetchOperand: public SgAsmExpression {
     public:
 #endif
 
@@ -2166,7 +2122,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(operation_);
         }
 #endif
@@ -2206,7 +2162,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Describes a system register for the ARM AArch64 A64 MRS and MSR instructions. */
-    class SgAsmAarch64SysMoveOperand: public SgAsmUnaryExpression {
+    class SgAsmAarch64SysMoveOperand: public SgAsmExpression {
     public:
 #endif
 
@@ -2218,7 +2174,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(access_);
         }
 #endif
@@ -2258,7 +2214,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** C-Immediate operand for SYS, AT, CFP, CPP, DC, DVP, IC, and TLBI instructions. */
-    class SgAsmAarch64CImmediateOperand: public SgAsmUnaryExpression {
+    class SgAsmAarch64CImmediateOperand: public SgAsmExpression {
     public:
 #endif
 
@@ -2270,7 +2226,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(imm_);
         }
 #endif
@@ -2310,7 +2266,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Barriar operation operand for ISB, DMB, and DSB instructions. */
-    class SgAsmAarch64BarrierOperand: public SgAsmUnaryExpression {
+    class SgAsmAarch64BarrierOperand: public SgAsmExpression {
     public:
 #endif
 
@@ -2322,7 +2278,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(operation_);
         }
 #endif
@@ -2356,15 +2312,8 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmUnaryExpression,
                           AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryTruncate | AsmUnarySignedExtend
-                          | AsmUnaryUnsignedExtend
-#ifdef ROSE_ENABLE_ASM_AARCH64
-                          | AsmAarch64AtOperand | AsmAarch64PrefetchOperand | AsmAarch64SysMoveOperand
-                          | AsmAarch64CImmediateOperand | AsmAarch64BarrierOperand
-#endif
-#ifdef ROSE_ENABLE_ASM_AARCH32
-                          | AsmAarch32Coprocessor
-#endif
-                          , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
+                          | AsmUnaryUnsignedExtend,
+                          "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmUnaryExpression);
 
@@ -2897,12 +2846,56 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    DECLARE_LEAF_CLASS(AsmAarch32Coprocessor);
+    IS_SERIALIZABLE(AsmAarch32Coprocessor);
+
+#ifdef DOCUMENTATION
+    /** Operand referencing a Co-processor. */
+    class SgAsmAarch32Coprocessor: public SgAsmExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmAarch32Coprocessor);
+#if defined(SgAsmAarch32Coprocessor_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S & s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(coprocessor_);
+        }
+#endif
+
+    private:
+        int coprocessor_;
+
+    public:
+        explicit SgAsmAarch32Coprocessor(int coprocessor)
+            : coprocessor_(coprocessor) {}
+
+        /** Property: Coprocessor number.
+         *
+         * @{ */
+        int coprocessor() const { return coprocessor_; }
+        void coprocessor(int n) { coprocessor_ = n; }
+        /** @} */
+#endif // SgAsmAarch32Coprocessor_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     DECLARE_LEAF_CLASS(AsmByteOrder);
     IS_SERIALIZABLE(AsmByteOrder);
 
 #ifdef DOCUMENTATION
     /** Byte order specification. */
-    class SgAsmByteOrder: public SgAsmConstantExpression {
+    class SgAsmByteOrder: public SgAsmExpression {
     public:
 #endif
 
@@ -2914,7 +2907,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S & s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
             s & BOOST_SERIALIZATION_NVP(byteOrder_);
         }
 #endif
@@ -2929,8 +2922,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Byte order.
          *
          * @{ */
-        int byteOrder() const { return byteOrder_; }
-        void byteOrder(int n) { byteOrder_ = n; }
+        ByteOrder::Endianness byteOrder() const { return byteOrder_; }
+        void byteOrder(ByteOrder::Endianness sex) { byteOrder_ = sex; }
         /** @} */
 #endif // SgAsmByteOrder_OTHERS
 
@@ -2941,7 +2934,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmConstantExpression,
-                          AsmIntegerValueExpression | AsmFloatValueExpression | AsmByteOrder,
+                          AsmIntegerValueExpression | AsmFloatValueExpression,
                           "AsmConstantExpression", "AsmConstantExpressionTag", false);
     AsmConstantExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmConstantExpression);
@@ -3414,7 +3407,15 @@ void Grammar::setUpBinaryInstructions() {
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
                           AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames          |
-                          AsmRiscOperation,
+                          AsmRiscOperation
+#ifdef ROSE_ENABLE_ASM_AARCH64
+                          | AsmAarch64AtOperand | AsmAarch64PrefetchOperand | AsmAarch64SysMoveOperand
+                          | AsmAarch64CImmediateOperand | AsmAarch64BarrierOperand
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+                          | AsmAarch32Coprocessor
+#endif
+                          | AsmByteOrder,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmExpression);
