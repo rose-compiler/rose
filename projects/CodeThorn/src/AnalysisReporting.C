@@ -93,7 +93,7 @@ namespace CodeThorn {
           printSeparationLine();
           break;
         case ANALYSIS_DEAD_CODE:
-          // generate verification call graph
+          AnalysisReporting::generateDeadCodeLocationsVerificationReport(ctOpt, analyzer, unreachableLabels);
           AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,false);
           AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
           printSeparationLine();
@@ -105,6 +105,29 @@ namespace CodeThorn {
           cout<<"Error: generateVerificationReports: unknown analysis: "<<analysisSel<<endl;
           exit(1);
         }
+      }
+    }
+  }
+
+  void AnalysisReporting::generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable) {
+    if(ctOpt.deadCodeAnalysisFileName.size()>0) {
+      stringstream locationsCSVFileData;
+      for(auto lab : unreachable) {
+        ROSE_ASSERT(analyzer->getLabeler());
+        SgNode* node=analyzer->getLabeler()->getNode(lab);
+        if(node) {
+          //cout<<lab.toString()<<","<<value<<endl;
+          locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+        } else {
+          locationsCSVFileData<<"unknown-location"<<endl;
+        }
+        locationsCSVFileData<<endl;
+      }
+      if(!CppStdUtilities::writeFile(ctOpt.deadCodeAnalysisFileName, locationsCSVFileData.str())) {
+        cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
+      } else {
+        if(!ctOpt.quiet)
+          cout<<"Generated analysis results in file "<<ctOpt.deadCodeAnalysisFileName<<endl;
       }
     }
   }
@@ -146,8 +169,7 @@ namespace CodeThorn {
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
         if(!CppStdUtilities::writeFile(fileName, locationsCSVFileData.str())) {
-          cout<<"Error: cannot write file "<<fileName<<endl;
-          exit(1);
+          cerr<<"Error: cannot write file "<<fileName<<endl;
         } else {
           if(!ctOpt.quiet)
             cout<<"Generated analysis results in file "<<fileName<<endl;
@@ -197,7 +219,6 @@ namespace CodeThorn {
         astCSVStats.setMinCountToShow(1); // default value is 1
         if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
           cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
         }
       }
     }
@@ -237,6 +258,7 @@ namespace CodeThorn {
       }
     }
   }
+
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
@@ -368,7 +390,7 @@ namespace CodeThorn {
       case UNVERIFIED: nodeColor="unverified";numUnverifiedFunctions++;break;
       case VERIFIED: nodeColor="verified";numVerifiedFunctions++;break;
       case INCONSISTENT: nodeColor="inconsistent";numInconsistentFunctions++;break;
-      case UNREACHABLE: nodeColor="unreachable";numUnreachableFunctions++;break;
+      case UNREACHABLE: nodeColor="dead";numUnreachableFunctions++;break;
       }
       SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
       string fileName=SgNodeHelper::sourceFilenameToString(node);

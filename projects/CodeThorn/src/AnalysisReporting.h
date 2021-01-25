@@ -20,6 +20,7 @@ namespace CodeThorn {
     static void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
     static void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting);
     static CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
+    static void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
   private:
     static bool isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab);
     static void printSeparationLine();
