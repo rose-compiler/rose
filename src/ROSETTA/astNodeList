@@ -975,3 +975,4 @@ SgAsmAarch32Instruction
 SgAsmAarch32Coprocessor
 //SgAdaDerivedType
 SgAdaLengthClause
+SgAsmBinaryConcat
