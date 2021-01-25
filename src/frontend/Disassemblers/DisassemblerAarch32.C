@@ -162,6 +162,7 @@ DisassemblerAarch32::makeUnknownInstruction(const Exception &e) {
 SgAsmExpression*
 DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
     SgAsmExpression *retval = nullptr;
+    SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
 
     switch (op.type) {
         case ARM_OP_INVALID:
@@ -177,7 +178,7 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
         }
 
         case ARM_OP_IMM:
-            retval = new SgAsmIntegerValueExpression(op.imm, SageBuilderAsm::buildTypeU32());
+            retval = new SgAsmIntegerValueExpression(op.imm, u32);
             break;
 
         case ARM_OP_MEM: {
@@ -185,7 +186,6 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
             auto base = new SgAsmDirectRegisterExpression(reg);
             base->set_type(registerType(reg));
             SgAsmExpression *addr = base;
-            SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
 
             if (op.mem.index != ARM_REG_INVALID) {
                 RegisterDescriptor indexReg = makeRegister(op.mem.index);
@@ -232,6 +232,84 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
         case ARM_OP_SYSREG: {
             retval = makeSystemRegister((arm_sysreg)op.reg);
             break;
+        }
+    }
+
+    // Adjust for shift and rotate
+    if (op.shift.type != ARM_SFT_INVALID && op.shift.value != 0) {
+        switch (op.shift.type) {
+            case ARM_SFT_INVALID:
+                ASSERT_not_reachable("filtered out above");
+            case ARM_SFT_ASR: {                         // shift with immediate const
+                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                retval = SageBuilderAsm::buildAsrExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_LSL: {                         // shift with immediate const
+                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                retval = SageBuilderAsm::buildLslExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_LSR: {                         // shift with immediate const
+                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                retval = SageBuilderAsm::buildLsrExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_ROR: {                         // shift with immediate const
+                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                retval = SageBuilderAsm::buildRorExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_RRX: {                         // rotate right with extend
+                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                auto carry = new SgAsmDirectRegisterExpression(carryReg);
+                carry->set_type(registerType(carryReg));
+                retval = SageBuilderAsm::buildConcatExpression(carry, retval);
+                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                retval = SageBuilderAsm::buildRorExpression(retval, value, retval->get_type());
+                break;
+            }
+            case ARM_SFT_ASR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                auto value = new SgAsmDirectRegisterExpression(reg);
+                value->set_type(registerType(reg));
+                retval = SageBuilderAsm::buildAsrExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_LSL_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                auto value = new SgAsmDirectRegisterExpression(reg);
+                value->set_type(registerType(reg));
+                retval = SageBuilderAsm::buildLslExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_LSR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                auto value = new SgAsmDirectRegisterExpression(reg);
+                value->set_type(registerType(reg));
+                retval = SageBuilderAsm::buildLsrExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_ROR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                auto value = new SgAsmDirectRegisterExpression(reg);
+                value->set_type(registerType(reg));
+                retval = SageBuilderAsm::buildRorExpression(retval, value, u32);
+                break;
+            }
+            case ARM_SFT_RRX_REG: {                     // shift with register
+                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                auto carry = new SgAsmDirectRegisterExpression(carryReg);
+                carry->set_type(registerType(carryReg));
+                retval = SageBuilderAsm::buildConcatExpression(carry, retval);
+
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                auto value = new SgAsmDirectRegisterExpression(reg);
+                value->set_type(registerType(reg));
+
+                retval = SageBuilderAsm::buildRorExpression(retval, value, retval->get_type());
+                break;
+            }
         }
     }
 

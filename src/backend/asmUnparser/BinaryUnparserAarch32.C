@@ -124,6 +124,11 @@ Aarch32::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
         }
         out <<"}";
 
+    } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" : ";
+        outputExpr(out, op->get_rhs(), state);
+
     } else {
         ASSERT_not_implemented(expr->class_name());
     }
