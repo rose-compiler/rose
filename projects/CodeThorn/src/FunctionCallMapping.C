@@ -125,7 +125,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   int n=0;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    // TODO CONTINE HERE: UNRESOLVED CALLS
     if(fcInfo.funCallType!=nullptr) {
+#if 1
       std::string funCallTypeName = fcInfo.funCallType->unparseToString();
       auto pos = std::lower_bound( funDefList.begin(), funDefList.end(),
                                    funCallTypeName, 
@@ -147,7 +149,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         
         ++pos;
       }
-      /*
+#else
       for (auto fd : funDefList) {
         FunctionCallTarget fcTarget(fd);
         bool matching;
@@ -173,7 +175,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           }
         }
       }
-      */
+#endif
     } else {
       std::vector<SgFunctionDeclaration*> targets;
 
