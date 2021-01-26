@@ -92,7 +92,6 @@ const std::string versionString="0.8.0";
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {
@@ -460,17 +459,11 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(ctOpt.normalizeFCalls) {
-      lowering.normalizeAst(sageProject,1);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
-    }
-
-    if(ctOpt.normalizeAll) {
+    if(ctOpt.normalizeLevel>0) {
       if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
-      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-      lowering.normalizeAst(sageProject,2);
+      lowering.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 

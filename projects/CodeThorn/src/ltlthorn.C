@@ -158,7 +158,6 @@ int main( int argc, char * argv[] ) {
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
-    optionallyGenerateVerificationReports(ctOpt,analyzer);
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
     optionallyRunVisualizer(ctOpt,analyzer,root);

@@ -7,13 +7,13 @@
 #include "CppStdUtilities.h"
 #include "ProgramLocationsAnalysis.h"
 #include "BoolLattice.h"
+#include "ConstantConditionAnalysis.h"
+#include <climits>
 
 using namespace std;
 using namespace CodeThorn;
 
 namespace CodeThorn {
-
-  enum VerificationResult { INCONSISTENT, UNVERIFIED, VERIFIED, FALSIFIED, UNREACHABLE };
 
   LabelSet AnalysisReporting::functionLabels(CodeThorn::CTAnalysis* analyzer) {
     LabelSet allFunctionLabels;
@@ -25,30 +25,32 @@ namespace CodeThorn {
     }
     return allFunctionLabels;
   }
+
+  bool AnalysisReporting::isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab) {
+    ROSE_ASSERT(analyzer->getLabeler());
+    SgNode* node=analyzer->getLabeler()->getNode(lab);
+    if(SgLocatedNode* locNode=isSgLocatedNode(node)) {
+      return SageInterface::insideSystemHeader(locNode);
+    } else {
+      return false;
+    }
+  }
   
+  void AnalysisReporting::printSeparationLine() {
+    cout<<"------------------------------------------------"<<endl;
+  }
+
   void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, bool reportDetectedErrorLines) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
         cout<<endl;
-        cout<<"-----------------------------------------------"<<endl;
+        printSeparationLine();
         cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
-        cout<<"-----------------------------------------------"<<endl;
+        printSeparationLine();
         ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
-#if 0
-        LabelSet labelsOfInterest1=analyzer->getCFAnalyzer()->labelsOfInterestSet();
-        // filter labels for dead code
-        LabelSet labelsOfInterest2;
-        for(auto lab : labelsOfInterest1) {
-          SgNode* node=analyzer->getLabeler()->getNode(lab);
-          if(SgLocatedNode* locNode=isSgLocatedNode(node))
-            if(!SageInterface::insideSystemHeader(locNode))
-              labelsOfInterest2.insert(lab);
-        }
-#else
         LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(analyzer);
-#endif
         // compute partioning
         LabelSet reachableLabels;
         LabelSet unreachableLabels;
@@ -62,35 +64,130 @@ namespace CodeThorn {
 
         report.setReachableLocations(reachableLabels);
         report.setUnreachableLocations(unreachableLabels);
-        report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
-        cout<<"-----------------------------------------------"<<endl;
-        // generate verification call graph
-        AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
-        AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report);
-        //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
-        cout<<"-----------------------------------------------"<<endl;
-        if(reportDetectedErrorLines) {
-          LabelSet violatingLabels=report.falsifiedLocations();
-          if(report.numDefinitiveLocations()>0) {
-            cout<<"Proven errors in program:"<<endl;
-            report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
-          } else {
-            LabelSet u=report.unverifiedLocations();
-            if(u.size()==0) {
-              cout<<"No violations exist - program verified."<<endl;
+
+        switch(analysisSel) {
+        case ANALYSIS_NULL_POINTER:
+        case ANALYSIS_OUT_OF_BOUNDS:
+        case ANALYSIS_UNINITIALIZED:
+          report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
+          printSeparationLine();
+          // generate verification call graph
+          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,true);
+          AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
+          //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
+          printSeparationLine();
+          if(reportDetectedErrorLines) {
+            LabelSet violatingLabels=report.falsifiedLocations();
+            if(report.numDefinitiveLocations()>0) {
+              cout<<"Proven errors in program:"<<endl;
+              report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
             } else {
-              cout<<"No violations proven - violations may exist in unverified portion of program."<<endl;
+              LabelSet u=report.unverifiedLocations();
+              if(u.size()==0) {
+                cout<<"No violations exist - program verified."<<endl;
+              } else {
+                cout<<"No violations proven - violations may exist in unverified portion of program."<<endl;
+              }
             }
           }
+          printSeparationLine();
+          break;
+        case ANALYSIS_DEAD_CODE:
+          AnalysisReporting::generateDeadCodeLocationsVerificationReport(ctOpt, analyzer, unreachableLabels);
+          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,false);
+          AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
+          printSeparationLine();
+          break;
+        case ANALYSIS_OPAQUE_PREDICATE:
+          generateConstantConditionVerificationReport(ctOpt, analyzer,analysisSel);
+          break;
+        default:
+          cout<<"Error: generateVerificationReports: unknown analysis: "<<analysisSel<<endl;
+          exit(1);
         }
-        cout<<"-----------------------------------------------"<<endl;
       }
+    }
+  }
+
+  void AnalysisReporting::generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable) {
+    if(ctOpt.deadCodeAnalysisFileName.size()>0) {
+      stringstream locationsCSVFileData;
+      for(auto lab : unreachable) {
+        ROSE_ASSERT(analyzer->getLabeler());
+        SgNode* node=analyzer->getLabeler()->getNode(lab);
+        if(node) {
+          //cout<<lab.toString()<<","<<value<<endl;
+          locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+        } else {
+          locationsCSVFileData<<"unknown-location"<<endl;
+        }
+        locationsCSVFileData<<endl;
+      }
+      if(!CppStdUtilities::writeFile(ctOpt.deadCodeAnalysisFileName, locationsCSVFileData.str())) {
+        cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
+      } else {
+        if(!ctOpt.quiet)
+          cout<<"Generated analysis results in file "<<ctOpt.deadCodeAnalysisFileName<<endl;
+      }
+    }
+  }
+
+  void AnalysisReporting::generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector analysisSel) {
+    ROSE_ASSERT(analyzer->getExprAnalyzer());
+    if(ReadWriteListener* readWriteListener=analyzer->getExprAnalyzer()->getReadWriteListener()) {
+      ROSE_ASSERT(readWriteListener);
+      ConstantConditionAnalysis* constCondAnalysis=dynamic_cast<ConstantConditionAnalysis*>(readWriteListener);
+      ROSE_ASSERT(constCondAnalysis);
+      ConstantConditionAnalysis::ConstConditionsMap& map=*constCondAnalysis->getResultMapPtr();
+      stringstream locationsCSVFileData;
+      std::uint32_t constTrueCnt=0;
+      std::uint32_t constFalseCnt=0;
+      for(auto p : map) {
+        Label lab=p.first;
+        bool value=p.second;
+        locationsCSVFileData<<"opaque-predicate,";
+        if(value) {
+          constTrueCnt++;
+          locationsCSVFileData<<"true,";
+        } else {
+          constFalseCnt++;
+          locationsCSVFileData<<"false,";
+        }
+        ROSE_ASSERT(analyzer->getLabeler());
+        SgNode* node=analyzer->getLabeler()->getNode(lab);
+        if(node) {
+          //cout<<lab.toString()<<","<<value<<endl;
+          locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+        } else {
+          locationsCSVFileData<<"unknown-location"<<endl;
+        }
+        locationsCSVFileData<<endl;
+      }
+      cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
+      cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
+      printSeparationLine();
+      string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
+      if(fileName.size()>0) {
+        if(!CppStdUtilities::writeFile(fileName, locationsCSVFileData.str())) {
+          cerr<<"Error: cannot write file "<<fileName<<endl;
+        } else {
+          if(!ctOpt.quiet)
+            cout<<"Generated analysis results in file "<<fileName<<endl;
+        }
+        
+      }
+      
+    } else {
+      cout<<"WARNING: Opaque Predicate Analysis report generation: plug-in not registered."<<endl;
     }
   }
   
   void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
+      // exception: skip opaque preducate analysis, because it uses it's own format
+      if(analysisSel==ANALYSIS_OPAQUE_PREDICATE)
+        continue;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
         ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
@@ -122,7 +219,6 @@ namespace CodeThorn {
         astCSVStats.setMinCountToShow(1); // default value is 1
         if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
           cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
         }
       }
     }
@@ -162,54 +258,17 @@ namespace CodeThorn {
       }
     }
   }
+
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
     //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
-    LabelSet verified=report.verifiedLocations();
-    LabelSet falsified=report.falsifiedLocations();
-    LabelSet unverified=report.unverifiedLocations();
-    //cout<<"Verified  :"<<verified.toString()<<endl;
-    //cout<<"Falsified :"<<falsified.toString()<<endl;
-    //cout<<"Unverified:"<<unverified.toString()<<endl;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     std::map<Label,VerificationResult> fMap;
-    for(auto entryLabel : functionEntryLabels) {
-      if(analyzer->isUnreachableLabel(entryLabel)) {
-        fMap[entryLabel]=UNREACHABLE;
-        continue;
-      }
-      // todo: function is
-      // falsified: if at least one label is falsified (=0)
-      // unverified: if at least one is unverified (=top)
-      // verified: all labels are verified (=1)
-      LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
-      //cout<<"Function label set:"<<funLabSet.toString()<<endl;
-      //for(auto lab : funLabSet) {
-      //  cout<<lab.toString()<<":"<<analyzer->getLabeler()->getNode(lab)->class_name()<<endl;
-      //}
-      VerificationResult funVer=INCONSISTENT;
-      size_t count=0;
-      for(auto lab : funLabSet) {
-        if(falsified.isElement(lab)) {
-          funVer=FALSIFIED;
-          break;
-        }
-        if(unverified.isElement(lab)) {
-          funVer=UNVERIFIED;
-        }
-        if(verified.isElement(lab)) {
-          count++;
-        }
-      }
-      //cout<<"Function verification: "<<SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel))<<":"<<funLabSet.size()<<" vs "<<count<<endl;
-      if(funLabSet.size()==count) {
-        funVer=VERIFIED;
-      }
-      fMap[entryLabel]=funVer;
-      //cout<<"DEBUG:entrylabel:"<<entryLabel.toString()<<" : "<<funVer<<" : "<< analyzer->getLabeler()->getNode(entryLabel)->unparseToString()<<endl;
-    }
+
+    calculatefMap(fMap,analyzer,functionEntryLabels,flow,report);
+
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
 
     std::string cgBegin="digraph G {\n";
@@ -269,40 +328,54 @@ namespace CodeThorn {
 
   }
 
-  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
-    string fileName1=analysisName+"-functions.csv";
+  void AnalysisReporting::calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report) {
     LabelSet verified=report.verifiedLocations();
     LabelSet falsified=report.falsifiedLocations();
     LabelSet unverified=report.unverifiedLocations();
-    
-    Flow& flow=*analyzer->getFlow();
-    std::map<Label,VerificationResult> fMap;
-    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+
     for(auto entryLabel : functionEntryLabels) {
       if(analyzer->isUnreachableLabel(entryLabel)) {
         fMap[entryLabel]=UNREACHABLE;
         continue;
       }
       LabelSet funLabSet=analyzer->getCFAnalyzer()->functionLabelSet(entryLabel,flow);
+      //cout<<"Function label set:"<<funLabSet.toString()<<endl;
+      //for(auto lab : funLabSet) {
+      //  cout<<lab.toString()<<":"<<analyzer->getLabeler()->getNode(lab)->class_name()<<endl;
+      //}
       VerificationResult funVer=INCONSISTENT;
       size_t count=0;
+      size_t unreachableCount=0;
       for(auto lab : funLabSet) {
         if(falsified.isElement(lab)) {
           funVer=FALSIFIED;
           break;
-        }
-        if(unverified.isElement(lab)) {
+        } else if(analyzer->isUnreachableLabel(lab)) {
+          unreachableCount++;
+        } else if(unverified.isElement(lab)) {
           funVer=UNVERIFIED;
-        }
-        if(verified.isElement(lab)) {
+        } else if(verified.isElement(lab)) {
           count++;
         }
       }
-      if(funLabSet.size()==count) {
+      //cout<<"DEBUG: Function verification: "<<SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel))<<":"<<funLabSet.size()<<" vs "<<count<<" + "<<unreachableCount<<endl;
+      if(funLabSet.size()==count+unreachableCount) {
         funVer=VERIFIED;
       }
       fMap[entryLabel]=funVer;
+      //cout<<"DEBUG:entrylabel:"<<entryLabel.toString()<<" : "<<funVer<<" : "<< analyzer->getLabeler()->getNode(entryLabel)->unparseToString()<<endl;
     }
+  }
+  
+  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting) {
+    string fileName1=analysisName+"-functions.csv";
+    
+    Flow& flow=*analyzer->getFlow();
+    std::map<Label,VerificationResult> fMap;
+    LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
+
+    calculatefMap(fMap,analyzer,functionEntryLabels,flow,report);
+
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
     stringstream cgNodes;
     string nodeColor;
@@ -317,13 +390,13 @@ namespace CodeThorn {
       case UNVERIFIED: nodeColor="unverified";numUnverifiedFunctions++;break;
       case VERIFIED: nodeColor="verified";numVerifiedFunctions++;break;
       case INCONSISTENT: nodeColor="inconsistent";numInconsistentFunctions++;break;
-      case UNREACHABLE: nodeColor="unreachable";numUnreachableFunctions++;break;
+      case UNREACHABLE: nodeColor="dead";numUnreachableFunctions++;break;
       }
       SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       std::string functionName=SgNodeHelper::getFunctionName(node);
       //      if(nodeColor!="inconsistent")
-        cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+      cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
     }
 
     // print stats
@@ -331,16 +404,19 @@ namespace CodeThorn {
     int numTotalReachableFunctions=numProvenFunctions+numUnverifiedFunctions+numInconsistentFunctions;
     int numTotalUnreachableFunctions=numUnreachableFunctions;
     int numTotalFunctions=numTotalReachableFunctions+numTotalUnreachableFunctions;
-    cout<<"Reachable verified   functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
-    cout<<" Safe                functions: "<<numVerifiedFunctions<<" [ "<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
-    cout<<" Unsafe              functions: "<<numFalsifiedFunctions<<" [ "<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
-    cout<<"Reachable unverified functions: "<<numUnverifiedFunctions<<" [ "<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
-    cout<<"Total reachable      functions: "<<numTotalReachableFunctions<<" [ "<<numTotalReachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total unreachable    functions: "<<numTotalUnreachableFunctions<<" [ "<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total                functions: "<<numTotalFunctions<<endl;
+    //    cout<<"Reachable verified   functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+    if(violationReporting) {
+      cout<<"Safe                 functions: "<<setw(6)<<numVerifiedFunctions<<" ["<<setw(6)<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+      cout<<"Unsafe               functions: "<<setw(6)<<numFalsifiedFunctions<<" ["<<setw(6)<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
+      cout<<"Undecided            functions: "<<setw(6)<<numUnverifiedFunctions<<" ["<<setw(6)<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+    //cout<<"Total reachable      functions: "<<setw(6)<<numTotalReachableFunctions<<" ["<<setw(6)<<numTotalReachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    }
+    cout<<"Dead (unreachable)   functions: "<<setw(6)<<numTotalUnreachableFunctions<<" ["<<setw(6)<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Total                functions: "<<setw(6)<<numTotalFunctions<<endl;
     if(numInconsistentFunctions>0)
-      cout<<"Inconsistent functions: "<<numInconsistentFunctions<<" [ "<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
+      cout<<"Inconsistent functions: "<<setw(6)<<numInconsistentFunctions<<" ["<<setw(6)<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
     
+    printSeparationLine();
     std::string dotFileString1=cgNodes.str();
     if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName1, dotFileString1)) {
       cerr<<"Error: could not generate function verification file "<<fileName1<<endl;

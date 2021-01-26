@@ -2051,7 +2051,6 @@ projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/RaaS/Makefile
 projects/RaaS/src/Makefile
-projects/RaaS/include/nlohmann/Makefile
 projects/RaaS/examples/demo/Makefile
 projects/RaaS/examples/demo/compile_commands.json
 projects/CompilationDB/Makefile
@@ -2089,7 +2088,6 @@ projects/ShiftCalculus4/Makefile
 projects/TemplateAnalysis/Makefile
 projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/include/ROSE/proposed/Makefile
-projects/TemplateAnalysis/include/nlohmann/Makefile
 projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
 projects/TemplateAnalysis/src/Makefile
@@ -2189,6 +2187,8 @@ python/Rose/BinaryAnalysis/Makefile
 python/Rose/BinaryAnalysis/Partitioner2/Makefile
 python/Rose/BinaryAnalysis/Unparser/Makefile
 scripts/Makefile
+src/3rdPartyLibraries/json/Makefile
+src/3rdPartyLibraries/json/nlohmann/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile

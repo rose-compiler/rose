@@ -1,5 +1,9 @@
 #include <cstdio>
 
+int g(int b) {
+  return b+1;
+}
+
 int main() {
   int x=0;
   x+=2;
@@ -17,8 +21,29 @@ int main() {
   z<<=3;
   z>>=2;
 
-  // x=2,y=30,z=16
-  printf("x=%d,y=%d,z=%d\n",x,y,z);
+  int f=1;
+  f=g(f+=1);
+  int* p=&f;
+  (*p)+=10;
+  struct S { int u; };
+  S s;
+  s.u=1;
+  printf("s.u=%d\n",s.u);
+  s.u+=1;
+  printf("s.u=%d\n",s.u);
+  p=&s.u;
+  (*p)+=1;
+  printf("*p=%d\n",*p);
+  (*p)++; // not working
+  printf("*p=%d\n",*p);
+  s.u++;
+  printf("s.u=%d\n",s.u);
+  if((*p+=g(1)) > 0) {
+    f=f+1;
+  }
+  // x=2,y=30,z=16, f=14, s.u=5
+  int t=s.u;
+  printf("x=%d,y=%d,z=%d,f=%d,t=%d\n",x,y,z,f,t);
   return 0;
     
 }

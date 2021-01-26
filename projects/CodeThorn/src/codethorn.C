@@ -57,6 +57,7 @@
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
 
+#include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
@@ -77,7 +78,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.19";
+const std::string versionString="1.12.20";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -201,6 +202,7 @@ int main( int argc, char * argv[] ) {
       originalProgramInfo.printCompared(&normalizedProgramInfo);
     }
 
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
@@ -214,9 +216,11 @@ int main( int argc, char * argv[] ) {
     analyzer->initLabeledAssertNodes(sageProject);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
-    
+
+    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
+      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
+    }
     runSolver(ctOpt,analyzer,sageProject,tc);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
