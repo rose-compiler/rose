@@ -201,6 +201,11 @@ namespace
       expr(n.get_end());
     }
 
+    void handle(SgExprListExp& n)
+    {
+      exprlst(n);
+    }
+
     void handle(SgCallExpression& n)
     {
       SgExprListExp& args = SG_DEREF(n.get_args());

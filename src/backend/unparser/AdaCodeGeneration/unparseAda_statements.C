@@ -863,6 +863,25 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgPragmaDeclaration& n)
+    {
+      SgPragma&      pragma = SG_DEREF(n.get_pragma());
+      SgExprListExp& args = SG_DEREF(pragma.get_args());
+
+      prn("pragma ");
+      prn(pragma.get_name());
+
+      if (!args.get_expressions().empty())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
+
+      prn(STMT_SEP);
+    }
+
+
 
     //~ ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);

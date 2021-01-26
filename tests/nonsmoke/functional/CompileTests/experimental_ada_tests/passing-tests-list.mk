@@ -79,4 +79,7 @@ PASSING_TESTS :=                       \
   simple_select_accept_guarded.adb     \
   scopequal.adb                        \
   representation_clause_2.ads          \
+  pragmas.adb                          \
+  procedure_pragma.adb                 \
+  package_pragma.ads                   \ 
   EndOfList

@@ -139,11 +139,22 @@ void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx
   const std::string&      unit = ctx.sourceFileName();
 
   // \todo consider deleting existing source location information
+  // \note CR suggests to overwrite any information that is present
   //~ delete n.get_file_info();
   //~ delete n.get_startOfConstruct();
   //~ delete n.get_endOfConstruct();
 
   n.set_file_info       (&mkFileInfo(unit, loc.First_Line, loc.First_Column));
+  n.set_startOfConstruct(&mkFileInfo(unit, loc.First_Line, loc.First_Column));
+  n.set_endOfConstruct  (&mkFileInfo(unit, loc.Last_Line,  loc.Last_Column));
+}
+
+void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
+{
+  Source_Location_Struct& loc  = elem.Source_Location;
+  const std::string&      unit = ctx.sourceFileName();
+
+  //~ n.set_file_info       (&mkFileInfo(unit, loc.First_Line, loc.First_Column));
   n.set_startOfConstruct(&mkFileInfo(unit, loc.First_Line, loc.First_Column));
   n.set_endOfConstruct  (&mkFileInfo(unit, loc.Last_Line,  loc.Last_Column));
 }
