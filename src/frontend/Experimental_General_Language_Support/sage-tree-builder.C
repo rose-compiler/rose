@@ -86,7 +86,7 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    SageInterface::setSourcePosition(node);
 }
 
-void SageTreeBuilder::Leave(SgScopeStatement* & scope)
+void SageTreeBuilder::Leave(SgScopeStatement* scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement* &) \n";
 
@@ -95,11 +95,44 @@ void SageTreeBuilder::Leave(SgScopeStatement* & scope)
 
 // Clear any dangling forward references
    if (!forward_refs_.empty()) {
+     std::map<const std::string, SgVarRefExp*>::iterator it = forward_refs_.begin();
+     while (it != forward_refs_.end()) {
+       if (SgFunctionSymbol* func_sym = SageInterface::lookupFunctionSymbolInParentScopes(it->first, scope)) {
+         SgVarRefExp* prev_var_ref = it->second;
+         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
+         ROSE_ASSERT(prev_var_sym);
+
+         SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
+         SgBinaryOp* bin_op_parent = isSgBinaryOp(prev_var_ref->get_parent());
+         ROSE_ASSERT(bin_op_parent);
+         ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
+
+         SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+         SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
+         func_call->set_parent(bin_op_parent);
+         bin_op_parent->set_rhs_operand(func_call);
+
+      // The dangling variable reference has been fixed
+      // forward_refs_.erase(pair.first);
+         it = forward_refs_.erase(it);
+
+      // Delete the previous variable reference, symbol and initialized name
+         delete prev_init_name;
+         delete prev_var_sym;
+         delete prev_var_ref;
+
+       }
+       else {
+         std::cout << "{" << it->first << ": " << it->second << "}\n";
+         it++;
+       }
+     }
+   }
+
+  // Some forward references can't be resolved until the global scope is reached
+   if (!forward_refs_.empty() && isSgGlobal(scope)) {
      std::cerr << "WARNING: map for forward references is not empty, size is "
                << forward_refs_.size() << std::endl;
-     for (auto const& pair: forward_refs_) {
-       std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-     }
      forward_refs_.clear();
    }
 }
@@ -1712,14 +1745,14 @@ SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgSc
      // Look for intrinsic name
      if (name == "num_images") {
        std::cout << "--> need to build a function reference to num_images \n";
+#if 0
        // Doesn't work
        // func_ref = SageBuilder::buildFunctionRefExp(SgName(name), scope);
        SgType* return_type = SB::buildIntType();
        SgFunctionParameterList *parList = SB::buildFunctionParameterList();
-
        SgGlobal* globalscope = SI::getGlobalScope(scope);
-
        SgFunctionDeclaration * funcDecl = SB::buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+#endif
      }
    }
 
@@ -1744,6 +1777,9 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   // Create a return type based on the intrinsic name
   if (name == "num_images") {
     return_type = SageBuilder::buildIntType();
+  }
+  else {
+    return_type = SageBuilder::buildVoidType();
   }
 
   if (return_type) {

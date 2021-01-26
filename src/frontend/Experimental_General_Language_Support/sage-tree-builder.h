@@ -111,7 +111,7 @@ public:
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
 
-   void Leave(SgScopeStatement* &);
+   void Leave(SgScopeStatement*);
 
    void Enter(SgBasicBlock* &);
    void Leave(SgBasicBlock*);

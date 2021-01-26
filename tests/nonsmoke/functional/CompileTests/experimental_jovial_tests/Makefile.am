@@ -153,33 +153,30 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-390.pre.jov              \
  rose-issue-rc-391.jov                  \
  rose-issue-rc-391.pre.jov              \
+ rose-issue-rc-392.jov                  \
+ rose-issue-rc-392.pre.jov              \
  rose-issue-rc-394.jov                  \
  rose-issue-rc-394.pre.jov              \
  rose-issue-rc-400.jov                  \
  rose-issue-rc-400.pre.jov              \
  rose-issue-rc-410.jov                  \
  rose-issue-rc-410.pre.jov              \
+ rose-issue-rc-413.jov                  \
+ rose-issue-rc-413.pre.jov              \
  rose-issue-rc-416.jov                  \
  rose-issue-rc-416.pre.jov              \
+ rose-issue-rc-429.jov                  \
+ rose-issue-rc-429.pre.jov              \
  rose-issue-rc-448.jov                  \
  rose-issue-rc-448.pre.jov              \
+ rose-issue-rc-449.jov                  \
+ rose-issue-rc-449.pre.jov              \
  rose-issue-rc-459.jov                  \
  rose-issue-rc-461a.jov                 \
  rose-issue-rc-461b.jov                 \
  rose-issue-rc-470.jov                  \
  rose-issue-rc-472.jov                  \
  rose-issue-rc-473.jov
-
-JOVIAL_PUTBACK_TESTCODES = \
-zrose-issue-rc-392.jov                  \
-zrose-issue-rc-392.pre.jov              \
-xrose-issue-rc-413.jov                  \
-xrose-issue-rc-413.pre.jov              \
-yrose-issue-rc-429.jov                  \
-yrose-issue-rc-429.pre.jov              \
- rose-issue-rc-448.jov                  \
- rose-issue-rc-448.pre.jov              \
- rose-issue-rc-459.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
