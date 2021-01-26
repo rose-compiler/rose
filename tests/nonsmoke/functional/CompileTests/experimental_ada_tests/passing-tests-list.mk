@@ -78,4 +78,8 @@ PASSING_TESTS :=                       \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   scopequal.adb                        \
+  defining_character_literal.adb       \
+  defining_enumeration_literal.adb     \
+  defining_operator_symbol.ads         \
+  private_extension_declaration.ads    \
   EndOfList
