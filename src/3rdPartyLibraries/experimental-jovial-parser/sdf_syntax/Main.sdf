@@ -121,6 +121,7 @@ BlockTable
 BlockItem
 TableEntry
 TableItem
+TableItemNoDeref
 Table
 Item
 RepFunctionVariable
@@ -148,11 +149,11 @@ CharacterConversion
 CharacterLiteral
 EqualOrNotEqualOperator
 RelationalOperator
-EqvContinuation
-XorContinuation
-OrContinuation
-LogicalContinuation
-AndContinuation
+%%EqvContinuation
+%%XorContinuation
+%%OrContinuation
+%%LogicalContinuation
+%%AndContinuation
 BitConversion
 BitFunctionCall
 NamedBitConstant
@@ -161,9 +162,9 @@ BooleanLiteral
 BitLiteral
 RelationalExpression
 BitPrimary
-BitOperand
+%%BitOperand
 LogicalOperand
-LogicalComponent
+%%LogicalComponent
 FixedConversion
 %%FixedFunctionCall
 %%NamedFixedConstant
@@ -228,7 +229,7 @@ ElseClause
 OptElseClause
 ConditionalStatement
 RelationalFormula     %% nonstandard
-NumericFormula OptNumericFormula
+NumericFormula %%OptNumericFormula
 NumericFunctionCall
 NamedNumericConstant
 NumericVariable
@@ -257,7 +258,7 @@ WhileClause
 ControlledStatement
 LoopType
 Variable
-Formula
+Formula OptFormula
 VariableList
 AbortStatement
 StopStatement
@@ -342,7 +343,7 @@ TablePreset
 TablePresetList
 OptItemPresetValue
 LocFunction
-CompileTimeFormula
+%%CompileTimeFormula
 ItemPresetValue
 AllocationSpecifier
 BlockBodyOptions
@@ -455,6 +456,19 @@ Precision
 OptPrecision
 %%CompileTimeIntegerFormula
 IntegerMachineParameter
+
+%%%%%%%%%%
+%% Changes to add operator precedence to the grammar based on Fortran
+%%%%%%%%%%
+Primary
+Level1Expr
+Level2Expr
+Level3Expr
+Level4Expr
+EQ
+AddOperand
+MultOperand
+AndOperand
 
 context-free syntax
 
@@ -669,6 +683,7 @@ context-free syntax
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
 
   CompileTimeNumericFormula   -> IntegerSize             {cons("ItemSize")}
+  EQ                          -> IntegerSize             {reject}
 
   IntegerSize                 -> OptIntegerSize
   % empty %                   -> OptIntegerSize          {cons("no-item-size")}
@@ -712,6 +727,8 @@ context-free syntax
 
   CompileTimeNumericFormula   -> ScaleSpecifier          {cons("ScaleSpecifier")}
   CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
+  EQ                          -> FractionSpecifier       {reject}
+%% What to do here
 
   ',' FractionSpecifier       -> OptFractionSpecifier    {cons("OptFractionSpecifier")}
   % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
@@ -730,6 +747,7 @@ context-free syntax
       OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
 
   CompileTimeNumericFormula   -> BitSize                  {cons("ItemSize")}
+  EQ                          -> BitSize                  {reject}
 
   BitSize                     -> OptBitSize
   % empty %                   -> OptBitSize               {cons("no-item-size")}
@@ -843,10 +861,7 @@ context-free syntax
   % empty %                  -> OptLowerBoundOption      {cons("no-lower-bound-option")}
 
   CompileTimeNumericFormula  -> LowerBound
-  CompileTimeStatusFormula   -> LowerBound
-
   CompileTimeNumericFormula  -> UpperBound
-  CompileTimeStatusFormula   -> UpperBound
 
 %% 2.1.2.2 TABLE STRUCTURE
 %%
@@ -992,9 +1007,13 @@ context-free syntax
   ItemPreset                      -> OptItemPreset
   % empty %                       -> OptItemPreset           {cons("no-item-preset")}
 
-  CompileTimeFormula              -> ItemPresetValue
-  LocFunction                     -> ItemPresetValue         {prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
+  CompileTimeNumericFormula       -> ItemPresetValue         {prefer}
+  LocFunction                     -> ItemPresetValue         %%{prefer}  %%fixes many different ambiguities with and within LocFunction in 2.1.1.7 Pointer Type tests
 
+%%Added UserDefinedFunctionCall to remove ambiguities
+%% when there is a PresetValuesOption that is a TableItem
+%% TableItems can only be parsed as UserDefinedFunctionCall
+  UserDefinedFunctionCall         -> OptItemPresetValue      {prefer}
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
 
@@ -1021,7 +1040,7 @@ context-free syntax
     ')' ':'                       -> PresetIndexSpecifier    {cons("PresetIndexSpecifier")}
 
   CompileTimeNumericFormula       -> ConstantIndex
-  CompileTimeStatusFormula        -> ConstantIndex
+%%CompileTimeStatusFormula        -> ConstantIndex
   
   OptItemPresetValue              -> PresetValuesOption    {cons("PresetValuesOption"), prefer}
   RepetitionCount
@@ -1363,7 +1382,8 @@ context-free syntax
   VariableList
     '=' Formula ';'          -> AssignmentStatement    {cons("AssignmentStatement")}
 
-  {Variable ','}+            -> VariableList           {cons("VariableList")}
+  {Variable  ','}+           -> VariableList           {cons("VariableList")}
+  {TableItemNoDeref ','}+    -> VariableList           {cons("VariableList")}
 
 %% 4.2 LOOP STATEMENTS
 %%
@@ -1379,7 +1399,7 @@ context-free syntax
 
   Statement                    -> ControlledStatement
 
-  'WHILE' BooleanFormula ';'   -> WhileClause          {cons("WhileClause")}
+  'WHILE' Formula     ';'      -> WhileClause          {cons("WhileClause")}
 
   'FOR' ControlItem   ':'
         ControlClause ';'      -> ForClause            {cons("ForClause")}
@@ -1412,11 +1432,12 @@ context-free syntax
 
   'BY' ByFormula               -> ByPhrase             {cons("ByPhrase")}
 
-  NumericFormula               -> ByFormula
+%%NumericFormula               -> ByFormula
+  Formula                      -> ByFormula
 
   'THEN' Formula               -> ThenPhrase           {cons("ThenPhrase")}
 
-  'WHILE' BooleanFormula       -> WhilePhrase          {cons("WhilePhrase")}
+  'WHILE' Formula              -> WhilePhrase          {cons("WhilePhrase")}
 
   WhilePhrase                  -> OptWhilePhrase
   % empty %                    -> OptWhilePhrase       {cons("no-while-phrase")}
@@ -1425,7 +1446,8 @@ context-free syntax
 %%
 
   LabelList
-  IfKeyword BooleanFormula ';'
+  IfKeyword Formula ';'
+%%IfKeyword BooleanFormula ';'
     ConditionalStatement
     OptElseClause            -> IfStatement            {cons("IfStatement")}
 
@@ -1447,10 +1469,11 @@ context-free syntax
     LabelList
   'END'                        -> CaseStatement        {cons("CaseStatement")}
 
-  NumericFormula               -> CaseSelectorFormula
-  BitFormula                   -> CaseSelectorFormula
-  CharacterFormula             -> CaseSelectorFormula
-  StatusFormula                -> CaseSelectorFormula
+  Formula                      -> CaseSelectorFormula
+%%NumericFormula               -> CaseSelectorFormula
+%%BitFormula                   -> CaseSelectorFormula
+%%CharacterFormula             -> CaseSelectorFormula
+%%StatusFormula                -> CaseSelectorFormula
 
   CaseAlternative+             -> CaseBody
 
@@ -1469,7 +1492,7 @@ context-free syntax
 
   '(' {CaseIndex ','}+ ')' ':' -> CaseIndexGroup       {cons("CaseIndexGroup")}
 
-  CompileTimeNumericFormula    -> CaseIndex            {cons("CaseIndex")}
+  CompileTimeNumericFormula    -> CaseIndex            {cons("CaseIndex"), prefer}
   CompileTimeBitFormula        -> CaseIndex            {cons("CaseIndex")}
   CompileTimeCharacterFormula  -> CaseIndex            {cons("CaseIndex")}
   CompileTimeStatusFormula     -> CaseIndex            {cons("CaseIndex")}
@@ -1538,10 +1561,10 @@ context-free syntax
 %% 4.9 STOP STATEMENTS
 %%
 
-  LabelList 'STOP' OptNumericFormula ';'  -> StopStatement          {cons("StopStatement")}
+  LabelList 'STOP' OptFormula ';'         -> StopStatement          {cons("StopStatement")}
 
-  NumericFormula                          -> OptNumericFormula
-  % empty %                               -> OptNumericFormula      {cons("no-integer-formula")} %% should be no-numeric-formula? Will keep as is for now
+  Formula                                 -> OptFormula
+  % empty %                               -> OptFormula             {cons("no-integer-formula")} %% should be no-numeric-formula? Will keep as is for now
 
 %% 4.10 ABORT STATEMENTS
 %%
@@ -1554,30 +1577,79 @@ context-free syntax
 %% 5.0 FORMULAS
 %%%%%%%%%%
 
-%%UntypedNamedVariable        -> Formula               {cons("VariableFormula")}  %% BEWARE NON_STANDARD_TRIAL
-  NumericFormula              -> Formula               {prefer}
+%%NumericFormula              -> Formula               {prefer}
   BitFormula                  -> Formula
   GeneralFormula              -> Formula             %%{cons("GeneralFormula")}
   TableFormula                -> Formula               {cons("TableFormula")}
 
-%% Additions to resolve ambiguities with variables (variables are mostly untyped)
-%%
-%%NamedVariable               -> UntypedNamedVariable   {cons("UntypedNamedVariable")}
-%%Sign NamedVariable          -> UntypedNamedVariable   {cons("NumericNamedVariable")}
+%%CompileTimeNumericFormula   -> CompileTimeFormula     {prefer}
+%%CompileTimeBitFormula       -> CompileTimeFormula
+%%CompileTimeCharacterFormula -> CompileTimeFormula
+%%CompileTimeStatusFormula    -> CompileTimeFormula
+%%CompileTimePointerFormula   -> CompileTimeFormula
 
-  CompileTimeNumericFormula   -> CompileTimeFormula     {prefer}
-  CompileTimeBitFormula       -> CompileTimeFormula
-  CompileTimeCharacterFormula -> CompileTimeFormula
-  CompileTimeStatusFormula    -> CompileTimeFormula
-  CompileTimePointerFormula   -> CompileTimeFormula
+  Formula                     -> CompileTimeNumericFormula      %% new Jan.11
 
-%% 5.1 NUMERIC FORMULAS
+%% 5.1 NUMERIC FORMULAS (expression hierarchy derived from Fortran)
 %%
 
-  OptSign NumericTerm         -> NumericFormula         {cons("NumericFormula")}
-  NumericFormula
-    PlusOrMinus NumericTerm   -> NumericFormula         {cons("NumericFormula")}
+  Literal                         -> Primary
+  FunctionCall                    -> Primary            {prefer}
+  Variable                        -> Primary
+  '(' Formula ')'                 -> Primary            {cons("Parens")}
 
+%%Odds and Ends (collection may change until complete)
+%%ItemPresetValue                 -> Primary
+%%Is this necessary?
+  Formula -> ItemPresetValue  %% check previous production
+
+  Primary                         -> Level1Expr
+
+  Level1Expr                      -> MultOperand
+  Level1Expr '**' MultOperand     -> MultOperand        {cons("Power")}
+
+  MultOperand                     -> AddOperand
+  AddOperand  '*'   MultOperand   -> AddOperand         {cons("Mult")}
+  AddOperand  '/'   MultOperand   -> AddOperand         {cons("Div")}
+  AddOperand  'MOD' MultOperand   -> AddOperand         {cons("Mod")}
+
+  AddOperand                      -> Level2Expr
+              '+' AddOperand      -> Level2Expr         {cons("UnaryPlus"),  prefer}
+              '-' AddOperand      -> Level2Expr         {cons("UnaryMinus"), prefer}
+  Level2Expr  '+' AddOperand      -> Level2Expr         {cons("Plus")}
+  Level2Expr  '-' AddOperand      -> Level2Expr         {cons("Minus")}
+
+  Level2Expr                      -> Level3Expr %% for concatenation operator in Fortran
+
+  ControlLetter                   -> Level2Expr
+%%Level2Expr                      -> Level3Expr
+  Level2Expr  '='   Level2Expr    -> EQ                 {cons("EQ")}
+  UserDefinedFunctionCall
+              '='   Level2Expr    -> EQ                 {cons("EQ"), prefer}
+  EQ                              -> Level3Expr
+  Level2Expr  '<'   Level2Expr    -> Level3Expr         {cons("LT")}
+  Level2Expr  '>'   Level2Expr    -> Level3Expr         {cons("GT")}
+  Level2Expr  '<='  Level2Expr    -> Level3Expr         {cons("LE")}
+  Level2Expr  '>='  Level2Expr    -> Level3Expr         {cons("GE")}
+  Level2Expr  '<>'  Level2Expr    -> Level3Expr         {cons("NE")}
+
+  Level3Expr                               -> AndOperand
+  'NOT' Level3Expr                         -> AndOperand      {cons("NOT")}
+
+  AndOperand                               -> LogicalOperand
+
+  LogicalOperand 'AND' AndOperand          -> LogicalOperand    {cons("AND")}
+  LogicalOperand 'OR'  AndOperand          -> LogicalOperand    {cons("OR")}
+  LogicalOperand 'EQV' AndOperand          -> LogicalOperand    {cons("EQV")}
+  LogicalOperand 'XOR' AndOperand          -> LogicalOperand    {cons("XOR")}
+
+  LogicalOperand                           -> Level4Expr
+
+  Level4Expr                               -> Formula
+
+%% This dealing with sign for unary purposes should probably be deleted
+%% as unary expressions are dealt with differently now
+%% as sern above in "UnaryPlus" and "UnaryMinus"
   Sign                        -> OptSign
   % empty %                   -> OptSign                {cons("no-sign")}
 
@@ -1606,6 +1678,13 @@ context-free syntax
   FixedConversion
     '(' Formula         ')'   -> NumericPrimary         {cons("NumericPrimary")}
 
+  IntegerConversion
+    '(' Formula ')'           -> Primary                {cons("NumericPrimary")}
+  FloatingConversion
+    '(' Formula         ')'   -> Primary                {cons("NumericPrimary")}
+  FixedConversion
+    '(' Formula         ')'   -> Primary                {cons("NumericPrimary"), prefer}
+
 %% Added new production of NumericPrimary to allow ControlLetter through
 %% Orginally ControlLetter -> NumericConstant -> NamedNumericConstant -> NumericPrimary
 %% However NamedNumericConstant was rejected because of ambiguity
@@ -1625,7 +1704,7 @@ context-free syntax
 
   FunctionCall                -> NumericFunctionCall
 
-  NumericFormula              -> CompileTimeNumericFormula
+%%  NumericFormula              -> CompileTimeNumericFormula
 
 %% 5.2 BIT FORMULAS
 %%
@@ -1634,26 +1713,26 @@ context-free syntax
 %%   LogicalOperand
 %%     OptLogicalContinuation -> BitFormula              {cons("BitFormula")}
 
-  LogicalOperand              -> BitOperand              {cons("BitOperand"), prefer}
-  LogicalOperand
-    LogicalContinuation       -> BitOperand              {cons("BitOperandContinuation")}
+%%  LogicalOperand              -> BitOperand              {cons("BitOperand"), prefer}
+%%  LogicalOperand
+%%    LogicalContinuation       -> BitOperand              {cons("BitOperandContinuation")}
 
-  BitOperand                  -> BitFormula
+%%BitOperand                  -> BitFormula
 
 %% Added for when variable is used with LogicalContinuation
-  LogicalComponent
-    LogicalContinuation       -> BitFormula             {cons("BitFormula"), prefer}
+%%LogicalComponent
+%%  LogicalContinuation       -> BitFormula             {cons("BitFormula"), prefer}
 
-  'NOT' LogicalComponent      -> BitFormula             {cons("BitFormulaNOT")}
+%%'NOT' LogicalComponent      -> BitFormula             {cons("BitFormulaNOT")}
 
-  Variable                    -> BitFormula             {cons("BitVariableFormula"), prefer}
+%%Variable                    -> BitFormula             {cons("BitVariableFormula"), prefer}
 
 %% Added LogicalComponent to allow for nonambiguous use of variables
-  LogicalOperand              -> LogicalComponent
-  Variable                    -> LogicalComponent
+%%  LogicalOperand              -> LogicalComponent
+%%  Variable                    -> LogicalComponent
 
-  BitPrimary                  -> LogicalOperand
-  RelationalExpression        -> LogicalOperand
+%%  BitPrimary                  -> LogicalOperand
+%%  RelationalExpression        -> LogicalOperand
 %%BitVariable                 -> LogicalOperand
 %% Moving variable to LogicalComponent to remove ambiguity
 
@@ -1668,19 +1747,19 @@ context-free syntax
   BitFunctionCall             -> BitPrimary
   '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimaryParens")}
   BitConversion
-  '('    Formula ')'          -> BitPrimary             {cons("BitPrimaryConversion")}
+  '('    Formula ')'          -> BitFormula             {cons("BitPrimaryConversion")}
 
-  AndContinuation+            -> LogicalContinuation
-  OrContinuation+             -> LogicalContinuation
-  XorContinuation+            -> LogicalContinuation
-  EqvContinuation+            -> LogicalContinuation
+%%AndContinuation+            -> LogicalContinuation
+%%OrContinuation+             -> LogicalContinuation
+%%XorContinuation+            -> LogicalContinuation
+%%EqvContinuation+            -> LogicalContinuation
 
 %% Using LogicalComponent instead of LogicalOperand
 %% for these continuations to allow use of variables
-  'AND' LogicalComponent      -> AndContinuation        {cons("AndContinuation")}
-  'OR'  LogicalComponent      ->  OrContinuation        {cons( "OrContinuation")}
-  'XOR' LogicalComponent      -> XorContinuation        {cons("XorContinuation")}
-  'EQV' LogicalComponent      -> EqvContinuation        {cons("EqvContinuation")}
+%%'AND' LogicalComponent      -> AndContinuation        {cons("AndContinuation")}
+%%'OR'  LogicalComponent      ->  OrContinuation        {cons( "OrContinuation")}
+%%'XOR' LogicalComponent      -> XorContinuation        {cons("XorContinuation")}
+%%'EQV' LogicalComponent      -> EqvContinuation        {cons("EqvContinuation")}
 
   Variable                    -> BitVariable            {cons("BitVariable")}
 
@@ -1739,7 +1818,8 @@ context-free syntax
 
 %% 5.2.2 BOOLEAN FORMULAS
 %%
-  BitFormula                  -> BooleanFormula
+%%BitFormula                  -> BooleanFormula
+  Formula                     -> BooleanFormula
 
 %% 5.3.0 GENERAL FORMULAS
 %%
@@ -1750,13 +1830,13 @@ context-free syntax
   StatusFormula               -> GeneralFormula
   PointerFormula              -> GeneralFormula
 
-  Variable                    -> GeneralFormula         {cons("GeneralFormula")}
-  NamedConstant               -> GeneralFormula         {cons("GeneralFormula")}
-  FunctionCall                -> GeneralFormula         {cons("GeneralFormula")}
+%%Variable                    -> GeneralFormula         {cons("GeneralFormula")}
+%%NamedConstant               -> GeneralFormula         {cons("GeneralFormula")}
+%%FunctionCall                -> GeneralFormula         {cons("GeneralFormula")}
 
 %% 5.3 CHARACTER FORMULAS
 %%
-  CharacterLiteral            -> CharacterFormula       {cons("CharacterFormula")}
+%%CharacterLiteral            -> CharacterFormula       {cons("CharacterFormula")}
 %%CharacterVariable           -> CharacterFormula       {cons("CharacterVariable")}
 %%NamedCharacterConstant      -> CharacterFormula       {cons("NamedCharacterConstant")}
 %%CharacterFunctionCall       -> CharacterFormula
@@ -1792,7 +1872,8 @@ context-free syntax
 
 %% 5.5 POINTER FORMULAS
 %%
-  PointerLiteral              -> PointerFormula     {cons("PointerFormula")}
+%%  Literals have been moved to Formula
+%%PointerLiteral              -> PointerFormula     {cons("PointerFormula")}
 %%PointerVariable             -> PointerFormula     {cons("PointerVariable")}
 %%NamedPointerConstant        -> PointerFormula     {cons("NamedPointerConstant")}
 %%PointerFunctionCall         -> PointerFormula
@@ -1810,8 +1891,8 @@ context-free syntax
 
 %% 5.6 TABLE FORMULAS
 %%
-  TableVariable               -> TableFormula       {cons("TableVariable")}
-  NamedTableConstant          -> TableFormula       {cons("NamedTableConstant")}
+%%TableVariable               -> TableFormula       {cons("TableVariable")}
+%%NamedTableConstant          -> TableFormula       {cons("NamedTableConstant")}
   '(' TableFormula ')'        -> TableFormula       {cons("TableFormulaParens")}
   TableConversion
     '(' Formula ')'           -> TableFormula       {cons("TableFormulaConversion")}
@@ -1840,23 +1921,23 @@ context-free syntax
   BlockItem                   -> NamedVariable      {reject} %% AMBIGUOUS with BlockTable
   BlockTable                  -> NamedVariable
   BlockTableItem              -> NamedVariable      {reject} %% AMBIGUOUS with TableItem
-  BlockTableEntry             -> NamedVariable
+  BlockTableEntry             -> NamedVariable      {reject}
 
   ItemName                    -> Item
   ItemDereference             -> Item
 
 %%TableName                   -> Table  %% AMBIGUOUS
-  TableDereference            -> Table
+%%  TableDereference            -> Table
 
+%% This is only used on right side of assignment statement
   TableItemName
-       Subscript
-%%  OptSubscript                                                      %% Optional makes AMBIGUOUS with Name
-    OptTableDereference       -> TableItem             {cons("TableItem"), prefer}
+    Subscript
+    OptTableDereference        -> TableItemNoDeref    {cons("TableItem")}
 
   TableItemName
     OptSubscript
 %%  OptTableDereference                                                          %% Optional makes AMBIGUOUS with Name
-       TableDereference       -> TableItem             {cons("TableItem")}
+    TableDereference          -> TableItem             {cons("TableItem")}
 
   Subscript                   -> OptSubscript
   % empty %                   -> OptSubscript          {cons("no-subscript")}
@@ -1888,14 +1969,14 @@ context-free syntax
   BlockDereference            -> OptBlockDereference
   % empty %                   -> OptBlockDereference   {cons("no-block-dereference")}
 
-  Dereference                 -> BlockDereference
+%%Dereference                 -> BlockDereference
 
   Dereference                 -> ItemDereference
 
   Dereference                 -> TableDereference      {prefer}
 
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
-  '@' '(' GeneralFormula ')'  -> Dereference           {cons("Dereference")}
+  '@' '(' Formula ')'         -> Dereference           {cons("Dereference")}
   '@' '(' PointerLiteral ')'  -> Dereference           {cons("Dereference"), reject}  %% This prevents NULL from being dereferenced
 
   ItemName                    -> PointerItemName       {prefer}
@@ -1904,15 +1985,15 @@ context-free syntax
 
   '(' { Index ','}+ ')'       -> Subscript             {cons("Subscript")}
 
-  NumericFormula              -> Index                 {prefer}
+  Formula                     -> Index                 {prefer}
   GeneralFormula              -> Index
 
-  'BIT' '(' BitVariable ','
+  'BIT' '(' Variable ','
             Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable"), prefer}
 
 %% Added production of BitFunctionVariable with BitFormula inside
 %% to allow variables with parentheses to be used
-  'BIT' '(' BitFormula ','
+  'BIT' '(' Formula ','
             Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
 %%'BYTE'
@@ -1979,8 +2060,12 @@ context-free syntax
 %%
   'LOC' '(' LocArgument ')'   -> LocFunction          {cons("LocFunction")}
 
-  Name                        -> LocArgument          {prefer}
 %% Added because can't distinguish between the different names below
+  Name                        -> LocArgument          {prefer}
+%% Added because TableItem is a NamedVariable
+%% but can only be accessed through UserDefinedFunctionCall
+  UserDefinedFunctionCall     -> LocArgument
+
   NamedVariable               -> LocArgument
   StatementName               -> LocArgument
   ProcedureName               -> LocArgument
@@ -1999,45 +2084,48 @@ context-free syntax
 %%
 %%PointerFormula              -> NextArgument
 
-  GeneralFormula              -> NextArgument
-  StatusFormula               -> NextArgument
+%%GeneralFormula              -> NextArgument
+%%StatusFormula               -> NextArgument
+  Formula                     -> NextArgument
 
-  NumericFormula              -> IncrementAmount
+  Formula                     -> IncrementAmount
 
 %% 6.3.3 BIT FUNCTION
 %%
-  'BIT' '(' BitFormula ','
-    Fbit ',' Nbit ')'         -> BitFunction          {cons("BitFunction")}
+  'BIT' '(' BitFormula
+    ',' Fbit ',' Nbit ')'     -> BitFunction          {cons("BitFunction")}
+  'BIT' '(' RepFunctionVariable
+    ',' Fbit ',' Nbit ')'     -> BitFunction          {cons("BitFunction"), prefer}
 
-  NumericFormula              -> Fbit                 {cons("Fbit")}
-  NumericFormula              -> Nbit                 {cons("Nbit")}
+  Formula                     -> Fbit                 {cons("Fbit")}
+  Formula                     -> Nbit                 {cons("Nbit")}
 
 %% 6.3.4 BYTE FUNCTION
 %%
-  'BYTE' '(' CharacterFormula
+  'BYTE' '(' Formula
     ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction")}
 
-  NumericFormula              -> Fbyte
-  NumericFormula              -> Nbyte
+  Formula                     -> Fbyte
+  Formula                     -> Nbyte
 
 %% 6.3.5 SHIFT FUNCTIONS
 %%
   ShiftDirection
-    '(' BitFormula ','
+    '(' Formula ','
     ShiftCount ')'            -> ShiftFunction        {cons("ShiftFunction")}
 
   'SHIFTL'                    -> ShiftDirection       {cons("SHIFTL")}
   'SHIFTR'                    -> ShiftDirection       {cons("SHIFTR")}
 
-  NumericFormula              -> ShiftCount
+  Formula                     -> ShiftCount
 
 %% 6.3.6 ABS FUNCTION
 %%
-  'ABS' '(' NumericFormula ')' -> AbsFunction         {cons("AbsFunction")}
+  'ABS' '(' Formula ')'        -> AbsFunction         {cons("AbsFunction")}
 
 %% 6.3.7 SIGN FUNCTION
 %%
-  'SGN' '(' NumericFormula ')' -> SignFunction        {cons("SignFunction")}
+  'SGN' '(' Formula ')'        -> SignFunction        {cons("SignFunction")}
 
 %% 6.3.7 SIZE FUNCTIONS
 %%
@@ -2103,7 +2191,7 @@ context-free syntax
   '(*'
     BitTypeDescription
                          '*)' -> BitTypeConversion    {cons("BitTypeConversion")}
-  BitTypeName                 -> BitTypeConversion
+  BitTypeName                 -> BitTypeConversion    {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
   'B'                         -> BitTypeConversion    {cons("BitTypeConversionB")}
 
 %%  '(*'
@@ -2120,40 +2208,40 @@ context-free syntax
   '(*'
     IntegerTypeName
                          '*)' -> IntegerConversion    {cons("TypeNameConversion")}
-  IntegerTypeName             -> IntegerConversion
+  IntegerTypeName             -> IntegerConversion    {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
   'S'                         -> IntegerConversion    {cons("IntegerConversionS")}
   'U'                         -> IntegerConversion    {cons("IntegerConversionU")}
 
   '(*'
     FloatingTypeDescription
                          '*)' -> FloatingConversion   {cons("FloatingConversion")}
-  FloatingTypeName            -> FloatingConversion
+  FloatingTypeName            -> FloatingConversion   {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
   'F'                         -> FloatingConversion   {cons("FloatingConversionF")}
 
   '(*'
     FixedTypeDescription
                          '*)' -> FixedConversion      {cons("FixedConversion")}
-  FixedTypeName               -> FixedConversion
+  FixedTypeName               -> FixedConversion      {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
 
   '(*'
     CharacterTypeDescription
                          '*)' -> CharacterConversion  {cons("CharacterConversion")}
-  CharacterTypeName           -> CharacterConversion
+  CharacterTypeName           -> CharacterConversion  {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
   'C'                         -> CharacterConversion  {cons("CharacterConversionC")}
 
-  '(*'
-    StatusTypeName
-                         '*)' -> StatusConversion     {cons("StatusConversion")}
-  StatusTypeName              -> StatusConversion
+%% reject these to remove ambiguities, using UserDefinedFunctionCall for type name conversions
+  '(*' StatusTypeName '*)'    -> StatusConversion     {cons("StatusConversion"), reject}
+  StatusTypeName              -> StatusConversion     {reject}
 
   '(*'
     PointerTypeDescription
                          '*)' -> PointerConversion    {cons("PointerConversion")}
-  PointerTypeName             -> PointerConversion
+  PointerTypeName             -> PointerConversion    {reject} %% reject to remove ambiguities, using UserDefinedFunctionCall for type name conversions
   'P'                         -> PointerConversion    {cons("PointerConversionP")}
 
-  '(*' TableTypeName     '*)' -> TableConversion     {cons("TableConversion")}
-  TableTypeName               -> TableConversion
+%% reject these to remove ambiguities, using UserDefinedFunctionCall for type name conversions
+  '(*' TableTypeName     '*)' -> TableConversion     {cons("TableConversion"), reject}
+  TableTypeName               -> TableConversion     {reject}
 
   'REP'                       -> RepConversion       {cons("RepConversion")}
 
@@ -2220,7 +2308,7 @@ context-free syntax
 
   EqualOrNotEqualOperator    -> RelationalOperator
   '<'                        -> RelationalOperator      {cons("LessThanOp")}
-  '>'                        -> RelationalOperator      {cons("GreaterThanOp")}
+%%'>'                        -> RelationalOperator      {cons("GreaterThanOp")}
   '<='                       -> RelationalOperator      {cons("LessOrEqualOp")}
   '>='                       -> RelationalOperator      {cons("GreaterOrEqualOp")}
 
@@ -2250,7 +2338,7 @@ context-free syntax
   FloatingLiteral            -> NumericLiteral
   FixedLiteral               -> NumericLiteral
 
-  Number                     -> IntegerLiteral        {cons("IntegerLiteral")}
+  Number                     -> IntegerLiteral        {cons("IntVal")}
   Icon                       -> Number
 
   RealLiteral                -> FloatingLiteral
