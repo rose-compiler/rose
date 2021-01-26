@@ -144,6 +144,12 @@ mkExceptionType(SgExpression& n)
   return mkNonSharedTypeNode<SgDeclType>(&n);
 }
 
+SgDeclType&
+mkAttributeType(SgTypeTraitBuiltinOperator& n)
+{
+  return mkNonSharedTypeNode<SgDeclType>(&n);
+}
+
 
 SgTypeDefault&
 mkOpaqueType()

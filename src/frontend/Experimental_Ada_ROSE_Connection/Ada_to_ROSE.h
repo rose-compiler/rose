@@ -51,6 +51,10 @@ std::map<int, Element_Struct*>& elemMap();
 template <class KeyType, class SageNode>
 using map_t = std::map<KeyType, SageNode>;
 
+
+/// Ada identifier that can be used in maps/lookup tables
+/// \brief
+///   converts each identifier to a common representation (i.e., upper case)
 struct AdaIdentifier : std::string
 {
   typedef std::string base;
@@ -303,7 +307,13 @@ namespace
   void
   recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    ROSE_ASSERT(replace || m.find(key) == m.end());
+    //~ ROSE_ASSERT(replace || m.find(key) == m.end());
+    if (!(replace || m.find(key) == m.end()))
+    {
+      logError() << "replace node " << typeid(*m[key]).name()
+                 << " with " << typeid(val).name()
+                 << std::endl;
+    }
 
     m[key] = &val;
   }

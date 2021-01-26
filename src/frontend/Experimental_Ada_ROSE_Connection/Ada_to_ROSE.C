@@ -488,47 +488,185 @@ void ElemCreator::operator()(Element_Struct& elem)
 }
 
 
-template <class UnitQueue, class UnitMap>
-void enqueueUnit(UnitQueue& res, UnitMap& units, Unit_Struct& unit)
+
+struct UnitEntry
 {
-  std::vector<Unit_Struct*>& children = std::get<0>(units[unit.ID]);
+  Unit_Struct*               unit;
+  std::vector<AdaIdentifier> dependencies;
+  bool                       marked;
+};
 
-  res.push_back(&unit);
+struct UniqueUnitId
+{
+  bool          isbody;
+  AdaIdentifier name;
+};
 
-  for (Unit_Struct* child : children)
-    enqueueUnit(res, units, *child);
+// sort specifications before bodies
+bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
+{
+  // System inclusion is implied, even if it is not referenced.
+  //   Ordering it first is semantically consistent.
+  if ((lhs.name == "SYSTEM") && (rhs.name != "SYSTEM"))
+    return true;
 
-  units.erase(unit.ID);
+  if ((lhs.name != "SYSTEM") && (rhs.name == "SYSTEM"))
+    return false;
+
+  if ((lhs.isbody == false) && (rhs.isbody == true))
+    return true;
+
+  if (lhs.isbody != rhs.isbody)
+    return false;
+
+  return lhs.name < rhs.name;
+}
+
+struct DependencyExtractor
+{
+  explicit
+  DependencyExtractor(std::vector<AdaIdentifier>& vec, AstContext ctx)
+  : deps(vec), astctx(ctx)
+  {}
+
+  void operator()(Element_Struct& elem)
+  {
+    ROSE_ASSERT(elem.Element_Kind == A_Clause);
+
+    Clause_Struct& clause = elem.The_Union.Clause;
+
+    if (clause.Clause_Kind != A_With_Clause)
+      return;
+
+    std::vector<AdaIdentifier>& res = deps;
+    AstContext                  ctx{astctx};
+
+    traverseIDs( idRange(clause.Clause_Names), elemMap(),
+                 [&res, &ctx](Element_Struct& el) -> void
+                 {
+                   ROSE_ASSERT (el.Element_Kind == An_Expression);
+                   NameData imported = getName(el, ctx);
+
+                   res.push_back(imported.fullName);
+                 }
+               );
+  }
+
+  std::vector<AdaIdentifier>& deps;
+  AstContext                  astctx;
+};
+
+
+void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
+{
+  ElemIdRange              range = idRange(unit.Context_Clause_Elements);
+
+  traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
+}
+
+
+void dfs( std::map<UniqueUnitId, UnitEntry>& m,
+          std::map<UniqueUnitId, UnitEntry>::value_type& el,
+          std::vector<Unit_Struct*>& res
+        )
+{
+  if (el.second.marked) return;
+
+  el.second.marked = true;
+
+  for (const std::string& depname : el.second.dependencies)
+    dfs(m, *m.find(UniqueUnitId{false, depname}), res);
+
+  res.push_back(el.second.unit);
+}
+
+UniqueUnitId uniqueUnitName(Unit_Struct& unit)
+{
+  const bool  isBody = (  (unit.Unit_Kind == A_Package_Body)
+                       || (unit.Unit_Kind == A_Function_Body)
+                       || (unit.Unit_Kind == A_Procedure_Body)
+                       );
+
+  return UniqueUnitId{isBody, AdaIdentifier{unit.Unit_Full_Name}};
 }
 
 std::vector<Unit_Struct*>
-reorderUnits(Unit_Struct_List_Struct* adaUnit)
+sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
 {
-  using ElemType = std::tuple<std::vector<Unit_Struct*>, Unit_Struct*>;
-  using MapType  = std::map<std::size_t, ElemType>;
+  using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
+  using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
 
-  MapType units;
+  DependencyMap deps;
+  IdEntryMap    idmap;
 
+  // build maps for all units
   for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
-    units[unit->Unit.ID] = ElemType{std::vector<Unit_Struct*>{}, &unit->Unit};
+  {
+    ROSE_ASSERT(unit);
+
+    UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
+
+    auto depres = deps.emplace( uniqueId,
+                                UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
+                              );
+    ROSE_ASSERT(depres.second);
+
+    // map specifications to their name
+    auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
+    ROSE_ASSERT(idmres.second);
+  }
+
+  // link the units
+  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+  {
+    IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
+    ROSE_ASSERT(uit != idmap.end());
+
+    DependencyMap::iterator pos = uit->second;
+    const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
+    IdEntryMap::iterator    idpos    = idmap.find(parentID);
+
+    if (idpos != idmap.end())
+    {
+      pos->second.dependencies.push_back(idpos->second->first.name);
+    }
+    else if (parentID > 0)
+    {
+      logError() << "unknown unit dependency from "
+                 << pos->first.name << ' ' << pos->first.isbody
+                 << " to #" << parentID
+                 << std::endl;
+    }
+
+    addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
+  }
 
   std::vector<Unit_Struct*> res;
 
-  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+  // topo sort
+  for (DependencyMap::value_type& el : deps)
+    dfs(deps, el, res);
+
+/*
+  // print all module dependencies
+  for (const DependencyMap::value_type& el : deps)
   {
-    size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
-    MapType::iterator pos = units.find(parentID);
+    logWarn() << el.first << "\n  ";
 
-    if (pos != units.end())
-    {
-      std::get<0>(pos->second).push_back(&unit->Unit);
-    }
-    else
-    {
-      enqueueUnit(res, units, unit->Unit);
-    }
+    for (const std::string& n : el.second.dependencies)
+      logWarn() << n << ", ";
+
+    logWarn() << std::endl << std::endl;
   }
+*/
 
+  logTrace() << "\nTopologically sorted module processing order"
+             << std::endl;
+
+  for (const Unit_Struct* uptr : res)
+    logTrace() << uptr->Unit_Full_Name << ", ";
+
+  logTrace() << std::endl;
   return res;
 }
 
@@ -540,16 +678,11 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
-  //~ Unit_Struct_List_Struct*  adaLimit = 0;
   Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
   SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
-  std::vector<Unit_Struct*> units    = reorderUnits(adaUnit);
-
-  //~ for (Unit_Struct_List_Struct* x = adaUnit; x != adaLimit; x = x->Next)
-    //~ logWarn() << PrnUnitHeader(x->Unit) << std::endl;
+  std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
   initializeAdaTypes(astScope);
-  //~ traverse(adaUnit, adaLimit, UnitCreator{AstContext{}.scope(astScope)});
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 

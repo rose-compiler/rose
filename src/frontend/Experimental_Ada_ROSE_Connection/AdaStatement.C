@@ -28,10 +28,6 @@ namespace
   /// auto deleter of an expression object
   typedef std::unique_ptr<SgExpression> GuardedExpression;
 
-  /// extracts NameData from \ref elem
-  NameData
-  getName(Element_Struct& elem, AstContext ctx);
-
   /// creates a vector of NameData objects from a sequence of Asis names.
   struct NameCreator
   {
@@ -136,7 +132,7 @@ namespace
 
       std::string        ident{idex.Name_Image};
 
-      return NameData{ ident, ident, &ctx.scope(), &elem };
+      return NameData{ ident, ident, ctx.scope(), elem };
     }
 
     ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
@@ -146,92 +142,9 @@ namespace
 
     return NameData{ selected.ident,
                      compound.fullName + "." + selected.fullName,
-                     &ctx.scope(),
-                     selected.asisElem
+                     ctx.scope(),
+                     selected.elem()
                    };
-  }
-
-
-  NameData
-  getName(Element_Struct& elem, AstContext ctx)
-  {
-    // \todo can getName be distinguished from getQualName by the call context?
-    if (elem.Element_Kind == An_Expression)
-      return getQualName(elem, ctx);
-
-    if (elem.Element_Kind != A_Defining_Name)
-      logWarn() << "unexpected elem kind (getName)" << elem.Element_Kind << std::endl;
-
-    ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
-    logKind("A_Defining_Name");
-
-    Defining_Name_Struct& asisname = elem.The_Union.Defining_Name;
-    SgScopeStatement*     parent = &ctx.scope();
-    std::string           ident{asisname.Defining_Name_Image};
-    std::string           name{ident};
-
-    switch (asisname.Defining_Name_Kind)
-    {
-      case A_Defining_Expanded_Name:
-        {
-          logKind("A_Defining_Expanded_Name");
-
-          NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
-          Element_Struct& prefixelem = retrieveAs<Element_Struct>(elemMap(), asisname.Defining_Prefix);
-
-          ident  = defname.ident;
-          parent = &getScope(prefixelem, ctx);
-          break;
-        }
-
-      case A_Defining_Identifier:
-        {
-          logKind("A_Defining_Identifier");
-          // nothing to do, the fields are already set
-          break;
-        }
-
-      case A_Defining_Operator_Symbol:     // 6.1(9)
-        {
-          static const std::string cxxprefix{"operator"};
-
-          logKind("A_Defining_Operator_Symbol");
-
-          ROSE_ASSERT(ident.size() > 2);
-          name = ident = cxxprefix + ident.substr(1, ident.size() - 2);
-
-          // nothing to do, the fields are already set
-
-          /* unused field:
-               enum Operator_Kinds       Operator_Kind
-          */
-          break;
-        }
-
-      case A_Defining_Enumeration_Literal: // 3.5.1(3)
-        {
-          logKind("A_Defining_Enumeration_Literal");
-
-          /* unused fields:
-               char* Position_Number_Image;      // \pp implied by name sequence
-               char* Representation_Value_Image; // \pp not in code, but could be defined by representation clause
-          */
-
-          break;
-        }
-
-      case Not_A_Defining_Name:
-        /* break; */
-
-      case A_Defining_Character_Literal:   // 3.5.1(4)
-      default:
-        logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
-                  << " (" << name << ")"
-                  << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
-
-    return NameData{ ident, name, parent, &elem };
   }
 
 
@@ -1756,7 +1669,7 @@ namespace
     if (names.size() == 0)
     {
       // add an unnamed exception handler
-      names.emplace_back(std::string{}, std::string{}, &ctx.scope(), &elem);
+      names.emplace_back(std::string{}, std::string{}, ctx.scope(), elem);
     }
 
     ROSE_ASSERT(names.size() == 1);
@@ -2001,6 +1914,8 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   {
     case A_Record_Representation_Clause:           // 13.5.1
       {
+        logKind("A_Record_Representation_Clause");
+
         SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
         SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
         SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
@@ -2185,11 +2100,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&     outer   = ctx.scope();
         NameData              adaname = singleName(decl, ctx);
         //~ SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, outer);
-        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, SG_DEREF(adaname.parent));
+        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, adaname.parent_scope());
         SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
 
-        ROSE_ASSERT(adaname.parent);
-        sgnode.set_scope(adaname.parent);
+        sgnode.set_scope(&adaname.parent_scope());
         //~ sgnode.set_scope(&outer);
         logTrace() << "package decl " << adaname.ident
                    << " (" <<  adaname.fullName << ")"
@@ -2868,8 +2782,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         auto re = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
         auto renamed_entity = re.The_Union.Expression;
         SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamed_entity, ctx));
-        ROSE_ASSERT(renamedDecl != nullptr);
-        sgnode.set_renamed_function(renamedDecl);
+
+        if (renamedDecl != nullptr)
+        {
+          sgnode.set_renamed_function(renamedDecl);
+        }
+        else
+        {
+          logError() << "cannot find renamed proc/func decl for:" << adaname.fullName << std::endl;
+        }
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
@@ -2901,7 +2822,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // PP (11/18/20) Test whether Corresponding_Name_Definition is a valid ID
         if (isInvalidId(renamed_entity_expr.Corresponding_Name_Definition))
         {
-          logError() << "unavailable name definition" << std::endl;
+          logError() << "unavailable name definition: "
+                     << adaname.ident << "/" << renamed_entity_expr.Name_Image
+                     << std::endl;
         }
         else
         {
@@ -2984,11 +2907,96 @@ singleName(Declaration_Struct& decl, AstContext ctx)
   return getNameID(*range.first, ctx);
 }
 
+
+NameData
+getName(Element_Struct& elem, AstContext ctx)
+{
+  // \todo can getName be distinguished from getQualName by the call context?
+  if (elem.Element_Kind == An_Expression)
+    return getQualName(elem, ctx);
+
+  if (elem.Element_Kind != A_Defining_Name)
+    logWarn() << "unexpected elem kind (getName)" << elem.Element_Kind << std::endl;
+
+  ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
+  logKind("A_Defining_Name");
+
+  Defining_Name_Struct& asisname = elem.The_Union.Defining_Name;
+  SgScopeStatement*     parent = &ctx.scope();
+  std::string           ident{asisname.Defining_Name_Image};
+  std::string           name{ident};
+
+  switch (asisname.Defining_Name_Kind)
+  {
+    case A_Defining_Expanded_Name:
+      {
+        logKind("A_Defining_Expanded_Name");
+
+        NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
+        Element_Struct& prefixelem = retrieveAs<Element_Struct>(elemMap(), asisname.Defining_Prefix);
+
+        ident  = defname.ident;
+        parent = &getScope(prefixelem, ctx);
+        break;
+      }
+
+    case A_Defining_Identifier:
+      {
+        logKind("A_Defining_Identifier");
+        // nothing to do, the fields are already set
+        break;
+      }
+
+    case A_Defining_Operator_Symbol:     // 6.1(9)
+      {
+        static const std::string cxxprefix{"operator"};
+
+        logKind("A_Defining_Operator_Symbol");
+
+        ROSE_ASSERT(ident.size() > 2);
+        name = ident = cxxprefix + ident.substr(1, ident.size() - 2);
+
+        // nothing to do, the fields are already set
+
+        /* unused field:
+             enum Operator_Kinds       Operator_Kind
+        */
+        break;
+      }
+
+    case A_Defining_Enumeration_Literal: // 3.5.1(3)
+      {
+        logKind("A_Defining_Enumeration_Literal");
+
+        /* unused fields:
+             char* Position_Number_Image;      // \pp implied by name sequence
+             char* Representation_Value_Image; // \pp not in code, but could be defined by representation clause
+        */
+
+        break;
+      }
+
+    case Not_A_Defining_Name:
+      /* break; */
+
+    case A_Defining_Character_Literal:   // 3.5.1(4)
+    default:
+      logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
+                << " (" << name << ")"
+                << std::endl;
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+
+  return NameData{ ident, name, SG_DEREF(parent), elem };
+}
+
+
 NameData
 getNameID(Element_ID el, AstContext ctx)
 {
   return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
 }
+
 
 
 }
