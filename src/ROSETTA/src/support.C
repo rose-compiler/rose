@@ -692,6 +692,11 @@ Grammar::setUpSupport ()
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     // PP (01/25/21): Add arguments for Ada pragma
+     Pragma.setDataPrototype ( "SgExprListExp*" , "args", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
   // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
@@ -2101,7 +2106,7 @@ Grammar::setUpSupport ()
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
-  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a 
+  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a
   // static data member of AstPerformance class.
   // Project.setDataPrototype         ( "bool", "compilationPerformance", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

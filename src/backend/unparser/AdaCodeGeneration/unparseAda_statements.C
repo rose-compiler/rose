@@ -854,6 +854,15 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaLengthClause& n)
+    {
+      prn("for ");
+      expr(n.get_attribute());
+      prn(" use ");
+      expr(n.get_size());
+      prn(STMT_SEP);
+    }
+
 
     //~ ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);

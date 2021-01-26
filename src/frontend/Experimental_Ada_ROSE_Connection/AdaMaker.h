@@ -443,9 +443,17 @@ namespace Ada_ROSE_Translation
   SgAdaComponentClause&
   mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range);
 
-  /// creates an Ada Record represtation clause for \ref record aligned at \ref align.
+  /// creates an Ada Record representation clause for \ref record aligned at \ref align.
   SgAdaRecordRepresentationClause&
   mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
+
+  /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
+  SgAdaLengthClause&
+  mkAdaLengthClause(SgTypeTraitBuiltinOperator& attr, SgExpression& size);
+
+  /// creates an Ada pragma declaration
+  SgPragmaDeclaration&
+  mkPragmaDeclaration(const std::string& name, SgExprListExp& args);
 
   //
   // Expression Makers

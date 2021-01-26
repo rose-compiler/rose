@@ -39,6 +39,10 @@ namespace Ada_ROSE_Translation
   SgTypeTraitBuiltinOperator&
   getAttributeExpr(Expression_Struct& expr, AstContext ctx);
 
+  /// returns an expression for an Asis element ID \ref id.
+  SgTypeTraitBuiltinOperator&
+  getAttributeExprID(Element_ID id, AstContext ctx);
+
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
   struct ExprSeqCreator

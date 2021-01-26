@@ -36,11 +36,21 @@ namespace
     ROSE_ASSERT(elem.Element_Kind == An_Association);
 
     Association_Struct& assoc      = elem.The_Union.Association;
-    ROSE_ASSERT(assoc.Association_Kind == A_Parameter_Association);
-    logKind("A_Parameter_Association");
+    ROSE_ASSERT(  assoc.Association_Kind == A_Parameter_Association
+               || assoc.Association_Kind == A_Pragma_Argument_Association
+               );
+    logKind( assoc.Association_Kind == A_Parameter_Association
+                   ? "A_Parameter_Association"
+                   : "A_Pragma_Argument_Association"
+           );
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
     Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(elemMap(), assoc.Formal_Parameter);
+
+    /* unused fields (A_Parameter_Association)
+       bool                   Is_Normalized
+       bool                   Is_Defaulted_Association
+    */
 
     if (!formalParm) return arg;
 
@@ -408,6 +418,7 @@ namespace
 
     // void handle(SgImportStatement& n)
 
+    void handle(SgClassDeclaration& n)   { set(n.get_type()); }
     void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
   };
 
@@ -579,6 +590,18 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
   }
 
   return SG_DEREF(res);
+}
+
+SgTypeTraitBuiltinOperator&
+getAttributeExprID(Element_ID el, AstContext ctx)
+{
+  Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), el);
+
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  SgTypeTraitBuiltinOperator& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
+
+  attachSourceLocation(sgnode, elem, ctx);
+  return sgnode;
 }
 
 

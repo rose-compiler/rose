@@ -224,9 +224,10 @@ namespace
           break;
         }
 
+      case A_Pragma:                  // Asis.Elements
+
       case Not_An_Element: /* break; */ // Nil_Element
       case A_Path:                    // Asis.Statements
-      case A_Pragma:                  // Asis.Elements
       case An_Association:            // Asis.Expressions
       default:
         logWarn() << "Unhandled element " << elem.Element_Kind << std::endl;

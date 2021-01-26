@@ -3562,6 +3562,10 @@ SgName get_mangled_name() const ROSE_OVERRIDE;
 
 HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_END
 
+HEADER_ADA_LENGTH_CLAUSE_START
+SgName get_mangled_name() const ROSE_OVERRIDE;
+HEADER_ADA_LENGTH_CLAUSE_END
+
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
@@ -20542,7 +20546,7 @@ SgAdaRecordRepresentationClause::get_mangled_name() const
   std::string res = "ada$representation$clause";
 
   res += get_recordType()->get_mangled();
-  return "ada$representation$clause";
+  return res;
 }
 
 void
@@ -20561,6 +20565,20 @@ SgAdaRecordRepresentationClause::prepend_component(SgAdaComponentClause* clause)
   p_components.insert(p_components.begin(), clause);
 }
 SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE_END
+
+
+SOURCE_ADA_LENGTH_CLAUSE_START
+void SgAdaLengthClause::post_construction_initialization() {}
+
+SgName
+SgAdaLengthClause::get_mangled_name() const
+{
+  std::string res = "ada$length$clause";
+
+  res += get_attribute()->unparseToString();
+  return res;
+}
+SOURCE_ADA_LENGTH_CLAUSE_END
 
 
 SOURCE_ADA_TASK_SPEC_STATEMENT_START
