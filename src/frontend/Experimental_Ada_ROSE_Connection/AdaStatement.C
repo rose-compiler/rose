@@ -1216,6 +1216,38 @@ namespace
   };
 
 
+  struct PragmaCreator
+  {
+      typedef std::vector<SgPragmaDeclaration*> result_container;
+
+      explicit
+      PragmaCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == A_Pragma);
+        logKind("A_Pragma");
+
+        Pragma_Struct&       pragma = el.The_Union.The_Pragma;
+        std::string          name{pragma.Pragma_Name_Image};
+        ElemIdRange          argRange = idRange(pragma.Pragma_Argument_Associations);
+        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
+        SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args);
+
+        attachSourceLocation(sgnode, el, ctx);
+        res.push_back(&sgnode);
+      }
+
+      operator result_container() && { return std::move(res); }
+
+    private:
+      result_container res;
+      AstContext       ctx;
+  };
+
+
   bool isForwardLoop(Element_Struct& forvar)
   {
     ROSE_ASSERT (forvar.Element_Kind == A_Declaration);
@@ -1908,7 +1940,6 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   ROSE_ASSERT(clause.Clause_Kind == A_Representation_Clause);
 
   Representation_Clause_Struct& repclause = clause.Representation_Clause;
-  SgType&                       tyrep     = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
 
   switch (repclause.Representation_Clause_Kind)
   {
@@ -1916,6 +1947,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       {
         logKind("A_Record_Representation_Clause");
 
+        SgType&                 tyrep = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
         SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
         SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
         SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
@@ -1933,6 +1965,19 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       }
 
     case An_Attribute_Definition_Clause:           // 13.3
+      {
+        SgTypeTraitBuiltinOperator& lenattr = getAttributeExprID(repclause.Representation_Clause_Name, ctx);
+        SgExpression&               lenexpr = getExprID(repclause.Representation_Clause_Expression, ctx);
+        SgAdaLengthClause&          sgnode  = mkAdaLengthClause(lenattr, lenexpr);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+        /* unhandled fields:
+             Pragma_Element_ID_List      Pragmas
+         */
+        break;
+      }
+
     case An_Enumeration_Representation_Clause:     // 13.4
     case An_At_Clause:                             // J.7
     case Not_A_Representation_Clause:              // An unexpected element
@@ -2281,6 +2326,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(declblk), SG_DEREF(trystmt)});
         }
+
+/*
+        {
+          typedef PragmaCreator::result_container PragmaNodes;
+
+          ElemIdRange          pragmas  = idRange(decl.Pragmas);
+          PragmaNodes          pragmadcls = traverseIDs(pragmas, elemMap(), PragmaCreator{ctx});
+
+          placeInScopes(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{declblk, stmtblk});
+        }
+*/
 
         /* unhandled field
            Declaration_ID                 Body_Block_Statement;

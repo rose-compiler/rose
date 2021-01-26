@@ -78,4 +78,5 @@ PASSING_TESTS :=                       \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   scopequal.adb                        \
+  representation_clause_2.ads          \
   EndOfList

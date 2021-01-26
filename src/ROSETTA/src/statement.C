@@ -88,7 +88,7 @@ Grammar::setUpStatements ()
   // test2017_47.C).  the purpose of this scope is similar to the unused FunctionParameterScope (above),
   // which was developed to support the case of "void foobar (int n, int array[n]);" type declarations
   // which are allowed in C99, but not in C++.  This nondefining (prototype) declaration works in ROSE,
-  // but is still assigned the scope of the function parameters to global scope (but not assigning symbols 
+  // but is still assigned the scope of the function parameters to global scope (but not assigning symbols
   // for them, so working OK, but is still not ideal).  The case of templates generating class declarations
   // (which in EDG are listed as proxy and nonreal classes) requires a better fix to support getting the
   // name qualification correct.  This is part of fixing a bug in the "backstroke" project (the last one
@@ -544,6 +544,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaLengthClause, "AdaLengthClause", "ADA_LENGTH_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
@@ -565,7 +566,7 @@ Grammar::setUpStatements ()
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
-          AdaRecordRepresentationClause
+          AdaRecordRepresentationClause           | AdaLengthClause
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -3126,6 +3127,13 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
+     AdaLengthClause.setFunctionPrototype("HEADER_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
+     AdaLengthClause.setDataPrototype ( "SgTypeTraitBuiltinOperator*", "attribute", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaLengthClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
 
@@ -4249,6 +4257,7 @@ Grammar::setUpStatements ()
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with
