@@ -74,4 +74,12 @@ PASSING_TESTS :=                       \
   short_circuit.adb                    \
   short_circuit_v2.adb                 \
   complex.ads                          \
+  async_transfer_select.adb            \
+  simple_select_accept.adb             \
+  simple_select_accept_guarded.adb     \
+  scopequal.adb                        \
+  defining_character_literal.adb       \
+  defining_enumeration_literal.adb     \
+  defining_operator_symbol.ads         \
+  private_extension_declaration.ads    \
   EndOfList

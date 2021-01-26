@@ -35,6 +35,9 @@ namespace Ada_ROSE_Translation
   SgExpression&
   getDefinitionExprID(Element_ID id, AstContext ctx);
 
+  /// returns an expression for attribute defined in expr
+  SgTypeTraitBuiltinOperator&
+  getAttributeExpr(Expression_Struct& expr, AstContext ctx);
 
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).

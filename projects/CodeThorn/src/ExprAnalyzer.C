@@ -921,13 +921,26 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         }
+      } else if(_variableIdMapping->hasReferenceType(arrayVarId)) {
+        SAWYER_MESG(logger[TRACE])<<"reference array variable access"<<endl;
+        arrayPtrValue=readFromReferenceMemoryLocation(estate.label(),&pstate2,arrayVarId);
+        if(arrayPtrValue.isBot()) {
+          // if referred memory location is not in state
+          res.result=CodeThorn::Top();
+          resultList.push_back(res);
+          return resultList;
+        }
+        //cout<<"DEBUG: array reference value: "<<arrayPtrValue.toString()<<endl;
+        //cout<<"PSTATE:"<<pstate2.toString(_variableIdMapping)<<endl;
+        //cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
       } else {
         cerr<<"Error: unknown type of array or pointer."<<endl;
-        cerr<<node->unparseToString()<<endl;
+        cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
         exit(1);
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
+      //cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
       if(arrayPtrPlusIndexValue.isNullPtr()) {
         recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
         // there is no state following a definitive null pointer
@@ -2039,7 +2052,9 @@ std::string ExprAnalyzer::analysisSelectorToString(AnalysisSelector sel) {
   switch(sel) {
   case ANALYSIS_NULL_POINTER: return "null-pointer";
   case ANALYSIS_OUT_OF_BOUNDS: return "out-of-bounds";
-  case ANALYSIS_UNINITIALIZED: return "unitialized-value";
+  case ANALYSIS_UNINITIALIZED: return "unitialized";
+  case ANALYSIS_DEAD_CODE: return "dead-code";
+  case ANALYSIS_OPAQUE_PREDICATE: return "opaque-predicate";
   default:
     SAWYER_MESG(logger[FATAL])<<"ExprAnalyzer::analysisSelectorToString: unknown selector."<<endl;
     exit(1);

@@ -227,7 +227,7 @@ void Solver16::run() {
                   _analyzer->addToWorkList(newEStatePtr);  
                   break;
                   case 2: 
-                    cerr<<"Error: abstraction mode 2 not suppored in solver 5."<<endl;
+                    cerr<<"Error: abstraction mode 2 not suppored in solver 16."<<endl;
                     exit(1);
                 }
                 default:

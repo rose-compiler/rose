@@ -12,8 +12,8 @@ namespace Ada_ROSE_Translation
   /// represents data extracted from an Asis name
   struct NameData
   {
-      NameData(std::string id, std::string full, SgScopeStatement* scope, Element_Struct* el)
-      : ident(id), fullName(full), parent(scope), asisElem(el)
+      NameData(std::string id, std::string full, SgScopeStatement& scope, Element_Struct& el)
+      : ident(id), fullName(full), parent(&scope), asisElem(&el)
       {}
 
       /// returns the main (right-most) element defining this name
@@ -22,19 +22,19 @@ namespace Ada_ROSE_Translation
       /// returns the id of the main element
       Element_ID      id()   const { return elem().ID; }
 
-      std::string       ident;    ///< the name of the r
-      std::string       fullName; ///< full, scope qualified name
+      /// returns the parent scope
+      SgScopeStatement& parent_scope() const { return SG_DEREF(parent); }
+
+      std::string       ident;    ///< the element's name
+      std::string       fullName; ///< full, scope-qualified name
+
+    private:
       SgScopeStatement* parent;   ///< the parent scope
       Element_Struct*   asisElem; ///< the main asis element, accessed through elem() and id().
 
-    private:
       NameData() = delete;
   };
 
-  /// returns the name information associated with \ref decl
-  /// \pre decl only has one name
-  NameData
-  singleName(Declaration_Struct& decl, AstContext ctx);
 
   /// functor to convert statements
   /// \details
@@ -70,6 +70,16 @@ namespace Ada_ROSE_Translation
   /// returns a NameData object for the element \ref el
   NameData
   getNameID(Element_ID el, AstContext ctx);
+
+  /// returns the name information associated with \ref decl
+  /// \pre decl only has one name
+  NameData
+  singleName(Declaration_Struct& decl, AstContext ctx);
+
+  /// extracts NameData from \ref elem
+  /// \pre elem is An_Expression
+  NameData
+  getName(Element_Struct& elem, AstContext ctx);
 }
 
 #endif /* _ADA_STATEMENT */

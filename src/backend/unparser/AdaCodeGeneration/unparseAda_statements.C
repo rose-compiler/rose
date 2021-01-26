@@ -299,6 +299,13 @@ namespace
       ++aa;
 
     return std::make_pair(aa, zz);
+/*
+    SgDeclarationStatementPtrList::iterator lim = aa;
+    while (lim != zz && declaredInMainFile(SG_DEREF(*lim), mainFile))
+      ++lim;
+
+    return std::make_pair(aa, lim);
+*/
   }
 
 
