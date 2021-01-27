@@ -110,7 +110,7 @@ mkAdaRangeConstraint(SgRangeExp& range)
 }
 
 SgAdaIndexConstraint&
-mkAdaIndexConstraint(SgRangeExpPtrList&& ranges)
+mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 {
   SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
 
