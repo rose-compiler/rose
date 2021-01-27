@@ -1597,6 +1597,7 @@ context-free syntax
   FunctionCall                    -> Primary            {prefer}
   Variable                        -> Primary
   '(' Formula ')'                 -> Primary            {cons("Parens")}
+  StatusConstant                  -> Primary            {cons("StatusFormula")}
 
 %%Odds and Ends (collection may change until complete)
 %%ItemPresetValue                 -> Primary
@@ -1645,7 +1646,7 @@ context-free syntax
 
   LogicalOperand                           -> Level4Expr
 
-  Level4Expr                               -> Formula
+  Level4Expr                               -> Formula           {prefer}
 
 %% This dealing with sign for unary purposes should probably be deleted
 %% as unary expressions are dealt with differently now
@@ -1854,7 +1855,8 @@ context-free syntax
 
 %% 5.4 STATUS FORMULAS
 %%
-  StatusConstant              -> StatusFormula      {cons("StatusFormula")}
+%%StatusConstant moved to Primary
+%%StatusConstant              -> StatusFormula      {cons("StatusFormula")}
 %%StatusVariable              -> StatusFormula      {cons("StatusVariable")}
 %%NamedStatusConstant         -> StatusFormula      {cons("NamedStatusConstant")}
 %%StatusFunctionCall          -> StatusFormula
