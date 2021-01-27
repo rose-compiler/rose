@@ -45,6 +45,10 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
         case V_SgAsmAarch64Instruction:
             return unparseAarch64Mnemonic(isSgAsmAarch64Instruction(insn));
 #endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
+            return unparseAarch32Mnemonic(isSgAsmAarch32Instruction(insn));
+#endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
         case V_SgAsmMipsInstruction:
@@ -82,6 +86,10 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         case V_SgAsmAarch64Instruction:
             return unparseAarch64Expression(expr, labels, registers);
 #endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
+            return unparseAarch32Expression(expr, labels, registers);
+#endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr, labels, registers);
         case V_SgAsmMipsInstruction:
@@ -106,6 +114,9 @@ unparseAsmStatement(SgAsmStatement* stmt)
         case V_SgAsmX86Instruction:
 #ifdef ROSE_ENABLE_ASM_AARCH64
         case V_SgAsmAarch64Instruction:
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
 #endif
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:

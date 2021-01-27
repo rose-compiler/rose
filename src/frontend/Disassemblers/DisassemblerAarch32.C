@@ -111,7 +111,6 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     ASSERT_require(r.csi->detail);
 
     // Convert disassembled Capstone instruction to ROSE AST
-    SgAsmInstruction *retval = nullptr;
     const cs_arm &detail = r.csi->detail->arm;
 #if 1 // DEBGUGGING: show the disassembly string from capstone itself
     std::cerr <<"ROBB: capstone disassembly:" <<" " <<StringUtility::addrToString(va) <<":";
@@ -120,6 +119,7 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     std::cerr <<" " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
 #endif
 
+    SgAsmInstruction *retval = nullptr;
     try {
         auto operands = new SgAsmOperandList;
         for (uint8_t i = 0; i < detail.op_count; ++i) {
