@@ -1218,7 +1218,7 @@ namespace
     stmt(def);
 
     prn(" ");
-    prn(n.get_name());
+    prn(name);
     prn(STMT_SEP);
   }
 

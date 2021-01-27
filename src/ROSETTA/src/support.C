@@ -2558,17 +2558,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgRangeExp*", "range", "",
+     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 /*
      AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgRangeExpPtrList" );
+     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
      AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
      AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
      AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
      AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
 */
-     AdaIndexConstraint.setDataPrototype("SgRangeExpPtrList", "indexRanges", "",
+     AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

@@ -67,7 +67,7 @@ namespace Ada_ROSE_Translation
   /// \param ranges a sequence of ranges.
   ///        the content of the sequence container \ref ranges will be chnage.
   SgAdaIndexConstraint&
-  mkAdaIndexConstraint(SgRangeExpPtrList&& ranges);
+  mkAdaIndexConstraint(SgExpressionPtrList&& ranges);
 
   /// builds a subtype constraint by \ref constr
   SgAdaSubtype&

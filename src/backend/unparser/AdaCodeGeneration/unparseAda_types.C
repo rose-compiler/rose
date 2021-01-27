@@ -195,7 +195,7 @@ namespace
       }
     }
 
-    void rangeList(SgRangeExpPtrList& lst)
+    void rangeList(SgExpressionPtrList& lst) // \todo remove
     {
       if (lst.empty()) return;
 

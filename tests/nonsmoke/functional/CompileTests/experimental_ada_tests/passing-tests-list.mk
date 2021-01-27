@@ -85,5 +85,7 @@ PASSING_TESTS :=                       \
   representation_clause_2.ads          \
   pragmas.adb                          \
   procedure_pragma.adb                 \
-  package_pragma.ads                   \ 
+  package_pragma.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \ 
   EndOfList
