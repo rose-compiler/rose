@@ -10769,21 +10769,18 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 
   if (isSgExprStatement(parent)) {
     isSgExprStatement(parent)->set_expression(newExp);
-    }
-  else if (isSgForStatement(parent)) {
+  } else if (isSgForStatement(parent)) {
     ROSE_ASSERT (isSgForStatement(parent)->get_increment() == oldExp);
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
-  }
-  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
+  } else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
     if(matlabFor->get_index() == oldExp)
       matlabFor->set_index(newExp);
     else if(matlabFor->get_range() == oldExp)
       matlabFor->set_range(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if(SgJovialForThenStatement *jovFor = isSgJovialForThenStatement(parent)) {
+  } else if(SgJovialForThenStatement *jovFor = isSgJovialForThenStatement(parent)) {
     if(jovFor->get_initialization() == oldExp)
       jovFor->set_initialization(newExp);
     else if(jovFor->get_while_expression() == oldExp)
@@ -10792,8 +10789,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       jovFor->set_by_or_then_expression(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
+  } else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
     if (rngexp->get_start() == oldExp)
       rngexp->set_start(newExp);
     else if (rngexp->get_end() == oldExp)
@@ -10802,26 +10798,22 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       rngexp->set_stride(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (isSgReturnStmt(parent))
+  } else if (isSgReturnStmt(parent)) {
     isSgReturnStmt(parent)->set_expression(newExp);
-  else  if (isSgBinaryOp(parent)!=NULL){
-    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand())
-        {
-          isSgBinaryOp(parent)->set_lhs_operand(newExp);
-         }
-     else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand())
-         {isSgBinaryOp(parent)->set_rhs_operand(newExp); }
-     else
-       ROSE_ASSERT(false);
-   } else //unary parent
-  if (isSgUnaryOp(parent)!=NULL){
+  } else  if (isSgBinaryOp(parent)!=NULL) {
+    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand()) {
+      isSgBinaryOp(parent)->set_lhs_operand(newExp);
+    } else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand()) {
+      isSgBinaryOp(parent)->set_rhs_operand(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgUnaryOp(parent)!=NULL){
       if (oldExp==isSgUnaryOp(parent)->get_operand_i())
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }
-  else if (isSgConditionalExp(parent) != NULL) {
+  } else if (isSgConditionalExp(parent) != NULL) {
      SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
      if (oldExp==expparent->get_conditional_exp())
         expparent->set_conditional_exp(newExp);
@@ -10831,8 +10823,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
         expparent->set_false_exp(newExp);
      else
         ROSE_ASSERT(false);
-  }
-  else if (isSgExprListExp(parent) != NULL) {
+  } else if (isSgExprListExp(parent) != NULL) {
     SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
@@ -10841,64 +10832,53 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  }
-  else if (isSgValueExp(parent)) {
+  } else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
-  }
-  else if ((parentExp=isSgExpression(parent)) != NULL) {
+  } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
-  }
-  else if (isSgInitializedName(parent))
-  {
-          SgInitializedName* initializedNameParent = isSgInitializedName(parent);
-          if (oldExp == initializedNameParent->get_initializer())
-          {
-                  //We can only replace an initializer expression with another initializer expression
-                  ROSE_ASSERT(isSgInitializer(newExp));
-                  initializedNameParent->set_initializer(isSgInitializer(newExp));
-          }
-          else
-          {
-                  //What other expressions can be children of an SgInitializedname?
-                  ROSE_ASSERT(false);
-          }
-  }
-  else if (isSgFortranDo(parent))
-  {
-    SgFortranDo* fortranDo = isSgFortranDo(parent);
-    if(oldExp == fortranDo->get_initialization())
-    {
-      fortranDo->set_initialization(newExp);
-    }
-    else if(oldExp == fortranDo->get_bound())
-    {
-      fortranDo->set_bound(newExp);
-    }
-    else if(oldExp == fortranDo->get_increment())
-    {
-      fortranDo->set_increment(newExp);
-    }
-    else
-    {
+  } else if (isSgInitializedName(parent)) {
+    SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+    if (oldExp == initializedNameParent->get_initializer()) {
+      //We can only replace an initializer expression with another initializer expression
+      ROSE_ASSERT(isSgInitializer(newExp));
+      initializedNameParent->set_initializer(isSgInitializer(newExp));
+    } else {
+      //What other expressions can be children of an SgInitializedname?
       ROSE_ASSERT(false);
     }
-  }
- else{
-  cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
-  ROSE_ASSERT(false);
+  } else if (isSgCaseOptionStmt(parent)) {
+    SgCaseOptionStmt * case_stmt = isSgCaseOptionStmt(parent);
+    if (oldExp == case_stmt->get_key()) {
+      case_stmt->set_key(newExp);
+    } else if(oldExp == case_stmt->get_key_range_end()) {
+      case_stmt->set_key_range_end(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgFortranDo(parent)) {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if (oldExp == fortranDo->get_initialization()) {
+      fortranDo->set_initialization(newExp);
+    } else if(oldExp == fortranDo->get_bound()) {
+      fortranDo->set_bound(newExp);
+    } else if (oldExp == fortranDo->get_increment()) {
+      fortranDo->set_increment(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
+    ROSE_ASSERT(false);
   }
 
-  if (!keepOldExp)
-  {
+  if (!keepOldExp) {
     deepDelete(oldExp); // avoid dangling node in memory pool
-  }
-  else
-  {
-      oldExp->set_parent(NULL);
+  } else {
+    oldExp->set_parent(NULL);
   }
 
 } //replaceExpression()
