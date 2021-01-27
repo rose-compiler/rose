@@ -18,11 +18,16 @@ namespace CodeThorn {
    * \date 2019.
    */
   struct FunctionCallInfo {
+    std::string getFunctionName() {
+      return funCallName;
+    }
     SgFunctionType* funCallType=nullptr; // type of function to be called
     SgName mangledFunCallTypeName;
     std::string funCallName; // name of function to be called.
     bool isFunctionPointerCall();
     void print();
+    SgFunctionSymbol* functionSymbol=0;
+    bool functionResolved = true;
   };
 
   class FunctionCallMapping {
@@ -44,7 +49,7 @@ namespace CodeThorn {
     static Sawyer::Message::Facility logger;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
   private:
-    unsigned int _matchMode=3; // workaround mode
+    unsigned int _matchMode=4; // 4: based on function names, 3: based on type names, but C default int(); functions (without declaration) don't work then
     ClassHierarchyWrapper* classHierarchy = nullptr;
   };
 

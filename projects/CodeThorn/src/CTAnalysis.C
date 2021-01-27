@@ -2836,11 +2836,17 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
     if(evalResult.isBot()) {
-      SAWYER_MESG(logger[ERROR])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
-      SAWYER_MESG(logger[ERROR])<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
-      exit(1);
-    }
-    if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
+      SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT at: "
+                               <<ProgramLocationsReport::programLocation(getLabeler(),newLabel)
+                               <<endl;
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
+    } else if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
@@ -2869,4 +2875,6 @@ void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptio
     cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
     exit(1);
   }
+  SAWYER_MESG(logger[TRACE])<<"TRACE: selected function resolution mode: "<<CFAnalysis::functionResolutionMode<<endl;
+
 }

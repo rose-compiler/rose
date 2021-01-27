@@ -42,7 +42,8 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       fcInfo.funCallType = isSgFunctionType(functionSymbol->get_type());
       fcInfo.funCallName=functionSymbol->get_name();
       fcInfo.mangledFunCallTypeName=fcInfo.funCallType->get_mangled();
-      functionResolved = true;
+      fcInfo.functionSymbol=functionSymbol;
+      fcInfo.functionResolved = true;
     } else if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
       // function pointer call
       SgType* type=varRefExp->get_type();
@@ -53,11 +54,11 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
         fcInfo.funCallName="*";
         fcInfo.funCallType=funCallType;
         fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
-        functionResolved = true;
+        fcInfo.functionResolved = true;
       } 
     } 
     
-    if (!functionResolved) {
+    if (!fcInfo.functionResolved) {
       // provide information for error reporting
       fcInfo.funCallName=fc->unparseToString();
       fcInfo.funCallType=nullptr; // indicates unknown type
@@ -78,6 +79,7 @@ std::string nameOfType(SgFunctionDefinition* fn)
 }
 
 void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
+  logger[INFO]<<"Using FunctionCallMapping1"<<endl;
   RoseAst ast(root);
   std::vector<SgFunctionDeclaration*> funDeclList;
   std::vector<SgFunctionDefinition*>  funDefList;
@@ -111,8 +113,6 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   SAWYER_MESG(logger[INFO])<< "Resolving " << funCallList.size() << " function call sites." <<endl;
   
   // experimental O(m lg n) + O(n lg n) matching
-  ROSE_ASSERT(_matchMode == 3);
-  
   if (_matchMode == 3) {
     std::sort( funDefList.begin(), funDefList.end(), 
                [](SgFunctionDefinition* lhs, SgFunctionDefinition* rhs) -> bool
@@ -125,7 +125,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   int n=0;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    // TODO CONTINE HERE: UNRESOLVED CALLS
     if(fcInfo.funCallType!=nullptr) {
+#if 0
       std::string funCallTypeName = fcInfo.funCallType->unparseToString();
       auto pos = std::lower_bound( funDefList.begin(), funDefList.end(),
                                    funCallTypeName, 
@@ -147,20 +149,23 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         
         ++pos;
       }
-      /*
+#else
       for (auto fd : funDefList) {
         FunctionCallTarget fcTarget(fd);
         bool matching;
         switch(_matchMode) {
         case 1:
         // this one should be working (but has a bug)
-          matching=fcInfo.funCallType==fcTarget.getFunctionType();break;
+          matching=(fcInfo.funCallType==fcTarget.getFunctionType());break;
         case 2:
           // this one should be working (but has a bug)
-          matching=fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName();break;
+          matching=(fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName());break;
         case 3:
           // this one works as workaround
-          matching=fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString();break;
+          matching=(fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString());break;
+        case 4:
+          // this one works as workaround
+          matching=(fcInfo.getFunctionName()==fcTarget.getFunctionName());break;
         default:
           SAWYER_MESG(logger[FATAL])<<"Error: FunctionCallMapping: unknown function matchmode "<<_matchMode<<endl;
           exit(1);
@@ -173,7 +178,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           }
         }
       }
-      */
+#endif
     } else {
       std::vector<SgFunctionDeclaration*> targets;
 
