@@ -12,6 +12,7 @@ add_library(roseAsmUnparser OBJECT
   BinaryUnparserNull.C
   BinaryUnparserPowerpc.C
   BinaryUnparserX86.C
+  unparseAarch32Asm.C
   unparseAarch64Asm.C
   unparseM68kAsm.C
   unparseMipsAsm.C
