@@ -95,7 +95,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   }
   // NOTE: SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(funSym);
   // SgName qfName=funDecl->get_qualified_name();
-#if 1
+#if 0
   SAWYER_MESG(logger[TRACE])<<"DUMP FUNCTION CALLS:"<<endl;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
