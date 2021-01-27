@@ -135,14 +135,14 @@ namespace Ada_ROSE_Translation
       void operator()(Element_Struct& elem);
 
       /// result read-out
-      operator SgRangeExpPtrList () &&
+      operator SgExpressionPtrList () &&
       {
         return std::move(lst);
       }
 
     private:
-      AstContext        ctx;
-      SgRangeExpPtrList lst;
+      AstContext          ctx;
+      SgExpressionPtrList lst;
 
       RangeListCreator() = delete;
   };

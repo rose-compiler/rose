@@ -1127,11 +1127,7 @@ void ArgListCreator::operator()(Element_Struct& elem)
 
 void RangeListCreator::operator()(Element_Struct& elem)
 {
-  SgExpression& rngexp = getDiscreteRange(elem, ctx);
-  SgRangeExp*   range  = isSgRangeExp(&rngexp);
-  ROSE_ASSERT(range);
-
-  lst.push_back(range);
+  lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
 

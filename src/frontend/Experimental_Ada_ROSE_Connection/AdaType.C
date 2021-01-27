@@ -617,8 +617,8 @@ getConstraintID(Element_ID el, AstContext ctx)
       {
         logKind("An_Index_Constraint");
 
-        ElemIdRange       idxranges = idRange(constraint.Discrete_Ranges);
-        SgRangeExpPtrList ranges = traverseIDs(idxranges, elemMap(), RangeListCreator{ctx});
+        ElemIdRange         idxranges = idRange(constraint.Discrete_Ranges);
+        SgExpressionPtrList ranges = traverseIDs(idxranges, elemMap(), RangeListCreator{ctx});
 
         res = &mkAdaIndexConstraint(std::move(ranges));
         break;
