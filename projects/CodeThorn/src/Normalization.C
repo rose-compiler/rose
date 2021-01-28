@@ -268,7 +268,7 @@ namespace CodeThorn {
   bool Normalization::hasFunctionCall(SgExpression* expr) {
     RoseAst ast(expr);
     for(auto node:ast) {
-      if(isSgFunctionCallExp(node)||isSgConditionalExp(node)) {
+      if(isSgFunctionCallExp(node)||isSgConditionalExp(node)||isSgPlusPlusOp(node)||isSgMinusMinusOp(node)) {
         return true;
       }
     }

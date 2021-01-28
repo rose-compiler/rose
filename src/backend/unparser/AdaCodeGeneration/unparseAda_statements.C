@@ -854,6 +854,34 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaLengthClause& n)
+    {
+      prn("for ");
+      expr(n.get_attribute());
+      prn(" use ");
+      expr(n.get_size());
+      prn(STMT_SEP);
+    }
+
+    void handle(SgPragmaDeclaration& n)
+    {
+      SgPragma&      pragma = SG_DEREF(n.get_pragma());
+      SgExprListExp& args = SG_DEREF(pragma.get_args());
+
+      prn("pragma ");
+      prn(pragma.get_name());
+
+      if (!args.get_expressions().empty())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
+
+      prn(STMT_SEP);
+    }
+
+
 
     //~ ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);
@@ -1190,7 +1218,7 @@ namespace
     stmt(def);
 
     prn(" ");
-    prn(n.get_name());
+    prn(name);
     prn(STMT_SEP);
   }
 

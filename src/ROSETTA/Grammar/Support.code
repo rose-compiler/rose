@@ -3162,16 +3162,13 @@ void SgAdaRangeConstraint::post_construction_initialization() {};
 
 std::string SgAdaRangeConstraint::displayString() const
 {
-  ROSE_ASSERT(get_range());
+  SgExpression* rng = get_range();
 
-  SgExpression* lb = get_range()->get_start();
-  SgExpression* ub = get_range()->get_end();
-
-  ROSE_ASSERT(lb && ub);
+  ROSE_ASSERT(rng);
 
   std::stringstream buf;
 
-  buf << lb->unparseToString() << ".." << ub->unparseToString();
+  buf << get_range()->unparseToString();
   return buf.str();
 }
 
@@ -7834,7 +7831,7 @@ eqstr::operator()(const SgName & s1, const SgName & s2) const
    }
 
 
-// DQ (11/5/2020): Moved this out of the generated header file and into the generated source 
+// DQ (11/5/2020): Moved this out of the generated header file and into the generated source
 // file so that it could be more easily changed without recompiling all of ROSE.
 void
 rose_hash_multimap::delete_elements()

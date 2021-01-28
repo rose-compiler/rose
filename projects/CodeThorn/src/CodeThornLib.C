@@ -749,7 +749,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
   }
     
   CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
-    SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
+    //SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
     CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
     FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
     ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
