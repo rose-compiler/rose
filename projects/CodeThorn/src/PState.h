@@ -72,6 +72,7 @@ namespace CodeThorn {
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue,
                                bool strongUpdate=true);
+    // number of elements in state
     size_t stateSize() const;
     PState::iterator begin();
     PState::iterator end();

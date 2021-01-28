@@ -250,7 +250,6 @@ AbstractValueSet PState::getVariableIds() const {
   return varIdSet;
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.

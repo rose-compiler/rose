@@ -32,6 +32,7 @@ namespace CodeThorn {
 
   class FunctionCallMapping {
   public:
+    FunctionCallMapping();
     void computeFunctionCallMapping(SgNode* root);
     FunctionCallTargetSet resolveFunctionCall(SgFunctionCallExp* funCall);
     std::string toString();
@@ -49,8 +50,8 @@ namespace CodeThorn {
     static Sawyer::Message::Facility logger;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
   private:
-    unsigned int _matchMode=4; // 4: based on function names, 3: based on type names, but C default int(); functions (without declaration) don't work then
-    ClassHierarchyWrapper* classHierarchy = nullptr;
+    unsigned int _matchMode; // init in constructor
+    ClassHierarchyWrapper* classHierarchy; // init in constructor
   };
 
 } // end of namespace CodeThorn

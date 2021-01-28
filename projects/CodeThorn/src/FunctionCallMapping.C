@@ -30,10 +30,13 @@ bool FunctionCallInfo::isFunctionPointerCall() {
   return funCallName=="*";
 }
 
+FunctionCallMapping::FunctionCallMapping():_matchMode(5),classHierarchy(nullptr) {
+}
+
 FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallExp* fc) {
     SgExpression*    exp=fc->get_function();
     FunctionCallInfo fcInfo;
-    bool             functionResolved = false;  
+    fcInfo.functionResolved=false;  
     if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
       // direct function call
       SgFunctionSymbol* funSym=functionRef->get_symbol();
@@ -54,7 +57,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
         fcInfo.funCallName="*";
         fcInfo.funCallType=funCallType;
         fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
-        fcInfo.functionResolved = true;
+        fcInfo.functionResolved = false;
       } 
     } 
     
@@ -156,16 +159,26 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         switch(_matchMode) {
         case 1:
         // this one should be working (but has a bug)
-          matching=(fcInfo.funCallType==fcTarget.getFunctionType());break;
+          matching=(fcInfo.funCallType==fcTarget.getFunctionType());
+          break;
         case 2:
           // this one should be working (but has a bug)
-          matching=(fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName());break;
+          matching=(fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName());
+          break;
         case 3:
           // this one works as workaround
-          matching=(fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString());break;
+          matching=(fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString());
+          break;
         case 4:
           // this one works as workaround
-          matching=(fcInfo.getFunctionName()==fcTarget.getFunctionName());break;
+          matching=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
+          break;
+        case 5: {
+          bool matching1=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
+          bool matching2=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
+          matching=matching1||matching2;
+          break;
+          }
         default:
           SAWYER_MESG(logger[FATAL])<<"Error: FunctionCallMapping: unknown function matchmode "<<_matchMode<<endl;
           exit(1);
