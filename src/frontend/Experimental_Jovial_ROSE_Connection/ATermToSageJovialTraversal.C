@@ -7,7 +7,7 @@
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 #define PRINT_WARNINGS 1
-#define CHECK_AMB 1
+#define CHECK_AMB 0
 #define PRINT_AMB_WARNINGS 0
 
 using namespace ATermSupport;
@@ -2206,11 +2206,13 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedItemDescription(ATerm term,
       // process location-specifier here (don't really need to call a function)
       if (ATmatch(t_loc_spec, "LocationSpecifier(<term>,<term>)", &t_start_bit, &t_start_word)) {
 
-         if (traverse_Formula(t_start_bit, start_bit)) {
+         if (ATmatch(t_start_bit, "StartingBitSTAR()")) {
+            start_bit = new SgAsteriskShapeExp();
+            ROSE_ASSERT(start_bit);
+            setSourcePosition(start_bit, t_start_bit);
+         }
+         else if (traverse_Formula(t_start_bit, start_bit)) {
             // MATCHED StartingBit
-         } else if (ATmatch(term, "StartingBitSTAR()")) {
-            cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription - StartingBitSTAR \n";
-            ROSE_ASSERT(false);
          } else return ATfalse;
 
          if (traverse_Formula(t_start_word, start_word)) {
