@@ -12,6 +12,8 @@
 #include <sstream>
 #include "AstTerm.h"
 
+#include "CppStdUtilities.h"
+
 using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
@@ -37,8 +39,12 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
     SgExpression*    exp=fc->get_function();
     FunctionCallInfo fcInfo;
     fcInfo.functionResolved=false;  
+    //cout<<"DEBUG:EXP:"<<AstTerm::astTermWithNullValuesToString(exp);
+    //cout<<"DEBUG: determineFunctionCallInfo: "<<fc->unparseToString()<<":";
+    fcInfo.problematic=false;
     if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
       // direct function call
+      //cout<<"DIRECT"<<endl;
       SgFunctionSymbol* funSym=functionRef->get_symbol();
       assert(funSym);
       SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(funSym);
@@ -48,7 +54,9 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       fcInfo.functionSymbol=functionSymbol;
       fcInfo.functionResolved = true;
     } else if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
+      //cout<<"FP INDIRECT"<<endl;
       // function pointer call
+      //cout<<"DEBUG: FUNCTION POINTER CALL : determineFunctionCallInfo: "<<fc->unparseToString()<<endl;
       SgType* type=varRefExp->get_type();
       
       if (const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
@@ -59,9 +67,34 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
         fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
         fcInfo.functionResolved = true;
       } 
-    } 
-    
+    } else if(SgPointerDerefExp* derefOp=isSgPointerDerefExp(exp)) {
+      SgExpression* exp=derefOp->get_operand();
+      ROSE_ASSERT(exp);
+      SgVarRefExp* varRefExp=isSgVarRefExp(exp);
+      if(varRefExp) {
+        cout<<"FP INDIRECT"<<endl;
+        // function pointer call
+        //cout<<"DEBUG: FUNCTION POINTER CALL : determineFunctionCallInfo: "<<fc->unparseToString()<<endl;
+        SgType* type=varRefExp->get_type();
+        //cout<<"DEBUG: FP TYPE:"<<type->unparseToString()<<endl;
+        //cout<<"DEBUG: FP TYPE:"<<AstTerm::astTermWithNullValuesToString(type);
+        if (const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
+          SgFunctionType* funCallType=isSgFunctionType(pointerType->get_base_type());
+          ROSE_ASSERT(funCallType);
+          fcInfo.funCallName="*";
+          fcInfo.funCallType=funCallType;
+          fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
+          fcInfo.functionResolved = true;
+          //cout<<"DEBUG: FP : correct functin pointer:"<<fcInfo.mangledFunCallTypeName<<endl;
+        } else {
+          // should not happen
+        }
+      } 
+    } else {
+      logger[WARN]<<"Function pointer dereference on non-normalized expression: "<<fc->unparseToString()<<endl;
+    }
     if (!fcInfo.functionResolved) {
+      cout<<"UNKNOWN"<<endl;
       // provide information for error reporting
       fcInfo.funCallName=fc->unparseToString();
       fcInfo.funCallType=nullptr; // indicates unknown type
@@ -70,11 +103,11 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
     return fcInfo;
 }
 
-static
-float percent(int part, int whole)
-{
-  return (part*100.0)/whole;
-}
+//static
+//float percent(int part, int whole)
+//{
+//  return (part*100.0)/whole;
+//}
 
 std::string nameOfType(SgFunctionDefinition* fn)
 {
@@ -129,7 +162,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
     // TODO CONTINE HERE: UNRESOLVED CALLS
-    if(fcInfo.funCallType!=nullptr) {
+    if(fcInfo.functionResolved) {
 #if 0
       std::string funCallTypeName = fcInfo.funCallType->unparseToString();
       auto pos = std::lower_bound( funDefList.begin(), funDefList.end(),
@@ -174,9 +207,24 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           matching=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
           break;
         case 5: {
-          bool matching1=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
+          //bool matching1=(fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString());
+          string funCallTypeName=fcInfo.mangledFunCallTypeName;
+          string fcTargetTypeName=fcTarget.getMangledFunctionTypeName();
+          #if 0
+          if(fcInfo.isFunctionPointerCall()) {
+            // strip off _Fb_i_ / _Fb_v_ to allow for int-void matching in C
+            if((CppStdUtilities::isPrefix("_Fb_i_",funCallTypeName)&&CppStdUtilities::isPrefix("_Fb_v_",fcTargetTypeName))
+               ||(CppStdUtilities::isPrefix("_Fb_v_",funCallTypeName)&&CppStdUtilities::isPrefix("_Fb_i_",fcTargetTypeName))) {
+              funCallTypeName.erase(0,6);
+              fcTargetTypeName.erase(0,6);
+            }
+          }
+          #endif
+          bool matching1=(funCallTypeName==fcTargetTypeName);
           bool matching2=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
           matching=matching1||matching2;
+          // problematic handles special case of unspecified function pointers in C
+          //logger[INFO]<<"XXX: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
           break;
           }
         default:
@@ -215,9 +263,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       // do not enter in mapping
     }
   }
-  SAWYER_MESG(logger[INFO])<<"Resolved "<<mapping.size()
-                           <<" ("<< percent(mapping.size(), funCallList.size()) << "%) function calls."
-                           <<endl;
+  //SAWYER_MESG(logger[INFO])<<"Resolved "<<mapping.size()
+  //                         <<" ("<< percent(mapping.size(), funCallList.size()) << "%) function calls."
+  //                         <<endl;
 }
 
 std::string FunctionCallMapping::toString() {

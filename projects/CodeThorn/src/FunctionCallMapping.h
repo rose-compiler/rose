@@ -28,6 +28,7 @@ namespace CodeThorn {
     void print();
     SgFunctionSymbol* functionSymbol=0;
     bool functionResolved = true;
+    bool problematic=false;
   };
 
   class FunctionCallMapping {
@@ -45,7 +46,6 @@ namespace CodeThorn {
     void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
     ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
     /** @} */
-
   protected:
     static Sawyer::Message::Facility logger;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
