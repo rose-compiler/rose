@@ -82,4 +82,7 @@ PASSING_TESTS :=                       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
   private_extension_declaration.ads    \
+  function_body_stub.ads               \
+  package_renaming_declaration.ads     \
+  procedure_body_stub.ads              \
   EndOfList
