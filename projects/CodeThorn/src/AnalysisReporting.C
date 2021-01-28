@@ -125,7 +125,7 @@ namespace CodeThorn {
         locationsCSVFileData<<endl;
       }
       string s=locationsCSVFileData.str();
-      if(!CppStdUtilities::writeFile(ctOpt.deadCodeAnalysisFileName, s)) {
+      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,ctOpt.deadCodeAnalysisFileName, s)) {
         cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
       } else {
         if(!ctOpt.quiet)
@@ -170,7 +170,7 @@ namespace CodeThorn {
       printSeparationLine();
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
-        if(!CppStdUtilities::writeFile(fileName, locationsCSVFileData.str())) {
+        if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {
           cerr<<"Error: cannot write file "<<fileName<<endl;
         } else {
           if(!ctOpt.quiet)

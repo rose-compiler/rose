@@ -46,7 +46,7 @@ void checkNumThreads(CodeThornOptions& ctOpt) {
 
 void checkReportMode(CodeThornOptions& ctOpt) {
   if(ctOpt.csvReportModeString!="generate" && ctOpt.csvReportModeString!="append") {
-    cerr<<"Error: unsupported argument for --report-mode : "<<ctOpt.csvReportModeString<<endl;
+    cerr<<"Error: unsupported argument for --csv-report-mode : "<<ctOpt.csvReportModeString<<endl;
     exit(1);
   }
 }
