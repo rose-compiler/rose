@@ -2839,7 +2839,7 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT at: "
-                               <<ProgramLocationsReport::programLocation(getLabeler(),newLabel)
+                               <<ProgramLocationsReport::programLocation(getLabeler(),estate->label())
                                <<endl;
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
