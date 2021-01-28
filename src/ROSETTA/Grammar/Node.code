@@ -185,7 +185,7 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 // mutex does not work on Windows
 // Pei-Hung (07/28/2016) 'sem_init' has been explicitly marked deprecated in OSX El Capitan
 #if defined(__APPLE__) && defined(__MACH__)
-// mutex does not work on Mac 
+// mutex does not work on Mac
 #else
 class mutex
    {
@@ -217,8 +217,8 @@ class mutex
     for the list types requires the use of an additional typedef to a pointer of that
     list<Type> so that the generation of the code can be done using types that don't
     explicitly have the "*" in the type string.  This avoids the automatic assumption
-    (currently hard coded within ROSETTA) that "*"'d types have a specific interface 
-    which includes set_parent and get_parent member functions.  This is assumption 
+    (currently hard coded within ROSETTA) that "*"'d types have a specific interface
+    which includes set_parent and get_parent member functions.  This is assumption
     within ROSETTA may be eliminated in the future.
  */
 
@@ -254,19 +254,19 @@ class SgDeclarationStatement;
 
 // DQ (1/28/2016): Different ways of documenting typedefs (none appear to be working with Doxygen).
 /** \typedef SgDeclarationStatementPtrList
-    \brief This is socumentation for the following typedef 
+    \brief This is socumentation for the following typedef
  */
 typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrList;
 
 /** \typedef SgDeclarationStatementPtrListPtr
-    \brief This is socumentation for the following typedef 
+    \brief This is socumentation for the following typedef
  */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // tps (8/20/2007): Added support for binaries.
 /** \typedef SgAsmBlockPtrList
-    This is socumentation for the following typedef 
+    This is socumentation for the following typedef
  */
 typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
 
@@ -366,9 +366,9 @@ class SgFile;
 typedef std::vector<SgFile*>                SgFilePtrList;
 typedef SgFilePtrList*                      SgFilePtrListPtr;
 
-// DQ (2/27/2019): Modified to add the line number so that we could support adding comments 
+// DQ (2/27/2019): Modified to add the line number so that we could support adding comments
 // and CPP directives to shared IR nodes to support multi-file compilation.
-// DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
+// DQ (5/22/2006): Added this support so that we could have general way of interpreting STL
 // containers so that we could simplify that code used to generated code for the destructors.
 // JJW (6/21/2008): Changed to a unordered vector for performance
 typedef int                                   SgFileId;
@@ -378,7 +378,7 @@ typedef std::vector<SgFileId>                 SgFileIdList;
 typedef int                                   SgFileLineNumber;
 typedef std::vector<SgFileLineNumber>         SgFileLineNumberList;
 
-// DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
+// DQ (5/22/2006): Added this support so that we could have general way of interpreting STL
 // containers so that we could simplify that code used to generated code for the destructors.
 typedef Rose_STL_Container<std::string>     SgStringList;
 typedef SgStringList*                       SgStringListPtr;
@@ -502,7 +502,7 @@ typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
 // DQ (8/21/2008): Use the reference built for rose_addr_t instead.
-// DQ (8/21/2008): Moved this from Node.code to make it local since 
+// DQ (8/21/2008): Moved this from Node.code to make it local since
 // we can't reference the nested addr_t directly from glogal scope.
 // typedef uint64_t addr_t; // address and size (file and memory)
 typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
@@ -661,10 +661,6 @@ class SgAdaComponentClause;
 typedef Rose_STL_Container<SgAdaComponentClause*> SgAdaComponentClausePtrList;
 typedef SgAdaComponentClausePtrList*              SgAdaComponentClausePtrListPtr;
 
-class SgRangeExp;
-typedef Rose_STL_Container<SgRangeExp*> SgRangeExpPtrList;
-typedef SgRangeExpPtrList*              SgRangeExpPtrListPtr;
-
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
 class TokenStreamSequenceToNodeMapping;
 class FrontierNode;
@@ -723,7 +719,7 @@ typedef SgTokenPtrList* SgTokenPtrListPtr;
 
 
 // DQ (11/4/2009): Trying to use the boost hash_map support
-namespace rose_hash 
+namespace rose_hash
    {
   // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
      using boost::unordered_map;
@@ -746,7 +742,7 @@ namespace rose_hash
      struct hash_integer
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead            
+       // CH (4/9/2010): Use boost::hash instead
           size_t operator()(const int n) const
              {
                return n;
@@ -756,11 +752,11 @@ namespace rose_hash
      struct hash_integer_pair
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead            
+       // CH (4/9/2010): Use boost::hash instead
           size_t operator()(const std::pair<int,int> & p) const
              {
             // DQ (4/30/2009): This subject should be reviewed!
-            // Since this is a hash function, it might not a problem if we have 
+            // Since this is a hash function, it might not a problem if we have
             // overflow (also the values should not be so large as to be a problem).
                return p.first+p.second;
              }
@@ -794,7 +790,7 @@ namespace rose_hash
      struct hash_graph_node
         {
        // tps (11/17/2009) : Changed this so that it works under Windows.
-       // CH (4/9/2010): Use boost::hash instead            
+       // CH (4/9/2010): Use boost::hash instead
           size_t operator()(const SgGraphNode* ptr) const
              {
                return (size_t) ptr;
@@ -809,19 +805,19 @@ namespace rose_hash
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead      
+// CH (4/9/2010): Use boost::unordered instead
 typedef rose_hash::unordered_multimap<std::string, SgGraphNode*> rose_graph_string_node_hash_multimap_base_type;
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
    {
-  // Need to document why we are using hash_multimap type here.  Why a hash (obvious), then why a multimap? 
+  // Need to document why we are using hash_multimap type here.  Why a hash (obvious), then why a multimap?
   // I think a multimap is used to support having no names on the nodes if they are unlabeled.  If the
   // nodes are labled then operations on the labled edges are possible using the multimap.  But is there
   // a performance trade-off for these choices?
 
      protected:
 
-       // DQ (4/25/2009): We need to change this name since I think we just want the 
+       // DQ (4/25/2009): We need to change this name since I think we just want the
        // associated IR node in the AST, and not any concept of parent in the graph.
           SgNode* parent;
 
@@ -831,7 +827,7 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
              {}
                          // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
-          rose_graph_string_node_hash_multimap(int sz) 
+          rose_graph_string_node_hash_multimap(int sz)
              : rose_graph_string_node_hash_multimap_base_type(sz), parent(NULL)
              {}
 #endif
@@ -839,7 +835,7 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
              : rose_graph_string_node_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
        // See note (above) about name change to the associated data member for these access functions.
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -879,12 +875,12 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead      
+// CH (4/9/2010): Use boost::unordered instead
 typedef rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
 class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
-  // Different graph classes derived from the SgGraph class contain additional 
+  // Different graph classes derived from the SgGraph class contain additional
   // maps that contain specific types of edges.
 
      protected:
@@ -896,17 +892,17 @@ class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_mult
              {}
          // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
-          rose_graph_node_edge_hash_multimap(int sz) 
+          rose_graph_node_edge_hash_multimap(int sz)
              : rose_graph_node_edge_hash_multimap_base_type(sz)
              {}
 #endif
-          rose_graph_node_edge_hash_multimap(const rose_graph_node_edge_hash_multimap& rhs) 
+          rose_graph_node_edge_hash_multimap(const rose_graph_node_edge_hash_multimap& rhs)
           // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
           // : rose_hash::unordered_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>((rose_graph_node_edge_hash_multimap)rhs)
              : rose_graph_node_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -937,7 +933,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_m
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type
-// CH (4/9/2010): Use boost::unordered instead      
+// CH (4/9/2010): Use boost::unordered instead
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int, SgGraphNode*, stdext::hash_compare <int, greater<int> > > rose_graph_integer_node_hash_map_base_type;
@@ -959,15 +955,15 @@ class rose_graph_integer_node_hash_map : public rose_graph_integer_node_hash_map
 // example from MSDN microsoft hash_map:
 // hash_map <int, int, hash_compare <int, less<int> > > hm1;
 //   hm1.insert( Int_Pair( 1, 10 ) );
-          rose_graph_integer_node_hash_map(int sz) 
+          rose_graph_integer_node_hash_map(int sz)
              : rose_graph_integer_node_hash_map_base_type(sz)
              {}
 #endif
-          rose_graph_integer_node_hash_map(const rose_graph_integer_node_hash_map& rhs) 
+          rose_graph_integer_node_hash_map(const rose_graph_integer_node_hash_map& rhs)
              : rose_graph_integer_node_hash_map_base_type(rhs),parent(rhs.parent)
              {}
 
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -999,7 +995,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::unordered_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
-// CH (4/9/2010): Use boost::unordered instead      
+// CH (4/9/2010): Use boost::unordered instead
 //#ifdef _MSCx_VER
 #if 0
 typedef rose_hash::unordered_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
@@ -1009,7 +1005,7 @@ typedef rose_hash::unordered_map<int,SgGraphEdge*, rose_hash::hash_integer> rose
 class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
-  // Different graph classes derived from the SgGraph class contain additional 
+  // Different graph classes derived from the SgGraph class contain additional
   // maps that contain specific types of edges.
 
      protected:
@@ -1022,15 +1018,15 @@ class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map
              {}
 // tps (11/18/2009) : I assume this is wrong, it should be a pair
 #if 0
-          rose_graph_integer_edge_hash_map(int sz) 
+          rose_graph_integer_edge_hash_map(int sz)
              : rose_graph_integer_edge_hash_map_base_type(sz)
              {}
 #endif
-          rose_graph_integer_edge_hash_map(const rose_graph_integer_edge_hash_map& rhs) 
+          rose_graph_integer_edge_hash_map(const rose_graph_integer_edge_hash_map& rhs)
              : rose_graph_integer_edge_hash_map_base_type(rhs),parent(rhs.parent)
              {}
 
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -1067,7 +1063,7 @@ typedef rose_hash::unordered_multimap<int,SgGraphEdge*> rose_graph_integer_edge_
 class rose_graph_integer_edge_hash_multimap : public rose_graph_integer_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
-  // Different graph classes derived from the SgGraph class contain additional 
+  // Different graph classes derived from the SgGraph class contain additional
   // maps that contain specific types of edges.
 
      protected:
@@ -1080,15 +1076,15 @@ class rose_graph_integer_edge_hash_multimap : public rose_graph_integer_edge_has
              {}
 // tps (11/18/2009) : I assume this is wrong, it should be a pair
 #if 0
-          rose_graph_integer_edge_hash_multimap(int sz) 
+          rose_graph_integer_edge_hash_multimap(int sz)
              : rose_graph_integer_edge_hash_multimap_base_type(sz)
              {}
 #endif
-          rose_graph_integer_edge_hash_multimap(const rose_graph_integer_edge_hash_multimap& rhs) 
+          rose_graph_integer_edge_hash_multimap(const rose_graph_integer_edge_hash_multimap& rhs)
              : rose_graph_integer_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -1121,7 +1117,7 @@ typedef rose_hash::unordered_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash
 class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
-  // Different graph classes derived from the SgGraph class contain additional 
+  // Different graph classes derived from the SgGraph class contain additional
   // maps that contain specific types of edges.
 
      protected:
@@ -1135,15 +1131,15 @@ class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_
 // tps (11/18/2009) : I assume this is wrong, it should be a pair
 // DQ (12/1/2009): This is not ment to be a pair, it should be an int as part of setting the size of the hash table.
 #if 0
-          rose_graph_integerpair_edge_hash_multimap(int sz) 
+          rose_graph_integerpair_edge_hash_multimap(int sz)
              : rose_graph_integerpair_edge_hash_multimap_base_type(sz)
              {}
 #endif
-          rose_graph_integerpair_edge_hash_multimap(const rose_graph_integerpair_edge_hash_multimap& rhs) 
+          rose_graph_integerpair_edge_hash_multimap(const rose_graph_integerpair_edge_hash_multimap& rhs)
              : rose_graph_integerpair_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -1175,12 +1171,12 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
-// CH (4/9/2010): Use boost::unordered instead      
+// CH (4/9/2010): Use boost::unordered instead
 typedef rose_hash::unordered_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {
      protected:
-       // DQ (4/25/2009): We need to change this name since I think we just want the 
+       // DQ (4/25/2009): We need to change this name since I think we just want the
        // associated IR node in the AST, and not any concept of parent in the graph.
           SgNode* parent;
 
@@ -1190,7 +1186,7 @@ class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer
              {}
          // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #if 0
-          rose_graph_string_integer_hash_multimap(int sz) 
+          rose_graph_string_integer_hash_multimap(int sz)
              : rose_graph_string_integer_hash_multimap_base_type(sz), parent(NULL)
              {}
 #endif
@@ -1199,7 +1195,7 @@ class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer
              {}
 
        // See note (above) about name change to the associated data member for these access functions.
-          void set_parent(SgNode * new_parent) 
+          void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
              }
@@ -1295,7 +1291,7 @@ ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateArgumentPtrList
  */
 class RTIMemberData
    {
-  // DQ (12/31/2005): Note that we can't use "using namespace std;" 
+  // DQ (12/31/2005): Note that we can't use "using namespace std;"
   // to simplify this code, or so it seems.
      public:
           // The first two of these fields are constants, and so this avoids the constructor
@@ -1329,13 +1325,13 @@ struct ReferenceToPointerHandler;
     To tailor a specific type of copy operation derive a class from this
     abstract class and define the clone_node function as required.
     context information if required muyst be obtained through local
-    analysis inside the function using the parent or scope information 
+    analysis inside the function using the parent or scope information
     at each IR node.
 
     \note This is an abstract class.
 
     \internal Used in ROSETTA generated copy functions on each IR node.
-              The location of this code should perhaps be changed to be in the 
+              The location of this code should perhaps be changed to be in the
               generate copy code rather than Node.code in ROSETTA/Grammar.
  */
 class SgCopyHelp
@@ -1499,16 +1495,16 @@ namespace AST_FileIO
    {
   /*! \brief This function returns a static pointer used with SgNode::p_freepointer.
 
-      This function returns 
-      returns an internally held (function local data) static pointer value 
-      used by SgNode::p_freepointer to identify non-NULL value representing 
-      valid IR node in memory pool.  A NULL pointer represents last entry in 
+      This function returns
+      returns an internally held (function local data) static pointer value
+      used by SgNode::p_freepointer to identify non-NULL value representing
+      valid IR node in memory pool.  A NULL pointer represents last entry in
       the memory pool.  This value allows us to distinguish the entries, and not
       require additional memory storage on each IR node.
    */
      SgNode* IS_VALID_POINTER();
 
-  /*! \brief Similar value as above function for reprentation of subsets of the AST 
+  /*! \brief Similar value as above function for reprentation of subsets of the AST
    */
      SgNode* TO_BE_COPIED_POINTER();
    }
@@ -1537,7 +1533,7 @@ class UnparseFormatHelp;
 
 // DQ (4/19/2006): forward declaration of PreprocessingInfo so that
 // PreprocessingInfo can follow Sage III class declarations and contain
-// a Sg_File_Info object (to record the filename of the comments and 
+// a Sg_File_Info object (to record the filename of the comments and
 // CPP directoves).
 // class PreprocessingInfo;
 
@@ -1596,13 +1592,13 @@ HEADER_START
      public:
 
       // DQ (7/23/2005): Let these be automatically generated by ROSETTA!
-      // Opps, these can't be generated by ROSETTA, since it would result 
+      // Opps, these can't be generated by ROSETTA, since it would result
       // in the recursive call to set_isModified (endless recursion).
 
       /*! \brief All nodes in the AST contain a isModified flag used to track changes to the AST.
 
            This flag can be set but this is typically an internal function used to track the modifications to AST.
-           Within future unparsing this flag will control where the token stream is used alternatively to the 
+           Within future unparsing this flag will control where the token stream is used alternatively to the
            code generation from the AST.
        */
           void set_isModified( bool isModified );
@@ -1616,7 +1612,7 @@ HEADER_START
 
       /*! \brief Acess function for isModified flag
 
-          This flag records if the current IR node has been modified.  
+          This flag records if the current IR node has been modified.
           It is set to false after and ROSE front-end processing.
        */
           bool get_isModified() const;
@@ -1651,7 +1647,7 @@ HEADER_START
           std::string unparseToCompleteString();
 
       /*! \brief Command line support for this compilation
-          The command line is saved as a static variable so that it will be available to 
+          The command line is saved as a static variable so that it will be available to
           support the rewrite mechanism.
 
           \param argv - vector of strings holding command line arguments
@@ -1664,7 +1660,7 @@ HEADER_START
        // numbers are the same, but the enumerator names are different)
           int variant() const ROSE_DEPRECATED_FUNCTION {return (int)this->variantT();}
 
-       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT                  
+       // AS (10/22/2007): build function to return class hierachy subtree of a VariantT
           static std::vector<VariantT> getClassHierarchySubTreeFunction( VariantT v);
           static void getClassHierarchySubTreeFunction( VariantT v, std::vector<VariantT>&);
 
@@ -1693,7 +1689,7 @@ HEADER_START
 
       /*! \brief Access function for lower level optimizing of global mangled name map.
 
-          This mangle name caching is implemented to shorter strings used in the globalMangledNameMap 
+          This mangle name caching is implemented to shorter strings used in the globalMangledNameMap
           mechanism.
        */
           static std::map<std::string, int> & get_shortMangledNameCache();
@@ -1715,7 +1711,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for type).
 
           This qualified name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
@@ -1723,7 +1719,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for type).
 
           This qualified name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
@@ -1732,7 +1728,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for maps of types).
 
           This qualified name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::map<SgNode*,std::string> > & get_globalQualifiedNameMapForMapsOfTypes();
@@ -1741,7 +1737,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for maps of types).
 
           This qualified name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,std::map<SgNode*,std::string> > & X );
@@ -1766,7 +1762,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for names of types).
 
           This type name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::string> & get_globalTypeNameMap();
@@ -1782,7 +1778,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for names in array type dimensions).
 
           This type name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::vector<std::string> > & get_globalQualifiedNameMapForArrayTypeDimensions();
@@ -1800,7 +1796,7 @@ HEADER_START
       /*! \brief Access function for name qualification support (for names of types).
 
           This type name is stored with reference to where the type is used (as required) instead
-          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
           static std::map<SgNode*> & get_globalReferencedNameSet();
@@ -1816,20 +1812,20 @@ HEADER_START
 
 
 
-     /* name Persistant Attribute Mechanism 
+     /* name Persistant Attribute Mechanism
 
-         This is the persistant attribute mechanism for attaching attributed to IR nodes across 
-         multiple passes. Note that these attributes are persistant in that they are preserved 
-         if the AST is written out to a file and read in from a file.  However, virtual function 
+         This is the persistant attribute mechanism for attaching attributed to IR nodes across
+         multiple passes. Note that these attributes are persistant in that they are preserved
+         if the AST is written out to a file and read in from a file.  However, virtual function
          in the user-defined class derived from the AstAttribute must be defined for the attribute
          to be defined across the boundary of File I/O (simple pack and unpack functions).  More
-         sophisticated mechanisms are available within the AstAttributeMechanism object 
+         sophisticated mechanisms are available within the AstAttributeMechanism object
          (e.g iterating though attributes, etc; get_attributeMechanism() is available if direct
          access is required, however mostly only internal tools use this lower level support).
 
-         \internal This used to be a public data member, but has been changed to be a protected 
-         pointer instead.  The functional interface of the AstAttributeMechanism is presevered 
-         but some of the names and the syntax for calling the interface have changed. The 
+         \internal This used to be a public data member, but has been changed to be a protected
+         pointer instead.  The functional interface of the AstAttributeMechanism is presevered
+         but some of the names and the syntax for calling the interface have changed. The
          pointer to the AstAttributeMechanism is now generated by ROSETTA.
       */
      /* */
@@ -1851,18 +1847,18 @@ HEADER_START
      //! Returns the number of attributes on this IR node.
          virtual int numberOfAttributes() const;
 
-     /*! \brief \b FOR \b INTERNAL \b USE Access function; if an attribute exists then 
+     /*! \brief \b FOR \b INTERNAL \b USE Access function; if an attribute exists then
                 a pointer to it is returned, else error.
 
-         This is an access function used for getting the interally held pointer to a valid 
-         AstAttributeMechanism. It provides access to lower level functionality of the 
+         This is an access function used for getting the interally held pointer to a valid
+         AstAttributeMechanism. It provides access to lower level functionality of the
          AstAttributeMechanism, put is mostly of use to internal tools.
       */
          virtual AstAttributeMechanism* get_attributeMechanism() const;
-     /*! 
+     /*!
          \brief \b FOR \b INTERNAL \b USE Access function; sets poiner to value AstAttributeMechanism.
 
-         This is an access function used for setting the interally held pointer to a valid 
+         This is an access function used for setting the interally held pointer to a valid
          AstAttributeMechanism.
       */
          virtual void set_attributeMechanism(AstAttributeMechanism* a);
@@ -1872,11 +1868,11 @@ HEADER_START
       /* name AST Copy Support Functions
 
           Support for IR node specific fixup of copy operation.
-          This function helps reset scopes and build untraversed parts of the 
-          AST that are difficult to have be constructed using the automatically 
+          This function helps reset scopes and build untraversed parts of the
+          AST that are difficult to have be constructed using the automatically
           generated copy functions.
 
-          \implementation These functions are used internally inside the AST copy mechanism.  
+          \implementation These functions are used internally inside the AST copy mechanism.
            The public interface for this functionality is given below this section.
        */
       /* */
@@ -1891,16 +1887,16 @@ HEADER_START
       /* name Source Position Information
           \brief Support for source code position information of all IR nodes.
 
-          These are the virtual function definitions, they are overloaded for SgLocatedNode 
+          These are the virtual function definitions, they are overloaded for SgLocatedNode
           and a few of the SgSupport IR nodes.
        */
       /* */
-      /*! \brief File information containing filename, line number, column number, 
+      /*! \brief File information containing filename, line number, column number,
                  and if the SgNode is a part of a new transformation, etc.
 
-          \internal This function is only defined here to make get_file_info usable 
+          \internal This function is only defined here to make get_file_info usable
                     without casting for for different types in polymorphic lists
-                    actually only defined in SgLocatedNode(s).  It used to be defined 
+                    actually only defined in SgLocatedNode(s).  It used to be defined
                     in the SgLocatedNode class.
        */
           virtual Sg_File_Info* get_file_info(void) const { return NULL; }
@@ -1924,7 +1920,7 @@ HEADER_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #if 0
-       // DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from 
+       // DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from
        // assertion from the header file (OK if it appears once from compiling the source file).
      /*! \brief Returns the CFG node for just before this AST node */
           VirtualCFG::CFGNode cfgForBeginning()
@@ -2011,17 +2007,17 @@ HEADER_START
       /*! \brief Computes the number of nodes in the defined subtree of the AST.
 
           This function is used as a basis for steps in AST isomophism tests.
-          The implementation uses a traversal of the AST subtree to count the 
-          number of IR nodes. So the complexity if order N in the size of the subtree. 
+          The implementation uses a traversal of the AST subtree to count the
+          number of IR nodes. So the complexity if order N in the size of the subtree.
        */
           int numberOfNodesInSubtree();
 
       /*! \brief Computes the depth of the current defined subtree of the AST.
 
           This function is used as a basis for steps in AST isomophism tests.
-          The implementation uses a traversal of the AST subtree to count the 
-          depth of the AST traversal. So the complexity if order N in the size 
-          of the subtree. 
+          The implementation uses a traversal of the AST subtree to count the
+          depth of the AST traversal. So the complexity if order N in the size
+          of the subtree.
        */
           int depthOfSubtree();
 
@@ -2062,7 +2058,7 @@ HEADER_PARSER_START
       /*! We parse from a lower level grammar into a higher level grammar
           An element (or root of s subtree of elements) of a lower level
           grammar is also an element (or root of) a higher level grammar
-          This text is located in parserPrototype.macro and is used only 
+          This text is located in parserPrototype.macro and is used only
           for non-child terminals/nonterminals.
        */
           friend SgNode* Sgparse ( $PARENT_GRAMMARS_PREFIX_$CLASS_BASE_NAME* X );
@@ -2072,7 +2068,7 @@ HEADER_PARSER_END
 
 SOURCE_START
 
-                  
+
 // ########################################
 // Some global variables used within SAGE 3
 // ########################################
@@ -2130,16 +2126,16 @@ std::map<std::string,int> SgNode::p_shortMangledNameCache;
 
 // DQ (5/28/2011): Added central location for qualified name maps (for names and types).
 // these maps store the required qualified name for where an IR node is referenced (not
-// at the IR node which has the qlocal qualifier).  Thus we can support multiple references 
-// to an IR node which might have different qualified names.  This is critical to the 
+// at the IR node which has the qlocal qualifier).  Thus we can support multiple references
+// to an IR node which might have different qualified names.  This is critical to the
 // qualified name support.
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
-// DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps 
-// to the generated name qualification substrings for each type, all associted with a single reference 
+// DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
+// to the generated name qualification substrings for each type, all associted with a single reference
 // node to the statement refering to the type.
 std::map<SgNode*,std::map<SgNode*,std::string> > SgNode::p_globalQualifiedNameMapForMapsOfTypes;
 
@@ -2254,9 +2250,9 @@ SgNode::clearGlobalMangledNameMap()
   // p_globalMangledNameMap.erase(p_globalMangledNameMap.begin(),p_globalMangledNameMap.end());
      p_globalMangledNameMap.clear();
 
-  // DQ (6/26/2007): The function types require the same mangled names be generated across 
+  // DQ (6/26/2007): The function types require the same mangled names be generated across
   // clears of the p_globalMangledNameMap cache. Clearing the short name map breaks this.
-  // It might be that we don't want to clear the short name map to permit the same mangled 
+  // It might be that we don't want to clear the short name map to permit the same mangled
   // names to be regenerated. However, for the purposes of AST merge this is not a problem.
   // p_shortMangledNameCache.clear();
    }
@@ -2358,7 +2354,7 @@ SgNode::set_globalTypeNameMap(const std::map<SgNode*,std::string> & X)
 
 
 #if 0
-  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
+  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will
   // implement this in a way that does not require such support.
 // DQ (6/21/2011): Added support for holding the set of seen declarations which is referenced as we travers and compute qualified names.
 std::set<SgNode*> &
@@ -2434,7 +2430,7 @@ SgNode::numberOfAttributes() const
 AstAttributeMechanism*
 SgNode::get_attributeMechanism() const
    {
-  // DQ (4/10/2006): virtual function defined at the SgNode and redefined whereever there is 
+  // DQ (4/10/2006): virtual function defined at the SgNode and redefined whereever there is
   // an AstAttributeMechanism defined!  Note that there is no set function defined.
      return NULL;
    }
@@ -2442,8 +2438,8 @@ SgNode::get_attributeMechanism() const
 void
 SgNode::set_attributeMechanism(AstAttributeMechanism* a)
    {
-  // Nothing to do here, but we need this virtual function so that the correct access 
-  // function will be call on IR nodes where the AstAttributeMechanism is defined as 
+  // Nothing to do here, but we need this virtual function so that the correct access
+  // function will be call on IR nodes where the AstAttributeMechanism is defined as
   // a data member.
 
      printf ("Error: SgNode::set_attributeMechanism(AstAttributeMechanism* a) has been called \n");
@@ -2451,15 +2447,15 @@ SgNode::set_attributeMechanism(AstAttributeMechanism* a)
    }
 
 #if 0
-void 
+void
 SgNode::print( std::ostream* os,   /* 0 uses the default */
                int maxdepth)  /* controlling function*/
    {
-     Sg_print_info().reset(os, maxdepth); 
-     this->_print(0); 
+     Sg_print_info().reset(os, maxdepth);
+     this->_print(0);
    }
 
-bool 
+bool
 SgNode::_print(int depth) const
    {
      return Sg_print_info().output_class(this,sage_class_name(), depth + 1);
@@ -2489,7 +2485,7 @@ SgNode::unparse_helper(SgUnparse_Info& info, std::ostream& os)
    {
    }
 
-void 
+void
 SgNode::logical_unparse(SgUnparse_Info& info, std::ostream& os)
    {
    }
@@ -2507,7 +2503,7 @@ SgNode::post_construction_initialization()
    }
 
 // DQ (7/23/2005): Let these be automatically generated by ROSETTA!
-// See note above where these are proptotyped, they have to be defined 
+// See note above where these are proptotyped, they have to be defined
 // explicitly to avoid endless recursion!
 
 void
@@ -2582,8 +2578,8 @@ SgNode::get_isModified () const
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ROSE_ASSERT(this != NULL);
 
-     return p_isModified; 
-   }                                                                                                   
+     return p_isModified;
+   }
 
 // DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
 void
@@ -2601,11 +2597,11 @@ SgNode::get_containsTransformation () const
    {
      ROSE_ASSERT(this != NULL);
 
-     return p_containsTransformation; 
+     return p_containsTransformation;
    }
-                                                                                                   
 
-bool 
+
+bool
 SgNode::get_isVisited () const
    {
   // The p_isVisited flag has been removed, it is an error to call this function.
@@ -2691,7 +2687,7 @@ SgNode::set_parent ( SgNode* parent )
           ROSE_ASSERT(false);
         }
 
-  // DQ (7/26/2010): Make the pointer a valid pointer by defining that it 
+  // DQ (7/26/2010): Make the pointer a valid pointer by defining that it
   // should point to its associated SgSymbol as used in the type table.
   // OLD COMMENT: We should not be setting the parent on SgType IR nodes
   // ROSE_ASSERT( isSgType(this) == NULL );
@@ -2744,7 +2740,7 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
   // copy all the entries in the command line.
      for (unsigned int i=0; i < argv.size(); i++)
         {
-       // Count up the number of filenames (if it is ZERO then this is likely a link line called 
+       // Count up the number of filenames (if it is ZERO then this is likely a link line called
        // using the compiler (required for template processing in C++ with most compilers) if there
        // is ONE then this is the source file.  Currently their can only be ONE source file specified.
 
@@ -2797,13 +2793,13 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
   // argv[fileNameLocation] = "rose_transformation.C";
 
 #if 0
-  // This is not longer required (EDG sets its 
-  // primary_source_file_name internally from the 
+  // This is not longer required (EDG sets its
+  // primary_source_file_name internally from the
   // command line directly).
 
-  // Since it is a problem to call EDG more than once with 
+  // Since it is a problem to call EDG more than once with
   // (EDG comand line processing can only be called once)
-  // the easiest thing to do is change the name of the primary 
+  // the easiest thing to do is change the name of the primary
   // source file.  See notes in the TODO document.
      EDG_secondarySourceFile = argv[fileNameLocation];
 #endif
@@ -2863,7 +2859,7 @@ SgCopyHelp::insertCopiedNodePair( const SgNode* key, SgNode* value )
      if (copiedNodeMap.find(key) == copiedNodeMap.end())
         {
        // Add the node to the map...
-          copiedNodeMap[key] = value; 
+          copiedNodeMap[key] = value;
         }
    }
 
@@ -2937,7 +2933,7 @@ bool SgTreeCopy :: clone_node( const SgNode *n ) const
 
 
 // DQ (8/10/2008): Added to support binary file format.
-std::ostream & 
+std::ostream &
 operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m )
    {
      return os;
@@ -2945,7 +2941,7 @@ operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & 
 
 #if 0
 // DQ (8/10/2008): This is not used!
-std::ostream & 
+std::ostream &
 operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l )
    {
      return os;
@@ -2953,13 +2949,13 @@ operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_ad
 #endif
 
 // DQ (8/10/2008): Added to support binary file format.
-std::ostream & 
+std::ostream &
 operator<< ( std::ostream & os, const struct stat & sb )
    {
      return os;
    }
 
-// DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from 
+// DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from
 // assertion from the header file (OK if it appears once from compiling the source file).
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
@@ -2974,7 +2970,7 @@ SgNode::cfgForEnd()
      ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
- 
+
 SOURCE_END
 
 SOURCE_ROOT_NODE_ERROR_FUNCTION_START

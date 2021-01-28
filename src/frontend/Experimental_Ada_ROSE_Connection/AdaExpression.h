@@ -39,6 +39,10 @@ namespace Ada_ROSE_Translation
   SgTypeTraitBuiltinOperator&
   getAttributeExpr(Expression_Struct& expr, AstContext ctx);
 
+  /// returns an expression for an Asis element ID \ref id.
+  SgTypeTraitBuiltinOperator&
+  getAttributeExprID(Element_ID id, AstContext ctx);
+
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
   struct ExprSeqCreator
@@ -131,14 +135,14 @@ namespace Ada_ROSE_Translation
       void operator()(Element_Struct& elem);
 
       /// result read-out
-      operator SgRangeExpPtrList () &&
+      operator SgExpressionPtrList () &&
       {
         return std::move(lst);
       }
 
     private:
-      AstContext        ctx;
-      SgRangeExpPtrList lst;
+      AstContext          ctx;
+      SgExpressionPtrList lst;
 
       RangeListCreator() = delete;
   };
