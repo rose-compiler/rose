@@ -118,12 +118,14 @@ namespace CodeThorn {
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
           locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+          // CONTINUE
         } else {
           locationsCSVFileData<<"unknown-location"<<endl;
         }
         locationsCSVFileData<<endl;
       }
-      if(!CppStdUtilities::writeFile(ctOpt.deadCodeAnalysisFileName, locationsCSVFileData.str())) {
+      string s=locationsCSVFileData.str();
+      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,ctOpt.deadCodeAnalysisFileName, s)) {
         cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
       } else {
         if(!ctOpt.quiet)
@@ -168,7 +170,7 @@ namespace CodeThorn {
       printSeparationLine();
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
-        if(!CppStdUtilities::writeFile(fileName, locationsCSVFileData.str())) {
+        if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {
           cerr<<"Error: cannot write file "<<fileName<<endl;
         } else {
           if(!ctOpt.quiet)
@@ -185,8 +187,8 @@ namespace CodeThorn {
   void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
-      // exception: skip opaque preducate analysis, because it uses it's own format
-      if(analysisSel==ANALYSIS_OPAQUE_PREDICATE)
+      // exception: skip some analysis, because they use their own format
+      if(analysisSel==ANALYSIS_OPAQUE_PREDICATE||analysisSel==ANALYSIS_DEAD_CODE)
         continue;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
@@ -396,7 +398,12 @@ namespace CodeThorn {
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       std::string functionName=SgNodeHelper::getFunctionName(node);
       //      if(nodeColor!="inconsistent")
-      cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+      if(analysisName!="dead-code") {
+        cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+      } else {
+        if(nodeColor=="dead")
+          cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+      }
     }
 
     // print stats
