@@ -57,7 +57,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
         fcInfo.funCallName="*";
         fcInfo.funCallType=funCallType;
         fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
-        fcInfo.functionResolved = false;
+        fcInfo.functionResolved = true;
       } 
     } 
     
