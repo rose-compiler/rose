@@ -7,8 +7,8 @@
 // capitializes x86 as "DispatcherX86").
 #ifndef ROSE_DispatcherPpc_H
 #define ROSE_DispatcherPpc_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 

@@ -2016,7 +2016,7 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
      return const_cast<SgSourceFile*>(file);
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
 SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )

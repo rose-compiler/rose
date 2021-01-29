@@ -7,8 +7,8 @@
  *    SgAsmElfStrtab is a class representing the string table contained in an SgAsmElfStringSection. It inherits from
  *    SgAsmGenericStrtab.  An SgAsmElfStrtab points back to the SgAsmElfStringSection that contains it.
  */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
