@@ -822,6 +822,7 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
    ROSE_ASSERT(control_stmt->get_control_kind() != SgProcessControlStatement::e_unknown);
 
    code->set_parent(control_stmt);
+   quiet->set_parent(control_stmt);
 
    SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
 }

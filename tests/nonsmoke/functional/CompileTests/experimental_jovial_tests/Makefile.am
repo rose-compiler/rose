@@ -180,7 +180,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-472.jov                  \
  rose-issue-rc-473.jov                  \
  rose-issue-rc-575.jov                  \
- rose-issue-rc-578.jov
+ rose-issue-rc-578.jov                  \
+ rose-issue-rc-581.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \

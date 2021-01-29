@@ -12848,6 +12848,12 @@ SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgTyp
      if (base_type) {
        // Mangle the name to make sure the table type and the base type don't have the same name
        type_name = "_table_of_" + type_name;
+       // Add dim_info address if there are subscripts to ensure type is unique
+       if (dim_info->get_expressions().size() > 0) {
+         std::ostringstream address;
+         address << (void const *)dim_info;
+         type_name += "_" + address.str();
+       }
      }
 
      SgClassDeclaration::class_types kind = SgClassDeclaration::e_jovial_table;

@@ -1848,6 +1848,7 @@ ATbool ATermToSageJovialTraversal::traverse_Dimension(ATerm term, SgExprListExp*
    }
 
    range = SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+   range->set_parent(shape);
    shape->get_expressions().push_back(range);
 
    return ATtrue;
