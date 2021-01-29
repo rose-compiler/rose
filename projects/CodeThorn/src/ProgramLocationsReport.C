@@ -80,7 +80,7 @@ string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Labe
   node=stmt;
   ROSE_ASSERT(stmt);
   // return fileinfo as formatted string
-  return SgNodeHelper::sourceLineColumnToString(node)+","+SgNodeHelper::sourceFilenameToString(node);
+  return SgNodeHelper::sourceFilenameToString(node)+","+SgNodeHelper::sourceLineColumnToString(node);
 }
 
 string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* labeler, Label lab) {

@@ -200,7 +200,10 @@ struct ElemCreator
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// @{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
+/// @}
 
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind

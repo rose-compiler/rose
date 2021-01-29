@@ -85,4 +85,10 @@ PASSING_TESTS :=                       \
   function_body_stub.ads               \
   package_renaming_declaration.ads     \
   procedure_body_stub.ads              \
+  representation_clause_2.ads          \
+  pragmas.adb                          \
+  procedure_pragma.adb                 \
+  package_pragma.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \ 
   EndOfList

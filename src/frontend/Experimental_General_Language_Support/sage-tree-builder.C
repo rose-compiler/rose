@@ -86,12 +86,55 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    SageInterface::setSourcePosition(node);
 }
 
-void SageTreeBuilder::Leave(SgScopeStatement* & scope)
+void SageTreeBuilder::Leave(SgScopeStatement* scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement* &) \n";
 
    scope = SageBuilder::getGlobalScopeFromScopeStack();
    ROSE_ASSERT(scope);
+
+// Clear any dangling forward references
+   if (!forward_refs_.empty()) {
+     std::map<const std::string, SgVarRefExp*>::iterator it = forward_refs_.begin();
+     while (it != forward_refs_.end()) {
+       if (SgFunctionSymbol* func_sym = SageInterface::lookupFunctionSymbolInParentScopes(it->first, scope)) {
+         SgVarRefExp* prev_var_ref = it->second;
+         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
+         ROSE_ASSERT(prev_var_sym);
+
+         SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
+         SgBinaryOp* bin_op_parent = isSgBinaryOp(prev_var_ref->get_parent());
+         ROSE_ASSERT(bin_op_parent);
+         ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
+
+         SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+         SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
+         func_call->set_parent(bin_op_parent);
+         bin_op_parent->set_rhs_operand(func_call);
+
+      // The dangling variable reference has been fixed
+      // forward_refs_.erase(pair.first);
+         it = forward_refs_.erase(it);
+
+      // Delete the previous variable reference, symbol and initialized name
+         delete prev_init_name;
+         delete prev_var_sym;
+         delete prev_var_ref;
+
+       }
+       else {
+         std::cout << "{" << it->first << ": " << it->second << "}\n";
+         it++;
+       }
+     }
+   }
+
+  // Some forward references can't be resolved until the global scope is reached
+   if (!forward_refs_.empty() && isSgGlobal(scope)) {
+     std::cerr << "WARNING: map for forward references is not empty, size is "
+               << forward_refs_.size() << std::endl;
+     forward_refs_.clear();
+   }
 }
 
 void SageTreeBuilder::Enter(SgBasicBlock* &block)
@@ -1327,6 +1370,26 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    ROSE_ASSERT(var_defn == init_name);
 
    SageInterface::appendStatement(var_decl, SageBuilder::topScopeStack());
+
+// Look for a symbol has been previously implicitly declared and fix the variable reference
+   if (forward_refs_.find(name) != forward_refs_.end()) {
+     if (SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name)) {
+        SgVarRefExp* prev_var_ref = forward_refs_[name];
+        SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
+        ROSE_ASSERT(prev_var_sym);
+
+        SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
+        ROSE_ASSERT(prev_init_name->get_name() == init_name->get_name());
+
+     // Reset the symbol for the variable reference to the symbol for the explicit variable declaration
+        prev_var_ref->set_symbol(var_sym);
+        forward_refs_.erase(name); // The dangling variable reference has been fixed
+
+     // Delete the previous symbol and initialized name
+        delete prev_var_sym;
+        delete prev_init_name;
+     }
+   }
 }
 
 void SageTreeBuilder::
@@ -1490,6 +1553,23 @@ importModule(const std::string &module_name)
    compool_builder.setLoadingModuleState(false);
 }
 
+// Jovial allows implicitly declared variables (like Fortran?) but does require there to
+// be an explicit declaration at some point (unlike Fortran). This builder function manages
+// name and symbol information so that the variable reference can be cleaned/fixed up when
+// the explicit declaration is seen.
+SgVarRefExp* SageTreeBuilder::
+buildVarRefExp_nfi(const std::string & name)
+{
+   SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(var_ref);
+   SageInterface::setSourcePosition(var_ref);
+
+   if (SageInterface::lookupSymbolInParentScopes(name) == nullptr) {
+      forward_refs_[name] = var_ref;
+   }
+   return var_ref;
+}
+
 // Jovial TableItem and Block data members have visibility outside of their declarative class.
 // Both tables and blocks are SgJovialTableStatements deriving from SgClassDeclaration.  So if the
 // current scope is SgClassDefinition, this function creates an alias to the data item variable
@@ -1502,14 +1582,19 @@ injectAliasSymbol(const std::string &name)
       SgVariableSymbol*
         var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
       ROSE_ASSERT(var_sym);
-      SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
-      ROSE_ASSERT(alias_sym);
 
       SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
       ROSE_ASSERT(table_decl);
-      SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
-      ROSE_ASSERT(global_scope);
-      global_scope->insert_symbol(SgName(name), alias_sym);
+      SgScopeStatement* decl_scope = table_decl->get_scope();
+      ROSE_ASSERT(decl_scope);
+
+      if (!isSgFunctionParameterScope(decl_scope)) {
+        SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
+        ROSE_ASSERT(alias_sym);
+        SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
+        ROSE_ASSERT(global_scope);
+        global_scope->insert_symbol(SgName(name), alias_sym);
+      }
    }
 }
 
@@ -1660,14 +1745,14 @@ SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgSc
      // Look for intrinsic name
      if (name == "num_images") {
        std::cout << "--> need to build a function reference to num_images \n";
+#if 0
        // Doesn't work
        // func_ref = SageBuilder::buildFunctionRefExp(SgName(name), scope);
        SgType* return_type = SB::buildIntType();
        SgFunctionParameterList *parList = SB::buildFunctionParameterList();
-
        SgGlobal* globalscope = SI::getGlobalScope(scope);
-
        SgFunctionDeclaration * funcDecl = SB::buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+#endif
      }
    }
 
@@ -1692,6 +1777,9 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
   // Create a return type based on the intrinsic name
   if (name == "num_images") {
     return_type = SageBuilder::buildIntType();
+  }
+  else {
+    return_type = SageBuilder::buildVoidType();
   }
 
   if (return_type) {

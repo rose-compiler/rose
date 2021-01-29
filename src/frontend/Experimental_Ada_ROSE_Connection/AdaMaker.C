@@ -110,7 +110,7 @@ mkAdaRangeConstraint(SgRangeExp& range)
 }
 
 SgAdaIndexConstraint&
-mkAdaIndexConstraint(SgRangeExpPtrList&& ranges)
+mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 {
   SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
 
@@ -949,7 +949,30 @@ mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
   return sgnode;
 }
 
+SgAdaLengthClause&
+mkAdaLengthClause(SgTypeTraitBuiltinOperator& attr, SgExpression& size)
+{
+  SgAdaLengthClause& sgnode = mkLocatedNode<SgAdaLengthClause>(&attr, &size);
 
+  attr.set_parent(&sgnode);
+  size.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgPragmaDeclaration&
+mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
+{
+  SgPragma&            details = mkBareNode<SgPragma>(std::ref(name));
+  SgPragmaDeclaration& sgnode  = mkLocatedNode<SgPragmaDeclaration>(&details);
+
+  details.set_parent(&sgnode);
+  sg::linkParentChild(details, args, &SgPragma::set_args);
+
+  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+  return sgnode;
+}
 
 SgBaseClass&
 mkRecordParent(SgClassDeclaration& n)
