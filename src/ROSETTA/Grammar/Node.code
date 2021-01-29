@@ -43,7 +43,7 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Sawyer/Set.h>
 namespace Rose {
   namespace BinaryAnalysis {
@@ -90,7 +90,7 @@ class ROSE_DLL_API rose_rva_t {
 // #ifndef ROSE_USE_SWIG_SUPPORT
 #ifndef SWIG
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 std::ostream &operator<<(std::ostream&, const rose_rva_t&);
 
 rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2);
@@ -172,7 +172,7 @@ struct HexdumpFormat {
 
 #include <RegisterDescriptor.h>
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Mapping from instruction virtual address to instruction. */
 typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 #endif
@@ -263,7 +263,7 @@ typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrLis
  */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // tps (8/20/2007): Added support for binaries.
 /** \typedef SgAsmBlockPtrList
     This is socumentation for the following typedef
@@ -447,7 +447,7 @@ typedef SgBasicBlock*                       SgBasicBlockPtr;
 typedef std::vector<SgBasicBlockPtr>        SgBasicBlockPtrList;
 typedef SgBasicBlockPtrList*                SgBasicBlockPtrListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmStatement*> SgAsmStatementPtrList;
 typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
@@ -508,7 +508,7 @@ typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
 typedef SgAddressList*                   SgAddressListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
 typedef SgRVAList*                             SgRVAListPtr;
 
@@ -523,7 +523,7 @@ typedef SgUnsignedList*                        SgUnsignedListPtr;
 typedef Rose_STL_Container<size_t>             SgSizeTList;
 typedef SgSizeTList*                           SgSizeTListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 typedef Rose_STL_Container<SgAsmNEEntryPoint*> SgAsmNEEntryPointPtrList;
 typedef SgAsmNEEntryPointPtrList*              SgAsmNEEntryPointPtrListPtr;
 
@@ -574,7 +574,7 @@ typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
 typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
 typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (11/5/2008): Addes as part of general Dwarf support in the AST for binary executables.
 typedef Rose_STL_Container<SgAsmDwarfLine*> SgAsmDwarfLinePtrList;
 typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
@@ -636,7 +636,7 @@ class SgUntypedFunctionDeclaration;
 typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
 typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 class SgAsmRegisterReferenceExpression;
 typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
 typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
@@ -669,7 +669,7 @@ class PreviousAndNextNodeData;
 // DQ (11/30/2015): Added support for mapping of the AST to macro expansions.
 class MacroExpansion;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <SgSharedVector.h>
 
 typedef SgSharedVector<unsigned char>             SgFileContentList;
@@ -1566,7 +1566,7 @@ namespace VirtualCFG
    }
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (3/15/2007): Added support for binaries
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<SgAsmStatement*> & l );
 #endif
@@ -1580,7 +1580,7 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 // tps (8/13/2007): working on binary cfg mechanism.
 //#include "virtualBinCFG.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // Version numbers for SgAsm* nodes. Used for backward compatibility. */
 BOOST_CLASS_VERSION(SgAsmInstruction, 1);
 #endif

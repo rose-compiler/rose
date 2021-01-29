@@ -79,7 +79,7 @@ static std::string toStringForRTI(const ExtentMap &x)
     return ss.str();
 }
 #endif
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (8/29/2008): Added the support for the Robb's SgSharedVector class.
 template <typename T>
 static std::string toStringForRTI(const SgSharedVector<T>& x)
