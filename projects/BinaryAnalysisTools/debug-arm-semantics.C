@@ -44,14 +44,10 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
     // Parse command-line
-    MemoryMap::Ptr memory;
-    if ((argc == 6 && (!strcmp(argv[1], "a64") || !strcmp(argv[1], "a32"))) ||
-        (argc == 4 && !strcmp(argv[1], "t32"))) {
-        memory = parseBytes(argc-1, argv+1);
-    } else {
+    if (argc < 3)
         showUsageAndExit(1, argv[0]);
-    }
     std::string isa = argv[1];
+    MemoryMap::Ptr memory = parseBytes(argc-1, argv+1);
 
     // Create the decoder and semantics
     P2::Engine engine;
