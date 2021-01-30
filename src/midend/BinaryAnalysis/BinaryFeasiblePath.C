@@ -194,6 +194,7 @@ public:
         ops->fpAnalyzer_ = fpAnalyzer;
         ops->pathProcessor_ = pathProcessor;
         ops->path_ = path;
+        ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS);
         return ops;
     }
 
