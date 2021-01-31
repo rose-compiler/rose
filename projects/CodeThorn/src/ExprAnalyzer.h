@@ -91,14 +91,16 @@ namespace CodeThorn {
     //! uses AbstractValue::getVariableIdMapping()
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
     void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
+
     void setSkipUnknownFunctionCalls(bool skip);
     bool getSkipUnknownFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
-    void setIgnoreUndefinedDereference(bool skip);
+
+    // obtained from ctOpt
     bool getIgnoreUndefinedDereference();
-    void setIgnoreFunctionPointers(bool skip);
     bool getIgnoreFunctionPointers();
+
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
     // deprecated

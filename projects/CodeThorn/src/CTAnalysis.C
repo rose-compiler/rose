@@ -484,12 +484,8 @@ void CodeThorn::CTAnalysis::setPrintDetectedViolations(bool flag) {
   exprAnalyzer.setPrintDetectedViolations(flag);
 }
 
-void CodeThorn::CTAnalysis::setIgnoreFunctionPointers(bool skip) {
-  exprAnalyzer.setIgnoreFunctionPointers(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreFunctionPointers() {
-  return exprAnalyzer.getIgnoreFunctionPointers();
+  return _ctOpt.ignoreFunctionPointers;
 }
 
 void CodeThorn::CTAnalysis::setInterpreterMode(CodeThorn::InterpreterMode mode) {
@@ -2386,12 +2382,8 @@ bool CodeThorn::CTAnalysis::getSkipArrayAccesses() {
   return exprAnalyzer.getSkipArrayAccesses();
 }
 
-void CodeThorn::CTAnalysis::setIgnoreUndefinedDereference(bool skip) {
-  exprAnalyzer.setIgnoreUndefinedDereference(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreUndefinedDereference() {
-  return exprAnalyzer.getIgnoreUndefinedDereference();
+  return _ctOpt.ignoreUndefinedDereference;
 }
 
 void CodeThorn::CTAnalysis::set_finished(std::vector<bool>& v, bool val) {
@@ -2683,10 +2675,13 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
         getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
-        // no state can follow, return estateList (may be empty)
-        // TODO: create error state here?
         //return estateList;
-        return memoryUpdateList;
+        if(_ctOpt.nullPointerDereferenceKeepGoing) {
+          // no state can follow, but as requested keep going without effect
+        } else {
+          // no state can follow
+          return memoryUpdateList;
+        }
       } else if(lhsPointerValue.isTop()) {
         getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
         // specific case a pointer expr evaluates to top. Dereference operation
