@@ -232,7 +232,7 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
+  // SgModifierType is also used to mark R,T,Z (round, truncate, truncate towards zero).
   // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
      if (modifier_type->get_typeModifier().isRound()     ||
          modifier_type->get_typeModifier().isTruncate()  ||

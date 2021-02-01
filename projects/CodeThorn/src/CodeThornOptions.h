@@ -92,6 +92,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool ignoreFunctionPointers=false;
   bool ignoreUndefinedDereference=false;
   bool ignoreUnknownFunctions=true;
+  bool nullPointerDereferenceKeepGoing=false;
   int functionResolutionMode=4;
   bool contextSensitive=false; // abitrary length call strings
   int abstractionMode=0;

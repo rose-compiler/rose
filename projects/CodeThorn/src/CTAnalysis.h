@@ -186,9 +186,9 @@ namespace CodeThorn {
     void setSkipUnknownFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
-    void setIgnoreUndefinedDereference(bool);
+
+    // obtained from ctopt
     bool getIgnoreUndefinedDereference();
-    void setIgnoreFunctionPointers(bool);
     bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
