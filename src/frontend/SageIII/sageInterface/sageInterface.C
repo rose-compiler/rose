@@ -24701,17 +24701,25 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   // print address
   out<<"@"<<node<<" "<< node->class_name()<<" ";
-  //file info
+
+  //optionally file info
   if (SgLocatedNode* lnode= isSgLocatedNode(node))
   {
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
   }
   
+  // optionally  qualified name
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
   if (SgInitializedName * v = isSgInitializedName(node) )
     out<<" "<< v->get_qualified_name();
+
+  // more type-specific information
+  if (SgConstructorInitializer* ctor= isSgConstructorInitializer(node) )
+  {
+    out<<" member function decl@"<< ctor->get_declaration();
+  }
 
   out<<endl;
 
