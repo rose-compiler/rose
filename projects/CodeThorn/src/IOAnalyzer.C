@@ -452,7 +452,6 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
 
   optionStringLiteralsInState=ctOpt.inStateStringLiterals;
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-  setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
   setStdFunctionSemantics(ctOpt.stdFunctions);
 
   setup(this, logger, ctOpt, ltlOpt, parProOpt);

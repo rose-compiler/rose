@@ -54,6 +54,15 @@ void ExprAnalyzer::setAnalyzer(CTAnalysis* analyzer) {
   _analyzer=analyzer;
 }
 
+bool ExprAnalyzer::getIgnoreUndefinedDereference() {
+  return _analyzer->_ctOpt.ignoreUndefinedDereference;
+}
+
+bool ExprAnalyzer::getIgnoreFunctionPointers() {
+  return _analyzer->_ctOpt.ignoreFunctionPointers;
+}
+
+// TODO: all following options to read from ctOpt (as above)
 void ExprAnalyzer::setSkipUnknownFunctionCalls(bool skip) {
   _skipSelectedFunctionCalls=skip;
 }
@@ -68,22 +77,6 @@ void ExprAnalyzer::setSkipArrayAccesses(bool skip) {
 
 bool ExprAnalyzer::getSkipArrayAccesses() {
   return _skipArrayAccesses;
-}
-
-void ExprAnalyzer::setIgnoreUndefinedDereference(bool skip) {
-  _ignoreUndefinedDereference=skip;
-}
-
-bool ExprAnalyzer::getIgnoreUndefinedDereference() {
-  return _ignoreUndefinedDereference;
-}
-
-void ExprAnalyzer::setIgnoreFunctionPointers(bool skip) {
-  _ignoreFunctionPointers=skip;
-}
-
-bool ExprAnalyzer::getIgnoreFunctionPointers() {
-  return _ignoreFunctionPointers;
 }
 
 void ExprAnalyzer::setSVCompFunctionSemantics(bool flag) {

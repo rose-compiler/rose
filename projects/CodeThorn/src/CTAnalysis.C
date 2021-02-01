@@ -484,12 +484,8 @@ void CodeThorn::CTAnalysis::setPrintDetectedViolations(bool flag) {
   exprAnalyzer.setPrintDetectedViolations(flag);
 }
 
-void CodeThorn::CTAnalysis::setIgnoreFunctionPointers(bool skip) {
-  exprAnalyzer.setIgnoreFunctionPointers(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreFunctionPointers() {
-  return exprAnalyzer.getIgnoreFunctionPointers();
+  return _ctOpt.ignoreFunctionPointers;
 }
 
 void CodeThorn::CTAnalysis::setInterpreterMode(CodeThorn::InterpreterMode mode) {
@@ -2386,12 +2382,8 @@ bool CodeThorn::CTAnalysis::getSkipArrayAccesses() {
   return exprAnalyzer.getSkipArrayAccesses();
 }
 
-void CodeThorn::CTAnalysis::setIgnoreUndefinedDereference(bool skip) {
-  exprAnalyzer.setIgnoreUndefinedDereference(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreUndefinedDereference() {
-  return exprAnalyzer.getIgnoreUndefinedDereference();
+  return _ctOpt.ignoreUndefinedDereference;
 }
 
 void CodeThorn::CTAnalysis::set_finished(std::vector<bool>& v, bool val) {
@@ -2683,10 +2675,13 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
         getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
-        // no state can follow, return estateList (may be empty)
-        // TODO: create error state here?
         //return estateList;
-        return memoryUpdateList;
+        if(_ctOpt.nullPointerDereferenceKeepGoing) {
+          // no state can follow, but as requested keep going without effect
+        } else {
+          // no state can follow
+          return memoryUpdateList;
+        }
       } else if(lhsPointerValue.isTop()) {
         getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
         // specific case a pointer expr evaluates to top. Dereference operation
@@ -2858,9 +2853,22 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       ROSE_ASSERT(newCSet.size()==0);
       EState newEstate=createEState(newLabel,cs,newPState,newCSet);
       newEStateList.push_back(newEstate);
-    } else {
+    } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
+    } else {
+      // all other cases (assume evaluating to true or false, sane as top)
+      // pass on EState
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
     }
   }
   return newEStateList;

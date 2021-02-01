@@ -145,7 +145,13 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   SgNode* functionDef=getLabeler()->getNode(entryLabel);
   RoseAst ast(functionDef);
   for(auto node : ast) {
-    if(!isSgBasicBlock(node)) {
+    bool labeledNodeNotInCFG=
+      isSgForStatement(node)
+      ||isSgWhileStmt(node)
+      ||isSgDoWhileStmt(node)
+      ||isSgSwitchStatement(node)
+      ||isSgIfStmt(node);
+    if(!isSgBasicBlock(node)&&!labeledNodeNotInCFG) {
       Label lab=getLabeler()->getLabel(node);
       if(lab.isValid()) {
         fLabels.insert(lab);
