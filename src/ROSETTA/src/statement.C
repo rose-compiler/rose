@@ -88,7 +88,7 @@ Grammar::setUpStatements ()
   // test2017_47.C).  the purpose of this scope is similar to the unused FunctionParameterScope (above),
   // which was developed to support the case of "void foobar (int n, int array[n]);" type declarations
   // which are allowed in C99, but not in C++.  This nondefining (prototype) declaration works in ROSE,
-  // but is still assigned the scope of the function parameters to global scope (but not assigning symbols 
+  // but is still assigned the scope of the function parameters to global scope (but not assigning symbols
   // for them, so working OK, but is still not ideal).  The case of templates generating class declarations
   // (which in EDG are listed as proxy and nonreal classes) requires a better fix to support getting the
   // name qualification correct.  This is part of fixing a bug in the "backstroke" project (the last one
@@ -256,7 +256,7 @@ Grammar::setUpStatements ()
           WaitStatement,
           "IOStatement", "IO_STATEMENT", false);
 
-  // CR (9/25/2018): Fortran 2018 nodes related to synchronization
+  // Rasmussen (9/25/2018): Fortran 2018 nodes related to synchronization
      NEW_TERMINAL_MACRO (SyncAllStatement,     "SyncAllStatement",            "SYNC_ALL_STATEMENT" );
      NEW_TERMINAL_MACRO (SyncImagesStatement,  "SyncImagesStatement",         "SYNC_IMAGES_STATEMENT" );
      NEW_TERMINAL_MACRO (SyncMemoryStatement,  "SyncMemoryStatement",         "SYNC_MEMORY_STATEMENT" );
@@ -270,17 +270,17 @@ Grammar::setUpStatements ()
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
-  // CR (11/12/2018): Support for Jovial Compool modules
+  // Rasmussen (11/12/2018): Support for Jovial Compool modules
      NEW_TERMINAL_MACRO (JovialCompoolStatement, "JovialCompoolStatement", "JOVIAL_COMPOOL_STATEMENT" );
 
-  // CR (03/26/2019): Support for Jovial directives and define declarations
+  // Rasmussen (03/26/2019): Support for Jovial directives and define declarations
      NEW_TERMINAL_MACRO (JovialDefineDeclaration,  "JovialDefineDeclaration",  "JOVIAL_DEFINE_DECLARATION" );
      NEW_TERMINAL_MACRO (JovialDirectiveStatement, "JovialDirectiveStatement", "JOVIAL_DIRECTIVE_STATEMENT" );
 
-  // CR (5/17/2020): Jovial overlays are used to control memory layout.
+  // Rasmussen (5/17/2020): Jovial overlays are used to control memory layout.
      NEW_TERMINAL_MACRO (JovialOverlayDeclaration, "JovialOverlayDeclaration", "JOVIAL_OVERLAY_DECLARATION" );
 
-  // CR (10/22/2018): Node specific to Jovial for statements with a then construct.
+  // Rasmussen (10/22/2018): Node specific to Jovial for statements with a then construct.
      NEW_TERMINAL_MACRO (JovialForThenStatement, "JovialForThenStatement", "JOVIAL_FOR_THEN_STATEMENT");
 
 
@@ -355,7 +355,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (EquivalenceStatement,      "EquivalenceStatement",       "TEMP_Equivalence_Statement" );
      NEW_TERMINAL_MACRO (DerivedTypeStatement,      "DerivedTypeStatement",       "TEMP_Derived_Type_Statement" );
 
-  // CR (3/18/2019): New IR node for Jovial tables (arrays of structs)
+  // Rasmussen (3/18/2019): New IR node for Jovial tables (arrays of structs)
      NEW_TERMINAL_MACRO (JovialTableStatement,      "JovialTableStatement",       "TEMP_Jovial_Table_Statement" );
 
   // DQ (9/4/2007): Added DIMENSION statement (for array declaration support)
@@ -441,7 +441,7 @@ Grammar::setUpStatements ()
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
-  // CR (10/22/2018): Added JovialForThenStatement
+  // Rasmussen (10/22/2018): Added JovialForThenStatement
      NEW_NONTERMINAL_MACRO (ScopeStatement,
           Global                       | BasicBlock           | IfStmt                    | /* IfConstexprStatement   | */
           ForStatement                 | FunctionDefinition   |
@@ -544,6 +544,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaLengthClause, "AdaLengthClause", "ADA_LENGTH_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
@@ -565,13 +566,13 @@ Grammar::setUpStatements ()
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
-          AdaRecordRepresentationClause
+          AdaRecordRepresentationClause           | AdaLengthClause
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
-  // CR (9/20/2018): Added ImageControlStatement
-  // CR (7/11/2020): Changed StopOrPauseStatement to ProcessControlStatement to allow more variants
+  // Rasmussen (9/20/2018): Added ImageControlStatement
+  //           (7/11/2020): Changed StopOrPauseStatement to ProcessControlStatement to allow more variants
      NEW_NONTERMINAL_MACRO (Statement,
              ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
              LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
@@ -1003,7 +1004,7 @@ Grammar::setUpStatements ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-// CR (09/24/2020): Finishing implementation of SgFunctionParameterScope for Jovial
+// Rasmussen (09/24/2020): Finishing implementation of SgFunctionParameterScope for Jovial
      FunctionParameterScope.setFunctionPrototype( "HEADER_FUNCTION_PARAMETER_SCOPE", "../Grammar/Statement.code" );
      FunctionParameterScope.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      FunctionParameterScope.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
@@ -2501,7 +2502,7 @@ Grammar::setUpStatements ()
      CaseOptionStmt.setDataPrototype ( "std::string", "case_construct_name", " = \"\"",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // CR (8/21/2018): Added support for Jovial FALLTHRU option.
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
      CaseOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2559,7 +2560,7 @@ Grammar::setUpStatements ()
      DefaultOptionStmt.setDataPrototype ( "std::string", "default_construct_name", " = \"\"",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // CR (8/21/2018): Added support for Jovial FALLTHRU option.
+  // Rasmussen (8/21/2018): Added support for Jovial FALLTHRU option.
      DefaultOptionStmt.setDataPrototype ( "bool", "has_fall_through", " = false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -3126,6 +3127,13 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
+     AdaLengthClause.setFunctionPrototype("HEADER_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
+     AdaLengthClause.setDataPrototype ( "SgTypeTraitBuiltinOperator*", "attribute", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaLengthClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
 
@@ -3370,7 +3378,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Fortran 95 specific construct (different from C/C++ for loop).
-  // CR (10/25/2018): Added forall_statement_kind_enum to allow specifying as a DO CONCURRENT statement
+  // Rasmussen (10/25/2018): Added forall_statement_kind_enum to allow specifying as a DO CONCURRENT statement
      ForAllStatement.setFunctionPrototype ( "HEADER_FORALL_STATEMENT", "../Grammar/Statement.code" );
      ForAllStatement.setDataPrototype ( "SgExprListExp*", "forall_header", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
@@ -3386,7 +3394,7 @@ Grammar::setUpStatements ()
                                         "forall_statement_kind", "= SgForAllStatement::e_forall_statement",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // CR (10/22/2018): Added JovialForThenStatement; An SgForStatement is used for other
+  // Rasmussen (10/22/2018): Added JovialForThenStatement; An SgForStatement is used for other
   // forms of Jovial for statements to allow analysis be the same as C.
      JovialForThenStatement.setFunctionPrototype ( "HEADER_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
      JovialForThenStatement.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
@@ -3401,7 +3409,7 @@ Grammar::setUpStatements ()
                                          "loop_statement_type", "= SgJovialForThenStatement::e_unknown",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
 
-  // CR (11/12/2018): Added to support Jovial COMPOOL modules
+  // Rasmussen (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionPrototype ( "HEADER_JOVIAL_COMPOOL_STATEMENT", "../Grammar/Statement.code" );
      JovialCompoolStatement.setDataPrototype     ( "SgName", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3423,7 +3431,7 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/14/2007): Added new data members to Fortran IR nodes.
-  // CR (7/11/2020): Added F2018 addition, quiet
+  // Rasmussen (7/11/2020): Added F2018 addition, quiet
      ProcessControlStatement.setFunctionPrototype ( "HEADER_PROCESS_CONTROL_STATEMENT", "../Grammar/Statement.code" );
      ProcessControlStatement.setDataPrototype     ( "SgProcessControlStatement::control_enum",
                                                     "control_kind", "= SgProcessControlStatement::e_unknown",
@@ -3448,7 +3456,7 @@ Grammar::setUpStatements ()
      IOStatement.setDataPrototype ( "SgExpression*", "iomsg", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // CR (9/20/2018): Added F2018 image control statements
+  // Rasmussen (9/20/2018): Added F2018 image control statements
      ImageControlStatement.setFunctionPrototype ( "HEADER_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
      ImageControlStatement.setDataPrototype     ( "SgImageControlStatement::image_control_statement_enum", "image_control_statement", "= SgImageControlStatement::e_unknown",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3706,14 +3714,14 @@ Grammar::setUpStatements ()
      AssignedGotoStatement.setFunctionPrototype      ("HEADER_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
-  // CR (3/18/2019): Added new IR node for Jovial support
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
      JovialTableStatement.setFunctionPrototype       ("HEADER_JOVIAL_TABLE_STATEMENT",  "../Grammar/Statement.code" );
 
   // DQ (7/21/2007): More IR nodes required for Fortran support
      BlockDataStatement.setDataPrototype    ( "SgBasicBlock*", "body", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // CR (8/3/2020): Added implicit_type enum for F2018 syntax (implicit_none becomes redundant)
+  // Rasmussen (8/3/2020): Added implicit_type enum for F2018 syntax (implicit_none becomes redundant)
      ImplicitStatement.setDataPrototype("bool", "implicit_none", "= false",
                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ImplicitStatement.setDataPrototype("SgImplicitStatement::implicit_spec_enum",
@@ -3775,7 +3783,7 @@ Grammar::setUpStatements ()
      DerivedTypeStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // CR (3/18/2019): Added new IR node for Jovial support
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
      JovialTableStatement.setDataPrototype ( "SgExpression*", "table_entry_size", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JovialTableStatement.setDataPrototype ( "bool", "has_table_entry_size", "= false",
@@ -3904,7 +3912,7 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 #endif
 
-  // CR (03/26/2019): Added support for Jovial directives and define declarations.
+  // Rasmussen (03/26/2019): Added support for Jovial directives and define declarations.
 
      JovialDirectiveStatement.setFunctionPrototype ( "HEADER_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -4249,6 +4257,7 @@ Grammar::setUpStatements ()
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with
@@ -4359,7 +4368,7 @@ Grammar::setUpStatements ()
 
      IOStatement.setFunctionSource              ("SOURCE_IO_STATEMENT", "../Grammar/Statement.code" );
 
-  // CR (9/20/2018): Added F2018 image control statements
+  // Rasmussen (9/20/2018): Added F2018 image control statements
      ImageControlStatement.setFunctionSource    ("SOURCE_IMAGE_CONTROL_STATEMENT", "../Grammar/Statement.code" );
 
   // Derived from ImageControlStatement
@@ -4421,7 +4430,7 @@ Grammar::setUpStatements ()
      AssignedGotoStatement.setFunctionSource      ("SOURCE_ASSIGNED_GOTO_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
-  // CR (3/18/2019): Added new IR node for Jovial support
+  // Rasmussen (3/18/2019): Added new IR node for Jovial support
      JovialTableStatement.setFunctionSource       ("SOURCE_JOVIAL_TABLE_STATEMENT", "../Grammar/Statement.code" );
 
      NamelistStatement.setFunctionSource          ("SOURCE_NAMELIST_STATEMENT", "../Grammar/Statement.code" );
@@ -4434,7 +4443,7 @@ Grammar::setUpStatements ()
      ForAllStatement.setFunctionSource            ( "SOURCE_FORALL_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
-  // CR (11/12/2018): Added to support Jovial COMPOOL modules
+  // Rasmussen (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionSource     ( "SOURCE_JOVIAL_COMPOOL_STATEMENT",  "../Grammar/Statement.code" );
      JovialForThenStatement.setFunctionSource     ( "SOURCE_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
 
