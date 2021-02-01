@@ -2830,7 +2830,6 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       i!=evalResultList.end();
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
-    cout<<"DEBUG: evalResult:"<<evalResult.result.toString()<<endl;
     if(evalResult.isBot()) {
       SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
