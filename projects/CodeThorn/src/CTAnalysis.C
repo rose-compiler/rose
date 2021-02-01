@@ -2830,6 +2830,7 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       i!=evalResultList.end();
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
+    cout<<"DEBUG: evalResult:"<<evalResult.result.toString()<<endl;
     if(evalResult.isBot()) {
       SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
@@ -2853,9 +2854,22 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       ROSE_ASSERT(newCSet.size()==0);
       EState newEstate=createEState(newLabel,cs,newPState,newCSet);
       newEStateList.push_back(newEstate);
-    } else {
+    } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
+    } else {
+      // all other cases (assume evaluating to true or false, sane as top)
+      // pass on EState
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
     }
   }
   return newEStateList;
