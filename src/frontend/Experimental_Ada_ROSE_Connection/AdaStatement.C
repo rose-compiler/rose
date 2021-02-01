@@ -1216,6 +1216,141 @@ namespace
   };
 
 
+  struct PragmaCreator
+  {
+      typedef std::vector<SgPragmaDeclaration*> result_container;
+
+      explicit
+      PragmaCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == A_Pragma);
+        logKind("A_Pragma");
+
+        Pragma_Struct&       pragma = el.The_Union.The_Pragma;
+        std::string          name{pragma.Pragma_Name_Image};
+        ElemIdRange          argRange = idRange(pragma.Pragma_Argument_Associations);
+        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
+        SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args);
+
+        attachSourceLocation(sgnode, el, ctx);
+        attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
+        res.push_back(&sgnode);
+      }
+
+      operator result_container() && { return std::move(res); }
+
+    private:
+      result_container res;
+      AstContext       ctx;
+  };
+
+
+  struct SourceLocationComparator
+  {
+    bool operator()(Sg_File_Info* lhs, Sg_File_Info* rhs) const
+    {
+      ROSE_ASSERT(lhs && rhs);
+
+      if (lhs->get_line() < rhs->get_line())
+        return true;
+
+      if (rhs->get_line() < lhs->get_line())
+        return false;
+
+      if (lhs->get_col() < rhs->get_col())
+        return true;
+
+      return false;
+    }
+
+    bool operator()(SgLocatedNode* n, Sg_File_Info* rhs) const
+    {
+      ROSE_ASSERT(n);
+
+      return (*this)(n->get_startOfConstruct(), rhs);
+    }
+  };
+
+
+  struct PragmaPlacer
+  {
+      explicit
+      PragmaPlacer(SgScopeStatement& one)
+      : all(), last(one)
+      {
+        copyToAll(one);
+      }
+
+      PragmaPlacer(SgScopeStatement& one, SgScopeStatement& two)
+      : all(), last(two)
+      {
+        copyToAll(one); copyToAll(two);
+      }
+
+      template <class Iterator>
+      void copyToAll(Iterator begin, Iterator limit)
+      {
+        std::copy(begin, limit, std::back_inserter(all));
+      }
+
+      void copyToAll(SgScopeStatement& lst)
+      {
+        if (lst.containsOnlyDeclarations())
+        {
+          SgDeclarationStatementPtrList& stmts = lst.getDeclarationList();
+
+          copyToAll(stmts.begin(), stmts.end());
+        }
+        else
+        {
+          SgStatementPtrList& stmts = lst.getStatementList();
+
+          copyToAll(stmts.begin(), stmts.end());
+        }
+      }
+
+
+      void operator()(SgPragmaDeclaration* pragma) const
+      {
+        typedef std::vector<SgStatement*>::const_iterator const_iterator;
+        ROSE_ASSERT(pragma);
+
+        const_iterator pos = std::lower_bound( all.begin(), all.end(),
+                                               pragma->get_startOfConstruct(),
+                                               SourceLocationComparator{}
+                                             );
+
+        if (pos != all.end())
+          SageInterface::insertStatementBefore(*pos, pragma);
+        else
+          SageInterface::appendStatement(pragma, &last);
+      }
+
+    private:
+      std::vector<SgStatement*> all;
+      SgScopeStatement&         last;
+  };
+
+  template <class... Scopes>
+  void placePragmas(Pragma_Element_ID_List pragmalst, AstContext ctx, Scopes... scopes)
+  {
+    typedef PragmaCreator::result_container PragmaNodes;
+
+    ElemIdRange pragmas = idRange(pragmalst);
+
+    if (pragmas.empty()) return; // early exit to prevent scope flattening
+
+    PragmaNodes pragmadcls = traverseIDs(pragmas, elemMap(), PragmaCreator{ctx});
+
+    // retroactively place pragmas according to their source position information
+    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{scopes...});
+  }
+
+
   bool isForwardLoop(Element_Struct& forvar)
   {
     ROSE_ASSERT (forvar.Element_Kind == A_Declaration);
@@ -1311,8 +1446,9 @@ namespace
 
           recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
+
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
           */
           break;
@@ -1331,8 +1467,9 @@ namespace
           recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
+
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
                 bool                      Is_Name_Repeated;
           */
@@ -1371,6 +1508,8 @@ namespace
             traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
           }
 
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
+
           /* unused fields:
                Pragma_Element_ID_List Pragmas;
                Element_ID             Corresponding_End_Name;
@@ -1399,10 +1538,15 @@ namespace
           if (tryblk)
           {
             traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
+
+            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
+          }
+          else
+          {
+            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode));
           }
 
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
                 bool                      Is_Name_Repeated;
                 bool                      Is_Declare_Block;
@@ -1687,8 +1831,8 @@ namespace
 
     traverseIDs(range, elemMap(), StmtCreator{ctx.scope(body)});
 
+    placePragmas(ex.Pragmas, ctx, std::ref(body));
     /* unused fields:
-         Pragma_Element_ID_List Pragmas;
     */
   }
 
@@ -1908,7 +2052,6 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   ROSE_ASSERT(clause.Clause_Kind == A_Representation_Clause);
 
   Representation_Clause_Struct& repclause = clause.Representation_Clause;
-  SgType&                       tyrep     = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
 
   switch (repclause.Representation_Clause_Kind)
   {
@@ -1916,6 +2059,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       {
         logKind("A_Record_Representation_Clause");
 
+        SgType&                 tyrep = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
         SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
         SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
         SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
@@ -1926,6 +2070,9 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         ctx.scope().append_statement(&sgnode);
 
         traverseIDs(range, elemMap(), ComponentClauseCreator{sgnode, ctx});
+
+        // \todo requires IR change
+        //~ placePragmas(repclause.Pragmas, ctx, std::ref{sgnode.get_block()});
         /* unhandled fields:
              Pragma_Element_ID_List      Pragmas
          */
@@ -1933,6 +2080,19 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       }
 
     case An_Attribute_Definition_Clause:           // 13.3
+      {
+        SgTypeTraitBuiltinOperator& lenattr = getAttributeExprID(repclause.Representation_Clause_Name, ctx);
+        SgExpression&               lenexpr = getExprID(repclause.Representation_Clause_Expression, ctx);
+        SgAdaLengthClause&          sgnode  = mkAdaLengthClause(lenattr, lenexpr);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+        /* unhandled fields:
+             Pragma_Element_ID_List      Pragmas
+         */
+        break;
+      }
+
     case An_Enumeration_Representation_Clause:     // 13.4
     case An_At_Clause:                             // J.7
     case Not_A_Representation_Clause:              // An unexpected element
@@ -2135,8 +2295,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true /* private items */});
         }
 
+        placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));
+
         /* unused nodes:
-               Pragma_Element_ID_List         Pragmas;
                Element_ID                     Corresponding_End_Name;
                bool                           Is_Name_Repeated;
                Declaration_ID                 Corresponding_Declaration;
@@ -2176,6 +2337,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgbody)});
         }
+
+        placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
 
         /*
          * unused nodes:
@@ -2280,7 +2443,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         if (trystmt)
         {
           traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(declblk), SG_DEREF(trystmt)});
+          placePragmas(decl.Pragmas, ctx, std::ref(declblk), std::ref(stmtblk));
         }
+        else
+        {
+          placePragmas(decl.Pragmas, ctx, std::ref(declblk));
+        }
+
 
         /* unhandled field
            Declaration_ID                 Body_Block_Statement;
@@ -2627,6 +2796,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
+
+        placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
 
         /* unused fields:
              bool                           Has_Task;

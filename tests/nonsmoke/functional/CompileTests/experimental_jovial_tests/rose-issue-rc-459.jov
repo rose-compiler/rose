@@ -9,6 +9,6 @@ START
       TABLE arr (*,*) a'cell;
       ITEM ptr P a'cell;
       ptr = LOC(arr(0,0));
-      val @ ptr = 0.;
+      val @ ptr = (* U *) (0.);
     END
 TERM

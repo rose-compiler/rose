@@ -484,12 +484,8 @@ void CodeThorn::CTAnalysis::setPrintDetectedViolations(bool flag) {
   exprAnalyzer.setPrintDetectedViolations(flag);
 }
 
-void CodeThorn::CTAnalysis::setIgnoreFunctionPointers(bool skip) {
-  exprAnalyzer.setIgnoreFunctionPointers(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreFunctionPointers() {
-  return exprAnalyzer.getIgnoreFunctionPointers();
+  return _ctOpt.ignoreFunctionPointers;
 }
 
 void CodeThorn::CTAnalysis::setInterpreterMode(CodeThorn::InterpreterMode mode) {
@@ -1317,8 +1313,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           return createEState(targetLabel,cs,newPState,cset);
         }
         if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
-          // TODO: initialization of references not supported yet
-          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
           SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
           ROSE_ASSERT(assignInit);
           SgExpression* assignInitOperand=assignInit->get_operand_i();
@@ -1326,7 +1321,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           //list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(assignInitOperand,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateLExpression(assignInitOperand,currentEState);
 
-          SAWYER_MESG(logger[INFO])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
           if(res.size()>1) {
             SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
             SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
@@ -1345,7 +1340,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             return createEState(targetLabel,cs,newPState,cset);
           }
           SingleEvalResultConstInt evalResult=*res.begin();
-          SAWYER_MESG(logger[INFO])<<"rhs (reference init) result: "<<evalResult.result.toString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"rhs (reference init) result: "<<evalResult.result.toString()<<endl;
             
           EState estate=evalResult.estate;
           PState newPState=*estate.pstate();
@@ -1966,7 +1961,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
       exit(1);
     } else {
       SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
-      SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3d."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3d."<<endl;
     }
   } else {
     // temporary to remain compatible
@@ -2000,7 +1995,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     ROSE_ASSERT(getFlow());
     getFlow()->setStartLabelSet(entryLabels);
   }
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3i."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3i."<<endl;
 
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
@@ -2051,7 +2046,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3h1."<<endl;
+    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
 
 #if 1
     // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
@@ -2102,7 +2097,8 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     ROSE_ASSERT(initialEState);
     variableValueMonitor.init(initialEState);
     addToWorkList(initialEState);
-    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
   } else {
     LabelSet startLabels=getFlow()->getStartLabelSet();
     cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
@@ -2113,7 +2109,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
-      SAWYER_MESG(logger[INFO]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[TRACE]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
     }
   }
   
@@ -2386,12 +2382,8 @@ bool CodeThorn::CTAnalysis::getSkipArrayAccesses() {
   return exprAnalyzer.getSkipArrayAccesses();
 }
 
-void CodeThorn::CTAnalysis::setIgnoreUndefinedDereference(bool skip) {
-  exprAnalyzer.setIgnoreUndefinedDereference(skip);
-}
-
 bool CodeThorn::CTAnalysis::getIgnoreUndefinedDereference() {
-  return exprAnalyzer.getIgnoreUndefinedDereference();
+  return _ctOpt.ignoreUndefinedDereference;
 }
 
 void CodeThorn::CTAnalysis::set_finished(std::vector<bool>& v, bool val) {
@@ -2683,10 +2675,13 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
         getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
-        // no state can follow, return estateList (may be empty)
-        // TODO: create error state here?
         //return estateList;
-        return memoryUpdateList;
+        if(_ctOpt.nullPointerDereferenceKeepGoing) {
+          // no state can follow, but as requested keep going without effect
+        } else {
+          // no state can follow
+          return memoryUpdateList;
+        }
       } else if(lhsPointerValue.isTop()) {
         getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
         // specific case a pointer expr evaluates to top. Dereference operation
@@ -2836,11 +2831,17 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
     if(evalResult.isBot()) {
-      SAWYER_MESG(logger[ERROR])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
-      SAWYER_MESG(logger[ERROR])<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
-      exit(1);
-    }
-    if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
+      SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT at: "
+                               <<ProgramLocationsReport::programLocation(getLabeler(),estate->label())
+                               <<endl;
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
+    } else if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
@@ -2852,9 +2853,22 @@ list<EState> CodeThorn::CTAnalysis::transferTrueFalseEdge(SgNode* nextNodeToAnal
       ROSE_ASSERT(newCSet.size()==0);
       EState newEstate=createEState(newLabel,cs,newPState,newCSet);
       newEStateList.push_back(newEstate);
-    } else {
+    } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
+    } else {
+      // all other cases (assume evaluating to true or false, sane as top)
+      // pass on EState
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
     }
   }
   return newEStateList;
@@ -2869,4 +2883,6 @@ void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptio
     cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
     exit(1);
   }
+  SAWYER_MESG(logger[TRACE])<<"TRACE: selected function resolution mode: "<<CFAnalysis::functionResolutionMode<<endl;
+
 }

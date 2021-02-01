@@ -1,0 +1,17 @@
+START
+
+DEF PROC logic U;
+  BEGIN
+    CONSTANT ITEM aa F = 3.3;
+    CONSTANT ITEM bb F = 13.0;
+    ITEM flag B;
+
+    flag = aa <> 0.0 AND bb >= 12.0 AND TRUE;
+
+    if flag; logic = 0;
+    else;    logic = 1;
+  END
+
+TERM
+
+

@@ -78,4 +78,17 @@ PASSING_TESTS :=                       \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   scopequal.adb                        \
+  defining_character_literal.adb       \
+  defining_enumeration_literal.adb     \
+  defining_operator_symbol.ads         \
+  private_extension_declaration.ads    \
+  function_body_stub.ads               \
+  package_renaming_declaration.ads     \
+  procedure_body_stub.ads              \
+  representation_clause_2.ads          \
+  pragmas.adb                          \
+  procedure_pragma.adb                 \
+  package_pragma.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \ 
   EndOfList

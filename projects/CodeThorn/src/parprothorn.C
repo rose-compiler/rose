@@ -315,8 +315,6 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
     analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
@@ -390,9 +388,6 @@ int main( int argc, char * argv[] ) {
     RewriteSystem rewriteSystem;
     if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
-    }
-    if(ctOpt.ignoreUndefinedDereference) {
-      analyzer->setIgnoreUndefinedDereference(true);
     }
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);

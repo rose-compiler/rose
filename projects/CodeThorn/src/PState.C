@@ -250,7 +250,6 @@ AbstractValueSet PState::getVariableIds() const {
   return varIdSet;
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -367,6 +366,10 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
     }
     return readSummary;
   } else {
+    if(find(memLoc)==end()) {
+      // address is not reserved, return top
+      return AbstractValue::createTop();
+    }
     AbstractValue val=((*(const_cast<PState*>(this)))[memLoc]);
     return val;
   }

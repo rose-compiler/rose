@@ -31,15 +31,18 @@ ASIS_SPEC_PASS_TESTS := \
         fixed_point_definition.ads \
         floating_point_definition.ads \
 	function_declaration.ads \
+        generic_package_renaming_declaration.ads \
         modular_type_definition.ads \
 	ordinary_type_declaration.ads \
 	ordinary_type_declaration_range_constraint.ads \
         package_pragma.ads \
+        package_renaming_declaration.ads \
 	package_with_body.ads \
 	parameter_declaration.ads \
         private_extension_declaration.ads \
 	procedure_declaration.ads \
         protected_type_declaration.ads \
+        protected_body_declaration.ads \
         representation_clause.ads \
 	selected_component.ads \
         single_protected_declaration.ads \
@@ -79,14 +82,18 @@ ASIS_BODY_PASS_TESTS := \
 	delay_relative.adb \
 	delay_until.adb \
         discriminant.adb \
+        entry_body_declaration.adb \
 	entry_call.adb \
+        entry_index_specification.adb \
 	enumeration.adb \
 	exit_statement.adb \
 	explicit_deref.adb \
 	extension_aggregate.adb \
 	for_loop_statement.adb \
+        function_body_stub.adb \
 	function_call.adb \
 	function_declaration.adb \
+        function_renaming.adb \
 	goto_loop.adb \
 	goto_loop_v2.adb \
 	hello_world.adb \
@@ -98,9 +105,12 @@ ASIS_BODY_PASS_TESTS := \
 	operator.adb \
 	package_with_body.adb \
 	pragmas.adb \
+        procedure_body_stub.adb \
 	procedure_call.adb \
 	procedure_declaration.adb \
         procedure_pragma.adb \
+        procedure_renaming.adb \
+        protected_body_declaration.adb \
 	qualified_expression.adb \
 	raise_statement.adb \
         requeue_statement_2.adb \

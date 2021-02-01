@@ -118,12 +118,14 @@ namespace CodeThorn {
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
           locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+          // CONTINUE
         } else {
           locationsCSVFileData<<"unknown-location"<<endl;
         }
         locationsCSVFileData<<endl;
       }
-      if(!CppStdUtilities::writeFile(ctOpt.deadCodeAnalysisFileName, locationsCSVFileData.str())) {
+      string s=locationsCSVFileData.str();
+      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,ctOpt.deadCodeAnalysisFileName, s)) {
         cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
       } else {
         if(!ctOpt.quiet)
@@ -144,17 +146,27 @@ namespace CodeThorn {
       std::uint32_t constFalseCnt=0;
       for(auto p : map) {
         Label lab=p.first;
-        bool value=p.second;
-        locationsCSVFileData<<"opaque-predicate,";
-        if(value) {
-          constTrueCnt++;
-          locationsCSVFileData<<"true,";
-        } else {
-          constFalseCnt++;
-          locationsCSVFileData<<"false,";
+        BoolLattice value=p.second;
+        if(value.isTop()) {
+          continue;
         }
         ROSE_ASSERT(analyzer->getLabeler());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
+        SgNode* parent=node->get_parent();
+        if(isSgWhileStmt(parent))
+          continue;
+        if(value.isTrue()) {
+          constTrueCnt++;
+          locationsCSVFileData<<"opaque-predicate,";
+          locationsCSVFileData<<"true,";
+        } else if(value.isFalse()){
+          constFalseCnt++;
+          locationsCSVFileData<<"opaque-predicate,";
+          locationsCSVFileData<<"false,";
+        } else {
+          // bot?
+          continue;
+        }
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
           locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
@@ -168,7 +180,7 @@ namespace CodeThorn {
       printSeparationLine();
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
-        if(!CppStdUtilities::writeFile(fileName, locationsCSVFileData.str())) {
+        if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {
           cerr<<"Error: cannot write file "<<fileName<<endl;
         } else {
           if(!ctOpt.quiet)
@@ -185,8 +197,8 @@ namespace CodeThorn {
   void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
-      // exception: skip opaque preducate analysis, because it uses it's own format
-      if(analysisSel==ANALYSIS_OPAQUE_PREDICATE)
+      // exception: skip some analysis, because they use their own format
+      if(analysisSel==ANALYSIS_OPAQUE_PREDICATE||analysisSel==ANALYSIS_DEAD_CODE)
         continue;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
@@ -378,7 +390,7 @@ namespace CodeThorn {
 
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
     stringstream cgNodes;
-    string nodeColor;
+    string csvEntryType;
     int numFalsifiedFunctions=0;
     int numUnverifiedFunctions=0;
     int numVerifiedFunctions=0;
@@ -386,17 +398,22 @@ namespace CodeThorn {
     int numUnreachableFunctions=0;
     for (auto entryLabel : functionEntryLabels ) {
       switch(fMap[entryLabel]) {
-      case FALSIFIED: nodeColor="violated";numFalsifiedFunctions++;break;
-      case UNVERIFIED: nodeColor="unverified";numUnverifiedFunctions++;break;
-      case VERIFIED: nodeColor="verified";numVerifiedFunctions++;break;
-      case INCONSISTENT: nodeColor="inconsistent";numInconsistentFunctions++;break;
-      case UNREACHABLE: nodeColor="dead";numUnreachableFunctions++;break;
+      case FALSIFIED: csvEntryType="unsafe";numFalsifiedFunctions++;break;
+      case UNVERIFIED: csvEntryType="undecided";numUnverifiedFunctions++;break;
+      case VERIFIED: csvEntryType="safe";numVerifiedFunctions++;break;
+      case INCONSISTENT: csvEntryType="inconsistent";numInconsistentFunctions++;break;
+      case UNREACHABLE: csvEntryType="dead";numUnreachableFunctions++;break;
       }
       SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       std::string functionName=SgNodeHelper::getFunctionName(node);
-      //      if(nodeColor!="inconsistent")
-      cgNodes<<fileName<<","<<functionName<<","<<nodeColor<<endl;
+      //      if(csvEntryType!="inconsistent")
+      if(analysisName!="dead-code") {
+        cgNodes<<fileName<<","<<functionName<<","<<csvEntryType<<endl;
+      } else {
+        if(csvEntryType=="dead")
+          cgNodes<<fileName<<","<<functionName<<","<<csvEntryType<<endl;
+      }
     }
 
     // print stats
