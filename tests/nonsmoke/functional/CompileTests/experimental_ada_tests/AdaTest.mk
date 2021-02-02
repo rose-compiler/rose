@@ -13,74 +13,79 @@
 #                  
 ########################################################################################3#
 
-ADA_TRANSLATOR_PASSING_TESTS :=        
+ADA_TRANSLATOR_PASSING_TESTS :=        \
+  block_statement.adb                  \
+  case_statement.adb                   \
+  component_declaration.ads            \
+  constant_declaration.ads             \
+  constants.ads                        \
+  delay_relative.adb                   \
+  empty_package.ads                    \
+  exit_statement.adb                   \
+  fib.adb                              \
+  for_loop.adb                         \
+  for_loop_statement.adb               \
+  function_declaration.adb             \
+  function_declaration.ads             \
+  goto_loop.adb                        \
+  if_statement.adb                     \
+  increment.adb                        \
+  loop_exit.adb                        \
+  loop_statement.adb                   \
+  minimal.adb                          \
+  named.ads                            \
+  operator.adb                         \
+  package_with_body.adb                \
+  package_with_body.ads                \
+  parameter_declaration.ads            \
+  procedure_declaration.adb            \
+  recursive_call.adb                   \
+  selected_component.ads               \
+  simpleada.ads                        \
+  unit_1.adb                           \
+  unit_3.ads                           \
+  variable_declaration.ads             \
+  while_loop_statement.adb 
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   accept_statement.adb                 \
   array_declare_2.ads                  \
   async_transfer_select.adb            \
   based_numbers.ads                    \
-  block_statement.adb                  \
-  case_statement.adb                   \
   complex.ads                          \
-  component_declaration.ads            \
-  constant_declaration.ads             \
-  constants.ads                        \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
-  delay_relative.adb                   \
   derived_record.ads                   \
-  empty_package.ads                    \
   entry_call.adb                       \
   entry_declaration.ads                \
   exception_declaration.ads            \
   exception_rename.ads                 \
-  exit_statement.adb                   \
-  fib.adb                              \
   floating_point_definition.ads        \
-  for_loop.adb                         \
-  for_loop_statement.adb               \
   function_body_stub.ads               \
-  function_declaration.adb             \
-  function_declaration.ads             \
-  goto_loop.adb                        \
   gototest.adb                         \
   gototest.ads                         \
-  if_statement.adb                     \
-  increment.adb	                       \
-  loop_exit.adb                        \
-  loop_statement.adb                   \
-  minimal.adb                          \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   myarray.ads                          \
-  myarray.adb                          \ 
-  named.ads                            \
+  myarray.adb                          \
   nullrecord.ads                       \
   opaque.ads                           \
-  operator.adb                         \
   ordinary_type_declaration.ads        \
   package_pragma.ads                   \
   package_renaming_declaration.ads     \
-  package_with_body.adb                \
-  package_with_body.ads                \
-  parameter_declaration.ads            \
   parent-child.ads                     \
   parent.ads                           \
   pragmas.adb                          \
   private_extension_declaration.ads    \
-  procedure_body_stub.ads              \ 
+  procedure_body_stub.ads              \
   procedure_call.adb                   \
-  procedure_declaration.adb            \
   procedure_declaration.ads            \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
-  recursive_call.adb                   \
   representation_clause.ads            \
   representation_clause_2.ads          \
   scopequal.adb                        \
-  selected_component.ads               \
   short_circuit.adb                    \
   short_circuit_v2.adb                 \
   simple_array_expressions.adb         \
@@ -91,7 +96,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
   simpleada-io.ads                     \
-  simpleada.ads                        \
   some_modes.ads                       \
   subtypes.ads                         \
   tagged_definition.ads                \
@@ -102,11 +106,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   task_with_body.ads                   \
   type_conversion.adb                  \
   unconstrained_array_definition.ads   \
-  unit_1.adb                           \
-  unit_3.ads                           \
-  variable_declaration.ads             \
-  week_string_literal.ads              \
-  while_loop_statement.adb             
+  week_string_literal.ads              
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=              \
@@ -124,7 +124,7 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           
 
-ROSE_FAILING_ADA_TESTS :=                           \ 
+ROSE_FAILING_ADA_TESTS :=                           \
   access_to_object.ads                              \
   access_to_subprogram.ads                          \
   alignment_component_clause.adb                    \
@@ -190,7 +190,7 @@ ASIS_FAILING_TESTS :=                               \
   all_modes.ads                                     \
   complex.adb                                       
 
-#defining all Ada test files                          
+#defining all Ada test files                         
 ADA_TESTS :=                                        \
   $(ASIS_PASSING_TESTS)                             \
   $(ASIS_FAILING_TESTS)                             

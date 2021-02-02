@@ -63,14 +63,17 @@ print:
 	@echo "DOT_SPEC_PASS_FILES = $(DOT_SPEC_PASS_FILES)"
 	@echo "DOT_BODY_PASS_FILES = $(DOT_BODY_PASS_FILES)"
 
+check-test-number:
+	@test "$(words $(ASIS_PASSING_TESTS))" = "$(shell ls $(DOT_OPTPUT)/*.dot | wc -l)" \
+         || { echo $(words $(ASIS_PASSING_TESTS)) tests but only $(shell ls $(DOT_OPTPUT)/*.dot | wc -l) dot files generated; exit 2; } \
+         && { echo Total $(words $(ASIS_PASSING_TESTS)) passing tests and $(words $(ASIS_FAILING_TESTS)) failing tests; }
+
 check-local: 
 	@echo "Tests ASIS."
 	@$(MAKE) $(DOT_FILES)
 	@echo "Compare Dot files."
 	@$(MAKE) $(PASSING_DOT_DIFF)
-	@test "$(words $(ASIS_PASSING_TESTS))" = "$(shell ls $(DOT_OPTPUT)/*.dot | wc -l)" \
-         || { echo $(words $(ASIS_PASSING_TESTS)) tests but only $(shell ls $(DOT_OPTPUT)/*.dot | wc -l) dot files generated; exit 2; } \
-         && { echo Total $(words $(ASIS_PASSING_TESTS)) passing tests and $(words $(ASIS_FAILING_TESTS)) failing tests; }
+	@$(MAKE) check-test-number
 
 .PHONY: clean-local
 clean-local:
