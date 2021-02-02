@@ -257,6 +257,7 @@ namespace
     if (res == nullptr)
     {
       logError() << "getParentRecordDecl: " << typeid(*basenode).name() << std::endl;
+      ROSE_ASSERT(false);
     }
 
     return SG_DEREF(res);
@@ -330,8 +331,9 @@ namespace
              unused fields: (derivedTypeDef)
                 Declaration_List     Implicit_Inherited_Declarations;
           */
+          SgType& basetype = getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
 
-          res.n = &getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
+          res.n = &mkAdaDerivedType(basetype);
           break;
         }
 

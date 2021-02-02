@@ -126,6 +126,12 @@ mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr)
   return mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
 }
 
+SgAdaDerivedType&
+mkAdaDerivedType(SgType& basetype)
+{
+  return mkNonSharedTypeNode<SgAdaDerivedType>(&basetype);
+}
+
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
@@ -943,9 +949,11 @@ mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range
 SgAdaRecordRepresentationClause&
 mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
 {
-  SgAdaRecordRepresentationClause& sgnode = mkLocatedNode<SgAdaRecordRepresentationClause>(&record, &align);
+  SgBasicBlock&                    elems = SG_DEREF(sb::buildBasicBlock());
+  SgAdaRecordRepresentationClause& sgnode = mkLocatedNode<SgAdaRecordRepresentationClause>(&record, &align, &elems);
 
   align.set_parent(&sgnode);
+  elems.set_parent(&sgnode);
   return sgnode;
 }
 

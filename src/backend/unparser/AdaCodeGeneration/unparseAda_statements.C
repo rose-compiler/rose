@@ -843,13 +843,17 @@ namespace
 
     void handle(SgAdaRecordRepresentationClause& n)
     {
-      SgClassType& rec = SG_DEREF(n.get_recordType());
+      SgClassType&  rec = SG_DEREF(n.get_recordType());
+      SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
       prn(rec.get_name());
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
-      list(n.get_components());
+
+      // do not unparse the block like a normal block..
+      // it just contains a sequence of clauses and declarations.
+      list(blk.get_statements());
       prn("end record");
       prn(STMT_SEP);
     }
@@ -1238,8 +1242,8 @@ namespace
   {
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)           { res = ReturnType("type",    " new"); }
-    void handle(SgAdaSubtype&)     { res = ReturnType("subtype", ""); }
+    void handle(SgType&)           { res = ReturnType("subtype", ""); }
+    void handle(SgAdaDerivedType&) { res = ReturnType("type",    " new"); }
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
