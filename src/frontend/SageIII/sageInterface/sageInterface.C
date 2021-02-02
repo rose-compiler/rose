@@ -15692,6 +15692,9 @@ PreprocessingInfo* SageInterface::attachComment(
                mytype = PreprocessingInfo::CplusplusStyleComment;
                resetPositionInfo = true;
                break;
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration: comment = "#ifndef " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorDefineDeclaration: comment = "#define " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:  comment = "#endif" + (content.empty() ? "\n" : (" /* " + content + " */\n")); break;
 
           default:
              {
