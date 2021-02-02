@@ -39,6 +39,7 @@ include $(srcdir)/passing-tests-list.mk
 #~ include $(srcdir)/rose-backend-todo-list.mk
 #~ include $(srcdir)/rose-frontend-todo-list.mk
 #~ include $(srcdir)/asis-todo-list.mk
+include $(srcdir)/AdaTest.mk
 
 NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
   comm.ads                             \
@@ -50,7 +51,7 @@ NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
 ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
-TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
+TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(ROSE_PASSING_ADA_TESTS))
 
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
@@ -93,6 +94,11 @@ $(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER
 $(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
+check-test-number:
+	@test "$(words $(ADA_TESTS))" = "$(shell ls $(srcdir)/tests/*.ad[b,s] | wc -l)" \
+         || { echo $(shell ls $(srcdir)/tests/*.ad[b,s] | wc -l) tests available but $(words $(ADA_TESTS)) used; exit 2; } \
+         && { echo Total $(words $(ADA_TESTS)) test files used for Ada testing; }
+
 .PHONY: clean-local
 clean-local:
 	rm -rf ./rose-ada-output ./obj
@@ -102,8 +108,22 @@ clean-local:
 check-local:
 	@echo "Tests for experimental Ada frontend."
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@$(MAKE) check-test-number
 	@$(MAKE) $(PASSING_TEST_Objects_ads)
 	@$(MAKE) $(PASSING_TEST_Objects_adb)
+#	TOTALFILE=$(words $(ADA_TESTS))
+#	TOTALFILE=$(shell  ls $(srcdir)/tests/*.ad[b,s] | wc -l )
+#	TOTALADSFILE=$(words $(filter %.ads,$(ADA_TESTS)))
+#	TOTALADBFILE=$(words $(filter %.adb,$(ADA_TESTS)))
+#	TOTALROSEPASSFILE=$(words $(filter %.adb %.ads,$(ROSE_PASSING_ADA_TESTS)))
+#	TOTALASISPASSFILE=$(words $(filter %.adb %.ads,$(ASIS_PASSING_TESTS)))
+#	FEDOTFILE=$(shell  ls $(builddir)/dot_asis_tests/*.ad[b,s].dot | wc -l )
+#	BEOUTFILE=$(shell  ls $(builddir)/compile_tests/rose-ada-output/*.ad[b,s] | wc -l )
+	@echo "$(words $(ADA_TESTS)) total Ada tests"
+	@echo "$(words $(ASIS_PASSING_TESTS)) passing ASIS tests"
+	@echo "$(words $(ROSE_PASSING_ADA_TESTS)) passing ROSE AST tests"
+	@echo "$(words $(ADA_TRANSLATOR_PASSING_TESTS)) passing Ada-to-C++ tests"
+
 	@echo "***********************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_ada_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************************"
