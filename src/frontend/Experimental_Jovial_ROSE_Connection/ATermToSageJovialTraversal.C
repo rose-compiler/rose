@@ -1401,12 +1401,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, S
    }
    else return ATfalse;
 
-   ROSE_ASSERT(type);
-
-   SgPointerType* pointer_type = SageBuilder::buildPointerType(type);
-   ROSE_ASSERT(pointer_type);
-
-   type = pointer_type;
+   type = sage_tree_builder.buildPointerType(type_name, type);
 
    return ATtrue;
 }
@@ -1427,20 +1422,12 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
    }
    else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, type_name)) {
+         // nullptr return is ok
          type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
-         if (type == nullptr) {
-            // Ensure that there is some type (what about primitive types?)
-            SgTypeUnknown* unknown_type = SageBuilder::buildUnknownType();
-            unknown_type->set_type_name(type_name);
-            unknown_type->set_has_type_name(true);
-            type = unknown_type;
-         }
       }
       else return ATfalse;
    }
    else return ATfalse;
-
-   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -7938,7 +7925,7 @@ ATbool ATermToSageJovialTraversal::traverse_TypeNameConversion(ATerm term, SgTyp
    if (ATmatch(term, "TypeNameConversion(<term>)", &t_type_name)) {
       // MATCHED TypeNameConversion
       if (traverse_OptTypeName(t_type_name, type, type_name)) {
-         // MATCHED TypeName
+         // Not optional here
          ROSE_ASSERT(type);
       } else return ATfalse;
    }
