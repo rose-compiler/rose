@@ -1928,8 +1928,9 @@ namespace
   ///   that can be referenced.
   struct ComponentClauseCreator
   {
-      ComponentClauseCreator(SgAdaRecordRepresentationClause& recclause, AstContext astctx)
-      : recordclause(recclause), ctx(astctx)
+      explicit
+      ComponentClauseCreator(AstContext astctx)
+      : ctx(astctx)
       {}
 
       void operator()(Element_Struct& el)
@@ -1950,16 +1951,10 @@ namespace
         //~ recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
 
-        sg::linkParentChild(recordclause, sgnode, &SgAdaRecordRepresentationClause::append_component);
-        //~ recordclause.append_component(&sgnode);
-        //~ ROSE_ASSERT(sgnode.get_parent() == &recordclause);
-
-        /* unused fields:
-         */
+        ctx.scope().append_statement(&sgnode);
       }
 
     private:
-      SgAdaRecordRepresentationClause& recordclause;
       AstContext                       ctx;
   };
 
@@ -2063,18 +2058,17 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
         SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
         SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
+        SgBasicBlock&           components = SG_DEREF(sgnode.get_components());
         ElemIdRange             range  = idRange(repclause.Component_Clauses);
 
         // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.scope().append_statement(&sgnode);
 
-        traverseIDs(range, elemMap(), ComponentClauseCreator{sgnode, ctx});
+        traverseIDs(range, elemMap(), ComponentClauseCreator{ctx.scope(components)});
 
-        // \todo requires IR change
-        //~ placePragmas(repclause.Pragmas, ctx, std::ref{sgnode.get_block()});
+        placePragmas(repclause.Pragmas, ctx, std::ref(components));
         /* unhandled fields:
-             Pragma_Element_ID_List      Pragmas
          */
         break;
       }

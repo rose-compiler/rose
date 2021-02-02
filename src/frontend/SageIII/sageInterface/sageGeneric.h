@@ -222,6 +222,7 @@ namespace sg
     GEN_VISIT(SgAdaSelectStmt)
     GEN_VISIT(SgAdaSelectAlternativeStmt)
     GEN_VISIT(SgAdaSubtype)
+    GEN_VISIT(SgAdaDerivedType)
     GEN_VISIT(SgAdaTaskBody)
     GEN_VISIT(SgAdaTaskBodyDecl)
     GEN_VISIT(SgAdaTaskSpec)
