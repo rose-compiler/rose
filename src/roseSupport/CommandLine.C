@@ -1,7 +1,7 @@
 #include <sage3basic.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <BinarySmtCommandLine.h>
 #endif
 
@@ -185,7 +185,7 @@ genericSwitches() {
                     "same number of threads as there is hardware concurrency (or one thread if the hardware "
                     "concurrency can't be determined)."));
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     // Global SMT solver name. This is used by any analysis that needs a solver and for which the user hasn't told that
     // specific analysis which solver to use. Specific analyses may override this global solver with other command-line
     // switches. The value "list" means generate a list of available solvers. So far this is only impelemented for the SMT

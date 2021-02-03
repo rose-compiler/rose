@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_BestMapAddress
 #define ROSE_BinaryAnalysis_BestMapAddress
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>

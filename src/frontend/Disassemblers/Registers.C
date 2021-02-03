@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Registers.h>
 
@@ -997,9 +997,54 @@ RegisterDictionary::dictionary_aarch32() {
         regs->insert("primask", aarch32_regclass_sys, aarch32_sys_primask, 0, 32);
         regs->insert("control", aarch32_regclass_sys, aarch32_sys_control, 0, 32);
 
-        // The FPSID provides top-level information about floating-pointimplementation. This register largely duplicates
-        // information held in the MIDR. Its use is deprecated.
-        regs->insert("fpsid", aarch32_regclass_sys, aarch32_sys_fpsid, 0, 32);
+        // VFP11 system registers. The VFPv2 architecture describes the following three system registers that must be present
+        // in a VFP system.
+        regs->insert("fpsid",   aarch32_regclass_sys, aarch32_sys_fpsid, 0, 32); // floating-point system ID register
+        regs->insert("fpscr",   aarch32_regclass_sys, aarch32_sys_fpscr, 0, 32); // floating-point status and control register
+        regs->insert("fpexc",   aarch32_regclass_sys, aarch32_sys_fpexc, 0, 32); // floating-point exception register
+
+        // Various fields of SPSCR
+        regs->insert("fpscr_n",      aarch32_regclass_sys, aarch32_sys_fpscr, 31, 1); // set if less than
+        regs->insert("fpscr_z",      aarch32_regclass_sys, aarch32_sys_fpscr, 30, 1); // set if equal
+        regs->insert("fpscr_c",      aarch32_regclass_sys, aarch32_sys_fpscr, 29, 1); // set if equal, greater than, or unordered
+        regs->insert("fpscr_v",      aarch32_regclass_sys, aarch32_sys_fpscr, 28, 1); // set if unordered
+        regs->insert("fpscr_nzcv",   aarch32_regclass_sys, aarch32_sys_fpscr, 28, 4); // N, Z, C, and V bits
+        regs->insert("fpscr_dn",     aarch32_regclass_sys, aarch32_sys_fpscr, 25, 1); // default NaN mode enable bit
+        regs->insert("fpscr_fz",     aarch32_regclass_sys, aarch32_sys_fpscr, 24, 1); // flush-to-zero mode enable bit
+        regs->insert("fpscr_rmode",  aarch32_regclass_sys, aarch32_sys_fpscr, 22, 2); // rounding mode control
+        regs->insert("fpscr_stride", aarch32_regclass_sys, aarch32_sys_fpscr, 20, 2); // vector length and stride control
+        regs->insert("fpscr_len",    aarch32_regclass_sys, aarch32_sys_fpscr, 16, 3); // vector length and stride control
+        regs->insert("fpscr_ide",    aarch32_regclass_sys, aarch32_sys_fpscr, 15, 1); // input subnormal exception enable
+        regs->insert("fpscr_ixe",    aarch32_regclass_sys, aarch32_sys_fpscr, 12, 1); // inexact exception enable
+        regs->insert("fpscr_ufe",    aarch32_regclass_sys, aarch32_sys_fpscr, 11, 1); // underflow exception enable
+        regs->insert("fpscr_ofe",    aarch32_regclass_sys, aarch32_sys_fpscr, 10, 1); // overflow exception enable
+        regs->insert("fpscr_dze",    aarch32_regclass_sys, aarch32_sys_fpscr,  9, 1); // division by zero exception enable
+        regs->insert("fpscr_ioe",    aarch32_regclass_sys, aarch32_sys_fpscr,  8, 1); // invalid operation exception enable
+        regs->insert("fpscr_idc",    aarch32_regclass_sys, aarch32_sys_fpscr,  7, 1); // input subnormal cumulative flag
+        regs->insert("fpscr_ixc",    aarch32_regclass_sys, aarch32_sys_fpscr,  4, 1); // inexact cumulative flag
+        regs->insert("fpscr_ufc",    aarch32_regclass_sys, aarch32_sys_fpscr,  3, 1); // underflow cumulative flag
+        regs->insert("fpscr_ofc",    aarch32_regclass_sys, aarch32_sys_fpscr,  2, 1); // overflow cumulative flag
+        regs->insert("fpscr_dzc",    aarch32_regclass_sys, aarch32_sys_fpscr,  1, 1); // division by zero cumulative flag
+        regs->insert("fpscr_ioc",    aarch32_regclass_sys, aarch32_sys_fpscr,  0, 1); // invalid operation cumulative flag
+
+        // To support exceptional conditions, the VFP11 coprocessor provides two additional registers. These registers
+        // are designed to be used with the support code software available from ARM Limited. As a result, this
+        // documentation [from ARM] does not fully specify exception handling in all cases.
+        regs->insert("fpinst",  aarch32_regclass_sys, aarch32_sys_fpinst,  0, 32); // floating-point instruction register
+        regs->insert("fpinst2", aarch32_regclass_sys, aarch32_sys_fpinst2, 0, 32); // floatinglcpoint instruction register two
+
+        // The VFP11 coprocessor also provides two feature registers.
+        regs->insert("mvfr0",   aarch32_regclass_sys, aarch32_sys_mvfr0, 0, 32); // media and VFP feature register 0
+        regs->insert("mvfr1",   aarch32_regclass_sys, aarch32_sys_mvfr1, 0, 32); // media and VFP feature register 1
+
+        // MVFR2, mediao, and VFP feature register 2. Describes the features provided by the AArch32 Advanced SIMD and
+        // Floating-point implementation. Must be interpreted with MVFR0 and MVFR1. This register is present only when
+        // AArch32 is supported at any exception level. Otherwise, direct accesses to MVFR2 are undefined. Implemented
+        // only if the implementation includes Advanced SIMD and floating-point instructions.
+        regs->insert("mvfr2",   aarch32_regclass_sys, aarch32_sys_mvfr2, 0, 32);
+
+        // Thumb IT instructions
+        regs->insert("itstate", aarch32_regclass_sys, aarch32_sys_itstate, 0, 32);
 
         // NEON and VFP use the same extension register bank. This is distinct from the ARM register bank. The extension
         // register bank is a colleciton of registers which can be accesed as either 32-bit, 64-bit, or 128-bit registers,

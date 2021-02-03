@@ -14,6 +14,7 @@ asmUnparser_la_sources=					\
 	$(asmUnparserPath)/BinaryUnparserNull.C		\
 	$(asmUnparserPath)/BinaryUnparserPowerpc.C	\
 	$(asmUnparserPath)/BinaryUnparserX86.C		\
+	$(asmUnparserPath)/unparseAarch32Asm.C		\
 	$(asmUnparserPath)/unparseAarch64Asm.C		\
 	$(asmUnparserPath)/unparseM68kAsm.C		\
 	$(asmUnparserPath)/unparseMipsAsm.C		\
