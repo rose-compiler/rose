@@ -514,15 +514,20 @@ struct UniqueUnitId
   AdaIdentifier name;
 };
 
+bool startsWith(const std::string& s, const std::string& sub)
+{
+  return (s.rfind(sub, 0) == 0);
+}
+
 // sort specifications before bodies
 bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
 {
   // System inclusion is implied, even if it is not referenced.
   //   Ordering it first is semantically consistent.
-  if ((lhs.name == "SYSTEM") && (rhs.name != "SYSTEM"))
+  if ((startsWith(lhs.name, "SYSTEM")) && (!startsWith(rhs.name, "SYSTEM")))
     return true;
 
-  if ((lhs.name != "SYSTEM") && (rhs.name == "SYSTEM"))
+  if ((!startsWith(lhs.name, "SYSTEM")) && (startsWith(rhs.name, "SYSTEM")))
     return false;
 
   if ((lhs.isbody == false) && (rhs.isbody == true))
@@ -644,9 +649,12 @@ sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
     }
     else if (parentID > 0)
     {
-      logError() << "unknown unit dependency from "
-                 << pos->first.name << ' ' << pos->first.isbody
-                 << " to #" << parentID
+      // parentID == 1.. is 1 used for the package standard??
+      logError() << "unknown unit dependency: "
+                 << pos->first.name << ' '
+                 << (pos->first.isbody ? "[body]" : "[spec]")
+                 << "#" << pos->second.unit->ID
+                 << " -> #" << parentID
                  << std::endl;
     }
 
@@ -676,7 +684,8 @@ sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
              << std::endl;
 
   for (const Unit_Struct* uptr : res)
-    logTrace() << uptr->Unit_Full_Name << ", ";
+    logTrace() << uptr->Unit_Full_Name
+               << "(" << uptr->ID << "), ";
 
   logTrace() << std::endl;
   return res;
