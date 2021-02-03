@@ -5,8 +5,8 @@
 // library used for reading and writing dwarf sections).  In ROSE we read the
 // Dwarf information and build special IR nodes into the AST.  This work effects
 // only AST for binary executable files (the ROSE Binary AST).
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 // DONE: Dwarf support handles sections: .debug_info, .debug_line
 // TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo

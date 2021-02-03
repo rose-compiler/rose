@@ -17,7 +17,7 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -1601,7 +1601,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 #endif
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Unparses a single physical, binary file.
  *
  *  Recreates the original binary file from the container representation under the SgAsmGenericFile node. This does not
@@ -3826,7 +3826,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     break;
                   }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
                   {
                     SgBinaryComposite* binary = isSgBinaryComposite(file);

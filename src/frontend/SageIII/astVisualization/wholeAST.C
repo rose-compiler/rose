@@ -8,7 +8,7 @@
 #include "transformationTracking.h"
 #include "wholeAST.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -1075,7 +1075,7 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
      if (isSgAsmExecutableFileFormat(node) != NULL)
         {
@@ -1087,7 +1087,7 @@ CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
      if (isSgAsmType(node) != NULL)
         {
@@ -2100,7 +2100,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
 #endif
                   {
@@ -2408,7 +2408,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
         }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmType(node) != NULL)
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2431,7 +2431,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmNode(node) != NULL)
         {
        // Color selection for the binary file format and binary instruction IR nodes.

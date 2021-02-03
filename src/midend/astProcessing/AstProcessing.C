@@ -44,7 +44,7 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
        // DQ (11/20/2013): Added SgJavaImportStatementList and SgJavaClassDeclarationList to the exception list since they don't have a source position field.
        // if (isSgProject(node) == NULL && isSgAsmNode(node) == NULL)
           bool cond = isSgProject(node) == NULL && isSgJavaImportStatementList(node) == NULL && isSgJavaClassDeclarationList(node) == NULL;
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           cond = cond && isSgAsmNode(node) == NULL;
 #endif
           if (cond)

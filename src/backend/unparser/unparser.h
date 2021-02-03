@@ -253,7 +253,7 @@ class Unparser
        // void unparseProject ( SgProject* project, SgUnparse_Info& info );
        // void unparseFile       ( SgFile* file, SgUnparse_Info& info );
           void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
 
        // Unparses a single physical file

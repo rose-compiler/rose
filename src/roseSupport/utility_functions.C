@@ -375,7 +375,7 @@ std::string version_message()
          "\n  --- using libmagic version: " + libmagicVersionString() +
          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
          "\n  --- using lib-yices version: " + yicesVersionString() +
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
          "\n  --- binary analysis is enabled"
 #ifdef ROSE_ENABLE_ASM_AARCH64
          "\n  ---   ARM AArch64 is enabled"
