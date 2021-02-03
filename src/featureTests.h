@@ -20,7 +20,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Binary analysis features
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
+// A more traditional name than ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#define ROSE_ENABLE_BINARY_ANALYSIS
 
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
 #if !defined(ROSE_ENABLE_ASM_AARCH64) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)

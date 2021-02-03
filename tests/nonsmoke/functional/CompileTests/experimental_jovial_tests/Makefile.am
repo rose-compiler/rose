@@ -179,6 +179,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-470.jov                  \
  rose-issue-rc-472.jov                  \
  rose-issue-rc-473.jov                  \
+ rose-issue-rc-523.jov                  \
  rose-issue-rc-575.jov                  \
  rose-issue-rc-578.jov                  \
  rose-issue-rc-581.jov
@@ -197,7 +198,7 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov
 
-## List of compool modules that need to be compiled first:
+## List compool modules that need to be compiled first:
 #     rc161b.pre.cpl before rc161a.pre.cpl before rc161.jov
 #
 COMPOOL_TESTCODES = \
@@ -254,6 +255,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-461.cpl                  \
  rose-issue-rc-512.cpl                  \
  rose-issue-rc-531.cpl                  \
+ rose-issue-rc-587.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \

@@ -345,45 +345,174 @@ printPath(std::ostream&, const Rose::BinaryAnalysis::FeasiblePath&,
 /** Compute calling conventions. */
 void assignCallingConventions(const Rose::BinaryAnalysis::Partitioner2::Partitioner&);
 
-/** Selects whether a path is to be printed. */
+/** Selects whether a path is to be printed.
+ *
+ *  A PathSelector applies an ordered list of predicates to the path in question until one of them indicates that the path
+ *  should be rejected. If none indicate that the path should be rejected, then the path is accepted and the caller should
+ *  produce some kind of output. The predicates are ordered so that final statistics can be displayed. However, the built-in
+ *  predicates created by the constructor do not depend on each other, so the user is free to rearrange them or delete them as
+ *  he sees fit. */
 class PathSelector {
 public:
-    // Settings
-    bool suppressAll;                                   /**< Show no output. Useful when generating only summaries. */
-    bool suppressUninteresting;                         /**< Suppress paths that are "uninteresting". */
-    bool suppressDuplicatePaths;                        /**< Suppress paths that have the same CFG execution sequence. */
-    bool suppressDuplicateEndpoints;                    /**< Suppress paths that end at the same address. */
-    bool showShorterPaths;                              /**< When suppressing endpoints, show shorter paths anyway. */
-    size_t maxPaths;                                    /**< Maximum number of paths to show. */
-    std::set<uint64_t> requiredHashes;                  /**< If non-empty, show only paths matching these hashes. */
+    /** Predicate that tests whether a path should be rejected. */
+    class Predicate {
+    public:
+        std::string name;                               /**< Name of this predicate displayed in diagnostics and as a lookup key. */
+        std::string description;                        /**< Description @em x fitting the sentence "path was rejected because @em X." */
+        size_t nCalls;                                  /**< Number of times this predicate was called, updated by the caller. */
+        size_t nRejects;                                /**< Number of times the provided path was rejected, updated by the caller. */
 
-    typedef Sawyer::Container::Map<rose_addr_t, size_t> EndpointLengths; /**< Path length per endpoint. */
+        /** Base constructor.
+         *
+         *  The name should be unique and short so it can be used as a lookup key. The description should be worded to explain
+         *  why a path was rejected, and should make sense in this sentence: "the path was rejected because @p desc." See
+         *  built-in predicates for examples. */
+        Predicate(const std::string &name, const std::string &desc)
+            : name(name), description(desc), nCalls(0), nRejects(0) {}
+
+        virtual ~Predicate() {}
+
+        /** Tests whether a path should be rejected.
+         *
+         *  Returns true if a path is rejected, and false if not. The @p nCalls and @p nRejects data members will be incremented
+         *  appropriately by the caller, so this function operator shouldn't mess with them. */
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                  SgAsmInstruction *offendingInstruction) = 0;
+
+        /** Final disposition of the path.
+         *
+         *  This is called once we know whether the path was selected or rejected. The @p disposition argument is true if
+         *  rejected, false if accepted. The @p nCalls and @p nRejects have already been updated by this point. */
+        virtual void wasRejected(bool disposition, const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                 SgAsmInstruction *offendingInstruction) {}
+    };
+
+    /** Always reject a path.
+     *
+     *  This is useful when all we want to do is report a summary of how many paths were found. */
+    class AlwaysReject: public Predicate {
+    public:
+        AlwaysReject()
+            : Predicate("always", "all paths are suppressed") {}
+
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                  SgAsmInstruction*) override {
+            return true;
+        }
+    };
+
+    /** Accept only unnamed to named paths.
+     *
+     *  Accept a path if it begins in an unnamed function but ends in a named function, otherwise reject it. With firmware,
+     *  this usually means the path begins in user code and ends in a library function that was given a name by matching the
+     *  function against a database. */
+    class RejectEndNames: public Predicate {
+    public:
+        RejectEndNames()
+            : Predicate("unamed-to-named", "it starts unnamed and ends named") {}
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                  SgAsmInstruction*) override;
+    };
+
+    /** Accept only specified paths. */
+    class RejectUnlisted: public Predicate {
+        std::set<uint64_t> listed_;                     // paths to accept (by hash), rejecting all others
+    public:
+        explicit RejectUnlisted(const std::set<uint64_t> &listed)
+            : Predicate("unlisted", "it is not among those requested"), listed_(listed) {}
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&,
+                                  const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                  SgAsmInstruction *insn) override {
+            return listed_.find(path.hash(insn)) == listed_.end();
+        }
+    };
+
+    /** Reject duplicate paths. */
+    class RejectDuplicatePaths: public Predicate {
+        std::set<uint64_t> selected_;                   // paths that were selected (i.e., not rejected by any predicate)
+    public:
+        RejectDuplicatePaths()
+            : Predicate("dup-paths", "path was seen already") {}
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&,
+                                  const Rose::BinaryAnalysis::Partitioner2::CfgPath& path,
+                                  SgAsmInstruction *insn) override {
+            return selected_.find(path.hash(insn)) != selected_.end(); // not previously selected
+        }
+        virtual void wasRejected(bool rejected, const Rose::BinaryAnalysis::FeasiblePath&,
+                                 const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                 SgAsmInstruction *insn) override {
+            if (!rejected)
+                selected_.insert(path.hash(insn));
+        }
+    };
+
+    /** Reject paths with duplicate endpoints. */
+    class RejectDuplicateEndpoints: public Predicate {
+        Sawyer::Container::Map<rose_addr_t /*insn*/, size_t /*path_length*/> seen_;
+        bool showShorterPaths_;                         // if true, don't reject a seen path that's shorter than previously seen
+    public:
+        explicit RejectDuplicateEndpoints(bool showShorterPaths)
+            : Predicate("dup-end", "its endpoint was already seen"), showShorterPaths_(showShorterPaths) {}
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                  SgAsmInstruction*) override;
+        void wasRejected(bool rejected, const Rose::BinaryAnalysis::FeasiblePath&,
+                         const Rose::BinaryAnalysis::Partitioner2::CfgPath &, SgAsmInstruction*) override;
+    };
+
+    /** Reject paths if we've accepted too many already. */
+    class RejectTooMany: public Predicate {
+        size_t limit_;                                  // number of paths to allow before we start rejecting them
+        size_t nSelected_;                              // number of paths previously selected
+    public:
+        explicit RejectTooMany(size_t limit)
+            : Predicate("too-many", "too many paths found"), limit_(limit) {}
+        size_t limit() const {
+            return limit_;
+        }
+        virtual bool shouldReject(const Rose::BinaryAnalysis::FeasiblePath&, const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                  SgAsmInstruction*) override {
+            return nSelected_ >= limit_;
+        }
+        virtual void wasRejected(bool rejected, const Rose::BinaryAnalysis::FeasiblePath&,
+                                 const Rose::BinaryAnalysis::Partitioner2::CfgPath&, SgAsmInstruction*) override {
+            if (!rejected)
+                ++nSelected_;
+        }
+    };
+
+    /** Ordered list of selectors.
+     *
+     *  Some of these are predefined by the constructor, but the user can add, remove, or reorder selectors as desired. */
+    std::vector<std::shared_ptr<Predicate>> predicates; // Ordered list of
 
 private:
-    SAWYER_THREAD_TRAITS::Mutex mutex_;                 // protects the following data members
-    std::set<uint64_t> seenPaths_;                      // hashes of paths we've seen
-    EndpointLengths seenEndpoints_;                     // path lengths for endpoints we've emitted
-    size_t nSuppressed_;                                // number of paths suppressed for any reason
-    size_t nUninteresting_;                             // number of uninteresting paths suppressed
-    size_t nDuplicatePaths_;                            // number of duplicate paths suppressed
-    size_t nDuplicateEndpoints_;                        // number of duplicate endpoints suppressed
-    size_t nWrongHashes_;                               // number of suppressions due to not being a specified hash
-    size_t nLimitExceeded_;                             // number of suppressions due to maxPaths being exceeded
-    size_t nSelected_;                                  // number of times operator() returned true
-
-public:
-    PathSelector()
-        : suppressAll(false), suppressUninteresting(false), suppressDuplicatePaths(false), suppressDuplicateEndpoints(false),
-          showShorterPaths(false), maxPaths(Rose::UNLIMITED), nSuppressed_(0), nUninteresting_(0), nDuplicatePaths_(0),
-          nDuplicateEndpoints_(0), nWrongHashes_(0), nLimitExceeded_(0), nSelected_(0) {}
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
+    size_t nSelected_ = 0;                              // total number of paths selected
+    size_t nRejected_ = 0;                              // total number of paths rejected
 
 public:
     /** Reset statistics. */
-    void resetStats() {
-        nSuppressed_ = nUninteresting_ = nDuplicatePaths_ = nDuplicateEndpoints_ = nLimitExceeded_ = nSelected_ = 0;
+    void resetStats();
+
+    /** Find a predicate by name.
+     *
+     *  Returns a null pointer if the name does not exist. If more than one predicate has the specified name, then the first
+     *  match is returned. */
+    std::shared_ptr<Predicate> findPredicate(const std::string &name) const;
+
+    /** Find a predicate by type.
+     *
+     *  Returns the first predicate whose type inherits from T, or returns the null pointer if there is no such predicate. */
+    template<class T>
+    std::shared_ptr<T> findPredicate() const {
+        for (auto predicate: predicates) {
+            if (auto retval = std::dynamic_pointer_cast<T>(predicate))
+                return retval;
+        }
+        return {};
     }
 
-    /** Return non-zero if the path should be shown, zero if suppressed.
+    /** Return non-zero path ID the path should be shown, zero if suppressed.
      *
      *  The specified path is compared against previously checked paths to see whether it should be presented to the user
      *  based on settings and indexes contained in this object. Checking whether a path should be shown also updates various
@@ -397,48 +526,26 @@ public:
                       const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
                       SgAsmInstruction *offendingInstruction);
 
-    /** Property: Total number of paths suppressed.
+    /** Tests whether a path should be rejected.
      *
-     *  This is the number of paths suppressed for any reason. */
-    size_t nSuppressed() const { return nSuppressed_; }
+     *  If rejected, returns the non-null predicate that rejected the path and sets @p pathId to zero; otherwise returns null
+     *  and sets @p pathId to the non-zero path identifier unique for each call that returns null.
+     *
+     *  Thread safety: This method is thread safe if the user is not currently adjusting the predicate list. */
+    std::shared_ptr<PathSelector::Predicate>
+    shouldReject(const Rose::BinaryAnalysis::FeasiblePath &fpAnalysis,
+                 const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                 SgAsmInstruction *offendingInstruction, size_t &pathId /*out*/);
 
-    /** Property: Number of uninteresting paths suppressed.
+    /** Property: Total number of paths rejected.
      *
-     *  This does not include those paths suppressed due to all paths being suppressed. */
-    size_t nUninteresting() const { return nUninteresting_; }
-
-    /** Property: Number of paths suppressed due to non-matching hashes.
-     *
-     *  This does not include those paths suppressed due to all paths being suppressed, or those paths suppressed due to being
-     *  deemed uninteresting paths. */
-    size_t nWrongHashes() const { return nWrongHashes_; }
-
-    /** Property: Number of duplicate paths suppressed.
-     *
-     *  This does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed uninteresting,
-     *  or paths suppressed because they didn't match the set of required path hashes. */
-    size_t nDuplicatePaths() const { return nDuplicatePaths_; }
-
-    /** Property: Number of duplicate endpoints suppressed.
-     *
-     *  This does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed
-     *  uninteresting, paths suppressed because they didn't match the set of required path hashes, or paths suppressed because
-     *  the entire path was a duplicate. This also does not include paths that would have been suppressed due to being a
-     *  duplicate endpoint when the path is shown anyway because its shorter than any previous path at that endpoint. */
-    size_t nDuplicateEndpoints() const { return nDuplicateEndpoints_; }
-
-    /** Property: Number of paths suppressed due to limit being exceeded.
-     *
-     *  This is the number of paths that were suppressed because we've already shown the maximum permitted number of
-     *  paths. This count does not include paths suppressed due to all paths being suppressed, paths suppressed due to being deemed
-     *  uninteresting, paths suppressed because they didn't match the set of required path hashes, paths suppressed because
-     *  the entire path was a duplicate, or paths suppressed because their end points were duplicates. */
-    size_t nLimitExceeded() const { return nLimitExceeded_; }
+     *  This is the number of paths rejected for any reason. */
+    size_t nRejected() const;
 
     /** Property: Number of paths selected.
      *
-     *  The number of times that the function operator returned a non-zero value. */
-    size_t nSelected() const { return nSelected_; }
+     *  The number of paths selected (i.e., not rejected). */
+    size_t nSelected() const;
 
     /** Terminate entire program if we've selected the maximum number of paths.
      *
@@ -446,6 +553,9 @@ public:
      *  assertions in boost and other weirdness), so we use "_exit" instead, which is an immediate termination of the process
      *  without any in-process cleanup. */
     void maybeTerminate() const;
+
+    /** Print statistics about paths. */
+    void printStatistics(std::ostream&, const std::string &prefix = "") const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -94,9 +94,9 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
    ROSE_ASSERT(scope);
 
 // Clear any dangling forward references
-   if (!forward_refs_.empty()) {
-     std::map<const std::string, SgVarRefExp*>::iterator it = forward_refs_.begin();
-     while (it != forward_refs_.end()) {
+   if (!forward_var_refs_.empty()) {
+     std::map<const std::string, SgVarRefExp*>::iterator it = forward_var_refs_.begin();
+     while (it != forward_var_refs_.end()) {
        if (SgFunctionSymbol* func_sym = SageInterface::lookupFunctionSymbolInParentScopes(it->first, scope)) {
          SgVarRefExp* prev_var_ref = it->second;
          SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
@@ -113,8 +113,7 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          bin_op_parent->set_rhs_operand(func_call);
 
       // The dangling variable reference has been fixed
-      // forward_refs_.erase(pair.first);
-         it = forward_refs_.erase(it);
+         it = forward_var_refs_.erase(it);
 
       // Delete the previous variable reference, symbol and initialized name
          delete prev_init_name;
@@ -130,10 +129,15 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
    }
 
   // Some forward references can't be resolved until the global scope is reached
-   if (!forward_refs_.empty() && isSgGlobal(scope)) {
-     std::cerr << "WARNING: map for forward references is not empty, size is "
-               << forward_refs_.size() << std::endl;
-     forward_refs_.clear();
+   if (!forward_var_refs_.empty() && isSgGlobal(scope)) {
+     std::cerr << "WARNING: map for forward variable references is not empty, size is "
+               << forward_var_refs_.size() << std::endl;
+     forward_var_refs_.clear();
+   }
+   if (!forward_type_refs_.empty() && isSgGlobal(scope)) {
+     std::cerr << "WARNING: map for forward type references is not empty, size is "
+               << forward_type_refs_.size() << std::endl;
+     forward_type_refs_.clear();
    }
 }
 
@@ -1314,10 +1318,13 @@ Enter(SgJovialTableStatement* &table_decl,
       table_def->setCaseInsensitive(true);
    }
 
-   SgType* sg_type = table_decl->get_type();
-   SgJovialTableType* sg_table_type = isSgJovialTableType(sg_type);
-   ROSE_ASSERT(sg_table_type);
+   SgType* type = table_decl->get_type();
+   SgJovialTableType* table_type = isSgJovialTableType(type);
+   ROSE_ASSERT(table_type);
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+
+// Fix forward type references
+   reset_forward_type_ref(name, table_type);
 
 // Append now (before Leave is called) so that symbol lookup will work
    SageInterface::appendStatement(table_decl, SageBuilder::topScopeStack());
@@ -1347,6 +1354,15 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
          var_init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
       }
 
+// Reset pointer base-type name so the base type can be replaced when it has been declared
+   if (SgPointerType* pointer = isSgPointerType(type)) {
+      if (SgTypeUnknown* unknown = isSgTypeUnknown(pointer->get_base_type())) {
+         // This allows the variable symbol for name to be found from the
+         // forward_type_refs_ map of pointers.
+         unknown->set_type_name(name);
+      }
+   }
+
    var_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, type, var_init, SageBuilder::topScopeStack());
    ROSE_ASSERT(var_decl != nullptr);
 
@@ -1373,9 +1389,9 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    SageInterface::appendStatement(var_decl, SageBuilder::topScopeStack());
 
 // Look for a symbol has been previously implicitly declared and fix the variable reference
-   if (forward_refs_.find(name) != forward_refs_.end()) {
+   if (forward_var_refs_.find(name) != forward_var_refs_.end()) {
      if (SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name)) {
-        SgVarRefExp* prev_var_ref = forward_refs_[name];
+        SgVarRefExp* prev_var_ref = forward_var_refs_[name];
         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
         ROSE_ASSERT(prev_var_sym);
 
@@ -1384,7 +1400,7 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 
      // Reset the symbol for the variable reference to the symbol for the explicit variable declaration
         prev_var_ref->set_symbol(var_sym);
-        forward_refs_.erase(name); // The dangling variable reference has been fixed
+        forward_var_refs_.erase(name); // The dangling variable reference has been fixed
 
      // Delete the previous symbol and initialized name
         delete prev_var_sym;
@@ -1519,6 +1535,9 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
    // This should be done in SageBuilder.
    type_def->set_base_type(type);
 
+// Fix forward type references
+   reset_forward_type_ref(name, type_def->get_type());
+
    SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
 
@@ -1566,9 +1585,66 @@ buildVarRefExp_nfi(const std::string & name)
    SageInterface::setSourcePosition(var_ref);
 
    if (SageInterface::lookupSymbolInParentScopes(name) == nullptr) {
-      forward_refs_[name] = var_ref;
+      forward_var_refs_[name] = var_ref;
    }
    return var_ref;
+}
+
+// Jovial allows pointers to types which haven't been declared yet. This builder function manages
+// type name and symbol information so that the pointer variable reference can be cleaned/fixed up when
+// the explicit type declaration is seen.
+SgPointerType* SageTreeBuilder::
+buildPointerType(const std::string& base_type_name, SgType* base_type)
+{
+  SgPointerType* type = nullptr;
+
+  if (base_type == nullptr) {
+    // Constructors are used here rather than SageBuilder functions because these
+    // types will be replaced (and deleted) once the actual base type is declared.
+    SgTypeUnknown* base_type = new SgTypeUnknown();
+    ROSE_ASSERT(base_type);
+    base_type->set_type_name(base_type_name);
+
+    type = new SgPointerType(base_type);
+    ROSE_ASSERT(type);
+
+    forward_type_refs_[base_type_name] = type;
+  }
+  else {
+    type = SageBuilder::buildPointerType(base_type);
+  }
+  ROSE_ASSERT(type);
+
+  return type;
+}
+
+void SageTreeBuilder::
+reset_forward_type_ref(const std::string &type_name, SgNamedType* type)
+{
+  if (forward_type_refs_.find(type_name) != forward_type_refs_.end()) {
+    SgPointerType* ptr = forward_type_refs_[type_name];
+    ROSE_ASSERT(ptr);
+
+    // The placeholder
+    SgTypeUnknown* unknown = isSgTypeUnknown(ptr->get_base_type());
+    ROSE_ASSERT(unknown);
+    const std::string & var_name = unknown->get_type_name();
+
+    SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name);
+    ROSE_ASSERT(var_sym);
+
+    SgInitializedName* init_name = var_sym->get_declaration();
+    ROSE_ASSERT(init_name);
+
+    SgPointerType* new_pointer = SageBuilder::buildPointerType(type);
+    init_name->set_type(new_pointer);
+
+    // Delete the placeholder type and its base type
+    if (ptr->get_base_type()) delete ptr->get_base_type();
+    delete ptr;
+
+    forward_type_refs_.erase(type_name); // The dangling pointer reference has been fixed
+  }
 }
 
 // Jovial TableItem and Block data members have visibility outside of their declarative class.
