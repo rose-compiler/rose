@@ -3,8 +3,8 @@
 // C++ runtime code that parses this section.  Here are some other sources:
 //      http://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
 //      http://www.airs.com/blog/archives/460
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"

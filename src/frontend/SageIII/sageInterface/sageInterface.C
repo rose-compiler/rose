@@ -2029,7 +2029,7 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite:
 #endif
              {
@@ -4906,7 +4906,7 @@ SageInterface::generateFileList()
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 #endif
 
@@ -17977,7 +17977,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // tps : 28 Oct 2008 - support for finding the main interpretation
 // rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
 /** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied

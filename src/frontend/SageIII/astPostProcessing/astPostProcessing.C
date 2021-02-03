@@ -129,7 +129,7 @@ void AstPostProcessing (SgNode* node)
                break;
              }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
        // Test for a binary executable, object file, etc.
           case V_SgBinaryComposite:
              {
