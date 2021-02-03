@@ -2,8 +2,9 @@
 #ifndef ROSE_ASM_UNPARSER_COMPAT_H
 #define ROSE_ASM_UNPARSER_COMPAT_H
 
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "AsmUnparser.h"
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 /** Returns the string representation of an assembly instruction, sans address. */
 ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels=NULL,
@@ -66,11 +67,20 @@ std::string unparseM68kExpression(SgAsmExpression*, const Rose::BinaryAnalysis::
                                   const Rose::BinaryAnalysis::RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
- * ARM A64
+ * ARM AArch64
  *-------------------------------------------------------------------------------------------------------------------------------*/
 #ifdef ROSE_ENABLE_ASM_AARCH64
 std::string unparseAarch64Mnemonic(SgAsmAarch64Instruction*);
 std::string unparseAarch64Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                                     const Rose::BinaryAnalysis::RegisterDictionary*);
+#endif
+
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * ARM AArch32
+ *-------------------------------------------------------------------------------------------------------------------------------*/
+#ifdef ROSE_ENABLE_ASM_AARCH32
+std::string unparseAarch32Mnemonic(SgAsmAarch32Instruction*);
+std::string unparseAarch32Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
                                      const Rose::BinaryAnalysis::RegisterDictionary*);
 #endif
 

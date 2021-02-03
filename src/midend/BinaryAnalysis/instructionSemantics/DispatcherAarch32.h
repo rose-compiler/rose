@@ -3,6 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
+#if __cplusplus < 201703L
+#error "your compiler is too old"
+#endif
+
 #include <BaseSemantics2.h>
 
 #include <boost/serialization/access.hpp>
@@ -109,6 +113,34 @@ protected:
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
     void set_register_dictionary(const RegisterDictionary*) override;
+
+public:
+    // Instruction condition
+    BaseSemantics::SValuePtr conditionHolds(Aarch32InstructionCondition);
+
+    //----------------------------------------------------------------------------------------------------------------
+    // The following functions are more or less from ARM documentation and named similarly. They are generally not
+    // further documented here or by ARM.
+    //----------------------------------------------------------------------------------------------------------------
+
+    enum class SrType { LSL, LSR, ASR, ROR, RRX };      // SRType
+    using TwoValues = std::tuple<BaseSemantics::SValuePtr, BaseSemantics::SValuePtr>;
+
+    BaseSemantics::SValuePtr part(const BaseSemantics::SValuePtr&, size_t maxBit, size_t minBit); // X<m,n>
+    BaseSemantics::SValuePtr part(const BaseSemantics::SValuePtr&, size_t bitNumber); // X<n>
+    BaseSemantics::SValuePtr join(const BaseSemantics::SValuePtr &highBits, const BaseSemantics::SValuePtr &lowBits); // X:Y
+    BaseSemantics::SValuePtr zeroExtend(const BaseSemantics::SValuePtr&, size_t); // ZeroExtend
+    BaseSemantics::SValuePtr makeZeros(size_t);         // Zeros
+    TwoValues a32ExpandImmC(const BaseSemantics::SValuePtr&); // A32ExpandImm_C
+    TwoValues shiftC(const BaseSemantics::SValuePtr&, SrType, int amount, const BaseSemantics::SValuePtr &carry); // Shift_C
+    TwoValues lslC(const BaseSemantics::SValuePtr&, size_t shift); // LSL_C
+    TwoValues lsrC(const BaseSemantics::SValuePtr&, size_t shift); // LSR_C
+    TwoValues asrC(const BaseSemantics::SValuePtr&, size_t shift); // ASR_C
+    TwoValues rorC(const BaseSemantics::SValuePtr&, int shift);    // ROR_C
+    TwoValues rrxC(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr &carry); // RRX_C
+    BaseSemantics::SValuePtr lsr(const BaseSemantics::SValuePtr&, size_t shift); // LSR
+    BaseSemantics::SValuePtr lsl(const BaseSemantics::SValuePtr&, size_t shift); // LSL
+    BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t); // SignExtend
 };
 
 } // namespace

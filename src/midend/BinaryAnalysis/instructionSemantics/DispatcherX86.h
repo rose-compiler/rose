@@ -1,7 +1,7 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <Registers.h>
