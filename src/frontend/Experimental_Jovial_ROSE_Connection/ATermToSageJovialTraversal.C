@@ -7,8 +7,6 @@
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 #define PRINT_WARNINGS 1
-#define CHECK_AMB 0
-#define PRINT_AMB_WARNINGS 0
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
@@ -1401,12 +1399,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, S
    }
    else return ATfalse;
 
-   ROSE_ASSERT(type);
-
-   SgPointerType* pointer_type = SageBuilder::buildPointerType(type);
-   ROSE_ASSERT(pointer_type);
-
-   type = pointer_type;
+   type = sage_tree_builder.buildPointerType(type_name, type);
 
    return ATtrue;
 }
@@ -1427,20 +1420,12 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
    }
    else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, type_name)) {
+         // nullptr return is ok
          type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
-         if (type == nullptr) {
-            // Ensure that there is some type (what about primitive types?)
-            SgTypeUnknown* unknown_type = SageBuilder::buildUnknownType();
-            unknown_type->set_type_name(type_name);
-            unknown_type->set_has_type_name(true);
-            type = unknown_type;
-         }
       }
       else return ATfalse;
    }
    else return ATfalse;
-
-   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -3539,24 +3524,35 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleDef(ATerm term)
    printf("... traverse_SimpleDef: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_simple_def, t_amb, t_def;
+   ATerm t_simple_def, t_amb;
 
    if (ATmatch(term, "SimpleDef(<term>)", &t_simple_def)) {
       // MATCHED SimpleDef
 
       // SimpleDef can have an ambiguity if an ItemDescription has a type name starting with "a"
       if (ATmatch(t_simple_def, "amb(<term>)", &t_amb)) {
-         // MATCHED an ambiguity, choose the first one
+         // MATCHED an ambiguity, choose the one with a named type
+         ATerm t_name, t_alloc, t_type, t_preset;
+         std::string name;
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
-         t_def = ATgetFirst(tail);
-      }
-      else {
-         t_def = t_simple_def;
+
+         while (! ATisEmpty(tail)) {
+            t_simple_def = ATgetFirst(tail);
+            tail = ATgetNext(tail);
+
+            // Search for ItemDeclaration with a named type
+            if (ATmatch(t_simple_def, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
+               if (traverse_Name(t_type, name)) {
+                 // Success, found a named type
+                 break;
+               }
+            }
+         }
       }
    }
    else return ATfalse;
 
-   if (traverse_DefSpecificationChoice(t_def)) {
+   if (traverse_DefSpecificationChoice(t_simple_def)) {
       // MATCHED DefSpecificationChoice
    }
    else return ATfalse;
@@ -4485,6 +4481,7 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
       else if (traverse_ProcedureCallStatement(t_stmt)) {
          // MATCHED ProcedureCallStatement
       }
+#if 0
       else if (ATmatch(t_stmt, "amb(<term>)", &t_amb)) {
          // MATCHED amb
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
@@ -4522,6 +4519,7 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
             // MATCHED ProcedureCallStatement
          } else return ATfalse;
       }
+#endif
       else return ATfalse;
    }
    else return ATfalse;
@@ -6360,7 +6358,7 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
    printf("... traverse_RelationalExpression: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_lhs, t_operator, t_rhs, t_amb;
+   ATerm t_lhs, t_operator, t_rhs;
    SgExpression *lhs = nullptr, *rhs = nullptr;
 
    if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_lhs, &t_operator, &t_rhs)) {
@@ -6392,18 +6390,9 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
       else if (ATmatch(t_operator, "NotEqualOp()")) {
          expr = new SgNotEqualOp(lhs, rhs, nullptr);
       }
-#if CHECK_AMB
-      else if (ATmatch(t_operator, "amb(<term>)", &t_amb)) {
-#if PRINT_AMB_WARNINGS
-          cerr << "WARNING AMBIGUITY: RelationalExpression \n";
-          printf("... traverse_RelationalExpression: %s\n", ATwriteToString(term));
-#endif
-          expr = SB::buildNullExpression_nfi();
-          return ATtrue;
-      }
-#endif
       else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    ROSE_ASSERT(expr);
    setSourcePosition(expr, term);
@@ -7938,7 +7927,7 @@ ATbool ATermToSageJovialTraversal::traverse_TypeNameConversion(ATerm term, SgTyp
    if (ATmatch(term, "TypeNameConversion(<term>)", &t_type_name)) {
       // MATCHED TypeNameConversion
       if (traverse_OptTypeName(t_type_name, type, type_name)) {
-         // MATCHED TypeName
+         // Not optional here
          ROSE_ASSERT(type);
       } else return ATfalse;
    }

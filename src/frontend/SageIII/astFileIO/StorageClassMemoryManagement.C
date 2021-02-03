@@ -4376,7 +4376,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
    ****************************************************************************************
 */
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 template <class TYPE>
 void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
 {
@@ -4493,7 +4493,7 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 
 // DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined 
 // when binary analysis is not supported (via language only options in configure).
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (Base::actual!=NULL && Base::getSizeOfData()>0)
         {
           rose_addr_t *pointer = Base::getBeginningOfDataBlock();
