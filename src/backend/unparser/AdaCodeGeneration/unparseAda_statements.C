@@ -52,6 +52,15 @@ namespace
     return nameOf(SG_DEREF(var_ref.get_symbol()));
   }
 
+  inline
+  SgName nameOf(const SgImportStatement& import)
+  {
+    const SgExpressionPtrList& lst = import.get_import_list();
+    ROSE_ASSERT(lst.size() == 1);
+
+    return nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
+  }
+
   const std::string NO_SEP = "";
   const std::string COMMA_SEP = ", ";
   const std::string STMT_SEP = ";\n";
@@ -1274,17 +1283,13 @@ namespace
       res = RenamingSyntax(unknown, unknown, unknown);
     }
 */
+
+    // band-aid until generic packages are supported
     void handle(SgImportStatement& n)
     {
       ROSE_ASSERT(idx == 0);
 
-      SgExpressionPtrList& lst = n.get_import_list();
-      //~ ROSE_ASSERT(lst.size() != 0);
-      ROSE_ASSERT(lst.size() == 1);
-
-      std::string renamed = nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
-
-      res = RenamingSyntax("package ", "", renamed);
+      res = RenamingSyntax("package ", "", nameOf(n));
     }
 
     void handle(SgAdaPackageSpecDecl& n)
@@ -1326,6 +1331,10 @@ namespace
     void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
     void handle(SgAdaPackageSpecDecl& n)  { usepkg(n.get_name()); }
     void handle(SgAdaPackageBodyDecl& n)  { usepkg(n.get_name()); }
+
+    // band-aid until generic packages are supported
+    void handle(SgImportStatement& n)     { usepkg(nameOf(n)); }
+
     void handle(SgTypedefDeclaration& n)  { usetype(n.get_name()); }
     void handle(SgAdaTaskTypeDecl& n)     { usetype(n.get_name()); }
     void handle(SgClassDeclaration& n)    { usetype(n.get_name()); }

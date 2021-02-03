@@ -104,6 +104,15 @@ clean-local:
 	rm -rf ./rose-ada-output ./obj
 	rm -f *.dot
 
+.PHONY: print-tests
+print-tests:
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@echo "$(ADA_TESTS)"
+else
+	@echo "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not set"
+endif
+
+
 .PHONY: check-local
 check-local:
 	@echo "Tests for experimental Ada frontend."

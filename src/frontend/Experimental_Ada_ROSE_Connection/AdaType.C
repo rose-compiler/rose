@@ -63,7 +63,31 @@ namespace
     ROSE_ASSERT(ex.Expression_Kind == An_Identifier);
 
     logKind("An_Identifier");
+    //~ use this if package standard is included
     return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+
+/*
+    logError() << "exlookup:" << ex.Name_Image
+               << std::endl;
+
+    if (SgInitializedName* res = findFirst(asisExcps(), ex.Corresponding_Name_Definition)
+      return *res;
+
+    AdaIdentifier exceptionName{ex.Name_Image};
+
+    ROSE_ASSERT(  (exceptionName == "CONSTRAINT_ERROR")
+               || (exceptionName == "PROGRAM_ERROR")
+               || (exceptionName == "STORAGE_ERROR")
+               || (exceptionName == "TASKING_ERROR")
+               );
+
+
+
+    SgInitializedName&     excpt = mkInitializedName(name, adaTypes()["EXCEPTION"], nullptr);
+    SgVariableDeclaration&*  mkExceptionDecl(
+
+    return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+*/
   }
 
   SgNode&
@@ -686,26 +710,30 @@ void initializeAdaTypes(SgGlobal& global)
   hiddenScope.set_parent(&global);
 
   // \todo reconsider using a true Ada exception representation
-  adaTypes()["EXCEPTION"]         = sb::buildOpaqueType("Exception", &hiddenScope);
+  adaTypes()["EXCEPTION"]           = sb::buildOpaqueType("Exception", &hiddenScope);
 
-  adaTypes()["INTEGER"]           = sb::buildIntType();
-  adaTypes()["CHARACTER"]         = sb::buildCharType();
-  adaTypes()["LONG_INTEGER"]      = sb::buildLongType(); // Long int
-  adaTypes()["LONG_LONG_INTEGER"] = sb::buildLongLongType(); // Long long int
+  adaTypes()["INTEGER"]             = sb::buildIntType();
+  adaTypes()["CHARACTER"]           = sb::buildCharType();
+  adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
+  adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
+  adaTypes()["SHORT_SHORT_INTEGER"] = sb::buildCharType(); // Long long int
+  adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
 
   // \todo items
-  adaTypes()["FLOAT"]             = sb::buildFloatType(); // Float is a subtype of Real
-  adaTypes()["LONG_LONG_FLOAT"]   = sb::buildLongDoubleType(); // Long long Double?
+  adaTypes()["FLOAT"]               = sb::buildFloatType(); // Float is a subtype of Real
+  adaTypes()["SHORT_FLOAT"]         = sb::buildFloatType(); // Float is a subtype of Real
+  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType(); // Float is a subtype of Real
+  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
 
   // \todo instead of ADAMAXINT a type attribute Integer'Last shall be set
-  adaTypes()["POSITIVE"]          = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
-  adaTypes()["NATURAL"]           = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
+  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
+  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
 
   //\todo reconsider modeling Boolean as an enumeration of True and False
-  adaTypes()["BOOLEAN"]           = sb::buildBoolType();
+  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
 
   // String is represented as Fortran-String with null
-  adaTypes()["STRING"]            = sb::buildStringType(sb::buildNullExpression());
+  adaTypes()["STRING"]              = sb::buildStringType(sb::buildNullExpression());
 }
 
 

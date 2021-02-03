@@ -94,4 +94,5 @@ PASSING_TESTS :=                       \
   sub_derived_types.ads                \
   io_test.adb                          \
   hello_world.adb                      \
+  array_declare.adb                    \
   EndOfList

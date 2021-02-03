@@ -97,6 +97,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_use_type.ads                  \
   simpleada-io.ads                     \
   some_modes.ads                       \
+  sub_derived_types.ads                \
   subtypes.ads                         \
   tagged_definition.ads                \
   task_type_declaration.ads            \
