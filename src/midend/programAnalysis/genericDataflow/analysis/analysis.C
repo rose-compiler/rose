@@ -797,10 +797,15 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                                 Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer Incoming Dataflow info modified\n";
                         // Record that the callee function needs to be re-analyzed because of new information from the caller
                         TraverseCallGraphDataflow::addToRemaining(getFunc(callee));
-                        ROSE_ASSERT(getFunc(callee) != NULL);
-                        remainingDueToCallers.insert(getFunc(callee));
+                        {
+                           const CGFunction* theFunc;
+
+                           theFunc = getFunc(callee);
+                           ROSE_ASSERT(theFunc != NULL);
+                           remainingDueToCallers.insert(theFunc);
+                        }
                 }
-                
+
                 // The lattices after the function (forward: before=above, after=below; backward: before=below, after=above).
                 const vector<Lattice*>* funcLatticesAfter;
                 if(fw) funcLatticesAfter = &(funcS->state.getLatticeBelow((Analysis*)intraAnalysis));
