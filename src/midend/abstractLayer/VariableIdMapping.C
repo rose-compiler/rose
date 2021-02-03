@@ -404,6 +404,9 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
       if(sym) {
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
+          // determine if it is a symbol of a global varible
+          // TODO
+
           // Register new symbol as normal variable symbol:
           registerNewSymbol(sym);
           // Remember that this symbol was already registered:
