@@ -92,6 +92,11 @@ namespace
     // \todo add handlers as needed
   };
 
+
+  SgScopeStatement&
+  getScopeID(Element_ID& el, AstContext ctx);
+
+
   /// returns the ROSE scope of an already converted Asis element \ref elem.
   SgScopeStatement&
   getScope(Element_Struct& elem, AstContext ctx)
@@ -99,8 +104,14 @@ namespace
     ROSE_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr = elem.The_Union.Expression;
-    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
 
+    if (expr.Expression_Kind == A_Selected_Component)
+      return getScopeID(expr.Prefix, ctx);
+
+    if (expr.Expression_Kind != An_Identifier)
+      logError() << "unexpected identifier" << expr.Expression_Kind;
+
+    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
     logKind("An_Identifier");
 
     SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
@@ -116,6 +127,13 @@ namespace
 
     return SG_DEREF(res);
   }
+
+  SgScopeStatement&
+  getScopeID(Element_ID& el, AstContext ctx)
+  {
+    return getScope(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+  }
+
 
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)
@@ -1899,11 +1917,21 @@ namespace
       {
         ROSE_ASSERT (el.Element_Kind == An_Expression);
 
+        //~ std::cerr << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+
         NameData                     usepkg = getName(el, ctx);
         SgScopeStatement&            scope  = ctx.scope();
         Expression_Struct&           expr   = asisExpression(usepkg.elem());
         SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+
+        //~ std::cerr
+        logError()
+                   << "use decl: " << usepkg.fullName
+                   << " " << typeid(*used).name()
+                   << " (" << expr.Corresponding_Name_Definition
+                   << ", " << expr.Corresponding_Name_Declaration << ")"
+                   << std::endl;
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
@@ -1928,8 +1956,9 @@ namespace
   ///   that can be referenced.
   struct ComponentClauseCreator
   {
-      ComponentClauseCreator(SgAdaRecordRepresentationClause& recclause, AstContext astctx)
-      : recordclause(recclause), ctx(astctx)
+      explicit
+      ComponentClauseCreator(AstContext astctx)
+      : ctx(astctx)
       {}
 
       void operator()(Element_Struct& el)
@@ -1950,16 +1979,10 @@ namespace
         //~ recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
 
-        sg::linkParentChild(recordclause, sgnode, &SgAdaRecordRepresentationClause::append_component);
-        //~ recordclause.append_component(&sgnode);
-        //~ ROSE_ASSERT(sgnode.get_parent() == &recordclause);
-
-        /* unused fields:
-         */
+        ctx.scope().append_statement(&sgnode);
       }
 
     private:
-      SgAdaRecordRepresentationClause& recordclause;
       AstContext                       ctx;
   };
 
@@ -2063,18 +2086,17 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
         SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
         SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
+        SgBasicBlock&           components = SG_DEREF(sgnode.get_components());
         ElemIdRange             range  = idRange(repclause.Component_Clauses);
 
         // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.scope().append_statement(&sgnode);
 
-        traverseIDs(range, elemMap(), ComponentClauseCreator{sgnode, ctx});
+        traverseIDs(range, elemMap(), ComponentClauseCreator{ctx.scope(components)});
 
-        // \todo requires IR change
-        //~ placePragmas(repclause.Pragmas, ctx, std::ref{sgnode.get_block()});
+        placePragmas(repclause.Pragmas, ctx, std::ref(components));
         /* unhandled fields:
-             Pragma_Element_ID_List      Pragmas
          */
         break;
       }
@@ -2999,14 +3021,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
         else
         {
-        SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
-        SgScopeStatement&       scope   = ctx.scope();
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+          SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
+          SgScopeStatement&       scope   = ctx.scope();
+          SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
         }
       break;
     }
@@ -3104,10 +3126,9 @@ getName(Element_Struct& elem, AstContext ctx)
         logKind("A_Defining_Expanded_Name");
 
         NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
-        Element_Struct& prefixelem = retrieveAs<Element_Struct>(elemMap(), asisname.Defining_Prefix);
 
         ident  = defname.ident;
-        parent = &getScope(prefixelem, ctx);
+        parent = &getScopeID(asisname.Defining_Prefix, ctx);
         break;
       }
 
