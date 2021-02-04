@@ -289,11 +289,8 @@ ATbool traverse_BinaryExpression(ATerm term, SgExpression* &expr);
 
 // 5.1 NUMERIC FORMULAS
 ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
 ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
-ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
 ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
 // 5.2 BIT FORMULAS

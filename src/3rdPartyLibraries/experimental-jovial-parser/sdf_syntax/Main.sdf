@@ -721,7 +721,9 @@ context-free syntax
   FixedItemDescription        -> FixedTypeDescription
   FixedTypeName               -> FixedTypeDescription    {reject} %% Using ItemTypeName
 
-  'A' OptRoundOrTruncate
+%%  'A'
+  FixedTypeDesc
+      OptRoundOrTruncate
       ScaleSpecifier
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
