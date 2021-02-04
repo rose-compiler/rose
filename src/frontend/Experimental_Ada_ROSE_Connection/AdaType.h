@@ -12,6 +12,7 @@ namespace Ada_ROSE_Translation
 {
 
 /// initializes a hidden scope with built-in ada types
+/// \todo this should disappear as soon as the Standard package is included in Asis
 void initializeAdaTypes(SgGlobal& global);
 
 /// represents a (partially) converted type
