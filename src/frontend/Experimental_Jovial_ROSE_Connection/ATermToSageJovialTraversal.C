@@ -377,207 +377,6 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineDefinitionList(ATerm term)
 }
 
 //========================================================================================
-// 1.4 IMPLEMENTATION PARAMETERS
-//----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, SgExpression* &expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_IntegerMachineParameter: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
-
-   if (ATmatch(term, "BITSINBYTE")) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
-#endif
-      // MATCHED BITSINBYTE
-   }
-   else if (ATmatch(term, "BITSINWORD")) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINWORD\n";
-#endif
-      // MATCHED BITSINWORD
-   }
-   else if (ATmatch(term, "LOCSINWORD")) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
-#endif
-      // MATCHED LOCSINWORD
-   }
-   else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
-#endif
-      // MATCHED BYTEPOS
-      if (traverse_NumericFormula(t_formula, expr)) {
-         // MATCHED CompileTimeNumericFormula
-      } else return ATfalse;
-   }
-
-   //TODO: 'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
-   //      'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
-   //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
-   //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
-   //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
-   //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
-
-
-   else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
-#endif
-      // MATCHED IMPLFLOATPRECISION
-      if (traverse_NumericFormula(t_precision, expr)) {
-         // MATCHED Precision
-      } else return ATfalse;
-   }
-   else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
-#endif
-      // MATCHED IMPLFIXEDPRECISION
-      if (traverse_NumericFormula(t_scale_spec, expr)) {
-         // MATCHED ScaleSpecifier
-      } else return ATfalse;
-      if (traverse_NumericFormula(t_frac_spec, expr)) {
-         // MATCHED FractionSpecifier
-      } else return ATfalse;
-   }
-
-   //TODO:
-   //  'IMPLINTSIZE' '(' IntegerSize ')'   -> IntegerMachineParameter {cons("IMPLINTSIZE")}
-   //  'MAXFLOATPRECISION'                 -> IntegerMachineParameter {cons("MAXFLOATPRECISION")}
-   //  'MAXFIXEDPRECISION'                 -> IntegerMachineParameter {cons("MAXFIXEDPRECSION")}
-   //  'MAXINTSIZE'                        -> IntegerMachineParameter {cons("MAXINTSIZE")}
-   //  'MAXBYTES'                          -> IntegerMachineParameter {cons("MAXBYTES")}
-   //  'MAXBITS'                           -> IntegerMachineParameter {cons("MAXBITS")}
-   //  'MAXINT'      '(' IntegerSize ')'   -> IntegerMachineParameter {cons("MAXINT")}
-   //  'MININT'      '(' IntegerSize ')'   -> IntegerMachineParameter {cons("MININT")}
-   //  'MAXTABLESIZE'                      -> IntegerMachineParameter {cons("MAXTABLESIZE")}
-   //  'MAXSTOP'                           -> IntegerMachineParameter {cons("MAXSTOP")}
-   //  'MINSTOP'                           -> IntegerMachineParameter {cons("MINSTOP")}
-   //  'MAXSIGNDIGITS'                     -> IntegerMachineParameter {cons("MAXSIGNDIGITS")}
-   //  'MINSIZE'
-   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINSIZE")}
-   //  'MINFRACTION'
-   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINFRACTION")}
-   //  'MINSCALE'
-   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINSCALE")}
-   //  'MINRELPRECISION'
-   //    '(' CompileTimeIntegerFormula ')' -> IntegerMachineParameter {cons("MINRELPRECISION")}
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_FloatingMachineParameter(ATerm term, SgExpression* &precision)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FloatingMachineParameter: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_precision;
-
-   if (ATmatch(term, "MAXFLOAT(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - MAXFLOAT\n";
-#endif
-      // MATCHED MAXFLOAT
-      if (traverse_NumericFormula(t_precision, precision)) {
-         // MATCHED Precision
-      } else return ATfalse;
-   }
-   else if (ATmatch(term, "MINFLOAT(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - MINFLOAT\n";
-#endif
-      // MATCHED MINFLOAT
-      if (traverse_NumericFormula(t_precision, precision)) {
-         // MATCHED Precision
-      } else return ATfalse;
-   }
-   else if (ATmatch(term, "FLOATRELPRECISION(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - FLOATRELPRECISION\n";
-#endif
-      // MATCHED FLOATRELPRECISION
-      if (traverse_NumericFormula(t_precision, precision)) {
-         // MATCHED Precision
-      } else return ATfalse;
-   }
-   else if (ATmatch(term, "FLOATUNDERFLOW(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - FLOATUNDERFLOW\n";
-#endif
-      // MATCHED FLOATUNDERFLOW
-      if (traverse_NumericFormula(t_precision, precision)) {
-         // MATCHED Precision
-      } else return ATfalse;
-   }
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_FixedMachineParameter(ATerm term, SgExpression* &expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_FixedMachineParameter: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_spec1, t_spec2, t_scale_spec, t_frac_spec;
-   SgExpression *scale_spec=nullptr, *frac_spec=nullptr;
-
-   expr = nullptr;
-
-   if (ATmatch(term, "MAXFIXED(<term>,<term>)", &t_spec1, &t_spec2)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FixedMachineParameter - MAXFIXED\n";
-      // MATCHED MAXFIXED
-#endif
-      if (ATmatch(t_spec1, "ScaleSpecifier(<term>)", &t_scale_spec)) {
-         if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
-            // MATCHED ScaleSpecifier
-         } else return ATfalse;
-      } else return ATfalse;
-
-      if (ATmatch(t_spec2, "FractionSpecifier(<term>)", &t_frac_spec)) {
-         if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
-            // MATCHED FractionSpecifier
-         } else return ATfalse;
-      } else return ATfalse;
-   }
-   else if (ATmatch(term, "MINFIXED(<term>,<term>)", &t_spec1, &t_spec2)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: FixedMachineParameter - MINFIXED\n";
-#endif
-      // MATCHED MINFIXED
-      if (ATmatch(t_spec1, "ScaleSpecifier(<term>)", &t_scale_spec)) {
-         if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
-            // MATCHED ScaleSpecifier
-         } else return ATfalse;
-      } else return ATfalse;
-
-      if (ATmatch(t_spec2, "FractionSpecifier(<term>)", &t_frac_spec)) {
-         if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
-            // MATCHED FractionSpecifier
-         } else return ATfalse;
-      } else return ATfalse;
-   }
-   else return ATfalse;
-
-// TODO - need to return an SgExprListExp containing the scale and fraction specifiers
-// expr = SageBuilder::buildExprListExp_nfi();
-// ROSE_ASSERT(scale_spec);
-// ROSE_ASSERT(frac_spec);
-
-   return ATtrue;
-}
-
-//========================================================================================
 // 2.0 DECLARATIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_Declaration(ATerm term)
@@ -986,14 +785,16 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    printf("... traverse_FixedItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_round_or_truncate, t_scale, t_fraction, t_scale_spec, t_frac_spec;
+   ATerm t_fixed_type_desc, t_round_or_truncate, t_scale, t_fraction, t_scale_spec, t_frac_spec;
    Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
    SgExpression * scale = nullptr, * fraction = nullptr;
 
-   if (ATmatch(term, "FixedItemDescription (<term>,<term>,<term>)", &t_round_or_truncate,&t_scale,&t_fraction)) {
+   if (ATmatch(term, "FixedItemDescription(<term>,<term>,<term>,<term>)", &t_fixed_type_desc,&t_round_or_truncate,&t_scale,&t_fraction)) {
       // MATCHED FixedItemDescription
    }
    else return ATfalse;
+
+// The first term, t_fixed_type_desc, comes from the lexer and is direct user input: "A", "a".
 
    if (traverse_OptRoundOrTruncate(t_round_or_truncate, modifier_enum)) {
       // MATCHED OptRoundOrTruncate
@@ -4428,7 +4229,7 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
    printf("... traverse_SimpleStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_stmt, t_amb;
+   ATerm t_labels, t_stmt;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
@@ -5851,33 +5652,6 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
       ROSE_ASSERT(false);
   }
 
-
-#if 0
-   // OptSign NumericTerm -> NumericFormula
-   //
-   else if (ATmatch(term, "NumericFormula(<term>,<term>)", &t_sign, &t_expr)) {
-      LanguageTranslation::ExpressionKind op_enum;
-
-      if (traverse_OptSign(t_sign, op_enum)) {
-         // MATCHED OptSign
-      } else return ATfalse;
-      if (traverse_NumericTerm(t_expr, expr)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-      if (op_enum == LanguageTranslation::e_operator_unary_minus) {
-        expr = SageBuilder::buildMinusOp_nfi(expr, SgUnaryOp::prefix);
-        setSourcePosition(expr, term);
-      }
-      else if (op_enum == LanguageTranslation::e_operator_unary_plus) {
-        expr = new SgUnaryAddOp(expr, nullptr);
-        ROSE_ASSERT(expr != nullptr);
-        setSourcePosition(expr, term);
-      }
-   }
-
-   else return ATfalse;
-#endif
-
    ROSE_ASSERT(expr);
    setSourcePosition(expr, term);
 
@@ -5893,59 +5667,12 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
    printf("... traverse_NumericFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
-
-   // OptSign NumericTerm -> NumericFormula
-   //
-   if (ATmatch(term, "NumericFormula(<term>,<term>)", &t_sign, &t_expr)) {
-      LanguageTranslation::ExpressionKind op_enum;
-
-      if (traverse_OptSign(t_sign, op_enum)) {
-         // MATCHED OptSign
-      } else return ATfalse;
-      if (traverse_NumericTerm(t_expr, expr)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-      if (op_enum == LanguageTranslation::e_operator_unary_minus) {
-        expr = SageBuilder::buildMinusOp_nfi(expr, SgUnaryOp::prefix);
-        setSourcePosition(expr, term);
-      }
-      else if (op_enum == LanguageTranslation::e_operator_unary_plus) {
-        expr = new SgUnaryAddOp(expr, nullptr);
-        ROSE_ASSERT(expr != nullptr);
-        setSourcePosition(expr, term);
-      }
-   }
-
-   // NumericFormula PlusOrMinus NumericTerm -> NumericFormula
-   //
-   else if (ATmatch(term, "NumericFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-      SgExpression * lhs = nullptr, * rhs = nullptr;
-
-      if (traverse_NumericFormula(t_lhs, lhs)) {
-         // MATCHED NumericFormula
-      } else return ATfalse;
-
-      if (traverse_NumericTerm(t_rhs, rhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      if (ATmatch(t_op, "AddOp()")) {
-         expr = SageBuilder::buildAddOp_nfi(lhs, rhs);
-         setSourcePosition(expr, term);
-      }
-      else if (ATmatch(t_op, "SubtractOp()")) {
-         expr = SageBuilder::buildSubtractOp_nfi(lhs, rhs);
-         setSourcePosition(expr, term);
-      } else return ATfalse;
-   }
-   else if (traverse_NumericPrimary(term, expr)) {
+   if (traverse_NumericPrimary(term, expr)) {
       // MATCHED NumericPrimary
       // Needed to get to numeric conversions
       // When NumericFormula traversals are cleaned up
       // Might want to change this path
    }
-
    else return ATfalse;
 
    return ATtrue;
@@ -5957,52 +5684,14 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    printf("... traverse_NumericPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
-   char *literal=nullptr, *var_name=nullptr;
+   ATerm t_formula, t_conversion;
 
-   SgExpression *num_term = nullptr, *factor = nullptr, *cast_formula = nullptr;
+   SgExpression* cast_formula = nullptr;
    SgType* conv_type = nullptr;
 
    expr = nullptr;
 
-   if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
-      expr = SageBuilder::buildIntVal_nfi(std::string(literal));
-      setSourcePosition(expr, term);
-   }
-
-   else if (traverse_FixedOrFloatingLiteral(term, expr)) {
-         // MATCHED FixedOrFloatingLiteral
-   }
-
-   else if (traverse_NumericMachineParameter(term, expr)) {
-      // MATCHED NumericMachineParameter
-   }
-
-   else if (ATmatch(term, "NumericVariable(<term>)", &t_num_var)) {
-#if 0
-      if (traverse_TableItem(t_table_item, table_item)){
-         //MATCHED TableItem
-      } else return ATfalse;
-#endif
-
-      // need to traverse all possible Variables, including TableItem
-      if (traverse_Variable(t_num_var, expr)) {
-         if (!expr) {
-            cerr << "WARNING UNIMPLEMENTED: NumericPrimary - NumericVariable\n";
-            ROSE_ASSERT(false);
-         }
-      } else return ATfalse;
-   }
-
-   else if (ATmatch(term, "NumericPrimaryParens(<term>)", &t_formula)) {
-      if (traverse_NumericFormula(t_formula, expr)) {
-         //  '(' NumericFormula ')'      -> NumericPrimary         {cons("NumericPrimary")}
-      } else return ATfalse;
-      ROSE_ASSERT(expr);
-      expr->set_need_paren(true);
-   }
-
-   else if (ATmatch(term, "NumericPrimary(<term>,<term>)", &t_conversion, &t_formula)) {
+   if (ATmatch(term, "NumericPrimary(<term>,<term>)", &t_conversion, &t_formula)) {
 
       if (traverse_IntegerConversion(t_conversion, conv_type)) {
          // MATCHED IntegerConversion
@@ -6026,7 +5715,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
-
+#if 0
    else if (ATmatch(term, "NumericPrimary(<term>,<term>,<term>)", &t_conversion, &t_num_term, &t_factor)) {
 
       if (traverse_FixedConversion(t_conversion, conv_type)) {
@@ -6048,37 +5737,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
-
-   else if (traverse_FunctionCall(term, expr)) {
-      // MATCHED FunctionCall (or a type conversion)
-   }
-
-// Lastly handle names (variable identifiers)
-   else if (ATmatch(term, "<str>", &var_name)) {
-      // MATCHED an unnamed string
-   }
-   else if (ATmatch(term, "NumericVariable(<str>)", &var_name)) {
-      // MATCHED NumericVariable
-   }
-   else if (ATmatch(term, "ControlLetter(<str>)", &var_name)) {
-      // MATCHED ControlLetter
-   }
+#endif
    else return ATfalse;
 
-   if (var_name != nullptr) {
-      SgVarRefExp* var_ref;
-      sage_tree_builder.Enter(var_ref, var_name, /*compiler_generate*/true);
-      sage_tree_builder.Leave(var_ref);
-
-      expr = var_ref;
-      setSourcePosition(expr, term);
-   }
-
-   if (expr == nullptr) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: NumericPrimary - expr is null \n";
-#endif
-   }
    ROSE_ASSERT(expr);
 
    return ATtrue;
@@ -6104,121 +5765,6 @@ ATbool ATermToSageJovialTraversal::traverse_OptSign(ATerm term, LanguageTranslat
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression* & expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_NumericTerm: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_lhs, t_op, t_rhs;
-   SgExpression *lhs = nullptr, *rhs = nullptr;
-
-   if (ATmatch(term, "NumericTerm(<term>,<term>,<term>)", &t_lhs, &t_op, &t_rhs)) {
-      if (traverse_NumericTerm(t_lhs, lhs)) {
-         // MATCHED NumericTerm
-      } else return ATfalse;
-
-      if (traverse_NumericFactor(t_rhs, rhs)) {
-         // MATCHED NumericFactor
-      } else return ATfalse;
-
-      ROSE_ASSERT(lhs && rhs);
-
-      if (ATmatch(t_op, "MultiplyOp()")) {
-         expr = SageBuilder::buildMultiplyOp_nfi(lhs, rhs);
-      }
-      else if (ATmatch(t_op, "DivideOp()")) {
-         expr = SageBuilder::buildDivideOp_nfi(lhs, rhs);
-      }
-      else if (ATmatch(t_op, "ModOp()")) {
-         expr = SageBuilder::buildModOp_nfi(lhs, rhs);
-      }
-      else return ATfalse;
-
-      ROSE_ASSERT(expr);
-      setSourcePosition(expr, term);
-   }
-   else if (traverse_NumericFactor(term, expr)) {
-         // MATCHED NumericFactor
-   }
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_NumericFactor(ATerm term, SgExpression* & expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_NumericFactor: %s\n", ATwriteToString(term));
-#endif
-
-   // NEED TO DECIDE: whether to use this or use traverse_ExponentiationOp
-   // or use both
-
-   if (traverse_NumericPrimary(term, expr)) {
-      // MATCHED NumericPrimary
-   } else if (traverse_ExponentiationOp(term, expr)) {
-      // MATCHED ExponentiationOp
-   }
-
-   else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_ExponentiationOp(ATerm term, SgExpression* & expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ExponentiationOp: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_lhs, t_rhs;
-   SgExpression * lhs = nullptr, * rhs = nullptr;
-
-   expr = nullptr;
-
-   if (ATmatch(term, "ExponentiationOp(<term>,<term>)", &t_lhs, &t_rhs)) {
-      if (traverse_NumericFactor(t_lhs, lhs)) {
-         // MATCHED NumericFactor
-      } else return ATfalse;
-
-      if (traverse_NumericPrimary(t_rhs, rhs)) {
-         // MATCHED NumericPrimary
-      } else return ATfalse;
-   }
-   else return ATfalse;
-
-   ROSE_ASSERT(lhs);
-   ROSE_ASSERT(rhs);
-
-   expr = SageBuilder::buildExponentiationOp_nfi(lhs, rhs);
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_NumericMachineParameter(ATerm term, SgExpression* &expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_NumericMachineParameter: %s\n", ATwriteToString(term));
-#endif
-
-   if (traverse_IntegerMachineParameter(term, expr)) {
-      // MATCHED IntegerMachineParameter
-   } else if (traverse_FloatingMachineParameter(term, expr)) {
-      // MATCHED FloatingMachineParameter
-   } else if (traverse_FixedMachineParameter(term, expr)) {
-      // MATCHED FixedMachineParameter
-   }
-   else return ATfalse;
-
-   if (expr == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: NumericMachineParameter\n";
-      ROSE_ASSERT(expr);
-   }
-
-   return ATtrue;
-}
-
 //========================================================================================
 // 5.2 BIT FORMULAS
 //----------------------------------------------------------------------------------------
@@ -6235,19 +5781,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    if (traverse_LogicalOperand(term, expr)) {
       // MATCHED LogicalOperand
    }
-
-   else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-         // MATCHED LogicalOperand
-      }
-      else return ATfalse;
-
-      ROSE_ASSERT(expr);
-      SgNotOp* not_op = SageBuilder::buildNotOp(expr);
-      setSourcePosition(not_op, term);
-      expr = not_op;
-   }
-
    else if (ATmatch(term, "BitVariableFormula(<term>)", &t_operand)) {
       if (traverse_Variable(t_operand, expr)) {
          // MATCHED Variable
@@ -6270,11 +5803,8 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
 
    if (traverse_BitPrimary(term, expr)) {
       // MATCHED BitPrimary
-   } else if (traverse_Variable(term, expr)) {
-      // MATCHED Variable
-   } else if (traverse_RelationalExpression(term, expr)) {
-      // MATCHED RelationalExpression
-   } else return ATfalse;
+   }
+   else return ATfalse;
 
    ROSE_ASSERT(expr != nullptr);
 
@@ -6287,24 +5817,11 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    printf("... traverse_BitPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_bit, t_conv_type, t_formula;
+   ATerm t_conv_type, t_formula;
 
    expr = nullptr;
 
-   if (traverse_BooleanLiteral(term, expr)) {
-      // MATCHED BooleanLiteral
-   }
-   else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
-      if (traverse_BitFormula(t_bit, expr)) {
-         // MATCHED BitFormula
-      } else return ATfalse;
-      ROSE_ASSERT(expr);
-      expr->set_need_paren(true);
-   }
-   else if (traverse_BitLiteral(term, expr)) {
-      // MATCHED BitLiteral
-   }
-   else if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
+   if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
       //          expr = SB::buildNullExpression_nfi();
       //          return ATtrue;
       //        }
@@ -6330,11 +5847,13 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
+#if DELETE
    else if (ATmatch(term, "BitVariable(<term>)", &t_formula)) {
       if (traverse_Variable(t_formula, expr)) {
          // MATCHED BitVariable
       } else return ATfalse;
    }
+#endif
    else if (traverse_FunctionCall(term, expr)) {
       // FunctionCall      -> BitFunctionCall
       // BitFunctionCall   -> BitPrimary (no cons)
@@ -6348,7 +5867,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
 
    return ATtrue;
 }
-
+#if 0
 //========================================================================================
 // 5.2.1 RELATIONAL EXPRESSIONS
 //----------------------------------------------------------------------------------------
@@ -6399,6 +5918,7 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
 
    return ATtrue;
 }
+#endif
 
 //========================================================================================
 // 5.3.0 GENERAL FORMULA
