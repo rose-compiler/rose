@@ -25,9 +25,12 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   fib.adb                              \
   for_loop.adb                         \
   for_loop_statement.adb               \
+  function_body_stub.ads               \
   function_declaration.adb             \
   function_declaration.ads             \
   goto_loop.adb                        \
+  gototest.adb                         \
+  gototest.ads                         \
   if_statement.adb                     \
   increment.adb                        \
   loop_exit.adb                        \
@@ -38,14 +41,30 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   package_with_body.adb                \
   package_with_body.ads                \
   parameter_declaration.ads            \
+  procedure_body_stub.ads              \
   procedure_declaration.adb            \
+  procedure_declaration.ads            \
   recursive_call.adb                   \
   selected_component.ads               \
-  simpleada.ads                        \
+  short_circuit.adb                    \
+  short_circuit_v2.adb                 \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
   while_loop_statement.adb 
+
+ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
+  derived_record.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \
+  nullrecord.ads                       \
+  package_pragma.ads                   \
+  private_extension_declaration.ads    \
+  procedure_pragma.adb                 \
+  some_modes.ads                       \
+  subtypes.ads                         \
+  tagged_definition.ads                \
+  unconstrained_array_definition.ads   
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   accept_statement.adb                 \
@@ -54,40 +73,26 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   based_numbers.ads                    \
   complex.ads                          \
   defining_character_literal.adb       \
-  defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
-  derived_record.ads                   \
+  defining_enumeration_literal.adb     \
   entry_call.adb                       \
   entry_declaration.ads                \
   exception_declaration.ads            \
   exception_rename.ads                 \
   floating_point_definition.ads        \
-  function_body_stub.ads               \
-  gototest.adb                         \
-  gototest.ads                         \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
-  myarray.ads                          \
-  myarray.adb                          \
-  nullrecord.ads                       \
   opaque.ads                           \
   ordinary_type_declaration.ads        \
-  package_pragma.ads                   \
   package_renaming_declaration.ads     \
-  parent-child.ads                     \
   parent.ads                           \
+  parent-child.ads                     \
   pragmas.adb                          \
-  private_extension_declaration.ads    \
-  procedure_body_stub.ads              \
   procedure_call.adb                   \
-  procedure_declaration.ads            \
-  procedure_pragma.adb                 \
   raise_statement.adb                  \
+  scopequal.adb                        \
   representation_clause.ads            \
   representation_clause_2.ads          \
-  scopequal.adb                        \
-  short_circuit.adb                    \
-  short_circuit_v2.adb                 \
   simple_array_expressions.adb         \
   simple_expression_range.ads          \
   simple_hello_world.adb               \
@@ -95,23 +100,21 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
+  simpleada.ads                        \
   simpleada-io.ads                     \
-  some_modes.ads                       \
   sub_derived_types.ads                \
-  subtypes.ads                         \
-  tagged_definition.ads                \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
   task_with_abort_v2.adb               \
   task_with_body.adb                   \
   task_with_body.ads                   \
   type_conversion.adb                  \
-  unconstrained_array_definition.ads   \
   week_string_literal.ads              
 
 # defines tests that are fully supported by ROSE
-ROSE_PASSING_ADA_TESTS :=              \
-  $(ADA_TRANSLATOR_PASSING_TESTS)      \
+ROSE_PASSING_ADA_TESTS :=                           \
+  $(ADA_TRANSLATOR_PASSING_TESTS)                   \
+  $(ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS)        \
   $(ADA_TRANSLATOR_FAILING_TESTS)      
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
