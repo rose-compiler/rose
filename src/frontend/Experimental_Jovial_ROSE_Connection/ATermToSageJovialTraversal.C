@@ -1296,7 +1296,18 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //    The type name is the name of the base type.
 //
    if (traverse_TableDescriptionName(t_table_desc, table_type_name, base_type, preset)) {
-      table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
+      if (dim_info->get_expressions().size() == 0) {
+        // TODO: FIXME: leads to WARNING in AstConsistencyTests.C at line 3118
+        // WARNING: change for Tristan
+        table_type = isSgJovialTableType(base_type);
+        ROSE_ASSERT(table_type);
+        // TODO: CLEAN this up
+        delete dim_info;
+        dim_info = nullptr;
+      }
+      else {
+        table_type = SageBuilder::buildJovialTableType(table_type_name, base_type, dim_info, SageBuilder::topScopeStack());
+      }
       type = table_type;
    }
 
@@ -1371,7 +1382,10 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    ROSE_ASSERT(decl);
    SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
    ROSE_ASSERT(def_decl);
-   SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   // WARNING: change for Tristan
+   if (dim_info) {
+     SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   }
 
    if (constant) {
    // This is a ConstantTableDeclaration
