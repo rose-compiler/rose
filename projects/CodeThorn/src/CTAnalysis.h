@@ -264,6 +264,8 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
+    void initializeGlobalVariablesOld(SgProject* root, EState& estate);
+    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
