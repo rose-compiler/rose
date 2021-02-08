@@ -206,7 +206,7 @@ namespace CodeThorn {
         string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
         if(!ctOpt.quiet)
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-        locations.writeResultFile(fileName,analyzer->getLabeler());
+        locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());
       }
     }
   }
