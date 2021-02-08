@@ -935,13 +935,6 @@ HEADER_LAMBDA_CAPTURE_LIST_START
 // DQ (9/3/2014): Adding support for C++11 lambda expresions.
 HEADER_LAMBDA_CAPTURE_LIST_END
 
-HEADER_ADA_COMPONENT_CLAUSE_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaComponentClause& c);
-HEADER_ADA_COMPONENT_CLAUSE_END
-
 
 
 
@@ -2243,41 +2236,5 @@ SOURCE_LAMBDA_CAPTURE_LIST_START
 // DQ (9/3/2014): Adding support for C++11 lambda expresions.
 SOURCE_LAMBDA_CAPTURE_LIST_END
 
-SOURCE_ADA_COMPONENT_CLAUSE_START
-void SgAdaComponentClause::post_construction_initialization() {};
-
-std::string SgAdaComponentClause::displayString() const
-{
-  ROSE_ASSERT(get_range() && get_offset() && get_component());
-
-  SgExpression* lb = get_range()->get_start();
-  SgExpression* ub = get_range()->get_end();
-
-  ROSE_ASSERT(lb && ub);
-
-  std::string res(get_component()->unparseToString());
-
-  res += "at ";
-  res += get_offset()->unparseToString();
-  res += ": ";
-  res += lb->unparseToString();
-  res += "..";
-  res += ub->unparseToString();
-
-  return res;
-}
-
-void SgAdaComponentClause::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
-}
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaComponentClause& c)
-{
-  return os << c.displayString();
-}
-
-SOURCE_ADA_COMPONENT_CLAUSE_END
 
 

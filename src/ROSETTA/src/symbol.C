@@ -1,4 +1,4 @@
-
+#include <featureTests.h>
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "AstNodeClass.h"
@@ -84,7 +84,7 @@ Grammar::setUpSymbols ()
      NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
      NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.
@@ -101,7 +101,7 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( AdaPackageSymbol, "AdaPackageSymbol", "ADA_PACKAGE_SYMBOL" );
      NEW_TERMINAL_MACRO ( AdaTaskSymbol,    "AdaTaskSymbol", "ADA_TASK_SYMBOL" );
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol   | NonrealSymbol          | FunctionSymbol         | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
@@ -322,7 +322,7 @@ Grammar::setUpSymbols ()
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      AsmBinaryAddressSymbol.setFunctionPrototype ( "HEADER_ASM_BINARY_ADDRESS_SYMBOL", "../Grammar/Symbol.code" );
      AsmBinaryAddressSymbol.setDataPrototype     ( "SgName", "address_name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -461,7 +461,7 @@ Grammar::setUpSymbols ()
 
      RenameSymbol.setFunctionSource         ( "SOURCE_RENAME_SYMBOL", "../Grammar/Symbol.code" );
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
   // values are assumed to be literals and will not have associated symbols.

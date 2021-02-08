@@ -1052,6 +1052,12 @@ HEADER_ADA_SUBTYPE_START
 
 HEADER_ADA_SUBTYPE_END
 
+HEADER_ADA_DERIVEDTYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_DERIVEDTYPE_END
+
 HEADER_ADA_MODULAR_TYPE_START
 
           SgName get_name() const;
@@ -6732,6 +6738,8 @@ SOURCE_ADA_SUBTYPE_START
 SgName
 SgAdaSubtype::get_mangled(void) const {
     const SgType* under_type = get_base_type();
+    ROSE_ASSERT(under_type);
+
     std::string   name(under_type->get_mangled());
 
     name += ":>";
@@ -6740,6 +6748,28 @@ SgAdaSubtype::get_mangled(void) const {
 }
 
 SOURCE_ADA_SUBTYPE_END
+
+SOURCE_ADA_DERIVEDTYPE_START
+
+SgName
+SgAdaDerivedType::get_mangled(void) const {
+    std::stringstream buf;
+
+    const SgType* under_type = get_base_type();
+    ROSE_ASSERT(under_type);
+
+    // encode the this pointer since every new derived type is
+    //   different.
+    buf << under_type->get_mangled()
+        << "$derived$"
+        << std::hex << this
+        ;
+
+    return buf.str();
+}
+
+SOURCE_ADA_DERIVEDTYPE_END
+
 
 SOURCE_ADA_MODULAR_TYPE_START
 
@@ -8811,6 +8841,23 @@ SgAdaSubtype::createType (SgType* base_type, SgAdaTypeConstraint* constraint, Sg
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_DERIVEDTYPE_START
+
+SgAdaDerivedType*
+SgAdaDerivedType::createType (SgType* base_type, SgExpression* /*optional_fortran_type_kind*/)
+{
+  // an ada derived type is always distinct from its base type,
+  // ===> do not unify them.
+  ROSE_ASSERT(base_type != NULL);
+  SgAdaDerivedType* res  = new SgAdaDerivedType(base_type);
+  SgName            name = res->get_mangled();
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_DERIVEDTYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE_START
 

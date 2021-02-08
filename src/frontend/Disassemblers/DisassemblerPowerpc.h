@@ -3,8 +3,9 @@
 #ifndef ROSE_DISASSEMBLER_POWERPC_H
 #define ROSE_DISASSEMBLER_POWERPC_H
 
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "Disassembler.h"
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "integerOps.h"
 #include "SageBuilderAsm.h"

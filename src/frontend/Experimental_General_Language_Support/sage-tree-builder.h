@@ -228,10 +228,13 @@ private:
 
    LanguageEnum language_;
    TraversalContext context_;
-   std::map<const std::string, SgVarRefExp*> forward_refs_;
+   std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::map<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
+
+   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
 
 public:
    bool is_Fortran_language() {return (language_ == e_language_fortran);}
@@ -250,8 +253,11 @@ public:
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
 
-// Builder function manages implicitly declared references
+// Builder function manages implicitly declared variable references
    SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
+
+// Builder function manages pointer references to undeclared types
+   SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
 
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);

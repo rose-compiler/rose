@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_AstHash_H
 #define ROSE_BinaryAnalysis_AstHash_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <MemoryMap.h>
 #include <Partitioner2/BasicBlock.h>

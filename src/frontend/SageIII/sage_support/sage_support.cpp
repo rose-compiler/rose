@@ -27,7 +27,7 @@
 #   include "ModuleBuilder.h"
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #   include <Partitioner2/Engine.h>
 #   include <Partitioner2/ModulesElf.h>
 #endif
@@ -1395,7 +1395,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                                 } else if (true) {
                                    // This is not a source file recognized by ROSE, so it is either a binary executable or
                                    // library archive or something that we can't process.
@@ -1475,7 +1475,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                        BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
                                            binary->get_libraryArchiveObjectFileNameList().push_back(memberName.string());
                                    }
-#endif // ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#endif
                                }
                               else
                                {
@@ -2147,7 +2147,7 @@ SgSourceFile::callFrontEnd()
      return frontendErrorLevel;
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 int
 SgBinaryComposite::callFrontEnd()
    {
@@ -2167,11 +2167,11 @@ SgUnknownFile::callFrontEnd()
      return 0;
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)
 {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     p_interpretations = new SgAsmInterpretationList();
     p_interpretations->set_parent(this);
 
@@ -3027,7 +3027,7 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
      SgFile::doSetupForConstructor(argv, project);
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 void
 SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
@@ -3425,7 +3425,7 @@ SgFile::callFrontEnd()
                          break;
                        }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
@@ -6310,12 +6310,12 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
    }
 
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
@@ -6368,7 +6368,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */

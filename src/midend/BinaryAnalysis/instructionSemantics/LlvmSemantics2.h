@@ -1,7 +1,7 @@
 #ifndef Rose_LlvmSemantics2_H
 #define Rose_LlvmSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "SymbolicSemantics2.h"
 #include "CommandLine.h"

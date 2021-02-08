@@ -1,7 +1,7 @@
 #ifndef ROSE_SageBuilderAsm_H
 #define ROSE_SageBuilderAsm_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace Rose {
 
@@ -117,6 +117,7 @@ SgAsmBinaryAsr* buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, S
 SgAsmBinaryRor* buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmUnaryRrx* buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type=NULL);
 SgAsmUnaryTruncate* buildTruncateExpression(SgAsmExpression*, SgAsmType*);
+SgAsmBinaryConcat* buildConcatExpression(SgAsmExpression *moreSignificant, SgAsmExpression *lessSignificant);
 SgAsmUnarySignedExtend* buildSignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmUnaryUnsignedExtend* buildUnsignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmExprListExp* buildExprListExpression();

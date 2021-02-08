@@ -1,6 +1,6 @@
 // Support for reading a binary and comparing its functions to a database.
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>

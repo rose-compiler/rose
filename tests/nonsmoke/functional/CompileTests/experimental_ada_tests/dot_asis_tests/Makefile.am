@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ADA_MAIN=$(top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main
+DOT_OPTPUT=$(top_builddir)/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests
 
 $(ADA_MAIN)/obj/run_asis_tool_2:
 	cd $(ADA_MAIN); $(MAKE) run_asis_tool_2
@@ -8,125 +9,26 @@ $(ADA_MAIN)/obj/run_asis_tool_2:
 RUN_ASIS_TOOL=$(ADA_MAIN)/obj/run_asis_tool_2
 GNAT_HOME=$(shell dirname $(shell dirname $(shell which gprbuild)))
 
+include $(srcdir)/../AdaTest.mk
 # ASIS and ROSE share same test files in a joint directory
 ASIS_TESTS_DIR = $(srcdir)/../tests
 # ASIS_SPEC_TESTS := $(shell find $(ASIS_TESTS_DIR) -name '*.ads')
 
-ASIS_SPEC_FAILED_TESTS := \
-	all_modes.ads 
+# SIS_SPEC_FAILED_TESTS := \
+#	all_modes.ads 
+ASIS_SPEC_FAILED_TESTS := $(filter %.ads,$(ASIS_FAILING_TESTS)) 
 
-ASIS_SPEC_PASS_TESTS := \
-        access_to_object.ads \
-        access_to_subprogram.ads \
-        array_declare_2.ads \
-	component_declaration.ads \
-	constant_declaration.ads \
-        constrained_array_definition.ads \
-        defining_operator_symbol.ads \
-	derived_record.ads \
-        discriminant_specification.ads \
-	empty_package.ads \
-	entry_declaration.ads \
-	exception_declaration.ads \
-        fixed_point_definition.ads \
-        floating_point_definition.ads \
-	function_declaration.ads \
-        generic_package_renaming_declaration.ads \
-        modular_type_definition.ads \
-	ordinary_type_declaration.ads \
-	ordinary_type_declaration_range_constraint.ads \
-        package_pragma.ads \
-        package_renaming_declaration.ads \
-	package_with_body.ads \
-	parameter_declaration.ads \
-        private_extension_declaration.ads \
-	procedure_declaration.ads \
-        protected_type_declaration.ads \
-        protected_body_declaration.ads \
-        representation_clause.ads \
-	selected_component.ads \
-        single_protected_declaration.ads \
-        signed_integer_type_definition.ads \
-	simple_expression_range.ads \
-	tagged_definition.ads \
-	task_type_declaration.ads \
-	task_with_body.ads \
-	test_unit.ads \
-        unconstrained_array_definition.ads \
-        unknown_discriminant.ads \
-	unit_2.ads \
-	variable_declaration.ads \
-        variant_record.ads
-
+ASIS_SPEC_PASS_TESTS := $(filter %.ads,$(ASIS_PASSING_TESTS))
 
 ASIS_SPEC_TESTS = $(ASIS_SPEC_PASS_TESTS) $(ASIS_SPEC_FAILED_TESTS)
 
-
 #ASIS_BODY_TESTS := $(shell find $(ASIS_TESTS_DIR) -name '*.adb')
 
-ASIS_BODY_FAILED_TESTS := \
-        # pragma.adb   #Not sure what happened to this test, it doesn't seem to exist
+#ASIS_BODY_FAILED_TESTS := \
+#        # pragma.adb   #Not sure what happened to this test, it doesn't seem to exist
+ASIS_BODY_FAILED_TESTS := $(filter %.adb,$(ASIS_FAILING_TESTS)) 
 
-ASIS_BODY_PASS_TESTS := \
-	accept_statement.adb \
-	alignment_component_clause.adb \
-	allocators.adb \
-        array_declare.adb \
-	array_expressions.adb \
-	asm_machine_code.adb \
-	block_statement.adb \
-	case_statement.adb \
-	choice_parameter_specification.adb \
-        defining_character_literal.adb \
-        defining_enumeration_literal.adb \
-	delay_relative.adb \
-	delay_until.adb \
-        discriminant.adb \
-        entry_body_declaration.adb \
-	entry_call.adb \
-        entry_index_specification.adb \
-	enumeration.adb \
-	exit_statement.adb \
-	explicit_deref.adb \
-	extension_aggregate.adb \
-	for_loop_statement.adb \
-        function_body_stub.adb \
-	function_call.adb \
-	function_declaration.adb \
-        function_renaming.adb \
-	goto_loop.adb \
-	goto_loop_v2.adb \
-	hello_world.adb \
-	if_statement.adb \
-        loop_parameter_specification.adb \
-	loop_statement.adb \
-	minimal.adb \
-        object_renaming_declaration.adb \
-	operator.adb \
-	package_with_body.adb \
-	pragmas.adb \
-        procedure_body_stub.adb \
-	procedure_call.adb \
-	procedure_declaration.adb \
-        procedure_pragma.adb \
-        procedure_renaming.adb \
-        protected_body_declaration.adb \
-	qualified_expression.adb \
-	raise_statement.adb \
-        requeue_statement_2.adb \
-	requeue_statements.adb \
-	select_accept.adb \
-	short_circuit.adb \
-	short_circuit_v2.adb \
-	task_with_abort.adb \
-	task_with_abort_v2.adb \
-	task_with_body.adb \
-	test_unit.adb \
-	type_conversion.adb \
-	unit_2.adb \
-        variable_variant_record.adb \
-	while_loop_statement.adb 
-
+ASIS_BODY_PASS_TESTS := $(filter %.adb,$(ASIS_PASSING_TESTS))
 
 
 ASIS_BODY_TESTS = $(ASIS_BODY_PASS_TESTS) $(ASIS_BODY_FAILED_TESTS) 
@@ -161,11 +63,17 @@ print:
 	@echo "DOT_SPEC_PASS_FILES = $(DOT_SPEC_PASS_FILES)"
 	@echo "DOT_BODY_PASS_FILES = $(DOT_BODY_PASS_FILES)"
 
+check-test-number:
+	@test "$(words $(ASIS_PASSING_TESTS))" = "$(shell ls $(DOT_OPTPUT)/*.dot | wc -l)" \
+         || { echo $(words $(ASIS_PASSING_TESTS)) tests but only $(shell ls $(DOT_OPTPUT)/*.dot | wc -l) dot files generated; exit 2; } \
+         && { echo Total $(words $(ASIS_PASSING_TESTS)) passing tests and $(words $(ASIS_FAILING_TESTS)) failing tests; }
+
 check-local: 
 	@echo "Tests ASIS."
 	@$(MAKE) $(DOT_FILES)
 	@echo "Compare Dot files."
 	@$(MAKE) $(PASSING_DOT_DIFF)
+	@$(MAKE) check-test-number
 
 .PHONY: clean-local
 clean-local:
