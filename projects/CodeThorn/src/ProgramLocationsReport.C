@@ -200,12 +200,12 @@ void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, 
   int t=int_n+d;
   os<<std::fixed<<std::setprecision(2);
   //os<<"Reachable verified locations  : "<<setw(6)<<f+v<<" ["<<setw(6)<<(f+v)/n*100.0<<"%]"<<endl;
-  os<<"Safe                 locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
-  os<<"Unsafe               locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
-  os<<"Undecided            locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
+  os<<"Verified  (definitely safe)    locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
+  os<<"Violated  (definitely unsafe)  locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
+  os<<"Undecided (potentially unsafe) locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
   //os<<"Total reachable locations     : "<<setw(6)<<int_n<<" ["<<setw(6)<<n/t*100.0<<"%]"<<endl;
-  os<<"Dead (unreachable)   locations: "<<setw(6)<<d<<" ["<<setw(6)<<(double)d/t*100.0<<"%]"<<endl;
-  os<<"Total                locations: "<<setw(6)<<t<<endl;
+  os<<"Dead      (unreachable)        locations: "<<setw(6)<<d<<" ["<<setw(6)<<(double)d/t*100.0<<"%]"<<endl;
+  os<<"Total                          locations: "<<setw(6)<<t<<endl;
 #if 0
   os<<"Detected Errors:"<<endl;
   if(f==0) {
