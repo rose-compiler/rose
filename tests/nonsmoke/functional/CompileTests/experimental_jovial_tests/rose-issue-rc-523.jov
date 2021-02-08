@@ -1,0 +1,12 @@
+START
+DEF PROC MAIN;
+BEGIN   
+   ITEM pointer1 P type1;
+   ITEM pointer2 P type2;
+
+   TYPE type1 U;
+   TYPE type2 TABLE U;
+
+   STOP;
+END
+TERM

@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_FunctionCallGraph_H
 #define ROSE_Partitioner2_FunctionCallGraph_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/Graph.h>

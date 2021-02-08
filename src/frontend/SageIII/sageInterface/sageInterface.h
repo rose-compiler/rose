@@ -106,7 +106,7 @@ namespace SageInterface
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 //! Find the main interpretation.
 SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
 

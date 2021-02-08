@@ -60,7 +60,8 @@ std::string
 SgAsmAarch32Instruction::description() const {
     using Kind = ::Rose::BinaryAnalysis::Aarch32InstructionKind;
     switch (get_kind()) {
-        case Kind::ARM_INS_INVALID:     return "";
+        case Kind::ARM_INS_ENDING:      return "";      // not a valid instruction
+        case Kind::ARM_INS_INVALID:     return "";      // not a valid instruction
         case Kind::ARM_INS_ADC:         return "add with carry";
         case Kind::ARM_INS_ADD:         return "add";
         case Kind::ARM_INS_ADR:         return "form PC-relative address";
@@ -82,8 +83,8 @@ SgAsmAarch32Instruction::description() const {
         case Kind::ARM_INS_BX:          return "branch and exchange";
         case Kind::ARM_INS_CBNZ:        return "compare and branch on nonzero";
         case Kind::ARM_INS_CBZ:         return "compare and branch on zero";
-        //case Kind::ARM_INS_CDP:
-        //case Kind::ARM_INS_CDP2:
+        case Kind::ARM_INS_CDP:         return "coprocessor data operation";
+        case Kind::ARM_INS_CDP2:        return "coprocessor data operation";
         case Kind::ARM_INS_CLREX:       return "clear exclusive";
         case Kind::ARM_INS_CLZ:         return "count leading zeros";
         case Kind::ARM_INS_CMN:         return "compare negative";
@@ -107,7 +108,7 @@ SgAsmAarch32Instruction::description() const {
         case Kind::ARM_INS_FLDMIAX:     return "load multiple SIMD&FP increment after";
         case Kind::ARM_INS_FSTMDBX:     return "store multiple SIMD&FP decrement before";
         case Kind::ARM_INS_FSTMIAX:     return "store multiple SIMD&FP increment after";
-        //case Kind::ARM_INS_HINT:
+        case Kind::ARM_INS_HINT:        return "hint";
         case Kind::ARM_INS_HLT:         return "halting breakpoint";
         case Kind::ARM_INS_HVC:         return "hypervisor call";
         case Kind::ARM_INS_ISB:         return "instruction synchronization barrier";
@@ -144,19 +145,19 @@ SgAsmAarch32Instruction::description() const {
         case Kind::ARM_INS_LDRT:        return "load register unprivileged";
         case Kind::ARM_INS_LSL:         return "logical shift left"; // alias of MOV, MOVS
         case Kind::ARM_INS_LSR:         return "logical shift right"; // alias of MOV, MOVS
-        case Kind::ARM_INS_MCR:         return "move to system register from general-purpose register";
-        //case Kind::ARM_INS_MCR2:
-        case Kind::ARM_INS_MCRR:        return "move to system register from two general-purpose registers";
-        //case Kind::ARM_INS_MCRR2:
+        case Kind::ARM_INS_MCR:         return "move general-purpose register to coprocessor";
+        case Kind::ARM_INS_MCR2:        return "move general-purpose register to coprocessor";
+        case Kind::ARM_INS_MCRR:        return "move two general-purpose registers to coprocessor";
+        case Kind::ARM_INS_MCRR2:       return "move two general-purpose registers to coprocessor";
         case Kind::ARM_INS_MLA:         return "multiply accumulate";
         case Kind::ARM_INS_MLS:         return "multiply and subtract";
         case Kind::ARM_INS_MOV:         return "move";
         case Kind::ARM_INS_MOVT:        return "move top";
         case Kind::ARM_INS_MOVW:        return "move";
-        case Kind::ARM_INS_MRC:         return "move to general-purpose register from system register";
-        //case Kind::ARM_INS_MRC2:
-        case Kind::ARM_INS_MRRC:        return "move to two general-purpose registers from system register";
-        //case Kind::ARM_INS_MRRC2:
+        case Kind::ARM_INS_MRC:         return "move coprocessor to general-purpose register";
+        case Kind::ARM_INS_MRC2:        return "move coprocessor to general-purpose register";
+        case Kind::ARM_INS_MRRC:        return "move coprocessor to two general-purpose registers";
+        case Kind::ARM_INS_MRRC2:       return "move coprocessor to two general-purpose registers";
         case Kind::ARM_INS_MRS:         return "move special register to general-purpose register";
         case Kind::ARM_INS_MSR:         return "move to special register";
         case Kind::ARM_INS_MUL:         return "multiply";
@@ -305,7 +306,7 @@ SgAsmAarch32Instruction::description() const {
         case Kind::ARM_INS_TBB:         return "table branch byte";
         case Kind::ARM_INS_TBH:         return "table branch half-word";
         case Kind::ARM_INS_TEQ:         return "test equivalence";
-        //case Kind::ARM_INS_TRAP:
+        case Kind::ARM_INS_TRAP:        return "trap";
         case Kind::ARM_INS_TST:         return "test";
         case Kind::ARM_INS_UADD16:      return "unsigned add 16";
         case Kind::ARM_INS_UADD8:       return "unsigned add 8";
@@ -419,8 +420,8 @@ SgAsmAarch32Instruction::description() const {
         case Kind::ARM_INS_VPADDL:      return "vector pairwise add long";
         case Kind::ARM_INS_VPMAX:       return "vector pairwise maximum";
         case Kind::ARM_INS_VPMIN:       return "vector pairwise minimum";
-        //case Kind::ARM_INS_VPOP: -- aliases VLDM*
-        //case Kind::ARM_INS_VPUSH: -- aliases VSTM*
+        case Kind::ARM_INS_VPOP:        return "pop extension registers from stack"; // aliases VLDM*
+        case Kind::ARM_INS_VPUSH:       return "push registers onto a full descending stack"; // aliases STMDB, VSTM*
         case Kind::ARM_INS_VQABS:       return "vector saturating absolute";
         case Kind::ARM_INS_VQADD:       return "vector saturating add";
         case Kind::ARM_INS_VQDMLAL:     return "vector saturating doubling multiply accumulate long";

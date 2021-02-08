@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
@@ -194,6 +194,7 @@ public:
         ops->fpAnalyzer_ = fpAnalyzer;
         ops->pathProcessor_ = pathProcessor;
         ops->path_ = path;
+        ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS);
         return ops;
     }
 
@@ -1832,10 +1833,8 @@ FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
     for (/*void*/; idx <= goalIdx; ++idx) {
         state = state->clone();                         // need to make a copy before we modify it
         sem.ops->currentState(state);
-        bool pathProcessed = false;
         try {
             processVertex(sem.cpu, path.vertices()[idx], incomingStepCount(path, idx));
-            pathProcessed = true;
         } catch (...) {
             SAWYER_MESG(debug) <<"    path semantics failed, path idx = " <<idx <<"\n";
             state = BaseSemantics::StatePtr();

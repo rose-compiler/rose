@@ -1,4 +1,4 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "AstNodeClass.h"
@@ -337,8 +337,6 @@ Grammar::setUpNodes ()
           UntypedNameList | UntypedTokenList | UntypedTokenPairList,
          "UntypedNode", "UntypedNodeTag", false);
 
-     NEW_TERMINAL_MACRO (AdaComponentClause, "AdaComponentClause", "AdaComponentClauseTag");
-
 
   // ***************************************************************************************
   //                              END of Untyped IR Node Support
@@ -356,7 +354,7 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
      NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | 
                             HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode | 
-                            LambdaCapture  | LambdaCaptureList | AdaComponentClause,
+                            LambdaCapture  | LambdaCaptureList,
                             "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
@@ -373,7 +371,7 @@ Grammar::setUpNodes ()
      AstNodeClass & Symbol  = *lookupTerminal(terminalList, "Symbol");
      AstNodeClass & Support = *lookupTerminal(terminalList, "Support");
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (3/14/2007): Added IR support for binaries
      AstNodeClass & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 #endif
@@ -389,7 +387,7 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
   // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
 #else
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol          , "Node", "NodeTag", false );
@@ -629,8 +627,6 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
-  // PP (12/3/20): Adding support for Ada
-     AdaComponentClause.setFunctionPrototype ( "HEADER_ADA_COMPONENT_CLAUSE"     , "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************
@@ -1597,13 +1593,6 @@ Grammar::setUpNodes ()
      LambdaCaptureList.setDataPrototype ( "SgLambdaCapturePtrList", "capture_list", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     // PP: Ada Component Clause
-     AdaComponentClause.setDataPrototype("SgVarRefExp*", "component", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaComponentClause.setDataPrototype("SgExpression*", "offset", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaComponentClause.setDataPrototype("SgRangeExp*", "range", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
   // ***********************************************************************
@@ -1645,8 +1634,6 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
-  // PP (12/3/20): Adding Ada
-     AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************

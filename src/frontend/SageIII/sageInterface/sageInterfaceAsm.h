@@ -1,7 +1,7 @@
 #ifndef ROSE_SAGE_INTERFACE_ASM
 #define ROSE_SAGE_INTERFACE_ASM
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 // These functions in this file are expected to become a part of the 
 // Binary Analysis and Transformation interfaces in the new ROSE API.

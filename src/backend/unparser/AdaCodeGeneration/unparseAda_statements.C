@@ -52,6 +52,15 @@ namespace
     return nameOf(SG_DEREF(var_ref.get_symbol()));
   }
 
+  inline
+  SgName nameOf(const SgImportStatement& import)
+  {
+    const SgExpressionPtrList& lst = import.get_import_list();
+    ROSE_ASSERT(lst.size() == 1);
+
+    return nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
+  }
+
   const std::string NO_SEP = "";
   const std::string COMMA_SEP = ", ";
   const std::string STMT_SEP = ";\n";
@@ -843,13 +852,17 @@ namespace
 
     void handle(SgAdaRecordRepresentationClause& n)
     {
-      SgClassType& rec = SG_DEREF(n.get_recordType());
+      SgClassType&  rec = SG_DEREF(n.get_recordType());
+      SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
       prn(rec.get_name());
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
-      list(n.get_components());
+
+      // do not unparse the block like a normal block..
+      // it just contains a sequence of clauses and declarations.
+      list(blk.get_statements());
       prn("end record");
       prn(STMT_SEP);
     }
@@ -1238,8 +1251,8 @@ namespace
   {
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)           { res = ReturnType("type",    " new"); }
-    void handle(SgAdaSubtype&)     { res = ReturnType("subtype", ""); }
+    void handle(SgType&)           { res = ReturnType("subtype", ""); }
+    void handle(SgAdaDerivedType&) { res = ReturnType("type",    " new"); }
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
@@ -1270,17 +1283,13 @@ namespace
       res = RenamingSyntax(unknown, unknown, unknown);
     }
 */
+
+    // band-aid until generic packages are supported
     void handle(SgImportStatement& n)
     {
       ROSE_ASSERT(idx == 0);
 
-      SgExpressionPtrList& lst = n.get_import_list();
-      //~ ROSE_ASSERT(lst.size() != 0);
-      ROSE_ASSERT(lst.size() == 1);
-
-      std::string renamed = nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
-
-      res = RenamingSyntax("package ", "", renamed);
+      res = RenamingSyntax("package ", "", nameOf(n));
     }
 
     void handle(SgAdaPackageSpecDecl& n)
@@ -1322,6 +1331,10 @@ namespace
     void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
     void handle(SgAdaPackageSpecDecl& n)  { usepkg(n.get_name()); }
     void handle(SgAdaPackageBodyDecl& n)  { usepkg(n.get_name()); }
+
+    // band-aid until generic packages are supported
+    void handle(SgImportStatement& n)     { usepkg(nameOf(n)); }
+
     void handle(SgTypedefDeclaration& n)  { usetype(n.get_name()); }
     void handle(SgAdaTaskTypeDecl& n)     { usetype(n.get_name()); }
     void handle(SgClassDeclaration& n)    { usetype(n.get_name()); }

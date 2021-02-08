@@ -1,6 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #include <sage3basic.h>
+#include <boost/lexical_cast.hpp>
 #include <BinaryUnparserAarch32.h>
 
 namespace Rose {
@@ -117,12 +118,29 @@ Aarch32::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
     } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
         out <<"p" <<op->coprocessor();
 
+    } else if (SgAsmByteOrder *op = isSgAsmByteOrder(expr)) {
+        switch (op->byteOrder()) {
+            case ByteOrder::ORDER_MSB:
+                out <<"be";
+                break;
+            case ByteOrder::ORDER_LSB:
+                out <<"le";
+                break;
+            default:
+                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(op->byteOrder()));
+        }
+
     } else if (SgAsmRegisterNames *op = isSgAsmRegisterNames(expr)) {
         for (size_t i = 0; i < op->get_registers().size(); ++i) {
             out <<(0 == i ? "{" : ", ");
             outputExpr(out, op->get_registers()[i], state);
         }
         out <<"}";
+
+    } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" : ";
+        outputExpr(out, op->get_rhs(), state);
 
     } else {
         ASSERT_not_implemented(expr->class_name());

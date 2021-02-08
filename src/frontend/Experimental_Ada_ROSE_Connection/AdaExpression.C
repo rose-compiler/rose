@@ -420,6 +420,7 @@ namespace
 
     void handle(SgClassDeclaration& n)   { set(n.get_type()); }
     void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
+    void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
   };
 
   void TypeRefMaker::set(SgType* ty)

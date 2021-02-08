@@ -1,7 +1,7 @@
 /* SgAsmM68kInstruction member definitions. Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any other *.code
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"

@@ -1,7 +1,7 @@
 #ifndef Rose_BinaryAnalysis_CodeInserter_H
 #define Rose_BinaryAnalysis_CodeInserter_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/Map.h>

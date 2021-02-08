@@ -73,6 +73,10 @@ namespace Ada_ROSE_Translation
   SgAdaSubtype&
   mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr);
 
+  /// builds a derived type from a \ref basetype
+  SgAdaDerivedType&
+  mkAdaDerivedType(SgType& basetype);
+
   /// builds a modular integral type with mod expression \ref modexpr.
   SgAdaModularType&
   mkAdaModularType(SgExpression& modexpr);

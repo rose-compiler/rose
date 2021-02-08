@@ -1,8 +1,9 @@
 #ifndef ROSE_Partitioner2_ModulesLinux_H
 #define ROSE_Partitioner2_ModulesLinux_H
 
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Partitioner2/Modules.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinarySystemCall.h>
 #include <BaseSemanticsDispatcher.h>
