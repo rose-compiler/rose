@@ -1,0 +1,75 @@
+On naming repo/workspace, build, and installation directories
+
+Generally a repo/workspace dir name has the form: "rose-<branch>-<rose version>",
+but could be anything!
+
+Repo/workspace dir name examples:
+rose-master-0.11.19.8
+rose-reynolds12-rc-569
+
+Build and installation dir names are identical, with different containing paths. 
+Their pattern is: "<repo dir name>-<rose compiler name>[-<backend compiler name>]"
+
+Build/installation examples:
+rose-master-0.11.19.8-gcc-4.9.3-c++11
+rose-master-0.11.19.8-intel-18.0.1.mpi-intel-18.0.1.mpi
+
+Compiler name is: "<name>-<version>[<modifier>]"
+"-c++11" and ".mpi" are modifiers
+
+
+In declare_install_functions.sh the names are constructed thus:
+
+ROSE_REPO_PATH="${ROSE_REPO_BASE}/${ROSE_REPO_NAME}"
+ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
+ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"
+
+When we are dealing with "rose-<branch>-<rose version>":
+ROSE_REPO_NAME="rose-${ROSE_BRANCH}-${ROSE_VERSION}"
+
+But we need to deal with "this workspace" and any arbitrary workspace.  
+
+
+DONE: Need to rename _rose_branch_version and *_VERSIONED.
+
+NOW: construct _repo_name when there is not a branch and version!
+
+DONE: Create setup routine for using this workspace.  Now we have:
+_set_ROSE_REPO_NAME_from_BRANCH_and_VERSION and 
+_set_ROSE_REPO_NAME_from_workspace_name, which is called from 
+use_this_workspace
+
+
+
+_dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
+or        "${ROSE_REPO_NAME}-${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}-c++11"
+or        "${ROSE_REPO_NAME}-${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}.mpi-${ROSE_BACKEND_COMPILER}-${ROSE_BACKEND_COMPILER_VERSION}.mpi"
+
+
+
+Can't clone ROSE or submodules from RZ with ssh::  Need https::
+
+Try something like:
+
+git submodule init
+git config submodule.DbConnector.url PRIVATE_URL
+
+git config submodule."projects/vulnerabilitySeeding".url https://rosecompiler2.llnl.gov/gitlab/rose-compiler/vulnerability-seeding.git
+git config submodule."src/frontend/CxxFrontend/EDG".url https://rosecompiler2.llnl.gov/gitlab/rose-compiler/edg.git
+
+The above is temporary to this workspace, and changes .git/config, not .gitmodules.
+
+THEN DO:
+git submodule update
+
+==============================================================================
+2021/02/05:
+Got both the script automation changes and the Ada makefile changes in the same reynolds12/rc-569 workspace 
+Got the submodules to populate
+Got the Make to go
+Got gprbuild to find asis.gpr
+
+gprbuild is calling /usr/bin/gcc and not gnat!
+
+gedit /g/g17/charles/code/ROSE/rose-reynolds12-rc-569/scripts/lc/ROSE/install_with_gcc_and_ada.sh__2021-02-05_16.55.17.log
+ 
