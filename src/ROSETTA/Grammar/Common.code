@@ -461,7 +461,7 @@ void $CLASSNAME::accept (ROSE_VisitorPattern & visitor) {
 $CLASSNAME*
 $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // This function is currently only supported for the AST used the represent Binary executables.
      if (isSgAsmNode(this) != NULL)
         {

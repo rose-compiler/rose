@@ -123,6 +123,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
      NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
      NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
+     NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVEDTYPE" );
      NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
 
@@ -223,7 +224,7 @@ Grammar::setUpTypes ()
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
           TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
-          AdaFloatType         | AdaModularType          | JovialBitType,
+          AdaFloatType         | AdaModularType          | AdaDerivedType            | JovialBitType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -409,6 +410,9 @@ Grammar::setUpTypes ()
 
      AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaSubtype.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+     AdaDerivedType.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaDerivedType.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      AdaModularType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaModularType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -699,6 +703,10 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaSubtype,
             "SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE",
             "SgType* type = NULL, SgAdaTypeConstraint* constraint = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(AdaDerivedType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_DERIVEDTYPE",
+            "SgType* type = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(AdaModularType,
             "SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE",
@@ -1127,6 +1135,13 @@ Grammar::setUpTypes ()
      AdaSubtype.setDataPrototype ("SgAdaTypeConstraint*", "constraint", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaDerivedType.setFunctionPrototype ("HEADER_ADA_DERIVEDTYPE", "../Grammar/Type.code" );
+
+     AdaDerivedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaDerivedType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaModularType.setFunctionPrototype ("HEADER_ADA_MODULAR_TYPE", "../Grammar/Type.code" );
 
      AdaModularType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
@@ -1244,6 +1259,7 @@ Grammar::setUpTypes ()
 
      AdaAccessType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaSubtype.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaDerivedType.excludeFunctionSource( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaModularType.excludeFunctionSource( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaFloatType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1420,6 +1436,7 @@ Grammar::setUpTypes ()
 
      AdaAccessType.setFunctionSource     ( "SOURCE_ADA_ACCESS_TYPE", "../Grammar/Type.code");
      AdaSubtype.setFunctionSource        ( "SOURCE_ADA_SUBTYPE", "../Grammar/Type.code");
+     AdaDerivedType.setFunctionSource    ( "SOURCE_ADA_DERIVEDTYPE", "../Grammar/Type.code");
      AdaModularType.setFunctionSource    ( "SOURCE_ADA_MODULAR_TYPE", "../Grammar/Type.code");
      AdaFloatType.setFunctionSource      ( "SOURCE_ADA_FLOAT_TYPE", "../Grammar/Type.code");
 

@@ -13,6 +13,7 @@ exports
 
     SignedTypeDesc             %% 2.1.1.1
     UnsignedTypeDesc           %% 2.1.1.1
+    FixedTypeDesc              %% 2.1.1.3
     BitTypeDesc                %% 2.1.1.5
     PointerTypeDesc            %% 2.1.1.7
     StrucSpecT                 %% 2.1.2.2
@@ -29,6 +30,10 @@ exports
 %%
   'S'                       -> SignedTypeDesc
   'U'                       -> UnsignedTypeDesc
+
+%% 2.1.1.3
+%%
+  'A'                       -> FixedTypeDesc
 
 %% 2.1.1.5
 %%
@@ -257,6 +262,7 @@ exports
     SignedTypeDesc   -/- [A-Za-z0-9]
     UnsignedTypeDesc -/- [A-Za-z0-9]
     BitTypeDesc      -/- [A-Za-z0-9]
+    FixedTypeDesc    -/- [A-Za-z0-9]
 
     PointerTypeDesc  -/- [A-Za-z0-9]
     StrucSpecT       -/- [A-Za-z0-9]

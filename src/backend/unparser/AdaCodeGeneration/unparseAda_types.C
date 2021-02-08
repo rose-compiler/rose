@@ -77,6 +77,11 @@ namespace
       support_opt(n.get_constraint());
     }
 
+    void handle(SgAdaDerivedType& n)
+    {
+      type(n.get_base_type());
+    }
+
     void handle(SgAdaModularType& n)
     {
       prn("mod ");
