@@ -281,20 +281,10 @@ namespace
   {
     Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
 
-    return fileInfo.get_filenameString() == mainFile;
-/*
-
-    std::string mainFileUp = boost::to_upper_copy(mainFile);
-    std::string fileNameUp = boost::to_upper_copy(fileInfo.get_filenameString());
-    size_t      pos = mainFileUp.rfind(fileNameUp);
-
-    std::cerr << (pos + fileNameUp.size()) << " =?= " << mainFileUp.size()
+    std::cerr << typeid(dcl).name() << ": " << fileInfo.get_filenameString()
               << std::endl;
 
-    return (  (pos != std::string::npos)
-           && (pos + fileNameUp.size() == mainFileUp.size())
-           );
-*/
+    return fileInfo.get_filenameString() == mainFile;
   }
 
   std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
