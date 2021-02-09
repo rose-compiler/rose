@@ -14,6 +14,7 @@ JOVIAL_TESTCODES = \
  parens.jov                             \
  typename_conv.jov                      \
  status_enumval.jov                     \
+ use_table_types.jov                    \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
  1_2_2_procedure-module_a.jov           \
@@ -210,9 +211,11 @@ COMPOOL_TESTCODES = \
  status_type.cpl                        \
  table_inheritance.cpl                  \
  table_names.cpl                        \
+ table_types.cpl                        \
  2_4_define.cpl                         \
  3_0_rent_and_rec.cpl                   \
  rc161b.pre.cpl                         \
+ rc600a.cpl                             \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -258,12 +261,12 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-512.cpl                  \
  rose-issue-rc-531.cpl                  \
  rose-issue-rc-587.cpl                  \
+ rose-issue-rc-600.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \
  rc503.cpl                              \
  rc515.cpl
-
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
