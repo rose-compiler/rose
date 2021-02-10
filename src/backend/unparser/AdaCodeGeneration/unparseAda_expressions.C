@@ -215,17 +215,13 @@ namespace
     }
 
     // unparse expression attributes
-    void handle(SgTypeTraitBuiltinOperator& n)
+    void handle(SgAdaAttributeExp& n)
     {
-      SgNodePtrList& args = n.get_args();
-      ROSE_ASSERT(args.size() == 2);
-
-      expr(isSgExpression(args.front()));
+      expr(n.get_object());
       prn("'");
-      prn(n.get_name());
+      prn(n.get_attribute());
 
-      SgExprListExp& attrargs = SG_DEREF(isSgExprListExp(args.back()));
-      arglst_opt(attrargs);
+      arglst_opt(SG_DEREF(n.get_args()));
     }
 
     void handle(SgCastExp& n)

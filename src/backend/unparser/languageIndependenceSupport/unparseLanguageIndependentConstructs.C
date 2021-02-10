@@ -382,7 +382,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // bool isCompilerGenerated = stmt->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
        //
        // Liao, 2021/1/4: outliner will build a lib file from input file. The introduced transformation should be preserved.
-       // 
+       //
        //   bool isTransformation    = stmt->get_file_info()->isTransformation();
        // if (isCompilerGenerated || isTransformation)
           if (stmt->get_file_info() == NULL)
@@ -8795,6 +8795,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                break;
              }
 
+          case V_SgAdaAttributeExp:
           case V_SgAdaTaskRefExp:
              {
                precedence_value = 0;
