@@ -1000,7 +1000,7 @@ do_gcc_configure_with_ada () {
 --disable-fortran \
 --without-java \
 --without-python \
-CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -Wextra -Wno-misleading-indentation -Wno-unused-parameter -g -Wall"
+CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall"
 }
 
 do_gcc_configure_with_binary_analysis () {

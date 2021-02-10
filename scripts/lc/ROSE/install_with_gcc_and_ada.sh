@@ -17,14 +17,17 @@ source ${ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
 # Uses ROSE_BUILD_BASE if set, else sets it:
 set_main_vars
-# use_latest_existing_workspace
-use_this_workspace
+
+#clone_latest_workspace
+#or
+#use_this_workspace
+#or
+use_latest_existing_workspace
 
 #do_preconfigure
-
 setup_gcc_compiler_with_ada
-setup_boost
+setup_boost_rose
 print_rose_vars
-#do_gcc_configure_with_ada
+do_gcc_configure_with_ada
 make_and_install
 
