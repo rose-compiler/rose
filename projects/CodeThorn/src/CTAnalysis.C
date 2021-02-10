@@ -1968,8 +1968,8 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState
           // only initialize global variable in inter-procedural mode
           estate=analyzeVariableDeclaration(*i,estate,estate.label());
         } else {
-          // do not intialize global variable
-          SAWYER_MESG(logger[TRACE])<<"NOT INITIALIZED GLOBAL VARIABLE:"<<(*i)->unparseToString()<<endl;
+          // initialize global variable to arbitrary value
+	  estate=analyzeVariableDeclaration(*i,estate,estate.label()); // currently the same
         }
       } else {
         filteredVars++;
@@ -1988,7 +1988,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
     SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
 
 #if 1
     // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
@@ -2000,7 +1999,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
 #endif
 
     // START_INIT 6
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
     uint32_t filteredVars=0;
     uint32_t declaredInGlobalState=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -2022,21 +2020,11 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
 	  continue;
 	}
       }
-      if(!_ctOpt.getInterProceduralFlag()) {
-	// do not initialize global vars for intra-procedural analysis (assume arbitrary value, potentially modified by other functions)
-	continue;
-      }
-
-      
-      // only initialize global variable if abstraction level >0 (more abstraction levels for containers to be added)
-      if(_ctOpt.initialStateGlobalVarsAbstractionLevel>0) {
-	// update estate (ref)
-	estate=analyzeVariableDeclaration(*i,estate,estate.label());
-	declaredInGlobalState++;
-      }
+      estate=analyzeVariableDeclaration(*i,estate,estate.label());
+      declaredInGlobalState++;
     }
     SAWYER_MESG(logger[INFO])<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-    if(_ctOpt.status) cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    SAWYER_MESG(logger[INFO])<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
   } else {
     SAWYER_MESG(logger[INFO])<< "INIT: no global scope. Global state remains without entries.";
   }
