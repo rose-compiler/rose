@@ -7,10 +7,10 @@
 #                                             /       |        \
 #                                            /        |         \
 #                       ROSE_PASSING_ADA_TESTS        |         ROSE_FAILING_ADA_TESTS 
-#                      /                      \	     ROSE_PASSING_IMCOMPLETE_ADA_TESTS
-#                     /                        \
-#   ADA_TRANSLATOR_PASSING_TESTS         ADA_TRANSLATOR_FAILING_TESTS 
-#                  
+#                      /           |          \	     ROSE_PASSING_IMCOMPLETE_ADA_TESTS
+#                     /            |           \
+#   ADA_TRANSLATOR_PASSING_TESTS   |     ADA_TRANSLATOR_FAILING_TESTS 
+#                  ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS
 ########################################################################################3#
 
 ADA_TRANSLATOR_PASSING_TESTS :=        \
@@ -111,78 +111,82 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   type_conversion.adb                  \
   week_string_literal.ads              
 
+ADA_TRANSLATOR_PENDING_TESTS :=        \
+  array_expressions.adb                \
+  asm_machine_code.adb                 \
+  case_function.adb                    \
+  case_function.ads                    \
+  comm.ads                             \
+  constrained_array_definition.ads     \
+  enum_colors.ads                      \
+  function_call.adb                    \
+  function_renaming.adb                \
+  goto_loop_v2.adb                     \
+  hello_world.adb                      \
+  io_test.adb                          \
+  loop_parameter_specification.adb     \
+  modular_type_definition.ads          \
+  pkgrename.ads                        \
+  procedure_renaming.adb               \
+  real_typedecl.ads                    \
+  select_accept.adb                    \
+  sender.ads                           \
+  test.ads                             \
+  test_unit.ads                                     
+
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
   $(ADA_TRANSLATOR_PASSING_TESTS)                   \
   $(ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS)        \
-  $(ADA_TRANSLATOR_FAILING_TESTS)      
+  $(ADA_TRANSLATOR_PENDING_TESTS)                   \
+  $(ADA_TRANSLATOR_FAILING_TESTS)                   
+
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
+  access_to_object.ads                              \
+  access_to_subprogram.ads                          \
+  allocators.adb                                    \
+  array_declare.adb                                 \
+  discriminant.adb                                  \
+  discriminant_constraint.ads                       \
+  discriminant_specification.ads                    \
+  enumeration.adb                                   \
+  enumeration_with_text_io.adb                      \
+  explicit_deref.adb                                \
+  extension_aggregate.adb                           \
+  fixed_point_definition.ads                        \
+  ordinary_type_declaration_range_constraint.ads    \
+  private_type_definition.ads                       \
   protected_type_declaration.ads                    \
+  qualified_expression.adb                          \
+  signed_integer_type_definition.ads                \
   single_protected_declaration.ads                  \
+  test.adb                                          \
   object_renaming_declaration.adb                   \
   entry_body_declaration.adb                        \
   function_body_stub.adb                            \
   generic_package_renaming_declaration.ads          \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
-  procedure_body_stub.adb                           
-
-ROSE_FAILING_ADA_TESTS :=                           \
-  access_to_object.ads                              \
-  access_to_subprogram.ads                          \
-  alignment_component_clause.adb                    \
-  allocators.adb                                    \
-  array_declare.adb                                 \
-  array_expressions.adb                             \
-  asm_machine_code.adb                              \
-  case_function.adb                                 \
-  case_function.ads                                 \
-  choice_parameter_specification.adb                \
-  comm.ads                                          \
-  constrained_array_definition.ads                  \
-  delay_until.adb                                   \
-  discriminant.adb                                  \
-  discriminant_constraint.ads                       \
-  discriminant_specification.ads                    \
-  entry_index_specification.adb                     \
-  enumeration.adb                                   \
-  enum_colors.ads                                   \
-  enumeration_with_text_io.adb                      \
-  explicit_deref.adb                                \
-  extension_aggregate.adb                           \
-  fixed_point_definition.ads                        \
-  function_call.adb                                 \
-  function_renaming.adb                             \
-  goto_loop_v2.adb                                  \
-  hello_world.adb                                   \
-  io_test.adb                                       \
-  iterate_range.adb                                 \
-  loop_parameter_specification.adb                  \
-  modular_type_definition.ads                       \
-  mpi.ads                                           \
-  mpiuse.ads                                        \
-  nested_package.ads                                \
-  ordinary_type_declaration_range_constraint.ads    \
-  pkgrename.ads                                     \
-  private_type_definition.ads                       \
-  procedure_renaming.adb                            \
-  qualified_expression.adb                          \
-  real_typedecl.ads                                 \
-  requeue_statement_2.adb                           \
-  requeue_statements.adb                            \
-  select_accept.adb                                 \
-  sender.ads                                        \
-  signed_integer_type_definition.ads                \
-  test.adb                                          \
-  test.ads                                          \
-  test_unit.adb                                     \
-  test_unit.ads                                     \
-  unit_2.adb                                        \
-  unit_2.ads                                        \
+  procedure_body_stub.adb                           \
   unknown_discriminant.ads                          \
   variable_variant_record.adb                       \
   variant_record.ads                                
+
+ROSE_FAILING_ADA_TESTS :=                           \
+  alignment_component_clause.adb                    \
+  choice_parameter_specification.adb                \
+  delay_until.adb                                   \
+  entry_index_specification.adb                     \
+  iterate_range.adb                                 \
+  mpi.ads                                           \
+  mpiuse.ads                                        \
+  nested_package.ads                                \
+  requeue_statement_2.adb                           \
+  requeue_statements.adb                            \
+  test_unit.adb                                     \
+  unit_2.adb                                        \
+  unit_2.ads                                        
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
