@@ -55,6 +55,7 @@ namespace CodeThorn {
   //CFAnalysis* createBackwardControlFlowGraph(SgProject* sageProject*, CodeThornOptions& ctOpt, SgProject* sageProject);
   IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector);
   //IOAnalyzer* runLTLVerification(CodeThornOptions&, CFAnalysis*,TimingCollector& timingCollector));
+  void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc);
   
 } // end of namespace CodeThorn
 

@@ -1607,6 +1607,7 @@ context-free syntax
   Formula -> ItemPresetValue  %% check previous production
 
   Primary                         -> Level1Expr
+  ControlLetter                   -> Level1Expr
 
   Level1Expr                      -> MultOperand
   Level1Expr '**' MultOperand     -> MultOperand        {cons("Power")}
@@ -1624,7 +1625,7 @@ context-free syntax
 
   Level2Expr                      -> Level3Expr %% for concatenation operator in Fortran
 
-  ControlLetter                   -> Level2Expr
+%%ControlLetter                   -> Level2Expr
 %%Level2Expr                      -> Level3Expr
   Level2Expr  '='   Level2Expr    -> EQ                 {cons("EQ")}
   UserDefinedFunctionCall

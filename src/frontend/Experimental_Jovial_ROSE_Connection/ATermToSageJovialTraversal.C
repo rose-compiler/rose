@@ -1382,7 +1382,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    ROSE_ASSERT(decl);
    SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
    ROSE_ASSERT(def_decl);
-   // WARNING: change for Tristan
    if (dim_info) {
      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }

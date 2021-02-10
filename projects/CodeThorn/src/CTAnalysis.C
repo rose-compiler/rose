@@ -778,9 +778,9 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
-       <<"/"<<analysisRunTimeInSeconds()<<"<"<<(_maxSeconds!=-1?std::to_string(_maxSeconds)+"s"     :"inf")
-       <<"/"<<getPhysicalMemorySize()/(1024*1024) <<"<"<<(_maxBytes  !=-1?std::to_string(_maxBytes/(1024*1024))  +" MiB":"inf")
-       <<"/"<<color("normal")<<analyzerStateToString()
+       <<"/"<<analysisRunTimeInSeconds()<<"s<"<<(_maxSeconds!=-1?std::to_string(_maxSeconds)+"s"     :"inf")
+       <<"/"<<getPhysicalMemorySize()/(1024*1024) <<" MiB <"<<(_maxBytes  !=-1?std::to_string(_maxBytes/(1024*1024))  +" MiB":"inf MiB")
+       <<color("normal") //<<"/"<<analyzerStateToString()
        <<endl
     ;
     printStatusMessage(ss.str());
@@ -1935,6 +1935,113 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   // TODO
 }
 
+void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState& estate) {
+  if(SgProject* project=isSgProject(root)) {
+    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
+    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
+
+#if 1
+    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
+    // this will not filter any variables
+    VariableIdSet setOfUsedVars;
+#else
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+#endif
+
+    // START_INIT 6
+    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
+    int filteredVars=0;
+    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
+      if(!globalVarId.isValid()) {
+        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
+        continue;
+      }
+      ROSE_ASSERT(globalVarId.isValid());
+      // TODO: investigate why array variables get filtered (but should not)
+      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
+        globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
+        if(_ctOpt.getInterProceduralFlag()) {
+          // only initialize global variable in inter-procedural mode
+          estate=analyzeVariableDeclaration(*i,estate,estate.label());
+        } else {
+          // do not intialize global variable
+          SAWYER_MESG(logger[TRACE])<<"NOT INITIALIZED GLOBAL VARIABLE:"<<(*i)->unparseToString()<<endl;
+        }
+      } else {
+        filteredVars++;
+      }
+    }
+    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
+    if(_variablesToIgnore.size()>0)
+      SAWYER_MESG(logger[TRACE])<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
+  } else {
+    SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
+  }
+}
+
+void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
+  if(SgProject* project=isSgProject(root)) {
+    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
+    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
+
+#if 1
+    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
+    // this will not filter any variables
+    VariableIdSet setOfUsedVars;
+#else
+    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+#endif
+
+    // START_INIT 6
+    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
+    uint32_t filteredVars=0;
+    uint32_t declaredInGlobalState=0;
+    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
+      if(!globalVarId.isValid()) {
+        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
+        continue;
+      }
+      ROSE_ASSERT(globalVarId.isValid());
+
+      // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
+      globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
+      
+      // TODO: investigate why array variables get filtered (but should not)
+      if(_ctOpt.initialStateFilterUnusedVariables) {
+	if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
+	  filteredVars++;
+	  SAWYER_MESG(logger[TRACE])<<"Global var:"<<(*i)->unparseToString()<<" filtered (unused)"<<endl;
+	  continue;
+	}
+      }
+      if(!_ctOpt.getInterProceduralFlag()) {
+	// do not initialize global vars for intra-procedural analysis (assume arbitrary value, potentially modified by other functions)
+	continue;
+      }
+
+      
+      // only initialize global variable if abstraction level >0 (more abstraction levels for containers to be added)
+      if(_ctOpt.initialStateGlobalVarsAbstractionLevel>0) {
+	// update estate (ref)
+	estate=analyzeVariableDeclaration(*i,estate,estate.label());
+	declaredInGlobalState++;
+      }
+    }
+    SAWYER_MESG(logger[INFO])<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
+    if(_ctOpt.status) cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+  } else {
+    SAWYER_MESG(logger[INFO])<< "INIT: no global scope. Global state remains without entries.";
+  }
+}
+
 void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
   SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
   startAnalysisTimer();
@@ -2042,53 +2149,11 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   transitionGraph.setAnalyzer(this);
 
   EState estate(slab,initialPStateStored,emptycsetstored);
-  if(SgProject* project=isSgProject(root)) {
-    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
 
-#if 1
-    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
-    // this will not filter any variables
-    VariableIdSet setOfUsedVars;
-#else
-    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-#endif
-
-    // START_INIT 6
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      if(!globalVarId.isValid()) {
-        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
-        continue;
-      }
-      ROSE_ASSERT(globalVarId.isValid());
-      // TODO: investigate why array variables get filtered (but should not)
-      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
-        if(_ctOpt.getInterProceduralFlag()) {
-          // only initialize global variable in inter-procedural mode
-          estate=analyzeVariableDeclaration(*i,estate,estate.label());
-        } else {
-          // do not intialize global variable
-          SAWYER_MESG(logger[TRACE])<<"NOT INITIALIZED GLOBAL VARIABLE:"<<(*i)->unparseToString()<<endl;
-        }
-      } else {
-        filteredVars++;
-      }
-    }
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-    if(_variablesToIgnore.size()>0)
-      SAWYER_MESG(logger[TRACE])<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
-  } else {
-    SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
-  }
-
-  //initializeGlobalVariables(root);
+  //initializeGlobalVariablesOld(root, estate);
+  initializeGlobalVariablesNew(root, estate);
+  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
+  
   setWorkLists(_explorationMode);
   
   estate.io.recordNone(); // ensure that extremal value is different to bot

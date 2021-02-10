@@ -206,7 +206,7 @@ namespace CodeThorn {
         string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
         if(!ctOpt.quiet)
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-        locations.writeResultFile(fileName,analyzer->getLabeler());
+        locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());
       }
     }
   }
@@ -398,9 +398,9 @@ namespace CodeThorn {
     int numUnreachableFunctions=0;
     for (auto entryLabel : functionEntryLabels ) {
       switch(fMap[entryLabel]) {
-      case FALSIFIED: csvEntryType="unsafe";numFalsifiedFunctions++;break;
+      case FALSIFIED: csvEntryType="violated";numFalsifiedFunctions++;break;
       case UNVERIFIED: csvEntryType="undecided";numUnverifiedFunctions++;break;
-      case VERIFIED: csvEntryType="safe";numVerifiedFunctions++;break;
+      case VERIFIED: csvEntryType="verified";numVerifiedFunctions++;break;
       case INCONSISTENT: csvEntryType="inconsistent";numInconsistentFunctions++;break;
       case UNREACHABLE: csvEntryType="dead";numUnreachableFunctions++;break;
       }
@@ -423,15 +423,15 @@ namespace CodeThorn {
     int numTotalFunctions=numTotalReachableFunctions+numTotalUnreachableFunctions;
     //    cout<<"Reachable verified   functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
     if(violationReporting) {
-      cout<<"Safe                 functions: "<<setw(6)<<numVerifiedFunctions<<" ["<<setw(6)<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
-      cout<<"Unsafe               functions: "<<setw(6)<<numFalsifiedFunctions<<" ["<<setw(6)<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
-      cout<<"Undecided            functions: "<<setw(6)<<numUnverifiedFunctions<<" ["<<setw(6)<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+      cout<<"Verified  (definitely safe)    functions: "<<setw(6)<<numVerifiedFunctions<<" ["<<setw(6)<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+      cout<<"Violated  (definitely unsafe)  functions: "<<setw(6)<<numFalsifiedFunctions<<" ["<<setw(6)<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
+      cout<<"Undecided (potentially unsafe) functions: "<<setw(6)<<numUnverifiedFunctions<<" ["<<setw(6)<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
     //cout<<"Total reachable      functions: "<<setw(6)<<numTotalReachableFunctions<<" ["<<setw(6)<<numTotalReachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
     }
-    cout<<"Dead (unreachable)   functions: "<<setw(6)<<numTotalUnreachableFunctions<<" ["<<setw(6)<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total                functions: "<<setw(6)<<numTotalFunctions<<endl;
+    cout<<"Dead (unreachable)             functions: "<<setw(6)<<numTotalUnreachableFunctions<<" ["<<setw(6)<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    cout<<"Total                          functions: "<<setw(6)<<numTotalFunctions<<endl;
     if(numInconsistentFunctions>0)
-      cout<<"Inconsistent functions: "<<setw(6)<<numInconsistentFunctions<<" ["<<setw(6)<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
+      cout<<"Inconsistent                   functions: "<<setw(6)<<numInconsistentFunctions<<" ["<<setw(6)<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
     
     printSeparationLine();
     std::string dotFileString1=cgNodes.str();
