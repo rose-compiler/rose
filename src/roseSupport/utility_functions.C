@@ -375,12 +375,17 @@ std::string version_message()
          "\n  --- using libmagic version: " + libmagicVersionString() +
          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
          "\n  --- using lib-yices version: " + yicesVersionString() +
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
          "\n  --- binary analysis is enabled"
-#ifdef ROSE_ENABLE_ASM_A64
-         "\n  ---   ARM A64 is enabled"
+#ifdef ROSE_ENABLE_ASM_AARCH64
+         "\n  ---   ARM AArch64 is enabled"
 #else
-         "\n  ---   ARM A64 is disabled"
+         "\n  ---   ARM AArch64 is disabled"
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+         "\n  ---   ARM AArch32 is enabled"
+#else
+         "\n  ---   ARM AArch32 is disasbled"
 #endif
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
          "\n  ---   concolic testing is enabled"

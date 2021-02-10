@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
   printf ("%s:  BEGIN.\n", prefix);
 
   dot_asisinit();
-  nodes = tool_2_wrapper 
+  nodes = tool_2_wrapper_with_flags
     (target_file,
     gnat_home, 
     output_dir,

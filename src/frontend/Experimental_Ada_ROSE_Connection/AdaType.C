@@ -27,21 +27,31 @@ namespace
 {
   struct MakeTyperef : sg::DispatchHandler<SgType*>
   {
-    typedef sg::DispatchHandler<SgType*> base;
+      typedef sg::DispatchHandler<SgType*> base;
 
-    MakeTyperef()
-    : base()
-    {}
+      MakeTyperef(Element_Struct& elem, AstContext astctx)
+      : base(), el(elem), ctx(astctx)
+      {}
 
-    void set(SgType* ty)                 { ROSE_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                       { ROSE_ASSERT(ty); res = ty; }
 
-    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+      void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType& n)               { set(&n); }
-    void handle(SgClassDeclaration& n)   { set(&mkRecordType(n)); }
-    void handle(SgAdaTaskTypeDecl& n)    { set(&mkAdaTaskType(n)); }
-    void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-    void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
+      void handle(SgType& n)                     { set(&n); }
+      void handle(SgClassDeclaration& n)         { set(&mkRecordType(n)); }
+      void handle(SgAdaTaskTypeDecl& n)          { set(&mkAdaTaskType(n)); }
+      void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
+
+      void handle(SgTypeTraitBuiltinOperator& n)
+      {
+        attachSourceLocation(n, el, ctx);
+        set(&mkAttributeType(n));
+      }
+
+    private:
+      Element_Struct& el;
+      AstContext      ctx;
   };
 
   SgNode&
@@ -105,6 +115,13 @@ namespace
           break /* counted in getExpr */;
         }
 
+      case An_Attribute_Reference:
+        {
+          logKind("An_Attribute_Reference");
+          res = &getAttributeExpr(typeEx, ctx);
+          break ;
+        }
+
       default:
         logWarn() << "Unknown type expression: " << typeEx.Expression_Kind << std::endl;
         ROSE_ASSERT(!FAIL_ON_ERROR);
@@ -158,7 +175,7 @@ namespace
     if (elem.Element_Kind == An_Expression)
     {
       SgNode& basenode = getExprType(elem.The_Union.Expression, ctx);
-      SgType* res      = sg::dispatch(MakeTyperef(), &basenode);
+      SgType* res      = sg::dispatch(MakeTyperef(elem, ctx), &basenode);
 
       return SG_DEREF(res);
     }
@@ -600,8 +617,8 @@ getConstraintID(Element_ID el, AstContext ctx)
       {
         logKind("An_Index_Constraint");
 
-        ElemIdRange       idxranges = idRange(constraint.Discrete_Ranges);
-        SgRangeExpPtrList ranges = traverseIDs(idxranges, elemMap(), RangeListCreator{ctx});
+        ElemIdRange         idxranges = idRange(constraint.Discrete_Ranges);
+        SgExpressionPtrList ranges = traverseIDs(idxranges, elemMap(), RangeListCreator{ctx});
 
         res = &mkAdaIndexConstraint(std::move(ranges));
         break;
@@ -671,6 +688,7 @@ void initializeAdaTypes(SgGlobal& global)
 
   adaTypes()["INTEGER"]           = sb::buildIntType();
   adaTypes()["CHARACTER"]         = sb::buildCharType();
+  adaTypes()["LONG_INTEGER"]      = sb::buildLongType(); // Long int
   adaTypes()["LONG_LONG_INTEGER"] = sb::buildLongLongType(); // Long long int
 
   // \todo items

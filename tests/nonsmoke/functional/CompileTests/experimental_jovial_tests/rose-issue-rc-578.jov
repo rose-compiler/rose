@@ -1,0 +1,6 @@
+START
+  DEF TABLE aTable W 1;
+    BEGIN
+      ITEM anItem U 2 POS(*,0);
+    END
+TERM

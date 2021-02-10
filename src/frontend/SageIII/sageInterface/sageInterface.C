@@ -1152,6 +1152,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         {
           switch(parent_declaration->variantT())
              {
+               case V_SgFunctionParameterList:
                case V_SgVariableDeclaration:
                   {
                     if (isSgVariableSymbol((*it).second)!=NULL)
@@ -1891,6 +1892,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgJavaForEachStatement:
 
           case V_SgAdaPackageSpec:
+          case V_SgAdaPackageBody:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
@@ -2027,7 +2029,7 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite:
 #endif
              {
@@ -4904,7 +4906,7 @@ SageInterface::generateFileList()
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 #endif
 
@@ -8980,6 +8982,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
      while(i != classChain.end())
         {
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf ("******** TOP OF WHILE LOOP ******** \n");
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
@@ -9029,6 +9032,9 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
                   }
              }
 
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
+          printf ("******** BOTTOM OF WHILE LOOP ******** \n");
+#endif
           i++;
 
        // Also increment the save_iter.
@@ -9557,7 +9563,7 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
    }
 
 SageInterface::DeferredTransformation
-SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
+SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfo/* = false*/)
    {
 #if 0
      printf ("In SageInterface::DeferredTransformation constructor for replaceStatement called \n");
@@ -10242,7 +10248,7 @@ void SageInterface::deepDelete(SgNode* root)
 #endif
 
 //! Replace a statement with another
-void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
+void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfoValue/* = false*/)
 {
   ROSE_ASSERT(oldStmt);
   ROSE_ASSERT(newStmt);
@@ -10266,12 +10272,25 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
     p->replace_statement(oldStmt,newStmt);
 
 // Some translators have their own handling for this (e.g. the outliner)
-  if (movePreprocessinInfo)
+  if (movePreprocessingInfoValue)
      {
 #if 0
-       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() \n");
+       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
 #endif
+
+    // DQ (12/28/2020): I think this should be movePreprocessingInfo instead of moveUpPreprocessingInfo 
+    // (which has a collection of defaults that are not appropriate).
+    // moveUpPreprocessingInfo(newStmt, oldStmt);
+#if 1
+    // DQ (12/28/2020): Since this works we will leave it in place (it appears to not be required to call this with: usePrepend == true).
        moveUpPreprocessingInfo(newStmt, oldStmt);
+#else
+    // void SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
+    //                                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
+       bool usePrepend = true;
+    // movePreprocessingInfo ( newStmt, oldStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+       movePreprocessingInfo ( oldStmt, newStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+#endif
      }
 }
 
@@ -10732,8 +10751,7 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 // Used to replace shared variables with the dereference expression of their addresses
 // e.g. to replace shared1 with (*__pp_shared1)
 
-void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
-{
+void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/) {
   SgExpression* parentExp;
 
   ROSE_ASSERT(oldExp);
@@ -10752,21 +10770,27 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 
   if (isSgExprStatement(parent)) {
     isSgExprStatement(parent)->set_expression(newExp);
-    }
-  else if (isSgForStatement(parent)) {
+  } else if (isSgForStatement(parent)) {
     ROSE_ASSERT (isSgForStatement(parent)->get_increment() == oldExp);
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
-  }
-  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
+  } else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
     if(matlabFor->get_index() == oldExp)
       matlabFor->set_index(newExp);
     else if(matlabFor->get_range() == oldExp)
       matlabFor->set_range(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
+  } else if(SgJovialForThenStatement *jovFor = isSgJovialForThenStatement(parent)) {
+    if(jovFor->get_initialization() == oldExp)
+      jovFor->set_initialization(newExp);
+    else if(jovFor->get_while_expression() == oldExp)
+      jovFor->set_while_expression(newExp);
+    else if(jovFor->get_by_or_then_expression() == oldExp)
+      jovFor->set_by_or_then_expression(newExp);
+    else
+      ROSE_ASSERT(!"sub-expression not found");
+  } else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
     if (rngexp->get_start() == oldExp)
       rngexp->set_start(newExp);
     else if (rngexp->get_end() == oldExp)
@@ -10775,26 +10799,22 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       rngexp->set_stride(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (isSgReturnStmt(parent))
+  } else if (isSgReturnStmt(parent)) {
     isSgReturnStmt(parent)->set_expression(newExp);
-  else  if (isSgBinaryOp(parent)!=NULL){
-    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand())
-        {
-          isSgBinaryOp(parent)->set_lhs_operand(newExp);
-         }
-     else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand())
-         {isSgBinaryOp(parent)->set_rhs_operand(newExp); }
-     else
-       ROSE_ASSERT(false);
-   } else //unary parent
-  if (isSgUnaryOp(parent)!=NULL){
+  } else  if (isSgBinaryOp(parent)!=NULL) {
+    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand()) {
+      isSgBinaryOp(parent)->set_lhs_operand(newExp);
+    } else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand()) {
+      isSgBinaryOp(parent)->set_rhs_operand(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgUnaryOp(parent)!=NULL){
       if (oldExp==isSgUnaryOp(parent)->get_operand_i())
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }
-  else if (isSgConditionalExp(parent) != NULL) {
+  } else if (isSgConditionalExp(parent) != NULL) {
      SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
      if (oldExp==expparent->get_conditional_exp())
         expparent->set_conditional_exp(newExp);
@@ -10804,8 +10824,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
         expparent->set_false_exp(newExp);
      else
         ROSE_ASSERT(false);
-  }
-  else if (isSgExprListExp(parent) != NULL) {
+  } else if (isSgExprListExp(parent) != NULL) {
     SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
@@ -10814,64 +10833,53 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  }
-  else if (isSgValueExp(parent)) {
+  } else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
-  }
-  else if ((parentExp=isSgExpression(parent)) != NULL) {
+  } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
-  }
-  else if (isSgInitializedName(parent))
-  {
-          SgInitializedName* initializedNameParent = isSgInitializedName(parent);
-          if (oldExp == initializedNameParent->get_initializer())
-          {
-                  //We can only replace an initializer expression with another initializer expression
-                  ROSE_ASSERT(isSgInitializer(newExp));
-                  initializedNameParent->set_initializer(isSgInitializer(newExp));
-          }
-          else
-          {
-                  //What other expressions can be children of an SgInitializedname?
-                  ROSE_ASSERT(false);
-          }
-  }
-  else if (isSgFortranDo(parent))
-  {
-    SgFortranDo* fortranDo = isSgFortranDo(parent);
-    if(oldExp == fortranDo->get_initialization())
-    {
-      fortranDo->set_initialization(newExp);
-    }
-    else if(oldExp == fortranDo->get_bound())
-    {
-      fortranDo->set_bound(newExp);
-    }
-    else if(oldExp == fortranDo->get_increment())
-    {
-      fortranDo->set_increment(newExp);
-    }
-    else
-    {
+  } else if (isSgInitializedName(parent)) {
+    SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+    if (oldExp == initializedNameParent->get_initializer()) {
+      //We can only replace an initializer expression with another initializer expression
+      ROSE_ASSERT(isSgInitializer(newExp));
+      initializedNameParent->set_initializer(isSgInitializer(newExp));
+    } else {
+      //What other expressions can be children of an SgInitializedname?
       ROSE_ASSERT(false);
     }
-  }
- else{
-  cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
-  ROSE_ASSERT(false);
+  } else if (isSgCaseOptionStmt(parent)) {
+    SgCaseOptionStmt * case_stmt = isSgCaseOptionStmt(parent);
+    if (oldExp == case_stmt->get_key()) {
+      case_stmt->set_key(newExp);
+    } else if(oldExp == case_stmt->get_key_range_end()) {
+      case_stmt->set_key_range_end(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgFortranDo(parent)) {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if (oldExp == fortranDo->get_initialization()) {
+      fortranDo->set_initialization(newExp);
+    } else if(oldExp == fortranDo->get_bound()) {
+      fortranDo->set_bound(newExp);
+    } else if (oldExp == fortranDo->get_increment()) {
+      fortranDo->set_increment(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
+    ROSE_ASSERT(false);
   }
 
-  if (!keepOldExp)
-  {
+  if (!keepOldExp) {
     deepDelete(oldExp); // avoid dangling node in memory pool
-  }
-  else
-  {
-      oldExp->set_parent(NULL);
+  } else {
+    oldExp->set_parent(NULL);
   }
 
 } //replaceExpression()
@@ -15684,6 +15692,9 @@ PreprocessingInfo* SageInterface::attachComment(
                mytype = PreprocessingInfo::CplusplusStyleComment;
                resetPositionInfo = true;
                break;
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration: comment = "#ifndef " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorDefineDeclaration: comment = "#define " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:  comment = "#endif" + (content.empty() ? "\n" : (" /* " + content + " */\n")); break;
 
           default:
              {
@@ -16377,13 +16388,27 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
      AttachedPreprocessingInfoType* dst_infoList = stmt_dst->getAttachedPreprocessingInfo();
      printf ("   --- dst_infoList                    = %p \n",dst_infoList);
 #endif
+#if 0
+     printf ("****************************************************************** \n");
+     printf ("In SageInterface::movePreprocessingInfo(): Attached comments and CPP directives: stmt_src \n");
+     SageInterface::printOutComments (stmt_src);
+     printf ("In SageInterface::movePreprocessingInfo(): Attached comments and CPP directives: stmt_dst \n");
+     SageInterface::printOutComments (stmt_dst);
+     printf ("****************************************************************** \n");
+#endif
 
   // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
   // This is a bug in the support for building a new prototype from a defining function declaration 
   // and caused this problem. This assertion will prevent this sort of error from happening again.
      ROSE_ASSERT(infoList == NULL || stmt_src->getAttachedPreprocessingInfo() != stmt_dst->getAttachedPreprocessingInfo());
 
-     if (infoList == NULL) return;
+     if (infoList == NULL)
+        {
+#if 0
+          printf ("In SageInterface::movePreprocessingInfo(): infoList == NULL: exiting movePreprocessingInfo() \n");
+#endif
+          return;
+        }
 
 #if 0
      printf ("   --- infoList->size()                = %zu \n",infoList->size());
@@ -16429,6 +16454,8 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 #if 0
           printf ("   --- TOP of loop: infoList->size()                = %zu \n",infoList->size());
           printf ("   --- TOP of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
+          printf ("   --- TOP of loop: info->getTypeOfDirective()      = %s \n",PreprocessingInfo::directiveTypeName(info->getTypeOfDirective()).c_str());
+          printf ("   --- TOP of loop: info->getRelativePosition()     = %s \n",PreprocessingInfo::relativePositionName(info->getRelativePosition()).c_str());
 #endif
           if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
                (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
@@ -16448,7 +16475,10 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration ) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorLineDeclaration) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorErrorDeclaration) ||
-               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration)
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration) ||
+            // DQ (12/28/2020): Added support for C linkage specifications.
+               (info->getTypeOfDirective()==PreprocessingInfo::ClinkageSpecificationStart) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::ClinkageSpecificationEnd)
              )
              {
 #if 0
@@ -16601,14 +16631,20 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
         } // end for
 
 #if 0
-     printf ("In SageInterface::movePreprocessingInfo(): Remove the element from the list of comments at the current astNode \n");
+     printf ("In SageInterface::movePreprocessingInfo(): Remove the element transfered to the new statement from the old statement list \n");
 #endif
 
   // Remove the element from the list of comments at the current astNode
      AttachedPreprocessingInfoType::iterator j;
      for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
+        {
+#if 0
+          printf ("In SageInterface::movePreprocessingInfo(): Remove the element from the list of comments at the current astNode \n");
+#endif
           infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+        }
    }
+
 
 //----------------------------
 // Sometimes, the preprocessing info attached to a declaration has to be
@@ -17941,7 +17977,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // tps : 28 Oct 2008 - support for finding the main interpretation
 // rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
 /** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied
@@ -20924,7 +20960,7 @@ static void moveSymbolTableBetweenBlocks(SgScopeStatement* sourceBlock, SgScopeS
     SgSymbol* symbol = s_table->find(iname);
     ROSE_ASSERT (symbol != NULL);
   }
-
+  // entirely move source block's symbol table to target block
   targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
   ROSE_ASSERT(sourceBlock != NULL);
@@ -20972,14 +21008,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
     if (stmt->get_scope() != targetBlock)
     {
       if (SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt))
-      { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+      { 
+
+        // why only move if it is a first nondefining declaration?
+        // We have a case to move both defining and nondefining function declarations of Ada package body to namespace definition.
+         // comment out the if condition for now. 1/20/2021
+        //
+        // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
         // The func declaration should be moved along with the call site.
         // The scope should be set to the new block also
         // Liao 1/14/2011
-        if (func->get_firstNondefiningDeclaration() == func)
+        // if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
       }
-      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt))
+      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
         // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
         // The issues are fixed in the switch statement below but this test is needed
@@ -21087,6 +21129,16 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
           def_decl->set_parent(targetBlock);
           def_decl->set_scope(targetBlock);
+
+          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
+          if (enum_decl) // Rasmussen (12/23/2020)
+            {
+              // Set the scope of the enumerators
+              BOOST_FOREACH (SgInitializedName* name, enum_decl->get_enumerators())
+                {
+                  name->set_scope(targetBlock);
+                }
+            }
           break;
         }
       case V_SgJovialTableStatement:
@@ -21176,7 +21228,7 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
   ROSE_ASSERT (sourceBlock && targetBlock);
-  if (sourceBlock == targetBlock)
+  if ((void*)sourceBlock == (void*)targetBlock)
   {
     cerr<<"warning: SageInterface::moveStatementsBetweenScopes() is skipped, "<<endl;
     cerr<<"         since program is trying to move statements from and to the identical scoped block. "<<endl;
@@ -21229,11 +21281,24 @@ static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
   }   
 }
 
+//TODO: now with more types, we need to use template functions
 void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
 {
   moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
   //create alias symbols in its global definition 
   createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveStatementsBetweenScopes(sourceBlock, targetBlock); 
+  //create alias symbols in its global definition 
+  createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
 }
 
 void
@@ -26203,10 +26268,15 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
           ROSE_ASSERT(nondefiningFunctionDeclaration->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(nondefiningFunctionDeclaration->get_definingDeclaration() != NULL);
 
-       // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
-       // This is a bug in the support for building a new prototype from a defining function declaration 
-       // and caused this problem. This assertion will prevent this sort of error from happening again.
-          ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+       // DQ (12/17/2020): This is a required fix that was only caught as an issue by some customer code.
+          if (nondefiningFunctionDeclaration != NULL)
+             {
+            // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+            // This is a bug in the support for building a new prototype from a defining function declaration 
+            // and caused this problem. This assertion will prevent this sort of error from happening again.
+               ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || 
+                           functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+             }
         }
 
      return nondefiningFunctionDeclaration;
@@ -26245,6 +26315,13 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
         }
 #endif
 
+#if 0
+     printf ("****************************************************************** \n");
+     printf ("Attached comments and CPP directives: defining functionDeclaration \n");
+     SageInterface::printOutComments (functionDeclaration);
+     printf ("****************************************************************** \n");
+#endif
+
   // DQ (10/15/2019): Find the file_id associated with the current file, and make the transformation with the same file_id value so that it will be unparsed.
 
   // DQ (10/29/2020): This is the refactored code.
@@ -26261,10 +26338,15 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
         }
 #endif
 
-  // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
-  // This is a bug in the support for building a new prototype from a defining function declaration 
-  // and caused this problem. This assertion will prevent this sort of error from happening again.
-     ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+  // DQ (12/17/2020): This is a required fix that was only caught as an issue by some customer code.
+     if (nondefiningFunctionDeclaration != NULL)
+        {
+       // DQ (11/22/2020): These can't be the same list else we will have a case of iterator invalidation.
+       // This is a bug in the support for building a new prototype from a defining function declaration 
+       // and caused this problem. This assertion will prevent this sort of error from happening again.
+          ROSE_ASSERT(functionDeclaration->getAttachedPreprocessingInfo() == NULL || 
+                      functionDeclaration->getAttachedPreprocessingInfo() != nondefiningFunctionDeclaration->getAttachedPreprocessingInfo());
+         }
 
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
 
@@ -26417,6 +26499,12 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
             // DQ (11/15/2020): Note that the default is false, and we need true.
                bool movePreprocessingInfo = true;
                replaceStatement(functionDeclaration,nondefiningFunctionDeclaration,movePreprocessingInfo);
+#if 0
+               printf ("******************************************************************** \n");
+               printf ("Attached comments and CPP directives: nondefiningFunctionDeclaration \n");
+               SageInterface::printOutComments (nondefiningFunctionDeclaration);
+               printf ("******************************************************************** \n");
+#endif
 
             // DQ (11/25/2020): This is the cause of a problem in the outliner caught in the resetParentPointer.C (definingDeclaration->get_parent() != __null).
             // DQ (11/24/2020): Maybe we should set the parent of the functionDeclaration to NULL, so that we will know to set it properly later.

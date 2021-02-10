@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Registers_H
 
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "RegisterParts.h"
 
@@ -107,14 +107,20 @@ public:
      *  the same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
     static const RegisterDictionary *dictionary_amd64();
 
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
     /** AArch64 registers.
      *
-     *  These are the registers for ARM's ARMv8 (a.k.a., "Armv8") architecture for the "AArch64" (a.k.a., "A64")
-     *  instruction set.
+     *  These are the registers for the ARM AArch64 architecture.
      *
      *  They are documented in "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited. */
-    static const RegisterDictionary* dictionary_a64();
+    static const RegisterDictionary* dictionary_aarch64();
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    /** AArch32 registers.
+     *
+     *  These are the registers for the ARM AArch32 architecture. */
+    static const RegisterDictionary* dictionary_aarch32();
 #endif
 
     /** PowerPC-32 registers. */

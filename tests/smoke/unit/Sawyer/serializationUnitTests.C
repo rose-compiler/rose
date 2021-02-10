@@ -283,7 +283,7 @@ typedef Sawyer::Container::MappedBuffer<size_t, boost::uint8_t> T05;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 // However, binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
-#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifndef ROSE_ENABLE_BINARY_ANALYSIS
 BOOST_CLASS_EXPORT(T05);
 #endif
 
@@ -314,7 +314,7 @@ typedef Sawyer::Container::NullBuffer<size_t, boost::uint8_t> T06;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
 // However, binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
-#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifndef ROSE_ENABLE_BINARY_ANALYSIS
 BOOST_CLASS_EXPORT(T06);
 #endif
 
@@ -364,7 +364,7 @@ typedef Sawyer::Container::AddressSegment<size_t, boost::uint8_t> T08;
 typedef Sawyer::Container::AllocatingBuffer<size_t, boost::uint8_t> T08_buffer;
 
 // Binary analysis support in librose also registers this same class, so we need to avoid an ODR violation here.
-#ifndef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifndef ROSE_ENABLE_BINARY_ANALYSIS
 BOOST_CLASS_EXPORT(T08_buffer);
 #endif
 

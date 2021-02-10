@@ -133,7 +133,7 @@ WalrusGraph::generateWalrusGraph( SgNode* node, string outputFilename )
         {
           printf ("Found the SgProject \n");
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           SgFile* fileNode = project->get_fileList()[0];
           if (isSgBinaryComposite(fileNode) != NULL)
              {

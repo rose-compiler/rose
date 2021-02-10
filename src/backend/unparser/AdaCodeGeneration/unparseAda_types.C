@@ -58,12 +58,15 @@ namespace
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)   { prn(" Boolean"); }
-    void handle(SgTypeInt&)    { prn(" Integer"); }
-    void handle(SgTypeChar&)   { prn(" Character"); }
-    void handle(SgTypeFloat&)  { prn(" Float"); }
-    void handle(SgTypeString&) { prn(" String"); }
-    void handle(SgTypeVoid&)   { prn(" -- void\n"); }
+    void handle(SgTypeBool&)       { prn(" Boolean"); }
+    void handle(SgTypeInt&)        { prn(" Integer"); }
+    void handle(SgTypeChar&)       { prn(" Character"); }
+    void handle(SgTypeFloat&)      { prn(" Float"); }
+    void handle(SgTypeString&)     { prn(" String"); }
+    void handle(SgTypeLong&)       { prn(" Long_Integer"); }
+    void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
+    void handle(SgTypeLongDouble&) { prn(" Long_Long_Float"); }
+    void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
 
     //
     // Ada types
@@ -155,7 +158,7 @@ namespace
 
     void handle(SgAdaFloatType& n)
     {
-      prn(" is ");
+      prn("digits ");
       expr(n.get_digits());
 
       support_opt(n.get_constraint());
@@ -192,7 +195,7 @@ namespace
       }
     }
 
-    void rangeList(SgRangeExpPtrList& lst)
+    void rangeList(SgExpressionPtrList& lst) // \todo remove
     {
       if (lst.empty()) return;
 

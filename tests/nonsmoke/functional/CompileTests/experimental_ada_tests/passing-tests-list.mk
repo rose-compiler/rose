@@ -68,4 +68,27 @@ PASSING_TESTS :=                       \
   array_declare_2.ads                  \
   for_loop_statement.adb               \
   for_loop.adb                         \
+  floating_point_definition.ads        \
+  based_numbers.ads                    \
+  task_with_abort_v2.adb               \
+  short_circuit.adb                    \
+  short_circuit_v2.adb                 \
+  complex.ads                          \
+  async_transfer_select.adb            \
+  simple_select_accept.adb             \
+  simple_select_accept_guarded.adb     \
+  scopequal.adb                        \
+  defining_character_literal.adb       \
+  defining_enumeration_literal.adb     \
+  defining_operator_symbol.ads         \
+  private_extension_declaration.ads    \
+  function_body_stub.ads               \
+  package_renaming_declaration.ads     \
+  procedure_body_stub.ads              \
+  representation_clause_2.ads          \
+  pragmas.adb                          \
+  procedure_pragma.adb                 \
+  package_pragma.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \ 
   EndOfList

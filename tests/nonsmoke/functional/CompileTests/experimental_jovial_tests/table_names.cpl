@@ -1,0 +1,11 @@
+START
+COMPOOL tablenames;
+  TYPE statustype STATUS (V(S1),V(S2));
+  TYPE tabletype TABLE U;
+  TYPE itemtype F;
+  DEF TABLE stable(0:3) statustype;
+  DEF TABLE ttable(0:3) tabletype;
+  DEF TABLE itable(0:3) itemtype;
+  DEF TABLE utable(0:3) U;
+  DEF TABLE atable(0:3); ITEM anItem S;
+TERM

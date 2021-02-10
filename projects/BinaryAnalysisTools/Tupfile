@@ -40,6 +40,7 @@ run $(tool_compile_linkexe) --install -o rose-pardis pardis.C
 ########################################################################################################################
 
 run $(tool_compile_linkexe) debug-arm-semantics.C
+run $(tool_compile_linkexe) count-mnemonics.C
 
 ########################################################################################################################
 # Tests

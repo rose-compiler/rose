@@ -1,8 +1,8 @@
 #ifndef ROSE_ByteOrder_H
 #define ROSE_ByteOrder_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace ByteOrder {
 

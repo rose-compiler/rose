@@ -139,9 +139,16 @@ size_t ProgramLocationsReport::numTotalRecordedLocations() {
   return (potentialLocations+definitiveLocations).size();
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
+void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, string writeMode, CodeThorn::Labeler* labeler) {
   std::ofstream myfile;
-  myfile.open(fileName.c_str(),std::ios::out);
+  if(writeMode=="generate") {
+    myfile.open(fileName.c_str(),std::ios::out);
+  } else if(writeMode=="append") {
+    myfile.open(fileName.c_str(),std::ios::app);
+  } else {
+    cerr<<"Error: unknown write mode: "<<writeMode<<endl;
+    exit(1);
+  }
   if(myfile.good()) {
     for(auto lab : definitiveLocations) {
       myfile<<"definitive,"<<programLocation(labeler,lab);

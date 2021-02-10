@@ -67,7 +67,7 @@ namespace Ada_ROSE_Translation
   /// \param ranges a sequence of ranges.
   ///        the content of the sequence container \ref ranges will be chnage.
   SgAdaIndexConstraint&
-  mkAdaIndexConstraint(SgRangeExpPtrList&& ranges);
+  mkAdaIndexConstraint(SgExpressionPtrList&& ranges);
 
   /// builds a subtype constraint by \ref constr
   SgAdaSubtype&
@@ -89,6 +89,11 @@ namespace Ada_ROSE_Translation
   //   are represented as decl type of a variable reference.
   SgDeclType&
   mkExceptionType(SgExpression& n);
+
+  /// returns the type produced by an attribute expression
+  // \todo consider returning an SgTypeOfType instead of SgDeclType
+  SgDeclType&
+  mkAttributeType(SgTypeTraitBuiltinOperator& n);
 
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
@@ -155,7 +160,10 @@ namespace Ada_ROSE_Translation
   mkLoopStmt(SgBasicBlock& body);
 
   /// creates a for loop statement with body \ref body and an *empty*
-  ///   loop header.
+  ///   loop header (i.e., init-stmt, test, and increment are nullptr).
+  /// to complete an Ada for loop, the init-stmt needs to be set, and
+  ///   the increment needs to set the direction (either ++i, --i).
+  ///   (see mkForLoopIncrement)
   SgForStatement&
   mkForStatement(SgBasicBlock& body);
 
@@ -231,6 +239,9 @@ namespace Ada_ROSE_Translation
   SgTryStmt&
   mkTryStmt(SgBasicBlock& blk);
 
+  /// creates an Ada Terminate alternative statement
+  SgAdaTerminateStmt&
+  mkTerminateStmt();
 
   //
   // Declaration Makers
@@ -240,13 +251,21 @@ namespace Ada_ROSE_Translation
   SgTypedefDeclaration&
   mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope);
 
-  /// creates a record declaration with name \ref name for record \ref def
+  /// creates a defining record declaration with name \ref name for record \ref def
   ///   in scope \ref scope.
   ///   This function builds both the nondefining and defining declarations
   ///   and returns the defining declarations.
-  // \todo check with Dan
   SgClassDeclaration&
   mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& scope);
+
+  /// creates a defining record declaration for the non-defining declaration \ref nondef,
+  ///   and the body \ref body in scope \ref scope.
+  SgClassDeclaration&
+  mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& body, SgScopeStatement& scope);
+
+  /// creates a non defining record decl with name \ref name
+  SgClassDeclaration&
+  mkRecordDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates an Ada package declaration
   SgAdaPackageSpecDecl&
@@ -352,6 +371,13 @@ namespace Ada_ROSE_Translation
                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                 );
 
+  SgAdaFunctionRenamingDecl&
+  mkAdaFunctionRenamingDecl( const std::string& name,
+                             SgScopeStatement& scope,
+                             SgType& retty,
+                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                             );
+
 
   /// creates an Ada entry declaration
   /// \param name     the entry name
@@ -417,9 +443,17 @@ namespace Ada_ROSE_Translation
   SgAdaComponentClause&
   mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range);
 
-  /// creates an Ada Record represtation clause for \ref record aligned at \ref align.
+  /// creates an Ada Record representation clause for \ref record aligned at \ref align.
   SgAdaRecordRepresentationClause&
   mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
+
+  /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
+  SgAdaLengthClause&
+  mkAdaLengthClause(SgTypeTraitBuiltinOperator& attr, SgExpression& size);
+
+  /// creates an Ada pragma declaration
+  SgPragmaDeclaration&
+  mkPragmaDeclaration(const std::string& name, SgExprListExp& args);
 
   //
   // Expression Makers
@@ -502,6 +536,41 @@ namespace Ada_ROSE_Translation
   SgAbsOp*
   buildAbsOp(SgExpression* op);
 
+  /// converts a value of type V to a value of type U via streaming
+  /// \tparam  V input value type
+  /// \tparam  U return value type
+  /// \param   val the value to be converted
+  /// \returns \ref val converted to type \ref U
+  template <class U, class V>
+  inline
+  U conv(V& img)
+  {
+    U                 res;
+    std::stringstream buf;
+
+    buf << img;
+    buf >> res;
+
+    return res;
+  }
+
+  /// converts text to constant values
+  /// @{
+  template <class T>
+  inline
+  T convAdaLiteral(const char* img)
+  {
+    return conv<T>(img);
+  }
+
+  template <>
+  int convAdaLiteral<int>(const char* img);
+
+  template <>
+  long double convAdaLiteral<long double>(const char* img);
+  /// @}
+
+
   /// creates a value representation of type \ref SageValue for the string \ref textrep.
   /// \tparam SageValue the AST node type to be created
   /// \pre SageValue is derived from SgValueExp
@@ -516,7 +585,7 @@ namespace Ada_ROSE_Translation
     typedef decltype(std::declval<SageValue>().get_value()) rose_rep_t;
 
     ROSE_ASSERT(textrep);
-    return mkLocatedNode<SageValue>(conv<rose_rep_t>(textrep), textrep);
+    return mkLocatedNode<SageValue>(convAdaLiteral<rose_rep_t>(textrep), textrep);
   }
 
   /// \overload

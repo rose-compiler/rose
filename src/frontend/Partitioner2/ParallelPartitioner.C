@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#if defined(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT) && __cplusplus >= 201103L
+#include <featureTests.h>
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
 #include <sage3basic.h>
 #include <Partitioner2/ParallelPartitioner.h>
 

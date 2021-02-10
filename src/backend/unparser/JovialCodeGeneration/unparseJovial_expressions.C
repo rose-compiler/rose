@@ -293,7 +293,7 @@ Unparse_Jovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
      SgType* lhs_type = lhs->get_type();
      SgType* rhs_type = rhs->get_type();
 
-     if (isSgJovialBitType(lhs_type) && isSgJovialBitType(rhs_type))
+     if ((isSgJovialBitType(lhs_type) || isSgTypeBool(lhs_type)) && (isSgJovialBitType(rhs_type) || isSgTypeBool(rhs_type)) )
         {
            unparseBinaryOperator(expr, "EQV", info);
         }

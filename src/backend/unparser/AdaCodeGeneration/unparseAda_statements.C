@@ -299,6 +299,13 @@ namespace
       ++aa;
 
     return std::make_pair(aa, zz);
+/*
+    SgDeclarationStatementPtrList::iterator lim = aa;
+    while (lim != zz && declaredInMainFile(SG_DEREF(*lim), mainFile))
+      ++lim;
+
+    return std::make_pair(aa, lim);
+*/
   }
 
 
@@ -361,6 +368,70 @@ namespace
     {
       prn("null");
       prn(STMT_SEP);
+    }
+
+    void handle(SgAdaSelectStmt& n)
+    {
+      switch (n.get_select_type()) {
+      case SgAdaSelectStmt::e_selective_accept:
+        // 9.7.1
+        prn("select\n");
+        stmt(n.get_select_path());
+        if (n.get_or_path() != NULL) {
+          prn("or\n");
+          stmt(n.get_or_path());
+        }
+        if (n.get_else_path() != NULL) {
+          prn("else\n");
+          stmt(n.get_else_path());
+        }
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_asynchronous:
+        // 9.7.4
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("then abort\n");
+        stmt(n.get_abort_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_conditional_entry:
+        // 9.7.3
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("else\n");
+        stmt(n.get_else_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      case SgAdaSelectStmt::e_timed_entry:
+        // 9.7.2
+        prn("select\n");
+        stmt(n.get_select_path());
+        prn("or\n");
+        stmt(n.get_or_path());
+        prn("end select");
+        prn(STMT_SEP);
+        break;
+      default:
+        ROSE_ASSERT(false);
+      }
+    }
+
+    void handle(SgAdaSelectAlternativeStmt& n)
+    {
+      if (isSgNullExpression(n.get_guard()) == NULL) {
+        prn("when ");
+        expr(n.get_guard());
+        prn(" =>\n");
+      }
+      stmt(n.get_body());
+      if (n.get_next() != NULL) {
+        prn("or\n");
+        stmt(n.get_next());
+      }
     }
 
     void handle(SgAdaTaskTypeDecl& n)
@@ -597,7 +668,7 @@ namespace
     {
       ROSE_ASSERT(n.get_increment());
 
-      const bool isReverse = isSgMinusOp(n.get_increment());
+      const bool isReverse = isSgMinusMinusOp(n.get_increment());
 
       prn("for ");
       forInitStmt(SG_DEREF(n.get_for_init_stmt()), isReverse);
@@ -743,6 +814,12 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaTerminateStmt& n)
+    {
+      prn("terminate");
+      prn(STMT_SEP);
+    }
+
     void handle(SgExprStatement& n)
     {
       expr(n.get_expression());
@@ -776,6 +853,34 @@ namespace
       prn("end record");
       prn(STMT_SEP);
     }
+
+    void handle(SgAdaLengthClause& n)
+    {
+      prn("for ");
+      expr(n.get_attribute());
+      prn(" use ");
+      expr(n.get_size());
+      prn(STMT_SEP);
+    }
+
+    void handle(SgPragmaDeclaration& n)
+    {
+      SgPragma&      pragma = SG_DEREF(n.get_pragma());
+      SgExprListExp& args = SG_DEREF(pragma.get_args());
+
+      prn("pragma ");
+      prn(pragma.get_name());
+
+      if (!args.get_expressions().empty())
+      {
+        prn("(");
+        expr(&args);
+        prn(")");
+      }
+
+      prn(STMT_SEP);
+    }
+
 
 
     //~ ScopePath pathToGlobal(SgStatement& n);
@@ -832,6 +937,10 @@ namespace
           stmt(def);
           prn("end record");
         }
+      }
+      else
+      {
+        prn(" is private");
       }
 
       prn(STMT_SEP);
@@ -1085,6 +1194,18 @@ namespace
       type(n.get_orig_return_type(), n);
     }
 
+    // MS 12/22/20 : if this is actually a function renaming declaration,
+    // print the renaming syntax after the function/procedure declaration
+    // and immediately return.
+    SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n);
+    if (renaming != NULL)
+    {
+      prn(" renames ");
+      prn(renaming->get_renamed_function()->get_name());
+      prn(STMT_SEP);
+      return;
+    }
+
     SgFunctionDefinition* def = n.get_definition();
 
     if (!def)
@@ -1097,7 +1218,7 @@ namespace
     stmt(def);
 
     prn(" ");
-    prn(n.get_name());
+    prn(name);
     prn(STMT_SEP);
   }
 
@@ -1122,6 +1243,7 @@ namespace
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
     void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
+    void handle(SgAdaFloatType&)   { res = ReturnType("type",    ""); }
   };
 
   std::pair<std::string, std::string>
