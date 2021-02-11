@@ -32,7 +32,8 @@
 #endif
 
 // ARM AArch32 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
-#if !defined(ROSE_ENABLE_ASM_AARCH32) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)
+// Instruction semantics for AArch32 requires C++17 or later.
+#if !defined(ROSE_ENABLE_ASM_AARCH32) && __cplusplus >= 201703L && defined(ROSE_HAVE_CAPSTONE)
     #define ROSE_ENABLE_ASM_AARCH32
 #endif
 
