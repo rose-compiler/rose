@@ -136,7 +136,8 @@ SgAsmM68kInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& i
 
     // Quick method based only on the kind of instruction
     if (m68k_bsr==last->get_kind() || m68k_jsr==last->get_kind() || m68k_callm==last->get_kind()) {
-        last->getBranchTarget(target_va); // only modifies target_va if it can be determined
+        if (target_va)
+            last->branchTarget().assignTo(*target_va);  // only modifies target_va if it can be determined
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
@@ -391,32 +392,28 @@ SgAsmM68kInstruction::getSuccessors(bool &complete)
         case m68k_traplt:
         case m68k_trapgt:
         case m68k_traple:
-        case m68k_trapv: {
+        case m68k_trapv:
             // Fall-through address and another (known or unknown) address
-            rose_addr_t target_va;
-            if (getBranchTarget(&target_va)) {
-                retval.insert(target_va);
+            if (Sawyer::Optional<rose_addr_t> target_va = branchTarget()) {
+                retval.insert(*target_va);
             } else {
                 complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
-        }
-            
+
         case m68k_bra:
         case m68k_bsr:
         case m68k_callm:
         case m68k_jmp:
-        case m68k_jsr: {
+        case m68k_jsr:
             // Unconditional branches
-            rose_addr_t target_va;
-            if (getBranchTarget(&target_va)) {
-                retval.insert(target_va);
+            if (Sawyer::Optional<rose_addr_t> target_va = branchTarget()) {
+                retval.insert(*target_va);
             } else {
                 complete = false;
             }
             break;
-        }
 
         case m68k_dbt:                                  // no-op
         case m68k_trapf:                                // no-op
@@ -483,9 +480,8 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
     return successors;
 }
 
-bool
-SgAsmM68kInstruction::getBranchTarget(rose_addr_t *target)
-{
+Sawyer::Optional<rose_addr_t>
+SgAsmM68kInstruction::branchTarget() {
     size_t labelArg = 999;                              // which argument is the target?
     bool useEffectiveAddress = false;                   // use the effective address as the target
 
@@ -592,7 +588,7 @@ SgAsmM68kInstruction::getBranchTarget(rose_addr_t *target)
         case m68k_trapf:                                // no-op
         default:
             // Not a branching instruction; do not modify target
-            return false;
+            return Sawyer::Nothing();
     }
 
     const SgAsmExpressionPtrList &args = get_operandList()->get_operands();
@@ -605,10 +601,8 @@ SgAsmM68kInstruction::getBranchTarget(rose_addr_t *target)
     if (!target_expr)
         target_expr = isSgAsmIntegerValueExpression(args[labelArg]);
     if (!target_expr)
-        return false;
-    if (target)
-        *target = target_expr->get_absoluteValue();
-    return true;
+        return Sawyer::Nothing();
+    return target_expr->get_absoluteValue();
 }
 
 std::string
