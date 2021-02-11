@@ -90,32 +90,94 @@ Aarch64::outputRegister(std::ostream &out, SgAsmRegisterReferenceExpression *exp
         out <<"[" <<expr->get_descriptor().nBits() <<"]";
 }
 
+int
+Aarch64::operatorPrecedence(SgAsmExpression *expr) {
+    ASSERT_not_null(expr);
+    if (isSgAsmBinaryPostupdate(expr) ||
+        isSgAsmBinaryPreupdate(expr)) {
+        return 0;                                       // these look like "X then Y", "X before Y"
+
+    } else if (isSgAsmBinaryLsr(expr) ||
+               isSgAsmBinaryLsl(expr)) {
+        return 1;                                       // shift/rotate
+
+    } else if (isSgAsmBinaryAdd(expr) ||
+               isSgAsmBinarySubtract(expr)) {
+        return 2;
+
+    } else if (isSgAsmBinaryConcat(expr)) {
+        return 3;
+
+    } else if (isSgAsmMemoryReferenceExpression(expr) ||
+               isSgAsmDirectRegisterExpression(expr) ||
+               isSgAsmIntegerValueExpression(expr) ||
+               isSgAsmFloatValueExpression(expr) ||
+               isSgAsmUnaryUnsignedExtend(expr) ||
+               isSgAsmUnarySignedExtend(expr) ||
+               isSgAsmUnaryTruncate(expr) ||
+               isSgAsmBinaryAsr(expr) ||
+               isSgAsmBinaryRor(expr) ||
+               isSgAsmBinaryMsl(expr) ||
+               isSgAsmByteOrder(expr) ||
+               isSgAsmRegisterNames(expr)) {
+        return 4;
+
+    } else {
+        ASSERT_not_reachable("invalid operator for AArch32 disassembly");
+    }
+}
+
+Aarch64::Parens
+Aarch64::parensForPrecedence(int rootPrec, SgAsmExpression *subexpr) {
+    ASSERT_not_null(subexpr);
+    int subPrec = operatorPrecedence(subexpr);
+    if (subPrec < rootPrec) {
+        return Parens("(", ")");
+    } else {
+        return Parens();
+    }
+}
+
 void
 Aarch64::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
     if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
-        outputExpr(out, op->get_lhs(), state);
-
         // Print the "+" and RHS only if RHS is non-zero
         SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
         if (!ival || !ival->get_bitVector().isAllClear()) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            out <<parens.left;
+            outputExpr(out, op->get_lhs(), state);
+            out <<parens.right;
+
             out <<" + ";
+
+            parens = parensForPrecedence(prec, op->get_rhs());
+            out <<parens.left;
             outputExpr(out, op->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            outputExpr(out, op->get_lhs(), state);
         }
 
-    } else if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(expr)) {
+    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
         outputExpr(out, op->get_lhs(), state);
-        out <<" += ";
+        out <<" (after ";
+        outputExpr(out, op->get_lhs(), state);
+        out <<" = ";
         outputExpr(out, op->get_rhs(), state);
+        out <<")";
 
-    } else if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(expr)) {
-            outputExpr(out, op->get_lhs(), state);
-            out <<" then ";
-            outputExpr(out, op->get_lhs(), state);
-            out <<" += ";
-            outputExpr(out, op->get_rhs(), state);
+    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" (then ";
+        outputExpr(out, op->get_lhs(), state);
+        out <<" = ";
+        outputExpr(out, op->get_rhs(), state);
+        out <<")";
 
     } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
         state.frontUnparser().emitTypeName(out, op->get_type(), state);
@@ -162,14 +224,32 @@ Aarch64::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
         out <<")";
 
     } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(expr)) {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        out <<parens.left;
         outputExpr(out, op->get_lhs(), state);
+        out <<parens.right;
+
         out <<" >> ";
+
+        parens = parensForPrecedence(prec, op->get_rhs());
+        out <<parens.left;
         outputExpr(out, op->get_rhs(), state);
+        out <<parens.right;
 
     } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(expr)) {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        out <<parens.left;
         outputExpr(out, op->get_lhs(), state);
+        out <<parens.right;
+
         out <<" << ";
+
+        parens = parensForPrecedence(prec, op->get_rhs());
+        out <<parens.left;
         outputExpr(out, op->get_rhs(), state);
+        out <<parens.right;
 
     } else if (SgAsmBinaryMsl *op = isSgAsmBinaryMsl(expr)) {
         out <<"msl(";

@@ -39,10 +39,10 @@ public:
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         for (size_t i = 0; i < operands.size(); ++i)
-            dispatcher->preUpdate(operands[i]);
+            dispatcher->preUpdate(operands[i], operators->boolean_(true));
         p(dispatcher.get(), operators.get(), insn, operands);
         for (size_t i = 0; i < operands.size(); ++i)
-            dispatcher->postUpdate(operands[i]);
+            dispatcher->postUpdate(operands[i], operators->boolean_(true));
     }
 
     void assert_args(I insn, A args, size_t nargs) {
@@ -2098,10 +2098,10 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
         case Aarch64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
             // WARNING: The ARM definition, which reads "c clear and z set" is not the inverse of the description for HI which
             // reads "c set and z clear", although it should be since HI and LS are inverses. The inverse of HI would be
-            // "c clear or z set".
+            // "c clear or z set".  I found other documentation that indeed says "c clear or z set", so I'm going with that.
             SValuePtr c = operators()->readRegister(REG_CPSR_C);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
-            return operators()->and_(operators()->invert(c), z);
+            return operators()->or_(operators()->invert(c), z);
         }
         case Aarch64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
@@ -2114,7 +2114,8 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
             return operators()->xor_(n, v);
         }
         case Aarch64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
-            // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below.
+            // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below. I found other user documentation that
+            // says "Z = 0 & N = V", so I'm going with that.
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
@@ -2122,9 +2123,10 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
             return operators()->and_(operators()->invert(z), nEqV);
         }
         case Aarch64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
-            // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description
-            // that reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
-            // inverse of "z clear and n == v" is "z set or n != v".
+            // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description that
+            // reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
+            // inverse of "z clear and n == v" is "z set or n != v". I found other user documentation that says "Z=1 or N=!V"
+            // (I'm parsing "N=!V" as "N != V".
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);

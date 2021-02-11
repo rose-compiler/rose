@@ -883,11 +883,18 @@ RegisterDictionary::dictionary_aarch32() {
     if (!regs) {
         regs = new RegisterDictionary("AArch32");
 
+        // Pseudo register that returns a new free variable every time it's read.
+        regs->insert("unknown", aarch32_regclass_sys, aarch32_sys_unknown, 0, 32);
+
         // 16 general purpose registers R0-R12, "sp" (stack pointer), "lr" (link register), and "pc" (program counter). The
         // stack pointer and link register are banked; that is, there are more than one stack register and link register but
         // only one is visible at a time depending on the current "system level view".
         for (unsigned i = 0; i < 13; ++i)
             regs->insert("r" + boost::lexical_cast<std::string>(i), aarch32_regclass_gpr, i, 0, 32);
+        regs->insert("sb", aarch32_regclass_gpr, aarch32_gpr_sb, 0, 32); // alias for r9
+        regs->insert("sl", aarch32_regclass_gpr, aarch32_gpr_sl, 0, 32); // alias for r10
+        regs->insert("fp", aarch32_regclass_gpr, aarch32_gpr_fp, 0, 32); // alias for r11
+        regs->insert("ip", aarch32_regclass_gpr, aarch32_gpr_ip, 0, 32); // alias for r12, not the instruction pointer (see PC)
         regs->insert("sp", aarch32_regclass_gpr, aarch32_gpr_sp, 0, 32); // the normal user stack pointer
         regs->insert("lr", aarch32_regclass_gpr, aarch32_gpr_lr, 0, 32); // the normal user link register
         regs->insert("pc", aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32); // program counter, aka. insn pointer
@@ -1073,6 +1080,46 @@ RegisterDictionary::dictionary_aarch32() {
         // Coprocessor registers named "cr0" through "cr15", although these names don't actually appear in the documentation.
         for (unsigned i = 0; i < 16; ++i)
             regs->insert("cr" + boost::lexical_cast<std::string>(i), aarch32_regclass_coproc, i, 0, 32);
+
+        // Debug registers. There are actually up to 1024 of these registers, but I'm not clear on how they're named.
+        regs->insert("didr",  aarch32_regclass_debug, aarch32_debug_didr,  0, 32);
+        regs->insert("wfar",  aarch32_regclass_debug, aarch32_debug_wfar,  0, 32);
+        regs->insert("vcr",   aarch32_regclass_debug, aarch32_debug_vcr,   0, 32);
+        regs->insert("ecr",   aarch32_regclass_debug, aarch32_debug_ecr,   0, 32);
+        regs->insert("dsccr", aarch32_regclass_debug, aarch32_debug_dsccr, 0, 32);
+        regs->insert("dsmcr", aarch32_regclass_debug, aarch32_debug_dsmcr, 0, 32);
+        regs->insert("dtrrx", aarch32_regclass_debug, aarch32_debug_dtrrx, 0, 32);
+        regs->insert("itr",   aarch32_regclass_debug, aarch32_debug_itr,   0, 32);
+        regs->insert("dscr",  aarch32_regclass_debug, aarch32_debug_dscr,  0, 32);
+        regs->insert("dtrtx", aarch32_regclass_debug, aarch32_debug_dtrtx, 0, 32);
+        regs->insert("drcr",  aarch32_regclass_debug, aarch32_debug_drcr,  0, 32);
+        for (unsigned i = 0; i < 16; ++i) {
+            regs->insert("bvr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_bvr0+i, 0, 32);
+            regs->insert("bcr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_bcr0+i, 0, 32);
+            regs->insert("wvr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_wvr0+i, 0, 32);
+            regs->insert("wcr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_wcr0+i, 0, 32);
+        }
+        regs->insert("oslar", aarch32_regclass_debug, aarch32_debug_oslar, 0, 32);
+        regs->insert("oslsr", aarch32_regclass_debug, aarch32_debug_oslsr, 0, 32);
+        regs->insert("ossrr", aarch32_regclass_debug, aarch32_debug_ossrr, 0, 32);
+        regs->insert("prcr",  aarch32_regclass_debug, aarch32_debug_prcr,  0, 32);
+        regs->insert("prsr",  aarch32_regclass_debug, aarch32_debug_prsr,  0, 32);
+        regs->insert("itctrl", aarch32_regclass_debug, aarch32_debug_itctrl, 0, 32);
+        regs->insert("claimset", aarch32_regclass_debug, aarch32_debug_claimset, 0, 32);
+        regs->insert("claimclr", aarch32_regclass_debug, aarch32_debug_claimclr, 0, 32);
+        regs->insert("lar",   aarch32_regclass_debug, aarch32_debug_lar,   0, 32);
+        regs->insert("lsr",   aarch32_regclass_debug, aarch32_debug_lsr,   0, 32);
+        regs->insert("authstatus", aarch32_regclass_debug, aarch32_debug_authstatus, 0, 32);
+        regs->insert("devid", aarch32_regclass_debug, aarch32_debug_devid, 0, 32);
+        regs->insert("devtype", aarch32_regclass_debug, aarch32_debug_devtype, 0, 32);
+        for (unsigned i = 0; i < 8; ++i) {
+            regs->insert("peripheralid" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug,
+                         aarch32_debug_peripheralid0+i, 0, 32);
+        }
+        for (unsigned i = 0; i < 4; ++i) {
+            regs->insert("componentid" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug,
+                         aarch32_debug_componentid0+i, 0, 32);
+        }
     }
     return regs;
 }

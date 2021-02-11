@@ -189,11 +189,21 @@ public:
      *  concrete value by this method. */
     virtual uint64_t get_number() const = 0;
 
-    /** Accessor for value width.
+    /** Property: value width.
+     *
+     *  This is the old name for this property, and is still present because it's what subclasses are already possibly
+     * overriding. The new name is @ref nBits, which just calls this function.
+     *
      * @{ */
     virtual size_t get_width() const { return width; }
     virtual void set_width(size_t nbits) { width = nbits; }
     /** @} */
+
+    /** Property: value width.
+     *
+     *  The width of the value in bits. One generally doesn't change the value after it's created. The old name of this property
+     *  was @ref get_width, and that's the one that subclasses still override. This function, nBits, just calls that other one. */
+    size_t nBits() const { return get_width(); }
 
     /** Returns true if two values could be equal. The SMT solver is optional for many subclasses. */
     virtual bool may_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;

@@ -220,6 +220,17 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             mainVa_ = arg0->get_number();
             functionPtrs.push_back(arg0);
         }
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    } else if (isSgAsmAarch32Instruction(args.bblock->instructions().back())) {
+        // The "main" pointer is passed to __libc_start_main@plt in the r0 register.
+        const RegisterDescriptor REG_R0 = regs->findOrThrow("r0");
+        BaseSemantics::SValuePtr r0 = state->peekRegister(REG_R0, dispatcher->undefined_(32), ops.get());
+        if (r0->is_number()) {
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: AArch32 with main in r0\n";
+            mainVa_ = r0->get_number();
+            functionPtrs.push_back(r0);
+        }
+#endif
     }
 
     if (!functionPtrs.empty()) {

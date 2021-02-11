@@ -234,6 +234,26 @@ RiscOperators::unsignedExtend(const SValuePtr &a, size_t new_width) {
     return a->copy(new_width);
 }
 
+void
+RiscOperators::interrupt(const SValuePtr &majr, const SValuePtr &minr, const SValuePtr &enabled) {
+    ASSERT_not_null(majr);
+    ASSERT_not_null(minr);
+    ASSERT_not_null(enabled);
+    ASSERT_require(enabled->nBits() == 1);
+
+    // Default implementation requires concrete values.
+    if (!majr->is_number() || !minr->is_number() || !enabled->is_number())
+        throw Exception("interrupt operands must be concrete", currentInstruction());
+    if (majr->nBits() > sizeof(int) || minr->nBits() > sizeof(int))
+        throw Exception("interrupt operands are too wide", currentInstruction());
+
+    if (enabled->get_number()) {
+        int majrN = majr->get_number();
+        int minrN = minr->get_number();
+        interrupt(majrN, minrN);
+    }
+}
+
 SValuePtr
 RiscOperators::fpFromInteger(const SValuePtr &intValue, SgAsmFloatType *fpType) {
     ASSERT_not_null(fpType);

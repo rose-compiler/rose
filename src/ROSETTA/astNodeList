@@ -979,3 +979,6 @@ SgAsmByteOrder
 SgAdaDerivedType
 SgAdaAttributeExp
 SgAdaEnumRepresentationClause
+SgAsmBinaryPreupdate
+SgAsmBinaryPostupdate
+

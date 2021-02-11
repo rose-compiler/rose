@@ -267,13 +267,13 @@ public:
      *
      *  For each SgAsmBinaryAddPreupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
      *  reference expression. */
-    virtual void preUpdate(SgAsmExpression*);
+    virtual void preUpdate(SgAsmExpression*, const BaseSemantics::SValuePtr &enabled);
 
     /** Update registers for post-add expressions.
      *
      *  For each SgAsmBinaryAddPostupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
      *  reference expression. */
-    virtual void postUpdate(SgAsmExpression*);
+    virtual void postUpdate(SgAsmExpression*, const BaseSemantics::SValuePtr &enabled);
 
     /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
      *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated

@@ -57,12 +57,24 @@ public:
 private:
     void init();
 
+    // Convert the instruction bytes to a 32- or 16- bit integer.
+    uint32_t bytesToWord(size_t nBytes, const uint8_t *bytes);
+
+    // Replace instruction-pointer expressions with constants if possible, leaving a comment in its place.
+    void commentIpRelative(SgAsmInstruction*);
+
+    // Fix the mnemonic to be something more human readable.
+    std::string fixMnemonic(const std::string&, arm_cc);
+
     // Make a ROSE instruction operand from a Capstone operand
     SgAsmExpression* makeOperand(const cs_insn&, const cs_arm_op&);
 
+    // Add shift or rotate operations to an expression based on the Capstone operand.
+    SgAsmExpression* shiftOrRotate(SgAsmExpression*, const cs_arm_op&);
+
     // Change a memory reference expression's address by wrapping it in a SgAsmPreIncrementExpression or SgAsmPostIncrement
     // expression if necessary.
-    void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm&);
+    void wrapPrePostIncrement(SgAsmAarch32Instruction*, const cs_insn&, const uint32_t insnWord);
 
     // Convert a Capstone register number to a ROSE register descriptor. ROSE's register descriptor are a lot more than just an
     // ID number.

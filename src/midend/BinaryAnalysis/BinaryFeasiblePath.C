@@ -9,6 +9,11 @@
 #include <BinaryYicesSolver.h>
 #include <Combinatorics.h>
 #include <CommandLine.h>
+#include <DisassemblerAarch32.h>
+#include <DisassemblerAarch64.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
@@ -904,13 +909,28 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  See also, end of this function. FIXME[Robb Matzke 2015-12-01]: We need to support
         // returning multiple values. We should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
+        Disassembler *dis = partitioner.instructionProvider().disassembler();
+        ASSERT_not_null(dis);
         RegisterDescriptor r;
-        if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
-            REG_RETURN_ = r;
-        } else if ((r = registers_->find("d0"))) {
-            REG_RETURN_ = r;                            // m68k also typically has other return registers
-        } else if ((r = registers_->find("r3"))) {
-            REG_RETURN_ = r;                            // PowerPC also returns via r4
+        if (dynamic_cast<DisassemblerX86*>(dis)) {
+            if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax")))
+                REG_RETURN_ = r;
+        } else if (dynamic_cast<DisassemblerM68k*>(dis)) {
+            if ((r = registers_->find("d0")))
+                REG_RETURN_ = r;                        // m68k also typically has other return registers
+        } else if (dynamic_cast<DisassemblerPowerpc*>(dis)) {
+            if ((r = registers_->find("r3")))
+                REG_RETURN_ = r;                        // PowerPC also returns via r4
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (dynamic_cast<DisassemblerAarch32*>(dis)) {
+            if ((r = registers_->find("r0")))
+                REG_RETURN_ = r;
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (dynamic_cast<DisassemblerAarch64*>(dis)) {
+            if ((r = registers_->find("r0")))
+                REG_RETURN_ = r;
+#endif
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -1104,6 +1124,14 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 #ifdef ROSE_ENABLE_ASM_AARCH64
         } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
+            // Return address is in the link register, lr
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch32>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
