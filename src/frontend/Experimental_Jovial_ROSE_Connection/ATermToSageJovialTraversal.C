@@ -1297,11 +1297,9 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //
    if (traverse_TableDescriptionName(t_table_desc, table_type_name, base_type, preset)) {
       if (dim_info->get_expressions().size() == 0) {
-        // TODO: FIXME: leads to WARNING in AstConsistencyTests.C at line 3118
-        // WARNING: change for Tristan
         table_type = isSgJovialTableType(base_type);
         ROSE_ASSERT(table_type);
-        // TODO: CLEAN this up
+        // Make sure there isn't a dangling pointer
         delete dim_info;
         dim_info = nullptr;
       }
@@ -3094,17 +3092,6 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       table_type->set_structure_specifier(SgJovialTableType::e_tight);
       table_type->set_bits_per_entry(struct_spec.bits_per_entry);
    }
-
-#if 0
-   std::cout << ".x. TABLE DECLARATION for type " << table_type_name << endl;
-   std::cout << ".x. TABLE TYPE SPEC rank is "     << dim_info->get_expressions().size() << endl;
-   std::cout << ".x. TABLE TYPE SPEC dim_info: "   << dim_info << endl;
-   std::cout << ".x. TABLE TYPE struct spec is: "  << table_type->get_structure_specifier() << endl;
-   std::cout << ".x. TABLE TYPE bits per entry: "  << table_type->get_bits_per_entry() << endl;
-   if (base_type) {
-      std::cout << ".x. base_type is " << base_type << ": " << base_type->class_name() << endl;
-   }
-#endif
 
    return ATtrue;
 }

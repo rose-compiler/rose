@@ -12847,7 +12847,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       else
                        {
                        // TV (09/13/2018): in ROSE/tutorial/: ./loopOptimization --edg:no_warnings -w -bk1 -fs0 -c /data1/roseenv/src/tmp-merge/tutorial/inputCode_LoopOptimization_blocking.C
-                         mfprintf(mlog [ WARN ] )("WARNING: Unexpected conditions in NameQualificationTraversal::evaluateInheritedAttribute.");
+                         mfprintf(mlog [ WARN ] )("WARNING: Unexpected conditions in NameQualificationTraversal::evaluateInheritedAttribute.\n");
+//                       ROSE_ASSERT(false);
                        }
 
 #if 0
