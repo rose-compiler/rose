@@ -24741,7 +24741,7 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   string prefix;
   serialize(node, prefix, false, oss);
   ofstream textfile;
-  textfile.open(filename, ios::out | ios::app);
+  textfile.open(filename, ios::out);
   textfile<<oss.str();
   textfile.close();
 }
