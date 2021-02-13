@@ -40,6 +40,31 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+  struct ScopeUpdateGuard
+  {
+      ScopeUpdateGuard(SgUnparse_Info& info, SgScopeStatement& scope)
+      : ui(info), oldScope(info.get_current_scope())
+      {
+        ui.set_current_scope(&scope);
+      }
+
+      ~ScopeUpdateGuard()
+      {
+        ui.set_current_scope(oldScope);
+      }
+
+    private:
+      ScopeUpdateGuard(const ScopeUpdateGuard&) = delete;
+
+      SgUnparse_Info&   ui;
+      SgScopeStatement* oldScope;
+  };
+
+  SgVariableSymbol& symOf(const SgVarRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
   inline
   SgName nameOf(const SgSymbol& sy)
   {
@@ -47,9 +72,9 @@ namespace
   }
 
   inline
-  SgName nameOf(const SgVarRefExp& var_ref)
+  SgName nameOf(const SgVarRefExp& n)
   {
-    return nameOf(SG_DEREF(var_ref.get_symbol()));
+    return nameOf(symOf(n));
   }
 
   inline
@@ -153,7 +178,7 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
 
-      unparser.unparseType(primary.get_type(), &sg::ancestor<SgScopeStatement>(n), info);
+      unparser.unparseType(primary.get_type(), info);
     }
 
     void operator()(SgVariableDeclaration* s)
@@ -358,6 +383,8 @@ namespace
     {
       typedef SgDeclarationStatementPtrList::iterator Iterator;
 
+      ScopeUpdateGuard scopeGuard(info, n);
+
       std::pair<Iterator, Iterator> declRange = declsInPackage(n.get_declarations(), unparser.getFileName());
 
       list(declRange.first, declRange.second);
@@ -493,17 +520,21 @@ namespace
     {
       ROSE_ASSERT(n.get_hasMembers());
 
+      ScopeUpdateGuard scopeGuard(info, n);
+
       list(n.get_declarations());
     }
 
     void handle(SgAdaTaskBody& n)
     {
+      ScopeUpdateGuard scopeGuard(info, n);
+
       list(n.get_statements());
     }
 
     void handle(SgAdaPackageSpecDecl& n)
     {
-      const std::string qual = scopeQual(n, n.get_scope());
+      const std::string qual = scopeQual(n.get_scope());
 
       prn("package ");
       prn(qual);
@@ -533,11 +564,15 @@ namespace
 
     void handle(SgAdaPackageSpec& n)
     {
+      ScopeUpdateGuard scopeGuard(info, n);
+
       list(n.get_declarations());
     }
 
     void handle(SgAdaPackageBody& n)
     {
+      ScopeUpdateGuard scopeGuard(info, n);
+
       list(n.get_statements());
     }
 
@@ -550,7 +585,7 @@ namespace
       prn(n.get_name());
       prn(renamed.infixSyntax);
       prn(" renames ");
-      prn(scopeQual(n, orig->get_scope()));
+      prn(scopeQual(orig->get_scope()));
       prn(renamed.renamedName);
       prn(STMT_SEP);
     }
@@ -566,7 +601,7 @@ namespace
 
       prn("use ");
       prn(usesyntax.first);
-      prn(scopeQual(n, orig->get_scope()));
+      prn(scopeQual(orig->get_scope()));
       prn(usesyntax.second);
       prn(STMT_SEP);
     }
@@ -581,7 +616,7 @@ namespace
       prn(" is");
       prn(declwords.second);
       prn(" ");
-      type(n.get_base_type(), n);
+      type(n.get_base_type());
       prn(STMT_SEP);
     }
 
@@ -605,13 +640,15 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
 
-      type(primary.get_type(), n);
+      type(primary.get_type());
       expr_opt(primary.get_initializer(), " := ");
       prn(STMT_SEP);
     }
 
     void handle(SgFunctionDefinition& n)
     {
+      ScopeUpdateGuard scopeGuard(info, n);
+
       handleBasicBlock(n.get_body(), true /* function body */);
     }
 
@@ -889,11 +926,11 @@ namespace
     //~ ScopePath pathToGlobal(SgStatement& n);
     //~ std::string recoverScopeName(SgLocatedNode& n);
 
-    std::string scopeQual(SgStatement& local, SgScopeStatement& remote);
+    std::string scopeQual(SgScopeStatement& remote);
 
-    std::string scopeQual(SgStatement& local, SgScopeStatement* remote)
+    std::string scopeQual(SgScopeStatement* remote)
     {
-      return scopeQual(local, SG_DEREF(remote));
+      return scopeQual(SG_DEREF(remote));
     }
 
     void parentRecord(SgClassDefinition& def)
@@ -906,7 +943,7 @@ namespace
       SgClassDeclaration& decl   = SG_DEREF(parent.get_base_class());
 
       prn(" new ");
-      prn(scopeQual(def, decl.get_scope()));
+      prn(scopeQual(decl.get_scope()));
       prn(decl.get_name());
       prn(" with");
     }
@@ -971,6 +1008,8 @@ namespace
 
     void handle(SgClassDefinition& n)
     {
+      ScopeUpdateGuard scopeGuard(info, n); // \todo required?
+
       list(n.get_members());
     }
 
@@ -1005,7 +1044,7 @@ namespace
         prn(": ");
       }
 
-      type(exvar.get_type(), n);
+      type(exvar.get_type());
       prn(" =>\n");
 
       stmt(n.get_body());
@@ -1044,9 +1083,9 @@ namespace
       prn(postfix_opt);
     }
 
-    void type(SgType* t, SgStatement& ctx)
+    void type(SgType* t)
     {
-      unparser.unparseType(t, &sg::ancestor<SgScopeStatement>(ctx), info);
+      unparser.unparseType(t, info);
     }
 
     void operator()(SgStatement* s)
@@ -1194,7 +1233,7 @@ namespace
     if (hasReturn)
     {
       prn(" return");
-      type(n.get_orig_return_type(), n);
+      type(n.get_orig_return_type());
     }
 
     // MS 12/22/20 : if this is actually a function renaming declaration,
@@ -1392,6 +1431,7 @@ namespace
 
     // parent handlers
     void handle(SgAdaTaskSpecDecl& n)    { withName(n.get_name()); }
+    void handle(SgAdaTaskBodyDecl& n)    { withName(n.get_name()); }
     void handle(SgAdaPackageSpecDecl& n) { withName(n.get_name()); }
     void handle(SgAdaPackageBodyDecl& n) { withName(n.get_name()); }
   };
@@ -1438,9 +1478,11 @@ namespace
   }
 
   std::string
-  AdaStatementUnparser::scopeQual(SgStatement& local, SgScopeStatement& remote)
+  AdaStatementUnparser::scopeQual(SgScopeStatement& remote)
   {
-    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
+    SgScopeStatement& current = SG_DEREF(info.get_current_scope());
+
+    return unparser.computeScopeQual(current, remote);
   }
 }
 
@@ -1451,6 +1493,19 @@ Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
 
   ScopePath         localPath  = pathToGlobal(local);
   ScopePath         remotePath = pathToGlobal(remote);
+
+/*
+  std::cerr << "localPath " << typeid(local).name() << ": ";
+  for (std::string x : localPath)
+    std::cerr << x << '.';
+
+  std::cerr << "\nremotePath: ";
+  for (std::string x : remotePath)
+    std::cerr << x << '.';
+
+  std::cerr << std::endl;
+*/
+
   size_t            pathlen    = std::min(localPath.size(), remotePath.size());
   PathIterator      localstart = localPath.rbegin();
   PathIterator      pathit     = std::mismatch( localstart, localstart + pathlen,
