@@ -24696,14 +24696,35 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
-  if (SgInitializedName * v = isSgInitializedName(node) )
-    out<<" "<< v->get_qualified_name();
+  if (SgClassDeclaration* f = isSgClassDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
 
-  // more type-specific information
+  if (SgInitializedName * v = isSgInitializedName(node) )
+  {
+    out<<" "<< v->get_qualified_name();
+    out<<" type@"<< v->get_type();
+  }
+
+  // associated class, function and variable declarations
+  if (SgTemplateInstantiationDecl* f = isSgTemplateInstantiationDecl(node) )
+    out<<" template class decl@"<< f->get_templateDeclaration();
+
+  if (SgMemberFunctionDeclaration* f = isSgMemberFunctionDeclaration(node) )
+    out<<" assoc. class decl@"<< f->get_associatedClassDeclaration();
+
   if (SgConstructorInitializer* ctor= isSgConstructorInitializer(node) )
   {
     out<<" member function decl@"<< ctor->get_declaration();
   }
+  
+  if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
+    out<<" init name@"<< var_ref->get_symbol()->get_declaration();
+
+  if (SgMemberFunctionRefExp* func_ref= isSgMemberFunctionRefExp(node) )
+    out<<" member func decl@"<< func_ref->get_symbol_i()->get_declaration();
+
+  if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
+    out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
   out<<endl;
 
