@@ -20,8 +20,8 @@ namespace
 {
   struct AdaTypeUnparser
   {
-    AdaTypeUnparser(Unparse_Ada& unp, SgScopeStatement* where, SgUnparse_Info& inf, std::ostream& outp)
-    : unparser(unp), ctx(where), info(inf), os(outp)
+    AdaTypeUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
+    : unparser(unp), info(inf), os(outp)
     {}
 
     void prn(const std::string& s)
@@ -30,11 +30,11 @@ namespace
       //~ os << s;
     }
 
-    std::string scopeQual(SgScopeStatement& local, SgDeclarationStatement& remote);
+    std::string scopeQual(SgDeclarationStatement& remote);
 
-    std::string scopeQual(SgScopeStatement& local, SgDeclarationStatement* remote)
+    std::string scopeQual(SgDeclarationStatement* remote)
     {
-      return scopeQual(local, SG_DEREF(remote));
+      return scopeQual(SG_DEREF(remote));
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
@@ -106,20 +106,11 @@ namespace
       /* print nothing - used for Integer and Real Number constants */
     }
 
-    void setCtxIfNeeded(SgDeclarationStatement& dcl)
-    {
-      if (ctx) return;
-
-      ctx = &sg::ancestor<SgScopeStatement>(dcl);
-    }
-
 
     void handle(SgNamedType& n)
     {
-      setCtxIfNeeded(SG_DEREF(n.get_declaration()));
-
       prn(" ");
-      prn(scopeQual(SG_DEREF(ctx), n.get_declaration()));
+      prn(scopeQual(n.get_declaration()));
       prn(n.get_name());
     }
 
@@ -156,8 +147,7 @@ namespace
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       prn(" ");
-      prn(scopeQual(SG_DEREF(ctx), n.get_decl()));
-      // prn(scopeQual(SG_DEREF(ctx), n.get_declaration()));
+      prn(scopeQual(n.get_decl()));
       prn(SG_DEREF(n.get_decl()).get_name());
     }
 
@@ -214,15 +204,16 @@ namespace
     }
 
     Unparse_Ada&      unparser;
-    SgScopeStatement* ctx;
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
 
   std::string
-  AdaTypeUnparser::scopeQual(SgScopeStatement& local, SgDeclarationStatement& remote)
+  AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
   {
-    return unparser.computeScopeQual(local, SG_DEREF(remote.get_scope()));
+    SgScopeStatement& current = SG_DEREF(info.get_current_scope());
+
+    return unparser.computeScopeQual(current, SG_DEREF(remote.get_scope()));
   }
 }
 
@@ -234,10 +225,10 @@ namespace
 //  to the appropriate function to unparse each Ada type.
 //-----------------------------------------------------------------------------------
 void
-Unparse_Ada::unparseType(SgType* type, SgScopeStatement* where, SgUnparse_Info& info)
+Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
 {
   ASSERT_not_null(type);
 
-  sg::dispatch(AdaTypeUnparser(*this, where, info, std::cerr), type);
+  sg::dispatch(AdaTypeUnparser(*this, info, std::cerr), type);
 }
 
