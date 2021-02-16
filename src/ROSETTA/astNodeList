@@ -977,3 +977,4 @@ SgAdaLengthClause
 SgAsmBinaryConcat
 SgAsmByteOrder
 SgAdaDerivedType
+SgAdaAttributeExp

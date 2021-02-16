@@ -181,6 +181,9 @@ namespace CodeThorn {
     TemporaryVariableIdMapping temporaryVariableIdMapping;
     VariableId addNewSymbol(SgSymbol* sym);
 
+    // used for link analysis of global variables based on mangled names
+    std::map<std::string,SgSymbol*> mappingGlobalVarNameToSymbol;
+
     // used for mapping in both directions
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
     std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;

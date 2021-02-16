@@ -2651,6 +2651,12 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     ASSERT_not_null(roseUnparser.u_fortran_locatedNode);
                     roseUnparser.u_fortran_locatedNode->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
                   }
+               else if (SageInterface::is_Ada_language())
+                  {
+                    Unparse_Ada adagen{&roseUnparser, ""};
+
+                    adagen.unparseStatement( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+                  }
                  else
                   {
                  // Unparse as a C/C++ code.
@@ -2704,9 +2710,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                   }
                else if (SageInterface::is_Ada_language())
                   {
-                    Unparse_Ada adagen{&roseUnparser, ""};
+                    Unparse_Ada   adagen{&roseUnparser, ""};
+                    SgExpression* exprNonConst = const_cast<SgExpression*>(expr);
+                    bool          replNull = !inheritedAttributeInfo.get_current_scope();
+
+                    if (replNull)
+                      adagen.setInitialScope(inheritedAttributeInfo, exprNonConst);
 
                     adagen.unparseExpression( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+
+                    if (replNull)
+                      adagen.setInitialScope(inheritedAttributeInfo, NULL);
                   }
                  else
                   {

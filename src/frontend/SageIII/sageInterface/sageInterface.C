@@ -21087,12 +21087,15 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
             {
               SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
               SgDeclarationStatement* decl = table_type->get_declaration();
-              SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
-              SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
-
-              def_decl->set_scope(targetBlock);
-              nondef_decl->set_scope(targetBlock);
-              nondef_decl->set_parent(targetBlock);
+              if (decl->get_scope() == sourceBlock)
+              {
+                // Needs to be moved
+                SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
+                SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
+                def_decl->set_scope(targetBlock);
+                nondef_decl->set_scope(targetBlock);
+                nondef_decl->set_parent(targetBlock);
+              }
             }
 
             // Must also move the symbol into the source block, Liao 2019/8/14

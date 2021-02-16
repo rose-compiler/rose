@@ -3132,7 +3132,7 @@ Grammar::setUpStatements ()
 */
 
      AdaLengthClause.setFunctionPrototype("HEADER_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
-     AdaLengthClause.setDataPrototype ( "SgTypeTraitBuiltinOperator*", "attribute", "= NULL",
+     AdaLengthClause.setDataPrototype ( "SgAdaAttributeExp*", "attribute", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaLengthClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
