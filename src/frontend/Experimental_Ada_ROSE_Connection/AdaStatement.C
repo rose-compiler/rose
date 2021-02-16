@@ -25,9 +25,6 @@ namespace Ada_ROSE_Translation
 
 namespace
 {
-  /// auto deleter of an expression object
-  typedef std::unique_ptr<SgExpression> GuardedExpression;
-
   /// creates a vector of NameData objects from a sequence of Asis names.
   struct NameCreator
   {
@@ -316,9 +313,15 @@ namespace
   /// creates a deep-copyW of \ref exp
   /// if \ref exp is null, null will be returned
   SgExpression*
-  cloneNonNull(SgExpression* exp)
+  cloneIfNeeded(SgExpression* exp, bool required)
   {
-    return exp ? si::deepCopy(exp) : exp;
+    if (!required) return exp;
+
+    exp = si::deepCopy(exp);
+
+    // \todo use a traversal to set all children nodes to compiler generated
+    markCompilerGenerated(SG_DEREF(exp));
+    return exp;
   }
 
 
@@ -333,7 +336,7 @@ namespace
                                    std::map<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   GuardedExpression initexpr = nullptr
+                                   SgExpression* initexpr
                                  )
   {
     SgInitializedNamePtrList lst;
@@ -345,7 +348,7 @@ namespace
 
       const std::string& name = names.at(i).fullName;
       Element_ID         id   = names.at(i).id();
-      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneNonNull(initexpr.get()));
+      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
 
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
 
@@ -466,9 +469,8 @@ namespace
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
     SgType&                  parmtype = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
-    GuardedExpression        initexpr{getVarInit(asisDecl, &parmtype, ctx)};
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         parmtype, std::move(initexpr)
+                                                                         parmtype, getVarInit(asisDecl, &parmtype, ctx)
                                                                        );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
@@ -541,28 +543,28 @@ namespace
   struct DeclarePrivateType
   {
       DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
-      : ty(tyrep), scope(astctx.scope()), privateElems(privateItems)
+      : ty(tyrep), ctx(astctx), privateElems(privateItems)
       {}
 
       void operator()(const NameData& nameelem)
       {
         ROSE_ASSERT(nameelem.fullName == nameelem.ident);
 
-        const std::string&      name = nameelem.fullName;
-        Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
-        ROSE_ASSERT(dcl);
+        const std::string&      name  = nameelem.fullName;
+        Element_ID              id    = nameelem.id();
+        SgScopeStatement&       scope = ctx.scope();
+        SgDeclarationStatement& dcl   = mkTypeDecl(name, ty, scope);
 
-        markCompilerGenerated(*dcl);
-        privatize(*dcl, privateElems);
-        scope.append_statement(dcl);
-        recordNode(asisTypes(), id, *dcl);
-        ROSE_ASSERT(dcl->get_parent() == &scope);
+        attachSourceLocation(dcl, nameelem.elem(), ctx);
+        scope.append_statement(&dcl);
+        privatize(dcl, privateElems);
+        recordNode(asisTypes(), id, dcl);
+        ROSE_ASSERT(dcl.get_parent() == &scope);
       }
 
     private:
       SgType&           ty;
-      SgScopeStatement& scope;
+      AstContext        ctx;
       bool              privateElems;
   };
 
@@ -628,21 +630,22 @@ namespace
   /// \note the created type depends on data provided in the TypeData object.
   struct DeclareType
   {
-      DeclareType(TypeData what, AstContext astctx, bool privateItems)
-      : foundation(what), scope(astctx.scope()), privateElems(privateItems)
+      DeclareType(TypeData what, Element_Struct& el, AstContext astctx, bool privateItems)
+      : foundation(what), elem(el), ctx(astctx), privateElems(privateItems)
       {}
 
       void operator()(const NameData& nameelem)
       {
         ROSE_ASSERT(nameelem.fullName == nameelem.ident);
 
+        SgScopeStatement&       scope = ctx.scope();
         Element_ID              id   = nameelem.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
         const std::string&      name = nameelem.fullName;
         SgDeclarationStatement* dcl  = sg::dispatch(MakeDeclaration(name, scope, foundation, nondef), foundation.n);
         ROSE_ASSERT(dcl);
 
-        markCompilerGenerated(*dcl);
+        attachSourceLocation(*dcl, elem, ctx);
         privatize(*dcl, privateElems);
         scope.append_statement(dcl);
 
@@ -653,7 +656,8 @@ namespace
 
     private:
       TypeData          foundation;
-      SgScopeStatement& scope;
+      Element_Struct&   elem;
+      AstContext        ctx;
       bool              privateElems;
   };
 
@@ -703,9 +707,8 @@ namespace
     ElemIdRange              range    = idRange(decl.Names);
     name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
     SgScopeStatement&        scope    = ctx.scope();
-    GuardedExpression        initexp{getVarInit(decl, expectedType, ctx)};
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         dclType, std::move(initexp)
+                                                                         dclType, getVarInit(decl, expectedType, ctx)
                                                                        );
     SgVariableDeclaration&   vardcl   = mkVarDecl(dclnames, scope);
 
@@ -994,7 +997,8 @@ namespace
       {
         ROSE_ASSERT(thenPath.first && thenPath.second);
 
-        return sb::buildIfStmt(thenPath.first, thenPath.second, elsePath);
+        return &mkIfStmt(SG_DEREF(thenPath.first), SG_DEREF(thenPath.second), elsePath);
+        //~ return sb::buildIfStmt(thenPath.first, thenPath.second, elsePath);
       }
 
       operator SgStatement&()
@@ -1254,6 +1258,7 @@ namespace
         SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
         SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args);
 
+        ROSE_ASSERT(args.get_parent());
         attachSourceLocation(sgnode, el, ctx);
         attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
         res.push_back(&sgnode);
@@ -1401,7 +1406,7 @@ namespace
         {
           logKind("A_Null_Statement");
 
-          completeStmt(mkNullStmt(), elem, ctx);
+          completeStmt(mkNullStatement(), elem, ctx);
           /* unused fields:
           */
           break;
@@ -1416,6 +1421,7 @@ namespace
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
           SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
 
+          attachSourceLocation(assign, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
           */
@@ -1503,6 +1509,7 @@ namespace
           Element_Struct&        forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
           SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
 
+          attachSourceLocation(forini, forvar, ctx);
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
           handleDeclaration(forvar, ctx.scope_npc(sgnode));
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
@@ -1516,7 +1523,7 @@ namespace
           SgVariableDeclaration* inductionVar = isSgVariableDeclaration(forini.get_init_stmt().front());
           SgExpression&          direction    = mkForLoopIncrement(isForwardLoop(forvar), SG_DEREF(inductionVar));
 
-          sgnode.set_increment(&direction);
+          sg::linkParentChild(sgnode, direction, &SgForStatement::set_increment);
 
           // loop body
           {
@@ -1608,30 +1615,14 @@ namespace
         {
           logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
 
-          SgExpression*  funrefexp = nullptr;
+          SgExpression&    funrefexp = getExprID(stmt.Called_Name, ctx);
+          ElemIdRange      range  = idRange(stmt.Call_Statement_Parameters);
+          SgExprListExp&   arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+          SgExprStatement& sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funrefexp, &arglst));
+          SgExpression&    call   = SG_DEREF(sgnode.get_expression());
 
-          //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
-/*
-          if (SgDeclarationStatement* tgt = findNode(asisDecls(), stmt.Corresponding_Called_Entity))
-          {
-            funrefexp = sb::buildFunctionRefExp(isSgFunctionDeclaration(tgt));
-          }
-          else
-          {
-            logWarn() << "unable to find declaration for "
-                      << (stmt.Statement_Kind == An_Entry_Call_Statement ? "entry" : "procedure")
-                      << " call"
-                      << std::endl;
-
-          }
-*/
-          funrefexp = &getExprID(stmt.Called_Name, ctx);
-
-          ROSE_ASSERT(funrefexp);
-          ElemIdRange    range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp& arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgStatement&   sgnode = SG_DEREF(sb::buildFunctionCallStmt(funrefexp, &arglst));
-
+          ROSE_ASSERT(arglst.get_parent());
+          attachSourceLocation(call, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
               + for A_Procedure_Call_Statement / An_Entry_Call_Statement
@@ -1677,7 +1668,7 @@ namespace
 
           if (stmts.empty())
           {
-            SgStatement&          noblock = mkNullStmt();
+            SgStatement&          noblock = mkNullStatement();
 
             sg::linkParentChild(sgnode, noblock, &SgAdaAcceptStmt::set_body);
           }
@@ -1767,9 +1758,10 @@ namespace
 
           ElemIdRange                range     = idRange(stmt.Aborted_Tasks);
           std::vector<SgExpression*> aborted   = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-          SgExprListExp&             abortList = SG_DEREF(sb::buildExprListExp(aborted));
+          SgExprListExp&             abortList = mkExprListExp(aborted);
           SgProcessControlStatement& sgnode    = mkAbortStmt(abortList);
 
+          ROSE_ASSERT(abortList.get_parent());
           completeStmt(sgnode, elem, ctx);
 
           /* unused fields:
@@ -1837,7 +1829,7 @@ namespace
     ROSE_ASSERT(names.size() == 1);
     ElemIdRange              tyRange = idRange(ex.Exception_Choices);
     SgType&                  extypes = traverseIDs(tyRange, elemMap(), ExHandlerTypeCreator{ctx});
-    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(ctx, asisVars(), names, extypes);
+    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(ctx, asisVars(), names, extypes, nullptr);
     SgBasicBlock&            body    = mkBasicBlock();
 
     ROSE_ASSERT(lst.size() == 1);
@@ -2103,9 +2095,9 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 
     case An_Attribute_Definition_Clause:           // 13.3
       {
-        SgTypeTraitBuiltinOperator& lenattr = getAttributeExprID(repclause.Representation_Clause_Name, ctx);
-        SgExpression&               lenexpr = getExprID(repclause.Representation_Clause_Expression, ctx);
-        SgAdaLengthClause&          sgnode  = mkAdaLengthClause(lenattr, lenexpr);
+        SgAdaAttributeExp& lenattr = getAttributeExprID(repclause.Representation_Clause_Name, ctx);
+        SgExpression&      lenexpr = getExprID(repclause.Representation_Clause_Expression, ctx);
+        SgAdaLengthClause& sgnode  = mkAdaLengthClause(lenattr, lenexpr);
 
         attachSourceLocation(sgnode, elem, ctx);
         ctx.scope().append_statement(&sgnode);
@@ -2383,12 +2375,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         const bool             isFunc  = decl.Declaration_Kind == A_Function_Declaration;
         SgScopeStatement&      outer   = ctx.scope();
         NameData               adaname = singleName(decl, ctx);
-        ElemIdRange            range   = idRange(decl.Parameter_Profile);
+        ElemIdRange            params  = idRange(decl.Parameter_Profile);
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                 : SG_DEREF(sb::buildVoidType());
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion{range, ctx});
+        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
 
         setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -2541,32 +2533,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           SgScopeStatement&       scope  = ctx.scope();
           SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, scope, defdata.second, ctx);
 
-          markCompilerGenerated(sgnode);
-          privatize(sgnode, isPrivate);
+          attachSourceLocation(sgnode, elem, ctx);
           scope.append_statement(&sgnode);
+          privatize(sgnode, isPrivate);
           recordNode(asisTypes(), id, sgnode);
           recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
           ROSE_ASSERT(sgnode.get_parent() == &scope);
-/*
-  Type_Kinds
-  queryTypeDefinitionKind(Element_ID completeElementId)
-
-
-  SgDeclarationStatement&
-  handlePartialTypeDecl(const NameData& adaname, Element_Struct& elem, AstContext ctx, bool isPrivate)
-  {
-
-  }
-
-  SgDeclarationStatement&
-  handlePartialTypeDeclID(const NameData& adaname, Element_ID id, AstContext ctx, bool isPrivate)
-  {
-    return handlePartialTypeDecl(adaname, retrieveAs<Element_Struct>(elemMap(), id), ctx, isPrivate);
-  }
-
-  SgDeclarationStatement& sgnode = handlePartialTypeDeclID(adaname, decl.Corresponding_Type_Declaration, ctx, isPrivate);
-*/
-
         }
         else /* use old code */
         {
@@ -2614,7 +2586,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData       ty    = getTypeFoundation(decl, ctx);
 
         ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclareType{ty, ctx, isPrivate});
+        std::for_each(names.begin(), names.end(), DeclareType{ty, elem, ctx, isPrivate});
 
         /* unused fields
             bool                           Has_Abstract;
@@ -2875,7 +2847,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
         SgScopeStatement&        scope    = ctx.scope();
         SgType&                  excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
-        SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(ctx, asisExcps(), names, excty);
+        SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(ctx, asisExcps(), names, excty, nullptr);
         SgVariableDeclaration&   sgnode   = mkExceptionDecl(dclnames, scope);
 
         attachSourceLocation(sgnode, elem, ctx);

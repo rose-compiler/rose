@@ -768,5 +768,9 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
     ioAnalysis->runSolver();
     return ioAnalysis;
   }
-  
+
+  void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc) {
+    if(ctOpt.status) cout<<tc.toString();
+    if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
+  }
 } // end of namespace CodeThorn

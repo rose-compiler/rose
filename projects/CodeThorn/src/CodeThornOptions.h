@@ -97,6 +97,10 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool contextSensitive=false; // abitrary length call strings
   int abstractionMode=0;
   int interpreterMode=0;
+
+  bool initialStateFilterUnusedVariables=false;
+  int initialStateGlobalVarsAbstractionLevel=1;
+  
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
   //bool printViolations=false;

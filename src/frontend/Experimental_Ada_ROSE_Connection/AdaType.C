@@ -43,7 +43,7 @@ namespace
       void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
 
-      void handle(SgTypeTraitBuiltinOperator& n)
+      void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx);
         set(&mkAttributeType(n));
@@ -227,7 +227,7 @@ namespace
   SgClassDefinition&
   getRecordBody(Record_Definition_Struct& rec, AstContext ctx)
   {
-    SgClassDefinition&        sgnode = SG_DEREF( sb::buildClassDefinition() );
+    SgClassDefinition&        sgnode = SG_DEREF( sb::buildClassDefinition_nfi() );
     ElemIdRange               components = idRange(rec.Record_Components);
     //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
@@ -239,6 +239,8 @@ namespace
     /* unused nodes:
          Record_Component_List Implicit_Components
     */
+
+    markCompilerGenerated(sgnode);
     return sgnode;
   }
 
@@ -253,7 +255,10 @@ namespace
     if (def.Definition_Kind == A_Null_Record_Definition)
     {
       logKind("A_Null_Record_Definition");
-      return SG_DEREF( sb::buildClassDefinition() );
+      SgClassDefinition&      sgdef = SG_DEREF( sb::buildClassDefinition_nfi() );
+
+      attachSourceLocation(sgdef, elem, ctx);
+      return sgdef;
     }
 
     ROSE_ASSERT(def.Definition_Kind == A_Record_Definition);
@@ -443,10 +448,11 @@ namespace
 
           ElemIdRange                indicesAsis = idRange(typenode.Discrete_Subtype_Definitions);
           std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-          SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
+          SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, false /* constrained */);
+          ROSE_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break ;
@@ -458,10 +464,11 @@ namespace
 
           ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
           std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-          SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
+          SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, true /* unconstrained */);
+          ROSE_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break;

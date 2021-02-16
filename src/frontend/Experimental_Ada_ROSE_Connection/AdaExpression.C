@@ -60,7 +60,10 @@ namespace
     ROSE_ASSERT(formalName.Expression_Kind == An_Identifier);
 
     logKind("An_Identifier");
-    return SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
+    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
+
+    attachSourceLocation(namedArg, elem, ctx);
+    return namedArg;
   }
 }
 
@@ -180,10 +183,11 @@ namespace
 
     if (namedElements)
     {
-      std::vector<SgExpression*> expr = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(expr));
+      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      SgExprListExp&             explst = mkExprListExp(exprs);
 
       sgnode = &mkAdaNamedInitializer(explst, init);
+      ROSE_ASSERT(explst.get_parent());
     }
 
     ROSE_ASSERT(sgnode);
@@ -264,9 +268,9 @@ namespace
   SgExpression&
   getOperator(Expression_Struct& expr, AstContext ctx)
   {
-    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > binary_maker_map_t;
+    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > operator_maker_map_t;
 
-    static const binary_maker_map_t binary_maker_map =
+    static const operator_maker_map_t maker_map =
     { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
       { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
       { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
@@ -292,9 +296,9 @@ namespace
 
     ROSE_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    binary_maker_map_t::const_iterator pos = binary_maker_map.find(expr.Operator_Kind);
+    operator_maker_map_t::const_iterator pos = maker_map.find(expr.Operator_Kind);
 
-    if (pos != binary_maker_map.end())
+    if (pos != maker_map.end())
     {
       logKind(pos->second.first);
       return SG_DEREF(pos->second.second());
@@ -432,14 +436,14 @@ namespace
 } // anonymous
 
 
-SgTypeTraitBuiltinOperator&
+SgAdaAttributeExp&
 getAttributeExpr(Expression_Struct& expr, AstContext ctx)
 {
   ROSE_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
 
-  SgTypeTraitBuiltinOperator* res = nullptr;
-  NameData                    name = getNameID(expr.Attribute_Designator_Identifier, ctx);
-  SgExpression&               obj = getExprID(expr.Prefix, ctx);
+  SgAdaAttributeExp* res = nullptr;
+  NameData           name = getNameID(expr.Attribute_Designator_Identifier, ctx);
+  SgExpression&      obj = getExprID(expr.Prefix, ctx);
 
   switch (expr.Attribute_Kind)
   {
@@ -458,10 +462,10 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)
     {
       ElemIdRange                range = idRange(expr.Attribute_Designator_Expressions);
-      std::vector<SgExpression*> expr = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             args = SG_DEREF(sb::buildExprListExp(expr));
+      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      SgExprListExp&             args  = mkExprListExp(exprs);
 
-      res = &mkAdaExprAttribute(obj, name.fullName, args);
+      res = &mkAdaAttributeExp(obj, name.fullName, args);
       break;
     }
 
@@ -570,9 +574,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
         logInfo() << "untested attribute created: " << expr.Attribute_Kind
                   << std::endl;
 
-        SgExprListExp& emptylst = SG_DEREF(sb::buildExprListExp());
-
-        res = &mkAdaExprAttribute(obj, name.fullName, emptylst);
+        res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp());
         break;
       }
 
@@ -584,8 +586,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
         logError() << "unknown expression attribute: " << expr.Attribute_Kind
                    << std::endl;
 
-        SgExprListExp& emptylst = SG_DEREF(sb::buildExprListExp());
-        res = &mkAdaExprAttribute(obj, "ErrorAttr:" + name.fullName, emptylst);
+        res = &mkAdaAttributeExp(obj, "ErrorAttr:" + name.fullName, mkExprListExp());
         ROSE_ASSERT(!FAIL_ON_ERROR);
       }
   }
@@ -593,13 +594,13 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
   return SG_DEREF(res);
 }
 
-SgTypeTraitBuiltinOperator&
+SgAdaAttributeExp&
 getAttributeExprID(Element_ID el, AstContext ctx)
 {
   Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), el);
 
   ROSE_ASSERT(elem.Element_Kind == An_Expression);
-  SgTypeTraitBuiltinOperator& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
+  SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
 
   attachSourceLocation(sgnode, elem, ctx);
   return sgnode;
@@ -756,9 +757,10 @@ getExpr(Element_Struct& elem, AstContext ctx)
         ElemIdRange                idxrange = idRange(expr.Index_Expressions);
         std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
         SgExpression&              indices = SG_DEREF(idxexpr.size() < 2 ? idxexpr.at(0)
-                                                                         : sb::buildExprListExp(idxexpr));
+                                                                         : &mkExprListExp(idxexpr));
 
         res = sb::buildPntrArrRefExp(&prefix, &indices);
+        ROSE_ASSERT(indices.get_parent());
         /* unused fields
            Declaration_ID        Corresponding_Called_Function; // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
            bool                  Is_Generalized_Indexing
@@ -820,10 +822,11 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
         ElemIdRange                range  = idRange(expr.Array_Component_Associations);
         std::vector<SgExpression*> components = traverseIDs(range, elemMap(), ArrayAggregateCreator{namedAggregate, ctx});
-        SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(components));
+        SgExprListExp&             explst = mkExprListExp(components);
 
         attachSourceLocation(explst, elem, ctx);
         res = sb::buildAggregateInitializer(&explst);
+        ROSE_ASSERT(explst.get_parent());
         break;
       }
 
@@ -832,10 +835,11 @@ getExpr(Element_Struct& elem, AstContext ctx)
         logKind("A_Record_Aggregate");
         ElemIdRange                range  = idRange(expr.Record_Component_Associations);
         std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
-        SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(components));
+        SgExprListExp&             explst = mkExprListExp(components);
 
         attachSourceLocation(explst, elem, ctx);
         res = sb::buildAggregateInitializer(&explst);
+        ROSE_ASSERT(explst.get_parent());
         break;
       }
 
@@ -957,10 +961,10 @@ getExprID_opt(Element_ID el, AstContext ctx)
   if (isInvalidId(el))
   {
     logWarn() << "uninitalized expression id " << el << std::endl;
-    return SG_DEREF( sb::buildNullExpression() );
+    return mkNullExpression();
   }
 
-  return el == 0 ? SG_DEREF( sb::buildNullExpression() )
+  return el == 0 ? mkNullExpression()
                  : getExprID(el, ctx)
                  ;
 }
@@ -969,7 +973,7 @@ namespace
 {
   template <typename AsisDiscreteRangeStruct>
   SgExpression&
-  getDiscreteRangeGeneric(Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
+  getDiscreteRangeGeneric(Element_Struct& el, Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
   {
     SgExpression* res = nullptr;
 
@@ -1020,17 +1024,18 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    return SG_DEREF(res);
+    attachSourceLocation(SG_DEREF(res), el, ctx);
+    return *res;
   }
 
   /// \private
   /// returns a range expression from the Asis definition \ref def
   SgExpression&
-  getDiscreteRange(Definition_Struct& def, AstContext ctx)
+  getDiscreteRange(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Discrete_Range);
 
-    return getDiscreteRangeGeneric(def, def.The_Union.The_Discrete_Range, ctx);
+    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Range, ctx);
   }
 
   SgExpression&
@@ -1038,15 +1043,15 @@ namespace
   {
     ROSE_ASSERT(el.Element_Kind == A_Definition);
 
-    return getDiscreteRange(el.The_Union.Definition, ctx);
+    return getDiscreteRange(el, el.The_Union.Definition, ctx);
   }
 
   SgExpression&
-  getDiscreteSubtype(Definition_Struct& def, AstContext ctx)
+  getDiscreteSubtype(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
 
-    return getDiscreteRangeGeneric(def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
+    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
   }
 
   SgExpression&
@@ -1078,12 +1083,12 @@ namespace
     {
       case A_Discrete_Range:
         logKind("A_Discrete_Range");
-        res = &getDiscreteRange(def, ctx);
+        res = &getDiscreteRange(el, def, ctx);
         break;
 
       case A_Discrete_Subtype_Definition:
         logKind("A_Discrete_Subtype_Definition");
-        res = &getDiscreteSubtype(def, ctx);
+        res = &getDiscreteSubtype(el, def, ctx);
         break;
 
       case An_Others_Choice:

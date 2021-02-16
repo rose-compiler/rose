@@ -1075,7 +1075,16 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint("STATIC ");
         }
 
-     unparseType(type, info);
+     SgNamedType* named_type = isSgNamedType(type);
+     if (named_type && !var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+        {
+        // If a base type defining declaration then name prefix will be "_table_of_" or "_anon_typeof_"
+           curprint(named_type->get_name());
+        }
+     else
+        {
+           unparseType(type, info);
+        }
 
   // OptStructureSpecifier
      if (table_type)

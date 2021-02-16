@@ -21,7 +21,7 @@ namespace Ada_ROSE_Translation
   // file info objects
 
   /// creates a default file info object for compiler generated nodes
-  // \todo currently generateDefaultFileInfoForTransformationNode is used
+  // \todo currently generateDefaultCompilerGenerated is used
   //       -> replace with info object that indicates compiler generated.
   Sg_File_Info& mkFileInfo();
 
@@ -97,7 +97,7 @@ namespace Ada_ROSE_Translation
   /// returns the type produced by an attribute expression
   // \todo consider returning an SgTypeOfType instead of SgDeclType
   SgDeclType&
-  mkAttributeType(SgTypeTraitBuiltinOperator& n);
+  mkAttributeType(SgAdaAttributeExp& n);
 
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
@@ -232,7 +232,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada NULL statement (represented in code)
   SgNullStatement&
-  mkNullStmt();
+  mkNullStatement();
 
   /// creates an Ada NULL declaration (represented in code)
   SgEmptyDeclaration&
@@ -453,7 +453,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
   SgAdaLengthClause&
-  mkAdaLengthClause(SgTypeTraitBuiltinOperator& attr, SgExpression& size);
+  mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size);
 
   /// creates an Ada pragma declaration
   SgPragmaDeclaration&
@@ -517,8 +517,8 @@ namespace Ada_ROSE_Translation
   /// \param args the attribute's arguments
   /// \example
   ///    Arr'Range(1) -> exp'ident(args)
-  SgTypeTraitBuiltinOperator&
-  mkAdaExprAttribute(SgExpression& exp, const std::string& ident, SgExprListExp& args);
+  SgAdaAttributeExp&
+  mkAdaAttributeExp(SgExpression& exp, const std::string& ident, SgExprListExp& args);
 
   /// creates an increment/decrement of the variable \ref var
   /// depending on whether the loop uses forward or backward iteration.
@@ -527,6 +527,15 @@ namespace Ada_ROSE_Translation
   /// \param scope the for loop's scope
   SgUnaryOp&
   mkForLoopIncrement(bool forward, SgVariableDeclaration& var);
+
+
+  /// creates an  expression list from \ref exprs
+  SgExprListExp&
+  mkExprListExp(const std::vector<SgExpression*>& exprs = {});
+
+  /// creates an SgNullExpression
+  SgNullExpression&
+  mkNullExpression();
 
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder
@@ -539,6 +548,11 @@ namespace Ada_ROSE_Translation
   ///       should SgAbsOp be called SgAdaAbs?
   SgAbsOp*
   buildAbsOp(SgExpression* op);
+
+
+  /// creates and if statement
+  SgIfStmt&
+  mkIfStmt(SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
 
   /// converts a value of type V to a value of type U via streaming
   /// \tparam  V input value type

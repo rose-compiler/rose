@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.25";
+const std::string versionString="1.12.26";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -246,7 +246,7 @@ int main( int argc, char * argv[] ) {
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
 
-    if(ctOpt.status) cout<<tc.toString()<<endl;
+    optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
