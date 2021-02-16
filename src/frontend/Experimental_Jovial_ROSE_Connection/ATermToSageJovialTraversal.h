@@ -288,22 +288,14 @@ ATbool traverse_UnaryExpression (ATerm term, SgExpression* &expr);
 ATbool traverse_BinaryExpression(ATerm term, SgExpression* &expr);
 
 // 5.1 NUMERIC FORMULAS
-ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
-ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
-ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
+ATbool traverse_NumericConversion(ATerm term, SgExpression* &expr);
+ATbool traverse_OptSign          (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &expr);
 ATbool traverse_BitPrimary             (ATerm term, SgExpression* &expr);
-
-// 5.2.1 RELATIONAL EXPRESSIONS
-ATbool traverse_RelationalExpression   (ATerm term, SgExpression* &expr);
-
-// 5.3.0 GENERAL FORMULAS
-ATbool traverse_GeneralFormula   (ATerm term, SgExpression* &expr);
 
 // 5.3 CHARACTER FORMULAS
 ATbool traverse_CharacterFormula (ATerm term, SgExpression* &expr);
