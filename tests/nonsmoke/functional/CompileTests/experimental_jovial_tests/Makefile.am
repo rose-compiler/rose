@@ -216,6 +216,7 @@ COMPOOL_TESTCODES = \
  3_0_rent_and_rec.cpl                   \
  rc161b.pre.cpl                         \
  rc600a.cpl                             \
+ rc616b.cpl                             \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -266,14 +267,16 @@ COMPOOL_TESTCODES = \
  rc410.cpl                              \
  rc410.pre.cpl                          \
  rc503.cpl                              \
- rc515.cpl
+ rc515.cpl                              \
+ rc616a.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
  rose-issue-rc-79b.cpl                  \
  rose-issue-rc-92b.cpl                  \
  rose-issue-rc-119b.cpl                 \
- rose-issue-rc-515.cpl
+ rose-issue-rc-515.cpl                  \
+ rose-issue-rc-616.cpl
 
 # proc_refs.cpl                          
 
