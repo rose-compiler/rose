@@ -571,9 +571,24 @@ namespace
 
     void handle(SgAdaPackageBody& n)
     {
-      ScopeUpdateGuard scopeGuard(info, n);
+      typedef SgStatementPtrList::iterator Iterator;
 
-      list(n.get_statements());
+      ScopeUpdateGuard    scopeGuard(info, n);
+      SgStatementPtrList& stmts = n.get_statements();
+      SgBasicBlock*       block = nullptr;
+      Iterator            zz = stmts.end();
+
+      if (stmts.size()) block = isSgBasicBlock(stmts.back());
+      if (block) --zz;
+
+      list(stmts.begin(), zz);
+
+      if (block)
+      {
+        prn("begin\n");
+        list(block->get_statements());
+        // the block's end is printed in the parent
+      }
     }
 
     void handle(SgAdaRenamingDecl& n)
