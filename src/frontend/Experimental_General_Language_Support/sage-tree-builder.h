@@ -192,7 +192,7 @@ public:
 #endif
    void Leave(SgImplicitStatement*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+   SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
 // Expressions
 //

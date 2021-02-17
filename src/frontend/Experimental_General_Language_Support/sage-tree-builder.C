@@ -625,28 +625,20 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
+   SgAssignOp* assign_op = nullptr;
    SgEnumVal* old_val = isSgEnumVal(rhs);
 
-   if (old_val && old_val->get_value() == -1) {
-      // I don't think this is true anymore as the SgEnumVal is found by symbol lookup
-      // Need to test for assignment to a status
-      ROSE_ASSERT(false);
-
+   // For Jovial, the symbol table may have multiple enumerators with the same name. Check and
+   // replace a Jovial status constant with the correct value based on the type of the variable.
+   if (old_val) {
       SgEnumType* enum_type = isSgEnumType(vars[0]->get_type());
       ROSE_ASSERT(enum_type);
-      SgEnumVal* enum_val = ReplaceEnumVal(enum_type, old_val->get_name());
-
-      rhs = enum_val;
-      delete old_val;
+      rhs = getEnumVal(enum_type, old_val);
    }
-
-   SgAssignOp* assign_op = nullptr;
-   SgExpression* new_rhs = rhs;
 
 // Jovial may have more than one variable in an assignment statement
    for (int i = vars.size()-1; i >= 0; i--) {
-      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], new_rhs);
-      new_rhs = assign_op;
+      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], rhs);
    }
    ROSE_ASSERT(assign_op);
 
@@ -1029,8 +1021,10 @@ Leave(SgImplicitStatement* implicit_stmt)
    SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
 }
 
+// For Jovial, the symbol table may have multiple enumerators with the same name. This
+// function returns the correct value based on the type of the variable.
 SgEnumVal* SageTreeBuilder::
-ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
+getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
 {
    SgEnumDeclaration* enum_decl = isSgEnumDeclaration(enum_type->get_declaration());
    ROSE_ASSERT(enum_decl);
@@ -1038,20 +1032,22 @@ ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
    SgInitializedNamePtrList &enum_list = enum_decl->get_enumerators();
    SgInitializedName* init_name = nullptr;
 
+   SgName name = old_val->get_name();
    BOOST_FOREACH(SgInitializedName* status_constant, enum_list) {
       if (status_constant->get_name() == name) {
          init_name = status_constant;
+         break;
       }
    }
-
    ROSE_ASSERT(init_name);
-   SgEnumFieldSymbol* enum_symbol = isSgEnumFieldSymbol(init_name->get_symbol_from_symbol_table());
-   ROSE_ASSERT(enum_symbol);
 
-   SgEnumVal* enum_val = SageBuilder::buildEnumVal(enum_symbol);
-   ROSE_ASSERT(enum_val);
+   SgAssignInitializer* assign_init = isSgAssignInitializer(init_name->get_initptr());
+   ROSE_ASSERT(assign_init);
 
-   return enum_val;
+   SgEnumVal* new_val = isSgEnumVal(assign_init->get_operand());
+   ROSE_ASSERT(new_val);
+
+   return new_val;
 }
 
 // Jovial specific nodes
