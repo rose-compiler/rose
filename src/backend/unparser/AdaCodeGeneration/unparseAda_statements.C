@@ -1252,6 +1252,7 @@ namespace
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
     void handle(SgType&)           { res = ReturnType("subtype", ""); }
+    void handle(SgAdaAccessType&)  { res = ReturnType("type",    ""); }
     void handle(SgAdaDerivedType&) { res = ReturnType("type",    " new"); }
     void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
     void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }

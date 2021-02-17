@@ -1125,6 +1125,31 @@ Grammar::setUpTypes ()
      AdaAccessType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     // MS: is it object or subprogram access type?
+     AdaAccessType.setDataPrototype ("bool", "is_object_type", "= true",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // MS: is it general access ("all") or not?
+     AdaAccessType.setDataPrototype ("bool", "is_general_access", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // MS: is it constant?
+     AdaAccessType.setDataPrototype ("bool", "is_constant", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // MS: for subprogram access types, retain profile of parameters at access type
+     //     definition site
+     AdaAccessType.setDataPrototype ("SgFunctionParameterList*", "subprogram_profile", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // for function access types, retain the return type
+     AdaAccessType.setDataPrototype ("SgType*", "return_type", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // MS: is subprogram access type protected?
+     AdaAccessType.setDataPrototype ("bool", "is_protected", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaSubtype.setFunctionPrototype ("HEADER_ADA_SUBTYPE", "../Grammar/Type.code" );
 
      AdaSubtype.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
