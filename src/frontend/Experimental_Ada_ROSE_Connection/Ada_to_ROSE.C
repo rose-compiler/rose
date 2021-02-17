@@ -238,6 +238,7 @@ namespace
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
+
           ROSE_ASSERT(false);
           break;
         }

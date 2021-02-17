@@ -2108,6 +2108,10 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       }
 
     case An_Enumeration_Representation_Clause:     // 13.4
+      //~ {
+        //~ break;
+      //~ }
+
     case An_At_Clause:                             // J.7
     case Not_A_Representation_Clause:              // An unexpected element
     default:
@@ -2349,10 +2353,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           ElemIdRange range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgbody)});
+          if (range.size())
+          {
+            SgBasicBlock& pkgblock = mkBasicBlock();
+
+            pkgbody.append_statement(&pkgblock);
+            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock)});
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
+          }
+          else
+          {
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
+          }
         }
 
-        placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
 
         /*
          * unused nodes:

@@ -35,8 +35,8 @@ namespace Ada_ROSE_Translation
 
   struct Settings
   {
-    bool processPredefinedUnits = false;
-    bool processImplementationUnits = false;
+    bool processPredefinedUnits = true;
+    bool processImplementationUnits = true;
     bool asisDebug = false;
   };
 
