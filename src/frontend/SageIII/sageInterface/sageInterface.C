@@ -21020,6 +21020,14 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         // Liao 1/14/2011
         // if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
+          // This is needed to move functions in Ada package body into C++ namespace
+          // We may have compiler generated first nondefining declaration. We need to move its scope also
+          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration()); 
+          if (func!=nondef_decl)
+          {
+            if (nondef_decl->get_file_info()->isCompilerGenerated())
+              nondef_decl->set_scope(targetBlock);
+          }
       }
       else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
@@ -21118,6 +21126,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         {
           SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
           ROSE_ASSERT (funcDecl);
+#if 0 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+          // move function symbols also: search_for_symbol_from_symbol_table() 
+          SgSymbol* func_sym= funcDecl->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table();
+          if (func_sym)
+          {
+            SgScopeStatement * old_scope = func_sym -> get_scope();
+            if (old_scope != sourceBlock)
+            {
+              old_scope->remove_symbol (func_sym);
+              sourceBlock ->insert_symbol(func_sym->get_name(), func_sym);
+            }
+          }
+#endif
+
           break;
         }
       // needed to move Ada record into definition of C++ namespace
