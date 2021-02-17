@@ -337,7 +337,7 @@ namespace
   };
 
   TypeData
-  getTypeFoundation(Definition_Struct& def, AstContext ctx)
+  getTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
 
@@ -392,9 +392,11 @@ namespace
 
       case An_Enumeration_Type_Definition:         // 3.5.1(2)
         {
+          ROSE_ASSERT(name.size());
+
           logKind("An_Enumeration_Type_Definition");
 
-          SgEnumDeclaration& sgnode = mkEnumDecl("", ctx.scope());
+          SgEnumDeclaration& sgnode = mkEnumDecl(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
           traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
@@ -528,7 +530,7 @@ namespace
     {
       case A_Type_Definition:
         {
-          TypeData resdata = getTypeFoundation(def, ctx);
+          TypeData resdata = getTypeFoundation("", def, ctx);
 
           res = isSgType(resdata.n);
           ROSE_ASSERT(res);
@@ -695,7 +697,7 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
 
 
 TypeData
-getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
+getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
   ROSE_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
 
@@ -705,7 +707,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
   Definition_Struct&      def = elem.The_Union.Definition;
   ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
 
-  return getTypeFoundation(def, ctx);
+  return getTypeFoundation(name, def, ctx);
 }
 
 void initializeAdaTypes(SgGlobal& global)

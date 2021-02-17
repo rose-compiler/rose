@@ -78,6 +78,20 @@ namespace
   }
 
   inline
+  SgName nameOf(const SgEnumType& n)
+  {
+    SgEnumDeclaration& dcl = SG_DEREF(isSgEnumDeclaration(n.get_declaration()));
+
+    return dcl.get_name();
+  }
+
+  inline
+  SgName nameOf(const SgClassType& n)
+  {
+    return n.get_name();
+  }
+
+  inline
   SgName nameOf(const SgImportStatement& import)
   {
     const SgExpressionPtrList& lst = import.get_import_list();
@@ -898,7 +912,7 @@ namespace
       SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
-      prn(rec.get_name());
+      prn(nameOf(rec));
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
 
@@ -908,6 +922,47 @@ namespace
       prn("end record");
       prn(STMT_SEP);
     }
+
+    void enumInit(SgExpression* n)
+    {
+      if (SgAssignOp* ini = isSgAssignOp(n))
+      {
+        expr(ini->get_lhs_operand());
+        prn("=>");
+        expr(ini->get_rhs_operand());
+      }
+      else
+      {
+        expr(n);
+      }
+    }
+
+    void enuminiList(SgExpressionPtrList& lst)
+    {
+      if (lst.empty()) return;
+
+      enumInit(lst[0]);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+      {
+        prn(", ");
+        enumInit(lst[i]);
+      }
+    }
+
+    void handle(SgAdaEnumRepresentationClause& n)
+    {
+      SgEnumType&    enumtype   = SG_DEREF(n.get_enumType());
+      SgExprListExp& components = SG_DEREF(n.get_components());
+
+      prn("for ");
+      prn(nameOf(enumtype));
+      prn(" use (");
+      enuminiList(components.get_expressions());
+      prn(")");
+      prn(STMT_SEP);
+    }
+
 
     void handle(SgAdaLengthClause& n)
     {
@@ -1285,8 +1340,8 @@ namespace
     std::for_each(aa, zz, *this);
   }
 
-  template <class SageStmtList>
-  void AdaStatementUnparser::list(SageStmtList& lst)
+  template <class SageNodeList>
+  void AdaStatementUnparser::list(SageNodeList& lst)
   {
     list(lst.begin(), lst.end());
   }
