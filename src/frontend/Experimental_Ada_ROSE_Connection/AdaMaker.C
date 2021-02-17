@@ -189,7 +189,7 @@ mkRecordType(SgClassDeclaration& dcl)
 SgEnumDeclaration&
 mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
-  return SG_DEREF(sb::buildEnumDeclaration(name, &scope));
+  return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
 }
 
 SgAdaTaskType&
@@ -996,6 +996,16 @@ mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
   elems.set_parent(&sgnode);
   return sgnode;
 }
+
+SgAdaEnumRepresentationClause&
+mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst)
+{
+  SgAdaEnumRepresentationClause& sgnode = mkLocatedNode<SgAdaEnumRepresentationClause>(&enumtype, &initlst);
+
+  initlst.set_parent(&sgnode);
+  return sgnode;
+}
+
 
 SgAdaLengthClause&
 mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size)
