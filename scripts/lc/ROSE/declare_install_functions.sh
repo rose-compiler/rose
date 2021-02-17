@@ -10,20 +10,11 @@
 #   ROSE_BIN_SCRIPT_DIR
 #   RUN_AND_LOG
 #   SRUN_DO
-#   _do_gcc_configure_common
-#   _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
-#   _set_ROSE_REPO_NAME_from_BRANCH_and_VERSION
-#   setup_gcc_compiler_base
-#   _setup_intel_compiler_common
-#   _setup_jvm_library_path
 #   _temp
-#   _turn_on_module
-#   _use_latest_rose_begin
-#   _use_rose_end
-#   _use_specific_rose_begin
 #   build_boost_rose
 #   clone_latest_workspace
 #   do_gcc_configure
+#   _do_gcc_configure_common
 #   do_gcc_configure_with_ada
 #   do_gcc_configure_with_binary_analysis
 #   do_gcc_configure_with_c_cxx
@@ -37,14 +28,17 @@
 #   make_and_install
 #   make_docs
 #   print_rose_vars
+#   _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
 #   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
 #   set_ROSE_LATEST_INSTALL_VERSION
 #   set_ROSE_LATEST_WORKSPACE_VERSION
+#   _set_ROSE_REPO_NAME_from_BRANCH_and_VERSION
 #   set_main_vars
 #   setup_boost
 #   setup_boost_rose
 #   setup_boost_tce
 #   setup_gcc_compiler
+#   setup_gcc_compiler_base
 #   setup_gcc_compiler_with_ada
 #   setup_gcc_compiler_with_binary_analysis
 #   setup_gcc_compiler_with_c_cxx
@@ -53,6 +47,9 @@
 #   setup_intel_18_0_2_compiler_non_mpi
 #   setup_intel_19_0_4_compiler
 #   setup_intel_compiler
+#   _setup_intel_compiler_common
+#   _setup_jvm_library_path
+#   _turn_on_module
 #   use_existing_workspace
 #   use_latest_existing_install
 #   use_latest_existing_workspace
@@ -63,8 +60,11 @@
 #   use_latest_gcc_rose_with_profiling
 #   use_latest_intel_19_0_4_rose
 #   use_latest_intel_rose
+#   _use_latest_rose_begin
+#   _use_rose_end
 #   use_script_repo_branch
 #   use_specific_intel_rose
+#   _use_specific_rose_begin
 
 #
 # Example users:
@@ -802,8 +802,13 @@ setup_gcc_compiler_with_ada () {
   setup_gcc_compiler_base
   _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-ada"
   # To get gprbuild etc.:
-  # Add GNAT to the end of the path to avoid getting the wrong gcc and g++:
-  export PATH="${PATH}:/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2019/bin" 
+  # Be sure we use the right gcc and the right gnat.  There is a gcc we don't 
+  # want in the gnat bin directory.  There is a gnat we don't want already in 
+  # ${PATH}.  Let the new path be [gcc dir]:[gnat dir]:${PATH}:
+  export PATH="\
+  ${ROSE_COMPILER_HOME}/bin:\
+  /collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2019/bin:\
+  ${PATH}"
 }
 
 # Uses and Sets are same as setup_gcc_compiler:
