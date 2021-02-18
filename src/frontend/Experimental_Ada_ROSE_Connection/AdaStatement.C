@@ -517,27 +517,6 @@ namespace
       AstContext               ctx;
   };
 
-  /// call-back to complete a function/procedure/entry declarations
-  ///   by adding parameters to the scopes (after they have been created)
-  struct ParameterCompletion
-  {
-      ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
-      : range(paramrange), ctx(astctx)
-      {}
-
-      void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
-      {
-        traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
-      }
-
-    private:
-      ElemIdRange range;
-      AstContext  ctx;
-
-      ParameterCompletion() = delete;
-  };
-
-
   /// creates a sequence of type declarations in ROSE from a
   ///   a single Asis declarations with multiple names.
   struct DeclarePrivateType
@@ -3054,6 +3033,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       logWarn() << "unhandled declaration kind: " << decl.Declaration_Kind << std::endl;
       ROSE_ASSERT(!FAIL_ON_ERROR);
   }
+}
+
+void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
+{
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)

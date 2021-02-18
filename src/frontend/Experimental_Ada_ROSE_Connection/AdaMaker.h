@@ -117,6 +117,10 @@ namespace Ada_ROSE_Translation
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
 
+  /// creates an ada access type with \ref base_type as the type being referenced.
+  SgAdaAccessType&
+  mkAdaAccessType(SgType *base_type);
+
   /// creates a task type that references a task type declaration \ref dcl.
   SgAdaTaskType&
   mkAdaTaskType(SgAdaTaskTypeDecl& dcl);

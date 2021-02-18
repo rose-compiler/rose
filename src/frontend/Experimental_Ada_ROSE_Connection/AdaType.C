@@ -499,6 +499,87 @@ namespace
           break;
         }
 
+      case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
+        {
+          logKind("An_Access_Type_Definition");
+          Access_Type_Struct access_type = typenode.Access_Type;
+          auto access_type_kind = access_type.Access_Type_Kind;
+          bool isFuncAccess = false;
+
+          switch (access_type_kind) {
+          // variable access kinds
+          case A_Pool_Specific_Access_To_Variable:
+          case An_Access_To_Variable:
+          case An_Access_To_Constant:
+            {
+              SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
+              res.n = &mkAdaAccessType(&ato);
+              // handle cases for ALL or CONSTANT general access modifiers
+              switch (access_type_kind) {
+              case An_Access_To_Variable:
+                ((SgAdaAccessType*)res.n)->set_is_general_access(true);
+                break;
+              case An_Access_To_Constant:
+                ((SgAdaAccessType*)res.n)->set_is_constant(true);
+                break;
+              default:
+                break;
+              }
+
+              break;
+            }
+
+          // subprogram access kinds
+          case An_Access_To_Function:
+          case An_Access_To_Protected_Function:
+          case An_Access_To_Procedure:
+          case An_Access_To_Protected_Procedure:
+            {
+              logWarn() << "subprogram access type support incomplete" << std::endl;
+
+              if (access_type_kind == An_Access_To_Function ||
+                  access_type_kind == An_Access_To_Protected_Function) {
+                // these are functions, so we need to worry about return types
+                isFuncAccess = true;
+              }
+              
+              if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
+                logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
+                /*
+                ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+
+                SgFunctionParameterList& lst   = mkFunctionParameterList();
+                SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+                ParameterCompletion{range,ctx}(lst, ctx);
+
+                ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
+                */
+              }
+
+              res.n = &mkAdaAccessType(NULL);
+              ((SgAdaAccessType*)res.n)->set_is_object_type(false);
+              
+              if (isFuncAccess) {
+                SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
+                ((SgAdaAccessType*)res.n)->set_return_type(&rettype);
+              }
+
+              // if protected, set the flag
+              if (access_type_kind == An_Access_To_Protected_Procedure ||
+                  access_type_kind == An_Access_To_Protected_Function) {
+                ((SgAdaAccessType*)res.n)->set_is_protected(true);
+              }
+
+              break;
+            }
+          default:
+            logWarn() << "Unhandled access type kind." << std::endl;
+            res.n = sb::buildVoidType();
+          }
+
+          break;
+        }
+
       case Not_A_Type_Definition: /* break; */     // An unexpected element
       case A_Root_Type_Definition:                 // 3.5.4(14):  3.5.6(3)
       case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
@@ -506,7 +587,6 @@ namespace
       //  //|A2005 start
       case An_Interface_Type_Definition:           // 3.9.4      -> Interface_Kinds
       //  //|A2005 end
-      case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
       default:
         {
           logWarn() << "unhandled type kind " << typenode.Type_Kind << std::endl;
