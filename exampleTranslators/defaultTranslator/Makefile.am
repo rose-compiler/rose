@@ -3,9 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper KeepGoingTranslator fileInfoDumper textASTGenerator
+bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper KeepGoingTranslator fileInfoDumper textASTGenerator simpleTraversal
 
 defaultTranslator_SOURCES = defaultTranslator.C 
+simpleTraversal_SOURCES = simpleTraversal.C
 preprocessingInfoDumper_SOURCES = preprocessingInfoDumper.C
 mangledNameDumper_SOURCES = mangledNameDumper.C
 qualifiedNameDumper_SOURCES = qualifiedNameDumper.C
