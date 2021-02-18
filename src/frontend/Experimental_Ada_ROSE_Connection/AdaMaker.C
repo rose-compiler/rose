@@ -189,7 +189,7 @@ mkRecordType(SgClassDeclaration& dcl)
 SgEnumDeclaration&
 mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
-  return SG_DEREF(sb::buildEnumDeclaration(name, &scope));
+  return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
 }
 
 SgAdaAccessType&
@@ -756,7 +756,7 @@ mkProcedureDef( SgFunctionDeclaration& ndef,
 {
   SgName                 nm     = ndef.get_name();
   SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDef);
-  SgSymbol*              baseSy = sgnode.search_for_symbol_from_symbol_table();
+  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = *SG_ASSERT_TYPE(SgFunctionSymbol, baseSy);
 
   linkDecls(funcSy, sgnode);
@@ -773,6 +773,8 @@ mkProcedureDef( const std::string& nm,
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
 {
+  logWarn() << "proc w/ string" << std::endl;
+
   SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
 
   return mkProcedureDef(ndef, scope, retty, std::move(complete));
@@ -1003,6 +1005,16 @@ mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
   elems.set_parent(&sgnode);
   return sgnode;
 }
+
+SgAdaEnumRepresentationClause&
+mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst)
+{
+  SgAdaEnumRepresentationClause& sgnode = mkLocatedNode<SgAdaEnumRepresentationClause>(&enumtype, &initlst);
+
+  initlst.set_parent(&sgnode);
+  return sgnode;
+}
+
 
 SgAdaLengthClause&
 mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size)
