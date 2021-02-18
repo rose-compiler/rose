@@ -192,6 +192,13 @@ mkEnumDecl(const std::string& name, SgScopeStatement& scope)
   return SG_DEREF(sb::buildEnumDeclaration(name, &scope));
 }
 
+SgAdaAccessType&
+mkAdaAccessType(SgType *base_type)
+{
+  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
+  return sgnode;
+}
+
 SgAdaTaskType&
 mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
 {
