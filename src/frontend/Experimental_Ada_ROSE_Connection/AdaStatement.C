@@ -580,7 +580,6 @@ namespace
       {
         ROSE_ASSERT(n.get_scope() == &dclscope);
 
-        n.set_name(dclname);
         res = &n;
       }
 
@@ -596,6 +595,11 @@ namespace
         res = &rec;
       }
 
+      operator SgDeclarationStatement& () const
+      {
+        return SG_DEREF(res);
+      }
+
     private:
       std::string             dclname;
       SgScopeStatement&       dclscope;
@@ -604,6 +608,7 @@ namespace
   };
 
 
+#if 0
   /// creates a sequence of type declarations in ROSE from a
   ///   a single Asis declarations with multiple names.
   /// \note the created type depends on data provided in the TypeData object.
@@ -639,7 +644,7 @@ namespace
       AstContext        ctx;
       bool              privateElems;
   };
-
+#endif
 
 /*
   needed?
@@ -1919,12 +1924,6 @@ namespace
   };
 
 
-
-
-  /// Functor to create an import statement (actually, a declaration)
-  ///   for each element of a with clause; e.g., with Ada.Calendar, Ada.Clock;
-  ///   yields two important statements, each of them is its own declaration
-  ///   that can be referenced.
   struct ComponentClauseCreator
   {
       explicit
@@ -1956,6 +1955,54 @@ namespace
     private:
       AstContext                       ctx;
   };
+
+  struct EnumValueCreator
+  {
+      explicit
+      EnumValueCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      SgAssignOp& itemValuePair(Element_Struct& el, Element_ID item, SgExpression& enumval)
+      {
+        SgExpression& enumitem = getExprID(item, ctx);
+
+        return SG_DEREF(sb::buildAssignOp(&enumitem, &enumval));
+      }
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == An_Association);
+        logKind("An_Association");
+
+        Association_Struct&        assoc = el.The_Union.Association;
+        ROSE_ASSERT(assoc.Association_Kind == An_Array_Component_Association);
+        logKind("An_Array_Component_Association");
+
+        ElemIdRange                range  = idRange(assoc.Array_Component_Choices);
+        SgExpression&              enumval = getExprID(assoc.Component_Expression, ctx);
+
+        ROSE_ASSERT(range.size() <= 1);
+        SgExpression&              sgnode = range.size() == 0
+                                                ? enumval
+                                                : itemValuePair(el, *range.first, enumval);
+                                                ;
+
+        attachSourceLocation(sgnode, el, ctx);
+        values.push_back(&sgnode);
+      }
+
+      operator SgExprListExp& ()
+      {
+        return mkExprListExp(values);
+      }
+
+    private:
+      AstContext                 ctx;
+      std::vector<SgExpression*> values;
+  };
+
+
 
   std::pair<Element_ID, Type_Kinds>
   queryDefinitionData(Element_ID completeElementId, AstContext ctx)
@@ -2029,6 +2076,18 @@ namespace
     return SG_DEREF(res);
   }
 
+  /// chooses between making an additional non-defining declaration
+  SgFunctionDeclaration&
+  createFunDef( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
+                  : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
 } // anonymous
 
 
@@ -2081,12 +2140,34 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         attachSourceLocation(sgnode, elem, ctx);
         ctx.scope().append_statement(&sgnode);
         /* unhandled fields:
-             Pragma_Element_ID_List      Pragmas
          */
         break;
       }
 
     case An_Enumeration_Representation_Clause:     // 13.4
+      {
+        SgType&                 ty       = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
+        SgEnumType&             enumtype = SG_DEREF(isSgEnumType(&ty));
+        Element_Struct&         inielem  = retrieveAs<Element_Struct>(elemMap(), repclause.Representation_Clause_Expression);
+        ROSE_ASSERT(inielem.Element_Kind == An_Expression);
+
+        Expression_Struct&      inilist  = inielem.The_Union.Expression;
+
+        ROSE_ASSERT(  inilist.Expression_Kind == A_Named_Array_Aggregate
+                   || inilist.Expression_Kind == A_Positional_Array_Aggregate
+                   );
+
+        ElemIdRange             range    = idRange(inilist.Array_Component_Associations);
+        SgExprListExp&          enumvals = traverseIDs(range, elemMap(), EnumValueCreator{ctx});
+        SgAdaEnumRepresentationClause& sgnode = mkAdaEnumRepresentationClause(enumtype, enumvals);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+        /* unhandled fields:
+         */
+        break;
+      }
+
     case An_At_Clause:                             // J.7
     case Not_A_Representation_Clause:              // An unexpected element
     default:
@@ -2328,10 +2409,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           ElemIdRange range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgbody)});
+          if (range.size())
+          {
+            SgBasicBlock& pkgblock = mkBasicBlock();
+
+            pkgbody.append_statement(&pkgblock);
+            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock)});
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
+          }
+          else
+          {
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
+          }
         }
 
-        placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
 
         /*
          * unused nodes:
@@ -2390,21 +2481,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+
     case A_Function_Body_Declaration:              // 6.3(2)
     case A_Procedure_Body_Declaration:             // 6.3(2)
       {
         logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Body_Declaration" : "A_Procedure_Body_Declaration");
 
-        const bool             isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
-        SgScopeStatement&      outer   = ctx.scope();
-        NameData               adaname = singleName(decl, ctx);
-        ElemIdRange            params  = idRange(decl.Parameter_Profile);
-        SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                : SG_DEREF(sb::buildVoidType());
+        const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                 : SG_DEREF(sb::buildVoidType());
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedureDef(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
-        SgBasicBlock&          declblk = getFunctionBody(sgnode);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = isSgFunctionDeclaration(ndef);
+        ROSE_ASSERT(nondef || !ndef);
+
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, outer, rettype, ParameterCompletion{params, ctx});
+        SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -2413,12 +2509,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
-        ElemIdRange            hndlrs  = idRange(decl.Body_Exception_Handlers);
+        ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
-        TryBlockNodes          trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-        SgTryStmt*             trystmt = trydata.first;
-        SgBasicBlock&          stmtblk = trydata.second;
+        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
+        SgTryStmt*              trystmt = trydata.first;
+        SgBasicBlock&           stmtblk = trydata.second;
 
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);
@@ -2552,20 +2648,30 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("An_Ordinary_Type_Declaration");
 
-        typedef NameCreator::result_container name_container;
-
         logTrace() << "Ordinary Type "
                    << "\n  abstract: " << decl.Has_Abstract
                    << "\n  limited: " << decl.Has_Limited
                    << std::endl;
         // \todo this may only declare one name (use singleName)
-        ElemIdRange    range  = idRange(decl.Names);
-        ROSE_ASSERT(range.size() == 1);
-        name_container names = traverseIDs(range, elemMap(), NameCreator{ctx});
-        TypeData       ty    = getTypeFoundation(decl, ctx);
+        NameData                adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclareType{ty, elem, ctx, isPrivate});
+        TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx);
+        SgScopeStatement&       scope = ctx.scope();
+        ROSE_ASSERT(scope.get_parent());
+
+        Element_ID              id   = adaname.id();
+        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
+        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+
+        privatize(sgnode, isPrivate);
+        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
+        attachSourceLocation(sgnode, elem, ctx);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        // \todo double check that recorded types are consistent with ROSE representation
+
 
         /* unused fields
             bool                           Has_Abstract;

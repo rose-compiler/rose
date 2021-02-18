@@ -455,6 +455,11 @@ namespace Ada_ROSE_Translation
   SgAdaRecordRepresentationClause&
   mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
 
+  /// creates an Ada Enum representation clause for \ref enumtype and
+  ///   enumerator initializations \ref initlst.
+  SgAdaEnumRepresentationClause&
+  mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst);
+
   /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
   SgAdaLengthClause&
   mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size);

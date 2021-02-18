@@ -324,24 +324,42 @@ namespace
   {
     ROSE_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
+#if 0
+    // seems to be obsolete...
     Element_Struct* typedcl = retrieveAsOpt<Element_Struct>(elemMap(), expr.Corresponding_Expression_Type_Definition);
 
     ROSE_ASSERT (!typedcl);
-
-    std::string   enumstr{expr.Name_Image};
+#endif
     SgExpression* res = NULL;
 
-    boost::to_upper(enumstr);
+    if (SgInitializedName* enumitem = findFirst(asisVars(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    {
+      SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
+      SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-    // \todo replace with actual enum values
-    if (enumstr == "TRUE")
-      res = sb::buildBoolValExp(1);
-    else if (enumstr == "FALSE")
-      res = sb::buildBoolValExp(0);
+      res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+    }
     else
-      res = sb::buildStringVal(enumstr);
+    {
+      std::string   enumstr{expr.Name_Image};
 
-    return SG_DEREF( res );
+      boost::to_upper(enumstr);
+
+      // \todo replace with actual enum values
+      if (enumstr == "TRUE")
+        res = sb::buildBoolValExp(1);
+      else if (enumstr == "FALSE")
+        res = sb::buildBoolValExp(0);
+      else
+      {
+        logWarn() << "unable to find definition for enum val " << enumstr
+                  << std::endl;
+
+        res = sb::buildStringVal(enumstr);
+      }
+    }
+
+    return SG_DEREF(res);
   }
 
   /// defines ROSE AST types for which we do not generate scope qualification

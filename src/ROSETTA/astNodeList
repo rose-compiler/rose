@@ -978,3 +978,4 @@ SgAsmBinaryConcat
 SgAsmByteOrder
 SgAdaDerivedType
 SgAdaAttributeExp
+SgAdaEnumRepresentationClause

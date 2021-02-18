@@ -64,7 +64,7 @@ getConstraintID(Element_ID el, AstContext ctx);
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
 TypeData
-getTypeFoundation(Declaration_Struct& decl, AstContext ctx);
+getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
 
 
 }
