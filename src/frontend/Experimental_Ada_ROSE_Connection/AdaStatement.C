@@ -2097,6 +2097,18 @@ namespace
     return SG_DEREF(res);
   }
 
+  /// chooses between making an additional non-defining declaration
+  SgFunctionDeclaration&
+  createFunDef( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
+                  : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
 } // anonymous
 
 
@@ -2490,21 +2502,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+
     case A_Function_Body_Declaration:              // 6.3(2)
     case A_Procedure_Body_Declaration:             // 6.3(2)
       {
         logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Body_Declaration" : "A_Procedure_Body_Declaration");
 
-        const bool             isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
-        SgScopeStatement&      outer   = ctx.scope();
-        NameData               adaname = singleName(decl, ctx);
-        ElemIdRange            params  = idRange(decl.Parameter_Profile);
-        SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                : SG_DEREF(sb::buildVoidType());
+        const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                 : SG_DEREF(sb::buildVoidType());
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedureDef(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
-        SgBasicBlock&          declblk = getFunctionBody(sgnode);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = isSgFunctionDeclaration(ndef);
+        ROSE_ASSERT(nondef || !ndef);
+
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, outer, rettype, ParameterCompletion{params, ctx});
+        SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -2513,12 +2530,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
-        ElemIdRange            hndlrs  = idRange(decl.Body_Exception_Handlers);
+        ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
-        TryBlockNodes          trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-        SgTryStmt*             trystmt = trydata.first;
-        SgBasicBlock&          stmtblk = trydata.second;
+        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
+        SgTryStmt*              trystmt = trydata.first;
+        SgBasicBlock&           stmtblk = trydata.second;
 
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);

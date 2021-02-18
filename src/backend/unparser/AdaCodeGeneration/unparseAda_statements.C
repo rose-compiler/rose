@@ -320,8 +320,8 @@ namespace
   {
     Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
 
-    std::cerr << typeid(dcl).name() << ": " << fileInfo.get_filenameString()
-              << std::endl;
+    //~ std::cerr << typeid(dcl).name() << ": " << fileInfo.get_filenameString()
+              //~ << std::endl;
 
     return fileInfo.get_filenameString() == mainFile;
   }
@@ -589,7 +589,7 @@ namespace
 
       ScopeUpdateGuard    scopeGuard(info, n);
       SgStatementPtrList& stmts = n.get_statements();
-      SgBasicBlock*       block = nullptr;
+      SgBasicBlock*       block = NULL;
       Iterator            zz = stmts.end();
 
       if (stmts.size()) block = isSgBasicBlock(stmts.back());
