@@ -45,6 +45,10 @@ using namespace Rose;
 
 #define OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES 0
 
+// DQ (2/5/2021): Adding debugging support for token-based unparsing.
+#define DEBUG_USING_CURPRINT 0
+
+
 Unparse_ExprStmt::Unparse_ExprStmt(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
@@ -96,15 +100,28 @@ void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
       printf ("unparseStatementFromTokenStream(stmt = %p = %s): \n",stmt,stmt->class_name().c_str());
       printf ("   --- stmt: filename = %s \n",stmt->getFilenameString().c_str());
 #endif
+#if DEBUG_USING_CURPRINT
+      curprint( string("\n/* In unparseStatementFromTokenStream(stmt,start,end,info): stmt = ") + 
+                stmt->class_name() + " get_containsTransformationToSurroundingWhitespace = "    + 
+                string(stmt->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
+#endif
 
-     if ( SgProject::get_verbose() > 0 )
+#if DEBUG_USING_CURPRINT
+     if ( SgProject::get_verbose() >= 0 )
         {
           string s = "/* Unparse a partial token sequence: 1 stmt: stmt = " + stmt->class_name() + " */ ";
           curprint (s);
         }
+#endif
 
   // unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end);
      unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end,info);
+
+#if DEBUG_USING_CURPRINT
+  // curprint("\n/* Leaving unparseStatementFromTokenStream(stmt,start,end,info): */ \n");
+     string s = string("\n/* Leaving unparseStatementFromTokenStream(stmt,start,end,info): stmt = ") + stmt->class_name() + " */ \n";
+     curprint(s);
+#endif
    }
 
 
@@ -129,7 +146,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #define DEBUG_TOKEN_STREAM_UNPARSING 0
 
 #if DEBUG_TOKEN_STREAM_UNPARSING
-     printf ("unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
+     printf ("In unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
      printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
      printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
      printf ("   --- unparseOnlyWhitespace = %s \n",unparseOnlyWhitespace ? "true" : "false");
@@ -150,6 +167,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
      printf ("   --- stmt_1->get_file_info()->get_filenameString() = %s \n",stmt_1->get_file_info()->get_filenameString().c_str());
      printf ("   --- stmt_2->get_file_info()->get_filenameString() = %s \n",stmt_2->get_file_info()->get_filenameString().c_str());
+#endif
+
+#if DEBUG_USING_CURPRINT
+     curprint("\n/* In unparseStatementFromTokenStream(stmt,stmt,start,end,info,bool): */");
+     curprint( string("\n/* --- stmt_1: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_1->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
+     curprint( string("\n/* --- stmt_2: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_2->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -314,6 +337,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
           ROSE_ASSERT(tokenSubsequence_1->token_subsequence_start != -1);
           ROSE_ASSERT(tokenSubsequence_2->token_subsequence_start != -1);
 
+#if DEBUG_USING_CURPRINT
+          curprint("\n/* In unparseStatementFromTokenStream(): tokenSubsequence_1 != NULL && tokenSubsequence_2 != NULL */ \n");
+#endif
+
        // This is correct for the SgFunctionDefinition IR node.
        // int start = functionDefinition_tokenSubsequence->leading_whitespace_start;
        // int end   = functionDefinition_tokenSubsequence->token_subsequence_start;
@@ -432,7 +459,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
             // This fixes cases where we have multiple blocks closed using "}}" (see test2015_96.C).
             // This should trigger a single token to be output.
             // end = start + 1;
-#if 0
+#if DEBUG_USING_CURPRINT
+               curprint("\n/* In unparseStatementFromTokenStream(): stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end */ \n");
+#endif
+#if DEBUG_TOKEN_STREAM_UNPARSING
                printf ("(stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == true \n");
                printf ("   --- start_reset_because_requestion_position_was_not_defined = %s \n",start_reset_because_requestion_position_was_not_defined ? "true" : "false");
 #endif
@@ -473,7 +503,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
              }
             else
              {
-#if 0
+#if DEBUG_USING_CURPRINT
+               curprint("\n/* In unparseStatementFromTokenStream(): (stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == false */ \n");
+#endif
+#if DEBUG_TOKEN_STREAM_UNPARSING
                printf ("(stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end) == false \n");
 #endif
                switch (e_token_sequence_position_end)
@@ -572,6 +605,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #if DEBUG_TOKEN_STREAM_UNPARSING
           printf ("unparseStatementFromTokenStream(): Iterate from start = %d to end = %d \n",start,end);
 #endif
+#if DEBUG_USING_CURPRINT
+          curprint(string("\n/* In unparseStatementFromTokenStream(): Iterate from start = ") + StringUtility::numberToString(start) + " to end = " + StringUtility::numberToString(end) + " */ \n");
+#endif
           ROSE_ASSERT(start >= 0);
 
        // DQ (12/26/2018): This is now declared in the function body scope.
@@ -630,6 +666,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                             {
                            // outputString << tokenVector[j]->get_lexeme_string();
                               whitespaceTokens.push_back(tokenVector[j]);
+#if DEBUG_USING_CURPRINT
+                              curprint(string("\n/* In unparseStatementFromTokenStream(): whitespaceTokens = ") + tokenVector[j]->get_lexeme_string() + " */ \n");
+#endif
                             }
                            else
                             {
@@ -716,6 +755,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
        // ROSE_ASSERT(false);
 #endif
         }
+
+#if DEBUG_USING_CURPRINT
+     curprint("\n/* Leaving unparseStatementFromTokenStream(stmt,stmt,start,end,info,bool): */ \n");
+#endif
    }
 
 
@@ -992,7 +1035,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
-     curprint( string("\n/* In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+     curprint(string("\n/* In unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): TOP \n");
@@ -1755,7 +1798,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #if 0
      printf ("Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
 #endif
 #if 0
@@ -1855,7 +1898,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #if 0
      printf ("In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT
      curprint("/* In Unparse_ExprStmt::unparseLanguageSpecificStatement(): Selecting an unparse function */");
 #endif
 
@@ -2056,7 +2099,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #if 0
      printf ("Leaving unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT
      curprint (string("/* Leaving of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
 #endif
 
@@ -2067,6 +2110,13 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
+
+#if 0
+     printf ("Leaving unparseLanguageSpecificStatement (Unparse_ExprStmt) = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if DEBUG_USING_CURPRINT
+     curprint ( string("\n/* Leaving unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+#endif
    }
 
 
@@ -8897,7 +8947,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("Inside of Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt->get_from_template() = %s \n",
           classdecl_stmt->get_from_template() ? "true" : "false");
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT
      curprint("/* Inside of Unparse_ExprStmt::unparseClassDeclStmt() */ \n");
 #endif
 #if 0
@@ -9221,7 +9271,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      printf ("Leaving unparseClassDeclStmt \n");
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT
      curprint ("/* Leaving unparseClassDeclStmt */ \n");
 #endif
    }
@@ -9339,8 +9389,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 #define DEBUG_UNPARSE_CLASS_DEFINITION 0
 
 #if DEBUG_UNPARSE_CLASS_DEFINITION
-     printf ("Inside of unparseClassDefnStmt \n");
-     curprint("/* Inside of unparseClassDefnStmt */ \n");
+     printf ("In unparseClassDefnStmt() \n");
+     curprint("/* In unparseClassDefnStmt() */ \n");
 #endif
 
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
@@ -9366,10 +9416,18 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (7/19/2003) skip the output of the semicolon
      ninfo.set_SkipSemiColon();
 
+#if DEBUG_USING_CURPRINT
+     curprint("/* In unparseClassDefnStmt(): calling unparseClassDeclStmt() */ \n");
+#endif
+
   // printf ("Calling unparseClassDeclStmt = %p isForward = %s from unparseClassDefnStmt = %p \n",
   //      classdefn_stmt->get_declaration(),(classdefn_stmt->get_declaration()->isForward() == true) ? "true" : "false",classdefn_stmt);
      ASSERT_not_null(classdefn_stmt->get_declaration());
      unparseClassDeclStmt( classdefn_stmt->get_declaration(), ninfo);
+
+#if DEBUG_USING_CURPRINT
+     curprint("/* In unparseClassDefnStmt(): DONE: calling unparseClassDeclStmt() */ \n");
+#endif
 
   // DQ (7/19/2003) unset the specification to skip the output of the semicolon
      ninfo.unset_SkipSemiColon();
@@ -9621,6 +9679,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseClassDefnStmt \n");
+#endif
+#if DEBUG_USING_CURPRINT
      curprint("/* Leaving unparseClassDefnStmt */ \n");
 #endif
    }
@@ -9703,6 +9763,9 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseEnumDeclStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if DEBUG_USING_CURPRINT
+     curprint("\n/* Inside of Unparse_ExprStmt::unparseEnumDeclStmt() */ \n");
 #endif
 
      string enum_string = "enum ";
@@ -9848,48 +9911,58 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if (p != p_last)
                p_last--;
 
+#if DEBUG_USING_CURPRINT
+           curprint("\n/* In Unparse_ExprStmt::unparseEnumDeclStmt(): output the enumerators */ \n");
+#endif
+
+       // DQ (2/5/2021): Note that token-based unparsing is not supported for partial token sequence output.
+       // DQ (2/5/2021): I think this should be a while loop...
           for (; p!=enum_stmt->get_enumerators().end(); p++)
-          {
+             {
             // Liao, 5/14/2009
             // enumerators may come from another included file
             // have to tell if it matches the current declaration's file before unparsing it!!
             // See test case: tests/nonsmoke/functional/CompileTests/C_test/test2009_05.c
             // TODO: still need work on mixed cases: part of elements are in the original file and others are from a header
-            SgInitializedName* field = *p;
-            ASSERT_not_null(field);
-            bool isInSameFile = (field->get_file_info()->get_filename()==enum_stmt->get_file_info()->get_filename());
-            if (isInSameFile)
-            {
-              unparseAttachedPreprocessingInfo(field, info, PreprocessingInfo::before);
-              // unparse the element   
-              ASSERT_not_null((*p));
-              tmp_name=(*p)->get_name();
-              tmp_init=(*p)->get_initializer();
-              curprint ( tmp_name.str());
-              if (tmp_init != NULL)
-              {
-                curprint("=");
-                unparseExpression(tmp_init, ninfo);
-              }
+               SgInitializedName* field = *p;
+               ASSERT_not_null(field);
+               bool isInSameFile = (field->get_file_info()->get_filename() == enum_stmt->get_file_info()->get_filename());
+               if (isInSameFile)
+                  {
+#if DEBUG_USING_CURPRINT
+                    curprint("\n/* In Unparse_ExprStmt::unparseEnumDeclStmt(): output enumerator (isInSameFile == true) */ \n");
+#endif
+                    unparseAttachedPreprocessingInfo(field, info, PreprocessingInfo::before);
+                 // unparse the element   
+                    ASSERT_not_null((*p));
+                    tmp_name=(*p)->get_name();
+                    tmp_init=(*p)->get_initializer();
+                    curprint ( tmp_name.str());
+                    if (tmp_init != NULL)
+                       {
+                         curprint("=");
+                         unparseExpression(tmp_init, ninfo);
+                       }
 
-              //if (p != (enum_stmt->get_enumerators().end()))
-              if (p != p_last)
-              {
-                curprint(",");
-              }
+                 // if (p != (enum_stmt->get_enumerators().end()))
+                    if (p != p_last)
+                       {
+                         curprint(",");
+                       }
  
-            } // end same file
-          } // end for
+                  } // end same file
+             } // end for
 
           if  (enum_stmt->get_enumerators().size()!=0)
+             {
             // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
-            unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
-
+               unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
+             }
 #if 0
        // DQ (11/12/2020): We never want a ";" after the list of enum values.
           if (!info.SkipSemiColon())
              {
-#if 1
+#if 0
                curprint (" /* test 1 output a ; */ ");
 #endif
                curprint(";");
@@ -9949,6 +10022,9 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseEnumDeclStmt(): \n");
+#endif
+#if DEBUG_USING_CURPRINT
+     curprint ("\n/* Leaving unparseEnumDeclStmt() */ \n");
 #endif
    }
 

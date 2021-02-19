@@ -110,4 +110,8 @@ class TokenStreamSequenceToNodeMapping
 #include "detectMacroOrIncludeFileExpansions.h"
 #include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
 
+
+// DQ (1/7/2021): Adding function to header so that I can call it elsewhere for testing.
+std::vector<stream_element*> getTokenStream( SgSourceFile* file );
+
 #endif

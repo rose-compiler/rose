@@ -499,6 +499,10 @@ class ROSEAttributesList
        // DQ replaced use of old list class with STL
           std::vector<PreprocessingInfo*> attributeList;
 
+       // DQ (1/9/2021): Added comment.
+       // Note that the token stream is contained in the ROSEAttributesList list which before this just held 
+       // the comments and CPP directives.  This is OK, but the makes of the types and data members are less
+       // than ideal.
           LexTokenStreamTypePointer rawTokenStream;
 
        // [DT] 3/15/2000 -- Name of file from which the directives come.
@@ -520,8 +524,8 @@ class ROSEAttributesList
        // DQ (1/15/2015): Adding support for token-based unparsing. When new comments and CPP directives are added we need
        // to record these as a kind of transformation that will trigger the token stream representation to NOT be used and
        // the comments and CPP directives unparsed from the AST seperately from the associated IR node being unparsed from
-       // the AST.  The problem is that we wnat to record where there might be comments or CPP directives removed and having
-       // a flag here is not going to work for that.  so we have to also record that the ROSEAttributesList has changed.
+       // the AST.  The problem is that we want to record where there might be comments or CPP directives removed and having
+       // a flag here is not going to work for that, so we have to also record that the ROSEAttributesList has changed.
        // bool p_isTransformation;
 
      public:

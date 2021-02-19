@@ -3,6 +3,9 @@
 #include "sage3basic.h"
 #include "attachPreprocessingInfo.h"
 
+// DQ (1/7/2021): Added to support testing of the token stream availability.
+#include "tokenStreamMapping.h"
+
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
@@ -638,15 +641,23 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 // Only compiled if using Boost::wave.
 #endif
 
+// DQ (12/3/2020): We sometimes want to read a file twice, and gather the comments 
+// and CPP directives twice, but the second time the file is read it is read so that 
+// it can build a file with a different name. So we need to specify the name of the
+// file that we want the comments and CPP directives to eventually be attached to 
+// and not the one from which they were take.  This technique is used to support
+// building a second file to be a dynamic library within the codeSegregation tool.
 // DQ (4/5/2006): Older version not using Wave preprocessor
 // This is the function to be called from the main function
 // DQ: Now called by the SgFile constructor body (I think)
-void
-attachPreprocessingInfo(SgSourceFile *sageFilePtr)
+// void attachPreprocessingInfo(SgSourceFile *sageFilePtr)
+void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_filename )
    {
      ROSE_ASSERT(sageFilePtr != NULL);
 
-#if 0
+#define DEBUG_ATTACH_PREPROCESSOR_INFO 0
+
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
      printf ("################################################################ \n");
      printf ("################################################################ \n");
      printf ("In attachPreprocessingInfo(): wave = %s file    = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
@@ -654,6 +665,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      printf (" --- sageFilePtr->getFileName()                 = %s \n",sageFilePtr->getFileName().c_str());
      printf (" --- sageFilePtr->get_globalScope()             = %p \n",sageFilePtr->get_globalScope());
      printf (" --- sageFilePtr->get_unparse_output_filename() = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
+     printf (" --- new_filename                               = %s \n",new_filename.c_str());
      printf ("################################################################ \n");
      printf ("################################################################ \n");
 #endif
@@ -702,17 +714,45 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      string filename = sageFilePtr->get_sourceFileNameWithPath();
      ROSEAttributesList* commentAndCppDirectiveList = NULL;
 
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+     printf ("Calling AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): \n");
+     printf ("sageFilePtr->getFileName() = %s \n",sageFilePtr->getFileName().c_str());
+     printf ("filename                   = %s \n",filename.c_str());
+     printf ("new_filename               = %s \n",new_filename.c_str());
+  // printf ("tokenVector.size() = %zu using filename     = %s \n",getTokenStream(sageFilePtr).size(),filename.c_str());
+#endif
+
+  // DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
   // DQ (7/4/2020): This function should not be called for binaries (only for C/C++ code).
   // commentAndCppDirectiveList = getPreprocessorDirectives(filename);
      bool usingWave = false;
   // commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,filename);
-     commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,sageFilePtr,filename);
+  // commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,sageFilePtr,filename);
+     commentAndCppDirectiveList = AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(usingWave,sageFilePtr,filename,new_filename);
 
      ROSE_ASSERT(commentAndCppDirectiveList != NULL);
+
+#if 0
+     printf ("In attachPreprocessingInfo(): sageFilePtr->get_tokenSubsequenceMap().size() = %zu \n",sageFilePtr->get_tokenSubsequenceMap().size());
+#endif
+
+#if 0
+  // DQ (1/4/2020): Testing use of new mechanism to get the token stream associated with the correct filename.
+     if (new_filename != "")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
 
   // sageFilePtr->get_preprocessorDirectivesAndCommentsList().insert()
 #if 0
      printf ("Adding list for filename = %s \n",filename.c_str());
+#endif
+
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+     printf ("Test after buildCommentAndCppDirectiveList(): sageFilePtr->getFileName() = %s tokenVector.size() = %zu \n",sageFilePtr->getFileName().c_str(),getTokenStream(sageFilePtr).size());
+     printf ("tokenVector.size() = %zu using filename     = %s \n",getTokenStream(sageFilePtr).size(),filename.c_str());
 #endif
 
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
@@ -724,16 +764,35 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      ROSE_ASSERT(sageFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
      ROSEAttributesListContainerPtr filePreprocInfo = sageFilePtr->get_preprocessorDirectivesAndCommentsList();
 
-#if 0
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
      printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
 #endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
      ROSE_ASSERT(filePreprocInfo->getList().size() > 0);
 
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+     printf ("sageFilePtr->get_token_list().size()                                       = %zu \n",sageFilePtr->get_token_list().size());
+     printf ("commentAndCppDirectiveList->get_rawTokenStream()->size()                   = %zu \n",commentAndCppDirectiveList->get_rawTokenStream()->size());
+     printf ("sageFilePtr->get_preprocessorDirectivesAndCommentsList()->getList().size() = %zu \n",sageFilePtr->get_preprocessorDirectivesAndCommentsList()->getList().size());
+#endif
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+     printf ("sageFilePtr->getFileName() = %s \n",sageFilePtr->getFileName().c_str());
+     printf ("tokenVector.size() = %zu using filename     = %s \n",getTokenStream(sageFilePtr).size(),filename.c_str());
+     printf ("tokenVector.size() = %zu using new_filename = %s \n",getTokenStream(sageFilePtr).size(),new_filename.c_str());
+#endif
+
 #if 0
-     printf ("sageFilePtr->get_token_list().size() = %zu \n",sageFilePtr->get_token_list().size());
-     printf ("commentAndCppDirectiveList->get_rawTokenStream()->size() = %zu \n",commentAndCppDirectiveList->get_rawTokenStream()->size());
+     printf ("In attachPreprocessingInfo(): sageFilePtr->get_tokenSubsequenceMap().size() = %zu \n",sageFilePtr->get_tokenSubsequenceMap().size());
+#endif
+
+#if 0
+  // DQ (1/8/2021): Debugging the token stream used when reading the same file twice.
+     if (new_filename != "")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
 #if 0
@@ -921,6 +980,14 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
   // DQ (11/18/2019): Set the flag that indicates that this SgSourceFile has had its CPP directives and comments added.
      sageFilePtr->set_processedToIncludeCppDirectivesAndComments(true);
+
+  // DQ (1/7/2021): Get the token vector using the mechanism used in buildTokenStreamMapping().
+  // vector<stream_element*> tokenVector = getTokenStream(sageFilePtr);
+
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+  // printf ("tokenVector.size() = %zu \n",tokenVector.size());
+     printf ("tokenVector.size() = %zu \n",getTokenStream(sageFilePtr).size());
+#endif
 
 #if 0
      printf ("Exiting as a test after either call to sageFilePtr or traverseWithinFile \n");
