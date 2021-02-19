@@ -159,6 +159,46 @@ namespace
       support_opt(n.get_constraint());
     }
 
+    void handle(SgAdaAccessType& n)
+    {
+      prn("access");
+      if (n.get_is_object_type()) {
+        if (n.get_is_general_access()) {
+          prn(" all");
+        }
+
+        if (n.get_is_constant()) {
+          prn(" constant");
+        }
+
+        if (n.get_base_type() != NULL) {
+          type(n.get_base_type());
+        }
+
+      } else {
+        // subprogram access type
+        if (n.get_is_protected()) {
+          prn(" protected");
+        }
+
+        if (n.get_return_type() != NULL) {
+          prn(" function");
+        } else {
+          prn(" procedure");
+        }
+
+        // TODO: print parameter profile here if it is specified.
+        //       parameter profiles are not currently implemented for
+        //       AdaAccessType nodes.
+
+        if (n.get_return_type() != NULL) {
+          prn(" return");
+          type(n.get_return_type());
+        }
+      }
+
+    }
+
     void type(SgType* ty)
     {
       sg::dispatch(*this, ty);

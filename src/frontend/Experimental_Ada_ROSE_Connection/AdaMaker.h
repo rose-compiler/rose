@@ -117,6 +117,10 @@ namespace Ada_ROSE_Translation
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
 
+  /// creates an ada access type with \ref base_type as the type being referenced.
+  SgAdaAccessType&
+  mkAdaAccessType(SgType *base_type);
+
   /// creates a task type that references a task type declaration \ref dcl.
   SgAdaTaskType&
   mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
@@ -450,6 +454,11 @@ namespace Ada_ROSE_Translation
   /// creates an Ada Record representation clause for \ref record aligned at \ref align.
   SgAdaRecordRepresentationClause&
   mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
+
+  /// creates an Ada Enum representation clause for \ref enumtype and
+  ///   enumerator initializations \ref initlst.
+  SgAdaEnumRepresentationClause&
+  mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst);
 
   /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
   SgAdaLengthClause&

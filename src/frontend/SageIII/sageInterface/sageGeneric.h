@@ -218,6 +218,7 @@ namespace sg
     GEN_VISIT(SgAdaPackageSymbol)
     GEN_VISIT(SgAdaRangeConstraint)
     GEN_VISIT(SgAdaRecordRepresentationClause)
+    GEN_VISIT(SgAdaEnumRepresentationClause)
     GEN_VISIT(SgAdaRenamingDecl)
     GEN_VISIT(SgAdaSelectStmt)
     GEN_VISIT(SgAdaSelectAlternativeStmt)
