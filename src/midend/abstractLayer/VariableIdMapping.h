@@ -52,6 +52,7 @@ namespace CodeThorn {
     */
     VariableId createUniqueTemporaryVariableId(std::string name);
     bool isTemporaryVariableId(VariableId varId);
+    bool isTemporaryVariableIdSymbol(SgSymbol* sym);
     bool isHeapMemoryRegionId(VariableId varId);
 
     // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
