@@ -749,16 +749,16 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
   //! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
-  PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
+ROSE_DLL_API PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
-PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
+ROSE_DLL_API PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
 
 //! Insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
-void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
+ROSE_DLL_API void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
-PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
+ROSE_DLL_API PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
 
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX.
 ROSE_DLL_API PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);

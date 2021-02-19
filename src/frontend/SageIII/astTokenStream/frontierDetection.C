@@ -198,6 +198,12 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           bool forceUnparseFromTokenStream = false;
           bool forceUnparseFromAST         = false;
 #endif
+
+#if 0
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+          printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
 #if 0
           printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
 #endif
@@ -207,7 +213,6 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
        // the token stream with unparsing from the AST.
           if (ROSE_tokenUnparsingTestingMode == true)
              {
-
                if (forceUnparseFromTokenStream == true || forceUnparseFromAST == true)
                   {
                  // We need to set this to a sufficently high number so that the conditional below will always be false.
@@ -245,7 +250,8 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
                if ( random_counter >= lowerbound && random_counter <= upperbound )
                   {
 #if 0
-                    printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",random_counter,statement,statement->class_name().c_str());
+                    printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",
+                         random_counter,statement,statement->class_name().c_str());
 #endif
                     options = "color=\"red\"";
 
@@ -1193,7 +1199,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
         {
        // ROSE_ASSERT(project != NULL);
 
-#if 0
+#if 1
           printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier defined \n");
 #endif
 
@@ -1267,7 +1273,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
              }
         }
 
-#if 0
+#if 1
      printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier AND edges defined \n");
 #endif
 

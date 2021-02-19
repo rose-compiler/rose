@@ -164,6 +164,9 @@ void Rose::Options::set_backend_warnings(bool flag)
 // std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
 std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
+// DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
+std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
+
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
 // std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;

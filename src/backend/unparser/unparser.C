@@ -680,11 +680,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (12/6/2014): This is the part of the token stream support that is required after transformations have been done in the AST.
      if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
+#define DEBUG_UNPARSE_TOKENS 0
+
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 0
+#if DEBUG_UNPARSE_TOKENS
           printf ("In Unparser::unparseFile(): END: this->currentFile = %p this->currentFile->getFileName() = %s \n",this->currentFile,this->currentFile->getFileName().c_str());
 #endif
-#if 0
+#if DEBUG_UNPARSE_TOKENS
           printf ("In Unparser::unparseFile(): Building token stream mapping frontier: filename = %s \n",file->getFileName().c_str());
 #endif
 
@@ -738,7 +740,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // ROSE_ASSERT(globalScope->get_parent() == sourceFile);
              }
 
-#if 0
+#if DEBUG_UNPARSE_TOKENS
+          printf ("################################################################################################## \n");
+          printf (" The token processing is now done in the secondaryFileProcessing (so we do not need to do it here) \n");
+          printf ("################################################################################################## \n");
+#endif
+#if DEBUG_UNPARSE_TOKENS
           printf ("******************************************************************* \n");
           printf ("In Unparser::unparseFile(): Building token stream mapping frontier! \n");
           printf ("   --- file = %s \n",file->getFileName().c_str());
@@ -753,7 +760,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // *** Next we have to attached the data base ***
        // buildTokenStreamMapping(file);
           buildTokenStreamFrontier(file);
-#if 0
+
+#if DEBUG_UNPARSE_TOKENS
           printf ("DONE: In Unparser::unparseFile(): Building token stream mapping frontier! \n");
 #endif
 
@@ -802,7 +810,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
 
             // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
-//MH-20140701 removed comment-out
+            // MH-20140701 removed comment-out
 #if 0
                printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
 #endif
@@ -835,7 +843,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      ROSE_ASSERT(file->get_outputLanguage() != SgFile::e_Promela_language);
 
 #if 1
-  // DQ (29/8/2017): Adding more general handling for language support.
+  // DQ (8/29/2017): Adding more general handling for language support.
 
   // Not clear if we want this, translators might not want to have this constraint.
   // But use this for debugging initially.  I would like to see the default setting
@@ -1362,6 +1370,12 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // Note that these are the SgToken IR nodes and we have generated a token stream via the type: LexTokenStreamType.
   // ROSE_ASSERT(file->get_token_list().empty() == true);
 
+     ROSE_ASSERT(file != NULL);
+     string fileNameForTokenStream = file->getFileName();
+
+#if 0
+     printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+#endif
 
   // ROSE_ASSERT(file->get_token_list().empty() == false);
      if (file->get_token_list().empty() == true)
@@ -1375,16 +1389,10 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ASSERT_not_null(currentListOfAttributes);
 #endif
 
-     string fileNameForTokenStream = file->getFileName();
-
-#if 0
-     printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
-#endif
-
      ASSERT_not_null(file->get_preprocessorDirectivesAndCommentsList());
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
-#if 0
+#if 1
      printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
@@ -1399,8 +1407,8 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
-#if 0
-     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
+#if 1
+     printf ("In unparseFileUsingTokenStream(): Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      while (map_iterator != filePreprocInfo->getList().end())
         {
@@ -2229,6 +2237,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
      printf ("Inside of globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
+
 // tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
 #if ROSE_GCC_OMP
 #pragma omp critical (unparser)
@@ -2494,6 +2503,11 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 
      ASSERT_not_null(inheritedAttributeInfoPointer);
      SgUnparse_Info & inheritedAttributeInfo = *inheritedAttributeInfoPointer;
+
+  // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
+  // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+  // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
+     inheritedAttributeInfoPointer->set_usedInUparseToStringFunction();
 
   // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
   // if (inheritedAttributeInfo.get_current_scope() == NULL)

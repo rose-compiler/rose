@@ -62,8 +62,11 @@
 
 
 #define DEBUG_TOKEN_OUTPUT 0
+
 #define DEBUG_EVALUATE_INHERITATE_ATTRIBUTE  0
 #define DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE 0
+#define DEBUG_TOKEN_MAPPING 0
+
 #define ERROR_CHECKING 0
 
 using namespace std;
@@ -410,9 +413,11 @@ class TokenMappingTraversal : public SgTopDownBottomUpProcessing<InheritedAttrib
        // Graph functions that write DOT file nodes, any children (and edges from the node to the children) to the output file.
           void graph ( SgNode* node );
 
+       // DQ (1/20/2021): Changed the API to use a reference to the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
        // This is the map of subsequences of the token sequence to the ROSE AST IR nodes.
        // map<SgNode*,pair<int,int> > tokenStreamSequenceMap;
-          map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenStreamSequenceMap;
+       // map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMap;
+          map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap;
 
        // We need an ordered sequence to check between the current and last element.
        // vector<pair<SgNode*,pair<int,int> > > tokenStreamSequenceVector;
@@ -427,8 +432,11 @@ class TokenMappingTraversal : public SgTopDownBottomUpProcessing<InheritedAttrib
        // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
           bool useTokenSequenceToImproveSourcePositionInfo;
 
+       // DQ (1/20/2021): Changed the API to add a pointer the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
        // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
-          TokenMappingTraversal(vector<stream_element*> & tokenStream, bool input_useTokenSequenceToImproveSourcePositionInfo);
+       // TokenMappingTraversal(vector<stream_element*> & tokenStream, bool input_useTokenSequenceToImproveSourcePositionInfo);
+          TokenMappingTraversal( vector<stream_element*> & tokenStream, bool input_useTokenSequenceToImproveSourcePositionInfo, 
+                                 std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMapPointer);
 
        // virtual function must be defined
           InheritedAttribute evaluateInheritedAttribute(SgNode* n, InheritedAttribute inheritedAttribute);
@@ -668,7 +676,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                     trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.line_num,
                     trailing_whitespace_end   < 0 ? -1 : tokenList[trailing_whitespace_end]->ending_fpi.column_num);
 #endif
-#if 1
+#if 0
                printf ("\nGraph_TokenMappingTraversal::visit(): n = %p = %s \n",n,n->class_name().c_str());
                printf ("   --- leading_whitespace_start  = %d leading_whitespace_end  = %d \n",leading_whitespace_start,leading_whitespace_end);
                printf ("   --- token_subsequence_start   = %d token_subsequence_end   = %d \n",token_subsequence_start,token_subsequence_end);
@@ -686,7 +694,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
 
             // DQ (12/23/2018): Added assertion to catch issue in token based unparsing.
                ROSE_ASSERT(tokenList[trailing_whitespace_start] != NULL);
-#if 1
+#if 0
                printf ("tokenList.size() = %zu trailing_whitespace_start = %d \n",tokenList.size(),trailing_whitespace_start);
 #endif
                ROSE_ASSERT(trailing_whitespace_start < (int)tokenList.size());
@@ -867,7 +875,7 @@ Graph_TokenMappingTraversal::graph_ast_and_token_stream( SgSourceFile* source_fi
      string dot_header = filename;
      filename += ".dot";
 
-#if 1
+#if 0
      printf ("In graph_ast_and_token_stream(): filename = %s \n",filename.c_str());
 #endif
 
@@ -1050,10 +1058,12 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
    {
   // Search forward through the token sequence to find the first non-whitespace token.
 
+#define DEBUG_TRIMING_WHITESPACE 0
+
      int trailing_whitespace_start = mappingInfo->token_subsequence_end + 1;
      int trailing_whitespace_end   = trailing_whitespace_start;
 
-#if 0
+#if DEBUG_TRIMING_WHITESPACE
      printf ("In trimTrailingWhiteSpaceFromRight(): before loop: trailing_whitespace_start            = %d \n",trailing_whitespace_start);
      printf ("In trimTrailingWhiteSpaceFromRight(): before loop: trailing_whitespace_end              = %d \n",trailing_whitespace_end);
      printf ("In trimTrailingWhiteSpaceFromRight(): before loop: original_end_of_token_subsequence    = %d \n",original_end_of_token_subsequence);
@@ -1217,7 +1227,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      int original_end_of_token_subsequence   = inheritedAttribute.end_of_token_sequence;
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
-     printf ("\nIn evaluateSynthesizedAttribute(): n = %p = %s childAttributes.size() = %zu (start=%d,end=%d) \n",n,n->class_name().c_str(),childAttributes.size(),original_start_of_token_subsequence,original_end_of_token_subsequence);
+     printf ("\nIn evaluateSynthesizedAttribute(): n = %p = %s childAttributes.size() = %zu (start=%d,end=%d) \n",
+          n,n->class_name().c_str(),childAttributes.size(),original_start_of_token_subsequence,original_end_of_token_subsequence);
      if (isSgClassDeclaration(n) != NULL)
         {
           printf ("   --- class name = %s \n",isSgClassDeclaration(n)->get_name().str());
@@ -1228,6 +1239,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         }
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
      printf ("   --- inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
+#endif
+
+#if DEBUG_TOKEN_MAPPING
+     if (isSgFunctionDeclaration(n) != NULL)
+        {
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+          printf ("Found a function declaration \n");
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+        }
 #endif
 
   // DQ (10/14/2013): Added consistancy test.
@@ -1490,7 +1510,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
                     if (true) // functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
                        {
-#if 0
+#if DEBUG_TOKEN_MAPPING
                          printf ("Detected function prototype: \n");
                          functionDeclaration->get_startOfConstruct()->display("start of functionDeclaration: debug");
                          functionDeclaration->get_endOfConstruct()->display("end of functionDeclaration: debug");
@@ -1499,7 +1519,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             {
                               TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(function_protytype_mappingInfo != NULL);
-
+#if DEBUG_TOKEN_MAPPING
+                              printf ("   --- (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end()) == true \n");
+#endif
                            // DQ (12/13/2015): This is required code and demonstrated in tests/nonsmoke/functional/roseTests/astTokenStreamTests/input_test2015_01.c
                            // DQ (12/12/2015): I am hoping we can avoid this fixup (we want to have as few as possible).
                            // Also this might not be required now that we have fixed the source position information in 
@@ -1507,7 +1529,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                               int function_protype_start = function_protytype_mappingInfo->token_subsequence_start;
                               int function_protype_end   = function_protytype_mappingInfo->token_subsequence_end;
-#if 0
+#if DEBUG_TOKEN_MAPPING
                               printf ("   --- function_protype_start = %d function_protype_end = %d \n",function_protype_start,function_protype_end);
 #endif
                               ROSE_ASSERT(function_protype_start >= 0);
@@ -1521,6 +1543,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            // int better_start_of_function_prototype_token_subsequence = function_protype_start;
                            // int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
                               int better_start_of_function_prototype_token_subsequence = function_protype_start;
+#if DEBUG_TOKEN_MAPPING
+                              printf ("after initialization: better_start_of_function_prototype_token_subsequence = %d \n",better_start_of_function_prototype_token_subsequence);
+#endif
                               SgScopeStatement* scope = isSgScopeStatement(functionDeclaration->get_parent());
 
                            // DQ (12/13/2015): Some scopes have an associated token such as "{" that we need to skip over,
@@ -1529,24 +1554,60 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                   isSgNamespaceDefinitionStatement(scope) != NULL ||
                                   isSgClassDefinition(scope) != NULL)
                                  {
+                                // DQ (2/10/2021): This appears to be the cause of the leading and training whitespce token sequence boundary being incorrect (see input_test2021_04.C).
+#if 0
+                                   printf ("Skipping the increment of better_start_of_function_prototype_token_subsequence due to scopes using braces \n");
+#endif
+#if 1
+#if DEBUG_TOKEN_MAPPING
+                                   printf ("Scope = %p = %s: Incrementing better_start_of_function_prototype_token_subsequence \n",scope,scope->class_name().c_str());
+#endif
+                                // better_start_of_function_prototype_token_subsequence++;
+#if 0
+                                   printf ("tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_lexeme = %s id = %d \n",
+                                        tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_lexeme.c_str(),
+                                        tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id);
+#endif
+#if 0
+                                // Original code.
                                    better_start_of_function_prototype_token_subsequence++;
+#else
+                                // DQ (2/10/2021): If this is the first statement in a class definition (or any scope using brace syntax), 
+                                // then we need to inclrement past the syntax (brace).
+                                   if (tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_SYNTAX)
+                                      {
+                                        better_start_of_function_prototype_token_subsequence++;
+                                      }
+#endif
+#endif
                                  }
-
+#if DEBUG_TOKEN_MAPPING
+                              printf ("after increment for scope: better_start_of_function_prototype_token_subsequence = %d \n",better_start_of_function_prototype_token_subsequence);
+                              bool isWhitespace = ( tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
+                                                    tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE);
+                              printf ("Before while loop: function_protype_end = %d isWhitespace = %s \n",function_protype_end,isWhitespace ? "true" : "false");
+#endif
+                           // If we incremented past some C/C++ syntax (e.g. brace) then we need to increment to the next non whitespace token.
                               while ( better_start_of_function_prototype_token_subsequence < function_protype_end && 
                                       ( tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
                                         tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
                                  {
+#if DEBUG_TOKEN_MAPPING
+                                   printf ("In while loop: Incrementing better_start_of_function_prototype_token_subsequence \n");
+#endif
                                    better_start_of_function_prototype_token_subsequence++;
                                  }
-#if 0
+#if DEBUG_TOKEN_MAPPING
                               printf ("better_start_of_function_prototype_token_subsequence = %d \n",better_start_of_function_prototype_token_subsequence);
 #endif
                               function_protytype_mappingInfo->token_subsequence_start = better_start_of_function_prototype_token_subsequence;
-#if 0
-                              printf ("RESET: function_protytype_mappingInfo->token_subsequence_start = %d end = %d \n",function_protytype_mappingInfo->token_subsequence_start,function_protytype_mappingInfo->token_subsequence_end);
+#if DEBUG_TOKEN_MAPPING
+                              printf ("RESET: function_protytype_mappingInfo->token_subsequence_start = %d end = %d \n",
+                                   function_protytype_mappingInfo->token_subsequence_start,function_protytype_mappingInfo->token_subsequence_end);
 #endif
                             }
                        }
+                   // DQ (2/10/2021): This else case is dead code!
                       else
                        {
                       // DQ (12/13/2015): I think the code above needs to address the case of any other non-defining declarations.
@@ -2325,8 +2386,11 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
                          Sg_File_Info* start_pos = mappingInfo->node->get_startOfConstruct();
                          Sg_File_Info* end_pos   = mappingInfo->node->get_endOfConstruct();
-                         printf ("   --- node = %p = %s: start (line=%d:column=%d) end(line=%d,column=%d) \n",mappingInfo->node,mappingInfo->node->class_name().c_str(),start_pos->get_physical_line(),start_pos->get_col(),end_pos->get_physical_line(),end_pos->get_col());
-                         printf ("START MAPPING i=%d: mappingInfo->token_subsequence_start = %d mappingInfo->token_subsequence_end = %d \n",i,mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
+                         printf ("   --- node = %p = %s: start (line=%d:column=%d) end(line=%d,column=%d) \n",
+                              mappingInfo->node,mappingInfo->node->class_name().c_str(),start_pos->get_physical_line(),
+                              start_pos->get_col(),end_pos->get_physical_line(),end_pos->get_col());
+                         printf ("START MAPPING i=%zu: mappingInfo->token_subsequence_start = %d mappingInfo->token_subsequence_end = %d \n",
+                              i,mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
 #endif
                       // int leading_whitespace_start  = mappingInfo->leading_whitespace_start;
                       // int leading_whitespace_end    = mappingInfo->leading_whitespace_end;
@@ -4302,6 +4366,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
                  // trimTrailingWhiteSpaceFromRight(mappingInfo,original_end_of_token_subsequence);
 
+#if 0
+                    printf ("In evaluateSynthesizedAttribute(): processing else sysntax for SgIfStmt: before for loop \n");
+#endif
+                 // DQ (2/15/2021): Added consistancy test.
+                    consistancyCheck();
+
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
 #if 0
@@ -4337,15 +4407,53 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                         printf ("Found true body: processing else syntax between true and false bodies \n");
 #endif
+                                     // DQ (2/16/2021): Added assertions, to debug failing consistancyCheck().
+                                        ROSE_ASSERT(tokenStreamSequenceMap.find(ifStatement) != tokenStreamSequenceMap.end());
+                                     // ROSE_ASSERT(tokenStreamSequenceMap.find(true_body_statement)  != tokenStreamSequenceMap.end());
+                                     // ROSE_ASSERT(tokenStreamSequenceMap.find(false_body_statement) != tokenStreamSequenceMap.end());
+#if 0
+                                     // Original code.
                                         TokenStreamSequenceToNodeMapping* if_statement_mappingInfo  = tokenStreamSequenceMap[ifStatement];
                                         TokenStreamSequenceToNodeMapping* true_body_mappingInfo     = tokenStreamSequenceMap[true_body_statement];
                                         TokenStreamSequenceToNodeMapping* false_body_mappingInfo    = tokenStreamSequenceMap[false_body_statement];
+#else
+                                     // DQ (2/16/2021): Debugging why we are failing consistancyCheck() with test2021_06.C
+                                        TokenStreamSequenceToNodeMapping* if_statement_mappingInfo  = tokenStreamSequenceMap[ifStatement];
 
+                                        TokenStreamSequenceToNodeMapping* true_body_mappingInfo = NULL;
+                                        ROSE_ASSERT(true_body_statement != NULL);
+                                        if (tokenStreamSequenceMap.find(true_body_statement)  != tokenStreamSequenceMap.end())
+                                           {
+                                             true_body_mappingInfo = tokenStreamSequenceMap[true_body_statement];
+                                           }
+
+                                        TokenStreamSequenceToNodeMapping* false_body_mappingInfo = NULL;
+                                        ROSE_ASSERT(false_body_statement != NULL);
+                                        if (tokenStreamSequenceMap.find(false_body_statement)  != tokenStreamSequenceMap.end())
+                                           {
+                                             false_body_mappingInfo = tokenStreamSequenceMap[false_body_statement];
+                                           }
+#endif
                                         ROSE_ASSERT(if_statement_mappingInfo != NULL);
-                                        ROSE_ASSERT(true_body_mappingInfo    != NULL);
-                                        ROSE_ASSERT(false_body_mappingInfo   != NULL);
 
-                                        discoverElseSyntax(if_statement_mappingInfo,true_body_mappingInfo,false_body_mappingInfo);
+                                     // DQ (1/31/2021): This fails for the case of an empty true block (see tests/nonsmoke/functional/roseTests/astTokenStreamTests Cxx_tests/test2007_158.C).
+                                     // ROSE_ASSERT(true_body_mappingInfo    != NULL);
+
+                                     // DQ (1/31/2021): This fails for the case of an empty false block (see tests/nonsmoke/functional/roseTests/astTokenStreamTests Cxx_tests/test2007_158.C).
+                                     // ROSE_ASSERT(false_body_mappingInfo   != NULL);
+#if 0
+                                        printf ("true_body_mappingInfo  = %p \n",true_body_mappingInfo);
+                                        printf ("false_body_mappingInfo = %p \n",false_body_mappingInfo);
+#endif
+                                     // DQ (1/31/2021): This fails for the case of an empty true and false block (see tests/nonsmoke/functional/roseTests/astTokenStreamTests Cxx_tests/test2007_158.C).
+                                     // discoverElseSyntax(if_statement_mappingInfo,true_body_mappingInfo,false_body_mappingInfo);
+                                        if (true_body_mappingInfo != NULL && false_body_mappingInfo != NULL)
+                                           {
+#if 0
+                                             printf ("Calling discoverElseSyntax() \n");
+#endif
+                                             discoverElseSyntax(if_statement_mappingInfo,true_body_mappingInfo,false_body_mappingInfo);
+                                           }
                                       }
 #if 0
                                    printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
@@ -4356,10 +4464,19 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  {
 #if 0
                                    printf ("In evaluateSynthesizedAttribute(): support for else syntax: false body in SgIfStmt does not have a previous TokenStreamSequenceToNodeMapping: ignoring this case \n");
-                                   printf ("   --- false_body_statement = %p \n");
+                                   printf ("   --- false_body_statement = %p \n",false_body_statement);
 #endif
                                  }
                             }
+                           else
+                            {
+#if 0
+                              printf (" (false_body_statement != ifStatement->get_false_body() \n");
+#endif
+                            }
+
+                      // DQ (2/15/2021): Added consistancy test.
+                         consistancyCheck();
                        }
                   }
              }
@@ -4372,10 +4489,18 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
              }
         }
 
-#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
      printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(n): n = %p = %s childAttributes.size() = %zu \n",n,(n != NULL) ? n->class_name().c_str() : "null",childAttributes.size());
   // printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
   //      start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
+#endif
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+  // if (isSgFunctionDeclaration(n) != NULL)
+        {
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+          printf ("Leaving evaluateSynthesizedAttribute() \n");
+          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+        }
 #endif
 
 #if 0
@@ -4746,6 +4871,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 // #if 1
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                          printf ("In AST:         starting_line              = %d ending_line              = %d \n",starting_line,ending_line);
+                         printf ("In AST:         starting_column            = %d ending_column            = %d \n",starting_column,ending_column);
                          printf ("In tokenStream: start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
                          printf ("BEFORE BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num   = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
                          printf ("BEFORE BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.column_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.column_num);
@@ -4798,23 +4924,51 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                             }
                            else
                             {
+                           // DQ (2/7/2021): We compute to the end of the tokens that ar before the current AST node positon and then once past it instead of backing up one.
+                           // This step needs to be computed more carefully, since we set the end of the trailing whitespace incorrectly (one or two past where it should have ended).
+                           // It might be that the "<" used to compute the column should be "<=" instead. Plus I think that we need the length of the whitespace when it is 
+                           // aggregated (as it is for the special case of blank spaces).  I think we need to add the size of the whitespace to the beginning_fpi.column_num.
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
+                              printf ("BEFORE BEGIN LOOP: starting_line = %d starting_column = %d tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d column_num = %d (end: %d,%d) \n",
+                                   starting_line,starting_column,start_of_token_subsequence,
+                                   tokenStream[start_of_token_subsequence]->beginning_fpi.line_num,
+                                   tokenStream[start_of_token_subsequence]->beginning_fpi.column_num,
+                                   tokenStream[start_of_token_subsequence]->ending_fpi.line_num,tokenStream[start_of_token_subsequence]->ending_fpi.column_num);
+#endif
+
                            // while ( (*start_of_token_subsequence)->beginning_fpi.line_num < starting_line && start_of_token_subsequence != end_of_token_subsequence)
                            // while ( tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line && start_of_token_subsequence <= end_of_token_subsequence)
                               while ( (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line || 
-                                        (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
+                                      (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
+                                   // (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->ending_fpi.column_num < starting_column))
                                       && start_of_token_subsequence < end_of_token_subsequence)
                                  {
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
-                                   printf ("TOP OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                                   printf ("TOP OF BEGIN LOOP:    tokenStream[start_of_token_subsequence = %2d]->beginning_fpi.line_num = %2d column_num = %2d (end: %2d,%2d): lexeme = %s \n",
+                                        start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num,
+                                        tokenStream[start_of_token_subsequence]->beginning_fpi.column_num,
+                                        tokenStream[start_of_token_subsequence]->ending_fpi.line_num,tokenStream[start_of_token_subsequence]->ending_fpi.column_num,
+                                        tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
                                    start_of_token_subsequence++;
                                    ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
+
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
-                                   printf ("BOTTOM OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                                   printf ("BOTTOM OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %2d]->beginning_fpi.line_num = %2d column_num = %2d (end: %2d,%2d) lexeme = %s \n",
+                                        start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num,
+                                        tokenStream[start_of_token_subsequence]->beginning_fpi.column_num,
+                                        tokenStream[start_of_token_subsequence]->ending_fpi.line_num,tokenStream[start_of_token_subsequence]->ending_fpi.column_num,
+                                        tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
                                  }
+
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                              printf ("AFTER BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                              printf ("AFTER BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d column_num = %d (end: %d,%d) lexeme = %s \n",
+                                   start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num,
+                                   tokenStream[start_of_token_subsequence]->beginning_fpi.column_num,
+                                   tokenStream[start_of_token_subsequence]->ending_fpi.line_num,tokenStream[start_of_token_subsequence]->ending_fpi.column_num,
+                                   tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
@@ -4835,13 +4989,34 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if 0
                                    printf ("TOP OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
 #endif
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
+                                   printf ("TOP OF END LOOP:    tokenStream[end_of_token_subsequence = %2d]->beginning_fpi.line_num = %2d column_num = %2d (end: %2d,%2d) lexeme = %s \n",
+                                        end_of_token_subsequence,
+                                        tokenStream[end_of_token_subsequence]->beginning_fpi.line_num,tokenStream[end_of_token_subsequence]->beginning_fpi.column_num,
+                                        tokenStream[end_of_token_subsequence]->ending_fpi.line_num,   tokenStream[end_of_token_subsequence]->ending_fpi.column_num,
+                                        tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
                                    end_of_token_subsequence--;
                                    ROSE_ASSERT(end_of_token_subsequence >= 0);
 #if 0
                                    printf ("BOTTOM OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
 #endif
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
+                                   printf ("BOTTOM OF END LOOP: tokenStream[end_of_token_subsequence = %2d]->beginning_fpi.line_num = %2d column_num = %2d (end: %2d,%2d) lexeme = %s \n",
+                                        end_of_token_subsequence,
+                                        tokenStream[end_of_token_subsequence]->beginning_fpi.line_num,tokenStream[end_of_token_subsequence]->beginning_fpi.column_num,
+                                           tokenStream[end_of_token_subsequence]->ending_fpi.line_num,   tokenStream[end_of_token_subsequence]->ending_fpi.column_num,
+                                        tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
                                  }
 
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->beginning_fpi.line_num = %d column_num = %d (end: %d,%d) lexeme = %s \n",
+                                   end_of_token_subsequence,
+                                   tokenStream[end_of_token_subsequence]->beginning_fpi.line_num,tokenStream[end_of_token_subsequence]->beginning_fpi.column_num,
+                                   tokenStream[end_of_token_subsequence]->ending_fpi.line_num,   tokenStream[end_of_token_subsequence]->ending_fpi.column_num,
+                                   tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
                               printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
@@ -4900,6 +5075,22 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
                             }
 
+#if 0
+                      // DQ (2/16/2021): If this is a variable declaration in an if statement, then we want to search for the associated ")" instead of the";".
+                         SgIfStmt* ifStatement = isSgIfStmt(n);
+                         if (ifStatement != NULL)
+                            {
+                           // Unclear if we need special processing for the if statement.
+#if 1
+                              printf ("In TokenMappingTraversal::evaluateInheritedAttribute(): Unclear if we need special processing for the if statement \n");
+#endif
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+#endif
+
                          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
                          if (functionDeclaration != NULL)
                             {
@@ -4942,32 +5133,39 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
                                         ROSE_ASSERT(tokenStream[start_of_token_subsequence+1] != NULL);
                                         ROSE_ASSERT(tokenStream[start_of_token_subsequence+1]->p_tok_elem != NULL);
-#if 0
+#if DEBUG_TOKEN_MAPPING
                                         printf ("tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_id = %d \n",tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_id);
-                                        printf ("tokenStream[start_of_token_subsequence = %d]->p_tok_elem->token_id = %s \n",start_of_token_subsequence,Graph_TokenMappingTraversal::getTokenIdString(tokenStream[start_of_token_subsequence]->p_tok_elem->token_id).c_str());
-                                        printf ("tokenStream[start_of_token_subsequence+1 = %d]->p_tok_elem->token_id = %s \n",start_of_token_subsequence+1,Graph_TokenMappingTraversal::getTokenIdString(tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_id).c_str());
+                                        printf ("tokenStream[start_of_token_subsequence = %d]->p_tok_elem->token_id = %s \n",
+                                             start_of_token_subsequence,Graph_TokenMappingTraversal::getTokenIdString(tokenStream[start_of_token_subsequence]->p_tok_elem->token_id).c_str());
+                                        printf ("tokenStream[start_of_token_subsequence+1 = %d]->p_tok_elem->token_id = %s \n",
+                                             start_of_token_subsequence+1,Graph_TokenMappingTraversal::getTokenIdString(tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_id).c_str());
 #endif
-                                     // while ( (start_of_token_subsequence < original_end_of_token_subsequence) && ( (tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_lexeme != "_") && (tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_lexeme != "\n") ) )
-                                        while ( (start_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                     // while ( (start_of_token_subsequence < original_end_of_token_subsequence) && 
+                                     //       ( (tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_lexeme != "_") && 
+                                     //         (tokenStream[start_of_token_subsequence+1]->p_tok_elem->token_lexeme != "\n") ) )
+                                        while ( (start_of_token_subsequence < original_end_of_token_subsequence) && 
+                                                (tokenStream[start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
                                            {
                                              start_of_token_subsequence++;
-#if 0
+#if DEBUG_TOKEN_MAPPING
                                              printf ("In LOOP: Adjusting the start of the token subsequence (forward) to find the leading ';' or '}': token = %s start_of_token_subsequence = %d \n",
                                                   tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),start_of_token_subsequence);
 #endif
                                            }
                                       }
 
-#if 0
-                                   printf ("BEFORE LOOP: SgFunctionDeclaration: Adjusting the end of the token subsequence to find the trailing ';' token = %s \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#if DEBUG_TOKEN_MAPPING
+                                   printf ("BEFORE LOOP: SgFunctionDeclaration: Adjusting the end of the token subsequence to find the trailing ';' token = %s \n",
+                                        tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                                    printf ("   --- original_end_of_token_subsequence = %d \n",original_end_of_token_subsequence);
 #endif
                                 // while ( (end_of_token_subsequence <= original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ";") )
                                    while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ";") )
                                       {
                                         end_of_token_subsequence++;
-#if 0
-                                        printf ("In LOOP: Adjusting the end of the token subsequence to find the trailing ';' token = %s end_of_token_subsequence = %d \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
+#if DEBUG_TOKEN_MAPPING
+                                        printf ("In LOOP: Adjusting the end of the token subsequence to find the trailing ';' token = %s end_of_token_subsequence = %d \n",
+                                             tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
 #endif
                                       }
                                  }
@@ -5044,6 +5242,16 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                             }
 
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(n);
+
+                         SgVariableDeclaration* variableDeclarationConditional = NULL;
+
+                      // DQ (2/16/2021): Note that variable declarations can appear in other IR nodes: SgWhileStmt, SgSwitchStmt, etc.
+                         if (variableDeclaration != NULL && isSgIfStmt(variableDeclaration->get_parent()) != NULL)
+                            {
+                              variableDeclaration = NULL;
+                              variableDeclarationConditional = isSgVariableDeclaration(n);
+                            }
+
                          SgTypedefDeclaration*  typedefDeclaration  = isSgTypedefDeclaration(n);
 
                       // DQ (11/30/2013): Added support for SgEnumDeclaration and SgClassDeclaration.
@@ -5077,6 +5285,47 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("special case of variable, typedef, enum, or class: start_of_token_subsequence=%d end_of_token_subsequence=%d): n = %p = %s \n",
                                    start_of_token_subsequence,end_of_token_subsequence,n,n->class_name().c_str());
+#endif
+                            }
+
+                      // DQ (2/16/2021): We need to search for the tailing ")" instead of the trailing ";".
+                         if (variableDeclarationConditional != NULL)
+                            {
+                           // Handle the special case where we search for the trailing ")" instead of the ";".
+#if 0
+                              printf ("Handle the special case where we search for the trailing \")\" instead of the \";\" \n");
+#endif
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("NOTE: move fixup of start_of_token_subsequence and end_of_token_subsequence to evaluateSynthesizedAttribute() (n = %s) \n",n->class_name().c_str());
+#endif
+                           // Then this is a secondary declaration (function prototype).
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("BEFORE LOOP: n=%s: Adjusting the end of the token subsequence to find the trailing ';' token = %s \n",
+                                   n->class_name().c_str(),tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+                              printf ("   --- original_end_of_token_subsequence = %d \n",original_end_of_token_subsequence);
+#endif
+                           // while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ";") )
+                              while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ")") )
+                                 {
+                                   end_of_token_subsequence++;
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                                   printf ("In LOOP: Adjusting the end of the token subsequence to find the trailing ')' token = %s end_of_token_subsequence = %d \n",
+                                        tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
+#endif
+                                 }
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("special case of variable, typedef, enum, or class: start_of_token_subsequence=%d end_of_token_subsequence=%d): n = %p = %s \n",
+                                   start_of_token_subsequence,end_of_token_subsequence,n,n->class_name().c_str());
+#endif
+                           // DQ (2/16/2021): The end of the variable declaration is just before the ")".
+                              if (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ")")
+                                 {
+                                   end_of_token_subsequence--;
+                                 }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
 #endif
                             }
 
@@ -5226,7 +5475,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                       // Set to clear default values.
                          start_of_token_subsequence = -1;
                          end_of_token_subsequence   = -1;
-#if 0
+#if DEBUG_TOKEN_MAPPING
                          printf ("Skipping this SgLocatedNode: n = %p = %s \n",n,n->class_name().c_str());
 #endif
                        }
@@ -5252,8 +5501,15 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                  // if (isSgStatement(n) != NULL && isSgFunctionParameterList(n) == NULL)
                     if ( (isSgStatement(n) != NULL && isSgFunctionParameterList(n) == NULL) || forStatementIncrementExpression != NULL)
                        {
-#if 0
-                         printf ("In evaluateInheritedAttribute(): n = %p = %s returning InheritedAttribute with start_of_token_subsequence = %d end_of_token_subsequence = %d \n",n,n->class_name().c_str(),start_of_token_subsequence,end_of_token_subsequence);
+#if DEBUG_TOKEN_MAPPING
+                         printf ("In evaluateInheritedAttribute(): n = %p = %s returning InheritedAttribute with start_of_token_subsequence = %d end_of_token_subsequence = %d \n",
+                              n,n->class_name().c_str(),start_of_token_subsequence,end_of_token_subsequence);
+#endif
+
+#if DEBUG_TOKEN_MAPPING
+                         printf ("\n############################################ \n");
+                         printf ("Evaluate the leading and trailing whitespace \n");
+                         printf ("############################################ \n");
 #endif
                       // Disallow the default value: -1
                          if (start_of_token_subsequence >= 0)
@@ -5396,6 +5652,12 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
           start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
 #endif
 
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+     printf ("#################################### \n");
+     printf ("Leaving evaluateInheritedAttribute() \n");
+     printf ("#################################### \n\n");
+#endif
+
      if (start_of_token_subsequence > end_of_token_subsequence)
         {
           printf ("Error: evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
@@ -5516,13 +5778,17 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
    }
 
 
-TokenMappingTraversal::TokenMappingTraversal(vector<stream_element*> & ts, bool input_useTokenSequenceToImproveSourcePositionInfo)
+  // DQ (1/20/2021): Changed the API to add a pointer to the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
+TokenMappingTraversal::TokenMappingTraversal( vector<stream_element*> & ts, bool input_useTokenSequenceToImproveSourcePositionInfo,
+                                              map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMapPointer)
    : tokenStream(ts),
   // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
-     useTokenSequenceToImproveSourcePositionInfo(input_useTokenSequenceToImproveSourcePositionInfo)
+     useTokenSequenceToImproveSourcePositionInfo(input_useTokenSequenceToImproveSourcePositionInfo),
+  // DQ (1/20/2021): Changed the API to set a reference to the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
+     tokenStreamSequenceMap(*tokenStreamSequenceMapPointer)
    {
 #if 0
-     printf ("tokenStream.size() = %zu \n",tokenStream.size());
+     printf ("In TokenMappingTraversal constructor: tokenStream.size() = %zu \n",tokenStream.size());
 #endif
 
      ROSE_ASSERT(tokenStream.empty() == false);
@@ -5609,7 +5875,7 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
    {
   // Check for unassigned tokens that are not white space.
 
-#if 0
+#if 1
      printf ("\n\nIn outputTokenStreamSequenceMap(): check for tokens between assigned token sequences associated with IR nodes \n");
 #endif
 
@@ -5755,14 +6021,20 @@ getTokenStream( SgSourceFile* file )
 
      string fileNameForTokenStream = file->getFileName();
 
-#if 0
+#if 1
+     printf ("In getTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+#endif
+
+#define DEBUG_GET_TOKEN_STREAM 0
+
+#if DEBUG_GET_TOKEN_STREAM
      printf ("In getTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
-#if 0
+#if DEBUG_GET_TOKEN_STREAM
      printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
 #endif
 
@@ -5772,8 +6044,8 @@ getTokenStream( SgSourceFile* file )
   // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
-#if 0
-     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
+#if DEBUG_GET_TOKEN_STREAM
+     printf ("In getTokenStream(): Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      while (map_iterator != filePreprocInfo->getList().end())
         {
@@ -5806,14 +6078,12 @@ getTokenStream( SgSourceFile* file )
   // LexTokenStreamTypePointer tokenStream = existingListOfAttributes->get_rawTokenStream();
   // ROSE_ASSERT(tokenStream != NULL);
 
+#if 0
      LexTokenStreamType & tokenList = *(existingListOfAttributes->get_rawTokenStream());
 
-#if 0
      printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
      printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
-#endif
 
-#if 0
      int counter = 0;
      for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
         {
@@ -6080,7 +6350,9 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
-#if 0
+#define DEBUG_TOKEN_FRONTIER 0
+
+#if 1
      printf ("In buildTokenStreamFrontier(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -6096,7 +6368,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6107,16 +6379,16 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // where nodes can contain transformation even if they are not a transformation directly.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): Calling detectMacroExpansionsToBeUnparsedAsAstTransformations(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -6124,11 +6396,11 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // However this must be called after all transformations have been done (in the frontier detection).
      detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): DONE: Calling detectMacroExpansionsToBeUnparsedAsAstTransformations(): sourceFile = %p \n",sourceFile);
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6154,7 +6426,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // streams on nodes containing transformations is required to provide a more precise generated 
   // code (precise representation with minimal diff).
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -6165,7 +6437,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6199,7 +6471,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
 #endif
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6212,7 +6484,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // DQ (11/29/2013): This can happen for test_CplusplusMacro_C.c (which has only CPP directives).
   // ROSE_ASSERT(token_unparse_frontier_map.empty() == false);
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
      printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6232,7 +6504,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
           FrontierNode* frontier_node = i->second;
           ROSE_ASSERT(frontier_node != NULL);
 
-#if 0
+#if DEBUG_TOKEN_FRONTIER
           printf ("In buildTokenStreamFrontier(): counter = %d sourceFile filename             = %s \n",counter,sourceFile->getFileName().c_str());
           printf ("In buildTokenStreamFrontier(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
@@ -6423,8 +6695,9 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 
 
+// void buildTokenStreamMapping(SgSourceFile* sourceFile)
 void
-buildTokenStreamMapping(SgSourceFile* sourceFile)
+buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & tokenVector)
    {
   // DQ (12/6/2014): This function seperates the initial generation of the token stream and it's mapping to the AST from 
   // the assocaited connection to the computed frontier after transformations have been done to define where the AST
@@ -6433,26 +6706,61 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
      ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+  // DQ (2/18/2021): Warn that the buildTokenStreamMapping() is always called.
+     if (sourceFile->get_unparse_tokens() == false)
+        {
+          printf ("*** Note that the buildTokenStreamMapping() has been called even if sourceFile->get_unparse_tokens() == false: source file = %s \n",sourceFile->getFileName().c_str());
+        }
+
 #if 0
-     printf ("In buildTokenStreamMapping() \n");
+     printf ("In buildTokenStreamMapping(): Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
+#define DEBUG_TOKEN_STREAM_MAPPING 0
+
+#if DEBUG_TOKEN_STREAM_MAPPING
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("In buildTokenStreamMapping() \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
+#if 0
+  // DQ (1/18/2021): The support for turning the vector<stream_element*> into the vector<SgToken*> is now supported 
+  // in the buildCommentAndCppDirectiveList(), so that it is closer to where the tokens are constructed in the 
+  // getPreprocessorDirectives() function.
      vector<stream_element*> tokenVector = getTokenStream(sourceFile);
+#endif
 
   // DQ (11/29/2018): Debugging the token stream (for form-feeds).
-#if 0
-     printf ("In buildTokenStreamMapping(): (after getTokenStream()): tokenVector = %zu sourceFile->getFileName() = %s \n",tokenVector.size(),sourceFile->getFileName().c_str());
+#if DEBUG_TOKEN_STREAM_MAPPING
+     printf ("In buildTokenStreamMapping(): (after getTokenStream()): tokenVector.size() = %zu sourceFile->getFileName() = %s \n",tokenVector.size(),sourceFile->getFileName().c_str());
+     printf (" --- tokenVector.empty() = %s \n",tokenVector.empty() ? "true" : "false");
 #endif
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (1/20/2021): Building a single instance that we can refer to via a pointer, so that we can use 
+  // this to initialize a reference and avoid multiple copying operations to hold it in the 
+  // Rose::tokenSubsequenceMapOfMapsBySourceFile container (for all SgSourceFile pointers).
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMapPointer = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
+     ROSE_ASSERT(tokenStreamSequenceMapPointer != NULL);
+
   // DQ (1/30/2014): Empty files are allowed (and tested).
   // ROSE_ASSERT(tokenVector.empty() == false);
      if (tokenVector.empty() == true)
         {
           printf ("In buildTokenStreamMapping(): No tokens found in file \n");
+
+       // DQ (1/30/2021): If there ar no tokens or AST nodes, then at least build the empty list to avoid errors later.
+       // This is the trival case of an empty file).
+          ROSE_ASSERT(tokenStreamSequenceMapPointer != NULL);
+          sourceFile->set_tokenSubsequenceMap(tokenStreamSequenceMapPointer);
+
           return;
         }
 
@@ -6473,14 +6781,27 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      bool processThisNode = true;
      InheritedAttribute inheritedAttribute(sourceFile,0,tokenVector.size()-1,processThisNode);
 
+#if 0
+  // DQ (1/20/2021): Building a single instance that we can refer to via a pointer, so that we can use 
+  // this to initialize a reference and avoid multiple copying operations to hold it in the 
+  // Rose::tokenSubsequenceMapOfMapsBySourceFile container (for all SgSourceFile pointers).
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMapPointer = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
+     ROSE_ASSERT(tokenStreamSequenceMapPointer != NULL);
+#endif
+
+  // DQ (1/20/2021): Modified the API for this function to take a pointer to an STL map build on the heap.
   // Build the traversal object
   // TokenMappingTraversal tokenMappingTraversal(tokenVector);
-     TokenMappingTraversal tokenMappingTraversal(tokenVector,sourceFile->get_use_token_stream_to_improve_source_position_info());
+  // TokenMappingTraversal tokenMappingTraversal(tokenVector,sourceFile->get_use_token_stream_to_improve_source_position_info());
+     TokenMappingTraversal tokenMappingTraversal(tokenVector,sourceFile->get_use_token_stream_to_improve_source_position_info(),tokenStreamSequenceMapPointer);
 
-#if 0
+  // std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenSubsequenceMap = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
+  // ROSE_ASSERT(tokenSubsequenceMap != NULL);
+
+#if DEBUG_TOKEN_STREAM_MAPPING
   // Output the depth of the AST.
      printf ("@@@@@@@@@@@@@@@@@@@@ In buildTokenStreamMapping(): (before traversal): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
-     printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+  // printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
      printf ("   --- sourceFile->depthOfSubtree()                 = %d \n",sourceFile->depthOfSubtree());
      printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
 #endif
@@ -6515,21 +6836,29 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
         }
 #endif
 
+#if DEBUG_TOKEN_STREAM_MAPPING
+     printf ("In buildTokenStreamMapping(): Calling tokenMappingTraversal.outputTokenStreamSequenceMap(): \n");
      tokenMappingTraversal.outputTokenStreamSequenceMap();
+#endif
 
-#if 1
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
   // DQ (12/26/2018): This is an error for badInput3.c (when using "-rose:verbose 2".
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
-     if ( SgProject::get_verbose() > 1 )
+     if ( SgProject::get_verbose() > -1 )
         {
+          printf ("In buildTokenStreamMapping(): Calling Graph_TokenMappingTraversal::graph_ast_and_token_stream() \n");
        // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
        // Build a dot file of the AST and the token stream showing the mapping.
           Graph_TokenMappingTraversal::graph_ast_and_token_stream(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap);
         }
 #endif
 
-#if 1
-  // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
+#if DEBUG_TOKEN_STREAM_MAPPING
+     printf ("In buildTokenStreamMapping(): sourceFile->get_unparse_using_leading_and_trailing_token_mappings() = %s \n",sourceFile->get_unparse_using_leading_and_trailing_token_mappings() ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (12/1/2013): Make the output of this graph conditional upon the verbose level.
   // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
   // if ( SgProject::get_verbose() > 0 )
      if ( sourceFile->get_unparse_using_leading_and_trailing_token_mappings() == true )
@@ -6552,6 +6881,13 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // Setup the current file ID from the name in the source file.
      ROSE_ASSERT(sourceFile->get_file_info() != NULL);
      int currentFileId = sourceFile->get_file_info()->get_file_id();
+
+  // DQ (1/7/2021): Output info on this converstion from the data structure used in the lex file
+  // to the data structure used in the rest of ROSE.
+     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+        {
+          printf ("In buildTokenStreamMapping(): building the SgToken objects from the tokens collected by the lex file: size = %zu \n",roseTokenList.size());
+        }
 
   // This should now include all of the CPP directives and C/C++ style comments as tokens.
   // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
@@ -6578,10 +6914,11 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // Avoid the copy into the list held by SgSourceFile.
   // sourceFile->set_token_list(tokenList);
 
-#if 1
-  // Output the tokenStreamSequenceMap:
 #if 0
+  // Output the tokenStreamSequenceMap:
+#if 1
      printf ("In buildTokenStreamMapping(): Output TokenStreamSequenceToNodeMapping \n");
+     printf ("tokenMappingTraversal.tokenStreamSequenceMap.size() = %zu \n",tokenMappingTraversal.tokenStreamSequenceMap.size());
 #endif
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator i = tokenMappingTraversal.tokenStreamSequenceMap.begin();
      while (i != tokenMappingTraversal.tokenStreamSequenceMap.end())
@@ -6610,17 +6947,30 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamMapping(): (before calling set function): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
+#if 1
+  // DQ (1/19/2021): Commented out so see how we can perhaps have a single map for all files.
+
   // Note that the map is actually a member of the ROSE namespace, and that this is done because the 
   // ROSE IR can't support (as defined by ROSETTA) some more complex types as what we would need to 
   // support it as a data member of the SgSourceFile IR node.  This is due in part to ROSETTA and the
   // additional requirements of the generated serialization that is a part of the AST File I/O.
-     sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
+  // sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
+     sourceFile->set_tokenSubsequenceMap(&(tokenMappingTraversal.tokenStreamSequenceMap));
 
-#if 0
+#if DEBUG_TOKEN_STREAM_MAPPING
+  // DQ (1/19/2021): This is redundant so that we don't have to call the get_tokenSubsequenceMap() function
+  // while debugging the set_tokenSubsequenceMap() function.
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = tokenMappingTraversal.tokenStreamSequenceMap;
+
      printf ("In buildTokenStreamMapping(): (after calling set function): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
-#if 1
+#else
+  // Make a local copy.
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = tokenMappingTraversal.tokenStreamSequenceMap;
+#endif
+
+#if 0
   // Output the tokenStreamSequenceMap:
 #if 0
      printf ("In buildTokenStreamMapping(): Output TokenStreamSequenceToNodeMapping \n");
@@ -6638,13 +6988,29 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 #endif
           j++;
         }
+#else
+
+#if DEBUG_TOKEN_STREAM_MAPPING
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator j = tokenStreamSequenceMap.begin();
+     while (j != tokenStreamSequenceMap.end())
+        {
+          printf ("j->first = %p = %s: \n",j->first,j->first->class_name().c_str());
+
+       // DQ (9/28/2018): Adding assertion.
+          ROSE_ASSERT(j->second->node != NULL);
+#if 0
+          j->second->display("buildTokenStreamMapping(): 2: token sequence");
+#endif
+          j++;
+        }
+#endif
 #endif
 #if 0
      printf ("Completed the AST token stream mapping (before transformations) \n");
      ROSE_ASSERT(false);
 #endif
 
-#if 0
+#if DEBUG_TOKEN_STREAM_MAPPING
      if (sourceFile->get_representativeWhitespaceStatementMap().size() >= 0)
         {
           printf ("buildTokenStreamMapping(): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
@@ -6682,21 +7048,39 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
         }
 #endif
 
-#if 1
+#if 0
   // DQ (9/25/2018): Test if the token stream mapping includes the global scope.
   // NOTE: this is an issue for the global scope added for each include file (which maybe should be done before the mapping is built).
   // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) == sourceFile->get_tokenSubsequenceMap().end());
      ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 #endif
 
-#if 0
+#if DEBUG_TOKEN_STREAM_MAPPING
   // Output the depth of the AST.
-     printf ("In buildTokenStreamMapping(): (after traversal): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
-     printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("Leaving buildTokenStreamMapping(): (after traversal): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+  // printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
      printf ("   --- sourceFile->depthOfSubtree()                 = %d \n",sourceFile->depthOfSubtree());
      printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
+     printf ("   --- sourceFile->get_unparse_output_filename()    = %s \n",sourceFile->get_unparse_output_filename().c_str());
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
+#if 0
+  // DQ (1/11/2021): Debugging code.
+  // if (sourceFile->getFileName() != "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_124.cpp")
+     if (sourceFile->get_unparse_output_filename() != "")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 

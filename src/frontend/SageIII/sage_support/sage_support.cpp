@@ -80,7 +80,8 @@ extern const std::string ROSE_OFP_VERSION_STRING;
 // DQ (12/6/2014): Moved this from the unparser.C fle to here so that it can
 // be called before any processing of the AST (so that it relates to the original
 // AST before transformations).
-void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & tokenVector);
 
 // DQ (11/30/2015): Adding general support fo the detection of macro expansions and include file expansions.
 void detectMacroOrIncludeFileExpansions(SgSourceFile* sourceFile);
@@ -2330,7 +2331,14 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
 #if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("In SgProject::parse(): Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
@@ -2983,7 +2991,9 @@ SgProject::parse()
         }
 
 #if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("Leaving SgProject::parse(): errorCode = %d \n",errorCode);
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
      return errorCode;
@@ -3536,6 +3546,8 @@ SgFile::secondaryPassOverSourceFile()
      printf (" --- get_header_file_unparsing_optimization() = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
 #endif
 
+#define DEBUG_SECONDARY_PASS 0
+
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
 
@@ -3551,7 +3563,7 @@ SgFile::secondaryPassOverSourceFile()
 
           if (this->get_header_file_unparsing_optimization_source_file() == true)
              {
-#if 0
+#if DEBUG_SECONDARY_PASS
                printf ("In SgFile::secondaryPassOverSourceFile(): this = %p = %s name = %s this->get_header_file_unparsing_optimization_header_file() = %s \n",
                     this,this->class_name().c_str(),this->getFileName().c_str(),this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
@@ -3566,7 +3578,7 @@ SgFile::secondaryPassOverSourceFile()
                   }
 
                ROSE_ASSERT(this->get_header_file_unparsing_optimization_header_file() == false);
-#if 0
+#if DEBUG_SECONDARY_PASS
                printf ("In SgFile::secondaryPassOverSourceFile(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
 #endif
             // DQ (12/21/2019): This not used and generates a compiler warning.
@@ -3577,7 +3589,7 @@ SgFile::secondaryPassOverSourceFile()
                ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == false);
                if (this->get_header_file_unparsing_optimization_header_file() == true)
                   {
-#if 0
+#if DEBUG_SECONDARY_PASS
                     printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
 #endif
                     header_file_unparsing_optimization_header_file = true;
@@ -3643,14 +3655,14 @@ SgFile::secondaryPassOverSourceFile()
             // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
                if (p_preprocessorDirectivesAndCommentsList == NULL)
                   {
-#if 0
+#if DEBUG_SECONDARY_PASS
                     printf ("Initialize NULL p_preprocessorDirectivesAndCommentsList to empty ROSEAttributesListContainer \n");
 #endif
                     p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
                   }
                  else
                   {
-#if 0
+#if DEBUG_SECONDARY_PASS
                     printf ("NOTE: p_preprocessorDirectivesAndCommentsList is already defined! \n");
                     printf (" --- filename = %s \n",this->getFileName().c_str());
                     printf (" --- p_preprocessorDirectivesAndCommentsList->getList().size() = %zu \n",p_preprocessorDirectivesAndCommentsList->getList().size());
@@ -3672,7 +3684,7 @@ SgFile::secondaryPassOverSourceFile()
        // traversal and has been rewritten.
           if (get_skip_commentsAndDirectives() == false)
              {
-               if (get_verbose() > 1)
+               if (get_verbose() >= 1)
                   {
                     printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
                   }
@@ -3689,13 +3701,13 @@ SgFile::secondaryPassOverSourceFile()
                     requiresCPP = get_requires_C_preprocessor();
                     if (requiresCPP == true)
                        {
-#if 0
+#if DEBUG_SECONDARY_PASS
                          printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 4) \n");
 #endif
                          set_requires_C_preprocessor(false);
                        }
                   }
-#if 0
+#if DEBUG_SECONDARY_PASS
                printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
 #endif
 #if 1
@@ -3712,12 +3724,13 @@ SgFile::secondaryPassOverSourceFile()
 
                  // DQ (10/18/2020): This is enforced within attachPreprocessingInfo(), so move the enforcement to be as early as possible.
                     ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
-#if 0
+#if DEBUG_SECONDARY_PASS
                     printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
                     attachPreprocessingInfo(sourceFile);
-#if 0
+#if DEBUG_SECONDARY_PASS
                     printf ("@@@@@@@@@@@@@@ DONE: In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+                 // printf ("In SgFile::secondaryPassOverSourceFile(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 #if 0
                     printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
@@ -3755,13 +3768,17 @@ SgFile::secondaryPassOverSourceFile()
                     SageInterface::translateToUseCppDeclarations(sourceFile);
                   }
 
-#if 0
+#if DEBUG_SECONDARY_PASS
+            // SgSourceFile* sourceFile = isSgSourceFile(this);
+            // printf ("In SgFile::secondaryPassOverSourceFile(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
                printf ("In SgFile::secondaryPassOverSourceFile(): Building token stream mapping map! \n");
 #endif
+
+            // DQ (1/18/2021): This is now moved to the buildCommentAndCppDirectiveList() function (closer to where the vector of tokes is generated).
             // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
             // and attaches the toke stream to the SgSourceFile IR node.
             // *** Next we have to attached the data base ***
-               buildTokenStreamMapping(sourceFile);
+            // buildTokenStreamMapping(sourceFile);
 #if 0
                printf ("sourceFile->get_token_list().size() = %zu \n",sourceFile->get_token_list().size());
 #endif
@@ -3842,6 +3859,13 @@ SgFile::secondaryPassOverSourceFile()
                        }
 #error "DEAD CODE!"
                   }
+#endif
+
+#if DEBUG_SECONDARY_PASS
+            // DQ (1/19/2021): This is a test for calling the get_tokenSubsequenceMap() function.
+               printf ("Testing first use of SgSourceFile::get_tokenSubsequenceMap() function:sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
+               map<SgNode*,TokenStreamSequenceToNodeMapping*> & temp_tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+               printf ("DONE: Testing first use of SgSourceFile::get_tokenSubsequenceMap() function:sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
 #if 0
                printf ("Exiting as a test! \n");
