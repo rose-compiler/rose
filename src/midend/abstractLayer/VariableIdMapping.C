@@ -15,7 +15,7 @@ using namespace std;
 using namespace CodeThorn;
 using namespace Rose::Diagnostics;
 
-int exprToInt(SgExpression* exp) {
+static int exprToInt(SgExpression* exp) {
   if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
     return valExp->get_value();
   else if(SgIntVal* valExpInt = isSgIntVal(exp))
@@ -61,10 +61,14 @@ size_t VariableIdMapping::getArrayDimensionsFromInitializer(SgAggregateInitializ
   return result;
 }
 
-VariableIdMapping::VariableIdMapping() {
+VariableIdMapping::VariableIdMapping():linkAnalysis(false) {
 }
 
 VariableIdMapping::~VariableIdMapping() {
+}
+
+void VariableIdMapping::setLinkAnalysisFlag(bool flag) {
+  linkAnalysis=flag;
 }
 
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
@@ -130,6 +134,13 @@ bool VariableIdMapping::hasClassType(VariableId varId) {
 bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
+}
+
+std::string VariableIdMapping::mangledName(VariableId varId) {
+  if(SgSymbol* sym=getSymbol(varId))
+    return sym->get_mangled_name();
+  else
+    return "*";
 }
 
 /*! 
@@ -281,7 +292,7 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
  * \date 2012.
  */
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
-  assert(sym);
+  ROSE_ASSERT(sym);
   VariableId newId;
   // schroder3 (2016-08-23): Added if-else to make sure that this does not create a
   //  new mapping entry (with id 0) if the given symbol is not in the mapping yet
@@ -388,7 +399,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
         //type = closureVar->get_type();
-      } else if(initName = isSgInitializedName(*i)) {
+      } else if((initName = isSgInitializedName(*i))) {
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
@@ -404,9 +415,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
       if(sym) {
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
-          // determine if it is a symbol of a global varible
-          // TODO
-
           // Register new symbol as normal variable symbol:
           registerNewSymbol(sym);
           // Remember that this symbol was already registered:
@@ -431,7 +439,34 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
   }
   // creates variableid for each string literal in the entire program
   registerStringLiterals(project);
+  if(linkAnalysis) {
+
+  }
   return;
+}
+
+SgSymbol* VariableIdMapping::selectLinkSymbol(std::set<SgSymbol*>& symSet) {
+  ROSE_ASSERT(symSet.size()>0);
+  return *symSet.begin();
+}
+
+void VariableIdMapping::performLinkAnalysisRemapping() {
+  for(VarNameToSymMappingType::iterator i=mappingGlobalVarNameToSymSet.begin();i!=mappingGlobalVarNameToSymSet.end();++i) {
+    std::set<SgSymbol*>& symSet=(*i).second;
+    VariableId v;
+    if(symSet.size()>0) {
+      v=variableId(selectLinkSymbol(symSet)); // choose some symbol
+      ROSE_ASSERT(v.isValid());
+      for (std::set<SgSymbol*>::iterator i=symSet.begin();i!=symSet.end();++i) {
+	SgSymbol* sym=*i;
+	if(sym!=mappingVarIdToInfo[v].sym) {
+	  mappingSymToVarId[sym]=v;
+	  mappingVarIdToInfo[v].sym=sym;
+	  mappingVarIdToInfo[v].relinked=true;
+	}
+      }
+    }
+  }
 }
 
 /*! 
@@ -646,9 +681,20 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     size_t newIdCode = mappingVarIdToInfo.size();
     mappingSymToVarId[sym] = variableIdFromCode(newIdCode);
     mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym=sym;
-    // set size to 1 (to compute bytes, multiply by size of type)
+
+    // determine if sym is declared in global scope and store information required for link analysis
+    // this check only succeeds for global variables (it filters member variables)
+    SgScopeStatement* scope=sym->get_scope();
+    if(isSgGlobal(scope)) {
+      SgName name=sym->get_mangled_name();
+      mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
+    }
+    
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
+    //VariableId newVarId=variableId(sym);
+
+    // set size to 1 (to compute bytes, multiply by size of type)
     setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
@@ -695,7 +741,8 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   numberOfElements(0),
   elementSize(0),
   offset(-1),
-  isMemberVariable(false)
+  isMemberVariable(false),
+  relinked(false)
 {
 }
 

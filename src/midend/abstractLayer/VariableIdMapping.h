@@ -159,16 +159,20 @@ namespace CodeThorn {
     // to the same SgSymbol. This function is used to handle this
     // special case.
     static bool isAnonymousBitfield(SgInitializedName* initName);
+    std::string mangledName(VariableId varId);
 
+    // link analysis is by default disabled (=false)
+    void setLinkAnalysisFlag(bool);
   protected:
     struct VariableIdInfo {
     public:
       VariableIdInfo();
       SgSymbol* sym;
-      size_t numberOfElements;
+      size_t numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables
       size_t elementSize; // in bytes
       int offset;      // in bytes, only for member variables
       bool isMemberVariable;
+      bool relinked; // true if link analysis relinked this entry
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
     std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
@@ -182,11 +186,16 @@ namespace CodeThorn {
     VariableId addNewSymbol(SgSymbol* sym);
 
     // used for link analysis of global variables based on mangled names
-    std::map<std::string,SgSymbol*> mappingGlobalVarNameToSymbol;
+    typedef std::map<SgName,std::set<SgSymbol*> > VarNameToSymMappingType;
+    VarNameToSymMappingType mappingGlobalVarNameToSymSet;
 
     // used for mapping in both directions
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
     std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
+
+    SgSymbol* selectLinkSymbol(std::set<SgSymbol*>& symSet);
+    void performLinkAnalysisRemapping();
+    bool linkAnalysis;
   }; // end of class VariableIdMapping
 
   typedef VariableIdMapping::VariableIdSet VariableIdSet;
