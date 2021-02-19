@@ -232,7 +232,7 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
+  // SgModifierType is also used to mark R,T,Z (round, truncate, truncate towards zero).
   // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
      if (modifier_type->get_typeModifier().isRound()     ||
          modifier_type->get_typeModifier().isTruncate()  ||
@@ -258,23 +258,26 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
      SgType* base_type = table_type->get_base_type();
      std::string type_name = table_type->get_name();
 
-  // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
-     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
-
+  // Unparse dimension information first
      SgExprListExp* dim_info = table_type->get_dim_info();
      if (dim_info != NULL)
         {
-           unparseDimInfo(dim_info, info);
+          unparseDimInfo(dim_info, info);
         }
 
-     if (info.inVarDecl() && is_anonymous == false)
+  // The base type will need to be unparsed (not just the base type name) if
+  // it is a primitive type (e.g., U 32, where get_name() won't exist) or if
+  // it is anonymous (where again, there won't be a proper name)
+     SgNamedType* named_type = isSgNamedType(base_type);
+
+     if (info.inVarDecl() && named_type)
         {
-           curprint(type_name);
+          curprint(named_type->get_name());
         }
      else if (base_type != NULL)
         {
-        // Unparse base type directly if present and not in a variable declaration context
-           unparseType(base_type, info);
+       // Unparse base type directly if present and not in a variable declaration context
+          unparseType(base_type, info);
         }
   }
 

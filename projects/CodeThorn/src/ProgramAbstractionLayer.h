@@ -9,6 +9,7 @@
 #include "Flow.h"
 #include "VariableIdMappingExtended.h"
 #include "CodeThornOptions.h"
+#include "TimingCollector.h"
 
 class SgProject;
 class ClassHierarchyWrapper;
@@ -19,6 +20,7 @@ namespace CodeThorn {
   public:
     ProgramAbstractionLayer();
     virtual ~ProgramAbstractionLayer();
+    virtual void initialize(CodeThornOptions& ctOpt, SgProject* root, CodeThorn::TimingCollector& tc);
     virtual void initialize(CodeThornOptions& ctOpt, SgProject* root);
     SgProject* getRoot();
     Labeler* getLabeler();

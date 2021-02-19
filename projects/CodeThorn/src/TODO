@@ -2,10 +2,5 @@
   #define NO_STATE -3
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
-11)
-  some CommandLineOptions are used in functions of libcodethorn. Therefore CommandLineOptoins.C is still compiled in libcodethorn.
-  This does not effect the DF* classes, only Solver5 based analysis (timeout options, etc.)
-12)
-  add RERS hybrid mode function pointer initialization to:
-  rers/scripts/generate_state_copy_functions
-  according to codethorn/src/RERS_empty_specialization.C
+
+CONTINUE UNRESOLVED CALLS

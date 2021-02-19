@@ -2745,7 +2745,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                switch (n->variantT())
                   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                  // SgBinaryComposite need not be in the switch since we don't attach CPP directives or comments to it.
                     case V_SgBinaryComposite:
                         {

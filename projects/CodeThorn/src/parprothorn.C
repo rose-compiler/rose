@@ -45,6 +45,7 @@
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
+#include "TimingCollector.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -91,7 +92,6 @@ const std::string versionString="0.8.0";
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {
@@ -315,8 +315,6 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
     analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
@@ -391,9 +389,6 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
     }
-    if(ctOpt.ignoreUndefinedDereference) {
-      analyzer->setIgnoreUndefinedDereference(true);
-    }
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
@@ -459,17 +454,11 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(ctOpt.normalizeFCalls) {
-      lowering.normalizeAst(sageProject,1);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
-    }
-
-    if(ctOpt.normalizeAll) {
+    if(ctOpt.normalizeLevel>0) {
       if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
-      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-      lowering.normalizeAst(sageProject,2);
+      lowering.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
@@ -651,16 +640,6 @@ int main( int argc, char * argv[] ) {
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
-    if(ctOpt.eliminateCompoundStatements) {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-      set<AbstractValue> compoundIncVarsSet=AstUtility::determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-      rewriteSystem.resetStatistics();
-      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
-    }
-
     if(ctOpt.rers.eliminateArrays) {
       Specialization speci;
       speci.transformArrayProgram(sageProject, analyzer);
@@ -681,8 +660,9 @@ int main( int argc, char * argv[] ) {
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
+    TimingCollector tc; // new feature, other timers can be removed
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver2(option_specialize_fun_name,sageProject);
+      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,tc);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -708,7 +688,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver2(startFunction,sageProject);
+      analyzer->initializeSolver3(startFunction,sageProject,tc);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
@@ -1217,8 +1197,8 @@ int main( int argc, char * argv[] ) {
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(ctOpt.visualization.viz) {
-        cout << "generating graphviz files:"<<endl;
+      if(ctOpt.visualization.vis) {
+        cout << "generating graphvis files:"<<endl;
         visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
@@ -1236,21 +1216,21 @@ int main( int argc, char * argv[] ) {
         //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
         analyzer->generateAstNodeInfo(sageProject);
         cout << "generating AST node info ... "<<endl;
         dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
         write_file("ast.dot", dotFile);
         cout << "generated ast.dot."<<endl;
 
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
         write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(ctOpt.visualization.vizTg2) {
+      if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;

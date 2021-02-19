@@ -2,6 +2,7 @@
 // #                           Header Files                       #
 // ################################################################
 
+#include <featureTests.h>
 #include "rose_config.h"
 #include "grammar.h"
 #include "AstNodeClass.h"
@@ -133,7 +134,7 @@ Grammar::Grammar ( const string& inputGrammarName,
      setUpExpressions();
      setUpSymbols();
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (3/15/2007): Added support for binaries
      setUpBinaryInstructions();
 #endif
@@ -3377,7 +3378,7 @@ Grammar::buildCode ()
   // DQ (3/15/2007): Added output function for STL list objects
   // ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::set<SgAsmStatement*>&);\n\n";
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmStatement*>&);\n\n";
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmExpression*>&);\n\n";
 #endif

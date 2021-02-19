@@ -145,7 +145,13 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   SgNode* functionDef=getLabeler()->getNode(entryLabel);
   RoseAst ast(functionDef);
   for(auto node : ast) {
-    if(!isSgBasicBlock(node)) {
+    bool labeledNodeNotInCFG=
+      isSgForStatement(node)
+      ||isSgWhileStmt(node)
+      ||isSgDoWhileStmt(node)
+      ||isSgSwitchStatement(node)
+      ||isSgIfStmt(node);
+    if(!isSgBasicBlock(node)&&!labeledNodeNotInCFG) {
       Label lab=getLabeler()->getLabel(node);
       if(lab.isValid()) {
         fLabels.insert(lab);
@@ -1659,17 +1665,17 @@ Flow CFAnalysis::flow(SgNode* n) {
 }
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
+  SAWYER_MESG(logger[INFO])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
   if(res.size()>0) {
     if(res.size()==1) {
-      SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      SAWYER_MESG(logger[INFO]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
+      SAWYER_MESG(logger[INFO])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[INFO]) << "NOT RESOLVED."<<endl;
   }
   return res;
 }

@@ -93,6 +93,21 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
       ss<<"->";
       ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
       ss<<";"<<endl;
+    } else if(v2.isPtrSet()) {
+      // nodes
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      AbstractValueSet* avTargetSet=(*j).second.getAbstractValueSet();
+      for(auto av : *avTargetSet) {
+        ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping)<<"\"];"<<endl;
+      }
+      //endl; // target label intentionally not generated
+      // edge
+      for(auto av : *avTargetSet) {
+        ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
+        ss<<"->";
+        ss<<"\""<<dotNodeIdString(prefix,av)<<"\" [weight=\"0.0\"]";
+        ss<<";"<<endl;
+      }
     } else {
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
     }
@@ -235,7 +250,6 @@ AbstractValueSet PState::getVariableIds() const {
   return varIdSet;
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -336,9 +350,29 @@ bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   * \author Markus Schordan
   * \date 2014.
  */
-AbstractValue PState::varValue(AbstractValue av) const {
-  AbstractValue val=((*(const_cast<PState*>(this)))[av]);
-  return val;
+AbstractValue PState::varValue(AbstractValue memLoc) const {
+  if(memLoc.isPtrSet()) {
+    // reading from set of values, combined all and return
+    AbstractValue readSummary; // defaults to bot
+    AbstractValueSet& set=*memLoc.getAbstractValueSet();
+    bool moreThanOneElement=set.size()>1;
+    for(auto memLoc : set) {
+      AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive cal
+      if(av.isPtrSet()) {
+        av=varValue(av);
+      } 
+      ROSE_ASSERT(!av.isPtrSet());
+      readSummary=AbstractValue::combine(readSummary,av);
+    }
+    return readSummary;
+  } else {
+    if(find(memLoc)==end()) {
+      // address is not reserved, return top
+      return AbstractValue::createTop();
+    }
+    AbstractValue val=((*(const_cast<PState*>(this)))[memLoc]);
+    return val;
+  }
 }
 
 AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const {
@@ -350,16 +384,25 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
 }
 
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
-                                   AbstractValue abstractValue) {
+                                   AbstractValue abstractValue,
+                                   bool strongUpdate) {
   if(abstractValue.isBot()) {
     // writing bot to memory (bot->top conversion)
-    abstractValue=AbstractValue(CodeThorn::Top());
-  }
-  if(abstractMemLoc.isTop()) {
+    abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
+  } else if(abstractMemLoc.isTop()) {
     combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    return;
+  } else if(abstractMemLoc.isPtrSet()) {
+    // call recursively for all values in the set
+    //cout<<"DEBUG: ptr set recursion."<<endl;
+    AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
+    for (auto av : avSet) {
+      writeToMemoryLocation(av,abstractValue,false);
+    }
     return;
   } else {
     if(AbstractValue::byteMode) {
+      ROSE_ASSERT(!abstractMemLoc.isPtrSet());
       VariableId varId=abstractMemLoc.getVariableId();
       long int offset=abstractMemLoc.getIndexIntValue();
       ROSE_ASSERT(AbstractValue::_variableIdMapping);
@@ -386,23 +429,47 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
               AbstractValue change=AbstractValue(inStateElemSize);
               abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
               // TODO: check for memory bound
-              operator[](abstractMemLoc)=AbstractValue::createTop();
+              rawWriteAtAbstractAddress(abstractMemLoc,AbstractValue::createTop());
             }
           }
         } else {
-          operator[](abstractMemLoc)=abstractValue; // should not happen (elemsize=0)
+          rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // should not happen (elemsize=0)
         }
       } else {
-        operator[](abstractMemLoc)=abstractValue; // elem size is the same, keeping precision
+        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // elem size is the same, keeping precision
       }
     } else {
-      operator[](abstractMemLoc)=abstractValue; // not in bytemode (cannot handle unaligend access)
+      // not in byte mode
+      if(abstractMemLoc.isPtrSet()) {
+        AbstractValueSet& set=*abstractMemLoc.getAbstractValueSet();
+        bool moreThanOneElement=set.size()>1;
+        for(auto memLoc : set) {
+          if(moreThanOneElement) {
+            //cout<<"DEBUG: COMBINE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
+            combineAtMemoryLocation(memLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
+          } else {
+            // strong update. TODO: local vars in recursive functions (must be marked as such)
+            //cout<<"DEBUG: WRITE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
+            rawWriteAtAbstractAddress(memLoc,abstractValue);
+          }
+        }
+      } else {
+        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
+      }
     }
   }
 }
 
+void PState::rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue) {
+  ROSE_ASSERT(!abstractAddress.isPtrSet());
+  //cout<<"DEBUG: rawrite:"<<abstractAddress.toString()<<","<<abstractValue.toString()<<endl;
+  operator[](abstractAddress)=abstractValue;
+  //cout<<"DEBUG: rawrite: done."<<endl;
+}
+
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
+  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::PTR_SET);
   AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 

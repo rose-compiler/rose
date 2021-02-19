@@ -24,19 +24,36 @@
 
 namespace
 {
+  SgVariableSymbol& symOf(const SgVarRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
+  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
   SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
   }
 
-  SgName nameOf(const SgVarRefExp& var_ref)
+  SgName nameOf(const SgVarRefExp& n)
   {
-    return nameOf(SG_DEREF(var_ref.get_symbol()));
+    return nameOf(symOf(n));
   }
 
-  SgName nameOf(const SgFunctionRefExp& fun_ref)
+  SgName nameOf(const SgFunctionRefExp& n)
   {
-    return nameOf(SG_DEREF(fun_ref.get_symbol()));
+    return nameOf(symOf(n));
+  }
+
+  SgInitializedName& declOf(const SgVarRefExp& n)
+  {
+    SgVariableSymbol& sy = symOf(n);
+
+    return SG_DEREF(sy.get_declaration());
   }
 
   std::string
@@ -129,12 +146,12 @@ namespace
     {}
 
     std::string
-    scopeQual(SgExpression& local, SgScopeStatement& remote);
+    scopeQual(SgScopeStatement& remote);
 
     std::string
-    scopeQual(SgExpression& local, SgScopeStatement* remote)
+    scopeQual(SgScopeStatement* remote)
     {
-      return scopeQual(local, SG_DEREF(remote));
+      return scopeQual(SG_DEREF(remote));
     }
 
     void prn(const std::string& s)
@@ -201,6 +218,11 @@ namespace
       expr(n.get_end());
     }
 
+    void handle(SgExprListExp& n)
+    {
+      exprlst(n);
+    }
+
     void handle(SgCallExpression& n)
     {
       SgExprListExp& args = SG_DEREF(n.get_args());
@@ -210,22 +232,18 @@ namespace
     }
 
     // unparse expression attributes
-    void handle(SgTypeTraitBuiltinOperator& n)
+    void handle(SgAdaAttributeExp& n)
     {
-      SgNodePtrList& args = n.get_args();
-      ROSE_ASSERT(args.size() == 2);
-
-      expr(isSgExpression(args.front()));
+      expr(n.get_object());
       prn("'");
-      prn(n.get_name());
+      prn(n.get_attribute());
 
-      SgExprListExp& attrargs = SG_DEREF(isSgExprListExp(args.back()));
-      arglst_opt(attrargs);
+      arglst_opt(SG_DEREF(n.get_args()));
     }
 
     void handle(SgCastExp& n)
     {
-      type(n.get_type(), n);
+      type(n.get_type());
       prn("(");
       expr(n.get_operand());
       prn(")");
@@ -233,7 +251,7 @@ namespace
 
     void handle(SgTypeExpression& n)
     {
-      type(n.get_type(), n);
+      type(n.get_type());
     }
 
     void handle(SgStringVal& n)
@@ -259,7 +277,13 @@ namespace
 
     void handle(SgVarRefExp& n)
     {
-      // \todo scope qualify if needed
+      if (ctxRequiresScopeQualification)
+      {
+        SgInitializedName& init = declOf(n);
+
+        prn(scopeQual(init.get_scope()));
+      }
+
       prn(nameOf(n));
     }
 
@@ -293,7 +317,7 @@ namespace
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
 
       if (ctxRequiresScopeQualification)
-        prn(scopeQual(n, fundcl.get_scope()));
+        prn(scopeQual(fundcl.get_scope()));
 
       prn(nameOf(n));
     }
@@ -302,7 +326,7 @@ namespace
     {
       SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
 
-      prn(scopeQual(n, tskdcl.get_scope()));
+      prn(scopeQual(tskdcl.get_scope()));
       prn(tskdcl.get_name());
     }
 
@@ -315,9 +339,9 @@ namespace
       expr(exp);
     }
 
-    void type(SgType* t, SgExpression& ctx)
+    void type(SgType* t)
     {
-      unparser.unparseType(t, sg::ancestor<SgScopeStatement>(&ctx), info);
+      unparser.unparseType(t, info);
     }
 
     Unparse_Ada&    unparser;
@@ -412,9 +436,12 @@ namespace
   }
 
   std::string
-  AdaExprUnparser::scopeQual(SgExpression& local, SgScopeStatement& remote)
+  AdaExprUnparser::scopeQual(SgScopeStatement& remote)
   {
-    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
+    SgScopeStatement* current = info.get_current_scope();
+
+    return current ? unparser.computeScopeQual(*current, remote)
+                   : ""; // <-- this should only be here if invoked from unparseToString..
   }
 
 }
@@ -444,7 +471,9 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
 {
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
+  const bool withScopeQual = info.get_current_scope() != NULL;
+
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, withScopeQual}, expr);
 }
 
 
@@ -453,3 +482,9 @@ void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
 }
 
+void Unparse_Ada::setInitialScope(SgUnparse_Info& info, SgExpression* n)
+{
+  SgScopeStatement* scope = sg::ancestor<SgScopeStatement>(n);
+
+  info.set_current_scope(scope);
+}

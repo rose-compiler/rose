@@ -51,6 +51,10 @@ std::map<int, Element_Struct*>& elemMap();
 template <class KeyType, class SageNode>
 using map_t = std::map<KeyType, SageNode>;
 
+
+/// Ada identifier that can be used in maps/lookup tables
+/// \brief
+///   converts each identifier to a common representation (i.e., upper case)
 struct AdaIdentifier : std::string
 {
   typedef std::string base;
@@ -196,7 +200,10 @@ struct ElemCreator
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// @{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
+/// @}
 
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind
@@ -210,24 +217,6 @@ void logKind(const char* kind, bool primaryHandler = true);
 /// anonymous namespace for auxiliary templates and functions
 namespace
 {
-  /// converts a value of type V to a value of type U via streaming
-  /// \tparam  V input value type
-  /// \tparam  U return value type
-  /// \param   val the value to be converted
-  /// \returns \ref val converted to type \ref U
-  template <class U, class V>
-  inline
-  U conv(const V& val)
-  {
-    U                 res;
-    std::stringstream buf;
-
-    buf << val;
-    buf >> res;
-
-    return res;
-  }
-
   /// upcasts an object of type Derived to an object of type Base
   /// \note useful mainly in the context of overloaded functions
   template <class Base, class Derived>
@@ -310,16 +299,28 @@ namespace
 #endif /* USE_SIMPLE_STD_LOGGER */
 
   /// records a node (value) \ref val with key \ref key in map \ref m.
+  /// \param m       the map
+  /// \param key     the record key
+  /// \param val     the new value
+  /// \param replace true, if the key is already in the map, false otherwise
+  ///        (this is used for consistency checks).
   /// \pre key is not in the map yet
   template <class KeyT, class DclT, class ValT>
   inline
   void
-  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    ROSE_ASSERT(m.find(key) == m.end());
+    //~ ROSE_ASSERT(replace || m.find(key) == m.end());
+    if (!(replace || m.find(key) == m.end()))
+    {
+      logError() << "replace node " << typeid(*m[key]).name()
+                 << " with " << typeid(val).name()
+                 << std::endl;
+    }
 
     m[key] = &val;
   }
+
 
   /// records the first mapping that appears in the translation
   /// secondary mappings are ignored, but do not trigger an error.

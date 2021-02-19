@@ -17,7 +17,7 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -1609,7 +1609,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 #endif
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Unparses a single physical, binary file.
  *
  *  Recreates the original binary file from the container representation under the SgAsmGenericFile node. This does not
@@ -2665,6 +2665,12 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     ASSERT_not_null(roseUnparser.u_fortran_locatedNode);
                     roseUnparser.u_fortran_locatedNode->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
                   }
+               else if (SageInterface::is_Ada_language())
+                  {
+                    Unparse_Ada adagen{&roseUnparser, ""};
+
+                    adagen.unparseStatement( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
+                  }
                  else
                   {
                  // Unparse as a C/C++ code.
@@ -2718,9 +2724,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                   }
                else if (SageInterface::is_Ada_language())
                   {
-                    Unparse_Ada adagen{&roseUnparser, ""};
+                    Unparse_Ada   adagen{&roseUnparser, ""};
+                    SgExpression* exprNonConst = const_cast<SgExpression*>(expr);
+                    bool          replNull = !inheritedAttributeInfo.get_current_scope();
+
+                    if (replNull)
+                      adagen.setInitialScope(inheritedAttributeInfo, exprNonConst);
 
                     adagen.unparseExpression( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
+
+                    if (replNull)
+                      adagen.setInitialScope(inheritedAttributeInfo, NULL);
                   }
                  else
                   {
@@ -3840,7 +3854,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     break;
                   }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
                   {
                     SgBinaryComposite* binary = isSgBinaryComposite(file);

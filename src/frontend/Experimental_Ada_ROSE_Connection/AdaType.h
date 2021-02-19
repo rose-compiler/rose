@@ -12,6 +12,7 @@ namespace Ada_ROSE_Translation
 {
 
 /// initializes a hidden scope with built-in ada types
+/// \todo this should disappear as soon as the Standard package is included in Asis
 void initializeAdaTypes(SgGlobal& global);
 
 /// represents a (partially) converted type
@@ -63,7 +64,7 @@ getConstraintID(Element_ID el, AstContext ctx);
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
 TypeData
-getTypeFoundation(Declaration_Struct& decl, AstContext ctx);
+getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
 
 
 }

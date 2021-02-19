@@ -151,10 +151,24 @@ void Solver5::run() {
                       // graph as an existing estate.
                       newEStatePtr=summaryEState; 
                     } else {
+                      stringstream condss;
                       EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       const EState* newEStatePtr2=pres.second;
+
+                      // DEBUG
+#if 0
+                      int checkId=220;
+                      int id=newEStatePtr2->label().getId();
+                      if(id==checkId) {
+                        cout<<"--------------------------------------------------"<<endl;
+                        cout<<"@"<<id<<": APPROX-BY-1:"<<newEStatePtr->toString()<<endl;
+                        cout<<"@"<<id<<": APPROX-BY-2:"<<summaryEState->toString()<<endl;
+                        cout<<"@"<<id<<": MERGED     :"<<newEStatePtr2->toString()<<endl;
+                      }
+#endif
+                      
                       if(pres.first==true) {
                         newEStatePtr=newEStatePtr2;
                       } else {
@@ -162,6 +176,12 @@ void Solver5::run() {
                       }
                       ROSE_ASSERT(newEStatePtr);
                       _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+#if 0
+                      if(id==checkId) {
+                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
+                        cout<<"--------------------------------------------------"<<endl;
+                      }
+#endif
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  

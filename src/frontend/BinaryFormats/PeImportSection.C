@@ -1,8 +1,8 @@
 /* SgAsmPEImportSection, normally named ".idata" if it appears in the section table. Most modern PE executables don't create a
  * special section in the section table, but rather have the SgAsmPEFileHeader::PAIR_IMPORTS RVA/Size pair point to part of the
  * memory mapped from another read-only section, such as the ".text" section. */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"

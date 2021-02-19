@@ -10,20 +10,12 @@
 #   ROSE_BIN_SCRIPT_DIR
 #   RUN_AND_LOG
 #   SRUN_DO
-#   _do_gcc_configure_common
-#   _do_preconfigure_no_latest_copy
-#   _set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE
-#   setup_gcc_compiler_base
-#   _setup_intel_compiler_common
-#   _setup_jvm_library_path
 #   _temp
-#   _turn_on_module
-#   _use_latest_rose_begin
-#   _use_rose_end
-#   _use_specific_rose_begin
 #   build_boost_rose
 #   clone_latest_workspace
 #   do_gcc_configure
+#   _do_gcc_configure_common
+#   do_gcc_configure_with_ada
 #   do_gcc_configure_with_binary_analysis
 #   do_gcc_configure_with_c_cxx
 #   do_gcc_configure_with_cxx11
@@ -31,19 +23,23 @@
 #   do_gcc_configure_with_profiling
 #   do_intel_configure
 #   do_preconfigure
+#   do_preconfigure_no_latest_copy
 #   echo_version_from_file
-#   log_maybe_not_set_var() {
 #   make_and_install
 #   make_docs
 #   print_rose_vars
+#   _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
 #   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
 #   set_ROSE_LATEST_INSTALL_VERSION
 #   set_ROSE_LATEST_WORKSPACE_VERSION
+#   _set_ROSE_REPO_NAME_from_BRANCH_and_VERSION
 #   set_main_vars
 #   setup_boost
 #   setup_boost_rose
 #   setup_boost_tce
 #   setup_gcc_compiler
+#   setup_gcc_compiler_base
+#   setup_gcc_compiler_with_ada
 #   setup_gcc_compiler_with_binary_analysis
 #   setup_gcc_compiler_with_c_cxx
 #   setup_gcc_compiler_with_fortran
@@ -51,6 +47,9 @@
 #   setup_intel_18_0_2_compiler_non_mpi
 #   setup_intel_19_0_4_compiler
 #   setup_intel_compiler
+#   _setup_intel_compiler_common
+#   _setup_jvm_library_path
+#   _turn_on_module
 #   use_existing_workspace
 #   use_latest_existing_install
 #   use_latest_existing_workspace
@@ -61,7 +60,11 @@
 #   use_latest_gcc_rose_with_profiling
 #   use_latest_intel_19_0_4_rose
 #   use_latest_intel_rose
+#   _use_latest_rose_begin
+#   _use_rose_end
+#   use_script_repo_branch
 #   use_specific_intel_rose
+#   _use_specific_rose_begin
 
 #
 # Example users:
@@ -99,6 +102,7 @@
 #   export RUN_OR_NOT_EFFORT_ONLY=TRUE
 #
 # For manual testing:
+#   export ROSE_REPO_BASE="${HOME}/code/ROSE"
 #   export ROSE_BUILD_BASE="${HOME}/code/ROSE"
 
 # Variable naming:
@@ -109,8 +113,10 @@
 #  they are set.
 
 # Find ourselves:
+# (Sourcers of this script should be in [repo]/scripts/lc/ROSE)
 _rel_enclosing_dir=`dirname ${BASH_SOURCE[0]}`
-export ROSE_LC_SCRIPT_DIR=`(cd ${_rel_enclosing_dir}/..; pwd)`
+export ROSE_SCRIPT_REPO_DIR=`(cd ${_rel_enclosing_dir}/../../..; pwd)`
+export ROSE_LC_SCRIPT_DIR="${ROSE_SCRIPT_REPO_DIR}/scripts/lc"
 export ROSE_BIN_SCRIPT_DIR="${ROSE_LC_SCRIPT_DIR}/bin"
 export ROSE_COMPDB_SCRIPT_DIR="${ROSE_LC_SCRIPT_DIR}/compdb"
 export ROSE_ROSE_SCRIPT_DIR="${ROSE_LC_SCRIPT_DIR}/ROSE"
@@ -119,8 +125,9 @@ export ROSE_ROSE_SCRIPT_DIR="${ROSE_LC_SCRIPT_DIR}/ROSE"
 # log_then_run, run_or_not, echo_maybe_not_set_var, etc.:
 source ${ROSE_BIN_SCRIPT_DIR}/utility_functions.sh
 
-export RUN_AND_LOG=${ROSE_BIN_SCRIPT_DIR}/run_and_log
-export SRUN_DO=${ROSE_BIN_SCRIPT_DIR}/srun_do
+export RUN_AND_LOG="${ROSE_BIN_SCRIPT_DIR}/run_and_log"
+export SRUN_DO="${ROSE_BIN_SCRIPT_DIR}/srun_do"
+export MAX_PROCS="36"
 
 _turn_on_module () {
   ###############################################################################
@@ -146,12 +153,6 @@ _turn_on_module () {
   ###############################################################################
 }
 
-log_maybe_not_set_var() {
-  # Logs value in the variable named in $1, or "<not set>" if it is not set.
-  # Does not throw an error if set -u is in effect.
-  eval log "$1=\${$1:-\<not set\>}"
-}
-
 print_rose_vars () {
   log_separator_1
   log "ROSE environment variables:"
@@ -160,11 +161,19 @@ print_rose_vars () {
   log_var CC
   log_var CXX
   log_var LD_LIBRARY_PATH
+  log_var PATH
   for line in `env | grep '^ROSE' | sort`
   do
     log $line
   done
   log_separator_1
+}
+
+# Call before calling set_main_vars:
+# Sets:
+#   ROSE_BRANCH_NAME_GIT
+use_script_repo_branch () {
+  export ROSE_BRANCH_NAME_GIT=`git branch --no-color | grep '* ' | tr -d ' *'`
 }
 
 # Uses these if set, else sets them:
@@ -173,29 +182,38 @@ print_rose_vars () {
 #   ROSE_BUILD_BASE
 #   ROSE_BRANCH_NAME_GIT
 #   ROSE_INSTALL_BASE
+#   ROSE_REPO_BASE
 # Sets:
 #   rose_latest_workspace_version_file
 #   rose_latest_install_version_file
 #   rose_remote_repo
 #   rose_repo_path_cloned
-#   rose_branch_path_part
+#   ROSE_BRANCH
 #   ROSE_MPI_KIND
 #   ROSE_MPI_VERSION
 #   ROSE_BOOST_VERSION
+#   ROSE_DO_UPDATE_VERSIONS
 set_main_vars () {
+  export COMMON_REPO_BASE=${COMMON_REPO_BASE:-"${HOME}/code"}
   export COMMON_BUILD_BASE=${COMMON_BUILD_BASE:-"${HOME}/code"}
   export COMMON_INSTALL_BASE=${COMMON_INSTALL_BASE:-"/collab/usr/global/tools"}
+  export ROSE_REPO_BASE=${ROSE_REPO_BASE:-"${COMMON_REPO_BASE}/ROSE"}
   export ROSE_BUILD_BASE=${ROSE_BUILD_BASE:-"${COMMON_BUILD_BASE}/ROSE"}
   export ROSE_INSTALL_BASE=${ROSE_INSTALL_BASE:-"${COMMON_INSTALL_BASE}/rose/${SYS_TYPE}"}
   # The Git branch name may include "/":
   # e.g. "reynolds12/automation"
   export ROSE_BRANCH_NAME_GIT=${ROSE_BRANCH_NAME_GIT:-"master"}
+
+  # Take out any slashes:
+  # e.g. "dquinlan/dq-development-dev" -> "dquinlan-dq-development-dev"
+  export ROSE_BRANCH=$(echo "${ROSE_BRANCH_NAME_GIT}" | tr '/' '-')
   
-  export rose_latest_workspace_version_file="${ROSE_BUILD_BASE}/VERSION_OF_LATEST_WORKSPACE"
+  export rose_latest_workspace_version_file="${ROSE_REPO_BASE}/VERSION_OF_LATEST_WORKSPACE"
   set_ROSE_LATEST_WORKSPACE_VERSION  
   export rose_latest_install_version_file="${ROSE_INSTALL_BASE}/VERSION_OF_LATEST_INSTALL"
   # Used by test_this_build.sh and others:
   set_ROSE_LATEST_INSTALL_VERSION
+  export ROSE_DO_UPDATE_VERSIONS="TRUE"
   
   # The LLNL ROSE git project and repo:
 #  _rose_remote_project="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
@@ -204,10 +222,7 @@ set_main_vars () {
   # e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
   export rose_remote_repo="${_rose_remote_project}/rose"
   # e.g. "${HOME}/code/ROSE/rose":
-  export rose_repo_path_cloned="${ROSE_BUILD_BASE}/rose"
-  # Take out any slashes:
-  # e.g. "dquinlan/dq-development-dev" -> "dquinlan-dq-development-dev"
-  rose_branch_path_part=$(echo ${ROSE_BRANCH_NAME_GIT} | tr '/' '-')
+  export rose_repo_path_cloned="${ROSE_REPO_BASE}/rose"
   
   # Non-compiler version info:
   export ROSE_MPI_KIND="mvapich2"
@@ -216,19 +231,26 @@ set_main_vars () {
 }
 
 # Uses:
-#   rose_branch_path_part
-#   ROSE_BUILD_BASE
-#   ROSE_INSTALL_BASE
+#   ROSE_BRANCH
+#   ROSE_REPO_BASE
 #   ROSE_VERSION
 # Sets:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
-_set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE () {
-  _rose_branch_version="rose-${rose_branch_path_part}-${ROSE_VERSION}"
-  export ROSE_REPO_PATH_VERSIONED="${ROSE_BUILD_BASE}/${_rose_branch_version}"
-  export ROSE_BUILD_BASE_VERSIONED="${ROSE_BUILD_BASE}/${_rose_branch_version}"
-  export ROSE_INSTALL_BASE_VERSIONED="${ROSE_INSTALL_BASE}/${_rose_branch_version}"
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
+_set_ROSE_REPO_NAME_from_BRANCH_and_VERSION () {
+  export ROSE_REPO_NAME="rose-${ROSE_BRANCH}-${ROSE_VERSION}"
+  export ROSE_REPO_PATH="${ROSE_REPO_BASE}/${ROSE_REPO_NAME}"
+}
+
+# Uses:
+#   ROSE_SCRIPT_REPO_DIR
+# Sets:
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
+_set_ROSE_REPO_NAME_from_workspace_name () {
+  export ROSE_REPO_NAME=`basename ${ROSE_SCRIPT_REPO_DIR}`
+  export ROSE_REPO_PATH="${ROSE_REPO_BASE}/${ROSE_REPO_NAME}"
+  export ROSE_DO_UPDATE_VERSIONS="FALSE"
 }
 
 # One parameter - file name:
@@ -257,16 +279,14 @@ set_ROSE_LATEST_WORKSPACE_VERSION () {
 }
 
 # Uses:
-#   rose_branch_path_part
+#   ROSE_BRANCH
 #   rose_repo_path_cloned
 #   rose_remote_repo
 #   ROSE_BRANCH_NAME_GIT
-#   ROSE_BUILD_BASE
-#   ROSE_INSTALL_BASE
+#   ROSE_REPO_BASE
 # Sets:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
 #   ROSE_VERSION
 clone_latest_workspace () {
   cd ${ROSE_BUILD_BASE}
@@ -279,37 +299,40 @@ clone_latest_workspace () {
   run_or_not git submodule init
   run_or_not git submodule update
   export ROSE_VERSION=`echo_version_from_file ROSE_VERSION`
-  _set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE
-  run_or_not mv ${rose_repo_path_cloned} ${ROSE_REPO_PATH_VERSIONED}
+  _set_ROSE_REPO_NAME_from_BRANCH_and_VERSION
+  run_or_not mv ${rose_repo_path_cloned} ${ROSE_REPO_PATH}
 }
 
 # Uses:
 #   One parameter - the ROSE version
-#   rose_branch_path_part
-#   ROSE_BUILD_BASE
-#   ROSE_INSTALL_BASE
+#   ROSE_BRANCH
 # Sets:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
 #   ROSE_VERSION
 use_existing_workspace () {
   export ROSE_VERSION=$1
-  _set_versioned_REPO_PATH_and_BUILD_BASE_and_INSTALL_BASE
+  _set_ROSE_REPO_NAME_from_BRANCH_and_VERSION
 }
 
 # Uses:
-#   rose_branch_path_part
-#   ROSE_BUILD_BASE
-#   ROSE_INSTALL_BASE
+#   ROSE_BRANCH
 #   ROSE_LATEST_WORKSPACE_VERSION
 # Sets:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
 #   ROSE_VERSION
 use_latest_existing_workspace () {
   use_existing_workspace ${ROSE_LATEST_WORKSPACE_VERSION}
+}
+
+# Uses:
+#   ROSE_SCRIPT_REPO_DIR
+# Sets:
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
+use_this_workspace () {
+  _set_ROSE_REPO_NAME_from_workspace_name
 }
 
 #========================
@@ -317,14 +340,12 @@ use_latest_existing_workspace () {
 #========================
 
 # Uses:
-#   rose_branch_path_part
-#   ROSE_BUILD_BASE
-#   ROSE_INSTALL_BASE
+#   ROSE_BRANCH
 #   ROSE_LATEST_INSTALL_VERSION
+#   ROSE_REPO_BASE
 # Sets:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
 #   ROSE_VERSION
 use_latest_existing_install () {
   use_existing_workspace ${ROSE_LATEST_INSTALL_VERSION}
@@ -348,7 +369,9 @@ set_ROSE_HOME_ROSE_LD_LIBRARY_PATH () {
 #   COMMON_BUILD_BASE
 #   ROSE_INSTALL_BASE
 #   ROSE_LATEST_INSTALL_VERSION
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
+#   ROSE_VERSION
 #   (See set_main_vars for more)
 _use_specific_rose_begin () {
   set_main_vars
@@ -358,8 +381,10 @@ _use_specific_rose_begin () {
 # Sets:
 #   COMMON_BUILD_BASE
 #   ROSE_INSTALL_BASE
-#   ROSE_INSTALL_BASE_VERSIONED
 #   ROSE_LATEST_INSTALL_VERSION
+#   ROSE_REPO_NAME
+#   ROSE_REPO_PATH
+#   ROSE_VERSION
 #   (See set_main_vars for more)
 _use_latest_rose_begin () {
   set_main_vars
@@ -395,8 +420,7 @@ _use_rose_end () {
 #   ROSE_BACKEND_COMPILER_HOME
 #   ROSE_BACKEND_CXX
 #   ROSE_HOME
-#   ROSE_INSTALL_BASE
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_REPO_NAME
 #   ROSE_LATEST_INSTALL_VERSION
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_TOOL
@@ -465,26 +489,33 @@ use_latest_intel_19_0_4_rose () {
 #========================
 
 # Uses:
-#   ROSE_REPO_PATH_VERSIONED
-_do_preconfigure_no_latest_copy () {
-  run_or_not cd ${ROSE_REPO_PATH_VERSIONED}
-  run_or_not ${SRUN_DO} ${RUN_AND_LOG} ./build
+#   rose_latest_workspace_version_file
+#   ROSE_DO_UPDATE_VERSIONS
+#   ROSE_REPO_PATH
+_update_latest_workspace_version () {
+  if [ ${ROSE_DO_UPDATE_VERSIONS} == "TRUE" ] 
+  then
+    run_or_not cp ${ROSE_REPO_PATH}/ROSE_VERSION ${rose_latest_workspace_version_file}
+  fi
 }
 
 # Uses:
 #   rose_latest_workspace_version_file
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_DO_UPDATE_VERSIONS
+#   ROSE_REPO_PATH
 do_preconfigure () {
-  _do_preconfigure_no_latest_copy
-  run_or_not cp ${ROSE_REPO_PATH_VERSIONED}/ROSE_VERSION ${rose_latest_workspace_version_file}
+  run_or_not cd ${ROSE_REPO_PATH}
+  run_or_not ${SRUN_DO} ${RUN_AND_LOG} ./build
+  _update_latest_workspace_version
 }
 
 #================================================
 # FOR INTEL 18.0.1 MPI (Used by ARES 2019-03-14):
 #================================================
 # Uses:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_BUILD_BASE
+#   ROSE_INSTALL_BASE
+#   ROSE_REPO_NAME
 # Sets:
 #   CC
 #   CXX
@@ -511,8 +542,9 @@ setup_intel_compiler () {
 # FOR INTEL 19.0.4 MPI (Used by ARES 2020-01-20):
 #================================================
 # Uses:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_BUILD_BASE
+#   ROSE_INSTALL_BASE
+#   ROSE_REPO_NAME
 # Sets:
 #   CC
 #   CXX
@@ -547,11 +579,12 @@ setup_intel_19_0_4_compiler () {
 #==============================
 # Uses:
 #   ROSE_BACKEND_COMPILER_VERSION
-#   ROSE_BUILD_BASE_VERSIONED
+#   ROSE_BUILD_BASE
 #   ROSE_COMPILER_VERSION
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_INSTALL_BASE
 #   ROSE_INTEL_GCC_COMPILER_VERSION
 #   ROSE_MPI_VERSION
+#   ROSE_REPO_NAME
 # Sets:
 #   CC
 #   CXX
@@ -580,7 +613,7 @@ _setup_intel_compiler_common () {
   #---------------------------------------
   # Run the Intel setup script so we don't have to add 
   # "-L/usr/tce/packages/intel/intel-18.0.1/lib/intel64" to line 275 of 
-  # "${ROSE_REPO_PATH_VERSIONED}/config/Makefile.for.ROSE.includes.and.libs" to avoid
+  # "${ROSE_REPO_PATH}/config/Makefile.for.ROSE.includes.and.libs" to avoid
   # link problems:
   export ROSE_NON_MPI_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
   export COMPILERVARS_ARCHITECTURE=intel64
@@ -594,9 +627,9 @@ _setup_intel_compiler_common () {
   pop_set_state
   #---------------------------------------
 
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}.mpi-${_rose_backend_compiler_versioned}.mpi"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
+  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED}.mpi-${_rose_backend_compiler_versioned}.mpi"
+  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"
+  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
 }
 #=====================================
 
@@ -604,8 +637,9 @@ _setup_intel_compiler_common () {
 # FOR INTEL 18.0.2 non-MPI (Used by BLAST):
 #=====================================
 # Uses:
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
+#   ROSE_BUILD_BASE
+#   ROSE_INSTALL_BASE
+#   ROSE_REPO_NAME
 # Sets:
 #   CC
 #   CXX
@@ -635,7 +669,7 @@ setup_intel_18_0_2_compiler_non_mpi () {
   #---------------------------------------
   # Run the Intel setup script so we don't have to add 
   # "-L/usr/tce/packages/intel/intel-18.0.1/lib/intel64" to line 275 of 
-  # "${ROSE_REPO_PATH_VERSIONED}/config/Makefile.for.ROSE.includes.and.libs" to avoid
+  # "${ROSE_REPO_PATH}/config/Makefile.for.ROSE.includes.and.libs" to avoid
   # link problems:
   export ROSE_NON_MPI_COMPILER_HOME="${ROSE_COMPILER_HOME}"
   export COMPILERVARS_ARCHITECTURE=intel64
@@ -650,18 +684,15 @@ setup_intel_18_0_2_compiler_non_mpi () {
   pop_set_state
   #---------------------------------------
 
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED}-${_rose_backend_compiler_versioned}"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"
+  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED}-${_rose_backend_compiler_versioned}"
+  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
+  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"
 }
 #=====================================
 
 #======================================
 # FOR GCC 4.9.3 or 6.1.0 non-MPI (used by Kull):
 #======================================
-# Uses:
-#   ROSE_INSTALL_BASE_VERSIONED
-#   ROSE_REPO_PATH_VERSIONED
 # Sets:
 #   CC
 #   CXX
@@ -714,9 +745,36 @@ _setup_jvm_library_path () {
   fi
 }
 
+# Sets the build and install paths, which have a common last path segment of:
+# rose-<branch>-<version>-<rose compiler>[-<target compiler>]
+# e.g.
+# rose-master-0.11.18.1-gcc-4.9.3-c++11
+# rose-master-0.11.18.1-intel-19.0.4.mpi-intel-19.0.4.mpi
+# 
+# If <workspace name> is not specified, it is: rose-<branch>-<version>
+# where <branch> is the git branch, without "/"
+# and <version> is the content of ./ROSE_VERSION
+#
+# This is a separate routine to reduce code duplication below:
+# Parameters:
+#   1: (optional) path suffix: -ada, -binary , -c-cxx, -fortran, -gprof, etc.
 # Uses:
-#   ROSE_BUILD_BASE_VERSIONED
-#   ROSE_INSTALL_BASE_VERSIONED
+#   ROSE_BUILD_BASE
+#   ROSE_INSTALL_BASE
+#   ROSE_REPO_NAME
+# Sets:
+#   ROSE_BUILD_PATH
+#   ROSE_INSTALL_PATH
+_set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH () {
+  # No "-" before the parameter so empty parameter doesn't give a trailing "-":
+  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED_STD}$1"
+  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
+  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"  
+}
+
+# Uses:
+#   ROSE_BUILD_BASE_REPO_NAME
+#   ROSE_INSTALL_BASE_REPO_NAME
 # Sets:
 #   CC
 #   CXX
@@ -733,45 +791,52 @@ _setup_jvm_library_path () {
 setup_gcc_compiler () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH ""
+}
+
+# Uses and Sets are same as setup_gcc_compiler, but does not set:
+#   LD_LIBRARY_PATH
+# Sets:
+#   PATH
+setup_gcc_compiler_with_ada () {
+  setup_gcc_compiler_base
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-ada"
+  # To get gprbuild etc.:
+  # Be sure we use the right gcc and the right gnat.  There is a gcc we don't 
+  # want in the gnat bin directory.  There is a gnat we don't want already in 
+  # ${PATH}.  Let the new path be [gcc dir]:[gnat dir]:${PATH}:
+  export PATH="\
+  ${ROSE_COMPILER_HOME}/bin:\
+  /collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2019/bin:\
+  ${PATH}"
 }
 
 # Uses and Sets are same as setup_gcc_compiler:
 setup_gcc_compiler_with_binary_analysis () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-binary"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-binary"
 }
 
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_c_cxx () {
   setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-c-cxx"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-c-cxx"
 }
 
 # Uses and Sets are same as setup_gcc_compiler:
 setup_gcc_compiler_with_fortran () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-fortran"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-fortran"
 }
 
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_profiling () {
   setup_gcc_compiler_base
-  _rose_compiler_path_part="${ROSE_COMPILER_VERSIONED_STD}-gprof"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE_VERSIONED}-${_rose_compiler_path_part}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${_rose_compiler_path_part}"  
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-gprof"
 }
 
 #======================================
@@ -817,7 +882,6 @@ setup_boost () {
 #   CXX
 #   ROSE_BOOST_VERSION
 #   ROSE_BUILD_BASE
-#   ROSE_BUILD_PATH
 #   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_BASE
 #   RUN_AND_LOG
@@ -850,7 +914,7 @@ build_boost_rose () {
   ./bootstrap.sh --prefix=${boost_install_path} --with-libraries=all 
   run_or_not ${SRUN_DO} \
   ${RUN_AND_LOG} \
-  ./b2 --prefix=${boost_install_path} -j36 cxxflags="${ROSE_COMPILER_CXX_STD_FLAG}" install
+  ./b2 --prefix=${boost_install_path} -j${MAX_PROCS} cxxflags="${ROSE_COMPILER_CXX_STD_FLAG}" install
 }
 
 #==============================
@@ -868,12 +932,12 @@ do_intel_configure () {
     echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH:?}"
   fi
   echo "------------------------"
-  echo "DO NOT run multiple configures using ${ROSE_REPO_PATH_VERSIONED} in parallel if they need different intel versions."
+  echo "DO NOT run multiple configures using ${ROSE_REPO_PATH} in parallel if they need different intel versions."
   echo "------------------------"
   echo "DOING configure"
   run_or_not ${SRUN_DO} \
   ${RUN_AND_LOG} \
-  ${ROSE_REPO_PATH_VERSIONED}/configure \
+  ${ROSE_REPO_PATH}/configure \
   --prefix=${ROSE_INSTALL_PATH} \
   --without-java \
   --with-boost=${ROSE_BOOST_HOME} \
@@ -909,10 +973,8 @@ _do_gcc_configure_common () {
   module load ${ROSE_COMPILER}/${ROSE_COMPILER_VERSION}
   run_or_not ${SRUN_DO} \
   ${RUN_AND_LOG} \
-  ${ROSE_REPO_PATH_VERSIONED}/configure \
+  ${ROSE_REPO_PATH}/configure \
   --prefix=${ROSE_INSTALL_PATH} \
-  --enable-c \
-  --enable-cxx \
   --with-boost=${ROSE_BOOST_HOME} \
   --disable-boost-version-check \
   CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall" \
@@ -927,14 +989,30 @@ _do_gcc_configure_common () {
 # Enables C, CXX, Fortran, and Binary Analysis:
 do_gcc_configure () {
   _do_gcc_configure_common \
+  --enable-c \
+  --enable-cxx \
   --enable-fortran \
   --enable-binary-analysis \
   --with-sqlite3
 }
 
+do_gcc_configure_with_ada () {
+  _do_gcc_configure_common \
+--enable-experimental_ada_frontend \
+--disable-binary-analysis \
+--without-swi-prolog \
+--without-cuda \
+--disable-fortran \
+--without-java \
+--without-python \
+CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall"
+}
+
 do_gcc_configure_with_binary_analysis () {
   # Per Jim Leek 2019-12-09
   _do_gcc_configure_common \
+  --enable-c \
+  --enable-cxx \
   --enable-binary-analysis \
   --with-sqlite3
 }
@@ -942,17 +1020,23 @@ do_gcc_configure_with_binary_analysis () {
 # Just C and CXX, no Java dependency:
 do_gcc_configure_with_c_cxx () {
   _do_gcc_configure_common \
+  --enable-c \
+  --enable-cxx \
   --without-java
 }
 
 do_gcc_configure_with_fortran () {
   # Fortran needs Java.
   _do_gcc_configure_common \
+  --enable-c \
+  --enable-cxx \
   --enable-fortran
 }
 
 do_gcc_configure_with_profiling () {
   _do_gcc_configure_common \
+  --enable-c \
+  --enable-cxx \
   --without-java \
   CFLAGS='-pg -g -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes' \
   CXXFLAGS='${ROSE_COMPILER_CXX_STD_FLAG} -pg -g -O2 -Wall'
@@ -963,27 +1047,46 @@ do_gcc_configure_with_profiling () {
 
 #===============================================
 
+
+# Uses:
+#   rose_latest_install_version_file
+#   ROSE_DO_UPDATE_VERSIONS
+#   ROSE_REPO_PATH
+_update_latest_installed_version () {
+  if [ ${ROSE_DO_UPDATE_VERSIONS} == "TRUE" ] 
+  then
+    run_or_not cp ${ROSE_REPO_PATH}/ROSE_VERSION ${rose_latest_install_version_file}
+  fi
+}
+
 #======================================
 # Make and install ROSE:
 #======================================
+# Uses:
+#   rose_latest_install_version_file
+#   ROSE_BUILD_PATH
+#   ROSE_DO_UPDATE_VERSIONS
+#   ROSE_REPO_PATH
 make_and_install () {
   run_or_not cd ${ROSE_BUILD_PATH}
-  run_or_not ${SRUN_DO} -c36 ${RUN_AND_LOG} --use_first_parm make all -j36
-  run_or_not ${SRUN_DO} -c36 ${RUN_AND_LOG} --use_first_parm make install -j36
+  run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make all -j${MAX_PROCS}
+  run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make install -j${MAX_PROCS}
   # Install the comp db scripts in prefix/bin (currently ${ROSE_BUILD_PATH}/bin):
 #  cd projects/CompilationDB
 #  ${RUN_AND_LOG} --use_first_parm make install
-  run_or_not cp ${ROSE_REPO_PATH_VERSIONED}/ROSE_VERSION ${rose_latest_install_version_file}
+  _update_latest_installed_version
 }
 #======================================
 
 #======================================
 # Make ROSE docs:
 #======================================
+# Uses:
+#   ROSE_BUILD_PATH
 make_docs () {
   run_or_not cd ${ROSE_BUILD_PATH}
-  run_or_not ${SRUN_DO} -c36 ${RUN_AND_LOG} --use_first_parm make check -j36
-  run_or_not ${SRUN_DO} -c36 ${RUN_AND_LOG} --use_first_parm make docs -j36
+  run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make check -j${MAX_PROCS}
+  run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make docs -j${MAX_PROCS}
 }
 #======================================
 

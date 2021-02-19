@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
@@ -194,6 +194,7 @@ public:
         ops->fpAnalyzer_ = fpAnalyzer;
         ops->pathProcessor_ = pathProcessor;
         ops->path_ = path;
+        ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS);
         return ops;
     }
 
@@ -933,8 +934,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     ASSERT_not_null(cpu);
 
     // More return value stuff, continued from above
-#ifdef ROSE_ENABLE_ASM_A64
-    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
         REG_RETURN_ = registers_->find("x0");
     }
 #endif
@@ -1101,8 +1102,8 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
                          returnTarget->get_width() / 8;
             stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
-#ifdef ROSE_ENABLE_ASM_A64
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherA64>(cpu)) {
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
@@ -1832,10 +1833,8 @@ FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
     for (/*void*/; idx <= goalIdx; ++idx) {
         state = state->clone();                         // need to make a copy before we modify it
         sem.ops->currentState(state);
-        bool pathProcessed = false;
         try {
             processVertex(sem.cpu, path.vertices()[idx], incomingStepCount(path, idx));
-            pathProcessed = true;
         } catch (...) {
             SAWYER_MESG(debug) <<"    path semantics failed, path idx = " <<idx <<"\n";
             state = BaseSemantics::StatePtr();

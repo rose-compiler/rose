@@ -46,10 +46,15 @@ noinst_PROGRAMS += conditionalDisable
 conditionalDisable_SOURCES = conditionalDisable.C
 conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Some tests are disabled because the ARM AArch64 A64 support is not enabled in ROSE.
-noinst_PROGRAMS += isA64Disabled
-isA64Disabled_SOURCES = isA64Disabled.C
-isA64Disabled_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+# Some tests are disabled because the ARM AArch64 support is not enabled in ROSE.
+noinst_PROGRAMS += isAarch64Disabled
+isAarch64Disabled_SOURCES = isAarch64Disabled.C
+isAarch64Disabled_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
+# Some tests are disabled because the ARM AArch32 support is not enabled in ROSE.
+noinst_PROGRAMS += isAarch32Disabled
+isAarch32Disabled_SOURCES = isAarch32Disabled.C
+isAarch32Disabled_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
 # Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
@@ -1432,7 +1437,7 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
+testRandomInput_ISAs = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
 TEST_TARGETS += $(testRandomInput_Targets) tri_a64.passed
 
@@ -1443,11 +1448,11 @@ $(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
 		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
 		$(TEST_EXIT_STATUS) $@
 
-tri_a64.passed: testRandomInput conditionalDisable isA64Disabled
-	@$(RTH_RUN)							\
-		TITLE="disassemble random $* input [$@]"		\
-		DISABLED="$$(./conditionalDisable)$$(./isA64Disabled)"	\
-		CMD="$$(pwd)/testRandomInput --size=50000 --isa=a64"	\
+tri_a64.passed: testRandomInput conditionalDisable isAarch64Disabled
+	@$(RTH_RUN)								\
+		TITLE="disassemble random $* input [$@]"			\
+		DISABLED="$$(./conditionalDisable)$$(./isAarch64Disabled)"	\
+		CMD="$$(pwd)/testRandomInput --size=50000 --isa=a64"		\
 		$(TEST_EXIT_STATUS) $@
 
 
@@ -1659,13 +1664,37 @@ testDisassembler-ppc64b.passed: $(top_srcdir)/scripts/test_with_answer testDisas
 # ARM AArch64 A64
 testDisassembler_a64_input = $(srcdir)/testDisassembler-a64.txt
 testDisassembler_a64_answer = $(srcdir)/testDisassembler-a64.ans
-testDisassembler-a64.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler isA64Disabled $(testDisassembler_a64_input)
+testDisassembler-a64.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler isAarch64Disabled $(testDisassembler_a64_input)
 	@$(RTH_RUN)										\
 		TITLE="test disassembler ARM AArch64 A64 [$@]"					\
-		DISABLED="$$(./isA64Disabled)"							\
+		DISABLED="$$(./isAarch64Disabled)"						\
 		USE_SUBDIR=no									\
 		CMD="$$(pwd)/testDisassembler --isa=a64 $(testDisassembler_a64_input)"		\
 		ANS="$(testDisassembler_a64_answer)"						\
+		$< $@
+
+# ARM AArch64 A32
+testDisassembler_a32_input = $(srcdir)/testDisassembler-a32.txt
+testDisassembler_a32_answer = $(srcdir)/testDisassembler-a32.ans
+testDisassembler-a32.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler isAarch32Disabled $(testDisassembler_a32_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler ARM AArch32 A32 [$@]"					\
+		DISABLED="$$(./isAarch32Disabled)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=a32 $(testDisassembler_a32_input)"		\
+		ANS="$(testDisassembler_a32_answer)"						\
+		$< $@
+
+# ARM AArch64 T32
+testDisassembler_t32_input = $(srcdir)/testDisassembler-t32.txt
+testDisassembler_t32_answer = $(srcdir)/testDisassembler-t32.ans
+testDisassembler-t32.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler isAarch32Disabled $(testDisassembler_t32_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler ARM AArch32 T32 [$@]"					\
+		DISABLED="$$(./isAarch32Disabled)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=t32 $(testDisassembler_t32_input)"		\
+		ANS="$(testDisassembler_t32_answer)"						\
 		$< $@
 
 

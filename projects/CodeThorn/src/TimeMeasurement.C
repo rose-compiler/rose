@@ -35,11 +35,11 @@ double TimeDuration::microSeconds() {
 }
 
 double TimeDuration::milliSeconds() {
-  return _timeDuration*0.001;
+  return _timeDuration/1000.0;
 }   
 
 double TimeDuration::seconds() {
-  return _timeDuration* 0.000001;
+  return _timeDuration/1000000.0;
 }
 
 double TimeDuration::minutes() {
@@ -51,12 +51,17 @@ double TimeDuration::hours() {
 }
 
 std::string TimeDuration::longTimeString() {
-  int ms=std::floor(milliSeconds());
-  int s=std::floor(seconds());
-  int m=std::floor(minutes());
-  int h=std::floor(hours());
+  int t=seconds();
+  int h=t/3600;
+  t=t-h*3600;
+  int m=t/60;
+  t=t-m*60;
+  int s=t;
+  int ms=milliSeconds()-(h*3600+m*60+s)*1000;
   std::stringstream ss;
-  ss<<std::setfill('0')<<std::setw(2)<<h<<":"<<m<<":"<<s<<"."<<std::setw(3)<<ms;
+  ss<<std::setfill('0')
+    <<std::setw(2)<<h<<"h:"
+    <<std::setw(2)<<m<<"m:"<<std::setw(2)<<s<<"."<<std::setw(3)<<ms<<"s";
   return ss.str();
 }
 

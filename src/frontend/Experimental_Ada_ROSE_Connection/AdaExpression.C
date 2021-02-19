@@ -36,11 +36,21 @@ namespace
     ROSE_ASSERT(elem.Element_Kind == An_Association);
 
     Association_Struct& assoc      = elem.The_Union.Association;
-    ROSE_ASSERT(assoc.Association_Kind == A_Parameter_Association);
-    logKind("A_Parameter_Association");
+    ROSE_ASSERT(  assoc.Association_Kind == A_Parameter_Association
+               || assoc.Association_Kind == A_Pragma_Argument_Association
+               );
+    logKind( assoc.Association_Kind == A_Parameter_Association
+                   ? "A_Parameter_Association"
+                   : "A_Pragma_Argument_Association"
+           );
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
     Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(elemMap(), assoc.Formal_Parameter);
+
+    /* unused fields (A_Parameter_Association)
+       bool                   Is_Normalized
+       bool                   Is_Defaulted_Association
+    */
 
     if (!formalParm) return arg;
 
@@ -50,7 +60,10 @@ namespace
     ROSE_ASSERT(formalName.Expression_Kind == An_Identifier);
 
     logKind("An_Identifier");
-    return SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
+    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
+
+    attachSourceLocation(namedArg, elem, ctx);
+    return namedArg;
   }
 }
 
@@ -132,7 +145,7 @@ namespace
       ArrayAggregateCreator(ArrayAggregateCreator&&)                 = default;
       ArrayAggregateCreator& operator=(ArrayAggregateCreator&&)      = default;
 
-      // \todo the following copying functions should be removed post C++17
+      // \todo the following copying functions should be deleted post C++17
       // @{
       ArrayAggregateCreator(const ArrayAggregateCreator&)            = default;
       ArrayAggregateCreator& operator=(const ArrayAggregateCreator&) = default;
@@ -170,16 +183,64 @@ namespace
 
     if (namedElements)
     {
-      std::vector<SgExpression*> expr = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(expr));
+      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      SgExprListExp&             explst = mkExprListExp(exprs);
 
       sgnode = &mkAdaNamedInitializer(explst, init);
+      ROSE_ASSERT(explst.get_parent());
     }
 
     ROSE_ASSERT(sgnode);
     attachSourceLocation(*sgnode, el, ctx);
     elems.push_back(sgnode);
   }
+
+
+  struct RecordAggregateCreator
+  {
+      explicit
+      RecordAggregateCreator(AstContext astctx)
+      : ctx(astctx), elems()
+      {}
+
+      RecordAggregateCreator(RecordAggregateCreator&&)                 = default;
+      RecordAggregateCreator& operator=(RecordAggregateCreator&&)      = default;
+
+      // \todo the following copying functions should be deleted post C++17
+      // @{
+      RecordAggregateCreator(const RecordAggregateCreator&)            = default;
+      RecordAggregateCreator& operator=(const RecordAggregateCreator&) = default;
+      // @}
+
+      void operator()(Element_Struct& el);
+
+      /// result read-out
+      operator std::vector<SgExpression*> () &&
+      {
+        return std::move(elems);
+      }
+
+    private:
+      AstContext                 ctx;
+      std::vector<SgExpression*> elems;
+
+      RecordAggregateCreator() = delete;
+  };
+
+  void RecordAggregateCreator::operator()(Element_Struct& el)
+  {
+    ROSE_ASSERT(el.Element_Kind == An_Association);
+
+    Association_Struct&        assoc = el.The_Union.Association;
+    ROSE_ASSERT(assoc.Association_Kind == A_Record_Component_Association);
+    logKind("A_Record_Component_Association");
+
+    SgExpression&              sgnode = getExprID(assoc.Component_Expression, ctx);
+
+    attachSourceLocation(sgnode, el, ctx);
+    elems.push_back(&sgnode);
+  }
+
 
 
   typedef SgExpression* (*mk_wrapper_fun)();
@@ -207,9 +268,9 @@ namespace
   SgExpression&
   getOperator(Expression_Struct& expr, AstContext ctx)
   {
-    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > binary_maker_map_t;
+    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > operator_maker_map_t;
 
-    static const binary_maker_map_t binary_maker_map =
+    static const operator_maker_map_t maker_map =
     { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
       { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
       { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
@@ -231,13 +292,13 @@ namespace
       { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
       { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            buildAbsOp> }},
       { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
-                       };
+    };
 
     ROSE_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    binary_maker_map_t::const_iterator pos = binary_maker_map.find(expr.Operator_Kind);
+    operator_maker_map_t::const_iterator pos = maker_map.find(expr.Operator_Kind);
 
-    if (pos != binary_maker_map.end())
+    if (pos != maker_map.end())
     {
       logKind(pos->second.first);
       return SG_DEREF(pos->second.second());
@@ -263,24 +324,42 @@ namespace
   {
     ROSE_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
+#if 0
+    // seems to be obsolete...
     Element_Struct* typedcl = retrieveAsOpt<Element_Struct>(elemMap(), expr.Corresponding_Expression_Type_Definition);
 
     ROSE_ASSERT (!typedcl);
-
-    std::string   enumstr{expr.Name_Image};
+#endif
     SgExpression* res = NULL;
 
-    boost::to_upper(enumstr);
+    if (SgInitializedName* enumitem = findFirst(asisVars(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    {
+      SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
+      SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-    // \todo replace with actual enum values
-    if (enumstr == "TRUE")
-      res = sb::buildBoolValExp(1);
-    else if (enumstr == "FALSE")
-      res = sb::buildBoolValExp(0);
+      res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+    }
     else
-      res = sb::buildStringVal(enumstr);
+    {
+      std::string   enumstr{expr.Name_Image};
 
-    return SG_DEREF( res );
+      boost::to_upper(enumstr);
+
+      // \todo replace with actual enum values
+      if (enumstr == "TRUE")
+        res = sb::buildBoolValExp(1);
+      else if (enumstr == "FALSE")
+        res = sb::buildBoolValExp(0);
+      else
+      {
+        logWarn() << "unable to find definition for enum val " << enumstr
+                  << std::endl;
+
+        res = sb::buildStringVal(enumstr);
+      }
+    }
+
+    return SG_DEREF(res);
   }
 
   /// defines ROSE AST types for which we do not generate scope qualification
@@ -361,7 +440,9 @@ namespace
 
     // void handle(SgImportStatement& n)
 
+    void handle(SgClassDeclaration& n)   { set(n.get_type()); }
     void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
+    void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
   };
 
   void TypeRefMaker::set(SgType* ty)
@@ -370,170 +451,178 @@ namespace
     res = sb::buildTypeExpression(ty);
     ROSE_ASSERT(res);
   }
+} // anonymous
 
-  SgTypeTraitBuiltinOperator&
-  getAttributeExpr(Expression_Struct& expr, AstContext ctx)
+
+SgAdaAttributeExp&
+getAttributeExpr(Expression_Struct& expr, AstContext ctx)
+{
+  ROSE_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
+
+  SgAdaAttributeExp* res = nullptr;
+  NameData           name = getNameID(expr.Attribute_Designator_Identifier, ctx);
+  SgExpression&      obj = getExprID(expr.Prefix, ctx);
+
+  switch (expr.Attribute_Kind)
   {
-    ROSE_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
+    // attributes with optional expression list argument
 
-    SgTypeTraitBuiltinOperator* res = nullptr;
-    NameData                    name = getNameID(expr.Attribute_Designator_Identifier, ctx);
-    SgExpression&               obj = getExprID(expr.Prefix, ctx);
+    case A_First_Attribute:            // 3.5(12), 3.6.2(3), K(68), K(70)
+    case A_Length_Attribute:           // 3.6.2(9), K(117)
+    case An_Unknown_Attribute:          // Unknown to ASIS
+    case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
+      logInfo() << "untested attribute created: " << expr.Attribute_Kind
+                << "  attr-name: " << name.fullName
+                << std::endl;
 
-    switch (expr.Attribute_Kind)
+    /* fall through */
+    case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
+    case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)
     {
-      // attributes with optional expression list argument
+      ElemIdRange                range = idRange(expr.Attribute_Designator_Expressions);
+      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      SgExprListExp&             args  = mkExprListExp(exprs);
 
-      case A_First_Attribute:            // 3.5(12), 3.6.2(3), K(68), K(70)
-      case A_Length_Attribute:           // 3.6.2(9), K(117)
-      case An_Unknown_Attribute:          // Unknown to ASIS
-      case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
-        logWarn() << "untested attribute created: " << expr.Attribute_Kind
-                  << "  attr-name: " << name.fullName
+      res = &mkAdaAttributeExp(obj, name.fullName, args);
+      break;
+    }
+
+    // attributes with empty expression list argument
+
+    case An_Access_Attribute:          // 3.10.2(24), 3.10.2(32), K(2), K(4)
+    case An_Address_Attribute:         // 13.3(11), J.7.1(5), K(6)
+    case An_Adjacent_Attribute:        // A.5.3(48), K(8)
+    case An_Aft_Attribute:            // 3.5.10(5), K(12)
+    case An_Alignment_Attribute:       // 13.3(23), K(14)
+    case A_Base_Attribute:            // 3.5(15), K(17)
+    case A_Bit_Order_Attribute:        // 13.5.3(4), K(19)
+    case A_Body_Version_Attribute:      // E.3(4), K(21)
+    case A_Callable_Attribute:         // 9.9(2), K(23)
+    case A_Caller_Attribute:           // C.7.1(14), K(25)
+    case A_Ceiling_Attribute:          // A.5.3(33), K(27)
+    case A_Class_Attribute:            // 3.9(14), 7.3.1(9), K(31), K(34)
+    case A_Component_Size_Attribute:    // 13.3(69), K(36)
+    case A_Compose_Attribute:          // A.5.3(24), K(38)
+    case A_Constrained_Attribute:      // 3.7.2(3), J.4(2), K(42)
+    case A_Copy_Sign_Attribute:        // A.5.3(51), K(44)
+    case A_Count_Attribute:            // 9.9(5), K(48)
+    case A_Definite_Attribute:         // 12.5.1(23), K(50)
+    case A_Delta_Attribute:            // 3.5.10(3), K(52)
+    case A_Denorm_Attribute:           // A.5.3(9), K(54)
+    case A_Digits_Attribute:           // 3.5.8(2), 3.5.10(7), K(56), K(58)
+    case An_Exponent_Attribute:        // A.5.3(18), K(60)
+    case An_External_Tag_Attribute:     // 13.3(75), K(64)
+    case A_First_Bit_Attribute:        // 13.5.2(3), K(72)
+    case A_Floor_Attribute:            // A.5.3(30), K(74)
+    case A_Fore_Attribute:            // 3.5.10(4), K(78)
+    case A_Fraction_Attribute:         // A.5.3(21), K(80)
+    case An_Identity_Attribute:        // 11.4.1(9), C.7.1(12), K(84), K(86)
+    case An_Image_Attribute:           // 3.5(35), K(88)
+    case An_Input_Attribute:           // 13.13.2(22), 13.13.2(32), K(92), K(96)
+    case A_Last_Bit_Attribute:         // 13.5.2(4), K(106)
+    case A_Leading_Part_Attribute:      // A.5.3(54), K(108)
+    case A_Machine_Attribute:          // A.5.3(60), K(119)
+    case A_Machine_Emax_Attribute:      // A.5.3(8), K(123)
+    case A_Machine_Emin_Attribute:      // A.5.3(7), K(125)
+    case A_Machine_Mantissa_Attribute:  // A.5.3(6), K(127)
+    case A_Machine_Overflows_Attribute: // A.5.3(12), A.5.4(4), K(129), K(131)
+    case A_Machine_Radix_Attribute:     // A.5.3(2), A.5.4(2), K(133), K(135)
+    case A_Machine_Rounds_Attribute:    // A.5.3(11), A.5.4(3), K(137), K(139)
+    case A_Max_Attribute:             // 3.5(19), K(141)
+    case A_Max_Size_In_Storage_Elements_Attribute: //   13.11.1(3), K(145)
+    case A_Min_Attribute:             // 3.5(16), K(147)
+    case A_Model_Attribute:            // A.5.3(68), G.2.2(7), K(151)
+    case A_Model_Emin_Attribute:       // A.5.3(65), G.2.2(4), K(155)
+    case A_Model_Epsilon_Attribute:     // A.5.3(66), K(157)
+    case A_Model_Mantissa_Attribute:    // A.5.3(64), G.2.2(3), K(159)
+    case A_Model_Small_Attribute:      // A.5.3(67), K(161)
+    case A_Modulus_Attribute:          // 3.5.4(17), K(163)
+    case An_Output_Attribute:          // 13.13.2(19), 13.13.2(29), K(165), K(169)
+    case A_Partition_ID_Attribute:      // E.1(9), K(173)
+    case A_Pos_Attribute:             // 3.5.5(2), K(175)
+    case A_Position_Attribute:         // 13.5.2(2), K(179)
+    case A_Pred_Attribute:            // 3.5(25), K(181)
+    case A_Read_Attribute:            // 13.13.2(6), 13.13.2(14), K(191), K(195)
+    case A_Remainder_Attribute:        // A.5.3(45), K(199)
+    case A_Round_Attribute:            // 3.5.10(12), K(203)
+    case A_Rounding_Attribute:         // A.5.3(36), K(207)
+    case A_Safe_First_Attribute:       // A.5.3(71), G.2.2(5), K(211)
+    case A_Safe_Last_Attribute:        // A.5.3(72), G.2.2(6), K(213)
+    case A_Scale_Attribute:            // 3.5.10(11), K(215)
+    case A_Scaling_Attribute:          // A.5.3(27), K(217)
+    case A_Signed_Zeros_Attribute:      // A.5.3(13), K(221)
+    case A_Size_Attribute:            // 13.3(40), 13.3(45), K(223), K(228)
+    case A_Small_Attribute:            // 3.5.10(2), K(230)
+    case A_Storage_Pool_Attribute:      // 13.11(13), K(232)
+    case A_Storage_Size_Attribute:      // 13.3(60), 13.11(14), J.9(2), K(234),
+                                       //                             K(236)
+    case A_Succ_Attribute:            // 3.5(22), K(238)
+    case A_Tag_Attribute:             // 3.9(16), 3.9(18), K(242), K(244)
+    case A_Terminated_Attribute:       // 9.9(3), K(246)
+    case A_Truncation_Attribute:       // A.5.3(42), K(248)
+    case An_Unbiased_Rounding_Attribute: // A.5.3(39), K(252)
+    case An_Unchecked_Access_Attribute:  // 13.10(3), H.4(18), K(256)
+    case A_Val_Attribute:              // 3.5.5(5), K(258)
+    case A_Valid_Attribute:            // 13.9.2(3), H(6), K(262)
+    case A_Value_Attribute:            // 3.5(52), K(264)
+    case A_Version_Attribute:           // E.3(3), K(268)
+    case A_Wide_Image_Attribute:        // 3.5(28), K(270)
+    case A_Wide_Value_Attribute:        // 3.5(40), K(274)
+    case A_Wide_Width_Attribute:        // 3.5(38), K(278)
+    case A_Width_Attribute:            // 3.5(39), K(280)
+    case A_Write_Attribute:            // 13.13.2(3), 13.13.2(11), K(282), K(286)
+
+    //  |A2005 start
+    //  New Ada 2005 attributes. To be alphabetically ordered later
+    case A_Machine_Rounding_Attribute:
+    case A_Mod_Attribute:
+    case A_Priority_Attribute:
+    case A_Stream_Size_Attribute:
+    case A_Wide_Wide_Image_Attribute:
+    case A_Wide_Wide_Value_Attribute:
+    case A_Wide_Wide_Width_Attribute:
+    //  |A2005 end
+
+    //  |A2012 start
+    //  New Ada 2012 attributes. To be alphabetically ordered later
+    case A_Max_Alignment_For_Allocation_Attribute:
+    case An_Overlaps_Storage_Attribute:
+    //  |A2012 end
+      {
+        logInfo() << "untested attribute created: " << expr.Attribute_Kind
                   << std::endl;
 
-      /* fall through */
-      case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
-      case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)
-      {
-        ElemIdRange                range = idRange(expr.Attribute_Designator_Expressions);
-        std::vector<SgExpression*> expr = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-        SgExprListExp&             args = SG_DEREF(sb::buildExprListExp(expr));
-
-        res = &mkAdaExprAttribute(obj, name.fullName, args);
+        res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp());
         break;
       }
 
-      // attributes with empty expression list argument
+    // failure kinds
 
-      case An_Access_Attribute:          // 3.10.2(24), 3.10.2(32), K(2), K(4)
-      case An_Address_Attribute:         // 13.3(11), J.7.1(5), K(6)
-      case An_Adjacent_Attribute:        // A.5.3(48), K(8)
-      case An_Aft_Attribute:            // 3.5.10(5), K(12)
-      case An_Alignment_Attribute:       // 13.3(23), K(14)
-      case A_Base_Attribute:            // 3.5(15), K(17)
-      case A_Bit_Order_Attribute:        // 13.5.3(4), K(19)
-      case A_Body_Version_Attribute:      // E.3(4), K(21)
-      case A_Callable_Attribute:         // 9.9(2), K(23)
-      case A_Caller_Attribute:           // C.7.1(14), K(25)
-      case A_Ceiling_Attribute:          // A.5.3(33), K(27)
-      case A_Class_Attribute:            // 3.9(14), 7.3.1(9), K(31), K(34)
-      case A_Component_Size_Attribute:    // 13.3(69), K(36)
-      case A_Compose_Attribute:          // A.5.3(24), K(38)
-      case A_Constrained_Attribute:      // 3.7.2(3), J.4(2), K(42)
-      case A_Copy_Sign_Attribute:        // A.5.3(51), K(44)
-      case A_Count_Attribute:            // 9.9(5), K(48)
-      case A_Definite_Attribute:         // 12.5.1(23), K(50)
-      case A_Delta_Attribute:            // 3.5.10(3), K(52)
-      case A_Denorm_Attribute:           // A.5.3(9), K(54)
-      case A_Digits_Attribute:           // 3.5.8(2), 3.5.10(7), K(56), K(58)
-      case An_Exponent_Attribute:        // A.5.3(18), K(60)
-      case An_External_Tag_Attribute:     // 13.3(75), K(64)
-      case A_First_Bit_Attribute:        // 13.5.2(3), K(72)
-      case A_Floor_Attribute:            // A.5.3(30), K(74)
-      case A_Fore_Attribute:            // 3.5.10(4), K(78)
-      case A_Fraction_Attribute:         // A.5.3(21), K(80)
-      case An_Identity_Attribute:        // 11.4.1(9), C.7.1(12), K(84), K(86)
-      case An_Image_Attribute:           // 3.5(35), K(88)
-      case An_Input_Attribute:           // 13.13.2(22), 13.13.2(32), K(92), K(96)
-      case A_Last_Bit_Attribute:         // 13.5.2(4), K(106)
-      case A_Leading_Part_Attribute:      // A.5.3(54), K(108)
-      case A_Machine_Attribute:          // A.5.3(60), K(119)
-      case A_Machine_Emax_Attribute:      // A.5.3(8), K(123)
-      case A_Machine_Emin_Attribute:      // A.5.3(7), K(125)
-      case A_Machine_Mantissa_Attribute:  // A.5.3(6), K(127)
-      case A_Machine_Overflows_Attribute: // A.5.3(12), A.5.4(4), K(129), K(131)
-      case A_Machine_Radix_Attribute:     // A.5.3(2), A.5.4(2), K(133), K(135)
-      case A_Machine_Rounds_Attribute:    // A.5.3(11), A.5.4(3), K(137), K(139)
-      case A_Max_Attribute:             // 3.5(19), K(141)
-      case A_Max_Size_In_Storage_Elements_Attribute: //   13.11.1(3), K(145)
-      case A_Min_Attribute:             // 3.5(16), K(147)
-      case A_Model_Attribute:            // A.5.3(68), G.2.2(7), K(151)
-      case A_Model_Emin_Attribute:       // A.5.3(65), G.2.2(4), K(155)
-      case A_Model_Epsilon_Attribute:     // A.5.3(66), K(157)
-      case A_Model_Mantissa_Attribute:    // A.5.3(64), G.2.2(3), K(159)
-      case A_Model_Small_Attribute:      // A.5.3(67), K(161)
-      case A_Modulus_Attribute:          // 3.5.4(17), K(163)
-      case An_Output_Attribute:          // 13.13.2(19), 13.13.2(29), K(165), K(169)
-      case A_Partition_ID_Attribute:      // E.1(9), K(173)
-      case A_Pos_Attribute:             // 3.5.5(2), K(175)
-      case A_Position_Attribute:         // 13.5.2(2), K(179)
-      case A_Pred_Attribute:            // 3.5(25), K(181)
-      case A_Read_Attribute:            // 13.13.2(6), 13.13.2(14), K(191), K(195)
-      case A_Remainder_Attribute:        // A.5.3(45), K(199)
-      case A_Round_Attribute:            // 3.5.10(12), K(203)
-      case A_Rounding_Attribute:         // A.5.3(36), K(207)
-      case A_Safe_First_Attribute:       // A.5.3(71), G.2.2(5), K(211)
-      case A_Safe_Last_Attribute:        // A.5.3(72), G.2.2(6), K(213)
-      case A_Scale_Attribute:            // 3.5.10(11), K(215)
-      case A_Scaling_Attribute:          // A.5.3(27), K(217)
-      case A_Signed_Zeros_Attribute:      // A.5.3(13), K(221)
-      case A_Size_Attribute:            // 13.3(40), 13.3(45), K(223), K(228)
-      case A_Small_Attribute:            // 3.5.10(2), K(230)
-      case A_Storage_Pool_Attribute:      // 13.11(13), K(232)
-      case A_Storage_Size_Attribute:      // 13.3(60), 13.11(14), J.9(2), K(234),
-                                         //                             K(236)
-      case A_Succ_Attribute:            // 3.5(22), K(238)
-      case A_Tag_Attribute:             // 3.9(16), 3.9(18), K(242), K(244)
-      case A_Terminated_Attribute:       // 9.9(3), K(246)
-      case A_Truncation_Attribute:       // A.5.3(42), K(248)
-      case An_Unbiased_Rounding_Attribute: // A.5.3(39), K(252)
-      case An_Unchecked_Access_Attribute:  // 13.10(3), H.4(18), K(256)
-      case A_Val_Attribute:              // 3.5.5(5), K(258)
-      case A_Valid_Attribute:            // 13.9.2(3), H(6), K(262)
-      case A_Value_Attribute:            // 3.5(52), K(264)
-      case A_Version_Attribute:           // E.3(3), K(268)
-      case A_Wide_Image_Attribute:        // 3.5(28), K(270)
-      case A_Wide_Value_Attribute:        // 3.5(40), K(274)
-      case A_Wide_Width_Attribute:        // 3.5(38), K(278)
-      case A_Width_Attribute:            // 3.5(39), K(280)
-      case A_Write_Attribute:            // 13.13.2(3), 13.13.2(11), K(282), K(286)
+    case Not_An_Attribute:             // An unexpected element
+    default:
+      {
+        logError() << "unknown expression attribute: " << expr.Attribute_Kind
+                   << std::endl;
 
-      //  |A2005 start
-      //  New Ada 2005 attributes. To be alphabetically ordered later
-      case A_Machine_Rounding_Attribute:
-      case A_Mod_Attribute:
-      case A_Priority_Attribute:
-      case A_Stream_Size_Attribute:
-      case A_Wide_Wide_Image_Attribute:
-      case A_Wide_Wide_Value_Attribute:
-      case A_Wide_Wide_Width_Attribute:
-      //  |A2005 end
-
-      //  |A2012 start
-      //  New Ada 2012 attributes. To be alphabetically ordered later
-      case A_Max_Alignment_For_Allocation_Attribute:
-      case An_Overlaps_Storage_Attribute:
-      //  |A2012 end
-        {
-          logWarn() << "untested attribute created: " << expr.Attribute_Kind
-                    << std::endl;
-
-          SgExprListExp& emptylst = SG_DEREF(sb::buildExprListExp());
-
-          res = &mkAdaExprAttribute(obj, name.fullName, emptylst);
-          break;
-        }
-
-      // failure kinds
-
-      case Not_An_Attribute:             // An unexpected element
-      default:
-        {
-          logError() << "unknown expression attribute: " << expr.Attribute_Kind
-                     << std::endl;
-
-          SgExprListExp& emptylst = SG_DEREF(sb::buildExprListExp());
-          res = &mkAdaExprAttribute(obj, "ErrorAttr:" + name.fullName, emptylst);
-          ROSE_ASSERT(!FAIL_ON_ERROR);
-        }
-    }
-
-    return SG_DEREF(res);
+        res = &mkAdaAttributeExp(obj, "ErrorAttr:" + name.fullName, mkExprListExp());
+        ROSE_ASSERT(!FAIL_ON_ERROR);
+      }
   }
 
-} // anonymous
+  return SG_DEREF(res);
+}
 
+SgAdaAttributeExp&
+getAttributeExprID(Element_ID el, AstContext ctx)
+{
+  Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), el);
+
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
+
+  attachSourceLocation(sgnode, elem, ctx);
+  return sgnode;
+}
 
 
 
@@ -613,7 +702,9 @@ getExpr(Element_Struct& elem, AstContext ctx)
     case An_Integer_Literal:                        // 2.4
       {
         logKind("An_Integer_Literal");
+
         res = &mkValue<SgIntVal>(expr.Value_Image);
+        //~ res = &mkValue<SgLongIntVal>(expr.Value_Image);
         /* unused fields: (Expression_Struct)
              enum Attribute_Kinds  Attribute_Kind
         */
@@ -684,9 +775,10 @@ getExpr(Element_Struct& elem, AstContext ctx)
         ElemIdRange                idxrange = idRange(expr.Index_Expressions);
         std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
         SgExpression&              indices = SG_DEREF(idxexpr.size() < 2 ? idxexpr.at(0)
-                                                                         : sb::buildExprListExp(idxexpr));
+                                                                         : &mkExprListExp(idxexpr));
 
         res = sb::buildPntrArrRefExp(&prefix, &indices);
+        ROSE_ASSERT(indices.get_parent());
         /* unused fields
            Declaration_ID        Corresponding_Called_Function; // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
            bool                  Is_Generalized_Indexing
@@ -748,10 +840,24 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
         ElemIdRange                range  = idRange(expr.Array_Component_Associations);
         std::vector<SgExpression*> components = traverseIDs(range, elemMap(), ArrayAggregateCreator{namedAggregate, ctx});
-        SgExprListExp&             explst = SG_DEREF(sb::buildExprListExp(components));
+        SgExprListExp&             explst = mkExprListExp(components);
 
         attachSourceLocation(explst, elem, ctx);
         res = sb::buildAggregateInitializer(&explst);
+        ROSE_ASSERT(explst.get_parent());
+        break;
+      }
+
+    case A_Record_Aggregate:                        // 4.3
+      {
+        logKind("A_Record_Aggregate");
+        ElemIdRange                range  = idRange(expr.Record_Component_Associations);
+        std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
+        SgExprListExp&             explst = mkExprListExp(components);
+
+        attachSourceLocation(explst, elem, ctx);
+        res = sb::buildAggregateInitializer(&explst);
+        ROSE_ASSERT(explst.get_parent());
         break;
       }
 
@@ -837,7 +943,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case An_Explicit_Dereference:                   // 4.1
 
-    case A_Record_Aggregate:                        // 4.3
     case An_Extension_Aggregate:                    // 4.3
 
     case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
@@ -874,10 +979,10 @@ getExprID_opt(Element_ID el, AstContext ctx)
   if (isInvalidId(el))
   {
     logWarn() << "uninitalized expression id " << el << std::endl;
-    return SG_DEREF( sb::buildNullExpression() );
+    return mkNullExpression();
   }
 
-  return el == 0 ? SG_DEREF( sb::buildNullExpression() )
+  return el == 0 ? mkNullExpression()
                  : getExprID(el, ctx)
                  ;
 }
@@ -886,7 +991,7 @@ namespace
 {
   template <typename AsisDiscreteRangeStruct>
   SgExpression&
-  getDiscreteRangeGeneric(Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
+  getDiscreteRangeGeneric(Element_Struct& el, Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
   {
     SgExpression* res = nullptr;
 
@@ -937,17 +1042,18 @@ namespace
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 
-    return SG_DEREF(res);
+    attachSourceLocation(SG_DEREF(res), el, ctx);
+    return *res;
   }
 
   /// \private
   /// returns a range expression from the Asis definition \ref def
   SgExpression&
-  getDiscreteRange(Definition_Struct& def, AstContext ctx)
+  getDiscreteRange(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Discrete_Range);
 
-    return getDiscreteRangeGeneric(def, def.The_Union.The_Discrete_Range, ctx);
+    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Range, ctx);
   }
 
   SgExpression&
@@ -955,15 +1061,15 @@ namespace
   {
     ROSE_ASSERT(el.Element_Kind == A_Definition);
 
-    return getDiscreteRange(el.The_Union.Definition, ctx);
+    return getDiscreteRange(el, el.The_Union.Definition, ctx);
   }
 
   SgExpression&
-  getDiscreteSubtype(Definition_Struct& def, AstContext ctx)
+  getDiscreteSubtype(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
 
-    return getDiscreteRangeGeneric(def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
+    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
   }
 
   SgExpression&
@@ -995,12 +1101,12 @@ namespace
     {
       case A_Discrete_Range:
         logKind("A_Discrete_Range");
-        res = &getDiscreteRange(def, ctx);
+        res = &getDiscreteRange(el, def, ctx);
         break;
 
       case A_Discrete_Subtype_Definition:
         logKind("A_Discrete_Subtype_Definition");
-        res = &getDiscreteSubtype(def, ctx);
+        res = &getDiscreteSubtype(el, def, ctx);
         break;
 
       case An_Others_Choice:
@@ -1045,11 +1151,7 @@ void ArgListCreator::operator()(Element_Struct& elem)
 
 void RangeListCreator::operator()(Element_Struct& elem)
 {
-  SgExpression& rngexp = getDiscreteRange(elem, ctx);
-  SgRangeExp*   range  = isSgRangeExp(&rngexp);
-  ROSE_ASSERT(range);
-
-  lst.push_back(range);
+  lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
 

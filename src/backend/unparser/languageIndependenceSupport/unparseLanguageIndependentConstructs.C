@@ -391,7 +391,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (5/26/2005): Query isCompilerGenerated and isTransformation before processing the filename.
        // bool isCompilerGenerated = stmt->get_file_info()->isCompilerGenerated();
        // bool isCompilerGenerated = stmt->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
-       // bool isTransformation    = stmt->get_file_info()->isTransformation();
+       //
+       // Liao, 2021/1/4: outliner will build a lib file from input file. The introduced transformation should be preserved.
+       //
+       //   bool isTransformation    = stmt->get_file_info()->isTransformation();
        // if (isCompilerGenerated || isTransformation)
           if (stmt->get_file_info() == NULL)
              {
@@ -453,7 +456,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                printf ("sourceFile->get_unparseHeaderFiles()                = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
 #endif
                if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() &&
-                   sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false)
+                   sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false) // isTransformation == false
                   {
 #if 0
                     printf ("########## Forcing isOutputInCodeGeneration == false and forceOutputOfGeneratedCode == false \n");
@@ -9171,6 +9174,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                break;
              }
 
+          case V_SgAdaAttributeExp:
           case V_SgAdaTaskRefExp:
              {
                precedence_value = 0;

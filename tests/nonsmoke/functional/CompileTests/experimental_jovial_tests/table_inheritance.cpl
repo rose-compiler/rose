@@ -1,6 +1,6 @@
 START
 
-COMPOOL table'inheritance;
+COMPOOL tableinheritance;
 
 TYPE table'base'type TABLE;
   BEGIN
