@@ -1167,6 +1167,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 #endif
           switch(parent_declaration->variantT())
              {
+               case V_SgFunctionParameterList:
                case V_SgVariableDeclaration:
                   {
                     if (isSgVariableSymbol((*it).second) != NULL)
@@ -1918,6 +1919,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgJavaForEachStatement:
 
           case V_SgAdaPackageSpec:
+          case V_SgAdaPackageBody:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
@@ -2054,7 +2056,7 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite:
 #endif
              {
@@ -4931,7 +4933,7 @@ SageInterface::generateFileList()
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 #endif
 
@@ -10776,8 +10778,7 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 // Used to replace shared variables with the dereference expression of their addresses
 // e.g. to replace shared1 with (*__pp_shared1)
 
-void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
-{
+void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/) {
   SgExpression* parentExp;
 
   ROSE_ASSERT(oldExp);
@@ -10796,21 +10797,27 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 
   if (isSgExprStatement(parent)) {
     isSgExprStatement(parent)->set_expression(newExp);
-    }
-  else if (isSgForStatement(parent)) {
+  } else if (isSgForStatement(parent)) {
     ROSE_ASSERT (isSgForStatement(parent)->get_increment() == oldExp);
     isSgForStatement(parent)->set_increment(newExp);
     // TODO: any other cases here??
-  }
-  else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
+  } else if(SgMatlabForStatement *matlabFor = isSgMatlabForStatement(parent)) {
     if(matlabFor->get_index() == oldExp)
       matlabFor->set_index(newExp);
     else if(matlabFor->get_range() == oldExp)
       matlabFor->set_range(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
+  } else if(SgJovialForThenStatement *jovFor = isSgJovialForThenStatement(parent)) {
+    if(jovFor->get_initialization() == oldExp)
+      jovFor->set_initialization(newExp);
+    else if(jovFor->get_while_expression() == oldExp)
+      jovFor->set_while_expression(newExp);
+    else if(jovFor->get_by_or_then_expression() == oldExp)
+      jovFor->set_by_or_then_expression(newExp);
+    else
+      ROSE_ASSERT(!"sub-expression not found");
+  } else if (SgRangeExp* rngexp = isSgRangeExp(parent)) {
     if (rngexp->get_start() == oldExp)
       rngexp->set_start(newExp);
     else if (rngexp->get_end() == oldExp)
@@ -10819,26 +10826,22 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       rngexp->set_stride(newExp);
     else
       ROSE_ASSERT(!"sub-expression not found");
-  }
-  else if (isSgReturnStmt(parent))
+  } else if (isSgReturnStmt(parent)) {
     isSgReturnStmt(parent)->set_expression(newExp);
-  else  if (isSgBinaryOp(parent)!=NULL){
-    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand())
-        {
-          isSgBinaryOp(parent)->set_lhs_operand(newExp);
-         }
-     else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand())
-         {isSgBinaryOp(parent)->set_rhs_operand(newExp); }
-     else
-       ROSE_ASSERT(false);
-   } else //unary parent
-  if (isSgUnaryOp(parent)!=NULL){
+  } else  if (isSgBinaryOp(parent)!=NULL) {
+    if (oldExp==isSgBinaryOp(parent)->get_lhs_operand()) {
+      isSgBinaryOp(parent)->set_lhs_operand(newExp);
+    } else if (oldExp==isSgBinaryOp(parent)->get_rhs_operand()) {
+      isSgBinaryOp(parent)->set_rhs_operand(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgUnaryOp(parent)!=NULL){
       if (oldExp==isSgUnaryOp(parent)->get_operand_i())
            isSgUnaryOp(parent)->set_operand_i(newExp);
       else
         ROSE_ASSERT(false);
-  }
-  else if (isSgConditionalExp(parent) != NULL) {
+  } else if (isSgConditionalExp(parent) != NULL) {
      SgConditionalExp* expparent = isSgConditionalExp(parent); //get explicity type parent
      if (oldExp==expparent->get_conditional_exp())
         expparent->set_conditional_exp(newExp);
@@ -10848,8 +10851,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
         expparent->set_false_exp(newExp);
      else
         ROSE_ASSERT(false);
-  }
-  else if (isSgExprListExp(parent) != NULL) {
+  } else if (isSgExprListExp(parent) != NULL) {
     SgExpressionPtrList& explist = isSgExprListExp(parent)->get_expressions();
     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
       if (isSgExpression(*i)==oldExp) {
@@ -10858,64 +10860,53 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  }
-  else if (isSgValueExp(parent)) {
+  } else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
-  }
-  else if ((parentExp=isSgExpression(parent)) != NULL) {
+  } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
     ROSE_ASSERT (worked);
-  }
-  else if (isSgInitializedName(parent))
-  {
-          SgInitializedName* initializedNameParent = isSgInitializedName(parent);
-          if (oldExp == initializedNameParent->get_initializer())
-          {
-                  //We can only replace an initializer expression with another initializer expression
-                  ROSE_ASSERT(isSgInitializer(newExp));
-                  initializedNameParent->set_initializer(isSgInitializer(newExp));
-          }
-          else
-          {
-                  //What other expressions can be children of an SgInitializedname?
-                  ROSE_ASSERT(false);
-          }
-  }
-  else if (isSgFortranDo(parent))
-  {
-    SgFortranDo* fortranDo = isSgFortranDo(parent);
-    if(oldExp == fortranDo->get_initialization())
-    {
-      fortranDo->set_initialization(newExp);
-    }
-    else if(oldExp == fortranDo->get_bound())
-    {
-      fortranDo->set_bound(newExp);
-    }
-    else if(oldExp == fortranDo->get_increment())
-    {
-      fortranDo->set_increment(newExp);
-    }
-    else
-    {
+  } else if (isSgInitializedName(parent)) {
+    SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+    if (oldExp == initializedNameParent->get_initializer()) {
+      //We can only replace an initializer expression with another initializer expression
+      ROSE_ASSERT(isSgInitializer(newExp));
+      initializedNameParent->set_initializer(isSgInitializer(newExp));
+    } else {
+      //What other expressions can be children of an SgInitializedname?
       ROSE_ASSERT(false);
     }
-  }
- else{
-  cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
-  ROSE_ASSERT(false);
+  } else if (isSgCaseOptionStmt(parent)) {
+    SgCaseOptionStmt * case_stmt = isSgCaseOptionStmt(parent);
+    if (oldExp == case_stmt->get_key()) {
+      case_stmt->set_key(newExp);
+    } else if(oldExp == case_stmt->get_key_range_end()) {
+      case_stmt->set_key_range_end(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else if (isSgFortranDo(parent)) {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if (oldExp == fortranDo->get_initialization()) {
+      fortranDo->set_initialization(newExp);
+    } else if(oldExp == fortranDo->get_bound()) {
+      fortranDo->set_bound(newExp);
+    } else if (oldExp == fortranDo->get_increment()) {
+      fortranDo->set_increment(newExp);
+    } else {
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
+    ROSE_ASSERT(false);
   }
 
-  if (!keepOldExp)
-  {
+  if (!keepOldExp) {
     deepDelete(oldExp); // avoid dangling node in memory pool
-  }
-  else
-  {
-      oldExp->set_parent(NULL);
+  } else {
+    oldExp->set_parent(NULL);
   }
 
 } //replaceExpression()
@@ -15741,6 +15732,9 @@ PreprocessingInfo* SageInterface::attachComment(
                mytype = PreprocessingInfo::CplusplusStyleComment;
                resetPositionInfo = true;
                break;
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration: comment = "#ifndef " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorDefineDeclaration: comment = "#define " + content + "\n"; break;
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:  comment = "#endif" + (content.empty() ? "\n" : (" /* " + content + " */\n")); break;
 
           default:
              {
@@ -18086,7 +18080,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // tps : 28 Oct 2008 - support for finding the main interpretation
 // rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
 /** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied
@@ -21069,7 +21063,7 @@ static void moveSymbolTableBetweenBlocks(SgScopeStatement* sourceBlock, SgScopeS
     SgSymbol* symbol = s_table->find(iname);
     ROSE_ASSERT (symbol != NULL);
   }
-
+  // entirely move source block's symbol table to target block
   targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
   ROSE_ASSERT(sourceBlock != NULL);
@@ -21117,14 +21111,28 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
     if (stmt->get_scope() != targetBlock)
     {
       if (SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt))
-      { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
+      { 
+
+        // why only move if it is a first nondefining declaration?
+        // We have a case to move both defining and nondefining function declarations of Ada package body to namespace definition.
+         // comment out the if condition for now. 1/20/2021
+        //
+        // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
         // The func declaration should be moved along with the call site.
         // The scope should be set to the new block also
         // Liao 1/14/2011
-        if (func->get_firstNondefiningDeclaration() == func)
+        // if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
+          // This is needed to move functions in Ada package body into C++ namespace
+          // We may have compiler generated first nondefining declaration. We need to move its scope also
+          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration()); 
+          if (func!=nondef_decl)
+          {
+            if (nondef_decl->get_file_info()->isCompilerGenerated())
+              nondef_decl->set_scope(targetBlock);
+          }
       }
-      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt))
+      else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
         // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
         // The issues are fixed in the switch statement below but this test is needed
@@ -21190,12 +21198,15 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
             {
               SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
               SgDeclarationStatement* decl = table_type->get_declaration();
-              SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
-              SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
-
-              def_decl->set_scope(targetBlock);
-              nondef_decl->set_scope(targetBlock);
-              nondef_decl->set_parent(targetBlock);
+              if (decl->get_scope() == sourceBlock)
+              {
+                // Needs to be moved
+                SgDeclarationStatement* def_decl = decl->get_definingDeclaration();
+                SgDeclarationStatement* nondef_decl = decl->get_firstNondefiningDeclaration();
+                def_decl->set_scope(targetBlock);
+                nondef_decl->set_scope(targetBlock);
+                nondef_decl->set_parent(targetBlock);
+              }
             }
 
             // Must also move the symbol into the source block, Liao 2019/8/14
@@ -21218,6 +21229,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         {
           SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
           ROSE_ASSERT (funcDecl);
+#if 0 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+          // move function symbols also: search_for_symbol_from_symbol_table() 
+          SgSymbol* func_sym= funcDecl->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table();
+          if (func_sym)
+          {
+            SgScopeStatement * old_scope = func_sym -> get_scope();
+            if (old_scope != sourceBlock)
+            {
+              old_scope->remove_symbol (func_sym);
+              sourceBlock ->insert_symbol(func_sym->get_name(), func_sym);
+            }
+          }
+#endif
+
           break;
         }
       // needed to move Ada record into definition of C++ namespace
@@ -21232,6 +21257,16 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
           def_decl->set_parent(targetBlock);
           def_decl->set_scope(targetBlock);
+
+          SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
+          if (enum_decl) // Rasmussen (12/23/2020)
+            {
+              // Set the scope of the enumerators
+              BOOST_FOREACH (SgInitializedName* name, enum_decl->get_enumerators())
+                {
+                  name->set_scope(targetBlock);
+                }
+            }
           break;
         }
       case V_SgJovialTableStatement:
@@ -21321,7 +21356,7 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
   ROSE_ASSERT (sourceBlock && targetBlock);
-  if (sourceBlock == targetBlock)
+  if ((void*)sourceBlock == (void*)targetBlock)
   {
     cerr<<"warning: SageInterface::moveStatementsBetweenScopes() is skipped, "<<endl;
     cerr<<"         since program is trying to move statements from and to the identical scoped block. "<<endl;
@@ -21374,11 +21409,24 @@ static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
   }   
 }
 
+//TODO: now with more types, we need to use template functions
 void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageSpec * sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
 {
   moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
   //create alias symbols in its global definition 
   createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveStatementsBetweenScopes(sourceBlock, targetBlock); 
+  //create alias symbols in its global definition 
+  createAliasSymbols(isSgNamespaceDeclarationStatement(targetBlock->get_parent()));
+}
+
+void SageInterface::moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock )
+{
+  moveDeclarationsBetweenScopes(sourceBlock, targetBlock); 
 }
 
 void
@@ -24767,17 +24815,46 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   // print address
   out<<"@"<<node<<" "<< node->class_name()<<" ";
-  //file info
+
+  //optionally file info
   if (SgLocatedNode* lnode= isSgLocatedNode(node))
   {
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
   }
   
+  // optionally  qualified name
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgClassDeclaration* f = isSgClassDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
   if (SgInitializedName * v = isSgInitializedName(node) )
+  {
     out<<" "<< v->get_qualified_name();
+    out<<" type@"<< v->get_type();
+  }
+
+  // associated class, function and variable declarations
+  if (SgTemplateInstantiationDecl* f = isSgTemplateInstantiationDecl(node) )
+    out<<" template class decl@"<< f->get_templateDeclaration();
+
+  if (SgMemberFunctionDeclaration* f = isSgMemberFunctionDeclaration(node) )
+    out<<" assoc. class decl@"<< f->get_associatedClassDeclaration();
+
+  if (SgConstructorInitializer* ctor= isSgConstructorInitializer(node) )
+  {
+    out<<" member function decl@"<< ctor->get_declaration();
+  }
+  
+  if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
+    out<<" init name@"<< var_ref->get_symbol()->get_declaration();
+
+  if (SgMemberFunctionRefExp* func_ref= isSgMemberFunctionRefExp(node) )
+    out<<" member func decl@"<< func_ref->get_symbol_i()->get_declaration();
+
+  if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
+    out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
   out<<endl;
 
@@ -24815,7 +24892,7 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   string prefix;
   serialize(node, prefix, false, oss);
   ofstream textfile;
-  textfile.open(filename, ios::out | ios::app);
+  textfile.open(filename, ios::out);
   textfile<<oss.str();
   textfile.close();
 }

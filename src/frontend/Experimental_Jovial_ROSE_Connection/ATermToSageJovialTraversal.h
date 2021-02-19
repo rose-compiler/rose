@@ -282,19 +282,19 @@ ATbool traverse_AbortStatement  (ATerm term);
 // 5.0 FORMULAS
 ATbool traverse_Formula(ATerm term, SgExpression* &expr);
 
+ATbool traverse_Literal(ATerm term, SgExpression* &expr);
+ATbool traverse_Parens (ATerm term, SgExpression* &expr);
+ATbool traverse_UnaryExpression (ATerm term, SgExpression* &expr);
+ATbool traverse_BinaryExpression(ATerm term, SgExpression* &expr);
+
 // 5.1 NUMERIC FORMULAS
 ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
 ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
-ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
 ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
-ATbool traverse_OptLogicalContinuation (ATerm term, SgExpression* &expr);
-ATbool traverse_LogicalContinuation    (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &expr);
 ATbool traverse_BitPrimary             (ATerm term, SgExpression* &expr);
@@ -319,7 +319,6 @@ ATbool traverse_Variable         (ATerm term, SgExpression* &var);
 ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
 ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);
-ATbool traverse_Index            (ATerm term, SgExpression* &expr);
 ATbool traverse_TableDereference (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_Dereference      (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &func_call);

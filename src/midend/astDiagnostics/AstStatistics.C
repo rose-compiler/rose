@@ -217,7 +217,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgModifier)
           IR_NODE_VISIT_CASE(SgBitAttribute)
           IR_NODE_VISIT_CASE(SgAttribute)
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           IR_NODE_VISIT_CASE(SgBinaryComposite)
 #endif
           IR_NODE_VISIT_CASE(SgSupport)
@@ -418,7 +418,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgVariableDeclaration)
           IR_NODE_VISIT_CASE(SgVariableDefinition)
           IR_NODE_VISIT_CASE(SgEnumDeclaration)
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           IR_NODE_VISIT_CASE(SgAsmStmt)
 #endif
           IR_NODE_VISIT_CASE(SgTypedefDeclaration)
@@ -468,11 +468,11 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgCommonSymbol)
           IR_NODE_VISIT_CASE(SgRenameSymbol)
           IR_NODE_VISIT_CASE(SgAliasSymbol)
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           IR_NODE_VISIT_CASE(SgAsmBlock)
           IR_NODE_VISIT_CASE(SgAsmOperandList)
-#ifdef ROSE_ENABLE_ASM_A64
-          IR_NODE_VISIT_CASE(SgAsmA64Instruction)
+#ifdef ROSE_ENABLE_ASM_AARCH64
+          IR_NODE_VISIT_CASE(SgAsmAarch64Instruction)
 #endif
           IR_NODE_VISIT_CASE(SgAsmX86Instruction)
           IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)

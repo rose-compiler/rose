@@ -1,6 +1,6 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -79,7 +79,7 @@ SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf64SectionTableEn
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                                                      const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
 {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     ctor(sex, disk);
 #else
     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -90,7 +90,7 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                                                      const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
 {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     ctor(sex, disk);
 #else
     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");

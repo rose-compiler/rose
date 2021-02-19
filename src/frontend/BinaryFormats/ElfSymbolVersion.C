@@ -12,8 +12,8 @@
  *    SgAsmElfSymverEntry   -- A single entry in an SgAsmElfSymverSection, usually an index into one of the other
  *                             version tables, but some special values are also defined.
  */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we

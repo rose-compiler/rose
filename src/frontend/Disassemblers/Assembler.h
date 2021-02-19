@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Assembler_H
 #define ROSE_BinaryAnalysis_Assembler_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <RoseException.h>
 
@@ -12,7 +12,8 @@ namespace BinaryAnalysis {
 /** Virtual base class for instruction assemblers.
  *
  *  The Assembler class is a virtual class providing all non-architecture-specific functionality for the assembly of
- *  instructions; architecture-specific components are in subclasses such as AssemblerA64, AssemblerPowerpc, and AssemblerX86.
+ *  instructions; architecture-specific components are in subclasses such as AssemblerAarch64, AssemblerPowerpc, and
+ *  AssemblerX86.
  *
  *  This example shows how to test the disassembler against the assembler by disassembling and then reassembling all
  *  instructions. Generate debugging output for instructions that cannot be reassembled into an encoding identical to the

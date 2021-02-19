@@ -12,8 +12,8 @@
 //     symbol.p_addresses[0].set_section(section);     // this works
 //     symbol.get_addresses()[0].set_section(section); // so does this.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 /** @class rose_rva_t

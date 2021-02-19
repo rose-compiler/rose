@@ -837,6 +837,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTemplateDeclaration::template_type_enum" ) ||
                  ( varTypeString == "SgBaseClassModifier::baseclass_modifier_enum" ) ||
                  ( varTypeString == "SgLinkageModifier::linkage_modifier_enum" ) ||
+                 ( varTypeString == "SgAdaSelectStmt::select_type_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
                  ( varTypeString == "SgImplicitStatement::implicit_spec_enum" ) ||
@@ -882,8 +883,10 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
                  ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
                  ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
-                 ( varTypeString == "A64InstructionKind" ) || "Rose::BinaryAnalysis::A64InstructionKind" == varTypeString ||
-                 ( varTypeString == "A64InstructionCondition" ) || "Rose::BinaryAnalysis::A64InstructionCondition" == varTypeString ||
+                 ( varTypeString == "Aarch32InstructionKind" ) || "Rose::BinaryAnalysis::Aarch32InstructionKind" == varTypeString ||
+                 ( varTypeString == "Aarch32InstructionCondition" ) || "Rose::BinaryAnalysis::Aarch32InstructionCondition" == varTypeString ||
+                 ( varTypeString == "Aarch64InstructionKind" ) || "Rose::BinaryAnalysis::Aarch64InstructionKind" == varTypeString ||
+                 ( varTypeString == "Aarch64InstructionCondition" ) || "Rose::BinaryAnalysis::Aarch64InstructionCondition" == varTypeString ||
                  ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
                  ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||

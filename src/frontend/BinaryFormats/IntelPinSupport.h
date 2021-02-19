@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #ifndef USE_ROSE_INTEL_PIN_SUPPORT
 #error "ROSE not configured to use INTEL PIN support (use --with-IntelPin=<path>)."

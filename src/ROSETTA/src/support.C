@@ -1,3 +1,5 @@
+#include <featureTests.h>
+
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
@@ -108,14 +110,14 @@ Grammar::setUpSupport ()
   // can be related to a source file (and many source files).  The mapping is left
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
      BinaryComposite.isBoostSerializable(true);
 #endif
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
 #else
      NEW_NONTERMINAL_MACRO (File, SourceFile |                   UnknownFile , "File", "FileTag", false);
@@ -422,7 +424,7 @@ Grammar::setUpSupport ()
      SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
   // SourceFile.setAutomaticGenerationOfConstructor(false);
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      BinaryComposite.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 #endif
 
@@ -691,6 +693,11 @@ Grammar::setUpSupport ()
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // PP (01/25/21): Add arguments for Ada pragma
+     Pragma.setDataPrototype ( "SgExprListExp*" , "args", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
@@ -1495,7 +1502,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
@@ -2101,7 +2108,7 @@ Grammar::setUpSupport ()
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
-  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a 
+  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a
   // static data member of AstPerformance class.
   // Project.setDataPrototype         ( "bool", "compilationPerformance", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2553,17 +2560,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgRangeExp*", "range", "",
+     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 /*
      AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgRangeExpPtrList" );
+     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
      AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
      AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
      AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
      AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
 */
-     AdaIndexConstraint.setDataPrototype("SgRangeExpPtrList", "indexRanges", "",
+     AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -2986,7 +2993,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      DirectoryList.setFunctionSource   ( "SOURCE_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
      File.setFunctionSource            ( "SOURCE_APPLICATION_FILE", "../Grammar/Support.code");
      SourceFile.setFunctionSource      ( "SOURCE_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 #endif
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");

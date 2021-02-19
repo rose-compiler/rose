@@ -368,9 +368,8 @@ bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
  * \author Markus Schordan
  * \date 2012.
  */
-void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
   int numWarningsCount=0;
-  int maxWarningsCount=3; // 0 turns off warnings
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -378,6 +377,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
     ast.setWithTemplates(true);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgSymbol* sym = 0;
+      SgInitializedName* initName = NULL;
       // schroder3 (2016-08-18): Added variables that are "declared" in a lambda capture. There is currently no SgInitializedName for
       //  these closure variables.
       if(SgLambdaCapture* lambdaCapture = isSgLambdaCapture(*i)) {
@@ -388,7 +388,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
         //type = closureVar->get_type();
-      } else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+      } else if(initName = isSgInitializedName(*i)) {
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
@@ -404,6 +404,9 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
       if(sym) {
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
+          // determine if it is a symbol of a global varible
+          // TODO
+
           // Register new symbol as normal variable symbol:
           registerNewSymbol(sym);
           // Remember that this symbol was already registered:
@@ -411,10 +414,16 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         }
       } else {
         numWarningsCount++;
-        if(numWarningsCount<maxWarningsCount) {
-          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+        std::string name("UNKNOWN");
+        if(initName) {
+          name = initName->get_qualified_name().getString();
+        }
+        if(numWarningsCount<maxWarningsCount || -1 == maxWarningsCount) {
+          if(initName) {
+            Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName " << name << " at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          }
         } else if(numWarningsCount==maxWarningsCount) {
-          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName " << name << " at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
           Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName: maximum warning count of "<<maxWarningsCount<<" reached."<<endl;
         }
       }

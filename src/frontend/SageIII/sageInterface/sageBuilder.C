@@ -12844,8 +12844,20 @@ SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& na
 //! Build a Jovial table type with required class definition and defining and nondefining declarations.
 SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgType* base_type, SgExprListExp* dim_info, SgScopeStatement* scope)
    {
+     std::string type_name(name);
+     if (base_type) {
+       // Mangle the name to make sure the table type and the base type don't have the same name
+       type_name = "_table_of_" + type_name;
+       // Add dim_info address if there are subscripts to ensure type is unique
+       if (dim_info->get_expressions().size() > 0) {
+         std::ostringstream address;
+         address << (void const *)dim_info;
+         type_name += "_" + address.str();
+       }
+     }
+
      SgClassDeclaration::class_types kind = SgClassDeclaration::e_jovial_table;
-     SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (name, kind, scope);
+     SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (type_name, kind, scope);
 
      setOneSourcePositionForTransformation(table_decl);
      ROSE_ASSERT(table_decl->get_firstNondefiningDeclaration() != NULL);
@@ -12856,7 +12868,7 @@ SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgTyp
      ROSE_ASSERT(nondef_decl != NULL);
      nondef_decl->set_parent(table_decl);
 
-     SgJovialTableType* table_type = new SgJovialTableType(nondef_decl);
+     SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
      ROSE_ASSERT(table_type != NULL);
 
      table_type->set_base_type(base_type);
