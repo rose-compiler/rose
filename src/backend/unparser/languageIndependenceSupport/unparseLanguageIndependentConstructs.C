@@ -4176,6 +4176,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
           if (sourceFile->get_unparse_tokens() == false)
              {
+#if 0
+            // DQ (2/19/2021): Comment this out since it is a problem for the AST read test that is run by the distribution mechanism.
             // DQ (12/14/2015): Even if we don't unparse using the token stream, we can still use the
             // token sequence mapping to build more accurate source position information in the AST.
             // ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
@@ -4187,6 +4189,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
                        }
                  // ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
                   }
+#else
+               printf ("In unparseGlobalStmt(): Commented out use of sourceFile->get_use_token_stream_to_improve_source_position_info() \n");
+#endif
              }
             else
              {
