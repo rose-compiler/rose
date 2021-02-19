@@ -21020,6 +21020,14 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         // Liao 1/14/2011
         // if (func->get_firstNondefiningDeclaration() == func)
           func->set_scope(targetBlock);
+          // This is needed to move functions in Ada package body into C++ namespace
+          // We may have compiler generated first nondefining declaration. We need to move its scope also
+          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration()); 
+          if (func!=nondef_decl)
+          {
+            if (nondef_decl->get_file_info()->isCompilerGenerated())
+              nondef_decl->set_scope(targetBlock);
+          }
       }
       else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
@@ -21118,6 +21126,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         {
           SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
           ROSE_ASSERT (funcDecl);
+#if 0 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+          // move function symbols also: search_for_symbol_from_symbol_table() 
+          SgSymbol* func_sym= funcDecl->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table();
+          if (func_sym)
+          {
+            SgScopeStatement * old_scope = func_sym -> get_scope();
+            if (old_scope != sourceBlock)
+            {
+              old_scope->remove_symbol (func_sym);
+              sourceBlock ->insert_symbol(func_sym->get_name(), func_sym);
+            }
+          }
+#endif
+
           break;
         }
       // needed to move Ada record into definition of C++ namespace
@@ -24688,17 +24710,46 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   // print address
   out<<"@"<<node<<" "<< node->class_name()<<" ";
-  //file info
+
+  //optionally file info
   if (SgLocatedNode* lnode= isSgLocatedNode(node))
   {
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
   }
   
+  // optionally  qualified name
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgClassDeclaration* f = isSgClassDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
   if (SgInitializedName * v = isSgInitializedName(node) )
+  {
     out<<" "<< v->get_qualified_name();
+    out<<" type@"<< v->get_type();
+  }
+
+  // associated class, function and variable declarations
+  if (SgTemplateInstantiationDecl* f = isSgTemplateInstantiationDecl(node) )
+    out<<" template class decl@"<< f->get_templateDeclaration();
+
+  if (SgMemberFunctionDeclaration* f = isSgMemberFunctionDeclaration(node) )
+    out<<" assoc. class decl@"<< f->get_associatedClassDeclaration();
+
+  if (SgConstructorInitializer* ctor= isSgConstructorInitializer(node) )
+  {
+    out<<" member function decl@"<< ctor->get_declaration();
+  }
+  
+  if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
+    out<<" init name@"<< var_ref->get_symbol()->get_declaration();
+
+  if (SgMemberFunctionRefExp* func_ref= isSgMemberFunctionRefExp(node) )
+    out<<" member func decl@"<< func_ref->get_symbol_i()->get_declaration();
+
+  if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
+    out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
   out<<endl;
 
@@ -24736,7 +24787,7 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   string prefix;
   serialize(node, prefix, false, oss);
   ofstream textfile;
-  textfile.open(filename, ios::out | ios::app);
+  textfile.open(filename, ios::out);
   textfile<<oss.str();
   textfile.close();
 }
