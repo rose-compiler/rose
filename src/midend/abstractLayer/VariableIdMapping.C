@@ -416,9 +416,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
           // Register new symbol as normal variable symbol:
-          registerNewSymbol(sym);
-          // Remember that this symbol was already registered:
-          symbolSet.insert(sym);
+	  // ensure it's a "valid" symbol 
+	  if(sym->get_symbol_basis()!=0) {
+	    registerNewSymbol(sym);
+	    // Remember that this symbol was already registered:
+	    symbolSet.insert(sym);
+	  }
         }
       } else {
         numWarningsCount++;
@@ -439,9 +442,11 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
   }
   // creates variableid for each string literal in the entire program
   registerStringLiterals(project);
-  if(linkAnalysis) {
 
+  if(linkAnalysis) {
+    performLinkAnalysisRemapping();
   }
+
   return;
 }
 
@@ -587,7 +592,11 @@ bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
  * \date 2012.
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
+  return isTemporaryVariableIdSymbol(getSymbol(varId));
+}
+
+bool VariableIdMapping::isTemporaryVariableIdSymbol(SgSymbol* sym) {
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(sym)!=0;
 }
 
 bool VariableIdMapping::isVariableIdValid(VariableId varId) {
@@ -682,12 +691,16 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     mappingSymToVarId[sym] = variableIdFromCode(newIdCode);
     mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym=sym;
 
-    // determine if sym is declared in global scope and store information required for link analysis
-    // this check only succeeds for global variables (it filters member variables)
-    SgScopeStatement* scope=sym->get_scope();
-    if(isSgGlobal(scope)) {
-      SgName name=sym->get_mangled_name();
-      mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
+    ROSE_ASSERT(sym);
+    // exclude temporary variables from link analysis
+    if(!isTemporaryVariableIdSymbol(sym)) {
+      // determine if sym is declared in global scope and store information required for link analysis
+      // this check only succeeds for global variables (it filters member variables)
+      SgScopeStatement* scope=sym->get_scope();
+      if(isSgGlobal(scope)) {
+	SgName name=sym->get_mangled_name();
+	mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
+      }
     }
     
     VariableId newVarId;
