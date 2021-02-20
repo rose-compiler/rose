@@ -18,6 +18,8 @@ namespace CodeThorn {
      * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
+    SgType* strippedType(SgType* type);
     void computeTypeSizes();
     // direct lookup
     unsigned int getTypeSize(enum CodeThorn::BuiltInType);
@@ -25,6 +27,7 @@ namespace CodeThorn {
     unsigned int getTypeSize(VariableId varId);
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
+    virtual void toStream(std::ostream& os);
   private:
     CodeThorn::TypeSizeMapping typeSizeMapping;
   };
