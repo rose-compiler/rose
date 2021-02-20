@@ -121,7 +121,7 @@ namespace CodeThorn {
     CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
     void registerNewSymbol(SgSymbol* sym);
     void registerNewArraySymbol(SgSymbol* sym, int arraySize);
-    void toStream(std::ostream& os);
+    virtual void toStream(std::ostream& os);
     void generateDot(std::string filename,SgNode* astRoot);
 
     VariableIdSet getVariableIdSet();

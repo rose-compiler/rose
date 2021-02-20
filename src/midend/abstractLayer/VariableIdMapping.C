@@ -676,6 +676,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   ROSE_ASSERT(sym);
+  // ensure every symbol is only registered once (symbols of linked global variables can be processed multiple times)
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // Due to arrays there can be multiple ids for one symbol (one id
     //  for each array element but only one symbol for the whole array)
@@ -712,10 +713,6 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
     ROSE_ASSERT(mappingVarIdToInfo[mappingSymToVarId.at(sym)].sym == sym);
-  } else {
-    stringstream ss;
-    ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-    throw CodeThorn::Exception(ss.str());
   }
 }
 
