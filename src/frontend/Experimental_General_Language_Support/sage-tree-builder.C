@@ -1033,13 +1033,30 @@ getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
    SgInitializedName* init_name = nullptr;
 
    SgName name = old_val->get_name();
+#if 1
+   std::string status_name;
+   std::cout << "--> will look for " << name << " in STATUS " << enum_decl->get_name() << std::endl;
+   std::cout << "--> list size is " << enum_list.size() << std::endl;
+#endif
    BOOST_FOREACH(SgInitializedName* status_constant, enum_list) {
+#if 1
+     status_name = status_constant->get_name();
+#endif
       if (status_constant->get_name() == name) {
          init_name = status_constant;
          break;
       }
+     std::cout << "--> looking for " << name << " found " << status_name << std::endl;
    }
+   std::cout << "--> looking for " << name << " did find " << status_name << std::endl;
+#if 0
    ROSE_ASSERT(init_name);
+#else
+   if (!init_name) {
+     std::cout << "--> getEnumVal: did not find " << name << " returning old value\n";
+     return old_val;
+   }
+#endif
 
    SgAssignInitializer* assign_init = isSgAssignInitializer(init_name->get_initptr());
    ROSE_ASSERT(assign_init);
