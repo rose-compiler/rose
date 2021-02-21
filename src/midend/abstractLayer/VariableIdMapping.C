@@ -339,6 +339,16 @@ size_t VariableIdMapping::getElementSize(VariableId variableId) {
   return mappingVarIdToInfo[variableId].elementSize;
 }
 
+void VariableIdMapping::setTotalSize(VariableId variableId, size_t size) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].totalSize=size;
+}
+
+size_t VariableIdMapping::getTotalSize(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].totalSize;
+}
+
 void VariableIdMapping::setOffset(VariableId variableId, int size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].offset=size;
@@ -750,6 +760,7 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   sym(0),
   numberOfElements(0),
   elementSize(0),
+  totalSize(0),
   offset(-1),
   isMemberVariable(false),
   relinked(false)
