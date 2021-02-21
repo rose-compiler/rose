@@ -19,6 +19,7 @@ namespace CodeThorn {
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     SgType* strippedType(SgType* type);
     void computeTypeSizes();
     // direct lookup

@@ -31,6 +31,10 @@ namespace CodeThorn {
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset) {
     cout<<"DEBUG: register class members:"<<endl;
     std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
+    return registerClassMembers(classType,memberList,offset);
+  }
+  
+  CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
     cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     int numClassMembers=0;
     for(auto memberVarDecl : memberList) {
@@ -44,8 +48,8 @@ namespace CodeThorn {
 	ROSE_ASSERT(varId.isValid());
 	SgType* type=strippedType(sym->get_type());
 	cout<<"Type:"<<type->unparseToString()<<endl;
-	if(SgClassType* classType=isSgClassType(type)) {
-	  CodeThorn::TypeSize typeSize=registerClassMembers(classType,0); // start with 0 for each nested type
+	if(SgClassType* memberClassType=isSgClassType(type)) {
+	  CodeThorn::TypeSize typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
 	  offset+=typeSize;
 	} else if(SgArrayType* arrayType=isSgArrayType(type)) {
 	  offset+=typeSizeMapping.determineTypeSize(type);
@@ -80,16 +84,30 @@ namespace CodeThorn {
       RoseAst ast(*k);
       ast.setWithTemplates(true);
       for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	CodeThorn::TypeSize totalSize=0;
 	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
 	  cout<<"DEBUG: var decl: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
 	  SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
 	  if(sym->get_symbol_basis()!=0) {
 	    registerNewSymbol(sym);
+	    VariableId varId=variableId(sym);
 	    SgType* type=strippedType(sym->get_type());// strip typedef and const
-	    if(SgClassType* classType=isSgClassType(type)) {
-	      registerClassMembers(classType,0);
-	    }
 	    cout<<"DEBUG:     type: "<<type->unparseToString()<<endl;
+	    if(SgClassType* classType=isSgClassType(type)) {
+	      cout<<"DEBUG: register class members:"<<endl;
+	      std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
+	      CodeThorn::TypeSize typeSize=registerClassMembers(classType,memberList,0); // start with offset 0
+	      setNumberOfElements(varId,memberList.size());
+	      setTotalSize(varId,typeSize);
+	    } else if(SgArrayType* arrayType=isSgArrayType(type)) {
+	      setElementSize(varId,typeSizeMapping.determineElementTypeSize(arrayType));
+	      setNumberOfElements(varId,typeSizeMapping.determineNumberOfElements(arrayType));
+	      setTotalSize(varId,getElementSize(varId)*getNumberOfElements(varId));
+	    } else {
+	      setElementSize(varId,typeSizeMapping.determineTypeSize(type));
+	      setNumberOfElements(varId,1);
+	      setTotalSize(varId,getElementSize(varId));
+	    }
 	  } else {
 	    cout<<"DEBUG: no symbol basis."<<endl;
 	  }

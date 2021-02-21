@@ -109,6 +109,10 @@ namespace CodeThorn {
     // get the size of an element of the memory region determined by this variableid
     size_t getElementSize(VariableId variableId);
 
+    // set total size in bytes of variableId's memory region (for arrays not necessary, computed from other 2 values)
+    void setTotalSize(VariableId variableId, size_t size);
+    size_t getTotalSize(VariableId variableId);
+    
     // set offset of member variable (type is implicit as varids are unique across all types)
     void setOffset(VariableId variableId, int offset);
     // get offset of member variable (type is implicit as varids are unique across all types)
@@ -171,6 +175,7 @@ namespace CodeThorn {
       SgSymbol* sym;
       size_t numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables
       size_t elementSize; // in bytes
+      size_t totalSize;
       int offset;      // in bytes, only for member variables
       bool isMemberVariable;
       bool relinked; // true if link analysis relinked this entry
