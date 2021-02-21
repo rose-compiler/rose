@@ -289,7 +289,7 @@ ATbool traverse_BinaryExpression(ATerm term, SgExpression* &expr);
 
 // 5.1 NUMERIC FORMULAS
 ATbool traverse_NumericConversion(ATerm term, SgExpression* &expr);
-ATbool traverse_OptSign          (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
+ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
@@ -385,17 +385,33 @@ ATbool traverse_BooleanLiteral (ATerm term, SgExpression* &expr);
 ATbool traverse_PointerLiteral (ATerm term, SgExpression* &expr);
 
 // 9.0 DIRECTIVES
-ATbool traverse_DirectiveList     (ATerm term);
-ATbool traverse_Directive         (ATerm term);
+ATbool traverse_DirectiveList      (ATerm term);
+ATbool traverse_Directive          (ATerm term);
 
 // 9.1 COMPOOL DIRECTIVES
-ATbool traverse_CompoolDirective  (ATerm term);
+ATbool traverse_CompoolDirective   (ATerm term);
+
+// 9.2.2 SKIP, BEGIN, AND END DIRECTIVES
+ATbool traverse_SkipDirective      (ATerm term);
+ATbool traverse_BeginDirective     (ATerm term);
+ATbool traverse_EndDirective       (ATerm term);
+
+// 9.3 LINKAGE DIRECTIVES
+ATbool traverse_LinkageDirective   (ATerm term);
 
 // 9.6 REDUCIBLE DIRECTIVES
-ATbool traverse_ReducibleDirective(ATerm term);
+ATbool traverse_ReducibleDirective (ATerm term);
+
+// 9.7.1 SOURCE-LISTING DIRECTIVES
+ATbool traverse_NolistDirective    (ATerm term);
+ATbool traverse_ListDirective      (ATerm term);
+ATbool traverse_EjectDirective     (ATerm term);
+
+// 9.10 INITIALIZATION DIRECTIVES
+ATbool traverse_InitializeDirective(ATerm term);
 
 // 9.11 ALLOCATION ORDER DIRECTIVES
-ATbool traverse_OrderDirective    (ATerm term);
+ATbool traverse_OrderDirective     (ATerm term);
 
 }; // class ATermToSageJovialTraversal
 }  // namespace Jovial

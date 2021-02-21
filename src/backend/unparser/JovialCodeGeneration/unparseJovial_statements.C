@@ -147,9 +147,64 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
               curprint("');\n");
               break;
            }
+        case SgJovialDirectiveStatement::e_skip:
+           {
+              curprint_indented("!SKIP", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_begin:
+           {
+              curprint_indented("!BEGIN", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_end:
+           {
+              curprint_indented("!END;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_linkage:
+           {
+              curprint_indented("!LINKAGE", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
         case SgJovialDirectiveStatement::e_reducible:
            {
               curprint_indented("!REDUCIBLE;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_nolist:
+           {
+              curprint_indented("!NOLIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_list:
+           {
+              curprint_indented("!LIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_eject:
+           {
+              curprint_indented("!EJECT;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_initialize:
+           {
+              curprint_indented("!INITIALIZE;\n", info);
               break;
            }
         case SgJovialDirectiveStatement::e_order:
