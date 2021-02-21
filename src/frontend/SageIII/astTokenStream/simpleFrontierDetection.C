@@ -393,6 +393,9 @@ SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFil
    {
      int value = 0;
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree():");
+
      class CountTraversal : public SgSimpleProcessing
         {
           public:
@@ -420,6 +423,9 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
   // DQ (4/14/2015): After an more detailed evaluation of this function it does not acomplish it's objectives.
 
   // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
+
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST Simple Frontier Detection For Token Stream Mapping:");
 
   // DQ (11/13/2018): We need to make sure that the SgSourceFile pointer is set.
   // SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute;

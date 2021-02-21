@@ -655,6 +655,9 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
    {
      ROSE_ASSERT(sageFilePtr != NULL);
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer_1 ("AST attachPreprocessingInfo:");
+
 #define DEBUG_ATTACH_PREPROCESSOR_INFO 0
 
 #if DEBUG_ATTACH_PREPROCESSOR_INFO
@@ -803,7 +806,7 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
+     TimingPerformance timer_2 ("AST Comment and CPP Directive Processing (not using Wave):");
 
   // Dummy attribute (nothing is done here since this is an empty class)
      AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh;

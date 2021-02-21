@@ -17350,8 +17350,9 @@ SgSourceFile::get_tokenSubsequenceMap()
         }
        else
         {
+#if 0
           printf ("NOTE: SgSourceFile = %p not found in Rose::tokenSubsequenceMapOfMapsBySourceFile (might be because it is not saved in the AST write) \n",this);
-
+#endif
        // DQ (2/19/2021): Disable this as an error since the AST read (after the AST write) will not have this data structure.
        // We are not trying to currently support the token-based unparsing after an AST write and AST read.
        // DQ (1/30/2021): Added an assertion.

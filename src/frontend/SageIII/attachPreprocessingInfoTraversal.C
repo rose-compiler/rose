@@ -896,6 +896,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // The list is then used to draw from as the AST is traversed and the list elements 
   // are woven into the AST.
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST buildCommentAndCppDirectiveList():");
+
 #define DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST 0
 
 #if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
@@ -1127,18 +1130,28 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                printf ("sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
 #endif
 
+            // DQ (2/20/2021): This conditional fixes the performance problem with the use of ROSE without the token-based unparsing.
+            // The token based unparsing is more expensive mostly because of the call to buildTokenStreamMapping().  We might have to
+            // look into that seperately.  Since it is about as expensive as the cost of the frontend with token-based unparsing.
             // DQ (2/18/2021): We only want to process the token stream if sourceFile->get_unparse_tokens() is true (specified on the command line).
             // Currently we have to call this else we get an error in the unparser.  This should be fixed for performance reasons.
             // We currently output a message in buildTokenStreamMapping() when sourceFile->get_unparse_tokens() == false.
-            // if (sourceFile->get_unparse_tokens() == true)
+#if 1
+            // This code now works and solves the perfoermance problem that was present for ROSE when used without the token-based unparsing.
+               if (sourceFile->get_unparse_tokens() == true)
+#else
+            // DQ (2/20/2021): This works, but it is the cause of a performance problem (mapping takes about twice as long as the normal compile time).
                if (sourceFile->get_unparse_tokens() == true || true)
+#endif
                   {
+                 // DQ (02/20/2021): Using the performance tracking within ROSE.
+                    TimingPerformance timer ("AST calling buildTokenStreamMapping():");
 #if 0
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
                     printf ("In buildCommentAndCppDirectiveList(): Calling buildTokenStreamMapping() \n");
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
 #endif
-                 // void buildTokenStreamMapping(SgSourceFile* sourceFile);
+                 // DQ (2/20/2021): This is a pretty expensive operation, about the same cost of the frontend (without the call to this function).
                     buildTokenStreamMapping(sourceFile,tokenVector);
 #if 0
                     printf ("DONE: Calling buildTokenStreamMapping() \n");
