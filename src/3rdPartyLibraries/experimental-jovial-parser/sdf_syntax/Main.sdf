@@ -447,7 +447,7 @@ context-free syntax
 %% 1.2.2 PROCEDURE MODULES
 %%
   'START'
-    Directive*
+%%  Directive*
     DeclarationList
     NonNestedSubroutineList
   'TERM'                     -> ProcedureModule       {cons("ProcedureModule")}
@@ -461,7 +461,7 @@ context-free syntax
 %% 1.2.3 MAIN PROGRAM MODULES
 %%
   'START'
-    Directive*
+%%  Directive*
     DeclarationList
   'PROGRAM'
     ProgramName ';'
@@ -571,6 +571,7 @@ context-free syntax
   'BEGIN'
     Declaration+
   'END'                      -> Declaration           {cons("Declaration")}
+  Directive                  -> Declaration
 
   ExternalDeclaration        -> CompoolDeclaration
   ConstantDeclaration        -> CompoolDeclaration
@@ -581,6 +582,7 @@ context-free syntax
   'BEGIN'
     CompoolDeclaration+
   'END'                      -> CompoolDeclaration    {cons("Declaration")} %% Using Declaration traversals
+  Directive                  -> CompoolDeclaration
 
 
 %% 2.1 DATA DECLARATIONS
@@ -1218,11 +1220,12 @@ context-free syntax
 %% 3.2 FUNCTIONS
 %%
   FunctionHeading ';'
-    ReducibleDirective*
+%%  Directives are now Declarations
+%%  ReducibleDirective*
     Declaration                   -> FunctionDeclaration    {cons("FunctionDeclaration")}
 
   FunctionHeading ';'
-    ReducibleDirective*
+%%  ReducibleDirective*
     FunctionBody                  -> FunctionDefinition      {cons("FunctionDefinition")}
 
   'PROC'

@@ -122,14 +122,9 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureModule(ATerm term)
    printf("... traverse_ProcedureModule: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_dirs, t_decls, t_funcs;
+   ATerm t_decls, t_funcs;
 
-   if (ATmatch(term, "ProcedureModule(<term>,<term>,<term>)", &t_dirs, &t_decls, &t_funcs)) {
-
-      if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED DirectiveList
-      } else return ATfalse;
-
+   if (ATmatch(term, "ProcedureModule(<term>,<term>)", &t_decls, &t_funcs)) {
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
       } else return ATfalse;
@@ -190,17 +185,13 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
    printf("... traverse_MainProgramModule: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_dirs, t_decls, t_name, t_body, t_funcs;
+   ATerm t_decls, t_name, t_body, t_funcs;
 
    SgProgramHeaderStatement* program_decl = nullptr;
 
-   if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>,<term>)", &t_dirs, &t_decls,&t_name,&t_body,&t_funcs)) {
+   if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>)", &t_decls,&t_name,&t_body,&t_funcs)) {
       std::string name;
       std::vector<std::string> labels;
-
-      if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED DirectiveList
-      } else return ATfalse;
 
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
@@ -210,13 +201,13 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
          // MATCHED Name
       } else return ATfalse;
 
-      Rose::builder::SourcePosition prog_start, prog_end;  // start and end of program
-      Rose::builder::SourcePosition dirs_start, dirs_end;  // start and end of directives
-      setSourcePositions(term,   prog_start, prog_end);
-      setSourcePositions(t_dirs, dirs_start, dirs_end);
+      Rose::builder::SourcePosition prog_start, prog_end;   // start and end of program
+      Rose::builder::SourcePosition decls_start, decls_end; // start and end of declarations
+      setSourcePositions(term, prog_start, prog_end);
+      setSourcePositions(t_decls, decls_start, decls_end);
 
    // Enter SageTreeBuilder for SgProgramHeaderStatement
-      Rose::builder::SourcePositions sources(prog_start, dirs_start, prog_end);
+      Rose::builder::SourcePositions sources(prog_start, decls_start, prog_end);
       sage_tree_builder.Enter(program_decl, boost::optional<std::string>(name), labels, sources);
 
       if (traverse_ProgramBody(t_body)) {
@@ -423,6 +414,9 @@ ATbool ATermToSageJovialTraversal::traverse_Declaration(ATerm term)
    }
    else if (traverse_NullDeclaration(term)) {
       // MATCHED NullDeclaration
+   }
+   else if (traverse_Directive(term)) {
+      // MATCHED Directive
    }
    else return ATfalse;
 
@@ -3860,7 +3854,7 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    printf("... traverse_FunctionDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_func_heading, t_dirs, t_decl;
+   ATerm t_func_heading, t_decl;
 
    std::string name;
    SgType* return_type = NULL;
@@ -3871,7 +3865,7 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_decl)) {
+   if (ATmatch(term, "FunctionDeclaration(<term>,<term>)", &t_func_heading, &t_decl)) {
 
       if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
@@ -3881,10 +3875,6 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
-
-      if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED DirectiveList (grammar is ReducibleDirective*)
-      } else return ATfalse;
 
       if (traverse_Declaration(t_decl)) {
          // MATCHED Declaration
@@ -3910,7 +3900,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    printf("... traverse_FunctionDefinition: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_func_heading, t_dirs, t_proc_body;
+   ATerm t_func_heading, t_proc_body;
 
    std::string name;
    SgType* return_type = NULL;
@@ -3921,7 +3911,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
+   if (ATmatch(term, "FunctionDefinition(<term>,<term>)", &t_func_heading, &t_proc_body)) {
 
       if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
@@ -3929,10 +3919,6 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
-
-      if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED ReducibleDirective*
-      } else return ATfalse;
 
       if (traverse_SubroutineBody(t_proc_body)) {
          // MATCHED FunctionBody
@@ -7648,26 +7634,43 @@ ATbool ATermToSageJovialTraversal::traverse_Directive(ATerm term)
    if (traverse_CompoolDirective(term)) {
       // MATCHED CompoolDirective
    }
-   else if (traverse_OrderDirective(term)) {
-      // MATCHED OrderDirective
+   else if (traverse_SkipDirective(term)) {
+      // MATCHED SkipDirective
+   }
+   else if (traverse_BeginDirective(term)) {
+      // MATCHED BeginDirective
+   }
+   else if (traverse_EndDirective(term)) {
+      // MATCHED EndDirective
+   }
+   else if (traverse_LinkageDirective(term)) {
+      // MATCHED LinkageDirective
    }
    else if (traverse_ReducibleDirective(term)) {
       // MATCHED ReducibleDirective
+   }
+   else if (traverse_NolistDirective(term)) {
+      // MATCHED NolistDirective
+   }
+   else if (traverse_ListDirective(term)) {
+      // MATCHED ListDirective
+   }
+   else if (traverse_EjectDirective(term)) {
+      // MATCHED EjectDirective
+   }
+   else if (traverse_InitializeDirective(term)) {
+      // MATCHED InitializeDirective
+   }
+   else if (traverse_OrderDirective(term)) {
+      // MATCHED OrderDirective
    }
    else return ATfalse;
 
    return ATtrue;
 
 //  CopyDirective            -> Directive
-//  SkipDirective            -> Directive
-//  BeginDirective           -> Directive
-//  EndDirective             -> Directive
-//  LinkageDirective         -> Directive
 //  TraceDirective           -> Directive
 //  InterferenceDirective    -> Directive
-//  NolistDirective          -> Directive
-//  ListDirective            -> Directive
-//  EjectDirective           -> Directive
 //  ListinvDirective         -> Directive
 //  ListexpDirective         -> Directive
 //  ListbothDirective        -> Directive
@@ -7676,7 +7679,6 @@ ATbool ATermToSageJovialTraversal::traverse_Directive(ATerm term)
 //  DropDirective            -> Directive
 //  LeftrightDirective       -> Directive
 //  RearrangeDirective       -> Directive
-//  InitializeDirective      -> Directive
 
 }
 
@@ -7742,6 +7744,143 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 }
 
 //========================================================================================
+// 9.2.2 SKIP, BEGIN, AND END DIRECTIVES
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_SkipDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SkipDirective: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_opt_letter;
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+   std::string str = "";
+   char* letter;
+
+   if (ATmatch(term, "SkipDirective(<term>)", &t_opt_letter)) {
+      // MATCHED SkipDirective
+
+      if (ATmatch(t_opt_letter, "no-letter")) {
+         // MATCHED no-letter
+      }
+      else if (ATmatch(t_opt_letter, "<str>", &letter)) {
+         str = letter;
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, str);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_skip);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_BeginDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BeginDirective: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_opt_letter;
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+   std::string str = "";
+   char* letter;
+
+   if (ATmatch(term, "BeginDirective(<term>)", &t_opt_letter)) {
+      // MATCHED BeginDirective
+
+      if (ATmatch(t_opt_letter, "no-letter")) {
+         // MATCHED no-letter
+      }
+      else if (ATmatch(t_opt_letter, "<str>", &letter)) {
+         str = letter;
+      } else return ATfalse;
+
+   } else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, str);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_begin);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_EndDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndDirective: %s\n", ATwriteToString(term));
+#endif
+
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "EndDirective()")) {
+      // MATCHED EndDirective
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_end);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 9.3 LINKAGE DIRECTIVES
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_LinkageDirective: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_symbol;
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+   std::string str = "";
+   SgExpression* expr = nullptr;
+
+   if (ATmatch(term, "LinkageDirective(<term>)", &t_symbol)) {
+      // MATCHED LinkageDirective
+
+#if 1
+      // TODO: if needed, deal with symbol in more complex cases (.e.g., symbol list)
+      ATermList tail = (ATermList) ATmake("<term>", t_symbol);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_Literal(head, expr)) {
+            // MATCHED Literal
+            SgIntVal* int_val = isSgIntVal(expr);
+            if (int_val) {
+               str = int_val->get_valueString();
+            }
+         } else return ATfalse;
+      }
+#else
+      if (traverse_Literal(t_symbol, expr)) {
+         // MATCHED Literal
+         SgIntVal* int_val = isSgIntVal(expr);
+         if (int_val) {
+            str = int_val->get_valueString();
+         }
+      } else return ATfalse;
+#endif
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, str);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_linkage);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 9.6 REDUCIBLE DIRECTIVES
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_ReducibleDirective(ATerm term)
@@ -7759,6 +7898,96 @@ ATbool ATermToSageJovialTraversal::traverse_ReducibleDirective(ATerm term)
 
    sage_tree_builder.Enter(directive_stmt, std::string(""));
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_reducible);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 9.7.1 SOURCE-LISTING DIRECTIVES
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_NolistDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NolistDirective: %s\n", ATwriteToString(term));
+#endif
+
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "NolistDirective()")) {
+      // MATCHED NolistDirective
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_nolist);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_ListDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ListDirective: %s\n", ATwriteToString(term));
+#endif
+
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "ListDirective()")) {
+      // MATCHED ListDirective
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_list);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_EjectDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EjectDirective: %s\n", ATwriteToString(term));
+#endif
+
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "EjectDirective()")) {
+      // MATCHED EjectDirective
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_eject);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 9.10 INITIALIZATION DIRECTIVES
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_InitializeDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InitializeDirective: %s\n", ATwriteToString(term));
+#endif
+
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "InitializeDirective()")) {
+      // MATCHED InitializeDirective
+   }
+   else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_initialize);
 
    sage_tree_builder.Leave(directive_stmt);
 
