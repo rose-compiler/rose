@@ -68,6 +68,7 @@
 #define DEBUG_TOKEN_MAPPING 0
 
 #define ERROR_CHECKING 0
+#define ERROR_CONSISTANCY_CHECKING 0
 
 using namespace std;
 using namespace Rose;
@@ -465,6 +466,8 @@ void
 TokenMappingTraversal::consistancyCheck()
    {
      static int counter = 0;
+
+  // This function is commented out when ERROR_CONSISTANCY_CHECKING is defined to be 0
 
 #if ERROR_CHECKING
      ROSE_ASSERT(tokenStreamSequenceMap.size() == tokenStreamSequenceVector.size());
@@ -1250,8 +1253,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         }
 #endif
 
+#if ERROR_CONSISTANCY_CHECKING
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
+#endif
 
 #if 0
   // DQ (11/30/2013): This is not the correct way to handle children of a SgBasicBlock.
@@ -1628,9 +1633,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     printf ("   --- In evaluateSynthesizedAttribute(): child_name = %s child node = %p = %s \n",
                          child_name.c_str(),childAttributes[i].node,(childAttributes[i].node != NULL) ? childAttributes[i].node->class_name().c_str() : "null");
 #endif
+#if ERROR_CONSISTANCY_CHECKING
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
-
+#endif
 #if 0
                  // DQ (1/6/2015): Adding assertions to eliminate possible null entries in the tokenStreamSequenceMap.
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
@@ -1808,8 +1814,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
                                         printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
+#if ERROR_CONSISTANCY_CHECKING
                                      // DQ (10/14/2013): Added consistancy test.
                                         consistancyCheck();
+#endif
 #if 0
                                         printf ("Exiting as a test! \n");
                                         ROSE_ASSERT(false);
@@ -1846,8 +1854,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
                          printf ("BEFORE erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
+#if ERROR_CONSISTANCY_CHECKING
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
+#endif
 #if 0
                       // DQ (11/30/2013): Added exit as part of testing.
                          if (isSgBasicBlock(n) != NULL)
@@ -1908,8 +1918,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
                          printf ("AFTER erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
+#if ERROR_CONSISTANCY_CHECKING
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
+#endif
 #if 0
                          vector<TokenStreamSequenceToNodeMapping*>::iterator k = tokenToNodeEntriesToRemove.begin();
                          while (k != tokenToNodeEntriesToRemove.end())
@@ -2169,8 +2181,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
                        }
 
+#if ERROR_CONSISTANCY_CHECKING
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
+#endif
                   }
 #if 0
             // List the IR nodes that have an identified token subsequence mapping (after removing nexted subsequence mappings).
@@ -4369,9 +4383,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                     printf ("In evaluateSynthesizedAttribute(): processing else sysntax for SgIfStmt: before for loop \n");
 #endif
+#if ERROR_CONSISTANCY_CHECKING
                  // DQ (2/15/2021): Added consistancy test.
                     consistancyCheck();
-
+#endif
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
 #if 0
@@ -4475,8 +4490,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                             }
 
+#if ERROR_CONSISTANCY_CHECKING
                       // DQ (2/15/2021): Added consistancy test.
                          consistancyCheck();
+#endif
                        }
                   }
              }
@@ -4536,8 +4553,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         }
 #endif
 
+#if ERROR_CONSISTANCY_CHECKING
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
+#endif
 
      return SynthesizedAttribute(n);
    }
@@ -4582,8 +4601,10 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
 #endif
 
+#if ERROR_CONSISTANCY_CHECKING
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
+#endif
 
      if (processed == false)
         {
@@ -5687,8 +5708,10 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
      ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
 
+#if ERROR_CONSISTANCY_CHECKING
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
+#endif
 
 #if 0
   // DQ (12/14/2014): This is part of a bug fix where the ending position does not include the trailing ";" in EDG.
@@ -6809,9 +6832,14 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
      printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
 #endif
 
+   {
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST tokenMappingTraversal:");
+
   // tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
   // tokenMappingTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
      tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
+   }
 
 #if 0
   // We need to set the positions of the trailing whitespace of the last element.
@@ -6892,6 +6920,10 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
           printf ("In buildTokenStreamMapping(): building the SgToken objects from the tokens collected by the lex file: size = %zu \n",roseTokenList.size());
         }
 
+   {
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST build the SgToken vector:");
+
   // This should now include all of the CPP directives and C/C++ style comments as tokens.
   // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
      int counter = 0;
@@ -6913,6 +6945,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
           roseTokenList.push_back(roseToken);
           counter++;
         }
+   }
 
   // Avoid the copy into the list held by SgSourceFile.
   // sourceFile->set_token_list(tokenList);
@@ -7021,10 +7054,15 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
         }
 #endif
 
+   {
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST set_representativeWhitespaceStatementMap:");
+
   // DQ (11/20/2015): Now setup the representative whitespace to use in the output of transformations for each scope.
   // Since the transformations are output without surrounding whitespace, we need to collect representative 
   // statements from each scope so that we can use their whitespace when transformations in that scope are output.
      sourceFile->set_representativeWhitespaceStatementMap(tokenMappingTraversal.representativeWhitespaceStatementMap);
+   }
 
 #if 0
   // DQ (11/20/2015): This should be true for most testing but does not have to be true for empty files and such pathological cases.
