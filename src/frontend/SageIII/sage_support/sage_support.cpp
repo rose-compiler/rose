@@ -3540,6 +3540,9 @@ SgFile::secondaryPassOverSourceFile()
   //  1) Just the source file (no header files)
   //  2) Just the header files (not the source file)
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST secondaryPassOverSourceFile:");
+
 #if 0
      printf ("################ In SgFile::secondaryPassOverSourceFile(): this = %p = %s \n",this,this->class_name().c_str());
      printf (" --- filename ================================= %s \n",this->getFileName().c_str());

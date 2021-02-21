@@ -6703,6 +6703,9 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
   // the assocaited connection to the computed frontier after transformations have been done to define where the AST
   // should be using the token stream unparsing and where it should be using the AST unparsing.
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST Token Stream Mapping:");
+
   // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
      ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
