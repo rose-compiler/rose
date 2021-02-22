@@ -24701,7 +24701,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   //if (!node) return;
 
   out<<prefix;
-  out<< (hasRemaining?"├──": "└──");
+  out<< (hasRemaining?"|---": "|___");
   if (!node)
   {
     out<<" NULL "<<endl;
@@ -24760,7 +24760,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     if (i+1<children.size())
       n_hasRemaining=true;
 
-    string suffix= hasRemaining? "│   " : "    ";
+    string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
     serialize (children[i], n_prefix, n_hasRemaining, out);
   }
