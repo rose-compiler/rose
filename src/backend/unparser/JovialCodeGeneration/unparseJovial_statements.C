@@ -1141,22 +1141,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            unparseType(type, info);
         }
 
-  // OptStructureSpecifier
-     if (table_type)
-        {
-           if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
-              curprint("PARALLEL ");
-           }
-           else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
-              curprint("T ");
-              if (table_type->get_bits_per_entry() > 0) {
-                 std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
-                 curprint(value);
-                 curprint(" ");
-              }
-           }
-        }
-
   // OptPackingSpecifier
      if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
      else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
