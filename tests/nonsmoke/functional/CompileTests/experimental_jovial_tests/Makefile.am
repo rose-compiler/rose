@@ -214,6 +214,7 @@ COMPOOL_TESTCODES = \
  table_inheritance.cpl                  \
  table_names.cpl                        \
  table_types.cpl                        \
+ tighttable.cpl                         \
  2_4_define.cpl                         \
  3_0_rent_and_rec.cpl                   \
  rc161b.pre.cpl                         \
@@ -265,6 +266,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-531.cpl                  \
  rose-issue-rc-587.cpl                  \
  rose-issue-rc-600.cpl                  \
+ rose-issue-rc-645.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \
