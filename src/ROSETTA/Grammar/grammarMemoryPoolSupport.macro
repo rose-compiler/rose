@@ -1,43 +1,5 @@
 HEADER_MEMORY_POOL_SUPPORT_START
 #include <semaphore.h>
-// DQ (9/21/2005): Static variables supporting memory pools
-/*! \brief \b FOR \b INTERNAL \b USE Number of objects allocated within each block of objects forming a memory pool for this IR node.
-
-\internal This is part of the support for memory pools within ROSE.
-     This can be removed and should be replaced by a function that evaluates to an increasing 
-     value so that each block in a memory pool is larger than the last (e.g. factor of 2).
-*/
-extern int $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE;        // = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
-
-/*! \brief \b FOR \b INTERNAL \b USE Current object (within a block) which will be returned from the new operator
-
-\internal This is part of the support for memory pools withn ROSE.
-*/
-extern $CLASSNAME* $CLASSNAME_Current_Link;              // = NULL;
-
-// DQ (12/15/2005): This is Jochen's implementation of the memory allocation pools.
-// This is was one of the things on the todo list (above).
-
-/*! \brief \b FOR \b INTERNAL \b USE This is the STL vector containing the pointers to the blocks in an IR node's memory pool.
-
-\internal This is part of the support for memory pools within ROSE.
-*/
-extern std::vector < unsigned char* > $CLASSNAME_Memory_Block_List;
-/* */
-
-// DQ (4/6/2006): Newer code from Jochen
-// Methods to find the pointer to a global and local index
-$CLASSNAME* $CLASSNAME_getPointerFromGlobalIndex ( unsigned long globalIndex ) ;
-$CLASSNAME* $CLASSNAME_getPointerFromGlobalIndex ( AstSpecificDataManagingClass* astInPool, unsigned long globalIndex ) ;
-
-// Methods for computing the total size of the memory pool. It actually returns the
-// size of the whole blocks allocated, no matter they contain valid pointers or not
-unsigned long $CLASSNAME_getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long );
-void $CLASSNAME_clearMemoryPool ( );
-void $CLASSNAME_extendMemoryPoolForFileIO ( );
-unsigned long $CLASSNAME_initializeStorageClassArray( $CLASSNAMEStorageClass *storageArray );
-void $CLASSNAME_resetValidFreepointers( );
-unsigned long $CLASSNAME_getNumberOfLastValidPointer();
 
 HEADER_MEMORY_POOL_SUPPORT_END
 
