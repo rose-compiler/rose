@@ -247,7 +247,7 @@ namespace
   SgVariableDeclaration* variableDeclaration(SgInitializedName* ini)
   {
     ASSERT_not_null(ini);
-    SgVariableDeclaration* var = isSgVariableDeclaration(ini->get_definition());
+    SgVariableDeclaration* var = isSgVariableDeclaration(ini->get_declptr());
 
     ASSERT_not_null(var);
     return var;
@@ -1120,6 +1120,13 @@ namespace
       stmt(n.get_body());
     }
 
+
+    void handle(SgFunctionParameterList& n)
+    {
+      // handled by the SgFunctionDeclaration and friends
+    }
+
+
     void handle(SgFunctionDeclaration& n)
     {
       SgFunctionType& ty      = SG_DEREF(n.get_type());
@@ -1181,6 +1188,7 @@ namespace
     // if not handled here, have the language independent parser handle it..
     unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
   }
+
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
