@@ -68,10 +68,10 @@ static void mergeFileIDs(
   unsigned num_nodes = Sg_File_Info::numberOfNodes();
   for (unsigned long i = start_node; i < num_nodes; i++) {
     // Compute the postion of the indexed Sg_File_Info object in the memory pool.
-    unsigned long positionInPool = i % Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE ;
-    unsigned long memoryBlock    = (i - positionInPool) / Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE;
+    unsigned long positionInPool = i % Sg_File_Info::pool_size ;
+    unsigned long memoryBlock    = (i - positionInPool) / Sg_File_Info::pool_size;
 
-    Sg_File_Info * fileInfo = &(((Sg_File_Info*)(Sg_File_Info_Memory_Block_List[memoryBlock]))[positionInPool]);
+    Sg_File_Info * fileInfo = &(((Sg_File_Info*)(Sg_File_Info::pools[memoryBlock]))[positionInPool]);
     ROSE_ASSERT(fileInfo != NULL);
 
     int oldFileId = fileInfo->get_file_id();

@@ -14,13 +14,6 @@ include $(srcdir)/sage_support/Makefile_variables
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 fSageSupportPath=sage_support#
 
-# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
-# although this will likely fail at least some of the nearly one hundred new name qualification tests.
-# DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
-# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
-# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
-# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
-
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    SUBDIRS = astFixup astPostProcessing sageInterface astVisualization virtualCFG includeDirectivesProcessing
 else
@@ -287,6 +280,8 @@ libsage3_la_LIBADD  = \
         astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
         includeDirectivesProcessing/libincludeDirectivesProcessing.la
 endif
+
+libsage3_la_LIBADD += astFileIO/libastFileIO.la
 
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
 # although this will likely fail at least some of the nearly one hundred new name qualification tests.
