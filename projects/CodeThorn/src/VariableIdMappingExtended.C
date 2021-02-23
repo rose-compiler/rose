@@ -78,6 +78,12 @@ namespace CodeThorn {
     */
   }
 
+  void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
+    VariableIdMapping::computeVariableSymbolMapping(project, maxWarningsCount);
+    computeTypeSizes();
+    typeSizeMapping.computeOffsets(project,this);
+  }
+
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -113,7 +119,7 @@ namespace CodeThorn {
 	  }
 	}
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
-	  cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
+	  //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
 	  std::vector<SgInitializedName *> & funParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
 	  for(auto initName : funParams) {
 	    SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initName);
@@ -123,6 +129,8 @@ namespace CodeThorn {
 	  }
 	}
       }
+      // creates variableid for each string literal in the entire program
+      registerStringLiterals(project);
       //computeTypeSizes();
       //typeSizeMapping.computeOffsets(project,this);
     }

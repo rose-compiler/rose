@@ -18,6 +18,7 @@ namespace CodeThorn {
      * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
+    void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount = 3); // override;
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     SgType* strippedType(SgType* type);
