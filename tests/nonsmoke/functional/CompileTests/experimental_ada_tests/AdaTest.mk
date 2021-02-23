@@ -38,6 +38,8 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   minimal.adb                          \
   named.ads                            \
   operator.adb                         \
+  overload.ads                         \  
+  overload.adb                         \
   package_with_body.adb                \
   package_with_body.ads                \
   parameter_declaration.ads            \
