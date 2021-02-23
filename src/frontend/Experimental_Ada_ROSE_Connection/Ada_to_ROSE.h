@@ -210,6 +210,40 @@ void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 /// \param primaryHandler true if this is the primary handler
 void logKind(const char* kind, bool primaryHandler = true);
 
+
+/// A range abstraction for a contiguous sequence
+template <class T>
+struct Range : std::pair<T, T>
+{
+  Range(T lhs, T rhs)
+  : std::pair<T, T>(lhs, rhs)
+  {}
+
+  bool empty() const { return this->first == this->second; }
+  int  size()  const { return this->second - this->first; }
+};
+
+/// A range of Asis Units
+struct UnitIdRange : Range<Unit_ID_Ptr>
+{
+  typedef Unit_Struct value_type;
+
+  UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
+  : Range<Unit_ID_Ptr>(lhs, rhs)
+  {}
+};
+
+/// A range of Asis Elements
+struct ElemIdRange : Range<Element_ID_Ptr>
+{
+  typedef Element_Struct value_type;
+
+  ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
+  : Range<Element_ID_Ptr>(lhs, rhs)
+  {}
+};
+
+
 /// non-tracing alternative
 //~ static inline
 //~ void logKind(const char*, bool = false) {}
@@ -425,38 +459,6 @@ namespace
   {
     return SG_DEREF(retrieveAsOpt<ElemT>(map, key));
   }
-
-  /// A range abstraction for a contiguous sequence
-  template <class T>
-  struct Range : std::pair<T, T>
-  {
-    Range(T lhs, T rhs)
-    : std::pair<T, T>(lhs, rhs)
-    {}
-
-    bool empty() const { return this->first == this->second; }
-    int  size()  const { return this->second - this->first; }
-  };
-
-  /// A range of Asis Units
-  struct UnitIdRange : Range<Unit_ID_Ptr>
-  {
-    typedef Unit_Struct value_type;
-
-    UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
-    : Range<Unit_ID_Ptr>(lhs, rhs)
-    {}
-  };
-
-  /// A range of Asis Elements
-  struct ElemIdRange : Range<Element_ID_Ptr>
-  {
-    typedef Element_Struct value_type;
-
-    ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
-    : Range<Element_ID_Ptr>(lhs, rhs)
-    {}
-  };
 
   /// Type mapping for range element types
   template <class T>

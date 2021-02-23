@@ -3143,7 +3143,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
-  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope_npc(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)
