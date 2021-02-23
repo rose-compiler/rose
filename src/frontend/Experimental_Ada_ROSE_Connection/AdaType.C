@@ -319,6 +319,9 @@ namespace
         NameData            name = singleName(decl, ctx);
         ROSE_ASSERT(name.ident == name.fullName);
 
+        // \todo name.ident could be a character literal, such as 'c'
+        //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+        //       SgInitializedName are created with the name 'c' instead of character constants.
         SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, nullptr);
 
         sgnode.set_scope(enumdcl.get_scope());
@@ -544,7 +547,7 @@ namespace
                 // these are functions, so we need to worry about return types
                 isFuncAccess = true;
               }
-              
+
               if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
                 logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
                 /*
@@ -560,7 +563,7 @@ namespace
 
               res.n = &mkAdaAccessType(NULL);
               ((SgAdaAccessType*)res.n)->set_is_object_type(false);
-              
+
               if (isFuncAccess) {
                 SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
                 ((SgAdaAccessType*)res.n)->set_return_type(&rettype);
