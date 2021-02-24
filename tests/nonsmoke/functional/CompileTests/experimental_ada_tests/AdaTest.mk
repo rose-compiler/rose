@@ -70,9 +70,11 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   accept_statement.adb                 \
+  alignment_component_clause.adb       \
   array_declare_2.ads                  \
   async_transfer_select.adb            \
   based_numbers.ads                    \
+  choice_parameter_specification.adb   \
   complex.ads                          \
   defining_character_literal.adb       \
   defining_operator_symbol.ads         \
@@ -133,6 +135,7 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   real_typedecl.ads                    \
   select_accept.adb                    \
   sender.ads                           \
+  standard_subtypes.ads                \
   test.ads                             \
   test_unit.ads                                     
 
@@ -176,8 +179,6 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   variant_record.ads                                
 
 ROSE_FAILING_ADA_TESTS :=                           \
-  alignment_component_clause.adb                    \
-  choice_parameter_specification.adb                \
   delay_until.adb                                   \
   entry_index_specification.adb                     \
   iterate_range.adb                                 \
