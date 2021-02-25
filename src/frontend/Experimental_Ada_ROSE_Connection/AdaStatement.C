@@ -2110,14 +2110,16 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   {
     case A_Record_Representation_Clause:           // 13.5.1
       {
+        using SageRecordClause = SgAdaRecordRepresentationClause;
+
         logKind("A_Record_Representation_Clause");
 
-        SgType&                 tyrep = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
-        SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
-        SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
-        SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
-        SgBasicBlock&           components = SG_DEREF(sgnode.get_components());
-        ElemIdRange             range  = idRange(repclause.Component_Clauses);
+        SgType&           tyrep      = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
+        SgClassType&      rec        = SG_DEREF(isSgClassType(&tyrep));
+        SgExpression&     modclause  = getExprID_opt(repclause.Mod_Clause_Expression, ctx);
+        SageRecordClause& sgnode     = mkAdaRecordRepresentationClause(rec, modclause);
+        SgBasicBlock&     components = SG_DEREF(sgnode.get_components());
+        ElemIdRange       range      = idRange(repclause.Component_Clauses);
 
         // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, elem, ctx);
@@ -3143,7 +3145,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
-  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope_npc(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)
