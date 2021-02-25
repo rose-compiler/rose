@@ -86,7 +86,13 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
             // result.push_back(fullPath);
                 if (using_nostdinc_option == true)
                   {
-                    if (*i == "gcc_HEADERS" || *i == "g++_HEADERS")
+                    const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH; 
+                    const char* CXX_Basename = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                    string CC_Headername(CC_Basename); 
+                    string CXX_Headername(CXX_Basename);
+                    CC_Headername += "_HEADERS"; 
+                    CXX_Headername += "_HEADERS"; 
+                    if (*i == CC_Headername || *i == CXX_Headername)
                        {
 #if 0
                          printf ("In makeSysIncludeList(): Where using_nostdinc_option == true: detected either gcc_HEADERS or g++_HEADERS ROSE specific directories \n");
