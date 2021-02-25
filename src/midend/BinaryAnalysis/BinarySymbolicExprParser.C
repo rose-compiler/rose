@@ -10,6 +10,7 @@
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
+#include "RoseAsserts.h" /* JFR: Added 25Feb2021 */
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -1315,8 +1316,14 @@ SymbolicExprParser::SymbolicExprCmdlineParser::operator()(const char *input, con
         *rest = input && *input ? input+1 : input;
         std::ostringstream ss;
         e.print(ss);
-        ss <<"\n  input: " <<input
-           <<"\n  here---" <<std::string(e.columnNumber, '-') <<"^";
+        if (input == NULL) {
+           ss <<"\n  input: <nil>"
+              <<"\n  here---" <<std::string(e.columnNumber, '-') <<"^";
+        }
+        else {
+           ss <<"\n  input: " <<input
+              <<"\n  here---" <<std::string(e.columnNumber, '-') <<"^";
+        }
         throw std::runtime_error(ss.str());
     }
 
