@@ -137,8 +137,6 @@ CharacterLiteral
 EqualOrNotEqualOperator
 RelationalOperator
 BitConversion
-BitFunctionCall
-BitVariable
 BooleanLiteral
 BitLiteral
 BitPrimary
@@ -156,10 +154,7 @@ MultiplyDivideOrMod
 Sign
 PlusOrMinus
 OptSign
-CompileTimePointerFormula
 CompileTimeNumericFormula
-TableFormula
-PointerFormula
 AbortPhrase
 BlockReference
 ActualOutputParameter
@@ -170,16 +165,11 @@ OptAbortPhrase
 OptActualParameterList
 MachineSpecificProcedureCall
 UserDefinedProcedureCall
-CompileTimeCharacterFormula
-CompileTimeBitFormula
 CaseIndex
 DefaultOption
 OptFALLTHRU
 CaseIndexGroup
 CaseAlternative
-StatusFormula
-CharacterFormula
-BitFormula
 CaseBody
 CaseSelectorFormula
 ElseClause
@@ -319,7 +309,6 @@ OptPackingSpecifier
 BitsPerEntry
 OptBitsPerEntry
 StructureSpecifier
-CompileTimeStatusFormula
 LowerBoundOption
 LowerBound
 UpperBound
@@ -413,6 +402,7 @@ EQ
 AddOperand
 MultOperand
 AndOperand
+Conversion
 
 context-free syntax
 
@@ -447,7 +437,7 @@ context-free syntax
 %% 1.2.2 PROCEDURE MODULES
 %%
   'START'
-%%  Directive*
+%%  Directive* has been moved from the original grammar to DeclarationList
     DeclarationList
     NonNestedSubroutineList
   'TERM'                     -> ProcedureModule       {cons("ProcedureModule")}
@@ -461,7 +451,7 @@ context-free syntax
 %% 1.2.3 MAIN PROGRAM MODULES
 %%
   'START'
-%%  Directive*
+%%  Directive* has been moved from the original grammar to DeclarationList
     DeclarationList
   'PROGRAM'
     ProgramName ';'
@@ -474,7 +464,7 @@ context-free syntax
   Statement                  -> ProgramBody           {cons("ProgramSimpleBody")}
 
   'BEGIN'
-%%    Directive*             %% Might need this in the future
+%%  Directive* has been moved from the original grammar to DeclarationList
     DeclarationList
     Statement+
     SubroutineDefinition*
@@ -991,7 +981,6 @@ context-free syntax
     ')' ':'                       -> PresetIndexSpecifier    {cons("PresetIndexSpecifier")}
 
   CompileTimeNumericFormula       -> ConstantIndex
-%%CompileTimeStatusFormula        -> ConstantIndex
   
   OptItemPresetValue              -> PresetValuesOption    {cons("PresetValuesOption"), prefer}
   RepetitionCount
@@ -1119,6 +1108,8 @@ context-free syntax
   DataDeclaration                 -> DefSpecificationChoice
   DefBlockInstantiation           -> DefSpecificationChoice
   StatementNameDeclaration        -> DefSpecificationChoice
+%%Not originally in grammar
+  OverlayDeclaration              -> DefSpecificationChoice
 
   'BLOCK' 'INSTANCE'
     BlockName ';'                 -> DefBlockInstantiation   {cons("DefBlockInstantiation")}
@@ -1210,7 +1201,7 @@ context-free syntax
   Statement                       -> SubroutineBody         {cons("SubroutineSimpleBody")}
 
   'BEGIN'
-%%    Directive*                  %% Might need this in the future
+%%  Directive* has been moved from the original grammar to DeclarationList
     DeclarationList
     Statement*
     SubroutineDefinition*
@@ -1441,9 +1432,6 @@ context-free syntax
   '(' {CaseIndex ','}+ ')' ':' -> CaseIndexGroup       {cons("CaseIndexGroup")}
 
   CompileTimeNumericFormula    -> CaseIndex            {cons("CaseIndex"), prefer}
-  CompileTimeBitFormula        -> CaseIndex            {cons("CaseIndex")}
-  CompileTimeCharacterFormula  -> CaseIndex            {cons("CaseIndex")}
-  CompileTimeStatusFormula     -> CaseIndex            {cons("CaseIndex")}
   LowerBound ':' UpperBound    -> CaseIndex            {cons("CaseIndex")}
 
 %% 4.5 PROCEDURE CALL STATEMENTS
@@ -1476,6 +1464,9 @@ context-free syntax
 
   Variable                     -> ActualOutputParameter    {cons("Variable"), prefer}
   BlockReference               -> ActualOutputParameter    {cons("BlockReference")}
+  %% Added UserDefinedFunctionCall to allow for TableItems that can't produce Variable because of ambiguities
+  UserDefinedFunctionCall      -> ActualOutputParameter
+
 
   'ABORT' StatementName        -> AbortPhrase              {cons("AbortPhrase")}
 
@@ -1525,11 +1516,7 @@ context-free syntax
 
 %% Most formulas will go through Level4Expr -> Formula, but some conversions and some others
 %% will go through these productions
-  BitFormula                  -> Formula
-  CharacterFormula            -> Formula
-  StatusFormula               -> Formula
-  PointerFormula              -> Formula
-  TableFormula                -> Formula               {cons("TableFormula")}
+%%  StatusFormula               -> Formula
 
 %% All CompileTimeFormulas will use this production to remove ambiguities
   Formula                     -> CompileTimeNumericFormula      %% new Jan.11
@@ -1550,6 +1537,7 @@ context-free syntax
   Variable                        -> Primary
   '(' Formula ')'                 -> Primary            {cons("Parens")}
   StatusConstant                  -> Primary            {cons("StatusFormula")}
+  Conversion                      -> Primary
 
   Primary                         -> Level1Expr
   ControlLetter                   -> Level1Expr
@@ -1585,21 +1573,34 @@ context-free syntax
 
   AndOperand                               -> LogicalOperand
 
-  LogicalOperand 'AND' AndOperand          -> LogicalOperand    {cons("AND")}
-  LogicalOperand 'OR'  AndOperand          -> LogicalOperand    {cons("OR")}
-  LogicalOperand 'EQV' AndOperand          -> LogicalOperand    {cons("EQV")}
-  LogicalOperand 'XOR' AndOperand          -> LogicalOperand    {cons("XOR")}
+%% 'AND', 'OR', 'EQV', 'XOR' moved to lexor
+  LogicalOperand ANDOperator AndOperand    -> LogicalOperand    {cons("AND")}
+  LogicalOperand OROperator  AndOperand    -> LogicalOperand    {cons("OR")}
+  LogicalOperand EQVOperator AndOperand    -> LogicalOperand    {cons("EQV")}
+  LogicalOperand XOROperator AndOperand    -> LogicalOperand    {cons("XOR")}
 
   LogicalOperand                           -> Level4Expr
 
   Level4Expr                               -> Formula           {prefer}
 
+%%Conversions have all been moved here
   IntegerConversion
-    '(' Formula ')'           -> Primary                {cons("NumericConversion")}
+    '(' Formula ')'           -> Conversion       {cons("NumericConversion")}
   FloatingConversion
-    '(' Formula         ')'   -> Primary                {cons("NumericConversion")}
+    '(' Formula ')'           -> Conversion       {cons("NumericConversion")}
   FixedConversion
-    '(' Formula         ')'   -> Primary                {cons("NumericConversion"), prefer}
+    '(' Formula ')'           -> Conversion       {cons("NumericConversion"), prefer}
+  BitConversion
+    '(' Formula ')'           -> Conversion       {cons("BitPrimaryConversion")}
+  CharacterConversion
+    '(' Formula ')'           -> Conversion       {cons("CharacterFormulaConversion")}
+  StatusConversion
+    '(' Formula ')'           -> Conversion       {cons("StatusFormulaConversion")}
+  PointerConversion
+    '(' Formula ')'           -> Conversion       {cons("PointerFormulaConversion")}
+  TableConversion
+    '(' Formula ')'           -> Conversion       {cons("TableFormulaConversion")}
+
 
   IntegerMachineParameter     -> NumericMachineParameter
   FloatingMachineParameter    -> NumericMachineParameter
@@ -1607,23 +1608,13 @@ context-free syntax
 
 %% 5.2 BIT FORMULAS
 %%
-%% LogicalOperand, LogicalContinuation, RelationalExpression moved to Level4Expr
-%% NamedBitConstant, like all constants, will be a Name or a Variable
+%%LogicalOperand, LogicalContinuation, RelationalExpression moved to Level4Expr
+%%NamedBitConstant, like all constants, will be a Name or a Variable
+%%BitConversion moved to Conversion which produces Primary
+%%BitVariable, BitFunctionCall not accessible and will go through more general productions
 
   BitLiteral                  -> BitPrimary
   BooleanLiteral              -> BitPrimary
-  BitVariable                 -> BitPrimary             {cons("BitVariable")}
-
-  BitFunctionCall             -> BitPrimary
-  '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimaryParens")}
-  BitConversion
-  '('    Formula ')'          -> BitFormula             {cons("BitPrimaryConversion")}
-
-  Variable                    -> BitVariable            {cons("BitVariable")}
-
-  FunctionCall                -> BitFunctionCall
-
-  BitFormula                  -> CompileTimeBitFormula
 
 %% 5.2.1 RELATIONAL EXPRESSIONS
 %%
@@ -1638,43 +1629,30 @@ context-free syntax
 %% 5.3 CHARACTER FORMULAS
 %%
 %%CharacterLiteral, CharacterVariable, NamedCharacterConstant
-%%CharacterFunctionCall are not accessible and will go through more general productions
+%%CharacterConversion moved to Conversion which produces Primary
+%%CharacterFunctionCall not accessible and will go through more general productions
 
-  '(' CharacterFormula ')'    -> CharacterFormula       {cons("CharacterFormulaParens")}
-  CharacterConversion
-    '(' Formula ')'           -> CharacterFormula       {cons("CharacterFormulaConversion")}
-
-  CharacterFormula            -> CompileTimeCharacterFormula
 
 %% 5.4 STATUS FORMULAS
 %%
 %%StatusConstant moved to Primary
+%%StatusConversion moved to Conversion which produces Primary
 %%StatusVariable, NamedStatusConstant, StatusFunctionCall not accessible
 %%and will go through more general productions
-  '(' StatusFormula ')'       -> StatusFormula      {cons("StatusFormulaParens")}
-  StatusConversion
-    '(' Formula ')'           -> StatusFormula      {cons("StatusFormulaConversion")}
 
-  StatusFormula               -> CompileTimeStatusFormula
 
 %% 5.5 POINTER FORMULAS
 %%
 %%PointerLiteral has been moved to Formula
+%%PointerConversion moved to Conversion which produces Primary
 %%PointerVariable, NamedPointerConstant, PointerFunctionCall not accessible
 %%and will go through more general productions
-  '(' PointerFormula ')'      -> PointerFormula     {cons("PointerFormulaParens")}
-  PointerConversion
-    '(' Formula ')'           -> PointerFormula     {cons("PointerFormulaConversion")}
-
-  PointerFormula              -> CompileTimePointerFormula
 
 %% 5.6 TABLE FORMULAS
 %%
+%%TableConversion moved to Conversion which produces Primary
 %%TableVariable, NamedTableConstant not accessible
 %%and will go through more general productions
-  '(' TableFormula ')'        -> TableFormula       {cons("TableFormulaParens")}
-  TableConversion
-    '(' Formula ')'           -> TableFormula       {cons("TableFormulaConversion")}
 
 %%%%%%%%%%
 %% 6.0 DATA REFERENCES
@@ -1861,7 +1839,8 @@ context-free syntax
 
 %% 6.3.3 BIT FUNCTION
 %%
-  'BIT' '(' BitFormula
+%%Grammar originally allows BitFormula as first argument
+  'BIT' '(' Formula
     ',' Fbit ',' Nbit ')'     -> BitFunction          {cons("BitFunction")}
   'BIT' '(' RepFunctionVariable
     ',' Fbit ',' Nbit ')'     -> BitFunction          {cons("BitFunction"), prefer}
@@ -1939,8 +1918,9 @@ context-free syntax
   'LAST'  '('
     StatusInverseArgument ')' -> StatusInverseFunction {cons("StatusInverseFunctionLAST")}
 
-  StatusFormula               -> StatusInverseArgument
-  StatusTypeName              -> StatusInverseArgument
+%%Grammar originially allows for StatusFormula as a StatusInverseArgument
+  Formula                     -> StatusInverseArgument
+  StatusTypeName              -> StatusInverseArgument {prefer}
 
 %% 6.3.12 NENT FUNCTION
 %%

@@ -3456,24 +3456,28 @@ bool ConstrGraph::transitiveClosureDiv(string indent)
                                 // inferredXY => d_y * x = d_x * y + q
                                 //      d_y * cX - d_x * cY = q
                                 inferredXY.set(divLY->getDiv(), divLX->getDiv(), divLY->getDiv() * cX - divLX->getDiv() * cY);
-                                if(getVal(*x, *y) != NULL) {
-                                   Dbg::dbg << indent << "transitiveClosureDiv() Current="<<getVal(*x, *y)->str(*x, *y, indent+"    ")<<" inferredXY="<<inferredXY.str(*x, *y, indent+"    ")<<"\n";
+                                //
+                                // Note: avoiding repeated getVal(*x, *y) calls.
+                                //
+                                affineInequality* afnIneqPtr = getVal(*x, *y);
+                                if(afnIneqPtr != NULL) {
+                                   Dbg::dbg << indent << "transitiveClosureDiv() Current="<<afnIneqPtr->str(*x, *y, indent+"    ")<<" inferredXY="<<inferredXY.str(*x, *y, indent+"    ")<<"\n";
                                 }
                                 else {
                                    Dbg::dbg << indent << "transitiveClosureDiv() Current=NONE inferredXY="<<inferredXY.str(*x, *y, indent+"    ")<<"\n";
                                 }
-                                if(getVal(*x, *y) == NULL) {
+                                if(afnIneqPtr == NULL) {
                                    Dbg::dbg << indent << "    No Original Constraint. Setting.\n";
                                 }
                                 else {
-                                   Dbg::dbg << indent << "    semLessThan ="<<getVal(*x, *y)->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x),
+                                   Dbg::dbg << indent << "    semLessThan ="<<afnIneqPtr->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x),
                                                                            getVal(*y, zeroVar), getVal(zeroVar, *y), indent+"            ")<<"\n";
                                 }
                                 // If either no x->y constraint is currently recorded or 
                                 //   there is one but the inferred constraint is not looser than the previous one, 
                                 //   replace the original with the inferred
-                                if(getVal(*x, *y)==NULL || 
-                                   !getVal(*x, *y)->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x), 
+                                if(afnIneqPtr==NULL || 
+                                   !afnIneqPtr->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x), 
                                                                             getVal(*y, zeroVar), getVal(zeroVar, *y), indent+"            ")) {
                                         modified = setVal(*x, *y, inferredXY) || modified;
                                 }
