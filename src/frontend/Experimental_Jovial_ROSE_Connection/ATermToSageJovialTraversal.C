@@ -3396,6 +3396,8 @@ ATbool ATermToSageJovialTraversal::traverse_DefSpecificationChoice(ATerm term)
       // MATCHED StatementNameDeclaration
    } else if (traverse_DefBlockInstantiation(term)) {
       // MATCHED DefBlockInstantiation
+   } else if (traverse_OverlayDeclaration(term)) {
+      // MATCHED OverlayDeclaration
    } else return ATfalse;
 
    return ATtrue;
@@ -5181,6 +5183,8 @@ ATbool ATermToSageJovialTraversal::traverse_ActualOutputParameters(ATerm term, S
                // Variable                     -> ActualOutputParameter    {cons("Variable"), prefer}
                // BlockReference               -> ActualOutputParameter    {cons("BlockReference")}
             }
+         } else if (traverse_UserDefinedFunctionCall(head, param)) {
+            // MATCHED UserDefinedFunctionCall
          } else return ATfalse;
 
          ROSE_ASSERT(param);
@@ -5507,7 +5511,7 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   printf("... traverse_BinaryExpression: %s\n", ATwriteToString(term));
 #endif
 
-  ATerm t_lhs, t_rhs;
+  ATerm t_lhs, t_rhs, t_oper;
   LanguageTranslation::ExpressionKind op = LT::e_none;
   SgExpression* lhs = nullptr;
   SgExpression* rhs = nullptr;
@@ -5528,10 +5532,10 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   else if (ATmatch(term, "NE(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_not_equal;
 
   // Logical operators
-  else if (ATmatch(term, "AND(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_and;
-  else if (ATmatch(term, "OR(<term>,<term>)",  &t_lhs, &t_rhs)) op = LT::e_operator_or;
-  else if (ATmatch(term, "XOR(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_xor;
-  else if (ATmatch(term, "EQV(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_equiv;
+  else if (ATmatch(term, "AND(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
+  else if (ATmatch(term,  "OR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
+  else if (ATmatch(term, "XOR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
+  else if (ATmatch(term, "EQV(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
 
   else if (ATmatch(term, "Mod(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_mod;
 
@@ -7117,7 +7121,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    func_call = nullptr;
 
    if (ATmatch(term, "StatusInverseFunctionFIRST(<term>)", &t_argument)) {
-      if (traverse_StatusFormula(t_argument, argument)) {
+      if (traverse_Formula(t_argument, argument)) {
          // MATCHED StatusFormula
       }
       else if (traverse_Name(t_argument, var_name)) {
@@ -7127,7 +7131,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
       function_name = "FIRST";
    }
    else if (ATmatch(term, "StatusInverseFunctionLAST(<term>)", &t_argument)) {
-      if (traverse_StatusFormula(t_argument, argument)) {
+      if (traverse_Formula(t_argument, argument)) {
          // MATCHED StatusFormula
       }
       else if (traverse_Name(t_argument, var_name)) {

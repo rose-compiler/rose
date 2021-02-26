@@ -93,6 +93,9 @@ map_t<int, SgDeclarationStatement*>& asisTypes();
 /// returns a mapping from string to builtin type nodes
 map_t<AdaIdentifier, SgType*>& adaTypes();
 
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+
 
 //
 // auxiliary functions and types
