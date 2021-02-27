@@ -29,13 +29,13 @@ generateJovialCompoolFile(SgFile *sfile)
   // file name, with full path.
      std::string originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
 
-  // For Jovial we shouldn't need to compile a module file already seen
-     if (sfile->get_skipfinalCompileStep() == true)
+  // For Jovial we shouldn't need to unparse or compile a module file already seen
+     if ((sfile->get_skip_unparse() == true) || (sfile->get_skipfinalCompileStep() == true))
         {
-           if (SgProject::get_verbose() > 0) {
-              mlog[INFO] << "Skipping generation of rcmp file: " << originalModuleFilenameWithPath << std::endl;
-           }
-           return;
+          if (SgProject::get_verbose() > 0) {
+            mlog[INFO] << "Skipping generation of rcmp file: " << originalModuleFilenameWithPath << std::endl;
+          }
+          return;
         }
 
      if (SgProject::get_verbose() > 0)

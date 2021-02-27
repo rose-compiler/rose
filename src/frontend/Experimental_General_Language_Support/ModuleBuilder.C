@@ -187,7 +187,6 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
         {
            mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present) \n";
            ROSE_ASSERT(false);
-           //return NULL;
         }
 
      argv.push_back(SKIP_SYNTAX_CHECK);
@@ -200,6 +199,10 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
 
      SgSourceFile* newFile = isSgSourceFile(determineFileType(argv,errorCode,project));
      ASSERT_not_null(newFile);
+
+  // Don't want to unparse or compile a module file in front-end
+     newFile->set_skip_unparse(true);
+     newFile->set_skipfinalCompileStep(true);
 
   // Run the frontend to process the compool file
      newFile->runFrontend(errorCode);
@@ -214,9 +217,9 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
      ASSERT_not_null (newFile->get_startOfConstruct());
      ROSE_ASSERT (newFile->get_parent() == project);
 
-  // Don't want to unparse or compile a module file
-     newFile->set_skipfinalCompileStep(true);
+  // Don't want to unparse or compile a module file in back-end either
      newFile->set_skip_unparse(true);
+     newFile->set_skipfinalCompileStep(true);
 
      project->set_file(*newFile);
 
