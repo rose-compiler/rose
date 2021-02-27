@@ -386,6 +386,8 @@ namespace
 
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
+    void modifiers(SgDeclarationStatement& n);
+
     //
     // handlers
 
@@ -643,6 +645,8 @@ namespace
       prn(" ");
       prn(n.get_name());
       prn(" is");
+
+      modifiers(n);
       prn(declwords.second);
       prn(" ");
       type(n.get_base_type());
@@ -1003,14 +1007,9 @@ namespace
       return scopeQual(SG_DEREF(remote));
     }
 
-    void parentRecord(SgClassDefinition& def)
+    void parentRecord(SgBaseClass& parentType)
     {
-      SgBaseClassPtrList& parents = def.get_inheritances();
-
-      if (parents.size() == 0) return;
-
-      SgBaseClass&        parent = SG_DEREF(parents.at(0));
-      SgClassDeclaration& decl   = SG_DEREF(parent.get_base_class());
+      SgClassDeclaration& decl   = SG_DEREF(parentType.get_base_class());
 
       prn(" new ");
       prn(scopeQual(decl.get_scope()));
@@ -1018,26 +1017,33 @@ namespace
       prn(" with");
     }
 
+    void parentRecord_opt(SgBaseClass* baserec)
+    {
+      if (baserec) parentRecord(*baserec);
+    }
+
+    void parentRecord_opt(SgClassDefinition& def)
+    {
+      SgBaseClassPtrList& parents = def.get_inheritances();
+
+      if (parents.size() == 1)
+        parentRecord(SG_DEREF(parents.at(0)));
+    }
+
     void handle(SgClassDeclaration& n)
     {
       prn("type ");
       prn(n.get_name());
+      prn(" is");
 
       if (SgClassDefinition* def = n.get_definition())
       {
         const bool explicitNullrec = (  def->get_members().empty()
                                      && def->get_inheritances().empty()
                                      );
-        SgDeclarationModifier& mod = n.get_declarationModifier();
 
-        prn(" is");
-
-        if (!explicitNullrec) parentRecord(*def);
-
-        if (mod.isAdaAbstract()) prn(" abstract");
-        if (mod.isAdaLimited())  prn(" limited");
-        if (mod.isAdaTagged())   prn(" tagged");
-
+        if (!explicitNullrec) parentRecord_opt(*def);
+        modifiers(n);
         if (explicitNullrec) prn(" null");
         prn(" record");
 
@@ -1050,7 +1056,10 @@ namespace
       }
       else
       {
-        prn(" is private");
+        modifiers(n);
+
+        parentRecord_opt(n.get_adaParentType());
+        prn(" private");
       }
 
       prn(STMT_SEP);
@@ -1352,6 +1361,15 @@ namespace
   void AdaStatementUnparser::list(SageNodeList& lst)
   {
     list(lst.begin(), lst.end());
+  }
+
+  void AdaStatementUnparser::modifiers(SgDeclarationStatement& n)
+  {
+    SgDeclarationModifier& mod = n.get_declarationModifier();
+
+    if (mod.isAdaAbstract()) prn(" abstract");
+    if (mod.isAdaTagged())   prn(" tagged");
+    if (mod.isAdaLimited())  prn(" limited");
   }
 
   struct TypedeclSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
