@@ -282,14 +282,6 @@ namespace
     return SG_DEREF(res);
   }
 
-  SgClassDeclaration&
-  getParentRecordDeclID(Element_ID defid, AstContext ctx)
-  {
-    Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
-    ROSE_ASSERT(elem.Element_Kind == A_Definition);
-
-    return getParentRecordDecl(elem.The_Union.Definition, ctx);
-  }
 
   struct EnumElementCreator
   {
@@ -368,8 +360,6 @@ namespace
           SgBaseClass&        parent = mkRecordParent(basecl);
 
           sg::linkParentChild(def, parent, &SgClassDefinition::append_inheritance);
-
-          //~ def.append_inheritance(&parent);
 
           /*
           Declaration_List     Implicit_Inherited_Declarations;
@@ -778,6 +768,15 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
   ROSE_ASSERT(elem.Element_Kind == A_Definition);
 
   return getDefinitionType(elem.The_Union.Definition, ctx);
+}
+
+SgClassDeclaration&
+getParentRecordDeclID(Element_ID defid, AstContext ctx)
+{
+  Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
+  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+
+  return getParentRecordDecl(elem.The_Union.Definition, ctx);
 }
 
 
