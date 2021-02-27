@@ -123,6 +123,8 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   comm.ads                             \
   constrained_array_definition.ads     \
   enum_colors.ads                      \
+  enumeration.adb                      \
+  enumeration_with_text_io.adb         \
   function_call.adb                    \
   function_renaming.adb                \
   goto_loop_v2.adb                     \
@@ -132,6 +134,7 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   modular_type_definition.ads          \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  private_type_definition.ads          \
   real_typedecl.ads                    \
   select_accept.adb                    \
   sender.ads                           \
@@ -155,13 +158,10 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   discriminant.adb                                  \
   discriminant_constraint.ads                       \
   discriminant_specification.ads                    \
-  enumeration.adb                                   \
-  enumeration_with_text_io.adb                      \
   explicit_deref.adb                                \
   extension_aggregate.adb                           \
   fixed_point_definition.ads                        \
   ordinary_type_declaration_range_constraint.ads    \
-  private_type_definition.ads                       \
   protected_type_declaration.ads                    \
   qualified_expression.adb                          \
   signed_integer_type_definition.ads                \
