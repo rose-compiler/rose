@@ -81,6 +81,9 @@ generateJovialCompoolFile(SgFile *sfile)
           SgScopeStatement* compool_scope = isSgScopeStatement(compool_stmt->get_parent());
           ASSERT_not_null(compool_scope);
 
+          SgGlobal* global_scope = SageInterface::getGlobalScope (compool_scope);
+          ASSERT_not_null(global_scope);
+
           ninfo.set_current_scope(compool_scope);
           ninfo.set_SkipFormatting();
 
@@ -106,7 +109,7 @@ generateJovialCompoolFile(SgFile *sfile)
           Unparse_Jovial myunp(&unp, output_filename);
 
           output_stream << "START\n";
-          myunp.unparseStatement(compool_scope, (SgUnparse_Info&)ninfo);
+          myunp.unparseStatement(global_scope, (SgUnparse_Info&)ninfo);
           output_stream << "TERM\n";
 
           output_stream.flush();
