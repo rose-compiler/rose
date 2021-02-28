@@ -116,6 +116,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   week_string_literal.ads              
 
 ADA_TRANSLATOR_PENDING_TESTS :=        \
+  array_declare.adb                    \
   array_expressions.adb                \
   asm_machine_code.adb                 \
   case_function.adb                    \
@@ -154,7 +155,6 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   access_to_object.ads                              \
   access_to_subprogram.ads                          \
   allocators.adb                                    \
-  array_declare.adb                                 \
   discriminant.adb                                  \
   discriminant_constraint.ads                       \
   discriminant_specification.ads                    \

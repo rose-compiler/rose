@@ -184,10 +184,10 @@ namespace
     if (namedElements)
     {
       std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             explst = mkExprListExp(exprs);
+      SgExprListExp&             choicelst = mkExprListExp(exprs);
 
-      sgnode = &mkAdaNamedInitializer(explst, init);
-      ROSE_ASSERT(explst.get_parent());
+      sgnode = &mkAdaNamedInitializer(choicelst, init);
+      ROSE_ASSERT(choicelst.get_parent());
     }
 
     ROSE_ASSERT(sgnode);
