@@ -188,6 +188,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-581.jov                  \
  rose-issue-rc-638a.jov                 \
  rose-issue-rc-642.jov                  \
+ rose-issue-rc-670.jov                  \
  rose-issue-rc-687.jov                  \
  rose-issue-rc-693.jov
 
