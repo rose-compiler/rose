@@ -2097,7 +2097,7 @@ void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
      {
        // Ada stores variable declarations in the function parameter scope
        //   ==> just make sure that these are set.
-       SgInitializedNamePtrList& args = paralist->get_args();
+      SgInitializedNamePtrList& args = paralist->get_args();
        for (SgInitializedNamePtrList::iterator i = args.begin(); i != args.end(); ++i)
        {
          ROSE_ASSERT(*i && isSgVariableDeclaration((*i)->get_declptr()));
@@ -2108,7 +2108,7 @@ void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
         // DQ (5/15/2012): Need to set the declptr in each SgInitializedName IR node.
         // This is needed to support the AST Copy mechanism (at least). The files: test2005_150.C,
         // test2012_81.C and testcode2012_82.C demonstrate this problem.
-       SgInitializedNamePtrList & args = paralist->get_args();
+      SgInitializedNamePtrList & args = paralist->get_args();
        for (SgInitializedNamePtrList::iterator i = args.begin(); i != args.end(); i++)
         {
           (*i)->set_declptr(func);
