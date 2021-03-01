@@ -86,6 +86,9 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
             // result.push_back(fullPath);
                 if (using_nostdinc_option == true)
                   {
+                    // Pei-Hung (03/01/2021): using only gcc_HEADERS and g++_HEADERS to check the header file directories is not sufficient.
+                    // The directory names change according the the executable names of gcc and g++.
+                    
                     const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH; 
                     const char* CXX_Basename = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                     string CC_Headername(CC_Basename); 
