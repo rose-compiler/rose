@@ -24724,6 +24724,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgClassDeclaration* f = isSgClassDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgTypedefDeclaration* f = isSgTypedefDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
   if (SgInitializedName * v = isSgInitializedName(node) )
   {
     out<<" "<< v->get_qualified_name();
