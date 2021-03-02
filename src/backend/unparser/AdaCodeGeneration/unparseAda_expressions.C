@@ -296,7 +296,7 @@ namespace
 
     void handle(SgDesignatedInitializer& n)
     {
-      exprlst(SG_DEREF(n.get_designatorList()));
+      exprlst(SG_DEREF(n.get_designatorList()), "| ");
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -331,7 +331,7 @@ namespace
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-    void exprlst(SgExprListExp& exp);
+    void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -411,7 +411,7 @@ namespace
     if (!isprefix) prn(operator_sym(n));
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
@@ -421,7 +421,7 @@ namespace
 
     for (size_t i = 1; i < lst.size(); ++i)
     {
-      prn(", ");
+      prn(sep);
       expr(lst[i]);
     }
   }
