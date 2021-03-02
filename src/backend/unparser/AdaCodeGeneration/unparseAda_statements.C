@@ -18,8 +18,11 @@
 
 #include "sage_support.h"
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
 
 #include <boost/algorithm/string.hpp>
+
+namespace si = SageInterface;
 
 Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -387,6 +390,7 @@ namespace
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
     void modifiers(SgDeclarationStatement& n);
+    bool hasModifiers(SgDeclarationStatement& n);
 
     //
     // handlers
@@ -1034,7 +1038,6 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is");
 
       if (SgClassDefinition* def = n.get_definition())
       {
@@ -1042,6 +1045,7 @@ namespace
                                      && def->get_inheritances().empty()
                                      );
 
+        prn(" is");
         if (!explicitNullrec) parentRecord_opt(*def);
         modifiers(n);
         if (explicitNullrec) prn(" null");
@@ -1056,10 +1060,21 @@ namespace
       }
       else
       {
-        modifiers(n);
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs = requiresPrivate || hasModifiers(n);
 
-        parentRecord_opt(n.get_adaParentType());
-        prn(" private");
+        std::cerr << "private type: " << requiresPrivate << std::endl;
+
+        if (requiresIs)
+        {
+          prn(" is");
+
+          modifiers(n);
+          parentRecord_opt(n.get_adaParentType());
+
+          if (requiresPrivate)
+            prn(" private");
+        }
       }
 
       prn(STMT_SEP);
@@ -1370,6 +1385,13 @@ namespace
     if (mod.isAdaAbstract()) prn(" abstract");
     if (mod.isAdaTagged())   prn(" tagged");
     if (mod.isAdaLimited())  prn(" limited");
+  }
+
+  bool AdaStatementUnparser::hasModifiers(SgDeclarationStatement& n)
+  {
+    SgDeclarationModifier& mod = n.get_declarationModifier();
+
+    return mod.isAdaAbstract() || mod.isAdaTagged() || mod.isAdaLimited();
   }
 
   struct TypedeclSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >

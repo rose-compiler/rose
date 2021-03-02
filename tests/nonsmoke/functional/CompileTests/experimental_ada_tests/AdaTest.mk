@@ -131,6 +131,7 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   goto_loop_v2.adb                     \
   hello_world.adb                      \
   io_test.adb                          \
+  linkedlists.ads                      \
   loop_parameter_specification.adb     \
   modular_type_definition.ads          \
   pkgrename.ads                        \
