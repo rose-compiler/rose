@@ -579,7 +579,17 @@ namespace
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-      void handle(SgType& n) { res = &mkTypeDecl(dclname, n, dclscope); }
+      void handle(SgType& n)
+      {
+        res = &mkTypeDecl(dclname, n, dclscope);
+
+        if (incomplDecl)
+        {
+          res->set_firstNondefiningDeclaration(incomplDecl);
+          res->set_definingDeclaration(res);
+          incomplDecl->set_definingDeclaration(res);
+        }
+      }
 
       void handle(SgEnumDeclaration& n)
       {
@@ -2044,11 +2054,17 @@ namespace
   {
     SgDeclarationStatement* res = nullptr;
     SgScopeStatement&       scope = ctx.scope();
-    Element_Struct&         typeview = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
-    ROSE_ASSERT(typeview.Element_Kind == A_Definition);
+    Element_Struct*         typeview = nullptr;
+
+    if (!isInvalidId(decl.Type_Declaration_View))
+    {
+      typeview = &retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+      ROSE_ASSERT(typeview->Element_Kind == A_Definition);
+    }
 
     switch (tyKind)
     {
+      case A_Derived_Type_Definition:
       case A_Signed_Integer_Type_Definition:
       case A_Modular_Type_Definition:
       case A_Floating_Point_Definition:
@@ -2059,15 +2075,15 @@ namespace
           break;
         }
 
-      case A_Derived_Type_Definition:
       case A_Record_Type_Definition:
       case A_Derived_Record_Extension_Definition:
       case A_Tagged_Record_Type_Definition:
         {
           SgClassDeclaration& sgnode = mkRecordDecl(adaname.ident, scope);
 
-          ROSE_ASSERT(typeview.Element_Kind == A_Definition);
-          setParentRecordConstraintIfAvail(sgnode, typeview.The_Union.Definition, ctx);
+          if (typeview)
+            setParentRecordConstraintIfAvail(sgnode, typeview->The_Union.Definition, ctx);
+
           res = &sgnode;
           break;
         }
@@ -2099,7 +2115,12 @@ namespace
     // \todo put declaration tags on
     SgDeclarationStatement& resdcl = SG_DEREF(res);
 
-    setTypeModifiers(resdcl, typeview.The_Union.Definition, ctx);
+    if (typeview)
+      setTypeModifiers(resdcl, typeview->The_Union.Definition, ctx);
+    else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
+      setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
+
+
     return resdcl;
   }
 
@@ -2114,6 +2135,38 @@ namespace
   {
     return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
+
+
+  // handles incomplete (but completed) and private types
+  void handleOpaqueTypes( Element_Struct& elem,
+                          Declaration_Struct& decl,
+                          bool isPrivate,
+                          AstContext ctx
+                        )
+  {
+    typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
+
+    logTrace() << "\n  abstract: " << decl.Has_Abstract
+               << "\n  limited: " << decl.Has_Limited
+               << "\n  private: " << decl.Has_Private
+               << std::endl;
+
+    //~ DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Completion, ctx);
+    DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
+    NameData                adaname = singleName(decl, ctx);
+    ROSE_ASSERT(adaname.fullName == adaname.ident);
+
+    Element_ID              id     = adaname.id();
+    SgScopeStatement&       scope  = ctx.scope();
+    SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, decl, defdata.second, ctx);
+
+    attachSourceLocation(sgnode, elem, ctx);
+    scope.append_statement(&sgnode);
+    privatize(sgnode, isPrivate);
+    recordNode(asisTypes(), id, sgnode);
+    recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
+    ROSE_ASSERT(sgnode.get_parent() == &scope);
   }
 } // anonymous
 
@@ -2581,35 +2634,41 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       }
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
+    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
       {
-        logKind("An_Incomplete_Type_Declaration");
+        logKind( decl.Declaration_Kind == An_Incomplete_Type_Declaration
+                        ? "An_Incomplete_Type_Declaration"
+                        : "A_Tagged_Incomplete_Type_Declaration"
+               );
 
-        NameData                adaname = singleName(decl, ctx);
-        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        if (decl.Corresponding_Type_Declaration)
+        {
+          handleOpaqueTypes(elem, decl, isPrivate, ctx);
+        }
+        else
+        {
+          // no definition is available, ... (e.g., in System)
+          NameData                adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgScopeStatement&       scope  = ctx.scope();
+          SgType&                 opaque = mkOpaqueType();
+          SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
 
-        logTrace() << "Incomplete Type: " << adaname.fullName
-                   << "\n  private: " << decl.Has_Private
-                   << "\n  limited: " << decl.Has_Limited
-                   << "\n  private: " << decl.Has_Private
-                   << std::endl;
-
-        SgScopeStatement&       scope  = ctx.scope();
-        SgType&                 opaque = mkOpaqueType();
-        SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
-
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        recordNode(asisTypes(), adaname.id(), sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          recordNode(asisTypes(), adaname.id(), sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+        }
 
         /*
            unhandled fields:
+             bool                           Has_Abstract;
+             bool                           Has_Limited;
+             bool                           Has_Private;
              Definition_ID                  Discriminant_Part
-             Definition_ID                  Type_Declaration_View
-             Declaration_ID                 Corresponding_Type_Declaration
              Declaration_ID                 Corresponding_Type_Completion
-             Declaration_ID                 Corresponding_Type_Partial_View (* notes)
+             Declaration_ID                 Corresponding_Type_Partial_View
         */
         break;
       }
@@ -2622,29 +2681,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                         : "A_Private_Extension_Declaration"
                );
 
-        logTrace() << "Private Type "
-                   << "\n  abstract: " << decl.Has_Abstract
-                   << "\n  limited: " << decl.Has_Limited
-                   << "\n  private: " << decl.Has_Private
-                   << std::endl;
-
-        typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
-
-        DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
-        NameData                adaname = singleName(decl, ctx);
-        ROSE_ASSERT(adaname.fullName == adaname.ident);
-
-        Element_ID              id     = adaname.id();
-        SgScopeStatement&       scope  = ctx.scope();
-        SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, decl, defdata.second, ctx);
-
-
-        attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
-        privatize(sgnode, isPrivate);
-        recordNode(asisTypes(), id, sgnode);
-        recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        handleOpaqueTypes(elem, decl, isPrivate, ctx);
 
         /* unused fields:
               bool                           Has_Abstract;
@@ -3123,7 +3160,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
-    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
