@@ -409,11 +409,14 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* block = isSgBasicBlock(stmt);
      ASSERT_not_null(block);
+     ASSERT_not_null(block->get_parent());
+
+     SgSwitchStatement* switch_stmt = isSgSwitchStatement(block->get_parent());
 
      int block_size = block->get_statements().size();
 
-  // allow one declaration to be unparsed without BEGIN and END
-     if (block_size > 1)
+  // allow one declaration to be unparsed without BEGIN and END (except for switch stmts)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("BEGIN\n", info);
         }
@@ -425,7 +428,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      info.dec_nestingLevel();
 
-     if (block_size > 1)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("END\n", info);
         }
@@ -1066,6 +1069,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
+     SgModifierType* modifier_type = isSgModifierType(type);
+
      info.set_inVarDecl();
 
   // pretty printing
@@ -1077,7 +1082,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
-        if (SgModifierType* modifier_type = isSgModifierType(type))
+        if (modifier_type)
            {
               type = modifier_type->get_base_type();
               ASSERT_not_null(type);
@@ -1102,9 +1107,11 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint("REF ");
         }
-     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+     if (modifier_type)
         {
-           curprint("CONSTANT ");
+           if (modifier_type->get_typeModifier().get_constVolatileModifier().isConst()) {
+             curprint("CONSTANT ");
+           }
         }
 
      switch (type->variantT())

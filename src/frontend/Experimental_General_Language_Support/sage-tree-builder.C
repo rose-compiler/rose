@@ -631,7 +631,18 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
    // For Jovial, the symbol table may have multiple enumerators with the same name. Check and
    // replace a Jovial status constant with the correct value based on the type of the variable.
    if (old_val) {
-      SgEnumType* enum_type = isSgEnumType(vars[0]->get_type());
+      SgEnumType* enum_type = nullptr;
+      SgJovialTableType* table_type = isSgJovialTableType(vars[0]->get_type());
+
+      if (table_type) {
+         SgEnumType* base_type = isSgEnumType(table_type->get_base_type());
+         if (base_type) {
+            enum_type = base_type;
+         }
+      } else {
+         enum_type = isSgEnumType(vars[0]->get_type());
+      }
+
       ROSE_ASSERT(enum_type);
       rhs = getEnumVal(enum_type, old_val);
    }

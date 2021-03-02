@@ -1363,6 +1363,11 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    }
 #endif
 
+   if (constant) {
+   // Create const SgModifierType with declared_type as base_type
+      type = SageBuilder::buildConstType(type);
+   }
+
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl = nullptr;
 
@@ -1378,11 +1383,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    ROSE_ASSERT(def_decl);
    if (dim_info) {
      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
-   }
-
-   if (constant) {
-   // This is a ConstantTableDeclaration
-      var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
    }
 
    if (table_spec.packing_spec != e_packing_spec_unknown) {
@@ -2159,6 +2159,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
    char* name;
 
    SgType* declared_type = nullptr;
+   SgType* const_type = nullptr;
    SgExpression* preset = nullptr;
    Sawyer::Optional<SgExpression*> status_size;
    SgEnumDeclaration* enum_decl = nullptr;
@@ -2183,6 +2184,9 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 
       if (traverse_ItemTypeDescription(t_type, declared_type)) {
          // MATCHED ItemTypeDescription without StatusItemDescription
+
+         // Create const SgModifierType with declared_type as base_type
+         const_type = SageBuilder::buildConstType(declared_type);
       }
       else if (traverse_StatusItemDescription(t_type, enum_decl, status_size)) {
          // status item declarations have to be handled differently than other ItemTypeDescription terms
@@ -2203,11 +2207,8 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
-   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset);
+   sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset);
    setSourcePosition(var_decl, term);
-
-// This is a ConstantItemDeclaration
-   var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
 
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
