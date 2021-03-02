@@ -1030,10 +1030,16 @@ void numericExprAnn::print(ostream & out)
 //  Pointer test
 // ------------------------------------------------------------
 
+static int myFetchLine ( const parserID* lhs )
+{
+   assert(lhs != NULL);
+   return lhs->line();
+}
+
 pointerExprAnn::pointerExprAnn(Broadway::Operator op,
                                const parserID * lhs,
                                const parserID * rhs)
-  : exprAnn(op, lhs->line()),
+  : exprAnn(op, myFetchLine(lhs)),
     _lhs_name(),
     _lhs(0),
     _rhs_name(),
