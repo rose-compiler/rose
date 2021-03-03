@@ -1862,6 +1862,10 @@ context-free syntax
     '(' Formula ','
     ShiftCount ')'            -> ShiftFunction        {cons("ShiftFunction")}
 
+  ShiftDirection
+    '(' RepFunctionVariable ','
+    ShiftCount ')'            -> ShiftFunction        {cons("ShiftFunction"), prefer}
+
   'SHIFTL'                    -> ShiftDirection       {cons("SHIFTL")}
   'SHIFTR'                    -> ShiftDirection       {cons("SHIFTR")}
 
