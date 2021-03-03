@@ -87,6 +87,7 @@ struct CodeThornOptions : public CodeThorn::Options {
 
   bool programStatsOnly=false;
   bool programStats=false;
+  std::string programStatsFileName;
   bool inStateStringLiterals=false;
   bool stdFunctions=false;
   bool ignoreFunctionPointers=false;

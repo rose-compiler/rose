@@ -17,6 +17,8 @@ class ProgramInfo {
   void printDetailed();
   void printCompared(ProgramInfo* other);
   std::string toStringDetailed();
+  std::string toCsvStringDetailed();
+  bool toCsvFileDetailed(std::string fileName, std::string mode);
   std::string toStringCompared(ProgramInfo* other);
   void writeFunctionCallNodesToFile(std::string fileName, CodeThorn::Labeler* labeler=0);
   
@@ -24,6 +26,7 @@ class ProgramInfo {
   enum Element {
     numFunDefs,
     numFunCall,
+    numFunPtrCall,
     numForLoop,
     numWhileLoop,
     numDoWhileLoop,
@@ -43,6 +46,7 @@ class ProgramInfo {
   SgNode* root;
   CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   std::list<SgFunctionCallExp*> _functionCallNodes;
+  std::list<SgFunctionCallExp*> _functionPtrCallNodes;
   uint32_t count[NUM+1];
   std::map<Element,std::string> countNameMap;
 };

@@ -198,6 +198,9 @@ int main( int argc, char * argv[] ) {
     ProgramInfo originalProgramInfo(sageProject);
     originalProgramInfo.compute();
     
+    if(ctOpt.programStatsFileName.size()>0) {
+      originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
+    }
     if(ctOpt.programStatsOnly) {
       originalProgramInfo.printDetailed();
       exit(0);

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include "FunctionCallMapping.h"
+#include "CppStdUtilities.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -23,21 +25,21 @@ void ProgramInfo::initCount() {
   for(int i=0;i<Element::NUM;i++) {
     count[i]=0;
   }
-  countNameMap[Element::numGlobalVars]      ="Global var decls";
-  countNameMap[Element::numLocalVars]       ="Local var decls ";
-  countNameMap[Element::numFunDefs]         ="Function defs   ";
-  countNameMap[Element::numFunCall]         ="Function calls  ";
-  countNameMap[Element::numFunCall]         ="Function calls  ";
-  countNameMap[Element::numForLoop]         ="For loops       ";
-  countNameMap[Element::numWhileLoop]       ="While loops     ";
-  countNameMap[Element::numDoWhileLoop]     ="Do-While loops  ";
-  countNameMap[Element::numConditionalExp]  ="Conditional ops ";
-  countNameMap[Element::numLogicOrOp]       ="Logic-or ops    ";
-  countNameMap[Element::numLogicAndOp]      ="Logic-and ops   ";
-  countNameMap[Element::numArrayAccess]     ="Array access ops";
-  countNameMap[Element::numArrowOp]         ="Arrow ops       ";
-  countNameMap[Element::numDerefOp]         ="Deref ops       ";
-  countNameMap[Element::numStructAccess]    ="Dot ops         ";
+  countNameMap[Element::numGlobalVars]      ="Global var decls  ";
+  countNameMap[Element::numLocalVars]       ="Local var decls   ";
+  countNameMap[Element::numFunDefs]         ="Function defs     ";
+  countNameMap[Element::numFunCall]         ="Function calls    ";
+  countNameMap[Element::numFunPtrCall]      ="Function ptr calls";
+  countNameMap[Element::numForLoop]         ="For loops         ";
+  countNameMap[Element::numWhileLoop]       ="While loops       ";
+  countNameMap[Element::numDoWhileLoop]     ="Do-While loops    ";
+  countNameMap[Element::numConditionalExp]  ="Conditional ops   ";
+  countNameMap[Element::numLogicOrOp]       ="Logic-or ops      ";
+  countNameMap[Element::numLogicAndOp]      ="Logic-and ops     ";
+  countNameMap[Element::numArrayAccess]     ="Array access ops  ";
+  countNameMap[Element::numArrowOp]         ="Arrow ops         ";
+  countNameMap[Element::numDerefOp]         ="Deref ops         ";
+  countNameMap[Element::numStructAccess]    ="Dot ops           ";
 }
 
 void ProgramInfo::compute() {
@@ -50,8 +52,13 @@ void ProgramInfo::compute() {
       std::set<SgVariableDeclaration*> localVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       count[numLocalVars]+=localVarDecls.size();
     } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
-      count[numFunCall]++;
-      _functionCallNodes.push_back(fc);
+      if(FunctionCallMapping::isFunctionPointerCall(fc)) {
+	count[numFunPtrCall]++;
+	_functionPtrCallNodes.push_back(fc);
+      } else {
+	count[numFunCall]++;
+	_functionCallNodes.push_back(fc);
+      }
     } else if(isSgWhileStmt(node)) {
       count[numWhileLoop]++;
     } else if(isSgDoWhileStmt(node)) {
@@ -92,6 +99,22 @@ void ProgramInfo::printCompared(ProgramInfo* other) {
 
 std::string ProgramInfo::toStringDetailed() {
   return toStringCompared(0);
+}
+
+std::string ProgramInfo::toCsvStringDetailed() {
+  ROSE_ASSERT(_validData);
+  stringstream ss;
+  for(int i=0;i<Element::NUM;i++) {
+    if(i!=0)
+      ss<<",";
+    ss<<std::right<<std::setw(5)<<count[i];
+  }
+  ss<<endl;
+  return ss.str();
+}
+
+bool ProgramInfo::toCsvFileDetailed(std::string fileName, std::string mode) {
+  return CppStdUtilities::writeFile(mode, fileName, toCsvStringDetailed());
 }
 
 std::string ProgramInfo::toStringCompared(ProgramInfo* other) {
