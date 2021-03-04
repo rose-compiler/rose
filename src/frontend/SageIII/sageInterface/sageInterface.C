@@ -21022,9 +21022,11 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           func->set_scope(targetBlock);
           // This is needed to move functions in Ada package body into C++ namespace
           // We may have compiler generated first nondefining declaration. We need to move its scope also
-          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration()); 
-          if (func!=nondef_decl)
+          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration());
+          if (func != nondef_decl)
           {
+            assert(nondef_decl != NULL);
+            assert(nondef_decl->get_file_info() != NULL);
             if (nondef_decl->get_file_info()->isCompilerGenerated())
               nondef_decl->set_scope(targetBlock);
           }
