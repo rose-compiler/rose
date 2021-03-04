@@ -210,6 +210,12 @@ namespace
       expr(rhs);
     }
 
+    void handle(SgPointerDerefExp& n)
+    {
+      SgExpression* target = n.get_operand();
+      expr(target);
+      prn(".all");
+    }
 
     void handle(SgRangeExp& n)
     {

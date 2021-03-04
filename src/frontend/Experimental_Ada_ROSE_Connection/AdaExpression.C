@@ -767,6 +767,16 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case An_Explicit_Dereference:                   // 4.1
+      {
+        logKind("An_Explicit_Dereference");
+
+        SgExpression& exp = getExprID(expr.Prefix, ctx);
+        res = sb::buildPointerDerefExp(&exp);
+
+        break;
+      }
+
     case An_Indexed_Component:                      // 4.1.1
       {
         logKind("An_Indexed_Component");
@@ -940,8 +950,6 @@ getExpr(Element_Struct& elem, AstContext ctx)
       }
 
     case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-
-    case An_Explicit_Dereference:                   // 4.1
 
     case An_Extension_Aggregate:                    // 4.3
 
