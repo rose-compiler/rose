@@ -25,6 +25,7 @@ namespace
     skipReferenceType        = (1 << 6),  /* C++ */
     skipRvalueReferenceType  = (1 << 7),  /* C++ */
     skipAllReferenceTypes    = (skipReferenceType | skipRvalueReferenceType),  /* C++ */
+    skipAdaAccessType        = (1 << 8),
     //~ skipUsingDecls           = (1 << 8),  /* C++ */
     //~ skipAdaUseTypes      = (1 << 9),  /* Ada */
     skipLast                 = (1 << 30)
@@ -69,6 +70,7 @@ namespace
       void handle(SgPointerType& n)         { res = skipIf(n, skipPointerType); }
       void handle(SgReferenceType& n)       { res = skipIf(n, skipReferenceType); }
       void handle(SgRvalueReferenceType& n) { res = skipIf(n, skipRvalueReferenceType); }
+      void handle(SgAdaAccessType& n)       { res = skipIf(n, skipAdaAccessType); }
 
     private:
       TypeSkip skipWhat;
