@@ -1144,6 +1144,22 @@ Leave(SgJovialDirectiveStatement* directive)
        // Insert aliases for all symbols in the compool scope into the current scope
           SgSymbolTable* symbol_table = compool_scope->get_symbol_table();
           SgScopeStatement* current_scope = SageBuilder::topScopeStack();
+
+       // -----------------------------
+       // This is a HACK, please fix me.................................................
+       // -----------------------------
+       // TODO/WORKING_ON: If there is no current scope we seem to be processing a
+       // compool directive that had been previously parsed.
+          if (current_scope == nullptr) {
+            // Hum, bail for now, not sure if the file processing directives should have pushed scope
+            // maybe could use compool_scope. Actually let's try pushing compool_scope back on the
+            // stack because we really didn't actually parse a new file.
+            SageBuilder::pushScopeStack(compool_scope);
+            // bail
+            break;
+          }
+          ROSE_ASSERT(current_scope);
+
           BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
             SgSymbol* symbol = isSgSymbol(node);
             ROSE_ASSERT(symbol);

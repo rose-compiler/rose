@@ -16,7 +16,7 @@ class SgSourceFile;
 
 namespace Rose {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build files
 
 /** Build a new binary composite object.
@@ -43,25 +43,25 @@ namespace Rose {
  *  Create an entry for the module in the moduleNAmeAstMap
  */
 
-#define  SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
+#define SKIP_SYNTAX_CHECK "-rose:skip_syntax_check"
 
 #if TEMPLATES
 template <typename T>
 #endif
 class ModuleBuilder
-  {
+{
 #if TEMPLATES
-     typedef std::map<std::string, T*> ModuleMapType;
+  typedef std::map<std::string, T*> ModuleMapType;
 #else
-     typedef std::map<std::string, SgJovialCompoolStatement*> ModuleMapType;
+  typedef std::map<std::string, SgSourceFile*> ModuleMapType;
 #endif
 
-     public:
-       ModuleBuilder() : loadingModuleState(false), nestedSgFile(0), currentProject(nullptr)
-         {
-         }
+public:
+   ModuleBuilder() : loadingModuleState(false), nestedSgFile(0), currentProject(nullptr)
+    {
+    }
 
-       bool isRoseModuleFile();
+   bool isRoseModuleFile();
 
        void setCurrentProject(SgProject*);
        SgProject* getCurrentProject();
@@ -73,8 +73,8 @@ class ModuleBuilder
        T*   getModule (const std::string &module_name) { ROSE_ASSERT(false); }
        void addMapping(const std::string &module_name, T* module_stmt);
 #else
-       SgJovialCompoolStatement* getModule(const std::string &module_name);
-       void addMapping(const std::string &module_name, SgJovialCompoolStatement* module_stmt);
+       SgSourceFile* getModule(const std::string &module_name);
+       void addMapping(const std::string &module_name, SgSourceFile* module_stmt);
        std::string getModuleFileSuffix() {return std::string(".rcmp");}
 #endif
 
@@ -100,7 +100,7 @@ class ModuleBuilderFactory
   {
     public:
 #if TEMPLATES
-      static ModuleBuilder<SgJovialCompoolStatement>& get_compool_builder();
+      static ModuleBuilder<SgSourceFile>& get_compool_builder();
 #else
       static ModuleBuilder& get_compool_builder()
          {
