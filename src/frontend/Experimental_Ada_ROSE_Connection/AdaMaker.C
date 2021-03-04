@@ -119,7 +119,10 @@ void markCompilerGenerated(SgLocatedNode& n)
 SgAdaRangeConstraint&
 mkAdaRangeConstraint(SgRangeExp& range)
 {
-  return mkBareNode<SgAdaRangeConstraint>(&range);
+  SgAdaRangeConstraint& sgnode = mkBareNode<SgAdaRangeConstraint>(&range);
+
+  range.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaIndexConstraint&
@@ -128,7 +131,10 @@ mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
   SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
 
   sgnode.get_indexRanges().swap(ranges);
-  // \todo shall the range pointers' parent point to sgnode?
+
+  for (SgExpression* expr : sgnode.get_indexRanges())
+    SG_DEREF(expr).set_parent(&sgnode);
+
   return sgnode;
 }
 
@@ -136,7 +142,10 @@ mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 SgAdaSubtype&
 mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr)
 {
-  return mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+  SgAdaSubtype& sgnode = mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+
+  constr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaDerivedType&
@@ -148,13 +157,21 @@ mkAdaDerivedType(SgType& basetype)
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
-  return mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+  SgAdaModularType& sgnode = mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+
+  modexpr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
-  return mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+  SgAdaFloatType& sgnode = mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+
+  digits.set_parent(&sgnode);
+  if (range_opt) range_opt->set_parent(&sgnode);
+
+  return sgnode;
 }
 
 SgDeclType&
