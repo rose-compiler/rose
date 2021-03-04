@@ -114,60 +114,47 @@ void ModuleBuilder::setCurrentProject(SgProject* project)
 template <typename T>
 T* ModuleBuilder<T>::getModule(const std::string &module_name)
 #else
-SgJovialCompoolStatement* ModuleBuilder::getModule(const std::string &module_name)
+SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
 #endif
-   {
+{
   // A note about the syntax. The typename (or class) qualifier is required to give a hint to the
   // compiler because the iterator has a template parameter. Find returns a pair so second is used to
   // return the value.
-     typename ModuleMapType::iterator mapIterator = moduleNameMap.find(module_name);
+  typename ModuleMapType::iterator mapIterator = moduleNameMap.find(module_name);
 #if TEMPLATES
-     T* module_stmt = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
+  T* module_stmt = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
 #else
-     SgJovialCompoolStatement* module_stmt = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
+  SgSourceFile* module_file = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
 #endif
 
-  // No need to read the module file if module declaration was stored in the map
-     if (module_stmt)
-        {
-           return module_stmt;
-        }
+  std::cout << "--> searching for module: " << module_name << std::endl;
 
-     std::string lc_module_name = StringUtility::convertToLowerCase(module_name);
-     std::string nameWithPath = find_file_from_inputDirs(lc_module_name);
+  // No need to read the module file if file was already parsed
+  if (module_file) {
+    std::cout << "    found existing module in map: " << module_name << std::endl;
+    return module_file;
+  }
 
-  // This will run the parser on the new module file and load the declarations into global scope
-     SgSourceFile* newModuleFile = createSgSourceFile(nameWithPath);
+  std::string lc_module_name = StringUtility::convertToLowerCase(module_name);
+  std::string file_path = find_file_from_inputDirs(lc_module_name);
 
-     if (newModuleFile == nullptr)
-        {
-           mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: "<< lc_module_name << std::endl;
-           ROSE_ASSERT(false);
-           return nullptr;
-        }
-     else
-        {
-        // Extract the pointer to the SgModule from the SgSourceFile
-        //
-        // WARNING: For Fortran: Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (newModuleFile,V_ SgModuleStatement);
-           Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (newModuleFile,V_SgJovialCompoolStatement);
+  // This will run the parser on the module file and load the declarations into global scope
+  module_file = createSgSourceFile(file_path);
 
-//TODO: May have to have a module file after all but for Jovial probably not
-// For Jovial try to make it like an include into global scope
-#if 0
-        // There should only be a single module defined in the associated *.rmod file.
-           ROSE_ASSERT(moduleDeclarationList.size() == 1);
+  if (module_file == nullptr) {
+    mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: "
+                << lc_module_name << std::endl;
+    ROSE_ASSERT(false);
+  }
+  else {
+    std::cout << "    storing module in map: " << module_name << std::endl;
 
-           module_stmt = isSgJovialCompoolStatement(moduleDeclarationList[0]);
-           ASSERT_not_null(module_stmt);
+    // Store the parsed module file into the map (this is the only location where the map is modified)
+    moduleNameMap.insert(ModuleMapType::value_type(module_name, module_file));
+  }
 
-        // Store the extracted module into the module name map (this is the only location where the map is modified)
-           moduleNameMap.insert(ModuleMapType::value_type(module_name, module_stmt));
-#endif
-
-           return module_stmt;
-        }
-   }
+  return module_file;
+}
 
 
 #if TEMPLATES
@@ -235,10 +222,10 @@ void ModuleBuilder<T>::clearMap()
 #else
 void ModuleBuilder::clearMap()
 #endif
-  {
-     moduleNameMap.clear();
-     return;
-  }
+{
+  moduleNameMap.clear();
+  return;
+}
 
 
 #if TEMPLATES
@@ -247,18 +234,18 @@ void ModuleBuilder<T>::dumpMap()
 #else
 void ModuleBuilder::dumpMap()
 #endif
-  {
+{
 #if TEMPLATES
-     std::map<std::string,T*>::iterator iter;
+  std::map<std::string,T*>::iterator iter;
 #else
-     std::map<std::string,SgJovialCompoolStatement*>::iterator iter;
+  std::map<std::string,SgSourceFile*>::iterator iter;
 #endif
 
-     std::cout << "Module Statement*  map::" << std::endl;
-     for (iter = moduleNameMap.begin(); iter != moduleNameMap.end(); iter++) {
-        std::cout <<"FIRST : " << (*iter).first << " SECOND : " << (*iter).second << std::endl;
-     }
+  std::cout << "Module file map::" << std::endl;
+  for (iter = moduleNameMap.begin(); iter != moduleNameMap.end(); iter++) {
+    std::cout <<"FIRST : " << (*iter).first << " SECOND : " << (*iter).second << std::endl;
   }
+}
 
 
 } // namespace Rose
