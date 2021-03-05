@@ -861,6 +861,10 @@ void setSourcePositionPointersToNull(SgNode *node);
 //! Check if a node is from a system header file
   ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
 
+// DQ (2/27/2021): Adding support to detect if a SgLocatedNode is located in a header file.
+//! Check if a node is from a header file
+  ROSE_DLL_API bool insideHeader (SgLocatedNode* node);
+
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
 // ROSE_DLL_API void setSourcePosition (SgLocatedNode * locatedNode);
 // ************************************************************************
@@ -1883,6 +1887,18 @@ struct DeferredTransformation
 
      typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
      FuncDeclList_t targetFriends;
+
+  // DQ (2/28/2021): Adding support for outlining where it involves building up pre-transformations.
+  // For example, in the code segregation, we build a conditiona around the interval of statements 
+  // that we are outlining. This conditional is used to overwrite the first statement in the interval 
+  // list.  Because we don't want to transform the AST until after the outlining, we need so save the
+  // whole interval so that we, after the outlining, remove the statements in the interval after that
+  // first statement.
+     typedef std::vector<SgStatement*> IntervalType;
+     IntervalType statementInterval;
+     SgStatement* locationToOverwriteWithTransformation;
+     SgStatement* transformationToOverwriteFirstStatementInInterval;
+     SgBasicBlock* blockOfStatementsToOutline;
 
   // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
      ROSE_DLL_API DeferredTransformation();

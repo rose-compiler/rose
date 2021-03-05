@@ -3417,7 +3417,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         SgDefaultOptionStmt* defaultOptionStatement = isSgDefaultOptionStmt(mappingInfo->node);
                                         if (caseOptionStatement != NULL || defaultOptionStatement != NULL)
                                            {
-#if 1
+#if 0
                                              printf ("$$$$$$$$$$$$ Handle special case of SgCaseOptionStmt = %p or SgDefaultOptionStmt = %p nested in SgBasicBlock \n",caseOptionStatement,defaultOptionStatement);
 #endif
                                              trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -5898,7 +5898,7 @@ TokenMappingTraversal::outputTokenStreamSequenceMap()
    {
   // Check for unassigned tokens that are not white space.
 
-#if 1
+#if 0
      printf ("\n\nIn outputTokenStreamSequenceMap(): check for tokens between assigned token sequences associated with IR nodes \n");
 #endif
 
@@ -6044,7 +6044,7 @@ getTokenStream( SgSourceFile* file )
 
      string fileNameForTokenStream = file->getFileName();
 
-#if 1
+#if 0
      printf ("In getTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -6375,7 +6375,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
 #define DEBUG_TOKEN_FRONTIER 0
 
-#if 1
+#if 0
      printf ("In buildTokenStreamFrontier(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -6754,6 +6754,14 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 #endif
 
 #if 0
+     if (sourceFile->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_135.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
   // DQ (1/18/2021): The support for turning the vector<stream_element*> into the vector<SgToken*> is now supported 
   // in the buildCommentAndCppDirectiveList(), so that it is closer to where the tokens are constructed in the 
   // getPreprocessorDirectives() function.
@@ -6824,7 +6832,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
   // std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenSubsequenceMap = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
   // ROSE_ASSERT(tokenSubsequenceMap != NULL);
 
-#if DEBUG_TOKEN_STREAM_MAPPING
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
   // Output the depth of the AST.
      printf ("@@@@@@@@@@@@@@@@@@@@ In buildTokenStreamMapping(): (before traversal): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
   // printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
@@ -6840,6 +6848,11 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
   // tokenMappingTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
      tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
    }
+
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
+     printf ("@@@@@@@@@@@@@@@@@@@@ In buildTokenStreamMapping(): (after traversal): sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+  // printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
 
 #if 0
   // We need to set the positions of the trailing whitespace of the last element.
@@ -6915,7 +6928,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 
   // DQ (1/7/2021): Output info on this converstion from the data structure used in the lex file
   // to the data structure used in the rest of ROSE.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In buildTokenStreamMapping(): building the SgToken objects from the tokens collected by the lex file: size = %zu \n",roseTokenList.size());
         }
@@ -6952,7 +6965,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 
 #if 0
   // Output the tokenStreamSequenceMap:
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): Output TokenStreamSequenceToNodeMapping \n");
      printf ("tokenMappingTraversal.tokenStreamSequenceMap.size() = %zu \n",tokenMappingTraversal.tokenStreamSequenceMap.size());
 #endif
@@ -7118,6 +7131,15 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
           ROSE_ASSERT(false);
         }
 #endif
+
+#if 0
+     if (sourceFile->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_135.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);

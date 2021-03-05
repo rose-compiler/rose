@@ -3681,7 +3681,9 @@ SgFile::secondaryPassOverSourceFile()
        // DQ (4/19/2006): since they can take a while and includes substantial
        // file I/O we make this optional (selected from the command line).
        // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
-
+#if 0
+          printf ("get_skip_commentsAndDirectives() = %s \n",get_skip_commentsAndDirectives() ? "true" : "false");
+#endif
        // DQ (12/17/2008): The merging of CPP directives and comments from either the
        // source file or including all the include files is not implemented as a single
        // traversal and has been rewritten.
@@ -3753,9 +3755,11 @@ SgFile::secondaryPassOverSourceFile()
        // DQ (8/18/2019): Add performance analysis support.
           TimingPerformance timer ("EDG-ROSE header file support for tokens:");
 
-       // DQ (7/2/2020): Use this variable for now while debugin this code moved from the parse() function.
+       // DQ (7/2/2020): Use this variable for now while debuging this code moved from the parse() function.
           SgFile* file = sourceFile;
-
+#if 0
+          printf ("(before conditional) filename = %s file->get_unparse_tokens() = %s \n",file->getFileName().c_str(),file->get_unparse_tokens() ? "true" : "false");
+#endif
        // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
        // if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
           if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) &&
@@ -3878,6 +3882,28 @@ SgFile::secondaryPassOverSourceFile()
             // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the
             // token sequence, but usig the token sequence permit us to gather more data.
                detectMacroOrIncludeFileExpansions(sourceFile);
+             }
+            else
+             {
+            // DQ (2/24/2021): Adding debugging support for the token-based unparsing.
+#if 0
+               printf ("We should have been able to process this file to support token-based unparsing (something might have gone wrong) \n");
+               printf ("file->getFileName() = %s \n",file->getFileName().c_str());
+#endif
+#if 0
+               printf ("(false part of conditional) file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+#if 0
+               if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_135.h")
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
              }
 #if 0
           if ( SgProject::get_verbose() > 0 )

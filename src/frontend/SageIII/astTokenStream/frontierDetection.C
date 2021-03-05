@@ -1199,7 +1199,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
         {
        // ROSE_ASSERT(project != NULL);
 
-#if 1
+#if 0
           printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier defined \n");
 #endif
 
@@ -1273,7 +1273,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
              }
         }
 
-#if 1
+#if 0
      printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier AND edges defined \n");
 #endif
 
