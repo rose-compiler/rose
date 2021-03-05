@@ -677,6 +677,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #endif
 
+#if 0
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("In Unparser::unparseFile(): file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
+     printf ("isCfile   = %s \n",isCfile ? "true" : "false");
+     printf ("isCxxFile = %s \n",isCxxFile ? "true" : "false");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
   // DQ (12/6/2014): This is the part of the token stream support that is required after transformations have been done in the AST.
      if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
@@ -740,7 +750,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // ROSE_ASSERT(globalScope->get_parent() == sourceFile);
              }
 
-#if DEBUG_UNPARSE_TOKENS
+#if DEBUG_UNPARSE_TOKENS || 0
           printf ("################################################################################################## \n");
           printf (" The token processing is now done in the secondaryFileProcessing (so we do not need to do it here) \n");
           printf ("################################################################################################## \n");
@@ -1392,7 +1402,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ASSERT_not_null(file->get_preprocessorDirectivesAndCommentsList());
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
-#if 1
+#if 0
      printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
@@ -1407,7 +1417,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
-#if 1
+#if 0
      printf ("In unparseFileUsingTokenStream(): Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      while (map_iterator != filePreprocInfo->getList().end())
@@ -3035,6 +3045,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
 #if 0
      printf ("Inside of unparseFile ( SgFile* file,x,x,SgScopeStatement* ) (using file->get_unparse_output_filename() = %s) \n",file->get_unparse_output_filename().c_str());
+     printf (" --- file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
 #endif
 
 #if 0
@@ -3590,7 +3601,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                printf ("WARNING: In unparseFile(): file = %p has no associated project \n",file);
              }
 
-
        // DQ (9/15/2013): Added assertion.
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
 
@@ -3623,8 +3633,31 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         }
 #endif
 
+  // DQ (2/23/2021): Added assertion.
+     ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+
+#if 0
+     printf ("Inside of unparseFile ( SgFile* file ) file->get_unparse_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
+#endif
 #if 0
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (2/25/2021): Debugging code.
+     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_133/BAtest_133.h")
+        {
+          printf ("Found /home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_133/BAtest_133.h header file, debugging token-based unparsing \n");
+
+          printf ("file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
+
+          printf ("Force the header file to unparse via the token stream \n");
+
+          file->set_unparse_tokens(true);
+
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      if (file->get_skip_unparse() == true)
@@ -4049,6 +4082,16 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      ASSERT_not_null(project);
 
+#if 0
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("TOP of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+     printf (" --- includedFileName = %s \n",includedFileName.c_str());
+     printf (" --- project->get_unparse_tokens() = %s \n",project->get_unparse_tokens() ? "true" : "false");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+#endif
+
      ROSE_ASSERT(project->get_files().empty() == false);
 
   // Getting the first file might not be correct later.
@@ -4092,9 +4135,15 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[includedFileName];
      ASSERT_not_null(include_file);
 
+  // DQ (3/2/2021): This should not have been built yet (we allow for this below).
+  // ROSE_ASSERT(include_file->get_source_file() == NULL);
 
 #if 0
      printf ("In buildSourceFileForHeaderFile(): include_file = %p includedFileName = %s \n",include_file,includedFileName.c_str());
+#endif
+
+#if 0
+     printf ("In buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
 #if 0
@@ -4113,7 +4162,11 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      include_sourceFile = include_file->get_source_file();
 
 #if 0
-     printf ("include_sourceFile = %p include_file = %p include_file->get_filename() = %s \n",include_sourceFile,include_file,include_file->get_filename().str());
+     if (include_sourceFile != NULL)
+        {
+          printf ("include_sourceFile = %p include_file = %p include_file->get_filename() = %s \n",include_sourceFile,include_file,include_file->get_filename().str());
+          printf (" --- include_sourceFile->get_unparse_tokens() = %s \n",include_sourceFile->get_unparse_tokens() ? "true" : "false");
+        }
 #endif
 
   // DQ (10/26/2019): Added debugging code.
@@ -4131,6 +4184,12 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
           include_sourceFile = new SgSourceFile();
           ASSERT_not_null(include_sourceFile);
 
+       // DQ (2/25/2021): Set the unparse_tokens flag in the SgSourceFile that is associated with the header file.
+          include_sourceFile->set_unparse_tokens(project->get_unparse_tokens());
+#if 0
+          printf (" --- project->get_unparse_tokens()            = %s \n",project->get_unparse_tokens() ? "true" : "false");
+          printf (" --- include_sourceFile->get_unparse_tokens() = %s \n",include_sourceFile->get_unparse_tokens() ? "true" : "false");
+#endif
           include_sourceFile->set_sourceFileNameWithPath(filename);
           include_sourceFile->set_startOfConstruct(new Sg_File_Info(filename));
        // include_sourceFile->set_endOfConstruct(new Sg_File_Info(filename));
@@ -4194,6 +4253,20 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
           ROSE_ASSERT(false);
 #endif
         }
+       else
+        {
+#if 0
+          printf ("In buildSourceFileForHeaderFile(): include_sourceFile != NULL: include_file = %p include_file->get_filename() = %s \n",include_file,include_file->get_filename().str());
+#endif
+       // DQ (2/25/2021): Set the unparse_tokens flag in the SgSourceFile that is associated with the header file.
+          include_sourceFile->set_unparse_tokens(project->get_unparse_tokens());
+#if 0
+
+          printf (" --- project->get_unparse_tokens()            = %s \n",project->get_unparse_tokens() ? "true" : "false");
+          printf (" --- include_sourceFile->get_unparse_tokens() = %s \n",include_sourceFile->get_unparse_tokens() ? "true" : "false");
+#endif
+        }
+
      ASSERT_not_null(include_sourceFile);
 
   // DQ (12/10/2019): tool_G.C input test_33.cpp is supposed to set this off, but I can't seem to reproduce it on REL 7.
@@ -4350,6 +4423,11 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Leaving buildSourceFileForHeaderFile(): return include_sourceFile = %p \n",include_sourceFile);
 #endif
 
+#if 0
+     printf ("BOTTOM of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+     printf (" --- include_sourceFile = %p = %s \n",include_sourceFile,include_sourceFile->getFileName().c_str());
+#endif
+
      return include_sourceFile;
    }
 
@@ -4382,6 +4460,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if 0
      printf ("In unparseIncludedFiles(): project = %p \n",project);
 #endif
+#if 0
+     printf ("TOP of unparseIncludedFiles(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
 
 #define DEBUG_UNPARSE_INCLUDE_FILES 0
 
@@ -4409,6 +4490,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
              {
                cout << endl << "***HEADER FILES UNPARSING***" << endl << endl;
              }
+#if 0
+          printf ("In unparseIncludedFiles(): before IncludedFilesUnparser constructor: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
 
           IncludedFilesUnparser includedFilesUnparser(project);
 
@@ -4420,10 +4504,16 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
           generateDOT_withIncludes ( *project , ".unparsing_headers" );
 #endif
 
+#if 0
+          printf ("In unparseIncludedFiles(): before figureOutWhichFilesToUnparse(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
        // DQ (9/20/2018): Choosing a better name for this function.
        // includedFilesUnparser.unparse();
           includedFilesUnparser.figureOutWhichFilesToUnparse();
 
+#if 0
+          printf ("In unparseIncludedFiles(): after figureOutWhichFilesToUnparse(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
 #if 0
           printf ("After call to figureOutWhichFilesToUnparse(): Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -4450,6 +4540,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                string s = *i;
                printf (" --- includedFilesUnparser.getIncludeCompilerOptions() = %s \n",s.c_str());
              }
+#endif
+#if 0
+          printf ("In unparseIncludedFiles(): before prependIncludeOptionsToCommandLine(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
           prependIncludeOptionsToCommandLine(project, includedFilesUnparser.getIncludeCompilerOptions());
 #if 0
@@ -4501,6 +4594,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
+#endif
+#if 0
+          printf ("In unparseIncludedFiles(): before while loop over unparseMap: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
        // DQ (11/19/2018): Copy the files that are specified in the filesToCopy list.
@@ -4732,6 +4828,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if 0
           printf ("In unparseIncludedFiles(): unparseMap.size() = %zu \n",unparseMap.size());
 #endif
+#if 0
+          printf ("In unparseIncludedFiles(): before for loop over unparseMap: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
 
           for (map<string, string>::const_iterator unparseMapEntry = unparseMap.begin(); unparseMapEntry != unparseMap.end(); unparseMapEntry++)
              {
@@ -4803,11 +4902,19 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if 0
                     printf ("We need to build a SgSourceFile to hold the statements that are in the header file which we have not processed yet \n");
 #endif
+#if 0
+                    printf ("In unparseIncludedFiles(): before buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+                    printf (" --- project->get_unparse_tokens() = %s \n",project->get_unparse_tokens() ? "true" : "false");
+#endif
                  // Build a SgSourceFile into the unparseSourceFileMap (mark it as a header file and point to the global scope that has the subset
                  // of its statements, including any statements from nested header files).
                     SgSourceFile* headerFileOnDemand = buildSourceFileForHeaderFile(project,originalFileName);
                     ASSERT_not_null(headerFileOnDemand);
-
+#if 0
+                    printf ("In unparseIncludedFiles(): after buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+                    printf (" --- headerFileOnDemand->getFileName() = %s \n",headerFileOnDemand->getFileName().c_str());
+                    printf (" --- headerFileOnDemand->get_unparse_tokens() = %s \n",headerFileOnDemand->get_unparse_tokens() ? "true" : "false");
+#endif
                  // DQ (10/2/2019): This will be checked below (test it here), but it is not reasonable for a header file when using the header file unparsing optimization.
                  // ASSERT_not_null(headerFileOnDemand->get_project());
 
@@ -5316,7 +5423,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                  // const SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     SgScopeStatement* header_file_associated_scope = unparseScopesMapEntry->second;
                     ASSERT_not_null(header_file_associated_scope);
-#if 1
+#if 0
                     printf ("header_file_associated_scope   = %p = %s \n",header_file_associated_scope,header_file_associated_scope->class_name().c_str());
                     printf ("   --- unparsedFile->getFileName()  = %s \n",unparsedFile->getFileName().c_str());
                     printf ("   --- header_file_associated_scope = %p \n",header_file_associated_scope);
@@ -5507,6 +5614,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 
 #if 0
+          printf ("BOTTOM of unparseIncludedFiles(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+#endif
+#if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
@@ -5527,7 +5637,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
   // #if DEBUG_UNPARSE_INCLUDE_FILES || 0
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving unparseIncludedFiles() project = %p \n",project);
         }

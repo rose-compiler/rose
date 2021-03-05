@@ -9544,13 +9544,21 @@ SageInterface::DeferredTransformation::DeferredTransformation()
      statementToAdd(NULL),
      class_definition(NULL),
      target_class_member(NULL),
-     new_function_prototype(NULL)
+     new_function_prototype(NULL),
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     locationToOverwriteWithTransformation(NULL),
+     transformationToOverwriteFirstStatementInInterval(NULL),
+     blockOfStatementsToOutline(NULL)
    {
   // Default constructor (not particularly useful).
 #if 0
      printf ("In SageInterface::DeferredTransformation default constructor called \n");
 #endif
    }
+
+// DQ (2/28/2021): Added new data member to support deferred transformations.
+// IntervalType statementInterval;
+// SgStatement* locationToOverwriteWithTransformation;
 
 SageInterface::DeferredTransformation::DeferredTransformation(
    SgClassDefinition* input_class_definition, 
@@ -9561,7 +9569,11 @@ SageInterface::DeferredTransformation::DeferredTransformation(
      statementToAdd(NULL),
      class_definition(input_class_definition),
      target_class_member(input_target_class_member),
-     new_function_prototype(input_new_function_prototype)
+     new_function_prototype(input_new_function_prototype),
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     locationToOverwriteWithTransformation(NULL),
+     transformationToOverwriteFirstStatementInInterval(NULL),
+     blockOfStatementsToOutline(NULL)
    {
   // This constructor is used by the outliner.
 #if 0
@@ -9586,6 +9598,12 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
      X.target_class_member        = NULL;
      X.new_function_prototype     = NULL;
 
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+  // X.statementInterval;
+     X.locationToOverwriteWithTransformation             = NULL;
+     X.transformationToOverwriteFirstStatementInInterval = NULL;
+     X.blockOfStatementsToOutline                        = NULL;
+
      return X;
    }
 
@@ -9605,6 +9623,12 @@ SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, Sg
      X.class_definition           = NULL;
      X.target_class_member        = NULL;
      X.new_function_prototype     = NULL;
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+  // X.statementInterval;
+     X.locationToOverwriteWithTransformation = NULL;
+     X.transformationToOverwriteFirstStatementInInterval = NULL;
+     X.blockOfStatementsToOutline = NULL;
 
      return X;
    }
@@ -9658,6 +9682,14 @@ SageInterface::DeferredTransformation & SageInterface::DeferredTransformation::o
      new_function_prototype     = X.new_function_prototype;
      targetClasses              = X.targetClasses;
      targetFriends              = X.targetFriends;
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     statementInterval                                 = X.statementInterval;
+     locationToOverwriteWithTransformation             = X.locationToOverwriteWithTransformation;
+     transformationToOverwriteFirstStatementInInterval = X.transformationToOverwriteFirstStatementInInterval;
+
+  // DQ (3/1/2021): Added new data member to support deferred transformations.
+     blockOfStatementsToOutline                        = X.blockOfStatementsToOutline;
 #endif
 
      return *this;
@@ -9720,7 +9752,8 @@ void SageInterface::DeferredTransformation::display ( std::string label ) const
 
      if (class_definition != NULL)
         {
-          printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
+       // printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
+          printf (" --- class_definition = %p \n",class_definition);
         }
 
      if (target_class_member != NULL)
@@ -9733,8 +9766,34 @@ void SageInterface::DeferredTransformation::display ( std::string label ) const
           printf (" --- new_function_prototype = %p = %s name = %s \n",new_function_prototype,new_function_prototype->class_name().c_str(),get_name(new_function_prototype).c_str());
         }
 
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     if (locationToOverwriteWithTransformation != NULL)
+        {
+       // printf (" --- locationToOverwriteWithTransformation = %p = %s name = %s \n",locationToOverwriteWithTransformation,
+       //      locationToOverwriteWithTransformation->class_name().c_str(),get_name(locationToOverwriteWithTransformation).c_str());
+          printf (" --- locationToOverwriteWithTransformation = %p \n",locationToOverwriteWithTransformation);
+        }
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     if (transformationToOverwriteFirstStatementInInterval != NULL)
+        {
+       // printf (" --- transformationToOverwriteFirstStatementInInterval = %p = %s name = %s \n",transformationToOverwriteFirstStatementInInterval,
+       //      transformationToOverwriteFirstStatementInInterval->class_name().c_str(),get_name(transformationToOverwriteFirstStatementInInterval).c_str());
+          printf (" --- transformationToOverwriteFirstStatementInInterval = %p \n",transformationToOverwriteFirstStatementInInterval);
+        }
+
+  // DQ (3/1/2021): Added new data member to support deferred transformations.
+     if (blockOfStatementsToOutline != NULL)
+        {
+          printf (" --- blockOfStatementsToOutline = %p \n",blockOfStatementsToOutline);
+        }
+
      printf ("targetClasses.size() = %zu \n",targetClasses.size());
      printf ("targetFriends.size() = %zu \n",targetFriends.size());
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     printf ("statementInterval.size() = %zu \n",statementInterval.size());
+
    }
 #endif
 
@@ -24533,7 +24592,9 @@ SageInterface::printOutComments ( SgLocatedNode* locatedNode )
         }
        else
         {
-          printf ("No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#if 0
+          printf ("In SageInterface::printOutComments(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
         }
    }
 
@@ -24937,6 +24998,42 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
   }
   return rtval;
 }
+
+
+// DQ (2/27/2021): Adding support to detect if a SgLocatedNode is located in a header file.
+bool SageInterface::insideHeader (SgLocatedNode* node)
+   {
+  // Check if a node is from a header file
+
+     bool returnValue = false;
+
+     Sg_File_Info* fileInfo = node->get_file_info();
+     ROSE_ASSERT(fileInfo != NULL);
+     string filename = fileInfo->get_filenameString();
+
+#if 0
+     printf ("In SageInterface::insideHeader(): node = %s line: %d column: %d file: %s \n",node->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),filename.c_str());
+#endif
+
+  // DQ (2/27/2021): We save a map of all of the header files processed in the generation of the ROSE AST,
+  // so the test is only if the filename is in the list.
+     if (EDG_ROSE_Translation::edg_include_file_map.find(filename) == EDG_ROSE_Translation::edg_include_file_map.end())
+        {
+#if 0
+          printf ("This is NOT in the EDG_ROSE_Translation::edg_include_file_map \n");
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("This IS in the EDG_ROSE_Translation::edg_include_file_map \n");
+#endif
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 //! Find the function type matching a function signature plus a given return type
 SgFunctionType* SageInterface::findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList)

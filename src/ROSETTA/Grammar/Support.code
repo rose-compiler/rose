@@ -17341,7 +17341,8 @@ SgSourceFile::get_tokenSubsequenceMap()
      if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(this) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
         {
 #if 0
-          printf ("Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+          printf ("Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",
+               Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
 #endif
           result = Rose::tokenSubsequenceMapOfMapsBySourceFile[this];
 #if 0
@@ -17360,9 +17361,12 @@ SgSourceFile::get_tokenSubsequenceMap()
         }
 
      return *result;
+
 #else
   // DQ (1/23/2021): Older version.
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
+
+#error "DEAD CODE!"
 
 #if 1
      printf ("$$$$$$$$$$$$$$$$$$$$ In SgSourceFile::get_tokenSubsequenceMap() $$$$$$$$$$$$$$$$$$$$$$ \n");
@@ -17387,6 +17391,8 @@ SgSourceFile::get_tokenSubsequenceMap()
   // mprintf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d \n",index);
      printf ("In SgSourceFile::get_tokenSubsequenceMap(): Rose::tokenSubsequenceMapOfMaps.size() = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
 #endif
+
+#error "DEAD CODE!"
 
      if (index < 0)
         {
@@ -17459,6 +17465,8 @@ SgSourceFile::get_tokenSubsequenceMap()
 #endif
         }
 
+#error "DEAD CODE!"
+
      ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps.find(index) != Rose::tokenSubsequenceMapOfMaps.end());
      ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps[index] != NULL);
 
@@ -17486,6 +17494,8 @@ SgSourceFile::get_tokenSubsequenceMap()
           k++;
         }
 #endif
+
+#error "DEAD CODE!"
 
      return *result;
 #endif

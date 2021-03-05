@@ -434,9 +434,13 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      SimpleFrontierDetectionForTokenStreamMapping fdTraversal(sourceFile);
 
 #if 0
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
      printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
      printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
 #endif
 #if 0
   // printf ("   --- global scope NOT present in tokenSubsequenceMap \n");
