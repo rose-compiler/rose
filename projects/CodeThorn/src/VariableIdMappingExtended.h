@@ -3,6 +3,8 @@
 
 #include "VariableIdMapping.h"
 #include "TypeSizeMapping.h"
+#include <unordered_map>
+#include <list>
 
 namespace CodeThorn {
   class VariableIdMappingExtended : public VariableIdMapping {
@@ -19,19 +21,28 @@ namespace CodeThorn {
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount = 3); // override;
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
-    SgType* strippedType(SgType* type);
+
+    // deprecated
     void computeTypeSizes();
+
     // direct lookup
-    unsigned int getTypeSize(enum CodeThorn::BuiltInType);
-    unsigned int getTypeSize(SgType* type);
-    unsigned int getTypeSize(VariableId varId);
+    CodeThorn::TypeSize getTypeSize(SgType* type);
+    CodeThorn::TypeSize getTypeSize(VariableId varId);
+    void setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize);
+    void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
+
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os);
+    CodeThorn::TypeSize getTypeSize(enum CodeThorn::BuiltInType);
   private:
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
+    SgType* strippedType(SgType* type);
     CodeThorn::TypeSizeMapping typeSizeMapping;
+    std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
+    void recordWarning(std::string);
+    std::list<std::string> _warnings;
   };
 }
 

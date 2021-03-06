@@ -102,6 +102,15 @@ std::string ProgramInfo::toStringDetailed() {
 }
 
 std::string ProgramInfo::toCsvStringDetailed() {
+  return toCsvStringDetailed(0);
+}
+
+std::string ProgramInfo::toCsvStringDetailed(VariableIdMappingExtended* vid) {
+  ROSE_ASSERT(_validData);
+  return toCsvStringCodeStats()+toCsvStringTypeStats(vid)+'\n';
+}
+
+std::string ProgramInfo::toCsvStringCodeStats() {
   ROSE_ASSERT(_validData);
   stringstream ss;
   for(int i=0;i<Element::NUM;i++) {
@@ -109,8 +118,19 @@ std::string ProgramInfo::toCsvStringDetailed() {
       ss<<",";
     ss<<std::right<<std::setw(5)<<count[i];
   }
-  ss<<endl;
   return ss.str();
+}
+
+std::string ProgramInfo::toCsvStringTypeStats(VariableIdMappingExtended* vid) {
+  if(vid) {
+    // global + local:
+    // * max total variables + struct members + array elements
+    // * max array size (elements*element size)
+    // * max struct size (struct elements)
+    return "";
+  } else {
+    return "";
+  }
 }
 
 bool ProgramInfo::toCsvFileDetailed(std::string fileName, std::string mode) {

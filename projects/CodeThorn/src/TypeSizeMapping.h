@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "VariableIdMapping.h"
+
 namespace CodeThorn {
 enum BuiltInType {
     BITYPE_BOOL,
@@ -19,9 +21,6 @@ namespace CodeThorn {
 
   class VariableIdMappingExtended;
   class VariableId;
-  
-  // typesize in bytes
-  typedef long int TypeSize;
   
   class TypeSizeMapping {
   public:
@@ -65,7 +64,7 @@ namespace CodeThorn {
                                                4,8,16,
                                                8,8
     };
-    std::unordered_map<SgType*,unsigned int> _typeToSizeMapping;
+    std::unordered_map<SgType*, TypeSize> _typeToSizeMapping;
   };
 }
 

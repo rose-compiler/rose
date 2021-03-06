@@ -291,7 +291,7 @@ namespace CodeThorn {
                     // is the same again (e.g. the same headerfile is
                     // included in 2 different files, both provided on the
                     // command line
-                    if(_typeToSizeMapping[varType]!=(size_t)offset) {
+                    if(_typeToSizeMapping[varType]!=(CodeThorn::TypeSize)offset) {
                       continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
                       // do nothing for now
                       //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;

@@ -18,6 +18,9 @@ namespace CodeThorn {
   class VariableId;
   typedef std::string VariableName;
 
+  // typesize in bytes
+  typedef long int TypeSize;
+
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -75,7 +78,7 @@ namespace CodeThorn {
     VariableId variableId(SgSymbol* sym);
     VariableId variableIdFromCode(int);
     SgSymbol* getSymbol(VariableId varId);
-    SgType* getType(VariableId varId);
+    virtual SgType* getType(VariableId varId);
 
     // returns true if this variable has type bool. This also includes the C type _Bool.
     bool hasBoolType(VariableId varId);
@@ -93,32 +96,32 @@ namespace CodeThorn {
     bool hasClassType(VariableId varId);
     bool hasArrayType(VariableId varId);
 
-    SgVariableDeclaration* getVariableDeclaration(VariableId varId);
+    virtual SgVariableDeclaration* getVariableDeclaration(VariableId varId);
     // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
     bool isVariableIdValid(VariableId varId);
     std::string variableName(VariableId varId);
     std::string uniqueVariableName(VariableId varId);
 
     // set number of elements of the memory region determined by this variableid
-    void setNumberOfElements(VariableId variableId, size_t size);
+    virtual void setNumberOfElements(VariableId variableId, size_t size);
     // get number of elements of the memory region determined by this variableid
-    size_t getNumberOfElements(VariableId variableId);
+    virtual size_t getNumberOfElements(VariableId variableId);
 
     // set the size of an element of the memory region determined by this variableid
-    void setElementSize(VariableId variableId, size_t size);
+    virtual void setElementSize(VariableId variableId, size_t size);
     // get the size of an element of the memory region determined by this variableid
-    size_t getElementSize(VariableId variableId);
+    virtual size_t getElementSize(VariableId variableId);
 
     // set total size in bytes of variableId's memory region (for arrays not necessary, computed from other 2 values)
-    void setTotalSize(VariableId variableId, size_t size);
-    size_t getTotalSize(VariableId variableId);
+    virtual void setTotalSize(VariableId variableId, size_t size);
+    virtual size_t getTotalSize(VariableId variableId);
     
     // set offset of member variable (type is implicit as varids are unique across all types)
-    void setOffset(VariableId variableId, int offset);
+    virtual void setOffset(VariableId variableId, int offset);
     // get offset of member variable (type is implicit as varids are unique across all types)
-    int getOffset(VariableId variableId);
-    bool isMemberVariable(VariableId variableId);
-    void setIsMemberVariable(VariableId variableId, bool flag);
+    virtual int getOffset(VariableId variableId);
+    virtual bool isMemberVariable(VariableId variableId);
+    virtual void setIsMemberVariable(VariableId variableId, bool flag);
     
     SgSymbol* createAndRegisterNewSymbol(std::string name);
     CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
@@ -143,20 +146,20 @@ namespace CodeThorn {
     bool hasAssignInitializer(VariableId arrayVar);
     bool isAggregateWithInitializerList(VariableId arrayVar);
     SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
-    size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
-    size_t getArrayElementCount(SgArrayType* t);
-    size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
-    VariableId idForArrayRef(SgPntrArrRefExp* ref);
+    virtual size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
+    virtual size_t getArrayElementCount(SgArrayType* t);
+    virtual size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
+    virtual VariableId idForArrayRef(SgPntrArrRefExp* ref);
   
     // memory locations of string literals
     VariableId getStringLiteralVariableId(SgStringVal* sval);
     void registerStringLiterals(SgNode* root);
     int numberOfRegisteredStringLiterals();
     bool isStringLiteralAddress(VariableId stringVarId);
+    std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
 
     // returns true if the variable is a formal parameter in a function definition
-    bool isFunctionParameter(VariableId varId);
-    std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+    virtual bool isFunctionParameter(VariableId varId);
 
     // determines for struct/class/union's data member if its
     // SgInitializeName defines an anonymous bitfield (e.g. struct S {

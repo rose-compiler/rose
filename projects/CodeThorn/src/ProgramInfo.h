@@ -6,6 +6,7 @@
 #include "Labeler.h"
 #include <string>
 #include <map>
+#include "VariableIdMappingExtended.h"
 
 class SgFunctionCall;
 
@@ -18,11 +19,15 @@ class ProgramInfo {
   void printCompared(ProgramInfo* other);
   std::string toStringDetailed();
   std::string toCsvStringDetailed();
+  std::string toCsvStringDetailed(CodeThorn::VariableIdMappingExtended* vid);
   bool toCsvFileDetailed(std::string fileName, std::string mode);
   std::string toStringCompared(ProgramInfo* other);
   void writeFunctionCallNodesToFile(std::string fileName, CodeThorn::Labeler* labeler=0);
+
+private:
+  std::string toCsvStringCodeStats();  
+  std::string toCsvStringTypeStats(CodeThorn::VariableIdMappingExtended* vim);
   
- private:
   enum Element {
     numFunDefs,
     numFunCall,

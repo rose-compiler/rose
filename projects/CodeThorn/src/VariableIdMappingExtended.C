@@ -84,6 +84,26 @@ namespace CodeThorn {
     typeSizeMapping.computeOffsets(project,this);
   }
 
+  void VariableIdMappingExtended::setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize) {
+    auto typeIter=_typeSize.find(type);
+    if(typeIter!=_typeSize.end()) {
+      if((*typeIter).second!=newTypeSize) {
+	stringstream ss;
+	ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
+	recordWarning(ss.str());
+      } else {
+	_typeSize[type]=newTypeSize;
+      }
+    }
+  }
+  void VariableIdMappingExtended::recordWarning(std::string warningText) {
+    _warnings.push_back(warningText);
+  }
+  
+  void VariableIdMappingExtended::setTypeSize(VariableId varId, CodeThorn::TypeSize newTypeSize) {
+    setTypeSize(getType(varId),newTypeSize);
+  }
+  
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -102,14 +122,16 @@ namespace CodeThorn {
 	    if(SgClassType* classType=isSgClassType(type)) {
 	      cout<<"DEBUG: register class members:"<<endl;
 	      std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
-	      CodeThorn::TypeSize typeSize=registerClassMembers(classType,memberList,0); // start with offset 0
+	      CodeThorn::TypeSize totalTypeSize=registerClassMembers(classType,memberList,0); // start with offset 0
 	      setNumberOfElements(varId,memberList.size());
-	      setTotalSize(varId,typeSize);
+	      setTotalSize(varId,totalTypeSize);
 	    } else if(SgArrayType* arrayType=isSgArrayType(type)) {
 	      setElementSize(varId,typeSizeMapping.determineElementTypeSize(arrayType));
 	      setNumberOfElements(varId,typeSizeMapping.determineNumberOfElements(arrayType));
-	      setTotalSize(varId,getElementSize(varId)*getNumberOfElements(varId));
+	      CodeThorn::TypeSize typeSize=getElementSize(varId)*getNumberOfElements(varId);
+	      setTotalSize(varId,typeSize);
 	    } else {
+	      // built-in type
 	      setElementSize(varId,typeSizeMapping.determineTypeSize(type));
 	      setNumberOfElements(varId,1);
 	      setTotalSize(varId,getElementSize(varId));
@@ -136,14 +158,14 @@ namespace CodeThorn {
     }
   }
 
-  unsigned int VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {
+  CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {
     return typeSizeMapping.getTypeSize(biType);
   }
 
-  unsigned int VariableIdMappingExtended::getTypeSize(SgType* type) {
+  CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(SgType* type) {
     return typeSizeMapping.determineTypeSize(type);
   }
-  unsigned int VariableIdMappingExtended::getTypeSize(VariableId varId) {
+  CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(VariableId varId) {
     return getTypeSize(getType(varId));
   }
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
