@@ -1613,7 +1613,7 @@ void EasyStorage <AstAttributeMechanism*> :: readFromFile (std::istream& inputFi
    ****************************************************************************************
 */
 
-#define DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass 1
+#define DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass 0
 
 void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingInfo* info) {
 #if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
@@ -1623,11 +1623,15 @@ void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingI
      ROSE_ASSERT(info != NULL);
      ROSE_ASSERT(info->get_file_info() != NULL);
 
+#if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
      printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info() = %p \n",info->get_file_info());
      printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info()->get_freepointer() = %p \n",info->get_file_info()->get_freepointer());
+#endif
 
      fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->get_file_info());
+#if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
      printf ("Saving fileInfoIndex = %d for %p \n",fileInfoIndex, info->get_file_info());
+#endif
 
   // get changeable pointer
      char* copy_ = info->packed();
@@ -1662,7 +1666,7 @@ void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingI
         }
    }
 
-#define DEBUG_EasyStorage_PreprocessingInfo_rebuildDataStoredInEasyStorageClass 1
+#define DEBUG_EasyStorage_PreprocessingInfo_rebuildDataStoredInEasyStorageClass 0
 
 PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass() const {
 #if DEBUG_EasyStorage_PreprocessingInfo_rebuildDataStoredInEasyStorageClass
@@ -1998,7 +2002,7 @@ void EasyStorage <AttachedPreprocessingInfoType*>::displayEasyStorageData()
 /* special implementation for omitting compiler instantiation errors*/
 void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass(AttachedPreprocessingInfoType* data_)
    {
-     printf ("EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass \n");
+//     printf ("EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass \n");
      if (data_ == NULL)
         {
           Base::sizeOfData = -1;
@@ -2063,7 +2067,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
 AttachedPreprocessingInfoType* 
 EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass() const
    {
-      printf ("EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass \n");
+//      printf ("EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass \n");
       AttachedPreprocessingInfoType* data_ = NULL;
       if ( Base::getSizeOfData() != -1 )
          {
