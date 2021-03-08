@@ -105,21 +105,21 @@ namespace CodeThorn {
     // set number of elements of the memory region determined by this variableid
     virtual void setNumberOfElements(VariableId variableId, size_t size);
     // get number of elements of the memory region determined by this variableid
-    virtual size_t getNumberOfElements(VariableId variableId);
+    virtual TypeSize getNumberOfElements(VariableId variableId);
 
     // set the size of an element of the memory region determined by this variableid
-    virtual void setElementSize(VariableId variableId, size_t size);
+    virtual void setElementSize(VariableId variableId, TypeSize size);
     // get the size of an element of the memory region determined by this variableid
-    virtual size_t getElementSize(VariableId variableId);
+    virtual TypeSize getElementSize(VariableId variableId);
 
     // set total size in bytes of variableId's memory region (for arrays not necessary, computed from other 2 values)
-    virtual void setTotalSize(VariableId variableId, size_t size);
-    virtual size_t getTotalSize(VariableId variableId);
+    virtual void setTotalSize(VariableId variableId, TypeSize size);
+    virtual TypeSize getTotalSize(VariableId variableId);
     
     // set offset of member variable (type is implicit as varids are unique across all types)
-    virtual void setOffset(VariableId variableId, int offset);
+    virtual void setOffset(VariableId variableId, TypeSize offset);
     // get offset of member variable (type is implicit as varids are unique across all types)
-    virtual int getOffset(VariableId variableId);
+    virtual TypeSize getOffset(VariableId variableId);
     virtual bool isMemberVariable(VariableId variableId);
     virtual void setIsMemberVariable(VariableId variableId, bool flag);
     
@@ -127,7 +127,7 @@ namespace CodeThorn {
     CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
     CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
     void registerNewSymbol(SgSymbol* sym);
-    void registerNewArraySymbol(SgSymbol* sym, int arraySize);
+    void registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize);
     virtual void toStream(std::ostream& os);
     void generateDot(std::string filename,SgNode* astRoot);
 
@@ -152,9 +152,9 @@ namespace CodeThorn {
     virtual VariableId idForArrayRef(SgPntrArrRefExp* ref);
   
     // memory locations of string literals
-    VariableId getStringLiteralVariableId(SgStringVal* sval);
     void registerStringLiterals(SgNode* root);
     int numberOfRegisteredStringLiterals();
+    VariableId getStringLiteralVariableId(SgStringVal* sval);
     bool isStringLiteralAddress(VariableId stringVarId);
     std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
 
@@ -169,18 +169,26 @@ namespace CodeThorn {
     static bool isAnonymousBitfield(SgInitializedName* initName);
     std::string mangledName(VariableId varId);
 
+    static bool isUnknownSizeValue(TypeSize size);
+    static TypeSize unknownSizeValue();
+    
     // link analysis is by default disabled (=false)
     void setLinkAnalysisFlag(bool);
+    enum VariableScope { VAR_UNKNOWN, VAR_LOCAL, VAR_GLOBAL, VAR_MEMBER };
+    bool isVolatile(VariableId varId);
+    void setVolatileFlag(VariableId varId, bool flag);
+
   protected:
     struct VariableIdInfo {
     public:
       VariableIdInfo();
       SgSymbol* sym;
-      size_t numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables
-      size_t elementSize; // in bytes
-      size_t totalSize;
-      int offset;      // in bytes, only for member variables
-      bool isMemberVariable;
+      TypeSize numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables, if unknown -1.
+      TypeSize elementSize; // in bytes, if unknown -1
+      TypeSize totalSize; // in bytes, if unknown -1
+      TypeSize offset;      // in bytes, only for member variables, if unknown -1
+      VariableScope variableScope;
+      bool isVolatileFlag;
       bool relinked; // true if link analysis relinked this entry
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
