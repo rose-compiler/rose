@@ -86,11 +86,23 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    SageInterface::setSourcePosition(node);
 }
 
+void SageTreeBuilder::Enter(SgScopeStatement* &scope)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
+
+   // Maybe this is where
+   //   static SgGlobal* initialize_global_scope(SgSourceFile* file)
+   // from jovial_support.C (for example) could go.
+   //
+   scope = isSgGlobal(SageBuilder::topScopeStack());
+   ROSE_ASSERT(scope);
+}
+
 void SageTreeBuilder::Leave(SgScopeStatement* scope)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement* &) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement*) \n";
 
-   scope = SageBuilder::getGlobalScopeFromScopeStack();
+   scope = isSgGlobal(SageBuilder::topScopeStack());
    ROSE_ASSERT(scope);
 
 // Clear any dangling forward references
@@ -1137,27 +1149,16 @@ Leave(SgJovialDirectiveStatement* directive)
    switch (directive->get_directive_type())
      {
        case SgJovialDirectiveStatement::e_compool: {
-       // Save and then pop the scope of the compool module loaded by the compool directive
-          SgScopeStatement* compool_scope = SageBuilder::topScopeStack();
           SageBuilder::popScopeStack();
 
+// DELETE_ME - replaced by code in loadModule
+#if 0
+       // Save and then pop the scope of the compool module loaded by the compool directive
+          SgScopeStatement* compool_file_scope = SageBuilder::topScopeStack();
+          SageBuilder::popScopeStack();
        // Insert aliases for all symbols in the compool scope into the current scope
-          SgSymbolTable* symbol_table = compool_scope->get_symbol_table();
+          SgSymbolTable* symbol_table = compool_file_scope->get_symbol_table();
           SgScopeStatement* current_scope = SageBuilder::topScopeStack();
-
-       // -----------------------------
-       // This is a HACK, please fix me.................................................
-       // -----------------------------
-       // TODO/WORKING_ON: If there is no current scope we seem to be processing a
-       // compool directive that had been previously parsed.
-          if (current_scope == nullptr) {
-            // Hum, bail for now, not sure if the file processing directives should have pushed scope
-            // maybe could use compool_scope. Actually let's try pushing compool_scope back on the
-            // stack because we really didn't actually parse a new file.
-            SageBuilder::pushScopeStack(compool_scope);
-            // bail
-            break;
-          }
           ROSE_ASSERT(current_scope);
 
           BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
@@ -1183,6 +1184,7 @@ Leave(SgJovialDirectiveStatement* directive)
               }
             }
           }
+#endif
           break;
        }
        case SgJovialDirectiveStatement::e_unknown:
@@ -1587,30 +1589,14 @@ Leave(SgTypedefDeclaration* type_def)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
 }
 
-// template <typename T>
 void SageTreeBuilder::
 importModule(const std::string &module_name)
 {
    mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
-
-   // NOTE: The following comments need to be updated.
-
-   // Compool declarations must be loaded into global scope. A compool directive may only follow a
-   // START so we should expect to be in global scope here. The compool directive should be appended
-   // to the AST after the directives are loaded allowing the unparser to ignore declarations preceding
-   // compool directives. Only declarations from the current compool directive are loaded, specifically,
-   // not compool directives within the current directive. Finally the namespace for the compool being
-   // loaded should not be created (allowing declarations to be placed in global scope). This all means
-   // that a flag (or other means) must be used to signal that a compool is being parsed as a compool
-   // directive.
-
    ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
 
    ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
-
-   compool_builder.setLoadingModuleState(true);
-   compool_builder.getModule(module_name);
-   compool_builder.setLoadingModuleState(false);
+   compool_builder.loadModule(module_name, isSgGlobal(SageBuilder::topScopeStack()));
 }
 
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to

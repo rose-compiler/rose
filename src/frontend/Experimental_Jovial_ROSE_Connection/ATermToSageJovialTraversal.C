@@ -1157,6 +1157,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
             SgIntVal* intval = isSgIntVal(init_expr);
             ROSE_ASSERT(intval);
             value = intval->get_value();
+            // The initialization expression for the enum is no longer needed
+            delete init_expr;
          }
          if (pass > 1) {
             ++value;
