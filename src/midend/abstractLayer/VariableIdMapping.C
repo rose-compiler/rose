@@ -24,6 +24,14 @@ static int exprToInt(SgExpression* exp) {
     return -1;
 }
 
+bool VariableIdMapping::isUnknownSizeValue(TypeSize size) {
+  return size==unknownSizeValue();
+}
+
+TypeSize VariableIdMapping::unknownSizeValue() {
+  return -1;
+}
+
 // Puts sizes of the array dimensions into the vector,
 // returns total element count.
 size_t VariableIdMapping::getArrayDimensions(SgArrayType* t, vector<size_t>* dimensions) {
@@ -324,50 +332,63 @@ void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) 
   mappingVarIdToInfo[variableId].numberOfElements=size;
 }
 
-size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+TypeSize VariableIdMapping::getNumberOfElements(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].numberOfElements;
 }
 
-void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+void VariableIdMapping::setElementSize(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].elementSize=size;
 }
 
-size_t VariableIdMapping::getElementSize(VariableId variableId) {
+TypeSize VariableIdMapping::getElementSize(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].elementSize;
 }
 
-void VariableIdMapping::setTotalSize(VariableId variableId, size_t size) {
+void VariableIdMapping::setTotalSize(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].totalSize=size;
 }
 
-size_t VariableIdMapping::getTotalSize(VariableId variableId) {
+TypeSize VariableIdMapping::getTotalSize(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].totalSize;
 }
 
-void VariableIdMapping::setOffset(VariableId variableId, int size) {
+void VariableIdMapping::setOffset(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].offset=size;
 }
 
-int VariableIdMapping::getOffset(VariableId variableId) {
+TypeSize VariableIdMapping::getOffset(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].offset;
 }
 
 void VariableIdMapping::setIsMemberVariable(VariableId variableId, bool flag) {
   ROSE_ASSERT(variableId.isValid());
-  mappingVarIdToInfo[variableId].isMemberVariable=flag;
+  if(flag)
+    mappingVarIdToInfo[variableId].variableScope=VAR_MEMBER;
+  else
+    mappingVarIdToInfo[variableId].variableScope=VAR_UNKNOWN;
 }
 
 bool VariableIdMapping::isMemberVariable(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
-  return mappingVarIdToInfo[variableId].isMemberVariable;
+  return mappingVarIdToInfo[variableId].variableScope==VAR_MEMBER;
 }
+
+bool VariableIdMapping::isVolatile(VariableId variableId) {
+  return mappingVarIdToInfo[variableId].isVolatileFlag;
+}
+
+void VariableIdMapping::setVolatileFlag(VariableId variableId, bool flag) {
+  mappingVarIdToInfo[variableId].isVolatileFlag=flag;
+}
+
+
 
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
@@ -656,8 +677,7 @@ CodeThorn::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::s
   return varId;
 }
 
-void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
-  ROSE_ASSERT(arraySize>0);
+void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize) {
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // map symbol to var-id of array variable symbol
     size_t newVariableIdCode=mappingVarIdToInfo.size();
@@ -758,11 +778,12 @@ SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
 
 VariableIdMapping::VariableIdInfo::VariableIdInfo():
   sym(0),
-  numberOfElements(0),
-  elementSize(0),
-  totalSize(0),
-  offset(-1),
-  isMemberVariable(false),
+  numberOfElements(VariableIdMapping::unknownSizeValue()),
+  elementSize(VariableIdMapping::unknownSizeValue()),
+  totalSize(VariableIdMapping::unknownSizeValue()),
+  offset(VariableIdMapping::unknownSizeValue()),
+  variableScope(VAR_UNKNOWN),
+  isVolatileFlag(false),
   relinked(false)
 {
 }
@@ -771,7 +792,7 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
  * \author Markus Schordan
  * \date 2012.
  */
-VariableId::VariableId():_id(-1){
+VariableId::VariableId():_id(-1) {
 }
 
 const char * const VariableId::idKindIndicator = "V";
