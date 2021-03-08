@@ -4840,13 +4840,6 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
      SgLocatedNode* locatedNode = isSgLocatedNode(node);
      SgSupport*     support     = isSgSupport(node);
 
-  // All types should have NULL parent pointers (because types can be shared)
-     if (type != NULL)
-        {
-       // Note that the SgNode::get_parent() function is forced to return NULL for the case of a SgType IR node
-          ROSE_ASSERT(type->get_parent() == NULL);
-        }
-
   // Symbols can be shared within a single file but are not yet shared across files in the AST merge
      if (symbol != NULL)
         {

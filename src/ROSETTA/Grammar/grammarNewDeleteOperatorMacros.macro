@@ -25,7 +25,18 @@
 #    endif
 #endif
 
+
+#if ROSE_ALLOC_TRACE && !defined(ROSE_ALLOC_TRACE_CNT)
+#define ROSE_ALLOC_TRACE_CNT
+unsigned long alloc_trace_cnt = 0;
+#endif
+
+#if ROSE_ALLOC_TRACE
+const unsigned $CLASSNAME::pool_size = 5;
+#else
 const unsigned $CLASSNAME::pool_size = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
+#endif
+
 $CLASSNAME* $CLASSNAME::next_node = nullptr;
 std::vector<unsigned char*> $CLASSNAME::pools;
 
@@ -67,7 +78,7 @@ void *$CLASSNAME::operator new ( size_t Size )
     ALLOC_MUTEX($CLASSNAME, lock);
 
 #if ROSE_ALLOC_TRACE
-    printf("$CLASSNAME::new (IN)\n  current_link = %p\n", $CLASSNAME::next_node);
+//    printf("$CLASSNAME::new[%zi] (IN)\n  current_link = %p\n", alloc_trace_cnt, $CLASSNAME::next_node);
 #endif
 
 #if USE_CPP_NEW_DELETE_OPERATORS
@@ -90,7 +101,7 @@ void *$CLASSNAME::operator new ( size_t Size )
         ROSE_ASSERT(alloc != nullptr);
 
 #if ROSE_ALLOC_TRACE
-        printf("$CLASSNAME::alloc\n  block[%zi] = [ %p , %p [\n", $CLASSNAME::pools.size(), alloc, alloc + $CLASSNAME::pool_size);
+//        printf("$CLASSNAME::alloc\n  block[%zi] = [ %p , %p [\n", $CLASSNAME::pools.size(), alloc, alloc + $CLASSNAME::pool_size);
 #endif
 
 #if ROSE_ALLOC_MEMSET == 1
@@ -111,17 +122,26 @@ void *$CLASSNAME::operator new ( size_t Size )
     $CLASSNAME * object = $CLASSNAME::next_node;
     $CLASSNAME::next_node = ($CLASSNAME*)(object->p_freepointer);
 
+#if ROSE_ALLOC_TRACE
+    printf("$CLASSNAME::new[%zi] %p %p %p %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+#endif
+
+    SgNode * fp = object->p_freepointer;
 #if ROSE_ALLOC_MEMSET == 1
-    memset(object, 0x00, sizeof($CLASSNAME));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(object, 0xBB, sizeof($CLASSNAME));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xBB, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
+#endif
+    object->p_freepointer = fp;
+
+#if ROSE_ALLOC_TRACE
+//    printf("$CLASSNAME::new[%zi] (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+    std::ostringstream oss; oss << "mempool-" << alloc_trace_cnt << ".csv";
+    Rose::MemPool::snapshot(oss.str());
+    alloc_trace_cnt++;
 #endif
 
     object->p_freepointer = AST_FileIO::IS_VALID_POINTER();
-
-#if ROSE_ALLOC_TRACE
-    printf("$CLASSNAME::new (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
-#endif
 
     ALLOC_MUTEX($CLASSNAME, unlock);
 
@@ -166,17 +186,18 @@ void $CLASSNAME::operator delete(void *Pointer, size_t Size)
     ROSE_ASSERT(object != nullptr);
 
 #if ROSE_ALLOC_TRACE
-    printf("$CLASSNAME::delete (IN)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+//  printf("$CLASSNAME::delete[%zi] (IN)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+    printf("$CLASSNAME::delete[%zi] %p %p %p %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
 #endif
 
-#if ROSE_DEALLOC_ASSERT == 1
+#if ROSE_DEALLOC_ASSERT
     ROSE_ASSERT(object->p_freepointer == AST_FileIO::IS_VALID_POINTER());
 #endif
 
 #if ROSE_ALLOC_MEMSET == 1
-    memset(object, 0x00, sizeof($CLASSNAME));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(object, 0xDD, sizeof($CLASSNAME));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xDD, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
 #endif
 
 // Liao, 8/11/2014, to support IR mapping, we need unique IDs for AST nodes.
@@ -189,7 +210,10 @@ void $CLASSNAME::operator delete(void *Pointer, size_t Size)
 #endif
 
 #if ROSE_ALLOC_TRACE
-    printf("$CLASSNAME::delete (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+//  printf("$CLASSNAME::delete[%zi] (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
+    std::ostringstream oss; oss << "mempool-" << alloc_trace_cnt << ".csv";
+    Rose::MemPool::snapshot(oss.str());
+    alloc_trace_cnt++;
 #endif
 
 #endif /* USE_CPP_NEW_DELETE_OPERATORS */

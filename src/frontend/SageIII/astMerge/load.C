@@ -5,6 +5,11 @@
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 
+#define TAKE_MEMPOOL_SNAPSHOT 0
+#if TAKE_MEMPOOL_SNAPSHOT
+#  include "memory-pool-snapshot.h"
+#endif
+
 using namespace std;
 
 namespace Rose {
@@ -103,6 +108,9 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
   printf("Rose::AST::load:\n");
   printf(" -- project = %p\n", project);
 #endif
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astload-before.csv");
+#endif
   size_t num_nodes = Sg_File_Info::numberOfNodes();
 
   AST_FILE_IO::startUp(project);
@@ -197,6 +205,9 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
   AST_FILE_IO::reset();
 
 //generateWholeGraphOfAST("merged", NULL);
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astload-after.csv");
+#endif
 }
 
 }

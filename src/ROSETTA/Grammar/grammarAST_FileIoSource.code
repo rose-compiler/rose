@@ -34,7 +34,7 @@ AST_FILE_IO::registeredAttributes;
    memory pools, already stored in listOfAccumulatedPoolSizes [ V_$CLASSNAME ].
 */
 
-#define DEBUG_AstFileIO_startUp 1
+#define DEBUG_AstFileIO_startUp 0
 
 void 
 AST_FILE_IO :: startUp( SgProject* root )
@@ -287,7 +287,7 @@ AST_FILE_IO :: areFreepointersContainingGlobalIndices ( )
       return freepointersOfCurrentAstAreSetToGlobalIndices;
    }
 
-#define DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer 1
+#define DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer 0
 
 unsigned long AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode * pointer) {
   if (pointer == nullptr) return 0;
@@ -298,7 +298,7 @@ unsigned long AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode * pointer) {
   printf ("  pointer = %p = %s \n", pointer, pointer ? pointer->class_name().c_str() : "");
   printf ("  pointer->p_freepointer = %p \n", pointer ? pointer->p_freepointer : nullptr);
 #endif
-  ROSE_ASSERT(pointer->p_freepointer != nullptr);
+//ROSE_ASSERT(pointer->p_freepointer != nullptr);
   ROSE_ASSERT(pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER());
 
   unsigned long globalIndex = (unsigned long) (pointer->p_freepointer);
@@ -308,7 +308,7 @@ unsigned long AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode * pointer) {
   return globalIndex;
 }
 
-#define DEBUG_AstFileIO_getSgClassPointerFromGlobalIndex 1
+#define DEBUG_AstFileIO_getSgClassPointerFromGlobalIndex 0
 
 SgNode * AST_FILE_IO :: getSgClassPointerFromGlobalIndex ( unsigned long globalIndex ) {
   if (globalIndex == 0) return nullptr;

@@ -245,43 +245,32 @@ nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE)
 
 
 if ROSE_USE_BOOST_WAVE
-
-if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-libsage3_la_LIBADD  = \
-	astFixup/libastFixup.la \
-	astPostProcessing/libastPostProcessing.la \
-	sageInterface/libsageInterface.la \
-   astVisualization/libastVisualization.la \
-	virtualCFG/libvirtualCFG.la \
-   includeDirectivesProcessing/libincludeDirectivesProcessing.la
+libsage3_la_LIBADD= \
+  astMerge/libastMerge.la \
+  astFileIO/libastFileIO.la \
+  astFixup/libastFixup.la \
+  astPostProcessing/libastPostProcessing.la \
+  sageInterface/libsageInterface.la \
+  virtualCFG/libvirtualCFG.la \
+  astFromString/libAstFromString.la \
+  astVisualization/libastVisualization.la \
+  astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+  includeDirectivesProcessing/libincludeDirectivesProcessing.la \
+  astTokenStream/libastTokenStream.la
 else
-libsage3_la_LIBADD  = \
-	astFixup/libastFixup.la \
-	astPostProcessing/libastPostProcessing.la \
-	astMerge/libastMerge.la \
-	sageInterface/libsageInterface.la \
-	astTokenStream/libastTokenStream.la \
-	virtualCFG/libvirtualCFG.la \
-        astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la \
-        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-        includeDirectivesProcessing/libincludeDirectivesProcessing.la
-endif
-else
-
-libsage3_la_LIBADD  = \
-	astFixup/libastFixup.la \
-	astPostProcessing/libastPostProcessing.la \
-	astMerge/libastMerge.la \
-	sageInterface/libsageInterface.la \
-	virtualCFG/libvirtualCFG.la \
-        astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la \
-        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-        includeDirectivesProcessing/libincludeDirectivesProcessing.la
+libsage3_la_LIBADD= \
+  astMerge/libastMerge.la \
+  astFileIO/libastFileIO.la \
+  astFixup/libastFixup.la \
+  astPostProcessing/libastPostProcessing.la \
+  sageInterface/libsageInterface.la \
+  virtualCFG/libvirtualCFG.la \
+  astFromString/libAstFromString.la \
+  astVisualization/libastVisualization.la \
+  astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+  includeDirectivesProcessing/libincludeDirectivesProcessing.la
 endif
 
-libsage3_la_LIBADD += astFileIO/libastFileIO.la
 
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
 # although this will likely fail at least some of the nearly one hundred new name qualification tests.

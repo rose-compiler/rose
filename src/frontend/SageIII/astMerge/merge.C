@@ -5,6 +5,11 @@
 #include "delete.h"
 #include "share.h"
 
+#define TAKE_MEMPOOL_SNAPSHOT 0
+#if TAKE_MEMPOOL_SNAPSHOT
+#  include "memory-pool-snapshot.h"
+#endif
+
 #define ENABLE_plot_links 0
 
 using namespace std;
@@ -227,25 +232,39 @@ void merge(SgProject * project) {
 
   int nodes_start = numberOfNodes();
 #if ENABLE_plot_links
-  std::ofstream ofs_in("merging-before.dot");
+  std::ofstream ofs_in("mergelink-before.dot");
   plot_links(ofs_in);
+#endif
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astmerge-before.csv");
 #endif
 
   shareRedundantNodes(project);
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astmerge-shared.csv");
+#endif
+
   deleteIslands(project);
 
 #if ENABLE_plot_links
-  std::ofstream ofs_mid("merging-middle.dot");
+  std::ofstream ofs_mid("mergelink-middle.dot");
   plot_links(ofs_mid);
 #endif
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astmerge-pruned.csv");
+#endif
+
 
   link_variable(project);
   link_function(project);
   link_class(project);
   link_namespace(project);
 
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astmerge-linked.csv");
+#endif
 #if ENABLE_plot_links
-  std::ofstream ofs_out("merging-after.dot");
+  std::ofstream ofs_out("mergelink-after.dot");
   plot_links(ofs_out);
 #endif
 
