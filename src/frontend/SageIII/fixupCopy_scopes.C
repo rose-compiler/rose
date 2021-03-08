@@ -307,7 +307,8 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           FixupCopyDataMemberMacro(copyLocatedNode,SgNode,get_parent,set_parent)
 
        // Debugging information
-          if (copyLocatedNode->get_parent() == NULL)
+          SgNode* cpParent = copyLocatedNode->get_parent();
+          if (cpParent == NULL)
              {
 #if PRINT_DEVELOPER_WARNINGS
                printf ("In SgLocatedNode::fixupCopy_scopes(): this->get_parent() != NULL, but copyLocatedNode->get_parent() == NULL for copyLocatedNode = %p = %s \n",copyLocatedNode,copyLocatedNode->class_name().c_str());
@@ -317,14 +318,14 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
 
        // Debugging information
-          if (copyLocatedNode->get_parent() != NULL && copyLocatedNode->get_parent()->variantT() != this->get_parent()->variantT())
+          if (cpParent != NULL && cpParent->variantT() != this->get_parent()->variantT())
              {
 #if PRINT_DEVELOPER_WARNINGS
                printf ("Warning: In SgLocatedNode::fixupCopy_scopes(): the parent of this and copyStatement are different \n");
                printf ("     this                        = %p = %s \n",this,this->class_name().c_str());
                printf ("     copyLocatedNode             = %p = %s \n",copyLocatedNode,copyLocatedNode->class_name().c_str());
                printf ("     this->get_parent()          = %p = %s \n",this->get_parent(),this->get_parent()->class_name().c_str());
-               printf ("     copyStatement->get_parent() = %p = %s \n",copyLocatedNode->get_parent(),copyLocatedNode->get_parent()->class_name().c_str());
+               printf ("     copyStatement->get_parent() = %p = %s \n",cpParent,cpParent->class_name().c_str());
 
                this->get_startOfConstruct()->display("this->get_startOfConstruct(): debug");
 #endif
