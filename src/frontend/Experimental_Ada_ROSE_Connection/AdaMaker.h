@@ -500,6 +500,13 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkOthersExp();
 
+  /// Creates a new expression
+  /// \param ty the type of the allocation
+  /// \param args_opt an optional aggregate to initialize the type
+  SgNewExp&
+  mkNewExp(SgType& ty, SgExprListExp* args_opt = nullptr);
+
+
   /// Creates a reference to the "exception type"
   /// \todo revisit exception representation
   SgExpression&
@@ -518,7 +525,19 @@ namespace Ada_ROSE_Translation
   /// \param choices a non-empty sequence of choices
   /// \return if multiple choices: a tree of expressions combined using SgCommaOpExp
   ///         otherwise (exactly one choice): the expression in \ref choices
-  SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices);
+  SgExpression&
+  mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices);
+
+  /// creates a type conversion of expression \ref expr to type \ref ty.
+  SgCastExp&
+  mkCastExp(SgExpression& expr, SgType& ty);
+
+  /// creates a qualified expression for \ref expr and type qualification \ref ty.
+  /// \todo consider whether the explicit representation in code is necessary
+  ///       or whether it can be reproduced by the backend.
+  SgExpression&
+  mkQualifiedExp(SgExpression& expr, SgType& ty);
+
 
   /// returns a representation of an Ada Attribute in expression context
   /// \param exp the attribute's prefix expression
