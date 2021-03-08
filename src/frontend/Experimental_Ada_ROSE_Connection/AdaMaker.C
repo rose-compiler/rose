@@ -119,7 +119,7 @@ void markCompilerGenerated(SgLocatedNode& n)
 SgAdaRangeConstraint&
 mkAdaRangeConstraint(SgRangeExp& range)
 {
-  SgAdaRangeConstraint& sgnode = mkBareNode<SgAdaRangeConstraint>(&range);
+  SgAdaRangeConstraint& sgnode = mkLocatedNode<SgAdaRangeConstraint>(&range);
 
   range.set_parent(&sgnode);
   return sgnode;
@@ -128,7 +128,7 @@ mkAdaRangeConstraint(SgRangeExp& range)
 SgAdaIndexConstraint&
 mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 {
-  SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
+  SgAdaIndexConstraint& sgnode = mkLocatedNode<SgAdaIndexConstraint>();
 
   sgnode.get_indexRanges().swap(ranges);
 
@@ -1152,6 +1152,29 @@ mkRangeExp()
   return mkRangeExp(start, end);
 }
 
+
+namespace
+{
+  SgConstructorInitializer&
+  mkConstructorInitializer(SgExprListExp& args, SgType& ty)
+  {
+    SgConstructorInitializer& sgnode = SG_DEREF(sb::buildConstructorInitializer_nfi(nullptr, &args, &ty, false, false, false, false));
+
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
+}
+
+SgNewExp&
+mkNewExp(SgType& ty, SgExprListExp* args_opt)
+{
+  SgConstructorInitializer* init = args_opt ? &mkConstructorInitializer(*args_opt, ty)
+                                            : nullptr;
+
+  return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
+}
+
+
 SgExpression&
 mkOthersExp()
 {
@@ -1175,6 +1198,20 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
+
+SgCastExp&
+mkCastExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_static_cast));
+}
+
+
+SgExpression&
+mkQualifiedExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_ada_type_qualification));
+}
+
 
 namespace
 {
