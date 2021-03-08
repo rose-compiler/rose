@@ -119,16 +119,22 @@ void markCompilerGenerated(SgLocatedNode& n)
 SgAdaRangeConstraint&
 mkAdaRangeConstraint(SgRangeExp& range)
 {
-  return mkBareNode<SgAdaRangeConstraint>(&range);
+  SgAdaRangeConstraint& sgnode = mkLocatedNode<SgAdaRangeConstraint>(&range);
+
+  range.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaIndexConstraint&
 mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 {
-  SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
+  SgAdaIndexConstraint& sgnode = mkLocatedNode<SgAdaIndexConstraint>();
 
   sgnode.get_indexRanges().swap(ranges);
-  // \todo shall the range pointers' parent point to sgnode?
+
+  for (SgExpression* expr : sgnode.get_indexRanges())
+    SG_DEREF(expr).set_parent(&sgnode);
+
   return sgnode;
 }
 
@@ -136,7 +142,10 @@ mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 SgAdaSubtype&
 mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr)
 {
-  return mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+  SgAdaSubtype& sgnode = mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+
+  constr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaDerivedType&
@@ -148,13 +157,21 @@ mkAdaDerivedType(SgType& basetype)
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
-  return mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+  SgAdaModularType& sgnode = mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+
+  modexpr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
-  return mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+  SgAdaFloatType& sgnode = mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+
+  digits.set_parent(&sgnode);
+  if (range_opt) range_opt->set_parent(&sgnode);
+
+  return sgnode;
 }
 
 SgDeclType&
@@ -1135,6 +1152,29 @@ mkRangeExp()
   return mkRangeExp(start, end);
 }
 
+
+namespace
+{
+  SgConstructorInitializer&
+  mkConstructorInitializer(SgExprListExp& args, SgType& ty)
+  {
+    SgConstructorInitializer& sgnode = SG_DEREF(sb::buildConstructorInitializer_nfi(nullptr, &args, &ty, false, false, false, false));
+
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
+}
+
+SgNewExp&
+mkNewExp(SgType& ty, SgExprListExp* args_opt)
+{
+  SgConstructorInitializer* init = args_opt ? &mkConstructorInitializer(*args_opt, ty)
+                                            : nullptr;
+
+  return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
+}
+
+
 SgExpression&
 mkOthersExp()
 {
@@ -1158,6 +1198,20 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
+
+SgCastExp&
+mkCastExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_static_cast));
+}
+
+
+SgExpression&
+mkQualifiedExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_ada_type_qualification));
+}
+
 
 namespace
 {

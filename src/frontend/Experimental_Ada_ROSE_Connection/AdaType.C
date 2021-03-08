@@ -744,7 +744,8 @@ getConstraintID(Element_ID el, AstContext ctx)
       res = &mkAdaRangeConstraint(mkRangeExp());
   }
 
-  return SG_DEREF(res);
+  attachSourceLocation(SG_DEREF(res), elem, ctx);
+  return *res;
 }
 
 
