@@ -252,6 +252,9 @@ namespace
   std::string
   AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
   {
+    if (info.get_current_scope() == NULL)
+      return "<missing-scope>";
+
     SgScopeStatement& current = SG_DEREF(info.get_current_scope());
 
     return unparser.computeScopeQual(current, SG_DEREF(remote.get_scope()));
