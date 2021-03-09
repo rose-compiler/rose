@@ -1,10 +1,6 @@
 #ifndef VARIABLEIDMAPPING_H
 #define VARIABLEIDMAPPING_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include <string>
 #include <map>
 #include <vector>
@@ -21,10 +17,6 @@ namespace CodeThorn {
   // typesize in bytes
   typedef long int TypeSize;
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   class VariableIdMapping {
     /* NOTE: cases where the symbol is in the ROSE AST:
        1) SgInitializedName in forward declaration (symbol=0)
@@ -80,21 +72,21 @@ namespace CodeThorn {
     SgSymbol* getSymbol(VariableId varId);
     virtual SgType* getType(VariableId varId);
 
-    // returns true if this variable has type bool. This also includes the C type _Bool.
-    bool hasBoolType(VariableId varId);
-    // returns true if this variable has any signed or unsigned char type (char,char16,char32)
-    bool hasCharType(VariableId varId);
-    // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
-    bool hasIntegerType(VariableId varId);
-    // returns true if this variable has an enum type 
-    bool hasEnumType(VariableId varId);
-    // returns true if this variable has any floating-point type (float,double,longdouble,float80,float128))
-    bool hasFloatingPointType(VariableId varId);
-    bool hasPointerType(VariableId varId);
+    // returns true if this variable is Of type bool. This also includes the C type _Bool.
+    bool isOfBoolType(VariableId varId);
+    // returns true if this variable is of any signed or unsigned char type (char,char16,char32)
+    bool isOfCharType(VariableId varId);
+    // returns true if this variable is of any signed or unsigned integer type (short,int,long,longlong)
+    bool isOfIntegerType(VariableId varId);
+    // returns true if this variable is of an enum type 
+    bool isOfEnumType(VariableId varId);
+    // returns true if this variable is of any floating-point type (float,double,longdouble,float80,float128))
+    bool isOfFloatingPointType(VariableId varId);
+    bool isOfPointerType(VariableId varId);
     // schroder3 (2016-07-05): Returns whether the given variable is a reference variable
-    bool hasReferenceType(VariableId varId);
-    bool hasClassType(VariableId varId);
-    bool hasArrayType(VariableId varId);
+    bool isOfReferenceType(VariableId varId);
+    bool isOfClassType(VariableId varId);
+    bool isOfArrayType(VariableId varId);
 
     virtual SgVariableDeclaration* getVariableDeclaration(VariableId varId);
     // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
@@ -217,10 +209,6 @@ namespace CodeThorn {
 
   typedef VariableIdMapping::VariableIdSet VariableIdSet;
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   class VariableId {
     friend class VariableIdMapping;
     friend bool operator<(VariableId id1, VariableId id2);
