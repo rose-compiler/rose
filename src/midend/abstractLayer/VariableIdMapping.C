@@ -1,6 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
 
 #include "sage3basic.h"
 #include "CodeThornException.h"
@@ -99,47 +96,47 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return type;
 }
 
-bool VariableIdMapping::hasBoolType(VariableId varId) {
+bool VariableIdMapping::isOfBoolType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeBool(type);
 }
 
-bool VariableIdMapping::hasCharType(VariableId varId) {
+bool VariableIdMapping::isOfCharType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeChar(type)||isSgTypeSignedChar(type)||isSgTypeUnsignedChar(type)||isSgTypeChar16(type)||isSgTypeChar32(type);
 }
 
-bool VariableIdMapping::hasIntegerType(VariableId varId) {
+bool VariableIdMapping::isOfIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type)||isSgTypeSigned128bitInteger(type);
 }
 
-bool VariableIdMapping::hasEnumType(VariableId varId) {
+bool VariableIdMapping::isOfEnumType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::IsEnum(type);
 }
 
-bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
+bool VariableIdMapping::isOfFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type);
 }
 
-bool VariableIdMapping::hasPointerType(VariableId varId) {
+bool VariableIdMapping::isOfPointerType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgPointerType(type)!=0;
 }
 
-bool VariableIdMapping::hasReferenceType(VariableId varId) {
+bool VariableIdMapping::isOfReferenceType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgReferenceType(type);
 }
 
-bool VariableIdMapping::hasClassType(VariableId varId) {
+bool VariableIdMapping::isOfClassType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgClassType(type)!=0;
 }
 
-bool VariableIdMapping::hasArrayType(VariableId varId) {
+bool VariableIdMapping::isOfArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
@@ -151,10 +148,6 @@ std::string VariableIdMapping::mangledName(VariableId varId) {
     return "*";
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
@@ -183,10 +176,6 @@ void VariableIdMapping::toStream(ostream& os) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   VariableIdSet set;
   for(map<SgSymbol*,VariableId>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
@@ -195,20 +184,12 @@ VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   return set;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableIdFromCode(int i) {
   VariableId id;
   id.setIdCode(i);
   return id;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* node,VariableId id) {
   file<<"_"<<node<<" "
       <<"->"
@@ -216,20 +197,12 @@ void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* n
       << endl;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string VariableIdMapping::generateDotSgSymbol(SgSymbol* sym) {
   stringstream ss;
   ss<<"_"<<sym;
   return ss.str();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2013.
- */
 void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
@@ -295,10 +268,6 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   myfile.close();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   ROSE_ASSERT(sym);
   VariableId newId;
@@ -316,10 +285,6 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   return newId;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToInfo.size());
@@ -406,10 +371,6 @@ bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   return false;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
   int numWarningsCount=0;
   set<SgSymbol*> symbolSet;
@@ -505,20 +466,12 @@ void VariableIdMapping::performLinkAnalysisRemapping() {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string VariableIdMapping::variableName(VariableId varId) {
   ROSE_ASSERT(varId.isValid());
   SgSymbol* sym=getSymbol(varId);
   return SgNodeHelper::symbolToString(sym);
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string VariableIdMapping::uniqueVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     if(!varId.isValid())
@@ -530,18 +483,10 @@ string VariableIdMapping::uniqueVariableName(VariableId varId) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
   return variableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
   return variableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
@@ -610,18 +555,10 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
 }
 
 
-/*! 
- * \author Markus Schordan
- * \date 2017.
- */
 bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
   return isTemporaryVariableId(varId);
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
   return isTemporaryVariableIdSymbol(getSymbol(varId));
 }
@@ -634,10 +571,6 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   return varId.isValid() && ((size_t)varId._id) < mappingVarIdToInfo.size() && varId._id >= 0;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 // deprecated (use createAndRegisterVariableId instead)
 VariableId  
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
@@ -684,17 +617,8 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize
     mappingSymToVarId[sym]=variableIdFromCode(newVariableIdCode);
     VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
 
-    //if(getModeVariableIdForEachArrayElement()) {
-    //  // assign one var-id for each array element (in addition to the variable id of the array itself!)
-    //  for(int i=0;i<arraySize;i++) {
-    //    size_t newArrayElemVariableIdCode=mappingVarIdToInfo.size();
-    //    VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
-    //    mappingVarIdToInfo[newArrayElemVarId].sym=sym;
-    //  }
-    //} else {
-      // assign one vari-id for entire array
-      mappingVarIdToInfo[tmpVarId].sym=sym;
-      //}
+    // assign one vari-id for entire array
+    mappingVarIdToInfo[tmpVarId].sym=sym;
     // size needs to be set *after* mappingVarIdToInfo[].sym has been updated
     setNumberOfElements(tmpVarId,arraySize);
   } else {
@@ -746,10 +670,6 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId)) {
@@ -760,18 +680,10 @@ void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(string name) : SgVariableSymbol() {
   _tmpName=name;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
 }
@@ -788,19 +700,11 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
 {
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId::VariableId():_id(-1) {
 }
 
 const char * const VariableId::idKindIndicator = "V";
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string
 VariableId::toString() const {
   stringstream ss;
@@ -851,18 +755,10 @@ VariableIdSet& CodeThorn::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   return s1;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 size_t CodeThorn::hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
   VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
@@ -874,10 +770,6 @@ VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariab
   return resultSet;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
   VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
@@ -982,12 +874,3 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
     }
   }
 }
-
-//void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
-//  ROSE_ASSERT(mappingVarIdToInfo.size()==0); 
-//  modeVariableIdForEachArrayElement=active;
-//}
-
-//bool VariableIdMapping::getModeVariableIdForEachArrayElement() {
-//  return modeVariableIdForEachArrayElement;
-//}
