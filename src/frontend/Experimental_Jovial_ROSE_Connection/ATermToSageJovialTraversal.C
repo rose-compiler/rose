@@ -7011,14 +7011,22 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
    // Find symbol and table name or table type name
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(table_or_type_name, SageBuilder::topScopeStack());
    ROSE_ASSERT(symbol);
-   SgJovialTableType* type = isSgJovialTableType(symbol->get_type());
-   ROSE_ASSERT(type);
+
+   SgType* type = symbol->get_type();
+   SgModifierType* mod_type = isSgModifierType(type);
+   if (mod_type) {
+     // unpack modifier wrapper (used for CONSTANT, for example)
+     type = mod_type->get_base_type();
+   }
+
+   SgJovialTableType* table_type = isSgJovialTableType(type);
+   ROSE_ASSERT(table_type);
 
    switch (symbol->variantT())
       {
       case V_SgClassSymbol:
          {
-            table_arg = SageBuilder::buildTypeExpression(type);
+            table_arg = SageBuilder::buildTypeExpression(table_type);
             break;
          }
       case V_SgVariableSymbol:
