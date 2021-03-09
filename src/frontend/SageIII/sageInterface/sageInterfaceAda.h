@@ -9,6 +9,8 @@ namespace SageInterface
 {
 namespace ada
 {
+  typedef std::pair<SgArrayType*, std::vector<SgExpression*> > FlatArrayType;
+
   /// tests if the declaration \ref dcl defines a type that is completed
   ///   in a private section.
   /// \return true, iff dcl is completed in a private section
@@ -16,13 +18,13 @@ namespace ada
   bool withPrivateDefinition(const SgDeclarationStatement* dcl);
 
   /// flattens the representation of Ada array types
-  /// \param   arrayType the type of the array to be flattened
-  /// \param   skipWhat defines intermediate nodes that are skipped
-  ///          for finding the base type of the array
-  /// \return  a pair of a base type pointer, and a vector of index ranges.
-  /// \pre     arrayType is not null
-  std::pair<SgType*, std::vector<SgExpression*> >
-  flattenArrayType(const SgArrayType* arrayType);
+  /// \param   atype the type of the array to be flattened
+  /// \return  iff \ref is not an arraytype, a pair <nullptr, empty vector> is returned
+  ///          otherwise a pair of a array pointer, and a vector of index ranges.
+  ///          (the expressions are part of the AST and MUST NOT BE DELETED.
+  /// \pre     atype is not null
+  FlatArrayType
+  flattenArrayType(SgType* atype);
 } // Ada
 } // SageInterface
 
