@@ -249,10 +249,15 @@ namespace
 
     void handle(SgCastExp& n)
     {
+      const bool typequal = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+
+      // only type qualifications have expression lists as arguments
+      //~ ROSE_ASSERT(typequal ^ (!isSgExprListExp(n.get_operand())));
+
       type(n.get_type());
-      prn("(");
+      prn(typequal ? "'" : "(");
       expr(n.get_operand());
-      prn(")");
+      if (!typequal) prn(")");
     }
 
     void handle(SgTypeExpression& n)
@@ -312,6 +317,13 @@ namespace
       expr(n.get_operand());
     }
 
+    void handle(SgConstructorInitializer& n)
+    {
+      //~ prn("(");
+      exprlst(SG_DEREF(n.get_args()));
+      //~ prn(")");
+    }
+
     void handle(SgNullExpression& n)
     {
       // \todo should not be reached
@@ -334,6 +346,16 @@ namespace
 
       prn(scopeQual(tskdcl.get_scope()));
       prn(tskdcl.get_name());
+    }
+
+    void handle(SgNewExp& n)
+    {
+      SgConstructorInitializer* init = n.get_constructor_args();
+
+      prn("new");
+      type(n.get_specified_type());
+
+      if (init) { prn("'"); expr(init); }
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);

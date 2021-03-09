@@ -116,6 +116,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   week_string_literal.ads              
 
 ADA_TRANSLATOR_PENDING_TESTS :=        \
+  allocators.adb                       \
   array_declare.adb                    \
   array_expressions.adb                \
   asm_machine_code.adb                 \
@@ -126,6 +127,7 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   enum_colors.ads                      \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
+  explicit_deref.adb                   \
   function_call.adb                    \
   function_renaming.adb                \
   goto_loop_v2.adb                     \
@@ -134,6 +136,7 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   linkedlists.ads                      \
   loop_parameter_specification.adb     \
   modular_type_definition.ads          \
+  nested_package.ads                   \
   pkgrename.ads                        \
   procedure_renaming.adb               \
   private_type_definition.ads          \
@@ -155,11 +158,10 @@ ROSE_PASSING_ADA_TESTS :=                           \
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   access_to_object.ads                              \
   access_to_subprogram.ads                          \
-  allocators.adb                                    \
   discriminant.adb                                  \
   discriminant_constraint.ads                       \
   discriminant_specification.ads                    \
-  explicit_deref.adb                                \
+  dynamic_array.adb                                 \
   extension_aggregate.adb                           \
   fixed_point_definition.ads                        \
   ordinary_type_declaration_range_constraint.ads    \
@@ -181,11 +183,8 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
 
 ROSE_FAILING_ADA_TESTS :=                           \
   delay_until.adb                                   \
-  entry_index_specification.adb                     \
   iterate_range.adb                                 \
-  mpi.ads                                           \
   mpiuse.ads                                        \
-  nested_package.ads                                \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
   test_unit.adb                                     \
@@ -200,6 +199,8 @@ ASIS_PASSING_TESTS :=                               \
 
 ASIS_FAILING_TESTS :=                               \
   all_modes.ads                                     \
+  entry_index_specification.adb                     \
+  mpi.ads                                           \
   complex.adb                                       
 
 #defining all Ada test files                         
