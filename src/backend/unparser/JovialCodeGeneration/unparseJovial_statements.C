@@ -1037,7 +1037,9 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
                     }
                  else if (isSgEmptyDeclaration(item_decl))
                     {
-                       // do nothing for a null declaration (may want to unparse ";\n")
+                       // must unparse ';' because "BEGIN ; END" appears in code
+                       curprint_indented(";\n", info);
+
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
