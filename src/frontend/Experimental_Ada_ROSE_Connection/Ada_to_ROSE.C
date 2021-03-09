@@ -13,6 +13,9 @@
 #include "AdaStatement.h"
 #include "AdaType.h"
 
+#include "sageInterfaceAda.h"
+
+
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
@@ -761,6 +764,23 @@ namespace
     fixer.traverse(file, preorder);
   }
 
+  template <class TypedSageNode>
+  void checkType(TypedSageNode* n)
+  {
+    if (!n) return;
+
+    si::ada::FlatArrayType res = si::ada::flattenArrayType(n->get_type());
+
+    if (!res.first) return;
+
+    logInfo() << "Found ArrayType: " << n->unparseToString() << std::flush;
+
+    for (SgExpression* exp : res.second)
+      logInfo() << ", " << SG_DEREF(exp).unparseToString();
+
+    logInfo() << std::endl;
+  }
+
 
 
   struct AstSanityCheck : AstSimpleProcessing
@@ -804,6 +824,9 @@ namespace
       if (!hasParent || printOutput)
         logWarn() << "        unparsed: " << n->unparseToString()
                   << std::endl;
+
+      //~ checkType(isSgExpression(n));
+      //~ checkType(isSgInitializedName(n));
     }
   };
 
