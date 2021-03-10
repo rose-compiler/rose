@@ -781,6 +781,21 @@ namespace
     logInfo() << std::endl;
   }
 
+  void checkExpr(SgAdaAttributeExp* n)
+  {
+    if (!n) return;
+
+    SgRangeExp* rangeExpr = si::ada::range(n);
+    const bool  rangeAttr = n->get_attribute() == "RANGE";
+
+    std::string out = "<null>";
+
+    if (rangeExpr) out = rangeExpr->unparseToString();
+
+    logInfo() << "Found Attribute: " << n->unparseToString() << " " << rangeAttr
+              << " = " << out
+              << std::endl;
+  }
 
 
   struct AstSanityCheck : AstSimpleProcessing
@@ -827,6 +842,7 @@ namespace
 
       //~ checkType(isSgExpression(n));
       //~ checkType(isSgInitializedName(n));
+      //~ checkExpr(isSgAdaAttributeExp(n));
     }
   };
 
