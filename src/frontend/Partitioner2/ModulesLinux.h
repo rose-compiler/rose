@@ -1,10 +1,12 @@
 #ifndef ROSE_Partitioner2_ModulesLinux_H
 #define ROSE_Partitioner2_ModulesLinux_H
 
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Partitioner2/Modules.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinarySystemCall.h>
+#include <BaseSemanticsDispatcher.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -48,6 +50,12 @@ public:
 
     /** Give the name "main" to the main function if it has no name yet. */
     void nameMainFunction(const Partitioner&) const;
+
+private:
+    // Read a value from the stack
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    readStack(const Partitioner &partitioner, const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+              size_t nBitsToRead, RegisterDescriptor segmentRegister);
 };
 
 /** Adds comments to system call instructions.

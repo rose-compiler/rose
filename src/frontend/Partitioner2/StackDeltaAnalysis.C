@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include <AsmUnparser_compat.h>
@@ -86,7 +86,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         SAWYER_MESG(mlog[DEBUG]) <<"  no instruction semantics for this architecture\n";
         return retval;
     }
-    BaseSemantics::MemoryStatePtr mem = cpu->get_operators()->currentState()->memoryState();
+    BaseSemantics::MemoryStatePtr mem = cpu->operators()->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->enabled(false);
     } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {

@@ -147,9 +147,64 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
               curprint("');\n");
               break;
            }
+        case SgJovialDirectiveStatement::e_skip:
+           {
+              curprint_indented("!SKIP", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_begin:
+           {
+              curprint_indented("!BEGIN", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_end:
+           {
+              curprint_indented("!END;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_linkage:
+           {
+              curprint_indented("!LINKAGE", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
         case SgJovialDirectiveStatement::e_reducible:
            {
               curprint_indented("!REDUCIBLE;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_nolist:
+           {
+              curprint_indented("!NOLIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_list:
+           {
+              curprint_indented("!LIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_eject:
+           {
+              curprint_indented("!EJECT;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_initialize:
+           {
+              curprint_indented("!INITIALIZE;\n", info);
               break;
            }
         case SgJovialDirectiveStatement::e_order:
@@ -170,7 +225,7 @@ Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
      ASSERT_not_null(define);
 
-     curprint("DEFINE ");
+     curprint_indented("DEFINE ", info);
      curprint(define->get_define_string());
      curprint(";\n");
    }
@@ -354,11 +409,14 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* block = isSgBasicBlock(stmt);
      ASSERT_not_null(block);
+     ASSERT_not_null(block->get_parent());
+
+     SgSwitchStatement* switch_stmt = isSgSwitchStatement(block->get_parent());
 
      int block_size = block->get_statements().size();
 
-  // allow one declaration to be unparsed without BEGIN and END
-     if (block_size > 1)
+  // allow one declaration to be unparsed without BEGIN and END (except for switch stmts)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("BEGIN\n", info);
         }
@@ -370,7 +428,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      info.dec_nestingLevel();
 
-     if (block_size > 1)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("END\n", info);
         }
@@ -776,53 +834,64 @@ Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
+Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& info)
+{
+   ASSERT_not_null(enum_decl);
+
+   SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
+   ASSERT_not_null(def_decl);
+
+   SgType* field_type = enum_decl->get_field_type();
+   if (field_type) {
+      SgTypeInt* int_type = isSgTypeInt(field_type);
+      ASSERT_not_null(int_type);
+      curprint(" ");
+      SgExpression* kind_expr = int_type->get_type_kind();
+      ASSERT_not_null(kind_expr);
+      unparseExpression(kind_expr, info);
+   }
+
+   unp->cur.insert_newline(1);
+
+   curprint_indented("(\n", info);
+   info.inc_nestingLevel();
+
+   int n = def_decl->get_enumerators().size();
+   foreach(SgInitializedName* init_name, def_decl->get_enumerators())
+     {
+       std::string name = init_name->get_name().str();
+       name.replace(0, 3, "V(");
+       name.append(")");
+
+       SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+       ASSERT_not_null(assign_expr);
+       SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+       ASSERT_not_null(enum_val);
+
+       curprint_indented(tostring(enum_val->get_value()), info);
+       curprint(name);
+       if (--n > 0) curprint(",");
+       unp->cur.insert_newline(1);
+     }
+   info.dec_nestingLevel();
+
+   curprint_indented(");", info);
+   unp->cur.insert_newline(1);
+}
+
+void
 Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
      ASSERT_not_null(enum_decl);
 
      SgName enum_name = enum_decl->get_name();
-     SgType* field_type = enum_decl->get_field_type();
 
      curprint_indented("TYPE ", info);
      curprint(enum_name.str());
      curprint(" STATUS");
 
-     if (field_type) {
-        SgTypeInt* int_type = isSgTypeInt(field_type);
-        ASSERT_not_null(int_type);
-        curprint(" ");
-        SgExpression* kind_expr = int_type->get_type_kind();
-        ASSERT_not_null(kind_expr);
-        unparseExpression(kind_expr, info);
-     }
-
-     unp->cur.insert_newline(1);
-
-     curprint_indented("(\n", info);
-     info.inc_nestingLevel();
-
-     int n = enum_decl->get_enumerators().size();
-     foreach(SgInitializedName* init_name, enum_decl->get_enumerators())
-        {
-           std::string name = init_name->get_name().str();
-           name.replace(0, 3, "V(");
-           name.append(")");
-
-           SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-           ASSERT_not_null(assign_expr);
-           SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-           ASSERT_not_null(enum_val);
-
-           curprint_indented(tostring(enum_val->get_value()), info);
-           curprint(name);
-           if (--n > 0) curprint(",");
-           unp->cur.insert_newline(1);
-        }
-     info.dec_nestingLevel();
-
-     curprint_indented(");", info);
-     unp->cur.insert_newline(1);
+     unparseEnumBody(enum_decl, info);
    }
 
 void
@@ -968,7 +1037,9 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
                     }
                  else if (isSgEmptyDeclaration(item_decl))
                     {
-                       // do nothing for a null declaration (may want to unparse ";\n")
+                       // must unparse ';' because "BEGIN ; END" appears in code
+                       curprint_indented(";\n", info);
+
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
@@ -1000,6 +1071,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
+     SgModifierType* modifier_type = isSgModifierType(type);
+
      info.set_inVarDecl();
 
   // pretty printing
@@ -1011,7 +1084,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
-        if (SgModifierType* modifier_type = isSgModifierType(type))
+        if (modifier_type)
            {
               type = modifier_type->get_base_type();
               ASSERT_not_null(type);
@@ -1036,9 +1109,11 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint("REF ");
         }
-     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+     if (modifier_type)
         {
-           curprint("CONSTANT ");
+           if (modifier_type->get_typeModifier().get_constVolatileModifier().isConst()) {
+             curprint("CONSTANT ");
+           }
         }
 
      switch (type->variantT())
@@ -1064,22 +1139,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            curprint("STATIC ");
         }
 
-     unparseType(type, info);
-
-  // OptStructureSpecifier
-     if (table_type)
+     SgNamedType* named_type = isSgNamedType(type);
+     if (named_type && !var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
-              curprint("PARALLEL ");
-           }
-           else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
-              curprint("T ");
-              if (table_type->get_bits_per_entry() > 0) {
-                 std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
-                 curprint(value);
-                 curprint(" ");
-              }
-           }
+        // If a base type defining declaration then name prefix will be "_table_of_" or "_anon_typeof_"
+           curprint(named_type->get_name());
+        }
+     else
+        {
+           unparseType(type, info);
         }
 
   // OptPackingSpecifier
@@ -1108,9 +1176,9 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
+        // typedefs (e.g., TYPE utype U) also have a base_type (in this case U)
            table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
-           ASSERT_not_null(table_decl);
-           if (table_decl->get_has_table_entry_size())
+           if (table_decl && table_decl->get_has_table_entry_size())
              {
                // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
                if (table_decl->get_table_entry_size() != NULL)
@@ -1134,15 +1202,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
   // Unparse anonymous type declaration body if present
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           ASSERT_not_null(table_decl);
+          if (table_decl) {
+            SgClassDefinition* table_def = table_decl->get_definition();
+            ASSERT_not_null(table_def);
 
-           SgClassDefinition* table_def = table_decl->get_definition();
-           ASSERT_not_null(table_def);
+            curprint(";\n");
 
-           curprint(";\n");
-
-        // Unparse table body
-           unparseTableBody(table_def, info);
+         // Unparse table body
+            unparseTableBody(table_def, info);
+          }
         }
      else
         {

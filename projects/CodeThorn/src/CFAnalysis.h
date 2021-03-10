@@ -9,7 +9,6 @@
 #include "Labeler.h"
 #include "CommandLineOptions.h"
 #include "Flow.h"
-#include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
 #include <map>
 
@@ -89,8 +88,6 @@ class CFAnalysis {
   // mapping. Required for function call resolution across multiple
   // files, and function pointers.
   // deprecated (use FunctionCallMapping instead)
-  void setFunctionIdMapping(FunctionIdMapping*);
-  FunctionIdMapping* getFunctionIdMapping();
   void setFunctionCallMapping(FunctionCallMapping* fcm);
   void setFunctionCallMapping2(FunctionCallMapping2* fcm);
   FunctionCallMapping* getFunctionCallMapping();
@@ -138,14 +135,17 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
-  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
+  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
   static Sawyer::Message::Facility logger;
   void setInterProcedural(bool flag); // by default true
   bool getInterProcedural();
+
+  // this function stores the Flow and InterFlow in this object.
+  void createICFG(SgProject* project);
+
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
-  SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);
   static void initDiagnostics();
@@ -158,9 +158,12 @@ class CFAnalysis {
   CodeThorn::Labeler* labeler;
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
-  FunctionIdMapping* _functionIdMapping=nullptr;
   FunctionCallMapping* _functionCallMapping=nullptr;
   FunctionCallMapping2* _functionCallMapping2=nullptr;
+  
+  Flow _icfgFlow;
+  InterFlow _interFlow;
+  
 };
 
 } // end of namespace CodeThorn

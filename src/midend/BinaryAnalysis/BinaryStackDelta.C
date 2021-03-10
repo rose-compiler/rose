@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BinaryStackDelta.h>
 
@@ -88,9 +88,11 @@ public:
 
     // Override the base class by initializing only the stack pointer register.
     BaseSemantics::StatePtr initialState() const {
-        BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
+        BaseSemantics::RiscOperatorsPtr ops = cpu()->operators();
         BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
+        cpu()->initializeState(newState);
+
         BaseSemantics::RegisterStateGenericPtr regState =
             BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
@@ -111,7 +113,7 @@ public:
         ASSERT_require(dfCfg.isValidVertex(vertex));
         if (P2::DataFlow::DfCfgVertex::BBLOCK == vertex->value().type()) {
             BaseSemantics::StatePtr retval = incomingState->clone();
-            BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->get_operators();
+            BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->operators();
             ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
             RegisterDescriptor SP = cpu()->stackPointerRegister();
@@ -170,7 +172,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
 
     // Build the initial state
     BaseSemantics::StatePtr initialState = xfer.initialState();
@@ -285,7 +287,7 @@ Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) co
     BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 BaseSemantics::SValuePtr
@@ -294,7 +296,7 @@ Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) c
     BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 Analysis::SValuePair
@@ -322,7 +324,7 @@ Analysis::instructionInputStackDeltaWrtFunction(SgAsmInstruction *insn) const {
     BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 BaseSemantics::SValuePtr
@@ -331,7 +333,7 @@ Analysis::instructionOutputStackDeltaWrtFunction(SgAsmInstruction*insn) const {
     BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
         return BaseSemantics::SValuePtr();
-    return cpu_->get_operators()->subtract(finalSp, initialSp);
+    return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
 void
@@ -340,7 +342,7 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
         clearAstStackDeltas(function);
         if (hasResults_) {
             function->set_stackDelta(functionStackDeltaConcrete());
-            BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->get_operators() : BaseSemantics::RiscOperatorsPtr();
+            BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperatorsPtr();
             BaseSemantics::SValuePtr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
                 BOOST_FOREACH (SgAsmBlock *block, SageInterface::querySubTree<SgAsmBlock>(function)) {

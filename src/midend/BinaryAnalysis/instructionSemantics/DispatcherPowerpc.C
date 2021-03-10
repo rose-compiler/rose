@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <BaseSemantics2.h>
@@ -45,7 +45,7 @@ public:
 
     virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherPowerpcPtr dispatcher = DispatcherPowerpc::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+        BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);
@@ -2777,8 +2777,8 @@ void
 DispatcherPowerpc::setXerOverflow(const BaseSemantics::SValuePtr &overflow) {
     ASSERT_not_null(overflow);
     ASSERT_require(overflow->get_width() == 1);
-    operators->writeRegister(REG_XER_OV, overflow);
-    operators->writeRegister(REG_XER_SO, operators->ite(overflow, overflow, operators->readRegister(REG_XER_SO)));
+    operators()->writeRegister(REG_XER_OV, overflow);
+    operators()->writeRegister(REG_XER_SO, operators()->ite(overflow, overflow, operators()->readRegister(REG_XER_SO)));
 }
 
 void
@@ -2787,17 +2787,17 @@ DispatcherPowerpc::updateCr0(const BaseSemantics::SValuePtr &result) {
     size_t nBits = result->get_width();
 
     // Three-bit constants
-    BaseSemantics::SValuePtr one = operators->number_(3, 1);
-    BaseSemantics::SValuePtr two = operators->number_(3, 2);
-    BaseSemantics::SValuePtr four = operators->number_(3, 4);
+    BaseSemantics::SValuePtr one = operators()->number_(3, 1);
+    BaseSemantics::SValuePtr two = operators()->number_(3, 2);
+    BaseSemantics::SValuePtr four = operators()->number_(3, 4);
 
     // High three bits of CR0 are set when result is less than zero, greater than zero, or equal to zero
-    BaseSemantics::SValuePtr signBit = operators->extract(result, nBits-1, nBits);
-    BaseSemantics::SValuePtr highThree = operators->ite(operators->equalToZero(result), one, operators->ite(signBit, four, two));
+    BaseSemantics::SValuePtr signBit = operators()->extract(result, nBits-1, nBits);
+    BaseSemantics::SValuePtr highThree = operators()->ite(operators()->equalToZero(result), one, operators()->ite(signBit, four, two));
 
     // Low bit is the summary overflow copied from the XER's SO field
-    BaseSemantics::SValuePtr so = operators->readRegister(REG_XER_SO);
-    operators->writeRegister(REG_CR0, operators->concat(so, highThree));
+    BaseSemantics::SValuePtr so = operators()->readRegister(REG_XER_SO);
+    operators()->writeRegister(REG_CR0, operators()->concat(so, highThree));
 }
 
 BaseSemantics::SValuePtr

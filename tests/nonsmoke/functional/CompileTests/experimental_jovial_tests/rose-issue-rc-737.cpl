@@ -1,0 +1,10 @@
+START
+COMPOOL NBLOCK;
+  DEF BLOCK BLOCK1 ;
+    BEGIN
+      BLOCK BL$OC$K2 ;
+        BEGIN
+          ;
+        END
+    END
+TERM

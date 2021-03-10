@@ -22,7 +22,7 @@ namespace CodeThorn {
   public:
     static void initDiagnostics();
 
-    void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) override;
+    void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) override;
 
     //! requires init
     void runSolver() override;

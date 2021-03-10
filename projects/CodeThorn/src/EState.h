@@ -30,7 +30,7 @@ typedef int EStateId;
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
 
 /*! 
   * \author Markus Schordan
@@ -82,6 +82,8 @@ namespace CodeThorn {
     const CodeThorn::ConstraintSet* _constraints;
   public:
     CodeThorn::InputOutput io;
+    void setCallString(CallString cs);
+    CallString getCallString() const;
     CallString callString;
     
   };

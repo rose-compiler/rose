@@ -7,8 +7,8 @@ using namespace std;
 
 namespace CodeThorn {
 
-  void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project) {
-    VariableIdMapping::computeVariableSymbolMapping(project);
+  void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
+    VariableIdMapping::computeVariableSymbolMapping(project, maxWarningsCount);
     computeTypeSizes();
     typeSizeMapping.computeOffsets(project,this);
   }
@@ -42,5 +42,7 @@ namespace CodeThorn {
       }
     }
   }
-
+  size_t  VariableIdMappingExtended::getNumVarIds() {
+    return mappingVarIdToInfo.size();
+  }
 }

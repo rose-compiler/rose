@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn equithorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -68,7 +68,7 @@ CODETHORN_HEADER_FILES=\
   AstUtility.h \
   AnalysisAstAnnotator.h \
   AnalysisReporting.h \
-  Analyzer.h \
+  CTAnalysis.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
   AstTermRepresentation.h \
@@ -93,10 +93,13 @@ CODETHORN_HEADER_FILES=\
   DataRaceDetection.h \
   defUseQuery.h \
   DFAbstractSolver.h \
+  DFAnalysisBaseWithoutData.h \
   DFAnalysisBase.h \
+  CSDFAnalysisBase.h \
+  CSDFAnalysisBaseWithoutData.h \
+  ConstantConditionAnalysis.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
-  EquivalenceChecking.h \
   EState.h \
   EStateAnalysis.h \
   EStateFactory.h \
@@ -147,7 +150,8 @@ CODETHORN_HEADER_FILES=\
   LTLOptions.h \
   ParProOptions.h \
   LTLRersMapping.h \
-  PASolver1.h \
+  DFSolver1.h \
+  DFSolver2.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
   PredefinedSemanticFunctions.h \
@@ -173,11 +177,13 @@ CODETHORN_HEADER_FILES=\
   RewriteSystem.h \
   RWState.h \
   Solver5.h \
+  Solver16.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
   SvcompWitness.h \
   TimeMeasurement.h \
+  TimingCollector.h \
   TopologicalSort.h \
   TransitionGraph.h \
   TransitionGraphReducer.h \
@@ -196,7 +202,7 @@ CODETHORN_SOURCE_FILES=\
   AstUtility.C \
   AnalysisAstAnnotator.C \
   AnalysisReporting.C \
-  Analyzer.C \
+  CTAnalysis.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
   AstTermRepresentation.C \
@@ -220,10 +226,12 @@ CODETHORN_SOURCE_FILES=\
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DataRaceDetection.C \
+  DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
+  CSDFAnalysisBase.C \
+  ConstantConditionAnalysis.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
-  EquivalenceChecking.C \
   EState.C \
   EStateAnalysis.C \
   EStateFactory.C \
@@ -273,7 +281,8 @@ CODETHORN_SOURCE_FILES=\
   NormalizationInliner.C \
   NormalizationOp.C \
   NumberIntervalLattice.C \
-  PASolver1.C \
+  DFSolver1.C \
+  DFSolver2.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
   PredefinedSemanticFunctions.C \
@@ -298,11 +307,13 @@ CODETHORN_SOURCE_FILES=\
   RewriteSystem.C \
   RWState.C \
   Solver5.C \
+  Solver16.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
   SvcompWitness.C \
   TimeMeasurement.C \
+  TimingCollector.C \
   TopologicalSort.C \
   TransitionGraph.C \
   TransitionGraphReducer.C \
@@ -475,41 +486,6 @@ ltlthorn_SOURCES = \
   LTLThornCommandLineOptions.C \
   ltlthorn.C
 
-##############################################################
-# TOOL: EQUITHORN
-##############################################################
-
-# yacc flags for LTL parser
-equithorn_YFLAGS = -p ltl_ 
-
-# this line creates speparately named object files
-equithorn_CXXFLAGS = -fopenmp -Wall -O3 
-
-# equithorn has most of its code organized in two separate libraries
-equithorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
-
-if ROSE_WITH_SPOT
-#spot and bdd need to be linked last with gcc 5.4
-equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
-equithorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
-endif
-
-equithorndir=.
-
-# only informative
-equithorn_xHEADERS = \
-  CommandLineOptions.h \
-  EquiThornCommandLineOptions.h \
-  codethorn.h \
-  LTL.h
-
-# codethorn sources in addition to libcodethorn and libltlthorn
-equithorn_SOURCES = \
-  LTLParser.y++ \
-  EquiThornCommandLineOptions.C \
-  equithorn.C
 
 ##############################################################
 # TOOL: PARPROTHORN
@@ -659,7 +635,7 @@ REGRESSION_DATA_DIR=regressiondata
 addressTakenAnalysis_SOURCES = \
   addressTakenAnalysisDriver.C
 
-.PHONY: codethorn-dist viz bsps test checkdemos
+.PHONY: codethorn-dist vis bsps test checkdemos
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -717,7 +693,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-equivalence check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-omp-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -725,6 +701,8 @@ CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
+
+check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
@@ -768,7 +746,7 @@ check-domain-old:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
 	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
-	@./codethorn $(srcdir)/tests/intertest14.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/intertest14.C --vis && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -796,7 +774,7 @@ check-const-analysis:
 	@rm tmp.const.csv
 
 
-check-par-cfg:
+check-omp-cfg:
 	$(srcdir)/scripts/runParCfgTests $(srcdir)/tests/ompcfg
 
 # outdated tests (but still passing)
@@ -852,7 +830,7 @@ check-ltl-cegpra:
 
 # not used
 check-arrays:
-	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --vis=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 # not used
 check-array-bounds: ./codethorn
@@ -871,21 +849,11 @@ check-svcomp-witness:
 check-reachability:
 	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=6 --with-counterexamples
 
-check-equivalence:
-	@rm -f tmp.nsdump
-	@echo ================================================================
-	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
-	@echo ================================================================
-	@./equithorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
-#	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@cat tmp.nsdump
-	@rm -f tmp.nsdump
-
 check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
@@ -893,6 +861,11 @@ check-deadcode:
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
+
+check-vis:
+	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM200_pointers_merge.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort --tg1-estate-memory-subgraphs --pointer-sets && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf transitiongraph2.dot -otg2.pdf && dot -Tpdf cfg.dot -ocfg.pdf
+
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -905,7 +878,7 @@ clean-local:
 	rm -f *.dot
 	rm -f *.ps
 	rm -f *.jpg
-	rm -f viz/*
+	rm -f vis/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
@@ -924,6 +897,7 @@ clean-local:
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
 	rm -f *-LTLParser.c++
+	rm -f *.csv
 
 distclean-local: clean
 	rm -f *.tgz

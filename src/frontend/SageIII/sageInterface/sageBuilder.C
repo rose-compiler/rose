@@ -123,6 +123,93 @@ bool SageBuilder::symbol_table_case_insensitive_semantics = false;
 SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode = SageBuilder::e_sourcePositionTransformation;
 
 
+
+// ROSE_DLL_API SgMemberFunctionDeclaration* buildConstructor ( const SgName & typeName, SgClassType* initializedName_classType, SgClassDefinition* classDefinition);
+// SgMemberFunctionDeclaration* SageBuilder::buildConstructor ( const SgName & typeName, SgClassType* classType, SgClassDefinition* classDefinition)
+SgMemberFunctionDeclaration* 
+SageBuilder::buildDefaultConstructor (SgClassType* classType)
+   {
+     ROSE_ASSERT(classType != NULL);
+
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+     ROSE_ASSERT(classDeclaration != NULL);
+
+     SgName className = classDeclaration->get_name();
+
+#if 1
+     printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
+#endif
+
+     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+     ROSE_ASSERT(definingClassDeclaration != NULL);
+     SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+     ROSE_ASSERT(classDefinition != NULL);
+
+  // SgExprListExp* exprListExp = SageBuilder::buildExprListExp();
+  // ROSE_ASSERT(exprListExp != NULL);
+  // SgFunctionParameterTypeList* functionParameterTypeList = SageBuilder::buildFunctionParameterTypeList(exprListExp);
+  // ROSE_ASSERT(functionParameterTypeList != NULL);
+  // SgMemberFunctionType* memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, functionParameterTypeList, initializedName_classType, mfunc_specifier, ref_qualifiers);
+
+     SgFunctionParameterList*     functionParameterList     = SageBuilder::buildFunctionParameterList();
+     ROSE_ASSERT(functionParameterList != NULL);
+
+  // Constructors are specified with type void internally, though the type name is not output.
+     SgType* return_type = SageBuilder::buildVoidType();
+     ROSE_ASSERT(return_type != NULL);
+
+  // unsigned int mfunc_specifier = 0;
+  // unsigned int ref_qualifiers  = 0;
+
+     SgExprListExp* decoratorList            = NULL;
+     bool buildTemplateInstantiation         = false;
+
+  // These are zero for a constructor.
+     unsigned int functionConstVolatileFlags = 0;
+
+     SgTemplateArgumentPtrList templateArgumentsList;
+
+     SgMemberFunctionDeclaration* first_nondefining_declaration = buildNondefiningMemberFunctionDeclaration (className, return_type, functionParameterList,
+          classDefinition, decoratorList, functionConstVolatileFlags, buildTemplateInstantiation, &templateArgumentsList);
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+
+     first_nondefining_declaration->get_specialFunctionModifier().setConstructor();
+     ROSE_ASSERT(first_nondefining_declaration->get_specialFunctionModifier().isConstructor() == true);
+
+  // DQ (11/10/2020): Need to make sure that the firstNondefiningDeclaration is being used (reset is needed).
+     if (first_nondefining_declaration->get_firstNondefiningDeclaration() != first_nondefining_declaration)
+        {
+          first_nondefining_declaration = isSgMemberFunctionDeclaration(first_nondefining_declaration->get_firstNondefiningDeclaration());
+        }
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (className, return_type, functionParameterList, 
+          classDefinition, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration, &templateArgumentsList);
+     ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+     memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+     ROSE_ASSERT(memberFunctionDeclaration->get_specialFunctionModifier().isConstructor() == true);
+
+  // We return the default constructor and the use should insert it, I think.
+  // classDefinition->prepend_statement(memberFunctionDeclaration);
+
+  // Mark the constructor as public.
+     memberFunctionDeclaration->get_declarationModifier().get_accessModifier().setPublic();
+
+     ROSE_ASSERT (memberFunctionDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return memberFunctionDeclaration;
+   }
+
+
+
+
+
 //! Get the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
 SageBuilder::SourcePositionClassification
 SageBuilder::getSourcePositionClassificationMode()
@@ -709,6 +796,8 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
        // I forget why we needed this case...
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
@@ -851,6 +940,8 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
        // PC (10/11/13):  Added case of SgJavaPackageDeclaration
        // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
        // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
+          case V_SgProcedureHeaderStatement:
+          case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
@@ -3493,16 +3584,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
   // declarations in the AST and a general update of this function to support this expanded use.
 
   // DQ (11/27/2011) Note: it is not clear if we need the newly added input paramter: buildTemplateInstantiation; since this is represented in the template parameter.
-
-#if 0
-  // FMZ (3/23/2009): We need this for the  coarray translator
-     if (SageInterface::is_Fortran_language() == true)
-        {
-       // We don't expect this is being called for Fortran
-          cerr<<"Building nondefining function in Fortran is not allowed!"<<endl;
-          ROSE_ASSERT(false);
-        }
-#endif
 
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): XXX_name = %s\n", XXX_name.str());
@@ -6279,81 +6360,70 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
    }
 
 // Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently [CR 9/24/2020]
-SgProcedureHeaderStatement*
-SageBuilder::buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type,
-                                                      SgFunctionParameterList* param_list, SgScopeStatement* scope)
+SgProcedureHeaderStatement* SageBuilder::
+buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type, SgFunctionParameterList* param_list,
+                                         SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
   {
     ROSE_ASSERT(return_type);
     ROSE_ASSERT(param_list);
+
+    SgProcedureHeaderStatement* nondef_decl = NULL;
 
     if (scope == NULL)
       {
         scope = SageBuilder::topScopeStack();
       }
 
-    SgProcedureHeaderStatement* nondef_decl = NULL;
-
-    SgFunctionType* func_type = buildFunctionType(return_type, param_list);
-    SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
-    if (func_symbol)
-      {
-        nondef_decl = isSgProcedureHeaderStatement(func_symbol->get_declaration());
-      }
-    else
-      {
-        nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
-                            ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
-                              /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
-      }
+  // A new nondefing declaration is needed even if the function symbol already exists. The function symbol
+  // should always contain the _first_ nondefining declaration (even though this may not be the first one).
+    nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                       ( name, return_type, param_list, /*isMemberFunction*/false, scope, /*decoratorList*/NULL,
+                        /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default );
 
     ROSE_ASSERT(isSgProcedureHeaderStatement(nondef_decl));
     ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration());
-    ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
+
+    nondef_decl->set_subprogram_kind(kind);
 
     return nondef_decl;
   }
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.
-SgProcedureHeaderStatement*
-SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
+// CR (10/7/2020): May not be appropriate for C++ but improves capability for Fortran and Jovial.
+SgProcedureHeaderStatement* SageBuilder::
+buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list,
+                              SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
    {
-  // DQ (8/23/2013): Added assertions.
      ROSE_ASSERT(return_type != NULL);
      ROSE_ASSERT(parameter_list != NULL);
 
-  // DQ (8/23/2013): We need to provide the buildDefiningFunctionDeclaration() function with a pointer to the first non-defining declaration.
-  // So we need to find it, and if it does not exist we need to build one so that we have a simple API for building defining declarations.
-  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
-  // SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+     SgFunctionDeclaration* nondef_decl = NULL;
 
      if (scope == NULL)
         {
           scope = SageBuilder::topScopeStack();
         }
 
-     SgFunctionDeclaration* nondefiningDeclaration = NULL;
-
      SgFunctionType* func_type = buildFunctionType(return_type,parameter_list);
      SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
-     if (func_symbol != NULL)
+     if (func_symbol == NULL)
         {
-          nondefiningDeclaration = func_symbol->get_declaration();
+       // CR (3/25/2020): Replaced call to builder function with templated version.
+          nondef_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                           ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
+                            /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
         }
        else
         {
-       // CR (3/25/2020): Replaced call to builder function with templated version.
-          nondefiningDeclaration = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
-                                                 ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
-                                                   /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
+          nondef_decl = func_symbol->get_declaration();
         }
 
-  // DQ (8/23/2013): Added assertions.
-     assert(nondefiningDeclaration != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
+     assert(nondef_decl != NULL);
+     assert(nondef_decl->get_firstNondefiningDeclaration() != NULL);
+     assert(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
 
-     SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondefiningDeclaration);
+     SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondef_decl);
      ROSE_ASSERT(proc_header_stmt);
 
      return buildProcedureHeaderStatement(name.str(), return_type, parameter_list, kind, scope, proc_header_stmt);
@@ -6366,12 +6436,8 @@ SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_typ
                                             SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,
                                             SgProcedureHeaderStatement* first_nondefining_declaration)
    {
-  // DQ (7/14/2013): We would like to insist that a nondefining declaration has been built at this point.
+  // CR (10/7/2020): Cleaned up code
      ROSE_ASSERT(first_nondefining_declaration != NULL);
-
-  // We will want to call: SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist,
-  //                                                                           bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList,
-  //                                                                           unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList)
 
      if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
         {
@@ -6381,17 +6447,16 @@ SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_typ
         {
           if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
              {
-               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:" << kind << endl;
+               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:"
+                           << kind << endl;
                ROSE_ASSERT(false);
              }
         }
 
-     SgName rose_name = name;
-  // SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (rose_name,return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration);
-     SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (rose_name,return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration, NULL);
+     SgProcedureHeaderStatement* func = buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (SgName(name),return_type,paralist,/* isMemberFunction = */ false,scope,NULL,0U,first_nondefining_declaration, NULL);
      ROSE_ASSERT(func != NULL);
 
-     func->set_subprogram_kind(kind) ;
+     func->set_subprogram_kind(kind);
 
      return func;
    }
@@ -8421,7 +8486,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
 
  // TODO: consider C++ template functions
     SgFunctionDeclaration * funcDecl = NULL;
-    if (SageInterface::is_Fortran_language ())
+    if (SageInterface::is_Fortran_language() || SageInterface::is_Jovial_language())
        {
       // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
          funcDecl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL, SgStorageModifier::e_default);
@@ -8606,7 +8671,6 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
 #endif
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
-
 
     symbol = lookupFunctionSymbolInParentScopes(name,scope);
     ROSE_ASSERT(symbol);
@@ -12780,8 +12844,20 @@ SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& na
 //! Build a Jovial table type with required class definition and defining and nondefining declarations.
 SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgType* base_type, SgExprListExp* dim_info, SgScopeStatement* scope)
    {
+     std::string type_name(name);
+     if (base_type) {
+       // Mangle the name to make sure the table type and the base type don't have the same name
+       type_name = "_table_of_" + type_name;
+       // Add dim_info address if there are subscripts to ensure type is unique
+       if (dim_info->get_expressions().size() > 0) {
+         std::ostringstream address;
+         address << (void const *)dim_info;
+         type_name += "_" + address.str();
+       }
+     }
+
      SgClassDeclaration::class_types kind = SgClassDeclaration::e_jovial_table;
-     SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (name, kind, scope);
+     SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (type_name, kind, scope);
 
      setOneSourcePositionForTransformation(table_decl);
      ROSE_ASSERT(table_decl->get_firstNondefiningDeclaration() != NULL);
@@ -12792,7 +12868,7 @@ SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgTyp
      ROSE_ASSERT(nondef_decl != NULL);
      nondef_decl->set_parent(table_decl);
 
-     SgJovialTableType* table_type = new SgJovialTableType(nondef_decl);
+     SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
      ROSE_ASSERT(table_type != NULL);
 
      table_type->set_base_type(base_type);
@@ -16432,7 +16508,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
 
   //! Build a SgFile node
 SgFile*
-SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
+SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 // Note that ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT defines a reduced set of ROSE to support front-end specific development.
 // It is mostly used by quinlan to support laptop development where the smaller set of files permits one to do limited
@@ -16441,7 +16517,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
 #if 0
-     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p) \n",inputFileName.c_str(),outputFileName.c_str(),project);
   // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
 
@@ -16456,6 +16532,41 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // printf ("sourceFilename_fullname = %s \n",sourceFilename_fullname.c_str());
      printf ("sourceFilename          = %s \n",sourceFilename.c_str());
 #endif
+
+
+  // DQ (11/5/2020): Experiment with clearing the global scope that is supporting multiple translation 
+  // units, since it is the cause of some problem when a tool is designed to read an input file twice.
+     if (project != NULL)
+        {
+          SgGlobal* globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+          ROSE_ASSERT(globalScopeAcrossFiles != NULL);
+
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table() != NULL);
+          ROSE_ASSERT(globalScopeAcrossFiles->get_symbol_table()->get_table() != NULL);
+
+#if 0
+          printf ("In SageBuilder::buildFile(): globalScopeAcrossFiles                  = %p \n",globalScopeAcrossFiles);
+          printf (" --- globalScopeAcrossFiles->get_declarations().size()               = %zu \n",globalScopeAcrossFiles->get_declarations().size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf (" --- globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+#endif
+#if 0
+          printf ("Removing all elements from the globalScopeAcrossFiles->get_symbol_table() \n");
+#endif
+
+       // DQ (11/5/2020): Clear the symbol table used to support multifile handling.
+       // This breaks only one of the test codes in the codeSegregation tool, but it is a name 
+       // qualification that should likely be handled better so I think this is a good fix.
+          if (clear_globalScopeAcrossFiles == true)
+             {
+               globalScopeAcrossFiles->get_symbol_table()->get_table()->delete_elements();
+             }
+
+#if 0
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->size()              = %d \n",globalScopeAcrossFiles->get_symbol_table()->size());
+          printf ("After removing all symbols (alias symbols): globalScopeAcrossFiles->get_symbol_table()->get_table()->size() = %d \n",globalScopeAcrossFiles->get_symbol_table()->get_table()->size());
+#endif
+        }
 
   // DQ (9/18/2019): Test that the use of fullname has no effect.
   // ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
@@ -16986,7 +17097,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 //! Build a SgFile node
 SgSourceFile*
-SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
+SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
   // DQ (2/9/2013): Adding support to build a SgSourceFile with an empty global scope.
   // This function calls the buildFile(string,string,SgProject*) function and provides
@@ -16997,7 +17108,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
 #if 0
-     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p \n",outputFileName.c_str(),project);
+     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
 #endif
 
   // Call the supporting function to build a file.
@@ -17007,7 +17118,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
      printf ("In SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project): calling buildFile() \n");
 #endif
 
-     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
+     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project,clear_globalScopeAcrossFiles);
      ROSE_ASSERT(file != NULL);
 
 #if 0
@@ -17032,7 +17143,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 
    }
 
-SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
+SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 #if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
@@ -17041,7 +17152,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf (" --- outputFileName = %s \n",outputFileName.c_str());
 #endif
 
-     SgFile* file = buildFile(inputFileName, outputFileName,project);
+     SgFile* file = buildFile(inputFileName, outputFileName,project,clear_globalScopeAcrossFiles);
      ROSE_ASSERT(file != NULL);
 
 #if 0
@@ -17299,16 +17410,21 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
   // Starting at the snippet_declaration, record the associated scope list to the global scope.
   // SgScopeStatement* snippet_scope = snippet_declaration->get_scope();
      SgScopeStatement* snippet_scope = snippet_declaration->get_scope();
-#if 0
+#if 1
      printf ("First scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
      SgClassDefinition* temp_classDefinition = isSgClassDefinition(snippet_scope);
      if (temp_classDefinition != NULL)
         {
           SgClassDeclaration* temp_classDeclaration = temp_classDefinition->get_declaration();
           SgName className = temp_classDeclaration->get_name();
-#if 0
+#if 1
           printf ("Input snippet declaration's class name = %s \n",className.str());
 #endif
+        }
+     SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(snippet_scope);
+     if (namespaceDefinitionStatement != NULL)
+        {
+
         }
 #endif
      snippet_scope_list.push_back(snippet_scope);
@@ -17319,13 +17435,13 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
           ROSE_ASSERT(snippet_scope->isNamedScope() == true);
 
           snippet_scope = snippet_scope->get_scope();
-#if 0
+#if 1
           printf ("snippet_scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
 #endif
           snippet_scope_list.push_back(snippet_scope);
         }
 
-#if 0
+#if 1
      printf ("snippet_scope_list.size() = %" PRIuPTR " \n",snippet_scope_list.size());
 #endif
 
@@ -17343,24 +17459,25 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
      while (i != snippet_scope_list.rend())
         {
        // This loop has to handle different types of names scopes (for C this only means structs, I think).
-#if 0
+#if 1
           printf ("snippet_AST_scope list *i = %p = %s \n",*i,(*i)->class_name().c_str());
 #endif
        // printf ("target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope ->class_name().c_str());
        // printf ("snippet_AST_scope = %p = %s \n",snippet_AST_scope,snippet_AST_scope ->class_name().c_str());
 
+       // DQ (12/5/2020): I think this should be a switch statement.
           SgClassDefinition* classDefinition = isSgClassDefinition(*i);
           if (classDefinition != NULL)
              {
                SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
                SgName className = classDeclaration->get_name();
-#if 0
+#if 1
                printf ("Found snippet class name = %s \n",className.str());
 #endif
                SgClassSymbol* classSymbol = target_AST_scope->lookup_class_symbol(className);
                ROSE_ASSERT(classSymbol != NULL);
                ROSE_ASSERT(classSymbol->get_declaration() != NULL);
-#if 0
+#if 1
                printf ("Associated symbol in taget AST: declaration = %p name = %s \n",classSymbol->get_declaration(),classSymbol->get_declaration()->get_name().str());
 #endif
             // Set the return value as we go so that it will be properly set at the end of the reverse iteration over the scopes.
@@ -17370,12 +17487,33 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                target_AST_scope = classDefinition;
              }
 
-       // Not clear if we can have this case for C.
+       // Not clear if we can have this case for C or C++.
           SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(*i);
           if (functionDefinition != NULL)
              {
                printf ("ERROR: Found an unusual case of SgFunctionDefinition in list of scopes holding a declaration for a type \n");
                ROSE_ASSERT(false);
+             }
+
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(*i);
+          if (namespaceDefinition != NULL)
+             {
+               SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+               SgName namespaceName = namespaceDeclaration->get_name();
+#if 1
+               printf ("Found snippet namespace name = %s \n",namespaceName.str());
+#endif
+               SgNamespaceSymbol* namespaceSymbol = target_AST_scope->lookup_namespace_symbol(namespaceName);
+               ROSE_ASSERT(namespaceSymbol != NULL);
+               ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
+#if 1
+               printf ("Associated symbol in taget AST: declaration = %p name = %s \n",namespaceSymbol->get_declaration(),namespaceSymbol->get_declaration()->get_name().str());
+#endif
+            // Set the return value as we go so that it will be properly set at the end of the reverse iteration over the scopes.
+               returnSymbol = namespaceSymbol;
+
+            // Reset the target AST scope (as we traverse down the AST to the associated declaration in the target AST).
+               target_AST_scope = namespaceDefinition;
              }
 
        // Increment the reverse iterator.
@@ -17479,6 +17617,36 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
                break;
              }
 
+       // DQ (12/5/2020): Adding support for codeSegregation tool.
+          case V_SgMemberFunctionDeclaration:
+          case V_SgFunctionDeclaration:
+             {
+               SgFunctionDeclaration* snippet_functionDeclaration = isSgFunctionDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_functionDeclaration != NULL);
+#if 1
+               printf ("snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+#endif
+               SgName snippet_functionName = snippet_functionDeclaration->get_name();
+#if 1
+               printf ("snippet snippet declaration's function name = %s \n",snippet_functionName.str());
+               printf (" --- target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope->class_name().c_str());
+#endif
+               SgFunctionSymbol* target_symbol = target_AST_scope->lookup_function_symbol(snippet_functionName);
+               ROSE_ASSERT(target_symbol != NULL);
+               returnSymbol = target_symbol;
+
+               SgFunctionSymbol* functionSymbolInTargetAST = isSgFunctionSymbol(returnSymbol);
+               ROSE_ASSERT(functionSymbolInTargetAST != NULL);
+               SgFunctionDeclaration* target_functionDeclaration = isSgFunctionDeclaration(functionSymbolInTargetAST->get_declaration());
+               ROSE_ASSERT(target_functionDeclaration != NULL);
+#if 1
+               printf ("snippet: functionDeclaration = %p = %s \n",snippet_functionDeclaration,snippet_functionDeclaration->get_name().str());
+               printf ("target: functionDeclaration  = %p = %s \n",target_functionDeclaration,target_functionDeclaration->get_name().str());
+#endif
+               ROSE_ASSERT(snippet_functionDeclaration->get_name() == target_functionDeclaration->get_name());
+               break;
+             }
+
           default:
              {
                printf ("Error: default reached in switch: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
@@ -17489,6 +17657,404 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
   // return the last found symbol.
      return returnSymbol;
    }
+
+
+SgDeclarationStatement*
+SageBuilder::findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
+   {
+  // DQ (12/6/2020): This is a similar function to findAssociatedSymbolInTargetAST() but since 
+  // I need to modify it to support the requirements of the codeSegregation, it was useful to not
+  // modify the existing findAssociatedSymbolInTargetAST() function too much so as to avoid 
+  // compromizing the snippet transformation support.
+
+#define DEBUG_FIND_ASSOCIATED_DECLARATION 0
+
+     SgSymbol* returnSymbol = NULL;
+     SgDeclarationStatement* returnDeclaration = NULL;
+
+     bool isDefiningDeclaration = (snippet_declaration == snippet_declaration->get_definingDeclaration());
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     printf ("isDefiningDeclaration = %s \n",isDefiningDeclaration ? "true" : "false");
+#endif
+
+  // DQ (12/7/2020): This should be true.
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,targetScope) == false);
+
+     typedef Rose_STL_Container<SgScopeStatement*>  SgScopeStatementPtrList;
+     SgScopeStatementPtrList snippet_scope_list;
+
+  // Starting at the snippet_declaration, record the associated scope list to the global scope.
+  // SgScopeStatement* snippet_scope = snippet_declaration->get_scope();
+     SgScopeStatement* snippet_scope = snippet_declaration->get_scope();
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     printf ("First scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
+     SgClassDefinition* temp_classDefinition = isSgClassDefinition(snippet_scope);
+     if (temp_classDefinition != NULL)
+        {
+          SgClassDeclaration* temp_classDeclaration = temp_classDefinition->get_declaration();
+          SgName className = temp_classDeclaration->get_name();
+          printf ("Input declaration's class name = %s \n",className.str());
+        }
+
+     SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(snippet_scope);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          SgNamespaceDeclarationStatement* temp_namespaceDeclaration = namespaceDefinitionStatement->get_namespaceDeclaration();
+          SgName namespaceName = temp_namespaceDeclaration->get_name();
+          printf ("Input declaration's namespace name = %s \n",namespaceName.str());
+        }
+#endif
+
+     snippet_scope_list.push_back(snippet_scope);
+     while (snippet_scope != NULL && isSgGlobal(snippet_scope) == NULL)
+        {
+       // The scopes between the snippet declaration and the global scope should be named scopes,
+       // else we will not be able to identify the associated scope in the target AST.
+          ROSE_ASSERT(snippet_scope->isNamedScope() == true);
+
+          snippet_scope = snippet_scope->get_scope();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+          printf ("snippet_scope = %p = %s \n",snippet_scope,snippet_scope->class_name().c_str());
+#endif
+          snippet_scope_list.push_back(snippet_scope);
+
+       // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should 
+       // have the same global scope as the input declaration.
+          ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,snippet_scope) == true);
+        }
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     printf ("snippet_scope_list.size() = %" PRIuPTR " \n",snippet_scope_list.size());
+     for (SgScopeStatementPtrList::iterator i = snippet_scope_list.begin(); i != snippet_scope_list.end(); i++)
+        {
+          SgScopeStatement* scope = *i;
+          printf (" --- *i = %p = %s name = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+          SgGlobal* global_scope_from_declarations_scope = TransformationSupport::getGlobalScope(scope);
+          printf (" --- --- global_scope_from_declarations_scope = %p \n",global_scope_from_declarations_scope);
+        } 
+#endif
+
+  // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should 
+  // have the same global scope as the input declaration.
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,snippet_scope) == true);
+
+     SgGlobal* global_scope_in_target_ast = TransformationSupport::getGlobalScope(targetScope);
+     SgScopeStatementPtrList::reverse_iterator i = snippet_scope_list.rbegin();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     printf ("global_scope_in_target_ast = %p = %s \n",global_scope_in_target_ast,global_scope_in_target_ast->class_name().c_str());
+#endif
+
+     SgScopeStatement* target_AST_scope  = global_scope_in_target_ast;
+     SgScopeStatement* snippet_AST_scope = *i;
+
+  // DQ (12/7/2020): This should be true.
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,snippet_AST_scope) == true);
+
+     ROSE_ASSERT(isSgGlobal(snippet_AST_scope) != NULL);
+  // Iterate past the global scope
+     i++;
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     string otherASTnameFromGlobalScope = global_scope_in_target_ast->get_file_info()->get_filenameString();
+     SgSourceFile* otherSourceFile      = SageInterface::getEnclosingNode<SgSourceFile>(targetScope,true);
+     string otherASTnameFromSourceFile  = otherSourceFile->getFileName();
+     printf ("Now traverse the list of scopes in reverse to find the declaration in the other AST: \n");
+     printf ("otherASTnameFromGlobalScope = %s \n",otherASTnameFromGlobalScope.c_str());
+     printf ("otherASTnameFromSourceFile  = %s \n",otherASTnameFromSourceFile.c_str());
+#endif
+
+  // DQ (12/7/2020): This should be true.
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+
+  // Traverse the snippet scopes in the reverse order from global scope to the associated scope in the target AST.
+     while (i != snippet_scope_list.rend())
+        {
+       // This loop has to handle different types of names scopes (for C this only means structs, I think).
+
+          SgScopeStatement* scope = *i;
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+          printf ("snippet_AST_scope list *i = %p = %s \n",*i,(*i)->class_name().c_str());
+          printf (" --- *i = %p = %s name = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
+          printf (" --- target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope ->class_name().c_str());
+       // printf ("snippet_AST_scope = %p = %s \n",snippet_AST_scope,snippet_AST_scope ->class_name().c_str());
+#endif
+
+       // DQ (12/7/2020): This should still be true.
+          ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,scope) == true);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+          SgSourceFile* otherSourceFile      = SageInterface::getEnclosingNode<SgSourceFile>(targetScope,true);
+          string otherASTnameFromSourceFile  = otherSourceFile->getFileName();
+          printf (" --- otherASTnameFromSourceFile  = %s \n",otherASTnameFromSourceFile.c_str());
+#endif
+
+       // DQ (12/5/2020): I think this should be a switch statement.
+          SgClassDefinition* classDefinition = isSgClassDefinition(*i);
+          if (classDefinition != NULL)
+             {
+               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+               SgName className = classDeclaration->get_name();
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf (" --- Found snippet class name = %s \n",className.str());
+#endif
+               SgClassSymbol* classSymbol = target_AST_scope->lookup_class_symbol(className);
+               ROSE_ASSERT(classSymbol != NULL);
+               ROSE_ASSERT(classSymbol->get_declaration() != NULL);
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf (" --- Associated symbol in taget AST: declaration = %p name = %s \n",classSymbol->get_declaration(),classSymbol->get_declaration()->get_name().str());
+#endif
+            // Set the return value as we go so that it will be properly set at the end of the reverse iteration over the scopes.
+               returnSymbol = classSymbol;
+
+            // DQ (12/8/2020): Need to get the associated class definition from the symbol in the target scope.
+               SgClassDeclaration* temp_classDeclaration_in_target_ast = classSymbol->get_declaration();
+               ROSE_ASSERT(temp_classDeclaration_in_target_ast != NULL);
+               SgClassDeclaration* classDeclaration_in_target_ast = isSgClassDeclaration(temp_classDeclaration_in_target_ast->get_definingDeclaration());
+               ROSE_ASSERT(classDeclaration_in_target_ast != NULL);
+               SgClassDefinition* classDefinition_in_target_ast = classDeclaration_in_target_ast->get_definition();
+               ROSE_ASSERT(classDefinition_in_target_ast != NULL);
+
+            // DQ (12/7/2020): This should be true.
+               ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+
+            // Reset the target AST scope (as we traverse down the AST to the associated declaration in the target AST).
+            // target_AST_scope = classDefinition;
+               target_AST_scope = classDefinition_in_target_ast;
+
+            // DQ (12/7/2020): This should be true.
+               ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+             }
+
+       // Not clear if we can have this case for C or C++.
+          SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(*i);
+          if (functionDefinition != NULL)
+             {
+               printf ("ERROR: Found an unusual case of SgFunctionDefinition in list of scopes holding a declaration for a type \n");
+               ROSE_ASSERT(false);
+             }
+
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(*i);
+          if (namespaceDefinition != NULL)
+             {
+               SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+               SgName namespaceName = namespaceDeclaration->get_name();
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf (" --- Found snippet namespace name = %s \n",namespaceName.str());
+#endif
+               SgNamespaceSymbol* namespaceSymbol = target_AST_scope->lookup_namespace_symbol(namespaceName);
+               ROSE_ASSERT(namespaceSymbol != NULL);
+               ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
+               SgNamespaceDeclarationStatement* otherASTnamespaceDeclaration = namespaceSymbol->get_declaration();
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf (" --- Associated symbol in taget AST: declaration = %p name = %s \n",namespaceSymbol->get_declaration(),namespaceSymbol->get_declaration()->get_name().str());
+#endif
+            // Set the return value as we go so that it will be properly set at the end of the reverse iteration over the scopes.
+               returnSymbol = namespaceSymbol;
+
+            // DQ (12/7/2020): This should be true.
+               ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+
+            // Reset the target AST scope (as we traverse down the AST to the associated declaration in the target AST).
+            // target_AST_scope = namespaceDefinition;
+               target_AST_scope = otherASTnamespaceDeclaration->get_definition();
+
+            // DQ (12/7/2020): This should be true.
+               ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+             }
+
+       // DQ (12/7/2020): This should be true.
+          ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+          printf (" --- At base of loop of the list of scopes in top to bottom: target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope->class_name().c_str());
+
+             {
+               SgSourceFile* otherSourceFile      = SageInterface::getEnclosingNode<SgSourceFile>(target_AST_scope,true);
+               string otherASTnameFromSourceFile  = otherSourceFile->getFileName();
+               printf (" --- At base of loop: otherASTnameFromSourceFile  = %s \n",otherASTnameFromSourceFile.c_str());
+             }
+#endif
+       // Increment the reverse iterator.
+          i++;
+        }
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+     printf ("##### Now based on the kind of declaration, search for that same named declaration in the target_AST_scope = %p = %s \n",
+          target_AST_scope,target_AST_scope->class_name().c_str());
+#endif
+
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,target_AST_scope) == false);
+
+  // Handle the different cases using a switch (there are only a few cases).
+     switch (snippet_declaration->variantT())
+        {
+          case V_SgClassDeclaration:
+             {
+               SgClassDeclaration* snippet_classDeclaration = isSgClassDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_classDeclaration != NULL);
+
+               SgName snippet_className = snippet_classDeclaration->get_name();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet snippet declaration's class name = %s \n",snippet_className.str());
+#endif
+               SgClassSymbol* target_symbol = target_AST_scope->lookup_class_symbol(snippet_className);
+               ROSE_ASSERT(target_symbol != NULL);
+               returnSymbol = target_symbol;
+
+               SgClassSymbol* classSymbolInTargetAST = isSgClassSymbol(returnSymbol);
+               ROSE_ASSERT(classSymbolInTargetAST != NULL);
+               SgClassDeclaration* target_classDeclaration = isSgClassDeclaration(classSymbolInTargetAST->get_declaration());
+               ROSE_ASSERT(target_classDeclaration != NULL);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet: classDeclaration = %p = %s \n",snippet_classDeclaration,snippet_classDeclaration->get_name().str());
+               printf ("target: classDeclaration  = %p = %s \n",target_classDeclaration,target_classDeclaration->get_name().str());
+#endif
+               ROSE_ASSERT(snippet_classDeclaration->get_name() == target_classDeclaration->get_name());
+               break;
+             }
+
+          case V_SgTypedefDeclaration:
+             {
+               SgTypedefDeclaration* snippet_typedefDeclaration = isSgTypedefDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_typedefDeclaration != NULL);
+
+               SgName snippet_typedefName = snippet_typedefDeclaration->get_name();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet snippet declaration's typedef name = %s \n",snippet_typedefName.str());
+#endif
+               SgTypedefSymbol* target_symbol = target_AST_scope->lookup_typedef_symbol(snippet_typedefName);
+               ROSE_ASSERT(target_symbol != NULL);
+               returnSymbol = target_symbol;
+
+               SgTypedefSymbol* typedefSymbolInTargetAST = isSgTypedefSymbol(returnSymbol);
+               ROSE_ASSERT(typedefSymbolInTargetAST != NULL);
+               SgTypedefDeclaration* target_typedefDeclaration = isSgTypedefDeclaration(typedefSymbolInTargetAST->get_declaration());
+               ROSE_ASSERT(target_typedefDeclaration != NULL);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet: typedefDeclaration = %p = %s \n",snippet_typedefDeclaration,snippet_typedefDeclaration->get_name().str());
+               printf ("target: typedefDeclaration  = %p = %s \n",target_typedefDeclaration,target_typedefDeclaration->get_name().str());
+#endif
+               ROSE_ASSERT(snippet_typedefDeclaration->get_name() == target_typedefDeclaration->get_name());
+               break;
+             }
+
+          case V_SgEnumDeclaration:
+             {
+               SgEnumDeclaration* snippet_enumDeclaration = isSgEnumDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_enumDeclaration != NULL);
+
+               SgName snippet_enumName = snippet_enumDeclaration->get_name();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet snippet declaration's enum name = %s \n",snippet_enumName.str());
+#endif
+            // DQ (4/13/2014): check if this is an un-named enum beclaration.
+               bool isUnNamed = snippet_enumDeclaration->get_isUnNamed();
+               if (isUnNamed == false)
+                  {
+                 // SgEnumSymbol* target_symbol = target_AST_scope->lookup_enum_symbol(snippet_enumName);
+                    SgEnumSymbol* target_symbol = lookupEnumSymbolInParentScopes(snippet_enumName,target_AST_scope);
+                    if (target_symbol == NULL)
+                       {
+                      // Debug this case.
+                         SgScopeStatement* scope = snippet_enumDeclaration->get_scope();
+                         printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+                         scope->get_file_info()->display("case V_SgEnumDeclaration: target_symbol == NULL: scope: debug");
+                       }
+                    ROSE_ASSERT(target_symbol != NULL);
+                    returnSymbol = target_symbol;
+
+                    SgEnumSymbol* enumSymbolInTargetAST = isSgEnumSymbol(returnSymbol);
+                    ROSE_ASSERT(enumSymbolInTargetAST != NULL);
+                    SgEnumDeclaration* target_enumDeclaration = isSgEnumDeclaration(enumSymbolInTargetAST->get_declaration());
+                    ROSE_ASSERT(target_enumDeclaration != NULL);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+                    printf ("snippet: enumDeclaration = %p = %s \n",snippet_enumDeclaration,snippet_enumDeclaration->get_name().str());
+                    printf ("target: enumDeclaration  = %p = %s \n",target_enumDeclaration,target_enumDeclaration->get_name().str());
+#endif
+                    ROSE_ASSERT(snippet_enumDeclaration->get_name() == target_enumDeclaration->get_name());
+                  }
+                 else
+                  {
+                 // DQ (4/13/2014): I think we all agreed these would not have to be handled.
+                    printf ("Warning: can't handle unnamed enum declarations \n");
+                    ROSE_ASSERT(returnSymbol == NULL);
+                  }
+               break;
+             }
+
+       // DQ (12/11/2020): Adding support for codeSegregation tool.
+          case V_SgTemplateMemberFunctionDeclaration:
+       // DQ (12/8/2020): Adding support for codeSegregation tool.
+          case V_SgTemplateFunctionDeclaration:
+       // DQ (12/5/2020): Adding support for codeSegregation tool.
+          case V_SgMemberFunctionDeclaration:
+          case V_SgFunctionDeclaration:
+             {
+               SgFunctionDeclaration* snippet_functionDeclaration = isSgFunctionDeclaration(snippet_declaration);
+               ROSE_ASSERT(snippet_functionDeclaration != NULL);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+#endif
+               SgName snippet_functionName = snippet_functionDeclaration->get_name();
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet snippet declaration's function name = %s \n",snippet_functionName.str());
+               printf (" --- target_AST_scope = %p = %s \n",target_AST_scope,target_AST_scope->class_name().c_str());
+#endif
+               SgFunctionSymbol* target_symbol = target_AST_scope->lookup_function_symbol(snippet_functionName);
+               ROSE_ASSERT(target_symbol != NULL);
+               returnSymbol = target_symbol;
+
+               SgFunctionSymbol* functionSymbolInTargetAST = isSgFunctionSymbol(returnSymbol);
+               ROSE_ASSERT(functionSymbolInTargetAST != NULL);
+               SgFunctionDeclaration* target_functionDeclaration = isSgFunctionDeclaration(functionSymbolInTargetAST->get_declaration());
+               ROSE_ASSERT(target_functionDeclaration != NULL);
+
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+               printf ("snippet: functionDeclaration = %p = %s \n",snippet_functionDeclaration,snippet_functionDeclaration->get_name().str());
+               printf ("target: functionDeclaration  = %p = %s \n",target_functionDeclaration,target_functionDeclaration->get_name().str());
+               printf ("isDefiningDeclaration        = %s \n",isDefiningDeclaration ? "true" : "false");
+#endif
+               if (isDefiningDeclaration == true)
+                  {
+#if DEBUG_FIND_ASSOCIATED_DECLARATION
+                    printf ("get the defining declaration instead of the firstNondefining declaration from the function symbol \n");
+#endif
+                    returnDeclaration = target_functionDeclaration->get_definingDeclaration();
+                  }
+
+               ROSE_ASSERT(snippet_functionDeclaration->get_name() == target_functionDeclaration->get_name());
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in switch: snippet_declaration = %p = %s \n",snippet_declaration,snippet_declaration->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnDeclaration != NULL);
+
+  // These should have different global scopes, because they are from different ASTs.
+     ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,returnDeclaration) == false);
+
+  // return the last found symbol.
+  // return returnSymbol;
+     return returnDeclaration;
+   }
+
 
 SgType*
 SageBuilder::getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope)

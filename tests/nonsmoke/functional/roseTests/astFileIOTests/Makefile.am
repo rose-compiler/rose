@@ -41,6 +41,46 @@ $(ast_write_targets): %.binary: $(Cxx_directory)/% $(ROSE_COMPILER)
 check_ast_write: $(ast_write_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
+#Specific test to demonstrate an issue with reading a writing merged files
+null  :=
+space := $(null) #
+comma := ,
+
+MERGE_TEST_1_SOURCES = A1.C A2.C
+
+MERGE_TEST_1_ASTS = $(addsuffix .binary, $(MERGE_TEST_1_SOURCES))
+MERGE_TEST_1_ASTS_COMMA := $(subst $(space),$(comma),$(strip $(MERGE_TEST_1_ASTS)))
+
+$(MERGE_TEST_1_ASTS): %.binary: $(srcdir)/merge_tests/% 
+	@$(RTH_RUN) \
+		TITLE="Write Serialize AST for $(notdir $<) [$@]" \
+		CMD="$(ROSE_COMPILER) -c $(abspath $<) -rose:ast:write $@" \
+		$(TEST_EXIT_STATUS) $@.write.passed
+
+ast_read_multi:  $(MERGE_TEST_1_ASTS)
+	@$(RTH_RUN) \
+		TITLE="Read Serialize AST for $(notdir $<) [$@]" \
+		CMD="$(ROSE_COMPILER) -c -rose:ast:read $(MERGE_TEST_1_ASTS_COMMA)" \
+		$(TEST_EXIT_STATUS) $@.read.passed
+
+ast_merge_multi:  $(MERGE_TEST_1_ASTS)
+	@$(RTH_RUN) \
+		TITLE="Read Serialize AST for $(notdir $<) [$@]" \
+		CMD="$(ROSE_COMPILER) -c -rose:ast:merge -rose:ast:read $(MERGE_TEST_1_ASTS_COMMA)" \
+		$(TEST_EXIT_STATUS) $@.merge.passed
+
+ast_merge_write_multi:  $(MERGE_TEST_1_ASTS)
+	@$(RTH_RUN) \
+		TITLE="Read Serialize AST for $(notdir $<) [$@]" \
+		CMD="$(ROSE_COMPILER) -c -rose:ast:merge -rose:ast:read $(MERGE_TEST_1_ASTS_COMMA) -rose:ast:write A.merge.binary" \
+		$(TEST_EXIT_STATUS) $@.merge.passed
+
+
+ast_write_multi: $(MERGE_TEST_1_ASTS)
+
+check_multi:  $(ast_write_multi) $(ast_read_multi) $(ast_merge_multi) $(ast_merge_write_multi)
+
+#------------------------------------------------------------------------------------------------------------------------
 
 ast_read_single_targets = $(addsuffix .read.passed, $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS))
 $(ast_read_single_targets): %.read.passed: %.binary $(ROSE_COMPILER)
@@ -182,7 +222,8 @@ check_ast_read_merged: $(TEST_READ_MERGED_TARGETS)
 
 check-local: \
 		check_ast_write \
-		check_ast_read_single
+		check_ast_read_single \
+		check_multi 
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astFileIOTests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"

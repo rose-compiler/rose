@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_DataFlow_H
 #define ROSE_BinaryAnalysis_DataFlow_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
@@ -214,7 +214,7 @@ public:
         InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
     public:
         explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
-        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->get_operators()) {}
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->operators()) {}
 
         bool operator()(InstructionSemantics2::BaseSemantics::StatePtr &dst /*in,out*/,
                         const InstructionSemantics2::BaseSemantics::StatePtr &src) const {

@@ -852,7 +852,7 @@
 0x08048f39: Basic block reasons: 
 0x08048f39: ff 24 85 58 9b 04 08    |.$.X... |<sp-80>   jmp    dword ds:[0x08049b58<.rodata+0x0264> + eax*0x04]
 0x08048f39: Outgoing stack delta: -80
-0x08048f39: Successor blocks: 0x08048f40, 0x08048fb8, 0x08048fbf, 0x08048fe4, 0x08048ff0, 0x08048ffc
+0x08048f39: Successor blocks: 0x08048f10, 0x08048f40, 0x08048fb8, 0x08048fbf, 0x08048fcb, 0x08048fd7, 0x08048fe4, 0x08048ff0, 0x08048ffc
 
 0x08048f40: Basic block reasons: 
 0x08048f40: e8 7f fd ff ff          |.....   |<sp-80>   call   0x08048cc4<<Func>>
@@ -949,15 +949,17 @@
 0x08048fc6: Outgoing stack delta: -80
 0x08048fc6: Successor blocks: 0x08048f18
 
-0x08048fcb: Basic block reasons: CFG head
-0x08048fcb: c7 45 e4 01 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xe4<-28>], 0x00000001
-0x08048fd2: e9 41 ff ff ff          |.A...   |          jmp    0x08048f18<<BBlock>>
+0x08048fcb: Basic block reasons: 
+0x08048fcb: c7 45 e4 01 00 00 00    |.E..... |<sp-80>   mov    dword ss:[ebp + 0xe4<-28>], 0x00000001
+0x08048fd2: e9 41 ff ff ff          |.A...   |<sp-80>   jmp    0x08048f18<<BBlock>>
+0x08048fd2: Outgoing stack delta: -80
 0x08048fd2: Successor blocks: 0x08048f18
 
-0x08048fd7: Basic block reasons: CFG head
-0x08048fd7: a1 48 ae 04 08          |.H...   |          mov    eax, dword ds:[0x0804ae48<(data)optarg>]
-0x08048fdc: 89 45 d0                |.E.     |          mov    dword ss:[ebp + 0xd0<-48>], eax
-0x08048fdf: e9 34 ff ff ff          |.4...   |          jmp    0x08048f18<<BBlock>>
+0x08048fd7: Basic block reasons: 
+0x08048fd7: a1 48 ae 04 08          |.H...   |<sp-80>   mov    eax, dword ds:[0x0804ae48<(data)optarg>]
+0x08048fdc: 89 45 d0                |.E.     |<sp-80>   mov    dword ss:[ebp + 0xd0<-48>], eax
+0x08048fdf: e9 34 ff ff ff          |.4...   |<sp-80>   jmp    0x08048f18<<BBlock>>
+0x08048fdf: Outgoing stack delta: -80
 0x08048fdf: Successor blocks: 0x08048f18
 
 0x08048fe4: Basic block reasons: 
@@ -1295,7 +1297,11 @@
 0x08049b68: f0 8f 04 08 e4 8f 04 08 |........|
 0x08049b70: 40 8f 04 08 40 8f 04 08 |@...@...|
 0x08049b78: 40 8f 04 08 40 8f 04 08 |@...@...|
-0x08049b80: b8 8f 04 08 40 8f 04 08 |....@...| 48 bytes untyped data beginning at 0x08049b58
+0x08049b80: b8 8f 04 08 40 8f 04 08 |....@...|
+0x08049b88: 10 8f 04 08 40 8f 04 08 |....@...|
+0x08049b90: 40 8f 04 08 40 8f 04 08 |@...@...|
+0x08049b98: d7 8f 04 08 40 8f 04 08 |....@...|
+0x08049ba0: 40 8f 04 08 cb 8f 04 08 |@.......| 80 bytes untyped data beginning at 0x08049b58
 
 0x080491c4: ================================== Function (function call, graph) unknown name
 0x080491c4: Function stack delta: +4

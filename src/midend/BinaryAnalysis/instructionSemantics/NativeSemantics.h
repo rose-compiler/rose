@@ -1,7 +1,7 @@
 #ifndef Rose_BinaryAnalysis_NativeSemantics_H
 #define Rose_BinaryAnalysis_NativeSemantics_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BinaryDebugger.h>
 #include <ConcreteSemantics2.h>
@@ -356,14 +356,14 @@ protected:
         : process_(process) {
         set_register_dictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
-        operators = RiscOperators::instance(protoval, process_);
+        operators(RiscOperators::instance(protoval, process_));
     }
 
     Dispatcher(const BaseSemantics::RiscOperatorsPtr &ops)
         : process_(RiscOperators::promote(ops)->process()) {
         set_register_dictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
-        operators = ops;
+        operators(ops);
     }
     
     //----------------------------------------

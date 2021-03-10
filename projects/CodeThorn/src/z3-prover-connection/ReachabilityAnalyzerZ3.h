@@ -5,7 +5,7 @@
 #define REACHABILITY_Analyzer_Z3_H
 
 #include"sage3basic.h"
-#include"Analyzer.h"
+#include"CTAnalysis.h"
 #include"z3++.h"
 #include"ContNodeAttribute.h"
 #include"PhiAttribute.h"
@@ -29,7 +29,7 @@ class ReachabilityAnalyzerZ3
 {
 	private:
 	Sawyer::Message::Facility logger;
-	Analyzer* analyzer;
+	CTAnalysis* analyzer;
 	Flow* flow;
 	CTIOLabeler* labeler;
 
@@ -41,7 +41,7 @@ class ReachabilityAnalyzerZ3
 	solver solverZ3;
 
 	public:
-	ReachabilityAnalyzerZ3(int RERSUpperBoundForInput, int RERSVerifierErrorNumber, Analyzer* analyzer, Sawyer::Message::Facility* logger): RERSUpperBoundForInput(RERSUpperBoundForInput), RERSVerifierErrorNumber(RERSVerifierErrorNumber), solverZ3(contextZ3)
+	ReachabilityAnalyzerZ3(int RERSUpperBoundForInput, int RERSVerifierErrorNumber, CTAnalysis* analyzer, Sawyer::Message::Facility* logger): RERSUpperBoundForInput(RERSUpperBoundForInput), RERSVerifierErrorNumber(RERSVerifierErrorNumber), solverZ3(contextZ3)
 	{
 		this->analyzer = analyzer;
 		this->logger = *logger;

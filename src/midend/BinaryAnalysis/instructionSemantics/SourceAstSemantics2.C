@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <SourceAstSemantics2.h>
 
@@ -539,9 +539,19 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     size_t nBytes = dflt->get_width() >> 3;
     BaseSemantics::SValuePtr retval;
     BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     for (size_t byteNum=0; byteNum<nBytes; ++byteNum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nBytes-(byteNum+1) : byteNum;
-        std::string ctext = "mem[" + SValue::promote(address)->ctext() +
+        std::string ctext = "mem[" + SValue::promote(adjustedVa)->ctext() +
                             "+" + StringUtility::numberToString(byteOffset) +
                             "]";
         BaseSemantics::SValuePtr byte = makeSValue(8, NULL, ctext);
@@ -571,11 +581,21 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     ASSERT_require2(value->get_width() % 8 == 0, "writeMemory size must be a multiple of a byte");
     size_t nBytes = value->get_width() >> 3;
     BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     for (size_t byteNum=0; byteNum<nBytes; ++byteNum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nBytes-(byteNum+1) : byteNum;
         BaseSemantics::SValuePtr byte = extract(value, 8*byteOffset, 8*(byteOffset+1));
-        std::string lhs = "mem[" + SValue::promote(address)->ctext() +
-                          " + " + SValue::promote(number_(address->get_width(), byteOffset))->ctext() +
+        std::string lhs = "mem[" + SValue::promote(adjustedVa)->ctext() +
+                          " + " + SValue::promote(number_(adjustedVa->get_width(), byteOffset))->ctext() +
                           "]";
 
         saveSideEffect(byte, makeSValue(8, NULL, lhs));

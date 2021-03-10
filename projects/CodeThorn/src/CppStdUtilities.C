@@ -32,6 +32,15 @@ namespace CppStdUtilities {
     }
   }
   
+  bool writeFile(string mode, std::string filename, std::string data) {
+    if(mode=="generate")
+      return writeFile(filename, data);
+    else if(mode=="append")
+      return appendFile(filename, data);
+    else
+      return false;
+  }
+
   bool writeFile(std::string filename, std::string data) {
     std::ofstream myfile;
     myfile.open(filename.c_str(),std::ios::out);

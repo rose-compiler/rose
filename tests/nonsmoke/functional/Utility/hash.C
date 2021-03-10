@@ -124,7 +124,7 @@ testAllHashes() {
 static void
 testMemoryMap() {
     std::cout <<"MemoryMap hashing\n";
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     using namespace Rose::BinaryAnalysis;
     typedef Combinatorics::HasherFnv Hasher;              // this one doesn't depend on libgcrypt
 

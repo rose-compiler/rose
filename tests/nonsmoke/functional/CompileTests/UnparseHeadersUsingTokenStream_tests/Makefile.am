@@ -66,6 +66,9 @@ testTransformVariable2: transformVariable $(srcdir)/badInput2.c
 	./transformVariable -rose:unparse_tokens -c $(srcdir)/badInput2.c
 
 check-local: $(TEST_TARGETS) testTransformVariable testTransformVariable2
+	@echo "**********************************************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests: make check rule complete (terminated normally) ******"
+	@echo "**********************************************************************************************************************************************"
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

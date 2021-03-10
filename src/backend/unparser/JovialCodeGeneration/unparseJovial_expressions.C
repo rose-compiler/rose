@@ -173,9 +173,22 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgTypeUnsignedInt:
         case V_SgTypeChar:
         case V_SgTypeFloat:
-        case V_SgPointerType:
            unparseType(type, info);
            break;
+
+        case V_SgPointerType:
+          {
+            SgPointerType* pointer = isSgPointerType(type);
+            if (SgTypedefType* typedef_type = isSgTypedefType(pointer->get_base_type())) {
+              curprint("(* P ");
+              unparseType(typedef_type, info);
+              curprint(" *)");
+            }
+            else {
+              unparseType(type, info);
+            }
+            break;
+          }
 
         case V_SgJovialBitType:
         case V_SgModifierType:
@@ -188,6 +201,11 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
         case V_SgTypedefType:
            curprint("(* ");
            unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+        case V_SgEnumType:
+           curprint("(* ");
+           unparseJovialType(isSgEnumType(type), info);
            curprint(" *)");
            break;
         default:
@@ -275,7 +293,7 @@ Unparse_Jovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
      SgType* lhs_type = lhs->get_type();
      SgType* rhs_type = rhs->get_type();
 
-     if (isSgJovialBitType(lhs_type) && isSgJovialBitType(rhs_type))
+     if ((isSgJovialBitType(lhs_type) || isSgTypeBool(lhs_type)) && (isSgJovialBitType(rhs_type) || isSgTypeBool(rhs_type)) )
         {
            unparseBinaryOperator(expr, "EQV", info);
         }
@@ -427,9 +445,23 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
 
      switch (operand->variantT())
         {
+        case V_SgAtOp:
+           curprint("@");
+           unparseExpression(operand, info);
+           break;
         case V_SgVarRefExp:
            curprint("@");
            unparseVarRef(operand, info);
+           break;
+        case V_SgPntrArrRefExp:
+           curprint("@(");
+           unparseArrayOp(operand, info);
+           curprint(")");
+           break;
+        case V_SgCastExp:
+           curprint("@ (");
+           unparseCastExp(operand, info);
+           curprint(")");
            break;
         default:
            std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";

@@ -1,7 +1,7 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <Registers.h>
@@ -102,6 +102,7 @@ protected:
         regcache_init();
         iproc_init();
         memory_init();
+        initializeState(ops->currentState());
     }
 
 public:
@@ -111,7 +112,7 @@ public:
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
 
-    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    /** Make sure memory properties are set up correctly. For instance, byte order should be little endian. */
     void memory_init();
 
 public:
@@ -174,6 +175,8 @@ public:
     }
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
+
+    virtual void initializeState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
 
     enum AccessMode { READ_REGISTER, PEEK_REGISTER };
 

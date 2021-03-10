@@ -355,11 +355,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      ROSE_ASSERT(currentScope    != NULL);
 
 #if ALIAS_SYMBOL_DEBUGGING || 0
+     printf ("******************************************************************************* \n");
      printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",
           referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
      printf ("   --- referencedScope = %s \n",SageInterface::get_name(referencedScope).c_str());
      printf ("   --- currentScope = %s \n",SageInterface::get_name(currentScope).c_str());
      printf ("   --- causalNode = %s \n",SageInterface::get_name(causalNode).c_str());
+     printf ("******************************************************************************* \n");
 #endif
 
      SgSymbolTable* symbolTable = referencedScope->get_symbol_table();
@@ -877,7 +879,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                            // not clear what to do here...
                            // I think we need more symbol table support for detecting matching symbols.
                            // I think we also need more alias symbol specific query support.
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
                               printf ("symbol is an SgAliasSymbol: aliasSymbol = %p = %s aliasSymbol->get_base() = %p = %s \n",
                                    symbol,symbol->class_name().c_str(),aliasSymbol->get_base(),aliasSymbol->get_base()->class_name().c_str());
 #endif
@@ -966,7 +968,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                             }
 
 
-#if 0 // uniform handling by code above now
+#if 0
+                      // DQ (12/24/2020): This code has been commented out since at least 12/24/2020.
+
+                      // uniform handling by code above now
                          case V_SgEnumSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_enum_symbol(name) != NULL);
@@ -1128,8 +1133,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                if ( alreadyExists == false)
                   {
-#if ALIAS_SYMBOL_DEBUGGING
-                    printf ("Building a SgAliasSymbol \n");
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                    printf ("Building a new SgAliasSymbol \n");
 #endif
                  // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
                     SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol);
@@ -1137,22 +1142,27 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                  // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
                     ROSE_ASSERT(causalNode != NULL);
+
+                 // DQ (12/26/2020): Since this is a new SgAliasSymbol, it should have an empty causal node list.
+                    ROSE_ASSERT(aliasSymbol->get_causal_nodes().empty() == true);
+
                     aliasSymbol->get_causal_nodes().push_back(causalNode);
 
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
                  // printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p causalNode = %p = %s \n",aliasSymbol,causalNode,causalNode->class_name().c_str());
                     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
 #endif
                  // Use the current name and the alias to the symbol
                     currentScope->insert_symbol(name, aliasSymbol);
 
-#if ALIAS_SYMBOL_DEBUGGING
-                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): DONE: Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): DONE: Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",
+                         currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
 #endif
                   }
                  else
                   {
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
                     printf ("An alias symbol for the same kind of symbol already exists, so add to the existing SgAliasSymbol \n");
                     printf ("  --- symbol          = %p = %s \n",symbol,symbol->class_name().c_str());
                     printf ("  --- original_symbol = %p = %s \n",original_symbol,original_symbol->class_name().c_str());
@@ -1176,9 +1186,29 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                  // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
                     ROSE_ASSERT(causalNode != NULL);
-                    aliasSymbol->get_causal_nodes().push_back(causalNode);
 
-#if ALIAS_SYMBOL_DEBUGGING
+                 // DQ (12/26/2020): check if this is already a causal node.  Debugging test_122.cpp in codeSegregation.
+                 // aliasSymbol->get_causal_nodes().push_back(causalNode);
+                    SgNodePtrList & causal_nodes_list = aliasSymbol->get_causal_nodes();
+                    if (std::find(causal_nodes_list.begin(),causal_nodes_list.end(),causalNode) != causal_nodes_list.end())
+                       {
+#if ALIAS_SYMBOL_DEBUGGING || 0
+                         printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): This causal node is already present in the causal_nodes_list: causalNode = %p = %s \n",
+                              causalNode,causalNode->class_name().c_str());
+                         printf ("Skipping insertion of causalNode into causal_nodes_list: causal_nodes_list.size() = %zu \n",causal_nodes_list.size());
+#endif
+#if 0
+                      // We would like to find out how this is happening a second time.
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                         aliasSymbol->get_causal_nodes().push_back(causalNode);
+                       }
+
+#if ALIAS_SYMBOL_DEBUGGING || 0
                     printf ("aliasSymbol->get_causal_nodes().size() = %zu \n",aliasSymbol->get_causal_nodes().size());
                     for (size_t i = 0; i < aliasSymbol->get_causal_nodes().size(); i++)
                        {
@@ -1233,7 +1263,7 @@ void
 FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
    {
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
      printf ("In FixupAstSymbolTablesToSupportAliasedSymbols::visit() (preorder AST traversal) node = %p = %s \n",node,node->class_name().c_str());
 #endif
 

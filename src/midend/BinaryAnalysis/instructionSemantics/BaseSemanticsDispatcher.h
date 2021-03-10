@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Dispatcher_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Dispatcher_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemanticsTypes.h>
 #include <Registers.h>
@@ -40,8 +40,9 @@ public:
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
+    RiscOperatorsPtr operators_;
+
 protected:
-    RiscOperatorsPtr operators;
     const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
@@ -57,7 +58,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(operators);
+        s & boost::serialization::make_nvp("operators", operators_); // for backward compatibility
         s & BOOST_SERIALIZATION_NVP(regdict);
         s & BOOST_SERIALIZATION_NVP(addrWidth_);
         s & BOOST_SERIALIZATION_NVP(autoResetInstructionPointer_);
@@ -76,8 +77,8 @@ protected:
         : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
 
     Dispatcher(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : operators(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
-        ASSERT_not_null(operators);
+        : operators_(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
+        ASSERT_not_null(operators_);
         ASSERT_not_null(regs);
     }
 
@@ -134,8 +135,17 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
 public:
-    /** Get a pointer to the RISC operators object. */
-    virtual RiscOperatorsPtr get_operators() const { return operators; }
+    // Deprecated [Robb Matzke 2020-11-19]
+    virtual RiscOperatorsPtr get_operators() const ROSE_DEPRECATED("use \"operators\" instead") { return operators_; }
+
+    /** Property: RISC operators.
+     *
+     *  The RISC operators also contain the current and initial state on which they operate.
+     *
+     * @{ */
+    virtual RiscOperatorsPtr operators() const { return operators_; }
+    virtual void operators(const RiscOperatorsPtr &ops);
+    /** @} */
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
      *  convenience. */
@@ -221,6 +231,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
 public:
+    /** Initialize the state.
+     *
+     *  Some architectures benefit from having their initial state initialized in a certain way. For instance, on x86/amd64 the
+     *  segment registers CS, DS, and SS typically refer to the entire machine memory and can be initialized to have a zero
+     *  base address. */
+    virtual void initializeState(const StatePtr&);
 
     /** Update the instruction pointer register.
      *

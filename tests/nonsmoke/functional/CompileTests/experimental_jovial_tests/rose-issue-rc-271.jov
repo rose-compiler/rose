@@ -1,0 +1,13 @@
+START
+
+TYPE colors STATUS (
+  V(red), V(green), V(blue)
+);
+
+DEF PROC paint (color);
+  BEGIN
+    ITEM color colors; % color is a variable with status type name colors %
+    STOP;
+  END
+
+TERM

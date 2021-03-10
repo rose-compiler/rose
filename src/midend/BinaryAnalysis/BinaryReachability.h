@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Reachability_H
 #define ROSE_BinaryAnalysis_Reachability_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BitFlags.h>
 #include <boost/serialization/access.hpp>

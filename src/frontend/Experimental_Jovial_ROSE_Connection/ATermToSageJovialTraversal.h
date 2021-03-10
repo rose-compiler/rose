@@ -1,33 +1,33 @@
 #ifndef ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
 #define ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
 
-#include "ATerm/ATermToUntypedTraversal.h"
+#include "ATerm/ATermTraversal.h"
 #include "general_language_translation.h"
 #include "Jovial_to_ROSE_translation.h"
 #include "sage-tree-builder.h"
 
-#define USE_SAGE_TREE_BUILDER 1
+namespace rb = Rose::builder;
 
 namespace ATermSupport {
 
    using namespace LanguageTranslation;
 
-class ATermToSageJovialTraversal : public ATermToUntypedTraversal
+class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-#if USE_SAGE_TREE_BUILDER
-   Rose::builder::SageTreeBuilder sage_tree_builder;
-#else
-   Rose::builder::SageTreeBuilderNull sage_tree_builder;
-#endif
+  // C++11
+  // rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_jovial}
+   rb::SageTreeBuilder sage_tree_builder;
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source);
-   virtual ~ATermToSageJovialTraversal();
+   ATermToSageJovialTraversal(SgSourceFile* source)
+     : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_jovial))
+     {
+     }
 
    void setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec);
 
@@ -282,28 +282,20 @@ ATbool traverse_AbortStatement  (ATerm term);
 // 5.0 FORMULAS
 ATbool traverse_Formula(ATerm term, SgExpression* &expr);
 
+ATbool traverse_Literal(ATerm term, SgExpression* &expr);
+ATbool traverse_Parens (ATerm term, SgExpression* &expr);
+ATbool traverse_UnaryExpression (ATerm term, SgExpression* &expr);
+ATbool traverse_BinaryExpression(ATerm term, SgExpression* &expr);
+
 // 5.1 NUMERIC FORMULAS
-ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
-ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericConversion(ATerm term, SgExpression* &expr);
 ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
-ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
-ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
-ATbool traverse_OptLogicalContinuation (ATerm term, SgExpression* &expr);
-ATbool traverse_LogicalContinuation    (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &expr);
 ATbool traverse_BitPrimary             (ATerm term, SgExpression* &expr);
-
-// 5.2.1 RELATIONAL EXPRESSIONS
-ATbool traverse_RelationalExpression   (ATerm term, SgExpression* &expr);
-
-// 5.3.0 GENERAL FORMULAS
-ATbool traverse_GeneralFormula   (ATerm term, SgExpression* &expr);
 
 // 5.3 CHARACTER FORMULAS
 ATbool traverse_CharacterFormula (ATerm term, SgExpression* &expr);
@@ -319,11 +311,11 @@ ATbool traverse_Variable         (ATerm term, SgExpression* &var);
 ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
 ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);
-ATbool traverse_Index            (ATerm term, SgExpression* &expr);
 ATbool traverse_TableDereference (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_Dereference      (ATerm term, SgExpression* &expr, bool build_ptr_ref=true);
 ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &func_call);
 ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &func_call);
+ATbool traverse_RepFunctionVariable  (ATerm term, SgExpression* &func_call);
 
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);
@@ -339,6 +331,9 @@ ATbool traverse_LocFunction          (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.2 NEXT FUNCTION
 ATbool traverse_NextFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
+// 6.3.3 BIT FUNCTION
+ATbool traverse_BitFunction          (ATerm term, SgFunctionCallExp* &func_call);
+
 // 6.3.4 BYTE FUNCTION
 ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
@@ -348,14 +343,23 @@ ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call)
 // 6.3.6 ABS FUNCTIONS
 ATbool traverse_AbsFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
-// 6.3.7 SIZE FUNCTION
+// 6.3.7 SIGN FUNCTION
+ATbool traverse_SignFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.8 SIZE FUNCTION
 ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.9 BOUNDS FUNCTION
+ATbool traverse_BoundsFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.10 NWDSEN FUNCTION
 ATbool traverse_NwdsenFunction       (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.12 NENT FUNCTION
+ATbool traverse_NentFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 ATbool traverse_BitConversion        (ATerm term, SgType* &type);
@@ -381,17 +385,33 @@ ATbool traverse_BooleanLiteral (ATerm term, SgExpression* &expr);
 ATbool traverse_PointerLiteral (ATerm term, SgExpression* &expr);
 
 // 9.0 DIRECTIVES
-ATbool traverse_DirectiveList     (ATerm term);
-ATbool traverse_Directive         (ATerm term);
+ATbool traverse_DirectiveList      (ATerm term);
+ATbool traverse_Directive          (ATerm term);
 
 // 9.1 COMPOOL DIRECTIVES
-ATbool traverse_CompoolDirective  (ATerm term);
+ATbool traverse_CompoolDirective   (ATerm term);
+
+// 9.2.2 SKIP, BEGIN, AND END DIRECTIVES
+ATbool traverse_SkipDirective      (ATerm term);
+ATbool traverse_BeginDirective     (ATerm term);
+ATbool traverse_EndDirective       (ATerm term);
+
+// 9.3 LINKAGE DIRECTIVES
+ATbool traverse_LinkageDirective   (ATerm term);
 
 // 9.6 REDUCIBLE DIRECTIVES
-ATbool traverse_ReducibleDirective(ATerm term);
+ATbool traverse_ReducibleDirective (ATerm term);
+
+// 9.7.1 SOURCE-LISTING DIRECTIVES
+ATbool traverse_NolistDirective    (ATerm term);
+ATbool traverse_ListDirective      (ATerm term);
+ATbool traverse_EjectDirective     (ATerm term);
+
+// 9.10 INITIALIZATION DIRECTIVES
+ATbool traverse_InitializeDirective(ATerm term);
 
 // 9.11 ALLOCATION ORDER DIRECTIVES
-ATbool traverse_OrderDirective    (ATerm term);
+ATbool traverse_OrderDirective     (ATerm term);
 
 }; // class ATermToSageJovialTraversal
 }  // namespace Jovial

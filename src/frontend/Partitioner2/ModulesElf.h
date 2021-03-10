@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_ModulesElf_H
 #define ROSE_Partitioner2_ModulesElf_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
@@ -31,13 +31,10 @@ size_t findErrorHandlingFunctions(SgAsmElfFileHeader*, std::vector<Function::Ptr
 /** Reads ELF PLT sections and returns a list of functions.
  *
  * @{ */
-std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmElfFileHeader*);
-std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretation*);
-size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+std::vector<Function::Ptr> findPltFunctions(Partitioner&, SgAsmElfFileHeader*);
+std::vector<Function::Ptr> findPltFunctions(Partitioner&, SgAsmInterpretation*);
+size_t findPltFunctions(Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
-
-/** Find the dynamic linking PLT GOT section. */
-SgAsmGenericSection* findPltGot(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader);
 
 /** Information about the procedure lookup table. */
 struct PltInfo {
@@ -50,7 +47,7 @@ struct PltInfo {
 };
 
 /** Find information about the PLT. */
-PltInfo findPlt(const Partitioner&, SgAsmElfFileHeader*);
+PltInfo findPlt(const Partitioner&, SgAsmGenericSection*, SgAsmElfFileHeader*);
 
 /** Get a list of all ELF sections by name.
  *
@@ -115,7 +112,7 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
  *  RVA which is added to the initial base address. */
 struct PltEntryMatcher: public InstructionMatcher {
     // These data members are generally optional, and filled in as they're matched.
-    rose_addr_t baseVa_;                                // base address for computing memAddress_
+    rose_addr_t gotVa_;                                 // address of global offset table
     rose_addr_t gotEntryVa_;                            // address through which an indirect branch branches
     size_t gotEntryNBytes_;                             // size of the global offset table entry in bytes
     rose_addr_t gotEntry_;                              // address read from the GOT if the address is mapped (or zero)
@@ -123,10 +120,15 @@ struct PltEntryMatcher: public InstructionMatcher {
     rose_addr_t functionNumber_;                        // function number argument for the dynamic linker (usually a push)
 
 public:
-    PltEntryMatcher(rose_addr_t base)
-        : baseVa_(base), gotEntryVa_(0), gotEntryNBytes_(0), gotEntry_(0), nBytesMatched_(0) {}
-    static Ptr instance(rose_addr_t base) { return Ptr(new PltEntryMatcher(base)); }
+    explicit PltEntryMatcher(rose_addr_t gotVa)
+        : gotVa_(gotVa), gotEntryVa_(0), gotEntryNBytes_(0), gotEntry_(0), nBytesMatched_(0) {}
+    static Ptr instance(rose_addr_t gotVa) {
+        return Ptr(new PltEntryMatcher(gotVa));
+    }
     virtual bool match(const Partitioner&, rose_addr_t anchor);
+
+    /** Address of global offset table. */
+    rose_addr_t gotVa() const { return gotVa_; }
 
     /** Size of the PLT entry in bytes. */
     size_t nBytesMatched() const { return nBytesMatched_; }
@@ -149,11 +151,13 @@ private:
     SgAsmInstruction* matchDirectJump(const Partitioner&, rose_addr_t va);
     SgAsmInstruction* matchIndirectJump(const Partitioner&, rose_addr_t va,
                                         rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchA64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
-    SgAsmInstruction* matchA64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
-                                  rose_addr_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchA64Add(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchA64Br(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchIndirectJumpEbx(const Partitioner&, rose_addr_t va,
+                                           rose_addr_t &offsetFromEbx /*out*/, size_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchAarch64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
+    SgAsmInstruction* matchAarch64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+                                      rose_addr_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchAarch64Add(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchAarch64Br(const Partitioner&, rose_addr_t va);
 };
 
 /** Build may-return white and black lists. */

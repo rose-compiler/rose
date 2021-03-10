@@ -32,7 +32,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -45,6 +45,7 @@
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
+#include "TimingCollector.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -91,7 +92,6 @@ const std::string versionString="0.8.0";
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {
@@ -172,28 +172,28 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   }
 
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
   if(ctOpt.maxTransitionsForcedTop!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
   } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
   } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
   } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
   }
 
   if (ctOpt.maxTime!=1) {
@@ -297,7 +297,9 @@ int main( int argc, char * argv[] ) {
 
     IOAnalyzer* analyzer;
     if(ctOpt.dr.checkShuffleAlgorithm) {
-      analyzer = new ReadWriteAnalyzer();
+      cout<<"Error: ReadWriteAnalyzer not supported."<<endl;
+      exit(1);
+      //analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
@@ -313,8 +315,6 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
     analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
@@ -323,7 +323,6 @@ int main( int argc, char * argv[] ) {
       switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
       case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
       default: 
         cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
@@ -390,9 +389,6 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
     }
-    if(ctOpt.ignoreUndefinedDereference) {
-      analyzer->setIgnoreUndefinedDereference(true);
-    }
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
@@ -458,17 +454,11 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(ctOpt.normalizeFCalls) {
-      lowering.normalizeAst(sageProject,1);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
-    }
-
-    if(ctOpt.normalizeAll) {
+    if(ctOpt.normalizeLevel>0) {
       if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
-      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-      lowering.normalizeAst(sageProject,2);
+      lowering.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
@@ -538,8 +528,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    // TODO: introduce ProgramAbstractionLayer
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(ctOpt, sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
@@ -651,16 +640,6 @@ int main( int argc, char * argv[] ) {
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
-    if(ctOpt.eliminateCompoundStatements) {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-      set<AbstractValue> compoundIncVarsSet=AstUtility::determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-      rewriteSystem.resetStatistics();
-      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
-    }
-
     if(ctOpt.rers.eliminateArrays) {
       Specialization speci;
       speci.transformArrayProgram(sageProject, analyzer);
@@ -681,8 +660,9 @@ int main( int argc, char * argv[] ) {
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
+    TimingCollector tc; // new feature, other timers can be removed
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,tc);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -708,16 +688,10 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver3(startFunction,sageProject,tc);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
-    // function-id-mapping is initialized in initializeSolver.
-    if(ctOpt.info.printFunctionIdMapping) {
-      ROSE_ASSERT(analyzer->getCFAnalyzer());
-      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-    }
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
@@ -1223,8 +1197,8 @@ int main( int argc, char * argv[] ) {
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(ctOpt.visualization.viz) {
-        cout << "generating graphviz files:"<<endl;
+      if(ctOpt.visualization.vis) {
+        cout << "generating graphvis files:"<<endl;
         visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
@@ -1242,21 +1216,21 @@ int main( int argc, char * argv[] ) {
         //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
         analyzer->generateAstNodeInfo(sageProject);
         cout << "generating AST node info ... "<<endl;
         dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
         write_file("ast.dot", dotFile);
         cout << "generated ast.dot."<<endl;
 
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
         write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(ctOpt.visualization.vizTg2) {
+      if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;

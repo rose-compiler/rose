@@ -1,6 +1,6 @@
 /* These are backward compatibility functions now implemented in terms of AsmUnparser */
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
@@ -41,9 +41,13 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
     switch (insn->variantT()) {
         case V_SgAsmX86Instruction:
             return unparseX86Mnemonic(isSgAsmX86Instruction(insn));
-#ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmA64Instruction:
-            return unparseA64Mnemonic(isSgAsmA64Instruction(insn));
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        case V_SgAsmAarch64Instruction:
+            return unparseAarch64Mnemonic(isSgAsmAarch64Instruction(insn));
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
+            return unparseAarch32Mnemonic(isSgAsmAarch32Instruction(insn));
 #endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
@@ -78,9 +82,13 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
     switch (insn->variantT()) {
         case V_SgAsmX86Instruction:
             return unparseX86Expression(expr, labels, registers);
-#ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmA64Instruction:
-            return unparseA64Expression(expr, labels, registers);
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        case V_SgAsmAarch64Instruction:
+            return unparseAarch64Expression(expr, labels, registers);
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
+            return unparseAarch32Expression(expr, labels, registers);
 #endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr, labels, registers);
@@ -104,8 +112,11 @@ unparseAsmStatement(SgAsmStatement* stmt)
     AsmUnparser u;
     switch (stmt->variantT()) {
         case V_SgAsmX86Instruction:
-#ifdef ROSE_ENABLE_ASM_A64
-        case V_SgAsmA64Instruction:
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        case V_SgAsmAarch64Instruction:
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        case V_SgAsmAarch32Instruction:
 #endif
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:

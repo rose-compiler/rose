@@ -30,7 +30,7 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -144,23 +144,20 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(ctOpt,sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
     SgNode* root=sageProject;ROSE_ASSERT(root);
     setAssertConditionVariablesInAnalyzer(root,analyzer);
-    optionallyEliminateCompoundStatements(ctOpt, analyzer, root);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
-    initializeSolverWithStartFunction(ctOpt,analyzer,root,tc);
+    initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
     analyzer->initLabeledAssertNodes(sageProject);
-    optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     runSolver(ctOpt,analyzer,sageProject,tc);
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
-    optionallyGenerateVerificationReports(ctOpt,analyzer);
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
     optionallyRunVisualizer(ctOpt,analyzer,root);

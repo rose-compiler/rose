@@ -1,20 +1,18 @@
 include_rules
 
-SOURCES = \
-    SgAsmBlock.C SgAsmFunction.C                                                                                    \
-    SgAsmInstruction.C SgAsmA64Instruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C \
-    SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C                                   \
-    SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C   \
-    Registers.C RegisterDescriptor.C		                                                                \
-    Disassembler.C DisassemblerA64.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C  \
-    Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C                                                   \
-    AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C             \
-    AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C				    \
-    BinaryInstructionCache.C
+SOURCES = Assembler.C AssemblerX86.C AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C		\
+    AssemblerX86Init5.C AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C				\
+    AssemblerX86Init.C BinaryInstructionCache.C DisassemblerAarch32.C DisassemblerAarch64.C Disassembler.C			\
+    DisassemblerM68k.C DisassemblerMips.C DisassemblerNull.C DisassemblerPowerpc.C DisassemblerX86.C RegisterDescriptor.C	\
+    RegisterParts.C Registers.C SgAsmAarch32Instruction.C SgAsmAarch64Instruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C	\
+    SgAsmExpression.C SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C SgAsmIntegerValueExpression.C		\
+    SgAsmInterpretation.C SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmNullInstruction.C SgAsmPowerpcInstruction.C	\
+    SgAsmType.C SgAsmX86Instruction.C x86InstructionProperties.C
 
 run $(librose_compile) $(SOURCES)
 
-run $(public_header) Registers.h RegisterDescriptor.h BitPattern.h Disassembler.h DisassemblerA64.h \
-    DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h Assembler.h AssemblerX86.h \
-    AssemblerX86Init.h InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h \
-    InstructionEnumsA64.h InstructionEnumsPowerpc.h RegisterParts.h BinaryInstructionCache.h
+run $(public_header) Assembler.h AssemblerX86.h AssemblerX86Init.h BinaryInstructionCache.h BitPattern.h			\
+    DisassemblerAarch32.h DisassemblerAarch64.h Disassembler.h DisassemblerM68k.h DisassemblerMips.h DisassemblerNull.h		\
+    DisassemblerPowerpc.h DisassemblerX86.h InstructionEnumsAarch32.h InstructionEnumsAarch64.h InstructionEnumsM68k.h		\
+    InstructionEnumsMips.h InstructionEnumsPowerpc.h InstructionEnumsX86.h RegisterDescriptor.h RegisterParts.h Registers.h	\
+    x86InstructionProperties.h

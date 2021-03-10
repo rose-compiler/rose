@@ -125,7 +125,6 @@ namespace ELF{
 
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"
-#include "DisassemblerArm.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerX86.h"
 #include "Partitioner.h"

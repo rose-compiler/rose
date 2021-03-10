@@ -70,7 +70,7 @@ LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
-// MS: TODO: refactor thse two functions  (2/2)
+// MS: TODO: refactor these two functions  (2/2)
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -145,7 +145,13 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   SgNode* functionDef=getLabeler()->getNode(entryLabel);
   RoseAst ast(functionDef);
   for(auto node : ast) {
-    if(!isSgBasicBlock(node)) {
+    bool labeledNodeNotInCFG=
+      isSgForStatement(node)
+      ||isSgWhileStmt(node)
+      ||isSgDoWhileStmt(node)
+      ||isSgSwitchStatement(node)
+      ||isSgIfStmt(node);
+    if(!isSgBasicBlock(node)&&!labeledNodeNotInCFG) {
       Label lab=getLabeler()->getLabel(node);
       if(lab.isValid()) {
         fLabels.insert(lab);
@@ -277,7 +283,6 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
     case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
-    case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
     case FRM_FUNCTION_CALL_MAPPING: {
       funCallTargetSet=determineFunctionDefinition4(funCall);
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
@@ -1232,7 +1237,7 @@ Flow CFAnalysis::flow(SgNode* n) {
   switch (node->variantT()) {
   case V_SgFunctionDefinition: {
     Sg_File_Info* fi = node->get_file_info();
-    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< " :" << fi->displayString() << endl;
+    SAWYER_MESG(logger[INFO])<<"Building CFG for function: "<<SgNodeHelper::getFunctionName(node)<< endl;
     // PP (04/09/20)
     // do nothing for function definitions that did not receive a label
     // e.g., templated functions
@@ -1659,36 +1664,18 @@ Flow CFAnalysis::flow(SgNode* n) {
   }
 }
 
-SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
-  //cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
-  SgFunctionDefinition* funDef=nullptr;
-  // TODO (use function id mapping)
-  ROSE_ASSERT(getFunctionIdMapping());
-  SgExpression* node=funCall->get_function();
-  if(node) {
-    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
-      funDef=getFunctionIdMapping()->resolveFunctionRef(funRef);
-      if(funDef) SAWYER_MESG(logger[TRACE])<<"Resolved to "<<funDef;
-      else SAWYER_MESG(logger[TRACE])<<"NOT resolved.";
-    }
-  }
-  SAWYER_MESG(logger[TRACE])<<" FunDef: "<<funDef<<endl;
-  return funDef;
-}
-
-
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
+  SAWYER_MESG(logger[INFO])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
   if(res.size()>0) {
     if(res.size()==1) {
-      SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      SAWYER_MESG(logger[INFO]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
+      SAWYER_MESG(logger[INFO])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[INFO]) << "NOT RESOLVED."<<endl;
   }
   return res;
 }
@@ -1765,14 +1752,6 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp
     }
   }
   return 0;
-}
-
-void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
-  _functionIdMapping=fim;
-}
-
-FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
-  return _functionIdMapping;
 }
 
 void CFAnalysis::setFunctionCallMapping(FunctionCallMapping* fcm) {
@@ -1900,4 +1879,15 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 2/2" << endl;
 
   return forksEqualJoins;
+}
+
+void CFAnalysis::createICFG(SgProject* project) {
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  setFunctionCallMapping2(functionCallMapping2);
+  _icfgFlow=flow(project);
+  _interFlow=interFlow(_icfgFlow);
+  intraInterFlow(_icfgFlow, _interFlow);
 }
