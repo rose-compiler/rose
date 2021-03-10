@@ -278,6 +278,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-645.cpl                  \
  rose-issue-rc-677.cpl                  \
  rose-issue-rc-737.cpl                  \
+ rose-issue-rc-742.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \
