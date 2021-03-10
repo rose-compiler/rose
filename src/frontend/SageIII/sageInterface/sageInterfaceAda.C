@@ -1,14 +1,12 @@
 
-
-#ifndef _SAGEINTERFACE_ADA_H
-#define _SAGEINTERFACE_ADA_H 1
-
-
 #include "sageInterfaceAda.h"
 #include "sageInterface.h"
 #include "sageGeneric.h"
 
 #include <iostream>
+#include <exception>
+
+namespace si = SageInterface;
 
 namespace
 {
@@ -33,13 +31,6 @@ namespace
 
   struct ArrayType : sg::DispatchHandler<SgArrayType*>
   {
-      //~ typedef sg::DispatchHandler<SgArrayType*> base;
-
-      //~ explicit
-      //~ ArrayType(TypeSkip skipped)
-      //~ : base(), skipWhat(skipped)
-      //~ {}
-
       static
       SgArrayType* find(SgType* n);
       //~ find(SgType* n, TypeSkip skipWhat = skipNone);
@@ -66,7 +57,6 @@ namespace
 
   SgArrayType*
   ArrayType::find(SgType* n)
-  //~ ArrayType::find(SgType* n, TypeSkip skipWhat)
   {
     SgArrayType* res = sg::dispatch(ArrayType(), n);
 
@@ -77,7 +67,6 @@ namespace
   ArrayType::recurse(SgType* n)
   {
     return ArrayType::find(n);
-    //~ return ArrayType::find(n, skipWhat);
   }
 
   struct DimRange : sg::DispatchHandler<SgExpression*>
@@ -183,50 +172,124 @@ namespace
     return sg::dispatch(ArrayBounds(), n);
   }
 
-
-#if 0
-       * get_typeptr(): SgAdaSubtype
-       ** get_typeptr(): SgTypedefType // type
-       *** get_declaration() : SgTypedefDeclaration
-       **** get_base_type(): SgArrayType  // array type for Vector only
-       ** get_constraint() SgAdaIndexConstraint // constraints on type
-       *** get_indexRanges(): SgTypeExpression
-       **** get_type() SgTypedefType
-       ***** get_declaration() SgTypedefDeclaration // Index_Range_1
-       ****** get_base_type() : SgAdaSubtype
-       ******* get_constraint():  SgAdaRangeConstraint  // constraint on
-       ******** get_range(): SgRangeExp
-#endif /* USE_CASE */
-
-/*
-  struct ArrayBase : sg::DispatchHandler<SgType*>
+  struct IntegralValue : sg::DispatchHandler<long long int>
   {
-    static
-    SgType& find(const SgArrayType&);
+    void handle(SgNode& n)     { SG_UNEXPECTED_NODE(n); }
 
-    // invalid case
-    void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+    void handle(SgExpression& n)
+    {
+      static const char* const msg = "sageInterface::ada: Expected constant integral value, got ";
 
-    // base case
-    void handle(SgType& n)      { res = &n; }
+      throw std::runtime_error(msg + n.unparseToString());
+    }
 
-    // recurse on array types
-    void handle(SgArrayType& n) { res = &find(n); }
+    void handle(SgIntVal& n)                 { res = n.get_value(); }
+    void handle(SgLongIntVal& n)             { res = n.get_value(); }
+    void handle(SgLongLongIntVal& n)         { res = n.get_value(); }
+    void handle(SgShortVal& n)               { res = n.get_value(); }
+    void handle(SgUnsignedCharVal& n)        { res = n.get_value(); }
+    void handle(SgUnsignedIntVal& n)         { res = n.get_value(); }
+    void handle(SgUnsignedLongLongIntVal& n) { res = n.get_value(); }
+    void handle(SgUnsignedLongVal& n)        { res = n.get_value(); }
+    void handle(SgUnsignedShortVal& n)       { res = n.get_value(); }
   };
-*/
 
-  SgArrayType*
-  findArrayType(SgType* ty)
+  size_t dimValue(SgExprListExp& args)
   {
-    //~ TypeSkip defaultSkips = TypeSkip(skipTypedefType | skipAdaDerivedType | skipAdaSubtype);
+    SgExpressionPtrList& exprlst = args.get_expressions();
 
-    return ArrayType::find(ty); // , defaultSkips);
+    if (exprlst.size() == 0)
+      return 1;
+
+    ROSE_ASSERT(exprlst.size() == 1);
+    return sg::dispatch(IntegralValue(), exprlst[0]);
   }
 
-  std::vector<SgExpression*>
-  findArrayBounds(SgType* ty, SgArrayType* arrty)
+  struct RangeExp : sg::DispatchHandler<SgRangeExp*>
   {
-    return ArrayBounds::find(ty, arrty);
+      typedef sg::DispatchHandler<SgRangeExp*> base;
+
+      explicit
+      RangeExp(size_t whichDimension)
+      : base(), dim(whichDimension)
+      {}
+
+      static
+      ReturnType
+      find(SgNode* n, size_t dim);
+
+      ReturnType
+      recurse(SgNode* n);
+
+      void notFound() const { ROSE_ASSERT(!res); }
+
+      size_t dimension() const
+      {
+        ROSE_ASSERT(dim > 0);
+
+        return dim-1;
+      }
+
+      //
+      // handlers
+
+      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+
+      // success
+      void handle(SgRangeExp& n)           { res = &n; }
+
+      // not found
+      void handle(SgType&)                 { notFound(); }
+
+      // For any expressions, try with the expression's type
+      // \note the ROSE AST may not yet compute the correct type for all
+      //       Ada expressions. Rather than putting on band aid here,
+      //       this would need to be fixed in the AST (if this is an issue).
+      void handle(SgExpression& n)         { res = recurse(n.get_type()); }
+
+      void handle(SgAdaAttributeExp& n)    { res = ::si::ada::range(n); }
+
+      void handle(SgAdaRangeConstraint& n) { res = recurse(n.get_range()); }
+
+      void handle(SgAdaIndexConstraint& n)
+      {
+        res = find(n.get_indexRanges().at(dimension()), 1);
+      }
+
+      void handle(SgAdaSubtype& n)
+      {
+        SgNode* constraint = n.get_constraint();
+
+        res = recurse(constraint ? constraint : n.get_base_type());
+      }
+
+      void handle(SgArrayType& n)
+      {
+        if (::si::ada::unconstrained(n))
+          return notFound();
+
+        SgExprListExp& exprlst = SG_DEREF(n.get_dim_info());
+
+        res = find(exprlst.get_expressions().at(dimension()), 1);
+      }
+
+      void handle(SgAdaDerivedType& n)     { res = recurse(n.get_base_type()); }
+      void handle(SgTypedefType& n)        { res = recurse(n.get_base_type()); }
+
+    private:
+      size_t dim;
+  };
+
+  RangeExp::ReturnType
+  RangeExp::find(SgNode* n, size_t dim)
+  {
+    return sg::dispatch(RangeExp(dim), n);
+  }
+
+  RangeExp::ReturnType
+  RangeExp::recurse(SgNode* n)
+  {
+    return find(n, dim);
   }
 }
 
@@ -234,24 +297,54 @@ namespace SageInterface
 {
 namespace ada
 {
-  bool withPrivateDefinition(const SgDeclarationStatement* n)
+  bool withPrivateDefinition(const SgDeclarationStatement& dcl)
   {
     // \todo check that dcl refers to a type
-
-    const SgDeclarationStatement& dcl = SG_DEREF(n);
     const SgDeclarationStatement* def = dcl.get_definingDeclaration();
 
     return def && def->get_declarationModifier().get_accessModifier().isPrivate();
   }
 
+  bool withPrivateDefinition(const SgDeclarationStatement* n)
+  {
+    return withPrivateDefinition(SG_DEREF(n));
+  }
+
   std::pair<SgArrayType*, std::vector<SgExpression*> >
   flattenArrayType(SgType* atype)
   {
-    SgArrayType* restype = findArrayType(atype);
+    SgArrayType* restype = ArrayType::find(atype);
 
-    return std::make_pair(restype, findArrayBounds(atype, restype));
+    return std::make_pair(restype, ArrayBounds::find(atype, restype));
+  }
+
+  SgRangeExp*
+  range(const SgAdaAttributeExp& rangeAttribute)
+  {
+    if (rangeAttribute.get_attribute() != "RANGE")
+      return NULL;
+
+    const size_t dim = dimValue(SG_DEREF(rangeAttribute.get_args()));
+
+    return RangeExp::find(rangeAttribute.get_object(), dim);
+  }
+
+  SgRangeExp*
+  range(const SgAdaAttributeExp* rangeAttribute)
+  {
+    return range(SG_DEREF(rangeAttribute));
+  }
+
+
+  bool unconstrained(const SgArrayType& ty)
+  {
+    return ty.get_is_variable_length_array();
+  }
+
+  bool unconstrained(const SgArrayType* ty)
+  {
+    return unconstrained(SG_DEREF(ty));
   }
 } // Ada
 } // SageInterface
 
-#endif /* _SAGEINTERFACE_ADA_H */
