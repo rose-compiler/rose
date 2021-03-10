@@ -211,6 +211,31 @@ void Build(const parser::Module &x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Module)\n";
 #endif
+
+   // ModuleStmt - Name v;
+   std::string module_stmt_name;
+   Build(std::get<0>(x.t).statement.v, module_stmt_name);
+
+   //   SgModuleStatement* module_stmt = nullptr;
+   //   builder.Enter(module_stmt, module_stmt_name);
+
+   // SpecificationPart
+   SgScopeStatement* function_scope{nullptr};
+   Build(std::get<parser::SpecificationPart>(x.t), function_scope);
+
+   // std::optional<ModuleSubprogramPart>
+#if 0
+   if (auto & opt = std::get<2>(x.t)) {
+   }
+#endif
+
+   // EndModuleStmt - std::optional<Name> v;
+   if (auto & opt = std::get<3>(x.t).statement.v) {
+      std::string end_module_stmt_name;
+      Build(opt.value(), end_module_stmt_name);
+   }
+
+   //   builder.Leave(module_stmt);
 }
 
 template<typename T>
