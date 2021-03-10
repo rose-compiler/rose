@@ -496,7 +496,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
       std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
       SgExprListExp&             args  = mkExprListExp(exprs);
 
-      res = &mkAdaAttributeExp(obj, name.fullName, args);
+      res = &mkAdaAttributeExp(obj, AdaIdentifier{name.fullName}, args);
       break;
     }
 
@@ -605,7 +605,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
         logInfo() << "untested attribute created: " << expr.Attribute_Kind
                   << std::endl;
 
-        res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp());
+        res = &mkAdaAttributeExp(obj, AdaIdentifier{name.fullName}, mkExprListExp());
         break;
       }
 
@@ -617,7 +617,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
         logError() << "unknown expression attribute: " << expr.Attribute_Kind
                    << std::endl;
 
-        res = &mkAdaAttributeExp(obj, "ErrorAttr:" + name.fullName, mkExprListExp());
+        res = &mkAdaAttributeExp(obj, AdaIdentifier{"ErrorAttr:" + name.fullName}, mkExprListExp());
         ROSE_ASSERT(!FAIL_ON_ERROR);
       }
   }
