@@ -441,11 +441,13 @@ fi
 # echo "Processing header files to language = $language"
 
 # if [ is_C_compiler = "yes" ]
-if [ "x$language" = "xc" ]
-then
-    [ -n "$VERBOSE" ] && echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
-    cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
-fi
+
+# Pei-Hung (03/08/2021) EDG can handle _Complex_I properly as tested with EDG5.  rose_specific_complex.h is no longer needed.
+# if [ "x$language" = "xc" ]
+# then
+#     [ -n "$VERBOSE" ] && echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
+#    cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
+# fi
 
 # DQ (7/26/2020): This might have to be specific to GNU, or GNU 10.x
 if [ "x$language" = "xc++" ]
