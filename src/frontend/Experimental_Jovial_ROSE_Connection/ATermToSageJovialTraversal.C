@@ -914,11 +914,12 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterItemDescription(ATerm term,
    printf("... traverse_CharacterItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_size;
+   ATerm t_char_type_desc, t_size;
    Sawyer::Optional<SgExpression*> size;
 
-   if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
+   if (ATmatch(term, "CharacterItemDescription(<term>,<term>)", &t_char_type_desc, &t_size)) {
       // MATCHED CharacterItemDescription
+      // The first term, t_char_type_desc, comes from the lexer and is direct user input: "C", "c".
    } else return ATfalse;
 
    if (traverse_OptItemSize(t_size, size)) {
