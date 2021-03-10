@@ -155,22 +155,20 @@ void VariableIdMapping::toStream(ostream& os) {
       <<","<<varId.toString(this)
       //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
-      <<","<<getNumberOfElements(varId)
-      <<","<<getElementSize(varId)
-      <<","<<getOffset(varId);
+      <<","<<getVariableIdInfo(varId).variableScopeToString()
+      <<","<<getVariableIdInfo(varId).aggregateTypeToString()
+      <<",elems:"<<getNumberOfElements(varId)
+      <<",elemsize:"<<getElementSize(varId)
+      <<",total:"<<getTotalSize(varId)
+      <<",offset:"<<getOffset(varId);
     if(isStringLiteralAddress(varId)) {
       os<<","<<"<non-symbol-string-literal-id>";
     } else if(isTemporaryVariableId(varId)) {
       os<<","<<"<non-symbol-memory-region-id>";
     } else if(SgSymbol* sym=getSymbol(varId)) {
-      os<<","<<sym->get_mangled_name();
+      os<<","<<variableName(varId);
     } else {
       os<<","<<"<missing-symbol>";
-    }
-    if(isMemberVariable(varId)) {
-      os<<",data-member";
-    } else {
-      os<<",variable";
     }
     os<<endl;
   }
@@ -312,6 +310,17 @@ TypeSize VariableIdMapping::getElementSize(VariableId variableId) {
   return mappingVarIdToInfo[variableId].elementSize;
 }
 
+void VariableIdMapping::setNumDimensionElements(VariableId variableId, TypeSize dimNr, TypeSize numElements) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].numDimensionElements[dimNr]=numElements;
+}
+
+TypeSize VariableIdMapping::getNumDimensionElements(VariableId variableId, TypeSize dimNr) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].numDimensionElements[dimNr];
+}
+
+
 void VariableIdMapping::setTotalSize(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].totalSize=size;
@@ -335,14 +344,14 @@ TypeSize VariableIdMapping::getOffset(VariableId variableId) {
 void VariableIdMapping::setIsMemberVariable(VariableId variableId, bool flag) {
   ROSE_ASSERT(variableId.isValid());
   if(flag)
-    mappingVarIdToInfo[variableId].variableScope=VAR_MEMBER;
+    mappingVarIdToInfo[variableId].variableScope=VS_MEMBER;
   else
-    mappingVarIdToInfo[variableId].variableScope=VAR_UNKNOWN;
+    mappingVarIdToInfo[variableId].variableScope=VS_UNKNOWN;
 }
 
 bool VariableIdMapping::isMemberVariable(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
-  return mappingVarIdToInfo[variableId].variableScope==VAR_MEMBER;
+  return mappingVarIdToInfo[variableId].variableScope==VS_MEMBER;
 }
 
 bool VariableIdMapping::isVolatile(VariableId variableId) {
@@ -694,7 +703,8 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   elementSize(VariableIdMapping::unknownSizeValue()),
   totalSize(VariableIdMapping::unknownSizeValue()),
   offset(VariableIdMapping::unknownSizeValue()),
-  variableScope(VAR_UNKNOWN),
+  aggregateType(AT_UNKNOWN),
+  variableScope(VS_UNKNOWN),
   isVolatileFlag(false),
   relinked(false)
 {
@@ -757,6 +767,46 @@ VariableIdSet& CodeThorn::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
 
 size_t CodeThorn::hash_value(const VariableId& vid) {
   return vid.getIdCode();
+}
+
+VariableIdMapping::VariableIdInfo VariableIdMapping::getVariableIdInfo(VariableId vid) {
+  return *getVariableIdInfoPtr(vid);
+}
+
+VariableIdMapping::VariableIdInfo* VariableIdMapping::getVariableIdInfoPtr(VariableId vid) {
+  return &mappingVarIdToInfo[vid];
+}
+
+void VariableIdMapping::setVariableIdInfo(VariableId vid, VariableIdInfo vif) {
+  mappingVarIdToInfo[vid]=vif;
+}
+  
+std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
+  switch(aggregateType) {
+  case AT_UNKNOWN:
+    return "unknown";
+  case AT_SINGLE:
+    return "single";
+  case AT_ARRAY:
+    return "array";
+  case AT_STRUCT:
+    return "struct";
+  }
+  return "undefined-aggregate-type-enum";
+}
+
+std::string VariableIdMapping::VariableIdInfo::variableScopeToString() {
+  switch(variableScope) {
+  case VS_UNKNOWN:
+    return "unknown";
+  case VS_LOCAL:
+    return "local";
+  case VS_GLOBAL:
+    return "global";
+  case VS_MEMBER:
+    return "member";
+  }
+  return "undefined-variable-scope-enum";
 }
 
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {

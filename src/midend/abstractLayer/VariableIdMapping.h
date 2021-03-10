@@ -99,6 +99,10 @@ namespace CodeThorn {
     // get number of elements of the memory region determined by this variableid
     virtual TypeSize getNumberOfElements(VariableId variableId);
 
+    virtual void setNumDimensionElements(VariableId variableId, TypeSize dimNr, TypeSize numElems);
+    virtual TypeSize getNumDimensionElements(VariableId variableId, TypeSize dimNr);
+
+    
     // set the size of an element of the memory region determined by this variableid
     virtual void setElementSize(VariableId variableId, TypeSize size);
     // get the size of an element of the memory region determined by this variableid
@@ -166,7 +170,8 @@ namespace CodeThorn {
     
     // link analysis is by default disabled (=false)
     void setLinkAnalysisFlag(bool);
-    enum VariableScope { VAR_UNKNOWN, VAR_LOCAL, VAR_GLOBAL, VAR_MEMBER };
+    enum AggregateType { AT_UNKNOWN, AT_SINGLE, AT_ARRAY, AT_STRUCT };
+    enum VariableScope { VS_UNKNOWN, VS_LOCAL, VS_GLOBAL, VS_MEMBER };
     bool isVolatile(VariableId varId);
     void setVolatileFlag(VariableId varId, bool flag);
 
@@ -177,11 +182,16 @@ namespace CodeThorn {
       SgSymbol* sym;
       TypeSize numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables, if unknown -1.
       TypeSize elementSize; // in bytes, if unknown -1
+      std::map<TypeSize,TypeSize> numDimensionElements; // in elements, if unknown -1 or non existent (getDimensionElements(0) returns -1)
       TypeSize totalSize; // in bytes, if unknown -1
       TypeSize offset;      // in bytes, only for member variables, if unknown -1
+      AggregateType aggregateType;
       VariableScope variableScope;
       bool isVolatileFlag;
       bool relinked; // true if link analysis relinked this entry
+      std::string toString();
+      std::string aggregateTypeToString();
+      std::string variableScopeToString();
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
     std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
@@ -205,6 +215,11 @@ namespace CodeThorn {
     SgSymbol* selectLinkSymbol(std::set<SgSymbol*>& symSet);
     void performLinkAnalysisRemapping();
     bool linkAnalysis;
+  public:
+    VariableIdInfo getVariableIdInfo(VariableId vid);
+    VariableIdInfo* getVariableIdInfoPtr(VariableId vid);
+    void setVariableIdInfo(VariableId vid, VariableIdInfo vif);
+
   }; // end of class VariableIdMapping
 
   typedef VariableIdMapping::VariableIdSet VariableIdSet;
