@@ -84,10 +84,17 @@ main(int argc, char *argv[]) {
 
 // C++ comppiler is too old
 #include <iostream>
+#include <cstring>
 
 int main(int argc, char *argv[]) {
+    int exitStatus = 1;
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--no-error-if-disabled"))
+            exitStatus = 0;
+    }
+
     std::cerr <<argv[0] <<": this tool is disabled (your C++ compiler is too old)\n";
-    return 1;
+    return exitStatus;
 }
 
 #endif

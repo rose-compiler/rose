@@ -191,6 +191,29 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
+// DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
+// and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in 
+// the header file.
+bool Rose::is_Ada_language        = false;
+bool Rose::is_C_language          = false;
+bool Rose::is_Cobol_language      = false;
+bool Rose::is_OpenMP_language     = false;
+bool Rose::is_UPC_language        = false;
+bool Rose::is_UPC_dynamic_threads = false;
+bool Rose::is_C99_language        = false;
+bool Rose::is_Cxx_language        = false;
+bool Rose::is_Java_language       = false;
+bool Rose::is_Jovial_language     = false;
+bool Rose::is_Fortran_language    = false;
+bool Rose::is_CAF_language        = false;
+bool Rose::is_PHP_language        = false;
+bool Rose::is_Python_language     = false;
+bool Rose::is_Cuda_language       = false;
+bool Rose::is_OpenCL_language     = false;
+bool Rose::is_X10_language        = false;
+bool Rose::is_binary_executable   = false;
+
+
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
 using namespace Rose::Diagnostics;
 
@@ -334,24 +357,45 @@ std::string version_message()
 
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
-          "ROSE (version: " + version_number() + ")" +
-          "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
-          "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
-          "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
-          "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-          "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
-          "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-          "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+         "ROSE (version: " + version_number() + ")" +
+         "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
+         "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
+         "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+         "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+         "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
+         "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
+         "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-          "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
-          "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
+         "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
+         "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
 #endif
-          "\n  --- using original build tree path: " + build_tree_path +
-          "\n  --- using instalation path: " + install_path +
-          "\n  --- using GNU readline version: " + readlineVersionString() +
-          "\n  --- using libmagic version: " + libmagicVersionString() +
-          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
-          "\n  --- using lib-yices version: " + yicesVersionString();
+         "\n  --- using original build tree path: " + build_tree_path +
+         "\n  --- using instalation path: " + install_path +
+         "\n  --- using GNU readline version: " + readlineVersionString() +
+         "\n  --- using libmagic version: " + libmagicVersionString() +
+         "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
+         "\n  --- using lib-yices version: " + yicesVersionString() +
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+         "\n  --- binary analysis is enabled"
+#ifdef ROSE_ENABLE_ASM_AARCH64
+         "\n  ---   ARM AArch64 is enabled"
+#else
+         "\n  ---   ARM AArch64 is disabled"
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+         "\n  ---   ARM AArch32 is enabled"
+#else
+         "\n  ---   ARM AArch32 is disasbled"
+#endif
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+         "\n  ---   concolic testing is enabled"
+#else
+         "\n  ---   concolic testing is disabled"
+#endif
+#else
+         "\n  --- binary analysis is disabled"
+#endif
+         ;
   }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.

@@ -1184,7 +1184,7 @@ class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgOmpClause::
 
 
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Maps SgSharedVector to/from file representation. This is almost exactly the same as the
  *  vector of Sg object pointers specialization except the rebuildDataStoredInEasyStorageClass() constructs the SgSharedVector
  *  in a different manner. In an original AST all SgSharedVector objects probably pointed to a common underlying storage pool

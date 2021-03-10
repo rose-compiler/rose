@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "SageBuilderAsm.h"
 
@@ -32,6 +32,9 @@ buildBinaryComposite(const std::string &fileName) {
         // We already have a project, so we cannot call frontend() again.
         retval = new SgBinaryComposite(args, project);
         BinaryLoader::load(retval, DONT_DISASSEMBLE);
+
+     // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
+        Rose::is_binary_executable = true;
     } else {
         // No project yet, so just call frontend()
         project = frontend(args);
@@ -682,6 +685,22 @@ buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     } else {
         a->set_type(rhs->get_type());
     }
+    return a;
+}
+
+SgAsmBinaryConcat*
+buildConcatExpression(SgAsmExpression *msb, SgAsmExpression *lsb) {
+    ASSERT_not_null(msb);
+    ASSERT_not_null(lsb);
+    ASSERT_not_null(msb->get_type());
+    ASSERT_not_null(lsb->get_type());
+    ASSERT_forbid(msb->get_parent());
+    ASSERT_forbid(lsb->get_parent());
+
+    SgAsmBinaryConcat *a = new SgAsmBinaryConcat(msb, lsb);
+    msb->set_parent(a);
+    lsb->set_parent(a);
+    a->set_type(buildTypeU(msb->get_type()->get_nBits() + lsb->get_type()->get_nBits()));
     return a;
 }
 

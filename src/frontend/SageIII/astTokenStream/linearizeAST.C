@@ -163,7 +163,7 @@ LinearizeAST::evaluateInheritedAttribute (
 
 
 //       if( isSgInitializer(astNode) == NULL && (isSgExpression(astNode) != NULL | isSgExprStatement(astNode) != NULL )) 
-       if( isSgBinaryOp(astNode) != NULL  || isSgConditionalExp(astNode) != NULL || isSgExprListExp(astNode) != NULL )
+     if( isSgBinaryOp(astNode) != NULL  || isSgConditionalExp(astNode) != NULL || isSgExprListExp(astNode) != NULL )
        {
                  //This is needed when the root node that is given the traversal is part of an expression
             inheritedAttribute.mustBeInherited=true;

@@ -1,8 +1,8 @@
 #ifndef ROSE_BitPattern_H
 #define ROSE_BitPattern_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "integerOps.h"
 #include "StringUtility.h"

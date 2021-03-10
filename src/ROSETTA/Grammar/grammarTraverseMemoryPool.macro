@@ -1,8 +1,8 @@
 void
 $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
    {
-  // This function traverses the memory pool for an IR node and
-  // calls the visit function of the input class execute a traversal 
+  // This function traverses the memory pool for only a specific IR node 
+  // and calls the visit function of the input class execute a traversal 
   // similar to the style of the attribute based traversals within ROSE.
   // This traversal will visit ALL nodes of the AST where as the other 
   // attribute based traversals visit only the embedded tree within the AST.
@@ -156,10 +156,13 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
                i++;
              }
 
+#if 0
+       // DQ (10/28/2020): Commented out this output spew that happens in the output of IR node statistics.
           if (done == false)
              {
                printf ("No representative for $CLASSNAME found in memory pools \n");
              }
+#endif
         }
    }
 

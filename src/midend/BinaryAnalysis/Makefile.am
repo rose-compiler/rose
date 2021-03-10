@@ -44,12 +44,12 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/ConcolicExecutor.C					\
     Concolic/ConcreteExecutor.C					\
     Concolic/Database.C						\
-    Concolic/Database2.C					\
     Concolic/ExecutionManager.C					\
     Concolic/LinuxExecutor.C					\
     Concolic/LinuxExitStatus.C					\
     Concolic/LinuxTraceExecutor.C				\
     Concolic/Specimen.C						\
+    Concolic/SystemCall.C					\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\
     Concolic/Utility.C						\
@@ -65,7 +65,8 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/BaseSemanticsSValue.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
-    instructionSemantics/DispatcherA64.C			\
+    instructionSemantics/DispatcherAarch32.C			\
+    instructionSemantics/DispatcherAarch64.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
@@ -146,7 +147,8 @@ pkginclude_HEADERS =					\
     instructionSemantics/BaseSemanticsTypes.h		\
     instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
-    instructionSemantics/DispatcherA64.h		\
+    instructionSemantics/DispatcherAarch32.h		\
+    instructionSemantics/DispatcherAarch64.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
@@ -171,7 +173,18 @@ pkginclude_HEADERS =					\
     Concolic/io-utility.h
 
 nobase_pkginclude_HEADERS =			\
-    Concolic/ConcolicExecutor.h
+    Concolic/BasicTypes.h			\
+    Concolic/ConcolicExecutor.h			\
+    Concolic/ConcreteExecutor.h			\
+    Concolic/Database.h				\
+    Concolic/ExecutionManager.h			\
+    Concolic/LinuxExecutor.h			\
+    Concolic/LinuxExitStatus.h			\
+    Concolic/LinuxTraceExecutor.h		\
+    Concolic/Specimen.h				\
+    Concolic/SystemCall.h			\
+    Concolic/TestCase.h				\
+    Concolic/TestSuite.h
 
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\

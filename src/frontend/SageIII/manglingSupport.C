@@ -131,10 +131,15 @@ findRootFunc (const SgScopeStatement* scope)
 
                     SgScopeStatement* nextOuterScope = scope->get_scope();
                     ROSE_ASSERT(nextOuterScope != NULL);
-#if 0
-                    printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
-#endif
-                    ROSE_ASSERT(nextOuterScope != scope);
+
+                 // CR (10/19/2020): Allowing nextOuterScope == scope. Otherwise (see issue RC-227)
+                 // SgTypedefDeclaration::get_mangled_name() causes havoc for Jovial. It may be that
+                 // I'm not prepending typedef_ to the typename. But then I'm not sure how symbol
+                 // lookup goes.
+                 // ROSE_ASSERT(nextOuterScope != scope);
+                    if (nextOuterScope == scope) {
+                      return NULL;
+                    }
 
                     return findRootFunc(scope->get_scope());
                   }
@@ -544,7 +549,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 SgName
 mangleQualifiers( const SgScopeStatement* scope )
    {
-  // DQ (3/14/2012): I think we have top assert this here, though it appears to have been commented out.
+  // DQ (3/14/2012): I think we have to assert this here, though it appears to have been commented out.
   // This may become a part of a future set of language dependent assertions in the AST Build Interface
   // since it is more relevant for C++ than for other languges.
   // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.
@@ -1321,10 +1326,11 @@ mangleExpression (const SgExpression* expr)
 
         case V_SgCastExp: {
           const SgCastExp * cast = isSgCastExp(expr);
-          SgType * cast_type = cast->get_type();
-          ROSE_ASSERT(cast_type != NULL);
+          ROSE_ASSERT(cast != NULL);
           SgExpression * op = cast->get_operand_i();
           ROSE_ASSERT(op != NULL);
+          SgType * cast_type = cast->get_type();
+          ROSE_ASSERT(cast_type != NULL);
           mangled_name << "_bCastExp_" << mangleExpression(op) << "_totype_" << cast_type->get_mangled().str() << "_eCastExp_";
           break;
         }
@@ -1423,6 +1429,7 @@ mangleExpression (const SgExpression* expr)
         }
         case V_SgConstructorInitializer: {
           const SgConstructorInitializer* e = isSgConstructorInitializer (expr);
+          ROSE_ASSERT(e != NULL);
 
           mangled_name << "_bConstructorInitializer_";
 

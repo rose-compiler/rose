@@ -10,6 +10,8 @@ noinst_LTLIBRARIES = libsageInterface.la
 libsageInterface_la_SOURCES      = \
      sageInterface.h \
      sageInterface.C \
+     sageInterfaceAda.h \
+     sageInterfaceAda.C \
      sageInterface_type.C \
      generateUniqueName.C \
      sageBuilder.h \
@@ -27,6 +29,7 @@ libsageInterface_la_DEPENDENCIES =
 
 pkginclude_HEADERS = \
      sageInterface.h \
+     sageInterfaceAda.h \
      sageBuilder.h \
      sageGeneric.h \
      sageFunctors.h \
