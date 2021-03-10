@@ -1023,6 +1023,49 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R416 c_action_signed_real_literal_constant()");
 #endif
 
+        // Pei-Hung (03/10/2021) The sign and token is provded by OFP now.
+        // if a sign is present, it value and associated string is updated with
+        // to sign.  It is checking V_SgFloatVal now and might need to add more
+        // supporting types in the future.
+
+        if (sign != NULL)
+        {
+            ROSE_ASSERT(astExpressionStack.empty() == false);
+            SgExpression* expression = astExpressionStack.front();
+            SgValueExp* valueExpression = isSgValueExp(expression);
+            ROSE_ASSERT(valueExpression != NULL);
+
+            string signstring(sign->text);
+            switch (valueExpression->variantT())
+            {
+                case V_SgFloatVal:
+                {
+                    SgFloatVal* floatValue = isSgFloatVal(valueExpression);
+                    string valueString = floatValue->get_valueString();
+                    if(signstring.compare("-") == 0)
+                    {
+                      floatValue->set_value(-floatValue->get_value());
+                      floatValue->set_valueString( "-" + valueString );
+                      ROSE_ASSERT(valueString.empty() == false);
+                    }
+                    else if(signstring.compare("+") == 0)
+                    {
+                      floatValue->set_valueString( "+" + valueString );
+                      ROSE_ASSERT(valueString.empty() == false);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    printf(
+                            "Error, default reached in switch: valueExpression = %p = %s \n",
+                            valueExpression, valueExpression->class_name().c_str());
+                    ROSE_ASSERT(false);
+                }
+            }
+        }
+#if 0
         if (sign == NULL)
         {
             // This is a bug in OFP (I think) See test2007_144.f90.
@@ -1069,6 +1112,7 @@ void c_action_label(Token_t * lbl)
             // No need to do anything here (unless we want to explicitly preserve the "+".
             // We can do this later by using the SgUnaryPlus operator.
         }
+#endif
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R416 c_action_signed_real_literal_constant()");
