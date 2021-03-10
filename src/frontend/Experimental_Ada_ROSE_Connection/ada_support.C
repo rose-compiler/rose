@@ -38,6 +38,9 @@ namespace Ada_ROSE_Translation
     bool processPredefinedUnits = true;
     bool processImplementationUnits = true;
     bool asisDebug = false;
+    bool logTrace  = false;
+    bool logInfo   = false;
+    bool logWarn   = false;
   };
 
 }
@@ -58,6 +61,7 @@ int main(int argc, char** argv)
      int status = 0;
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
+
      mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
 
      Ada_ROSE_Translation::Settings settings;
@@ -85,7 +89,32 @@ int main(int argc, char** argv)
            .intrinsicValue(true, settings.asisDebug)
            .doc("Sets Asis debug flag"));
 
+     ada2Rose.insert(scl::Switch("warn")
+           .intrinsicValue(true, settings.logWarn)
+           .doc("Enables warning messages"));
+
+     ada2Rose.insert(scl::Switch("trace")
+           .intrinsicValue(true, settings.logTrace)
+           .doc("Enables tracing messages"));
+
+     ada2Rose.insert(scl::Switch("info")
+           .intrinsicValue(true, settings.logInfo)
+           .doc("Enables info messages"));
+
      p.with(ada2Rose).parse(args).apply();
+
+     std::string warninglevels = "none, error, fatal";
+     Sawyer::Message::Facilities logctrl;
+
+     logctrl.insert(mlog);
+     //~ logctrl.control("none, error, warn, fatal");
+
+
+     if (settings.logWarn)  warninglevels += ", warn";
+     if (settings.logTrace) warninglevels += ", trace";
+     if (settings.logInfo)  warninglevels += ", info";
+
+     logctrl.control(warninglevels);
 
   // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
      const char *gnat_home   = std::getenv("GNAT_HOME");
@@ -100,7 +129,6 @@ int main(int argc, char** argv)
 
      Nodes_Struct head_nodes;
 
-#if 1
      {
        typedef boostfs::path::string_type string_type;
 
@@ -157,7 +185,6 @@ int main(int argc, char** argv)
 
        boostfs::current_path(currentDir);
      }
-#endif
 
      mprintf ("END.\n");
 
