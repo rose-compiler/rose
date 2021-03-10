@@ -12,14 +12,19 @@ using namespace Fortran;
 
 // The Build functions need to be turned into a class (global variable used for now)
 //
-   SageTreeBuilder builder{};
+//   SageTreeBuilder builder{};
+//      enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+//      : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_jovial))
+
+   SageTreeBuilder builder(SageTreeBuilder::e_language_fortran);
 // TODO: change this to a reference
-   parser::CookedSource* cooked_{nullptr};
+   parser::AllCookedSources* cooked_{nullptr};
 
 template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::Statement<T> &x, Order from)
 {
    std::optional<SourcePosition> pos{std::nullopt};
 
+   //#if FIX_SOURCE_POSITION
    if (auto sourceInfo{cooked_->GetSourcePositionRange(x.source)}) {
       if (from == Order::begin)
          pos.emplace(SourcePosition{sourceInfo->first.file.path(), sourceInfo->first.line, sourceInfo->first.column});
@@ -27,8 +32,11 @@ template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::S
          pos.emplace(SourcePosition{sourceInfo->second.file.path(), sourceInfo->second.line, sourceInfo->second.column});
    }
    else {
+     //#endif
       pos.emplace(SourcePosition{});
+      //#if FIX_SOURCE_POSITION
    }
+   //#endif
 
    return pos.value();
 }
@@ -89,7 +97,7 @@ std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPar
 }
 
 // Converts parsed program to ROSE Sage nodes
-void Build(const parser::Program &x, parser::CookedSource &cooked)
+void Build(const parser::Program &x, parser::AllCookedSources &cooked)
 {
    std::cout << "\n";
    std::cout << "Rose::builder::Build(Program) \n";
@@ -124,7 +132,7 @@ void Build(const parser::MainProgram &x, T* scope)
 
    const auto & end_program_stmt{std::get<4>(x.t)};
 
-   std::list<std::string> labels{};
+   std::vector<std::string> labels{};
    std::optional<SourcePosition> srcPosBody{std::nullopt};
    std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(program_stmt, Order::begin)};
    SourcePosition srcPosEnd{BuildSourcePosition(end_program_stmt, Order::end)};
@@ -239,6 +247,7 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
          // common:: Indirection - AssociateConstruct, BlockConstruct, CaseConstruct, ChangeTeamConstruct,
          // CriticalConstruct, DoConstruct, IfConstruct, SelectRankConstruct, SelectTypeConstruct,
          // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OpenACCConstruct, OmpEndLoopDirective
+         // AccEndCombinedDirective
          [&] (const auto &y) { Build(y.value(), scope); },
       },
       x.u);
@@ -532,15 +541,6 @@ void Build(const parser::Expr &x, SgExpression* &expr)
 void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(IntrinsicBinary)\n";
-}
-
-void Build(const parser::ConstantValue &x, SgExpression* &expr)
-{
-   std::cout << "Rose::builder::Build(ConstantValue)\n";
-   // std::variant<LiteralConstant, NamedConstant> u;
-
-   auto ConstantValueVisitor = [&] (const auto &y) { Build(y, expr); };
-   std::visit(ConstantValueVisitor, x.u);
 }
 
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
@@ -1110,16 +1110,13 @@ void Build(const parser::DataStmtValue &x, SgExpression* &expr)
 void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
 {
    std::cout << "Rose::builder::Build(DataStmtConstant)\n";
-   // CharBlock source;
-   // mutable TypedExpr typedExpr;
-   // std::variant<Scalar<ConstantValue>, Scalar<ConstantSubobject>,
-   //     SignedIntLiteralConstant, SignedRealLiteralConstant,
-   //     SignedComplexLiteralConstant, NullInit, InitialDataTarget,
-   //     StructureConstructor> u;
+   //     std::variant<LiteralConstant, SignedIntLiteralConstant,
+   //      SignedRealLiteralConstant, SignedComplexLiteralConstant, NullInit,
+   //      common::Indirection<Designator>, StructureConstructor>  u;
 
    std::visit(
       common::visitors{
-         [&] (const parser::Scalar<parser::ConstantValue> &y) { Build(y.thing, expr); },
+         [&] (const parser::Scalar<parser::LiteralConstant> &y) { Build(y.thing, expr); },
          [&] (const auto &y) { ; }
       },
       x.u);
@@ -2091,6 +2088,12 @@ template<typename T>
 void Build(const parser::OpenACCConstruct&x, T* scope)
 {
    std::cout << "Rose::builder::Build(OpenACConstruct)\n";
+}
+
+template<typename T>
+void Build(const parser::AccEndCombinedDirective&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(AccEndCombinedDirective)\n";
 }
 
 template<typename T>
