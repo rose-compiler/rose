@@ -30,6 +30,13 @@ static CaseValueRange* getCaseValueRange()
    return caseValueRange_inst;
 }
 
+static moduleNature* getModuleNature()
+{
+   static moduleNature* moduleNature_inst = NULL;
+   if ( moduleNature_inst== NULL) moduleNature_inst = new moduleNature();
+   return moduleNature_inst;
+}
+
 
 // ********************************************************************
 // ********************************************************************
@@ -16637,7 +16644,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
         // SgRenamePairPtrList nameList;
         // SgUseStatement* useStatement = new SgUseStatement(name,hasOnly,nameList);
-        SgUseStatement* useStatement = new SgUseStatement(name, hasOnly);
+        SgUseStatement* useStatement = new SgUseStatement(name, hasOnly, "");
 
         ROSE_ASSERT(useKeyword != NULL);
         setSourcePosition(useStatement, useKeyword);
@@ -16735,6 +16742,12 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         // This appears to always be false, and I think it is a bug in OFP.
         // Actually, the c_action_only steals the result, so this does work when not using the "only" option.
         // ROSE_ASSERT(hasRenameList == false);
+
+        // Pei-Hung (03/09/2021) Added module nature info. into AST
+        if(hasModuleNature)
+        {
+           useStatement->set_module_nature(getModuleNature()->nature);
+        }
 
 #define RICE_S3D_WORKAROUND 1  // Rice's workaround the USE module with rename-list bug
         // Only supporting hasOnly == false in initial work.
@@ -17083,6 +17096,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_module_nature(): nature = %p = %s \n", nature,
                 nature != NULL ? nature->text : "NULL");
 
+        getModuleNature()->nature = nature->text;
         // outputState("At BOTTOM of R1110 c_action_module_nature()");
     }
 
