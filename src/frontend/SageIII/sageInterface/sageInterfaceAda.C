@@ -142,8 +142,10 @@ namespace
         SgAdaIndexConstraint& idx = SG_DEREF(isSgAdaIndexConstraint(n.get_constraint()));
         SgExpressionPtrList&  idxlst = idx.get_indexRanges();
 
-        for (SgExpression* expr : idxlst)
+        for (size_t i = 0; i < idxlst.size(); ++i)
         {
+          SgExpression* expr = idxlst[i];
+
           res.push_back(&DimRange::find(expr));
         }
       }
