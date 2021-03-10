@@ -2123,7 +2123,16 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
      ASSERT_not_null(useStmt);
 
      curprint("USE ");
+
+     // Pei-Hung (03/09/21) added unparsing for module nature (intrinsic or non_intrinsic)
+     std::string nature = useStmt->get_module_nature();
+     if (nature != "")
+        {
+          curprint(", " + nature + " :: ");
+        }
+   
      curprint(useStmt->get_name().str());
+
 
 #if 0
      SgExprListExp*       u_rename = useStmt->get_rename_list();
