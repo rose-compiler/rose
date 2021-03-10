@@ -55,6 +55,64 @@ namespace CodeThorn {
     return size==-1;
   }
 
+  BuiltInType TypeSizeMapping::determineBuiltInTypeId(SgType* sgType) {
+    switch (sgType->variantT()) {
+    case V_SgTypeVoid:
+      return BITYPE_VOID;
+
+    case V_SgPointerType:
+      return BITYPE_POINTER;
+
+    case V_SgTypeBool:
+      return BITYPE_BOOL;
+
+    case V_SgTypeChar:
+    case V_SgTypeSignedChar:
+    case V_SgTypeUnsignedChar: 
+      return BITYPE_CHAR;
+
+    case V_SgTypeShort:
+    case V_SgTypeSignedShort:
+    case V_SgTypeUnsignedShort:
+      return BITYPE_SHORT;
+
+    case V_SgTypeUnsignedInt:
+    case V_SgTypeInt:
+    case V_SgTypeSignedInt:
+      return BITYPE_INT;
+
+    case V_SgTypeUnsignedLong:
+    case V_SgTypeLong:
+    case V_SgTypeSignedLong:
+      return BITYPE_LONG;
+
+    case V_SgTypeUnsignedLongLong:
+    case V_SgTypeLongLong:
+    case V_SgTypeSignedLongLong:
+      return BITYPE_LONG_LONG;
+
+    case V_SgTypeFloat:
+      return BITYPE_FLOAT;
+      
+    case V_SgTypeDouble:
+      return BITYPE_DOUBLE;
+      
+    case V_SgTypeLongDouble:
+      return BITYPE_LONG_DOUBLE;
+      
+    case V_SgReferenceType:
+      return BITYPE_REFERENCE;
+    case V_SgFunctionType:
+      return BITYPE_POINTER;
+    case V_SgEnumType:
+      return BITYPE_INT; // enum size is of size int in C++
+      //case V_SgTypeComplex:
+    default:
+      return BITYPE_UNKNOWN;
+    }
+    // unreachable
+  }
+  
   CodeThorn::TypeSize TypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
@@ -67,48 +125,6 @@ namespace CodeThorn {
     sgType=sgType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
     switch (sgType->variantT()) {
 
-    case V_SgTypeVoid:
-      return 0;
-
-    case V_SgPointerType:
-      return getTypeSize(BITYPE_POINTER);
-
-    case V_SgTypeBool:
-      return getTypeSize(BITYPE_BOOL);
-
-    case V_SgTypeChar:
-    case V_SgTypeSignedChar:
-    case V_SgTypeUnsignedChar: 
-      return getTypeSize(BITYPE_CHAR);
-
-    case V_SgTypeShort:
-    case V_SgTypeSignedShort:
-    case V_SgTypeUnsignedShort:
-      return getTypeSize(BITYPE_SHORT);
-
-    case V_SgTypeUnsignedInt:
-    case V_SgTypeInt:
-    case V_SgTypeSignedInt:
-      return getTypeSize(BITYPE_INT);
-
-    case V_SgTypeUnsignedLong:
-    case V_SgTypeLong:
-    case V_SgTypeSignedLong:
-      return getTypeSize(BITYPE_LONG);
-
-    case V_SgTypeUnsignedLongLong:
-    case V_SgTypeLongLong:
-    case V_SgTypeSignedLongLong:
-      return getTypeSize(BITYPE_LONG_LONG);
-
-    case V_SgTypeFloat:
-      return getTypeSize(BITYPE_FLOAT);
-    case V_SgTypeDouble:
-      return getTypeSize(BITYPE_DOUBLE);
-    case V_SgTypeLongDouble:
-      return getTypeSize(BITYPE_LONG_DOUBLE);
-    case V_SgReferenceType:
-      return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
       CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
@@ -132,13 +148,9 @@ namespace CodeThorn {
       }
       return sum;
     }
-    case V_SgFunctionType:
-      return getTypeSize(BITYPE_POINTER);
-      //case V_SgTypeComplex:
-    case V_SgEnumType:
-      return getTypeSize(BITYPE_INT); // enum size is of size int in C++
 
     default:
+      return getTypeSize(determineBuiltInTypeId(sgType));
       //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
     }

@@ -33,8 +33,18 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
     return registerClassMembers(classType,memberList,offset);
   }
-  
+
+  CodeThorn::TypeSize VariableIdMappingExtended::numClassMembers(SgType* classType) {
+    auto iter=classMembers.find(classType);
+    if(iter!=classMembers.end()) {
+      return static_cast<CodeThorn::TypeSize>(classMembers[classType].size());
+    } else {
+      return unknownSizeValue();
+    }
+  }
+
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
+    ROSE_ASSERT(classType!=nullptr);
     cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     int numClassMembers=0;
     for(auto memberVarDecl : memberList) {
@@ -44,7 +54,10 @@ namespace CodeThorn {
 	registerNewSymbol(sym);
 	numClassMembers++;
 	VariableId varId=variableId(sym);
+	registerClassMemberVar(classType,varId);
+	getVariableIdInfoPtr(varId)->variableScope=VS_MEMBER;
 	setOffset(varId,offset);
+	classMembers[classType].push_back(varId);
 	ROSE_ASSERT(varId.isValid());
 	SgType* type=strippedType(sym->get_type());
 	cout<<"Type:"<<type->unparseToString()<<endl;
@@ -117,21 +130,29 @@ namespace CodeThorn {
 	  if(sym->get_symbol_basis()!=0) {
 	    registerNewSymbol(sym);
 	    VariableId varId=variableId(sym);
+	    if(SgNodeHelper::isGlobalVariableDeclaration(varDecl)) {
+	      getVariableIdInfoPtr(varId)->variableScope=VS_GLOBAL;
+	    } else {
+	      getVariableIdInfoPtr(varId)->variableScope=VS_LOCAL;
+	    }
 	    SgType* type=strippedType(sym->get_type());// strip typedef and const
 	    cout<<"DEBUG:     type: "<<type->unparseToString()<<endl;
 	    if(SgClassType* classType=isSgClassType(type)) {
+	      getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
 	      cout<<"DEBUG: register class members:"<<endl;
-	      std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
-	      CodeThorn::TypeSize totalTypeSize=registerClassMembers(classType,memberList,0); // start with offset 0
-	      setNumberOfElements(varId,memberList.size());
+	      std::list<SgVariableDeclaration*> memberVariableDeclarationList=memberVariableDeclarationsList(classType);
+	      CodeThorn::TypeSize totalTypeSize=registerClassMembers(classType,memberVariableDeclarationList,0); // start with offset 0
+	      setNumberOfElements(varId,numClassMembers(classType));
 	      setTotalSize(varId,totalTypeSize);
 	    } else if(SgArrayType* arrayType=isSgArrayType(type)) {
+	      getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
 	      setElementSize(varId,typeSizeMapping.determineElementTypeSize(arrayType));
 	      setNumberOfElements(varId,typeSizeMapping.determineNumberOfElements(arrayType));
 	      CodeThorn::TypeSize typeSize=getElementSize(varId)*getNumberOfElements(varId);
 	      setTotalSize(varId,typeSize);
 	    } else {
 	      // built-in type
+	      getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
 	      setElementSize(varId,typeSizeMapping.determineTypeSize(type));
 	      setNumberOfElements(varId,1);
 	      setTotalSize(varId,getElementSize(varId));
@@ -155,6 +176,22 @@ namespace CodeThorn {
       registerStringLiterals(project);
       //computeTypeSizes();
       //typeSizeMapping.computeOffsets(project,this);
+    }
+  }
+
+  // class members handling
+  std::vector<VariableId> VariableIdMappingExtended::getRegisteredClassMemberVars(SgType* type) {
+    return classMembers[type];
+  }
+
+  bool VariableIdMappingExtended::isRegisteredClassMemberVar(SgType* type,VariableId varId) {
+    std::vector<VariableId>& v=classMembers[type];
+    return std::find(v.begin(), v.end(), varId)!=v.end();
+  }
+
+  void VariableIdMappingExtended::registerClassMemberVar(SgType* type,VariableId varId) {
+    if(!isRegisteredClassMemberVar(type,varId)) {
+      classMembers[type].push_back(varId);
     }
   }
 
@@ -200,23 +237,22 @@ void VariableIdMappingExtended::toStream(ostream& os) {
       <<","<<varId.toString(this)
       //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
-      <<","<<getNumberOfElements(varId)
-      <<","<<getElementSize(varId)
-      <<","<<getOffset(varId);
+      <<","<<getVariableIdInfo(varId).variableScopeToString()
+      <<","<<getVariableIdInfo(varId).aggregateTypeToString()
+      <<",elems:"<<getNumberOfElements(varId)
+      <<",elemsize:"<<getElementSize(varId)
+      <<",total:"<<getTotalSize(varId)
+      <<",offset:"<<getOffset(varId);
     if(isStringLiteralAddress(varId)) {
       os<<","<<"<non-symbol-string-literal-id>";
     } else if(isTemporaryVariableId(varId)) {
       os<<","<<"<non-symbol-memory-region-id>";
     } else if(SgSymbol* sym=getSymbol(varId)) {
-      os<<","<<sym->get_mangled_name();
+      os<<","<<variableName(varId);
     } else {
       os<<","<<"<missing-symbol>";
-    }
-    if(isMemberVariable(varId)) {
-      os<<",data-member";
-    } else {
-      os<<",variable";
     }
     os<<endl;
   }
 }
+

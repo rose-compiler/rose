@@ -8,12 +8,14 @@
 
 namespace CodeThorn {
 enum BuiltInType {
-    BITYPE_BOOL,
-    BITYPE_CHAR,   BITYPE_CHAR16,   BITYPE_CHAR32,
-    BITYPE_SHORT,  BITYPE_INT,      BITYPE_LONG,       BITYPE_LONG_LONG,
-    BITYPE_FLOAT,  BITYPE_DOUBLE,   BITYPE_LONG_DOUBLE,
-    BITYPE_POINTER,BITYPE_REFERENCE,
-    BITYPE_SIZE
+		  BITYPE_UNKNOWN,
+		  BITYPE_VOID,
+		  BITYPE_BOOL,
+		  BITYPE_CHAR,   BITYPE_CHAR16,   BITYPE_CHAR32,
+		  BITYPE_SHORT,  BITYPE_INT,      BITYPE_LONG,       BITYPE_LONG_LONG,
+		  BITYPE_FLOAT,  BITYPE_DOUBLE,   BITYPE_LONG_DOUBLE,
+		  BITYPE_POINTER,BITYPE_REFERENCE,
+		  BITYPE_SIZE
   };
 }
 
@@ -26,6 +28,7 @@ namespace CodeThorn {
   public:
     TypeSizeMapping();
     ~TypeSizeMapping();
+    static BuiltInType determineBuiltInTypeId(SgType* sgType);
     // sets sizes of all types (same as reported by sizeof on respective architecture)
     void setBuiltInTypeSizes(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
@@ -55,10 +58,11 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
     //int getOffset(CodeThorn::VariableId varId);
     // returns true if the variable is a member of a struct/class/union.
-    bool isUnionDeclaration(SgNode* node);
-    bool isClassOrStructDeclaration(SgNode* node);
+    static bool isUnionDeclaration(SgNode* node);
+    static bool isClassOrStructDeclaration(SgNode* node);
   protected:
-    std::vector<CodeThorn::TypeSize> _mapping={1,
+    std::vector<CodeThorn::TypeSize> _mapping={0,
+					       0,1,
                                                1,2,4,
                                                2,4,8,8,
                                                4,8,16,
