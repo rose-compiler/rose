@@ -1,7 +1,7 @@
 /* SgAsmX86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
@@ -71,7 +71,7 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.empty())
         return false;
@@ -92,7 +92,7 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>& in
 
 // see base class
 bool
-SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (isFunctionCallFast(insns, target, return_va))
         return true;

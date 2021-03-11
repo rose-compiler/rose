@@ -36,8 +36,19 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
         if test "$rose_boost_version" -ge 106100 -a "$rose_boost_version" -le 106300 -a \
                 "$FRONTEND_CXX_COMPILER_VENDOR" = "intel" -a \
                 "$support_binaries_frontend" = "yes"; then
-            prohibited="binary analysis enabled with boost 1.62 with Intel compiler"
+            prohibited="binary analysis enabled with boost 1.61 through 1.63 with Intel compiler"
             break
+        fi
+
+        # Boost-1.65.x have segmentation faults in the destructors of some serialization static objects within the Boost
+        # library. I thought this was just for GCC 4 and 5, but after enabling wider testing, we're also getting the
+        # segmentation faults with GCC 7 and 8. Therefore, this version of boost is blacklisted if binary analysis
+        # support is enabled.
+        if test "$rose_boost_version" = 106500 -o "$rose_boost_version" = 106501; then
+            if test "$support_binaries_frontend" = yes -a "$FRONTEND_CXX_COMPILER_VENDOR" = gnu ; then
+                prohibited="binary analysis enabled with boost 1.65 with GCC compiler"
+                break
+            fi
         fi
 
         # Boost-1.68.0 has serialization bugs reported by numerous other projects. Within ROSE, 1.68.0 fails the

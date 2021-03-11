@@ -21,7 +21,7 @@
 #include <string>
 #include <sstream>
 #include <set>
-
+#include <map>
 
 #include "Outliner.hh"
 #include "ASTtools.hh"
@@ -29,6 +29,7 @@
 #include "Copy.hh"
 #include "StmtRewrite.hh"
 #include "Outliner.hh"
+#include "RoseAst.h"
 
 //! Stores a variable symbol remapping.
 typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VarSymRemap_t;
@@ -267,6 +268,7 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
       ROSE_ASSERT (new_param_type);
       new_param_name+= "p__";
     }
+#if 0    
     else
     {
       // Fortran:
@@ -280,7 +282,7 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
       //new_param_name= "s_"+new_param_name; //s_ means shared variables
       new_param_name= new_param_name; //s_ means shared variables
     }
-
+#endif
   }
 
   // Fortran parameters are passed by reference by default,
@@ -646,33 +648,6 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     return decl;
 }
 
-//! Returns 'true' if the given type is 'const'.
-static
-bool
-isReadOnlyType (const SgType* type)
-{
-  ROSE_ASSERT (type);
-
-  const SgModifierType* mod = 0;
-  switch (type->variantT ())
-    {
-    case V_SgModifierType:
-      mod = isSgModifierType (type);
-      break;
-    case V_SgReferenceType:
-      mod = isSgModifierType (isSgReferenceType (type)->get_base_type ());
-      break;
-    case V_SgPointerType:
-      mod = isSgModifierType (isSgPointerType (type)->get_base_type ());
-      break;
-    default:
-      mod = 0;
-      break;
-    }
-  return mod
-    && mod->get_typeModifier ().get_constVolatileModifier ().isConst ();
-}
-
 /*!
  *  \brief Creates an assignment to "pack" a local variable back into
  *  an outlined-function parameter that has been passed as a pointer
@@ -743,7 +718,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
        // Also const char* a;  it will be wrongfuly recognized to be constant pointer.
   // We expect that the value transferring back to the original parameter is only 
   // needed for variable clone options and when the variable is being written && liveOut. 
-  if (isReadOnlyType(local_unpack_def->get_type ()))  
+  if (isConstType(local_unpack_def->get_type ()))  
   {
       if (Outliner::enable_debug)
       {
@@ -753,7 +728,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
   }
 #endif  
   if (local_unpack_def)
-//      && !isReadOnlyType (local_unpack_def->get_type ()))
+//      && !isConstType(local_unpack_def->get_type ()))
     {
       SgName local_var_name (local_unpack_def->get_name ());
 
@@ -1091,6 +1066,47 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
 //  handlePrivateVariables(pSyms, body, private_remap);
 //  This is done before calling the outliner now, by transOmpVariables()
 
+  // Liao, 2020/9/21
+   // We now decide for a function with 0 variables to pass, we still has a dummy void** parameter
+   // This is necessary to have compatible runtime library 's function prototype for the outlined function
+   // The runtime expects (void*) (void**) function pointers.
+   // enable_classic overrules useParameterWrapper
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+  if (!Outliner::enable_classic && Outliner::useParameterWrapper) 
+  {
+    SgName var1_name = "__out_argv";
+    // This is needed to support the pass-by-value semantics across different thread local stacks
+    // In this situation, pointer dereferencing cannot be used to get the value 
+    // of an inactive parent thread's local variables
+    SgType* ptype= NULL; 
+
+    // A dummy integer parameter for Fortran outlined function
+    if (SageInterface::is_Fortran_language() )
+    { 
+      var1_name = "out_argv";
+      ptype = buildIntType();
+      SgVariableDeclaration *var_decl = buildVariableDeclaration(var1_name,ptype, NULL, func_body);
+      prependStatement(var_decl, func_body);
+
+    }
+    else
+    {
+      if (Outliner::useStructureWrapper) // OpenMP code triggers this branch
+      {
+        // To have strict type matching in C++ model
+        // between the outlined function and the function pointer passed to the gomp runtime lib
+        // we use void* for the parameter type
+        ptype = buildPointerType (buildVoidType());
+      }
+      else // use array of pointers, regardless of the pass-by-value vs. pass-by-reference difference
+      {     // this is to be compatible with dlopen() runtime's function pointer type
+        ptype= buildPointerType(buildPointerType(buildVoidType()));
+      }
+    }
+    parameter1 = buildInitializedName(var1_name,ptype);
+    appendArg(params,parameter1);
+  }
+
   // --------------------------------------------------
   // for each parameters passed to the outlined function
   // They include parameters for 
@@ -1122,7 +1138,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     if (!Outliner::enable_classic && Outliner::useParameterWrapper) // Liao 3/26/2013. enable_classic overrules useParameterWrapper
  //   if (Outliner::useParameterWrapper)
     {
-      if (i==syms.rbegin())
+#if 0  // moved outside of the loop    
+      if (i==syms.rbegin()) // do this for the first parameter
       {
         SgName var1_name = "__out_argv";
         // This is needed to support the pass-by-value semantics across different thread local stacks
@@ -1147,6 +1164,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
         parameter1 = buildInitializedName(var1_name,ptype);
         appendArg(params,parameter1);
       }
+#endif       
       p_init_name = parameter1; // set the source parameter to the wrapper
     }
     else // case 3: use a parameter for each variable, the default case and the classic case
@@ -1257,13 +1275,14 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     counter ++;
   } //end for
 
-  SgBasicBlock* func_body = func->get_definition()->get_body();
 
-#if 1
+#if 0
   //TODO: move this outside of outliner since it is OpenMP-specific. omp_lowering.cpp generateOutlinedTask()
   // A caveat is the moving this also means we have to patch up prototype later
+  //
   //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
   //in order to match the gomp runtime lib 's function prototype for function pointers
+  // 
   SgFile* cur_file = getEnclosingFileNode(func);
   ROSE_ASSERT (cur_file != NULL);
   //if (cur_file->get_openmp_lowering () && ! SageInterface::is_Fortran_language())
@@ -1295,6 +1314,116 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
   // variable substitution 
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
+
+// same input file: two SgSourceFile nodes are created from it.
+// we build symbol mapping from first to second. 
+// This is used to support reset symbols of AST subtree moved from first to second file.
+class SymbolMapOfTwoFiles
+{
+  public:
+    static std::map <SgSymbol*, SgSymbol*>& getDict(SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      return get_inst(sf1, sf2)->dict;
+    }
+
+ private:
+    static SymbolMapOfTwoFiles* get_inst(SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      if (inst== 0)
+        inst = new SymbolMapOfTwoFiles(sf1, sf2);
+      return inst;
+    }
+
+    // TODO: use unordered_map if c++11 is enabled.
+    std::map <SgSymbol*, SgSymbol*> dict; //symbol from file1 to file 2
+
+    static SymbolMapOfTwoFiles* inst; 
+    // constructor is called only once, set up the dict
+    // Let's focus on namespaces first: easier to handle due to qualified names
+    SymbolMapOfTwoFiles (SgScopeStatement* sf1, SgScopeStatement* sf2)
+    {
+      if (sf1==sf2) return; 
+      //To be efficient, we only search for global and namespace scopes.
+      // They are mostly the cause to have cross-file symbol fixups.
+      VariantVector vv; 
+      vv.push_back(V_SgGlobal); // we search for global first
+      vv.push_back(V_SgNamespaceDefinitionStatement);
+      Rose_STL_Container<SgNode*> nodeList1 = NodeQuery::querySubTree(sf1, vv);  
+      Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(sf2, vv);  
+      ROSE_ASSERT (nodeList1.size()== nodeList2.size());
+      for (size_t i=0; i<nodeList1.size(); i++)
+      {
+        ROSE_ASSERT (nodeList1[i]->variantT() == nodeList2[i]->variantT());
+        SgScopeStatement* sc1 = isSgScopeStatement(nodeList1[i]);
+        SgScopeStatement* sc2 = isSgScopeStatement(nodeList2[i]);
+        ROSE_ASSERT (sc1&&sc2);
+        
+        SgSymbolTable* st1= sc1->get_symbol_table();
+        SgSymbolTable* st2= sc2->get_symbol_table();
+        ROSE_ASSERT (st1&&st2);
+
+        rose_hash_multimap * set1 = st1->get_table();;
+        rose_hash_multimap * set2 = st2->get_table();;
+
+        // additional assertion for namespaces
+        SgNamespaceDefinitionStatement* def1= isSgNamespaceDefinitionStatement(nodeList1[i]);
+        SgNamespaceDefinitionStatement* def2= isSgNamespaceDefinitionStatement(nodeList2[i]);
+        if (def1 && def2)
+        {
+          ROSE_ASSERT(def1->get_namespaceDeclaration ()->get_qualified_name()==def2->get_namespaceDeclaration ()->get_qualified_name()) ; 
+        }
+
+        if (set1->size()!=set2->size()) 
+        {
+          cerr<<"Warning: two matched SgScopeStatement have different symbol counts!" << set1->size() <<" vs. " << set2->size()   <<endl;
+          cerr<< nodeList1[i] << " " << nodeList1[i]->class_name() << " vs. " <<nodeList2[i] << " " << nodeList2[i]->class_name() <<endl; 
+        }
+#if 0 // this won't work since we are face different symbol counts         
+        rose_hash_multimap::iterator i1, i2;
+        for (i1=set1->begin(), i2=set2->begin(); i1!=set1->end() && i2!= set2->end() ; i1++, i2++)
+          dict[i1->second]=i2->second;
+#endif          
+        rose_hash_multimap::iterator i1, i2;
+        boost::unordered_map<string, SgVariableSymbol*> varSymDict; 
+        boost::unordered_map<string, SgFunctionSymbol*> funcSymDict; 
+
+        // cache mapping of new symbols,indexed by qualified name : qualified name to symbol
+        for (i2=set2->begin(); i2!=set2->end(); i2++)
+        {
+          SgFunctionSymbol* fsym2 = isSgFunctionSymbol(i2->second);
+          SgVariableSymbol* vsym2 = isSgVariableSymbol(i2->second);
+          if (fsym2) 
+            funcSymDict[fsym2->get_declaration()->get_qualified_name()]=fsym2; 
+          else if (vsym2) 
+            varSymDict [vsym2->get_declaration()->get_qualified_name()]=vsym2; 
+        } // end for
+
+
+        //for old symbols, link them to new symbols, through qualified names
+        for (i1=set1->begin(); i1!=set1->end(); i1++) // for each old symbol, we find a matching new symbol
+        {
+          SgFunctionSymbol* fsym1 = isSgFunctionSymbol(i1->second);
+          SgVariableSymbol* vsym1 = isSgVariableSymbol(i1->second);
+          if (fsym1) 
+            dict[i1->second]= funcSymDict[fsym1->get_declaration()->get_qualified_name()]; 
+          else if (vsym1) 
+            dict[i1->second]= varSymDict[vsym1->get_declaration()->get_qualified_name()]; 
+#if 1
+          if (fsym1|| vsym1)
+          {
+            if (dict[i1->second] == NULL)
+              cerr<<"Warning: no matching new symbol is found for old symbol:"<< i1->first <<endl;
+            //          else
+            //            cout<<"found matching func symbols for:"<< i1->first <<endl;
+          }
+#endif            
+        } // end for
+
+      }
+    }
+}; // end SymbolMapOfTwoFiles
+
+SymbolMapOfTwoFiles* SymbolMapOfTwoFiles::inst=0; 
 
 // =====================================================================
 
@@ -1386,7 +1515,54 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   SageInterface::moveStatementsBetweenBlocks (s, func_body);
 
   if (Outliner::useNewFile)
+  {
     ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+
+    // after the moving, reset symbols to be the ones from the current new file's scope
+     // We only do this when we have _lib file constructed from the original input file
+    // Liao, 2020/10/19: relinking symbols from original source file to symbols in _lib file
+    // current global scope
+    if (Outliner::copy_origFile) // we only do the symbol resetting when copy_origFile is turned on.
+    {
+      SgGlobal* new_global = isSgGlobal(scope); 
+      SgGlobal* old_global = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
+      ROSE_ASSERT (new_global != old_global);
+
+      RoseAst ast(func_body);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
+      {
+        SgFunctionRefExp* f_ref = isSgFunctionRefExp(*i);
+        SgVarRefExp* v_ref= isSgVarRefExp(*i);
+        if (f_ref || v_ref)
+        {
+          SgSymbol* sym;
+          if (f_ref)
+            sym = isSgSymbol(f_ref->get_symbol());
+          else
+            sym = isSgSymbol(v_ref->get_symbol()); 
+
+          // check the symbol 's parent, symbol table's scope, if reaching to the same global scope?
+          // if not, reset the symbol to a corresponding symbol under current global scope
+          if (getGlobalScope(sym)==old_global)
+          {
+            SgSymbol * n_sym = SymbolMapOfTwoFiles::getDict(old_global, new_global)[sym];
+            if(n_sym)
+            {
+              if (f_ref)
+                f_ref->set_symbol(isSgFunctionSymbol(n_sym)); 
+              else
+                v_ref->set_symbol(isSgVariableSymbol(n_sym));
+            }
+            else
+            {
+              cerr<<"Warning: cannot find new symbol for old sym:"<<sym << " "<< sym->get_name() <<endl; 
+            }
+          }
+        }
+      } // end for
+    }
+  }
+
 
 #if 0
   // We can't call this here because "s" is passed in as "cont".
@@ -1456,6 +1632,31 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   // printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
   //
   ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
+
+#if 1
+   // Eliminate problematic type casting to base class
+  // Liao 2020/11/18
+   RoseAst ast(func->get_definition()->get_body());
+ 
+   vector<SgCastExp*> cast_nodes; 
+   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        if (SgCastExp* cast_n= isSgCastExp(*i))
+        {
+          // TODO: check if class B (source type) is a derived type of class A (cast to)
+          if (isSgClassType(cast_n->get_type()) && isSgClassType(cast_n->get_operand_i()->get_type()))
+            cast_nodes.push_back(cast_n);
+        }
+   }
+ 
+   for (vector<SgCastExp*>::reverse_iterator iter=cast_nodes.rbegin(); iter!=cast_nodes.rend(); iter++ )
+   {
+     //     (*iter)->get_startOfConstruct()->unsetOutputInCodeGeneration();
+     //     (*iter)->get_endOfConstruct()->unsetOutputInCodeGeneration();
+     // we keep the original subtree, only delete the root node.
+     SageInterface::replaceExpression ( *iter, (*iter)->get_operand_i(), true );
+     delete (*iter);
+   }
+#endif
 
 #if 0
   printf ("Leaving generateFunction(): func = %p func_name_str = %s \n",func,func_name_str.c_str());

@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "integerOps.h"
@@ -58,17 +58,18 @@ std::string
 SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
 {
     SgNode *node = get_baseNode();
-    if (!node)
+    if (node == NULL)
         return "";
 
     // Get the name of the base object if possible.
     std::string retval;
     std::string refkind;
+    SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(node);
     if (isSgAsmFunction(node)) {
         retval = isSgAsmFunction(node)->get_name();
         refkind = "Func";
-    } else if (isSgAsmGenericSymbol(node)) {
-        retval = isSgAsmGenericSymbol(node)->get_name()->get_string();
+    } else if (symbol != NULL) {
+        retval = symbol->get_name()->get_string();
         refkind = "Sym";
     } else if (isSgAsmPEImportItem(node)) {
         retval = isSgAsmPEImportItem(node)->get_name()->get_string();

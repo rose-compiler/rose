@@ -575,10 +575,13 @@ EasyStorage<Sawyer::Container::BitVector>::rebuildDataStoredInEasyStorageClass()
         }
         retval.resize(nBits);
 
-        // Now read the data and load it into the bit vector
+        // Now read the data and load it into the bit vector, note that since
+        // the size is known to be positive the pointer better not be nil.
         BVWord *dst = retval.data();
-        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i)
+        assert(dst != NULL);
+        for (size_t i=1; i < (size_t)Base::getSizeOfData(); ++i) {
             *dst++ = *words++;
+        }
     }
     return retval;
 }
@@ -4373,7 +4376,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
    ****************************************************************************************
 */
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 template <class TYPE>
 void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
 {
@@ -4490,7 +4493,7 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 
 // DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined 
 // when binary analysis is not supported (via language only options in configure).
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (Base::actual!=NULL && Base::getSizeOfData()>0)
         {
           rose_addr_t *pointer = Base::getBeginningOfDataBlock();

@@ -27,7 +27,7 @@ namespace EDG_ROSE_Translation
 
 void addIncludeDirectives( SgNode* node );
 
-//! Inherited attribute required for AddIncludeDirectives class.
+
 class AddIncludeDirectivesInheritedAttribute
    {
      public:
@@ -39,6 +39,7 @@ class AddIncludeDirectivesInheritedAttribute
           AddIncludeDirectivesInheritedAttribute( const AddIncludeDirectivesInheritedAttribute & X );
    };
 
+
 class AddIncludeDirectivesSynthesizedAttribute
    {
      public:
@@ -47,7 +48,6 @@ class AddIncludeDirectivesSynthesizedAttribute
    };
 
 
-// class AddIncludeDirectivesTraversal : public SgTopDownProcessing<AddIncludeDirectivesInheritedAttribute>
 class AddIncludeDirectivesTraversal
    : public SgTopDownBottomUpProcessing<AddIncludeDirectivesInheritedAttribute,AddIncludeDirectivesSynthesizedAttribute>
    {

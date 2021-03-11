@@ -559,12 +559,16 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
 #endif
 
+       // DQ (8/25/2020): Changed this to a static function so that it could be called from UnparseLanguageIndependentConstructs::unparseExprList().
        // DQ (1/30/2019): We need to call this from unparseOneElemConInit() in unparseCxxStatements.C.
-          bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
+       // bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
+          static bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
 
        // DQ (1/8/2020): Refactors the output of base classes so that it can be supported in the unparseClassDefnStmt() and unparseClassType() functions.
           void unparseClassInheritanceList ( SgClassDefinition* classdefn_stmt, SgUnparse_Info& ninfo );
 
+       // DQ (9/23/2020): Output the SgPragma when it is associated with a SgScopeStatement.
+          void unparsePragmaAttribute(SgScopeStatement* scope_stmt);
    };
 
 #endif

@@ -6,11 +6,11 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 # Used in ../src/3rdPartyLibraries/fortran-parser/Makefile.am
 # and     ../src/frontend/SageIII/sageSupport.C
 #
-default_ofp_version=20190922
+default_ofp_version=20200819-JDK8
 
 ofp_major_version_number=0
 ofp_minor_version_number=8
-ofp_patch_version_number=6
+ofp_patch_version_number=7
 
 # DQ (10/18/2010): If fortran is enabled then OFP must be allowed and this was already check previously.
 # This step is taken to simplify how we handle OFP and Fortran.  Of course OFP is enabled if Fortran is

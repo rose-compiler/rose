@@ -1479,7 +1479,7 @@ namespace OmpSupport
         result = new SgOmpTargetStatement(NULL, body); 
         ROSE_ASSERT (result != NULL);
         break;
-       case e_target_data:
+      case e_target_data:
         result = new SgOmpTargetDataStatement(NULL, body); 
         ROSE_ASSERT (result != NULL);
         break;
@@ -1487,8 +1487,8 @@ namespace OmpSupport
         result = new SgOmpSimdStatement(NULL, body); 
         ROSE_ASSERT (result != NULL);
         break;
- 
-       //Fortran  
+
+        //Fortran  
       case e_do:
         result = new SgOmpDoStatement(NULL, body); 
         break;
@@ -1505,18 +1505,18 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     copyStartFileInfo (att->getNode(), result, att); 
     copyEndFileInfo (att->getNode(), result, att); 
-//    body->get_startOfConstruct()->display();
-//    body->get_endOfConstruct()->display();
+    //    body->get_startOfConstruct()->display();
+    //    body->get_endOfConstruct()->display();
     //set the current parent
     body->set_parent(result);
     // add clauses for those SgOmpClauseBodyStatement
     if (isSgOmpClauseBodyStatement(result))
       appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
-      
-   // Liao 1/9/2013, ensure the body is a basic block for some OpenMP constructs
-   if (isSgOmpSingleStatement(result)) 
-    ensureBasicBlockAsBodyOfOmpBodyStmt (result); 
-//    result->get_file_info()->display("debug after building ..");
+
+    // Liao 1/9/2013, ensure the body is a basic block for some OpenMP constructs
+    if (isSgOmpSingleStatement(result)) 
+      ensureBasicBlockAsBodyOfOmpBodyStmt (result); 
+    //    result->get_file_info()->display("debug after building ..");
     return result;
   }
 
@@ -1850,7 +1850,9 @@ This is no perfect solution until we handle preprocessing information as structu
        // We now support OpenMP AST construction for both C/C++ and Fortran
        // But we allow Fortran End directives to exist after -rose:openmp:ast_only
        // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
-       if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
+       OmpAttribute* ompAttrib = getOmpAttribute(decl);
+       ROSE_ASSERT(ompAttrib != NULL);    
+       if (isFortranEndDirective(ompAttrib->getOmpDirectiveType()))
           continue; 
       ROSE_ASSERT (decl->get_scope() !=NULL);    
       ROSE_ASSERT (decl->get_parent() !=NULL);    

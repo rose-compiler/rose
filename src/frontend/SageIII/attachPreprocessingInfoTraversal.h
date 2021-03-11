@@ -58,6 +58,10 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
             // DQ (7/1/2014): We need to make sure that CPP directives will not be attached to template instantiations that might 
             // not be unparsed (see test2014_68.C).
                isPartOfTemplateInstantiationDeclaration = false;
+
+            // Pei-Hung (09/17/2020): We need to check if SgInitializedName is part of SgFunctionParameterList and the comment
+            // will not be attached to it. 
+               isPartOfFunctionParameterList = false;
              }
 #endif
 
@@ -70,6 +74,10 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
        // DQ (7/1/2014): We need to make sure that CPP directives will not be attached to template instantiations that might 
        // not be unparsed (see test2014_68.C).
           bool isPartOfTemplateInstantiationDeclaration;
+
+      // Pei-Hung (09/17/2020): We need to check if SgInitializedName is part of SgFunctionParameterList and the comment
+      // will not be attached to it. 
+         bool isPartOfFunctionParameterList;
    };
 
 // This is an empty class, meaning that we could likely just have implemented just a TopDownProcessing traversal.

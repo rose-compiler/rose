@@ -231,6 +231,12 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           SgDeclarationStatement* associatedDeclaration ( SgScopeStatement* scope );
           SgDeclarationStatement* associatedDeclaration ( SgType* type );
 
+       // DQ (8/8/2020): this is code refactored from the evaluateInheritedAttribute() function within the SgInitializeName handling.
+       // This code support the name qualification of the type associated with a SgInitializedName (it might be useful else where as well).
+       // void nameQualificationTypeSupport ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement );
+       // void nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName, SgStatement* currentStatement, SgStatement* positionStatement );
+          void nameQualificationTypeSupport  ( SgType* type, SgScopeStatement* currentScope, SgInitializedName* initializedName );
+
        // These don't really need to be virtual, since we don't derive from this class.
           virtual NameQualificationInheritedAttribute evaluateInheritedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute);
 

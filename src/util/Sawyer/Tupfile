@@ -9,7 +9,7 @@ run $(support_compile_linklib) -o sawyer --objects=OBJECTS \
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) -o include/Sawyer --license=LICENSE \
-    Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitVector.h \
+    Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitFlags.h BitVector.h \
     BitVectorSupport.h Buffer.h Cached.h Callbacks.h Clexer.h CommandLine.h CommandLineBoost.h Database.h DatabasePostgresql.h \
     DatabaseSqlite.h DefaultAllocator.h DenseIntegerSet.h DistinctList.h DocumentBaseMarkup.h DocumentMarkup.h \
     DocumentPodMarkup.h DocumentTextMarkup.h Exception.h FileSystem.h Graph.h GraphAlgorithm.h GraphBoost.h GraphIteratorBiMap.h \

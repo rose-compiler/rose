@@ -44,6 +44,20 @@ bat_dis_LDFLAGS = $(ROSE_RPATHS)
 bat_dis_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-dis.passed
 
+bin_PROGRAMS += bat-insnfreq
+bat_insnfreq_SOURCES = bat-insnfreq.C
+bat_insnfreq_CPPFLAGS = $(ROSE_INCLUDES)
+bat_insnfreq_LDFLAGS = $(ROSE_RPATHS)
+bat_insnfreq_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-insnfreq.passed
+
+bin_PROGRAMS += bat-insnfreq-cmp
+bat_insnfreq_cmp_SOURCES = bat-insnfreq-cmp.C
+bat_insnfreq_cmp_CPPFLAGS = $(ROSE_INCLUDES)
+bat_insnfreq_cmp_LDFLAGS = $(ROSE_RPATHS)
+bat_insnfreq_cmp_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-insnfreq-cmp.passed
+
 bin_PROGRAMS += bat-entropy
 bat_entropy_SOURCES = bat-entropy.C
 bat_entropy_CPPFLAGS = $(ROSE_INCLUDES)
@@ -91,7 +105,7 @@ bat_stack_deltas_SOURCES = bat-stack-deltas.C
 bat_stack_deltas_CPPFLAGS = $(ROSE_INCLUDES)
 bat_stack_deltas_LDFLAGS = $(ROSE_RPATHS)
 bat_stack_deltas_LDADD = libbatSupport.a $(ROSE_LIBS)
-tests += bat-stack.passed
+tests += bat-stack-deltas.passed
 
 bin_PROGRAMS += bat-trace
 bat_trace_SOURCES = bat-trace.C
@@ -101,9 +115,12 @@ bat_trace_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-trace.passed
 
 $(tests): %.passed: %
-	@$(RTH_RUN)						\
-		TITLE="testing $* [$@]"				\
-		CMD="$$(pwd)/$* --self-test"			\
+	@$(RTH_RUN)							\
+		TITLE="testing $* [$@]"					\
+		CMD="$$(pwd)/$* --self-test --no-error-if-disabled"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
+check-local: $(tests) bat-insnfreq.passed bat-insnfreq-cmp.passed
+
+MOSTLYCLEANFILES = $(tests)
 endif

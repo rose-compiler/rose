@@ -2,6 +2,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/src/frontend/Experimental_General_Langu
 
 add_library(sageInterface OBJECT
   sageInterface.C
+  sageInterfaceAda.C
   sageInterfaceAsm.C
   sageInterface_asm.C
   sageInterface_type.C

@@ -176,10 +176,16 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
      curprint(" ");
 
   // The type name is optional
-     SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
-     if (named_type != NULL)
+     if (SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type()))
         {
            curprint(named_type->get_name());
+        }
+     else if (SgTypeUnknown* unknown_type = isSgTypeUnknown(pointer_type->get_base_type()))
+        {
+           if (unknown_type->get_has_type_name())
+              {
+                 curprint(unknown_type->get_type_name());
+              }
         }
   }
 
@@ -187,8 +193,23 @@ void
 Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(enum_type);
-  // TODO - for now only unparse the name
-     curprint(enum_type->get_name());
+
+     SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+     ASSERT_not_null(decl);
+
+  // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
+     std::string type_name = enum_type->get_name();
+     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
+
+     if (info.inVarDecl() && is_anonymous)
+       {
+         curprint("STATUS ");
+         unparseEnumBody(decl, info);
+       }
+     else if (info.inVarDecl())
+       {
+         curprint(type_name);
+       }
   }
 
 void
@@ -207,19 +228,26 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
   // type to be wrapped with an SgModifierType with isConst and isStatic set. This required the creation of
   // isJovialStatic to correctly unparse when the Jovial source actually has the STATIC keyword.
 
-  // SgModifierType is also used to mark R,T,Z (round, truncate, trancate towards zero).
      ROSE_ASSERT(modifier_type);
-
      SgType* base_type = modifier_type->get_base_type();
      ROSE_ASSERT(base_type);
 
-     unparseTypeDesc(base_type, info);
-
-     if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
-     else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
-     else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
-
-     unparseTypeSize(base_type, info);
+  // SgModifierType is also used to mark R,T,Z (round, truncate, truncate towards zero).
+  // If not used for (R,T,Z), unwrap and then unparse the base type (this should fix recurring problems).
+     if (modifier_type->get_typeModifier().isRound()     ||
+         modifier_type->get_typeModifier().isTruncate()  ||
+         modifier_type->get_typeModifier().isTruncateTowardsZero())
+     {
+        unparseTypeDesc(base_type, info);
+        if      (modifier_type->get_typeModifier().isRound())               curprint(",R");
+        else if (modifier_type->get_typeModifier().isTruncate())            curprint(",T");
+        else if (modifier_type->get_typeModifier().isTruncateTowardsZero()) curprint(",Z");
+        unparseTypeSize(base_type, info);
+     }
+     else
+     {
+        unparseType(base_type, info);
+     }
   }
 
 void
@@ -230,23 +258,41 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
      SgType* base_type = table_type->get_base_type();
      std::string type_name = table_type->get_name();
 
-  // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
-     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
-
+  // Unparse dimension information first
      SgExprListExp* dim_info = table_type->get_dim_info();
      if (dim_info != NULL)
         {
-           unparseDimInfo(dim_info, info);
+          unparseDimInfo(dim_info, info);
         }
 
-     if (info.inVarDecl() && is_anonymous == false)
+  // OptStructureSpecifier
+     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel)
         {
-           curprint(type_name);
+          curprint("PARALLEL ");
+        }
+     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight)
+        {
+          curprint("T ");
+          if (table_type->get_bits_per_entry() > 0) {
+            std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
+            curprint(value);
+            curprint(" ");
+          }
+        }
+
+  // The base type will need to be unparsed (not just the base type name) if
+  // it is a primitive type (e.g., U 32, where get_name() won't exist) or if
+  // it is anonymous (where again, there won't be a proper name)
+     SgNamedType* named_type = isSgNamedType(base_type);
+
+     if (info.inVarDecl() && named_type)
+        {
+          curprint(named_type->get_name());
         }
      else if (base_type != NULL)
         {
-        // Unparse base type directly if present and not in a variable declaration context
-           unparseType(base_type, info);
+       // Unparse base type directly if present and not in a variable declaration context
+          unparseType(base_type, info);
         }
   }
 

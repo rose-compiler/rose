@@ -92,8 +92,9 @@ void CompSlice::SetSliceAlign( LoopTreeNode *s, int align)
 
 CompSlice::SliceStmtInfo CompSlice :: QuerySliceStmtInfo( const LoopTreeNode *n) const
 {
-  assert(impl->QuerySliceStmt(n) != NULL);
-  return impl->QuerySliceStmt(n)->GetSliceInfo();
+  CompSliceStmt* stmnt = impl->QuerySliceStmt(n);
+  assert(stmnt != NULL);
+  return stmnt->GetSliceInfo();
 }
 
 CompSlice::SliceLoopInfo CompSlice :: QuerySliceLoopInfo( const LoopTreeNode *n) const

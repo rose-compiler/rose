@@ -161,8 +161,12 @@ class PreprocessingInfo
                CplusplusStyleComment,
                FortranStyleComment,
 
-           // FMZ(5/14/2010): Added  freeform comments (started with "!")
+            // FMZ(5/14/2010): Added freeform comments (started with "!")
                F90StyleComment,
+
+            // Rasmussen (11/3/2020): Added Ada and Jovial comments
+               AdaStyleComment,
+               JovialStyleComment,
 
             // DQ (11/20/2008): Added classification for blank line (a language independent form of comment).
                CpreprocessorBlankLine,
@@ -438,6 +442,9 @@ class PreprocessingInfo
           Sg_File_Info* get_file_info() const;
           void set_file_info( Sg_File_Info* info );
 
+       // DQ (8/26/2020): include directive have a filename imbedded inside, and we need to  
+       // extract that for from tools (e.g. the fixup for initializers from include files).
+          std::string get_filename_from_include_directive();
 
        // DQ (11/28/2008): Support for CPP generated linemarkers
           int get_lineNumberForCompilerGeneratedLinemarker();

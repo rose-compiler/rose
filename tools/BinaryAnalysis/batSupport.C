@@ -6,11 +6,14 @@
 #include <CommandLine.h>                                // rose
 #include <Partitioner2/Partitioner.h>                   // rose
 #include <rose_strtoull.h>                              // rose
+#include <stringify.h>                                  // rose
+#include <StringUtility.h>                              // rose
 
 #include <batSupport.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <Sawyer/BitVector.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/FileSystem.h>
 
@@ -20,6 +23,492 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 namespace Bat {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Null formatter produces no output.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+OutputFormatter::Ptr
+NullFormatter::instance() {
+    return Ptr(new NullFormatter);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Plain text formatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+OutputFormatter::Ptr
+PlainTextFormatter::instance() {
+    return Ptr(new PlainTextFormatter);
+}
+
+void
+PlainTextFormatter::title(std::ostream &out, const std::string &title) {
+    out <<title;
+}
+
+void
+PlainTextFormatter::pathNumber(std::ostream &out, size_t n) {
+    out <<", path #" <<n;
+}
+
+void
+PlainTextFormatter::pathHash(std::ostream &out, const std::string &hash) {
+    out <<", hash " <<hash <<"\n";
+}
+
+void
+PlainTextFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std::string &what) {
+    std::string s = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(m, ""));
+    out <<"  " <<s;
+    if (!what.empty())
+        out <<" " <<what;
+}
+
+void
+PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
+    std::string s = FeasiblePath::MUST ? "must" : "may";
+    out <<" " <<s;
+    if (!what.empty())
+        out <<" " <<what;
+    out <<"\n";
+}
+
+void
+PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+    out <<"  for address " <<*address <<"\n";
+}
+
+void
+PlainTextFormatter::finalInsn(std::ostream &out, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+    out <<"  at instruction " <<partitioner.unparse(insn) <<"\n";
+}
+
+void
+PlainTextFormatter::variable(std::ostream &out, const Variables::StackVariable &var) {
+    out <<"  for " <<var <<"\n";
+}
+
+void
+PlainTextFormatter::variable(std::ostream &out, const Variables::GlobalVariable &var) {
+    out <<"  for " <<var <<"\n";
+}
+
+void
+PlainTextFormatter::frameOffset(std::ostream &out, const Variables::OffsetInterval &i) {
+    if (i.size() == 1) {
+        out <<"  when accessing frame location " <<Variables::offsetStr(i.least()) <<"\n";
+    } else {
+        out <<"  when accessing frame locations " <<Variables::offsetStr(i.least())
+            <<" through " <<Variables::offsetStr(i.greatest()) <<"\n";
+    }
+}
+
+void
+PlainTextFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &var, const Variables::OffsetInterval &i,
+                                  FeasiblePath::IoMode ioMode) {
+    std::string direction = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(ioMode, ""));
+    if (i.least() < var.frameOffset()) {
+        size_t distance = var.frameOffset() - i.least();
+        out <<"  " <<direction <<" starts " <<Rose::StringUtility::plural(distance, "bytes") <<" before the variable\n";
+    }
+
+    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the frame offsets are
+    // signed and have only half the possible magnitude. We'll do the arithmetic in software with signed 65-bit types.
+    // The following code is equivalent to (modulo the types and hexadecimal output):
+    //    if (i.greatest() > var.frameOffset() + var.maxSizeBytes()) {
+    //        size_t distance = i.greatest() - (var.frameOffset() + var.maxSizeBytes()) + 1;
+    //        out <<" " <<direction <<" ends " <<Rose::StringUtility::plural(distance, "bytes") <<" after the variable\n";
+    //    }
+    typedef Sawyer::Container::BitVector BV;
+    BV greatestAccess(65);
+    greatestAccess.fromInteger((uint64_t)i.greatest());
+    greatestAccess.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
+    BV maxSizeBytes(65);
+    maxSizeBytes.fromInteger(var.maxSizeBytes());
+    BV endOffset(65);
+    endOffset.fromInteger((uint64_t)var.frameOffset());
+    endOffset.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
+    endOffset.add(maxSizeBytes);
+    if (greatestAccess.compareSigned(endOffset) > 0) {
+        // Access ends after the end of the variable.
+        BV distance(greatestAccess);
+        distance.subtract(endOffset);
+        distance.increment();
+        BV maxInt(65);
+        maxInt.set(BV::hull(0, 63));
+        if (distance.compareSigned(maxInt) <= 0) {
+            uint64_t d = distance.toInteger();
+            out <<" " <<direction <<" ends " <<Rose::StringUtility::plural(d, "bytes") <<" after the variable\n";
+        } else {
+            out <<" " <<direction <<" ends 0x" <<distance.toHex() <<" bytes after the variable\n";
+        }
+    }
+}
+
+void
+PlainTextFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars, const P2::Partitioner &partitioner) {
+    out <<"  these local variables were found:\n";
+    Variables::print(vars, partitioner, out, "    ");
+}
+
+void
+PlainTextFormatter::pathIntro(std::ostream &out) {
+    out <<"  the weakness occurs on the following execution path\n";
+}
+
+void
+PlainTextFormatter::pathLength(std::ostream &out, size_t nVerts, size_t nSteps) {
+    out <<"  path has " <<Rose::StringUtility::plural(nVerts, "vertices")
+        <<" containing " <<Rose::StringUtility::plural(nSteps, "steps") <<"\n";
+}
+
+void
+PlainTextFormatter::startFunction(std::ostream &out, const std::string &name) {
+    out <<"  starting in function \"" <<Rose::StringUtility::cEscape(name) <<"\"\n";
+}
+
+void
+PlainTextFormatter::endFunction(std::ostream &out, const std::string &name) {
+    out <<"  ending in function \"" <<Rose::StringUtility::cEscape(name) <<"\"\n";
+}
+
+void
+PlainTextFormatter::bbVertex(std::ostream &out, size_t id, const P2::BasicBlock::Ptr&, const std::string &funcName) {
+    out <<"    vertex #" <<id <<" in " <<funcName <<"\n";
+}
+
+void
+PlainTextFormatter::bbSrcLoc(std::ostream &out, const Rose::SourceLocation &loc) {
+    out <<"    at " <<loc <<"\n";
+}
+
+void
+PlainTextFormatter::insnListIntro(std::ostream &out) {}
+
+void
+PlainTextFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    out <<"      #" <<(boost::format("%-6d") % idx) <<" " <<partitioner.unparse(insn) <<"\n";
+}
+
+void
+PlainTextFormatter::semanticFailure(std::ostream &out) {
+    out <<"            semantic error caused by previous instruction\n"
+        <<"            previous insn ignored; semantic state may be invalid from this point on\n";
+}
+
+void
+PlainTextFormatter::indetVertex(std::ostream &out, size_t idx) {
+    out <<"    vertex #" <<idx <<" at indeterminate location\n";
+}
+
+void
+PlainTextFormatter::indetStep(std::ostream &out, size_t idx) {
+    out <<"      #" <<(boost::format("%-6d") % idx) <<" indeterminate\n";
+}
+
+void
+PlainTextFormatter::summaryVertex(std::ostream &out, size_t idx, rose_addr_t va) {
+    out <<"    vertex #" <<idx <<" at " <<Rose::StringUtility::addrToString(va) <<"\n";
+}
+
+void
+PlainTextFormatter::summaryStep(std::ostream &out, size_t idx, const std::string &name) {
+    out <<"      #" <<(boost::format("%-6d") % idx) <<" summary";
+    if (!name.empty())
+        out <<" " <<name;
+    out <<"\n";
+}
+
+void
+PlainTextFormatter::edge(std::ostream &out, const std::string &name) {
+    out <<"    edge " <<name <<"\n";
+}
+
+void
+PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
+                          const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+    out <<"      " <<title <<"\n";
+    if (state) {
+        BS::Formatter fmt;
+        fmt.set_register_dictionary(regdict);
+        fmt.set_line_prefix("        ");
+        out <<(*state + fmt);
+    } else {
+        out <<"      no virtual state calculated at the end of vertex #" <<vertexIdx <<"\n";
+    }
+}
+
+void
+PlainTextFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::SmtSolverPtr &solver) {
+    out <<"    evidence from SMT solver:\n";
+    if (solver) {
+        std::vector<std::string> names = solver->evidenceNames();
+        if (names.empty()) {
+            out <<"      none (trivial solution?)\n";
+        } else {
+            BOOST_FOREACH (const std::string &name, names) {
+                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                    out <<"      " <<name <<" = " <<*value <<"\n";
+                } else {
+                    out <<"      " <<name <<" = unknown\n";
+                }
+            }
+        }
+    } else {
+        out <<"      no solver\n";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// YAML formatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+OutputFormatter::Ptr
+YamlFormatter::instance() {
+    return Ptr(new YamlFormatter);
+}
+
+std::string
+YamlFormatter::formatTag(const std::string &tag) {
+    return (boost::format("%-32s") % tag).str();
+}
+
+void
+YamlFormatter::title(std::ostream &out, const std::string &title) {
+    writeln(out, "- title:", title);
+}
+
+void
+YamlFormatter::pathNumber(std::ostream &out, size_t n) {
+    writeln(out, "  sequence:", n);
+}
+
+void
+YamlFormatter::pathHash(std::ostream &out, const std::string &hash) {
+    writeln(out, "  hash:", hash);
+}
+
+void
+YamlFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std::string &what) {
+    std::string s = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(m, ""));
+    out <<formatTag("  description:") <<" " <<s;
+    if (!what.empty())
+        out <<" " <<what;
+}
+
+void
+YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
+    std::string s = FeasiblePath::MUST ? "must" : "may";
+    out <<" " <<s;
+    if (!what.empty())
+        out <<" " <<what;
+    out <<"\n";
+}
+
+void
+YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+    writeln(out, "  address:", *address);
+}
+
+void
+YamlFormatter::finalInsn(std::ostream &out, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+    writeln(out, "  instruction:", partitioner.unparse(insn));
+}
+
+void
+YamlFormatter::variable(std::ostream &out, const Variables::StackVariable &var) {
+    writeln(out, "  variable:", var);
+}
+
+void
+YamlFormatter::variable(std::ostream &out, const Variables::GlobalVariable &var) {
+    writeln(out, "  variable:", var);
+}
+
+void
+YamlFormatter::frameOffset(std::ostream &out, const Variables::OffsetInterval &i) {
+    if (i.size() == 1) {
+        writeln(out, "  frame-location:", Variables::offsetStr(i.least()));
+    } else {
+        writeln(out, "  frame-location:",
+                Variables::offsetStr(i.least()) + " through " + Variables::offsetStr(i.greatest()));
+    }
+}
+
+void
+YamlFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &var, const Variables::OffsetInterval &i,
+                                  FeasiblePath::IoMode ioMode) {
+    std::string direction = boost::to_lower_copy(stringify::Rose::BinaryAnalysis::FeasiblePath::IoMode(ioMode, ""));
+    if (i.least() < var.frameOffset()) {
+        size_t distance = var.frameOffset() - i.least();
+        writeln(out, "  before-variable:", Rose::StringUtility::plural(distance, "bytes"));
+    }
+
+    // We have to be careful because the var.maxSizeBytes() is unsigned and can be very large, but the frame offsets are
+    // signed and have only half the possible magnitude. We'll do the arithmetic in software with signed 65-bit types.
+    // The following code is equivalent to (modulo the types and hexadecimal output):
+    //    if (i.greatest() > var.frameOffset() + var.maxSizeBytes()) {
+    //        size_t distance = i.greatest() - (var.frameOffset() + var.maxSizeBytes()) + 1;
+    //        out <<" " <<direction <<" ends " <<Rose::StringUtility::plural(distance, "bytes") <<" after the variable\n";
+    //    }
+    typedef Sawyer::Container::BitVector BV;
+    BV greatestAccess(65);
+    greatestAccess.fromInteger((uint64_t)i.greatest());
+    greatestAccess.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
+    BV maxSizeBytes(65);
+    maxSizeBytes.fromInteger(var.maxSizeBytes());
+    BV endOffset(65);
+    endOffset.fromInteger((uint64_t)var.frameOffset());
+    endOffset.signExtend(BV::BitRange::hull(0, 63), BV::BitRange::hull(0, 64));
+    endOffset.add(maxSizeBytes);
+    if (greatestAccess.compareSigned(endOffset) > 0) {
+        // Access ends after the end of the variable.
+        BV distance(greatestAccess);
+        distance.subtract(endOffset);
+        distance.increment();
+        BV maxInt(65);
+        maxInt.set(BV::hull(0, 63));
+        if (distance.compareSigned(maxInt) <= 0) {
+            uint64_t d = distance.toInteger();
+            writeln(out, "  after-variable:", Rose::StringUtility::plural(d, "bytes"));
+        } else {
+            writeln(out, "  after-variable:", "0x" + distance.toHex() + " bytes");
+        }
+    }
+}
+
+void
+YamlFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars, const P2::Partitioner &partitioner) {
+    writeln(out, "  local-variables:");
+    Variables::print(vars, partitioner, out, "    - ");
+}
+
+void
+YamlFormatter::pathLength(std::ostream &out, size_t nVerts, size_t nSteps) {
+    std::string s = Rose::StringUtility::plural(nVerts, "vertices") +
+                    " containing " + Rose::StringUtility::plural(nSteps, "steps");
+    writeln(out, "  path-length:", s);
+}
+
+void
+YamlFormatter::startFunction(std::ostream &out, const std::string &name) {
+    writeln(out, "  start-function:", Rose::StringUtility::cEscape(name));
+}
+
+void
+YamlFormatter::endFunction(std::ostream &out, const std::string &name) {
+    writeln(out, "  end-function:", Rose::StringUtility::cEscape(name));
+}
+
+void
+YamlFormatter::pathIntro(std::ostream &out) {
+    writeln(out, "  vertices:");
+}
+
+void
+YamlFormatter::bbVertex(std::ostream &out, size_t idx, const P2::BasicBlock::Ptr &bb, const std::string &funcName) {
+    writeln(out, "    - vertex:", idx);
+    writeln(out, "      type:", "basic-block");
+    writeln(out, "      address:", Rose::StringUtility::addrToString(bb->address()));
+    if (!funcName.empty())
+        writeln(out, "      contained-in", funcName);
+}
+
+void
+YamlFormatter::bbSrcLoc(std::ostream &out, const Rose::SourceLocation &loc) {
+    writeln(out, "      src-location:", loc);
+}
+
+void
+YamlFormatter::insnListIntro(std::ostream &out) {
+    writeln(out, "      steps:");
+}
+
+void
+YamlFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    writeln(out, "        - step:", idx);
+    writeln(out, "          address:", Rose::StringUtility::addrToString(insn->get_address()));
+    writeln(out, "          instruction:", partitioner.unparsePlain(insn));
+}
+
+void
+YamlFormatter::semanticFailure(std::ostream &out) {
+    writeln(out, "          error:", "semantic-failure");
+}
+
+void
+YamlFormatter::indetVertex(std::ostream &out, size_t idx) {
+    writeln(out, "    - vertex:", idx);
+    writeln(out, "      type:", "indeterminate");
+    writeln(out, "      steps:");
+}
+
+void
+YamlFormatter::indetStep(std::ostream &out, size_t idx) {
+    writeln(out, "        - step:", idx);
+    writeln(out, "          address:", "indeterminate");
+}
+
+void
+YamlFormatter::summaryVertex(std::ostream &out, size_t idx, rose_addr_t va) {
+    writeln(out, "    - vertex:", idx);
+    writeln(out, "      type:", "summary");
+    writeln(out, "      address:", Rose::StringUtility::addrToString(va));
+    writeln(out, "      steps:");
+}
+
+void
+YamlFormatter::summaryStep(std::ostream &out, size_t idx, const std::string &name) {
+    writeln(out, "        - step:", idx);
+    writeln(out, "          entity:", name);
+}
+
+void
+YamlFormatter::edge(std::ostream &out, const std::string &name) {
+    writeln(out, "      outgoing-edge:", name);
+}
+
+void
+YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
+                          const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+    if (state) {
+        writeln(out, "      semantics:", title);
+        writeln(out, "      state:");
+        BS::Formatter fmt;
+        fmt.set_register_dictionary(regdict);
+        fmt.set_line_prefix("        - ");
+        out <<(*state + fmt);
+    }
+}
+
+void
+YamlFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::SmtSolverPtr &solver) {
+    if (solver) {
+        std::vector<std::string> names = solver->evidenceNames();
+        if (names.empty()) {
+            writeln(out, "  evidence:", "none (trivial solution?)");
+        } else {
+            writeln(out, "  evidence:");
+            BOOST_FOREACH (const std::string &name, names) {
+                writeln(out, "    - name:", name);
+                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                    writeln(out, "      value:", *value);
+                } else {
+                    writeln(out, "      value:", "unknown");
+                }
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Support functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
 checkRoseVersionNumber(const std::string &need) {
@@ -217,7 +706,9 @@ pathEndpointFunctionNames(const FeasiblePath &fpAnalysis, const P2::CfgPath &pat
 
 void
 printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &path, const SmtSolver::Ptr &solver,
-          const BS::RiscOperatorsPtr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates) {
+          const BS::RiscOperatorsPtr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
+          const OutputFormatter::Ptr &formatter) {
+    ASSERT_not_null(formatter);
     const P2::Partitioner &partitioner = fpAnalysis.partitioner();
 
     // We need to prevent the output of two or more paths from being interleaved
@@ -229,97 +720,66 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
     std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(lastInsn);
     size_t lastVertexIdx = lastIndices.first;
     size_t lastInsnIdx = lastIndices.second;
-    out <<"    path has " <<Rose::StringUtility::plural(lastInsnIdx+1, "steps") <<"\n";
+    formatter->finalInsn(out, partitioner, lastInsn);
 
     // Find the starting function and the function in which the flaw occurs
     std::pair<std::string, std::string> endpointNames = pathEndpointFunctionNames(fpAnalysis, path, lastVertexIdx);
     if (!endpointNames.first.empty())
-        out <<"    starting in function \"" <<Rose::StringUtility::cEscape(endpointNames.first) <<"\"\n";
+        formatter->startFunction(out, endpointNames.first);
     if (!endpointNames.second.empty())
-        out <<"    ending in in function \"" <<Rose::StringUtility::cEscape(endpointNames.second) <<"\"\n";
+        formatter->endFunction(out, endpointNames.second);
 
     // List the path
+    formatter->pathLength(out, lastVertexIdx+1, lastInsnIdx+1);
+    formatter->pathIntro(out);
     Rose::BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
     P2::CfgPath::Vertices vertices = path.vertices();
     for (size_t vertexIdx=0, insnIdx=0; vertexIdx <= lastVertexIdx; ++vertexIdx) {
 #if 1 // DEBUGGING [Robb Matzke 2020-02-27]
         if (vertexIdx > 0)
-            out <<"      edge " <<partitioner.edgeName(path.edges()[vertexIdx-1]) <<"\n";
+            formatter->edge(out, partitioner.edgeName(path.edges()[vertexIdx-1]));
 #endif
 
         P2::ControlFlowGraph::ConstVertexIterator vertex = vertices[vertexIdx];
         if (vertex->value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertex->value().bblock();
             P2::Function::Ptr function = partitioner.functionsOwningBasicBlock(bb->address()).front();
-            out <<"    vertex #" <<vertexIdx <<" in " <<function->printableName() <<"\n";
+            formatter->bbVertex(out, vertexIdx, bb, function->printableName());
             if (bb->sourceLocation())
-                out <<"    at " <<bb->sourceLocation() <<"\n";
+                formatter->bbSrcLoc(out, bb->sourceLocation());
+            formatter->insnListIntro(out);
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                std::string idxStr = (boost::format("%-6d") % insnIdx++).str();
-                out <<"      #" <<idxStr <<" " <<unparser->unparse(partitioner, insn) <<"\n";
-                if (insn->semanticFailure()) {
-                    out <<"            semantic error caused by revious instruction\n"
-                        <<"            previous insn ignored; semantic state may be invalid from this point on\n";
-                }
+                formatter->insnStep(out, insnIdx++, partitioner, insn);
+                if (insn->semanticFailure())
+                    formatter->semanticFailure(out);
                 if (insnIdx > lastInsnIdx)
                     break;
             }
         } else if (vertex->value().type() == P2::V_INDETERMINATE) {
-            out <<"    vertex #" <<vertexIdx <<" at indeterminate location\n";
-            std::string idxStr = (boost::format("%-6d") % insnIdx++).str();
-            out <<"      #" <<idxStr <<" indeterminate\n";
+            formatter->indetVertex(out, vertexIdx);
+            formatter->indetStep(out, vertexIdx++);
         } else if (vertex->value().type() == P2::V_USER_DEFINED) {
             const FeasiblePath::FunctionSummary &summary = fpAnalysis.functionSummary(vertex->value().address());
-            out <<"    vertex #" <<vertexIdx <<" in " <<Rose::StringUtility::cEscape(summary.name) <<"\n";
-            std::string idxStr = (boost::format("%-6d") % insnIdx++).str();
-            out <<"      #" <<idxStr <<" summary\n";
+            formatter->summaryVertex(out, vertexIdx, summary.address);
+            formatter->summaryStep(out, insnIdx++, summary.name);
         } else {
             ASSERT_not_reachable("unknown path vertex type: " + boost::lexical_cast<std::string>(vertex->value().type()));
         }
 
         // Show virtual machine state after each vertex
         if (ShowStates::YES == showStates) {
-            BS::StatePtr state;
+            const RegisterDictionary *regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
             if (vertexIdx == lastVertexIdx) {
-                if (cpu)
-                    state = cpu->currentState();
-                if (state)
-                    out <<"      state at detected operation:\n";
-            } else {
-                state = fpAnalysis.pathPostState(path, vertexIdx);
-                if (state)
-                    out <<"      state after vertex #" <<vertexIdx <<":\n";
-            }
-
-            if (state) {
-                BS::Formatter fmt;
-                fmt.set_register_dictionary(fpAnalysis.partitioner().instructionProvider().registerDictionary());
-                fmt.set_line_prefix("        ");
-                out <<(*state+fmt);
-            } else {
-                out <<"      no virtual state calculated at the end of vertex #" <<vertexIdx <<"\n";
+                formatter->state(out, vertexIdx, "state at detected operation:", cpu->currentState(), regdict);
+            } else if (BS::StatePtr state = fpAnalysis.pathPostState(path, vertexIdx)) {
+                formatter->state(out, vertexIdx, "state after vertex #" + boost::lexical_cast<std::string>(vertexIdx),
+                                 state, regdict);
             }
         }
     }
 
     // Show evidence from solver
-    out <<"    evidence from SMT solver:\n";
-    if (solver) {
-        std::vector<std::string> names = solver->evidenceNames();
-        if (names.empty()) {
-            out <<"      none (trivial solution?)\n";
-        } else {
-            BOOST_FOREACH (const std::string &name, names) {
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
-                    out <<"      " <<name <<" = " <<*value <<"\n";
-                } else {
-                    out <<"      " <<name <<" = unknown\n";
-                }
-            }
-        }
-    } else {
-        out <<"      no solver\n";
-    }
+    formatter->solverEvidence(out, solver);
 }
 
 P2::ControlFlowGraph::ConstVertexIterator
@@ -376,59 +836,228 @@ assignCallingConventions(const P2::Partitioner &partitioner) {
     partitioner.allFunctionCallingConventionDefinition(defaultCc);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Path selector for pruning path outputs.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+PathSelector::RejectEndNames::shouldReject(const Rose::BinaryAnalysis::FeasiblePath &fpAnalysis,
+                                           const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                           SgAsmInstruction *offendingInstruction) {
+    std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(offendingInstruction);
+    size_t lastVertexIdx = lastIndices.first;
+    std::pair<std::string, std::string> endpointNames = pathEndpointFunctionNames(fpAnalysis, path, lastVertexIdx);
+    // Interesting if starts with no name and ends with a name, so reject all others.
+    return !endpointNames.first.empty() || endpointNames.second.empty();
+}
+
+bool
+PathSelector::RejectDuplicateEndpoints::shouldReject(const Rose::BinaryAnalysis::FeasiblePath&,
+                                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                                     SgAsmInstruction*) {
+    rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+    size_t seenLength = seen_.getOrElse(va, Rose::UNLIMITED);
+    size_t curLength = path.nVertices();
+    return curLength >= seenLength;
+}
+
+void
+PathSelector::RejectDuplicateEndpoints::wasRejected(bool rejected, const Rose::BinaryAnalysis::FeasiblePath&,
+                                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                                     SgAsmInstruction*) {
+    if (!rejected) {
+        rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+        seen_.insert(va, showShorterPaths_ ? path.nVertices() : 0);
+    }
+}
+
+void
+PathSelector::resetStats() {
+    nSelected_ = nRejected_ = 0;
+    for (auto predicate: predicates) {
+        predicate->nCalls = predicate->nRejects = 0;
+    }
+}
+
 size_t
 PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, SgAsmInstruction *offendingInstruction) {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    size_t pathId = 0;
+    shouldReject(fpAnalysis, path, offendingInstruction, pathId /*out*/);
+    return pathId;
+}
 
-    // Suppress uninteresting paths.
-    if (suppressUninteresting) {
-        std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(offendingInstruction);
-        size_t lastVertexIdx = lastIndices.first;
-        std::pair<std::string, std::string> endpointNames = pathEndpointFunctionNames(fpAnalysis, path, lastVertexIdx);
-        if (endpointNames.first.empty() && !endpointNames.second.empty()) {
-            // Interesting because the path starts in unnamed user code and ends in a function whose name we know from library
-            // attribution results.
-        } else {
-            ++nUninteresting_;
-            return 0;
+std::shared_ptr<PathSelector::Predicate>
+PathSelector::shouldReject(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, SgAsmInstruction *offendingInstruction,
+                           size_t &pathId /*out*/) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    pathId = 0;
+
+    // Run the predicates until one says "reject!"
+    std::shared_ptr<Predicate> rejector;                // he who says "reject"
+    for (auto predicate: predicates) {
+        ASSERT_not_null(predicate);
+        ++predicate->nCalls;
+        if (predicate->shouldReject(fpAnalysis, path, offendingInstruction)) {
+            ++predicate->nRejects;                      // nRejects counter is for the specific predicate that said "reject"
+            rejector = predicate;
+            break;
         }
     }
 
-    uint64_t hash = path.hash(offendingInstruction);
+    // Tell all the predicates what happened.
+    bool wasRejected = rejector != nullptr;
+    for (auto predicate: predicates)
+        predicate->wasRejected(wasRejected, fpAnalysis, path, offendingInstruction);
 
-    // If a non-empty set of path hashes is specified, then suppress all but those that are present in the set.
-    if (!requiredHashes.empty() && requiredHashes.find(hash) == requiredHashes.end()) {
-        ++nWrongHashes_;
-        return 0;
+    if (wasRejected) {
+        ++nRejected_;
+    } else {
+        pathId = ++nSelected_;
     }
 
-    // It's possible for the same path to occur more than once. For instance, encountering a possible weakness doesn't
-    // necessarily mean that the execution path terminates -- the model checker may continue trying to extend the path.
-    // Therefore, in order to prevent printing redundant paths, we hash each path and print it only if we haven't seen the hash
-    // before.
-    if (suppressDuplicatePaths && !seenPaths_.insert(hash).second) {
-        ++nDuplicatePaths_;
-        return 0;
+    return rejector;
+}
+
+std::shared_ptr<PathSelector::Predicate>
+PathSelector::findPredicate(const std::string &name) const {
+    for (auto predicate: predicates) {
+        if (predicate->name == name)
+            return predicate;
     }
+    return {};
+}
 
-    // The user might want to show only one path per end-point.
-    if (suppressDuplicateEndpoints && !seenEndpoints_.insert(path.backVertex()->value().address()).second) {
-        ++nDuplicateEndpoints_;
-        return 0;
-    }
+size_t
+PathSelector::nRejected() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return nRejected_;
+}
 
-    // Have we selected too many paths already?
-    if (nSelected_ >= maxPaths)
-        return 0;
-
-    // Assume the path should be shown
-    return ++nSelected_;
+size_t
+PathSelector::nSelected() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return nSelected_;
 }
 
 void
 PathSelector::maybeTerminate() const {
-    if (nSelected_ >= maxPaths)
-        _exit(0);
+    if (auto predicate = findPredicate<RejectTooMany>()) {
+        if (nSelected_ >= predicate->limit()) {
+            std::cerr <<"path limit reached\n";
+            _exit(0);
+        }
+    }
 }
+
+void
+PathSelector::printStatistics(std::ostream &out, const std::string &prefix) const {
+    out <<prefix <<"  total paths reported:                      " <<nSelected() <<"\n";
+    out <<prefix <<"  total reports suppressed:                  " <<nRejected() <<"\n";
+    for (auto predicate: predicates)
+        out <<(boost::format("%s    because %-32s %d\n") %prefix %predicate->description %predicate->nRejects);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction histograms
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if __cplusplus >= 201402L
+
+InsnHistogram
+computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map) {
+    InsnHistogram histogram;
+    rose_addr_t va = 0;
+    while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+        const rose_addr_t aligned = alignUp(va, insns.instructionAlignment());
+        if (va != aligned) {
+            va = aligned;
+        } else if (SgAsmInstruction *insn = insns[va]) {
+            ++histogram[insn->get_mnemonic()];
+            va += insn->get_size();
+        } else {
+            ++va;
+        }
+    }
+    return histogram;
+}
+
+void
+saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path &fileName) {
+    auto io = SerialOutput::instance();
+    io->format(SerialIo::XML);
+    io->open(fileName);
+    io->saveObject(SerialIo::USER_DEFINED, histogram);
+}
+
+InsnHistogram
+loadInsnHistogram(const boost::filesystem::path &fileName) {
+    auto io = SerialInput::instance();
+    io->format(SerialIo::XML);
+    io->open(fileName);
+    return io->loadObject<InsnHistogram>(SerialIo::USER_DEFINED);
+}
+
+std::vector<InsnHistogram>
+splitInsnHistogram(const InsnHistogram &histogram, size_t nParts) {
+    ASSERT_require(nParts > 0);
+    std::vector<std::pair<std::string, size_t>> records(histogram.begin(), histogram.end());
+    std::sort(records.begin(), records.end(), [](auto &a, auto &b) { return a.second > b.second; });
+    size_t partSize = (records.size() + nParts - 1) / nParts;
+    std::vector<InsnHistogram> parts(nParts);
+    for (size_t i = 0; i < records.size(); ++i)
+        parts[i/partSize].insert(records[i]);
+    return parts;
+}
+
+void
+mergeInsnHistogram(InsnHistogram &histogram, const InsnHistogram &other) {
+    for (auto &pair: other)
+        histogram[pair.first] += pair.second;
+}
+
+double
+compareInsnHistograms(const std::vector<InsnHistogram> &aParts, const InsnHistogram &b) {
+    std::vector<InsnHistogram> bParts = splitInsnHistogram(b, aParts.size());
+    size_t totalDiff = 0, maxDiff = 0;
+    for (size_t i = 0; i < aParts.size(); ++i) {
+        maxDiff += std::max(i - 0, (bParts.size()-1) - i) * aParts[i].size();
+        for (const auto &record: aParts[i]) {
+            const std::string &label = record.first;
+            size_t foundAt = bParts.size() - 1;
+            for (size_t j = 0; j < bParts.size(); ++j) {
+                if (bParts[j].find(label) != bParts[j].end()) {
+                    foundAt = j;
+                    break;
+                }
+            }
+            size_t diff = std::max(i, foundAt) - std::min(i, foundAt);
+            totalDiff += diff;
+        }
+    }
+    return 1.0 * totalDiff / maxDiff;
+}
+
+double
+compareInsnHistograms(const InsnHistogram &a, const InsnHistogram &b, size_t nParts) {
+    std::vector<InsnHistogram> aParts = splitInsnHistogram(a, nParts);
+    return compareInsnHistograms(aParts, b);
+}
+
+void
+printInsnHistogram(const InsnHistogram &histogram, std::ostream &out) {
+    size_t runningTotal = 0, grandTotal = 0;
+    for (auto pair: histogram)
+        grandTotal += pair.second;
+    std::vector<std::pair<std::string, size_t>> results(histogram.begin(), histogram.end());
+    std::sort(results.begin(), results.end(), [](auto &a, auto &b) { return a.second > b.second; });
+    std::cout <<"Instruction           N      N%   Total  Total%\n";
+    for (auto pair: results) {
+        runningTotal += pair.second;
+        out <<(boost::format("%-15s\t%7d\t%7.3f\t%7d\t%7.3f\n")
+               %pair.first %pair.second %(100.0 * pair.second / grandTotal)
+               %runningTotal %(100.0 * runningTotal / grandTotal));
+    }
+}
+
+#endif
 
 } // namespace

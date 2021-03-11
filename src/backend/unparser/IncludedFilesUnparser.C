@@ -136,7 +136,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           if (FileHelper::isNotEmptyFolder(unparseRootPath))
              {
             // DQ (1/29/2018): This case happens when running ROSE from the command line and maybe we should automate the removal of this directory.
-#if 1
+#if 0
                printf ("\n\n");
                printf ("******************************************************************************************************** \n");
                printf ("Note: the unparseRootPath directory should be removed before running ROSE with the header file unparsing \n");
@@ -152,7 +152,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // Should be erased completely at every run to avoid name collisions with previous runs.
      FileHelper::eraseFolder(unparseRootPath);
 
-#if 1
+#if 0
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
@@ -239,7 +239,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
         }
 
-#if 1
+#if 0
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 1)
         {
@@ -268,14 +268,14 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): unparseAllHeaderFiles = %s \n",unparseAllHeaderFiles ? "true" : "false");
         }
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List allFiles list: processing parent include files chain: (size = %zu): \n",allFiles.size());
         }
@@ -289,7 +289,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
         {
 #if 1
        // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("   --- allFiles[%zu] = %s \n",tmp_counter,(*k).c_str());
              }
@@ -299,7 +299,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
        // Lookup the include file, so that we can traverse it's parents to a known file (in the allFiles list).
 #if 1
        // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("   --- EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end() = %s \n",
                     EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end() ? "true" : "false");
@@ -319,7 +319,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                   {
 #if 1
                  // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                    if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                        {
                          printf ("include_file->get_filename() = %s \n",include_file->get_filename().str());
                        }
@@ -327,7 +327,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                     SgIncludeFile* parent_include_file = isSgIncludeFile(include_file->get_parent());
 #if 1
                  // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                    if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                        {
                          printf ("parent_include_file = %p \n",parent_include_file);
                        }
@@ -337,7 +337,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                          string parent_filename = parent_include_file->get_filename().str();
 #if 1
                       // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-                         if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                         if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                             {
                               printf ("parent_include_file->get_filename() = %s \n",parent_include_file->get_filename().str());
                             }
@@ -437,7 +437,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List allFiles list (size = %zu): \n",allFiles.size());
           for (set<string>::iterator i = allFiles.begin(); i != allFiles.end(); i++)
@@ -449,7 +449,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("List modifiedFiles list (size = %zu): \n",modifiedFiles.size());
           set<string>::iterator j = modifiedFiles.begin();
@@ -515,7 +515,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 #if 1
             // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                   {
                     printf ("$$$$$$$$$$$$ Calling collectAdditionalFilesToUnparse() $$$$$$$$$$$$ \n");
                   }
@@ -528,7 +528,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(filesToUnparse) \n");
              }
@@ -540,7 +540,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           collectIncludeCompilerPaths();
 
        // DQ (4/14/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): calling applyFunctionToIncludingPreprocessingInfos(allFiles) \n");
              }
@@ -558,7 +558,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 #if 1
        // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf ("At bottom of DO WHILE loop: newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
              }
@@ -596,7 +596,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           FileHelper::ensureFolderExists(it -> second);
         }
 
-#if 0
+#if 1
      printf ("Before leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printDiagnosticOutput();
 #endif
@@ -608,7 +608,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
         }
@@ -628,8 +628,9 @@ IncludedFilesUnparser::printDiagnosticOutput()
      if (SgProject::get_verbose() >= 0)
         {
           printf ("In IncludedFilesUnparser::printDiagnosticOutput(): Output internal data \n");
+#if 0
           printf ("################################################## \n");
-
+#endif
           CollectionHelper::printSet(allFiles, "\nAll files:", "");
           CollectionHelper::printSet(modifiedFiles, "\nModified files:", "");
 
@@ -655,9 +656,10 @@ IncludedFilesUnparser::printDiagnosticOutput()
 
           cout << endl << endl;
 
+#if 0
           printf ("################################################## \n");
           printf ("Leaving IncludedFilesUnparser::printDiagnosticOutput(): Output internal data \n");
-
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -770,7 +772,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
    {
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In IncludedFilesUnparser::collectIncludeCompilerPaths(): includingPathsMap.size() = %zu \n",includingPathsMap.size());
         }
@@ -781,7 +783,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
           string fileToUnparse = mapEntry -> first;
 #if 1
        // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
              {
                printf (" --- In loop over includingPathsMap: fileToUnparse = %s \n",fileToUnparse.c_str());
              }
@@ -833,7 +835,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
 
 #if 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 1)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("Leaving IncludedFilesUnparser::collectIncludeCompilerPaths(): includingPathsMap.size() = %zu \n",includingPathsMap.size());
         }
@@ -1075,9 +1077,26 @@ void IncludedFilesUnparser::collectIncludingPathsFromUnaffectedFiles(const strin
 void
 IncludedFilesUnparser::initializeFilesToUnparse()
    {
-#if 0
+
+#define DEBUG_INITIALIZER_FILES_TO_UNPARSE 0
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
      printf ("In initializeFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
-     printf (" --- modifiedFiles.size()        = %zu \n",modifiedFiles.size());
+     printf (" --- modifiedFiles.size()                           = %zu \n",modifiedFiles.size());
+#endif
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
+     if (modifiedFiles.size() > 0)
+        {
+          printf ("List of modifiedFiles: \n");
+          std::set<std::string>::iterator i = modifiedFiles.begin();
+          while (i != modifiedFiles.end())
+             {
+               string filename = *i;
+               printf (" --- modifiedFiles: %s \n",filename.c_str());
+               i++;
+             }
+        }
 #endif
 
   // DQ (8/20/2019): Collect the comments and CPP directives of the modified header files so that they can be unparsed.
@@ -1088,10 +1107,14 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
      ASSERT_not_null(file);
 
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
+     printf (" --- file->get_header_file_unparsing_optimization() = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
+#endif
+
      if (file->get_header_file_unparsing_optimization() == true)
         {
           file->set_header_file_unparsing_optimization_header_file(true);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
           printf ("Perform collection of comments and CPP directives only on the header files \n");
           printf ("####################################################### \n");
           printf ("Processing comments and CPP directives for header files \n");
@@ -1100,7 +1123,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
        // Iterate over the modified files and collect comments and CPP directives for any header files.
           std::set<SgIncludeFile*> modifiedIncludeFiles;
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
           printf ("modifiedFiles.size() = %zu \n",modifiedFiles.size());
           printf ("Initializing modifiedIncludeFiles.size() = %zu \n",modifiedIncludeFiles.size());
 #endif
@@ -1111,20 +1134,20 @@ IncludedFilesUnparser::initializeFilesToUnparse()
           while (i != modifiedFiles.end())
              {
                string filename = *i;
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                printf ("Iterating over modifiedFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
 #endif
                if (unparseScopesMap.find(filename) != unparseScopesMap.end())
                   {
                     SgScopeStatement* scope = unparseScopesMap[filename];
                     ASSERT_not_null(scope);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Found entry in unparseScopesMap: scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
                   }
                  else
                   {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Entry not found in unparseScopesMap \n");
 #endif
                   }
@@ -1135,13 +1158,13 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                  // SgSourceFile* sourceFile = unparseSourceFileMap[filename];
                     sourceFile = unparseSourceFileMap[filename];
                     ASSERT_not_null(sourceFile);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Found entry in unparseSourceFileMap: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
                   }
                  else
                   {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Entry not found in unparseSourceFileMap \n");
 #endif
                   }
@@ -1150,14 +1173,14 @@ IncludedFilesUnparser::initializeFilesToUnparse()
             // extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
                if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
                   {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("In initializeFilesToUnparse(): Looking for a SgIncludeFile: filename = %s \n",filename.c_str());
 #endif
                     SgIncludeFile* includeFile = EDG_ROSE_Translation::edg_include_file_map[filename];
                  // ASSERT_not_null(includeFile);
                     if (includeFile != NULL)
                        {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                          printf ("In initializeFilesToUnparse(): includeFile = %p \n",includeFile);
 #endif
                       // SgSourceFile* sourceFile = includeFile->get_source_file();
@@ -1185,26 +1208,26 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                             }
                            else
                             {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                               printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                             }
                        }
                       else
                        {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                          printf ("EDG_ROSE_Translation::edg_include_file_map[filename] is NOT a SgIncludeFile \n");
 #endif
                        }
 
                     ASSERT_not_null(sourceFile);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Found entry in EDG_ROSE_Translation::edg_include_file_map: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
                   }
                  else
                   {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Entry not found in EDG_ROSE_Translation::edg_include_file_map \n");
 #endif
                   }
@@ -1235,7 +1258,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                  // SgSourceFile* sourceFile = isSgSourceFile(parent);
 #endif
                     ASSERT_not_null(sourceFile);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("sourceFile->getFileName()      = %s \n",sourceFile->getFileName().c_str());
                     printf ("sourceFile->get_isHeaderFile() = %s \n",sourceFile->get_isHeaderFile() ? "true" : "false");
 
@@ -1245,7 +1268,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                        {
                          SgNode* parent2 = sourceFile->get_parent();
                          ASSERT_not_null(parent2);
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                          printf ("parent2 = %p = %s \n",parent2,parent2->class_name().c_str());
 #endif
                          SgIncludeFile* includeFile = isSgIncludeFile(sourceFile->get_parent());
@@ -1258,12 +1281,12 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                  else
                   {
                  // DQ (10/14/2019): This should be the case of a non-header file (sometimes this is another generated file source file that was modified).
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("sourceFile == NULL \n");
 #endif
                   }
 
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                printf ("modifiedIncludeFiles.size() = %zu \n",modifiedIncludeFiles.size());
 #endif
 #if 0
@@ -1288,10 +1311,17 @@ IncludedFilesUnparser::initializeFilesToUnparse()
        // concept of deferred transformations (an option for the outliner).
 
        // DQ (10/9/2019): We only want to process the header files identified as having been modified.
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
+          printf ("##################################################################################################################################### \n");
           printf ("Iterate over the modified header files and process them to attach comments and CPP directives: modifiedIncludeFiles.size() = %zu \n",modifiedIncludeFiles.size());
+          printf ("##################################################################################################################################### \n");
 #endif
-          if (projectNode->get_usingDeferredTransformations() == false)
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
+          printf ("projectNode->get_usingDeferredTransformations() = %s \n",projectNode->get_usingDeferredTransformations() ? "true" : "false");
+#endif
+       // DQ (10/17/2020): This code processes the comments and CPP directives for the files when get_usingDeferredTransformations() == false.
+       // But it might be clearer to just always process the files independent of get_usingDeferredTransformations() being true or false.
+       // if (projectNode->get_usingDeferredTransformations() == false)
              {
                std::set<SgIncludeFile*>::iterator includeFileIterator = modifiedIncludeFiles.begin();
 
@@ -1301,14 +1331,14 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     ASSERT_not_null(includeFile);
 
                     string filename = includeFile->get_filename();
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
 #endif
                     SgSourceFile* sourceFile = isSgSourceFile(includeFile->get_source_file());
                     ASSERT_not_null(sourceFile);
 
                  // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
 #endif
                     sourceFile->set_header_file_unparsing_optimization_header_file(true);
@@ -1317,7 +1347,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
 
                  // DQ (10/21/2019): This will be tested below, in secondaryPassOverSourceFile(), if it is not in place then we need to do it here.
-                    ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+                 // ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 
 #if 0
                  // ASSERT_not_null(filePreprocInfo);
@@ -1331,23 +1361,85 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                          printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo == NULL \n");
                        }
 #endif
-#if 0
-                    printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+                 // DQ (10/18/2020): Let this trigger when to process the CPP directives and comments.
+                    if (sourceFile->get_processedToIncludeCppDirectivesAndComments() == false)
+                       {
+                      // DQ (10/18/2020): This is enforced within secondaryPassOverSourceFile() and attachPreprocessingInfo(), so move the enforcement to be as early as possible.
+                         ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
+                         printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-                 // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
-                    sourceFile->secondaryPassOverSourceFile();
-#if 0
-                    printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+                      // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
+                         sourceFile->secondaryPassOverSourceFile();
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
+                         printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
+                       }
+                      else
+                       {
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
+                         printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): (already processed sourceFile = %p = %s) \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+                       }
+
                     includeFileIterator++;
                   }
              }
+
+#if 0
+         // DQ (10/17/2020): This code processes the comments and CPP directives for the files when not using get_usingDeferredTransformations() == true.
+         // But it might be clearer to just always process the files independent of get_usingDeferredTransformations() being true or false.
             else
              {
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): Skipping attachment of CPP directives and comments because deferred transformations are being used \n");
 #endif
+               std::set<SgIncludeFile*>::iterator includeFileIterator = modifiedIncludeFiles.begin();
+               while (includeFileIterator != modifiedIncludeFiles.end())
+                  {
+                    SgIncludeFile* includeFile = *includeFileIterator;
+                    ASSERT_not_null(includeFile);
+
+                    string filename = includeFile->get_filename();
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
+                    printf ("########## Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
+#endif
+                    SgSourceFile* sourceFile = isSgSourceFile(includeFile->get_source_file());
+                    ASSERT_not_null(sourceFile);
+
+                    printf ("########## Calling sourceFile->get_preprocessorDirectivesAndCommentsList(): sourceFile filename = %s \n",filename.c_str());
+
+                 // ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+                    if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
+                       {
+                         printf ("########## Note: no uniformity in how this is set: sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL \n");
+                       }
+                      else
+                       {
+                         ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+                         printf ("########## filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+                       }
+                 // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE && 1
+                    printf ("########## In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+                 // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
+                    sourceFile->secondaryPassOverSourceFile();
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE && 1
+                    printf ("########## DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+
+                    includeFileIterator++;
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -1385,12 +1477,16 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
 
 #if 1
-#if 0
+
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
           printf ("In initializeFilesToUnparse(): file = %p = %s name = %s Calling file->set_header_file_unparsing_optimization_header_file(false) \n",file,file->class_name().c_str(),file->getFileName().c_str());
 #endif
        // DQ (9/19/2019): Unclear to me why we want to set this to false, or if we are doing so for the correct file.
           file->set_header_file_unparsing_optimization_header_file(false);
 #else
+
+#error "DEAD CODE!"
+
 #if 0
           printf ("In initializeFilesToUnparse(): Skipped calling file->set_header_file_unparsing_optimization_header_file(false) \n");
           printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
@@ -1403,7 +1499,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
   // All modified files have to be unparsed.
      filesToUnparse = modifiedFiles;
 
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
      printf ("In initializeFilesToUnparse(): initialized with modifiedFiles: filesToUnparse.size() = %zu \n",filesToUnparse.size());
 #endif
 
@@ -1414,7 +1510,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
           filesToUnparse.insert(FileHelper::normalizePath((*inputFilePtr) -> getFileName())); //normalize just in case it is not normalized by default as expected
         }
 
-#if 0
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE
      printf ("Leaving initializeFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
 #endif
 #if 0
@@ -1796,6 +1892,12 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
      printf ("In IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+     if (functionDeclaration != NULL)
+        {
+          printf (" --- functionDeclaration name = %s \n",functionDeclaration->get_name().str());
+          printf (" --- functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
+        }
 #endif
 
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
@@ -1889,7 +1991,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                   }
                  else
                   {
-                    printf ("In IncludedFilesUnparser::visit(): for includeDirectiveStatement = %p headerFile == NULL \n");
+                    printf ("In IncludedFilesUnparser::visit(): for includeDirectiveStatement = %p headerFile == NULL \n",includeDirectiveStatement);
                   }
 #if 1
                printf ("Exiting as a test! \n");
@@ -2066,7 +2168,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): node = %p = %s  \n",node,node->class_name().c_str());
 #endif
-               if (SgProject::get_verbose() > 0)
+               if (SgProject::get_verbose() > 2)
                   {
                     cout << "Found a modified node: "    << node -> class_name() << endl;
                     cout << "   In file: "               << normalizedFileName << endl;

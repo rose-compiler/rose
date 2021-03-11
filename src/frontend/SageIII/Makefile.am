@@ -76,6 +76,9 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    AM_CPPFLAGS += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 endif
 
+###Rasmussen:FIXME************************************
+   AM_CPPFLAGS += -I$(top_srcdir)/src/frontend/Experimental_General_Language_Support
+
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 

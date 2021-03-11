@@ -4,8 +4,8 @@ SOURCES = addPrototypesForTemplateInstantiations.C astPostProcessing.C buildStat
     checkIsCompilerGeneratedFlag.C checkIsFrontendSpecificFlag.C checkIsModifiedFlag.C checkPhysicalSourcePosition.C \
     detectTransformations.C fixupConstantFoldedValues.C fixupConstructorPreinitializationLists.C \
     fixupCxxSymbolTablesToSupportAliasingSymbols.C fixupDeclarationScope.C fixupDeclarations.C \
-    fixupDefiningAndNondefiningDeclarations.C fixupFileInfoFlags.C fixupFunctionDefaultArguments.C fixupNames.C \
-    fixupNullPointers.C fixupSelfReferentialMacros.C fixupSymbolTables.C fixupTemplateArguments.C \
+    fixupDefiningAndNondefiningDeclarations.C fixupFileInfoFlags.C fixupInitializers.C fixupFunctionDefaultArguments.C \
+    fixupNames.C fixupNullPointers.C fixupSelfReferentialMacros.C fixupSymbolTables.C fixupTemplateArguments.C \
     fixupTemplateInstantiations.C fixupTypeReferences.C fixupTypes.C fixupUseAndUsingDeclarations.C \
     initializeExplicitScopeData.C insertFortranContainsStatement.C markBackendCompilerSpecificFunctions.C \
     markCompilerGenerated.C markForOutputInCodeGeneration.C markLhsValues.C markOverloadedTemplateInstantiations.C \
@@ -24,8 +24,8 @@ run $(public_header) addIncludeDirectives.h addPrototypesForTemplateInstantiatio
     checkIsCompilerGeneratedFlag.h checkIsFrontendSpecificFlag.h checkIsModifiedFlag.h checkPhysicalSourcePosition.h \
     detectTransformations.h fixupConstantFoldedValues.h fixupConstructorPreinitializationLists.h \
     fixupCxxSymbolTablesToSupportAliasingSymbols.h fixupDeclarationScope.h fixupDeclarations.h \
-    fixupDefiningAndNondefiningDeclarations.h fixupFileInfoFlags.h fixupFunctionDefaultArguments.h fixupNames.h \
-    fixupNullPointers.h fixupSelfReferentialMacros.h fixupSymbolTables.h fixupTemplateArguments.h \
+    fixupDefiningAndNondefiningDeclarations.h fixupFileInfoFlags.h fixupFunctionDefaultArguments.h fixupInitializers.h \
+    fixupNames.h fixupNullPointers.h fixupSelfReferentialMacros.h fixupSymbolTables.h fixupTemplateArguments.h \
     fixupTemplateInstantiations.h fixupTypeReferences.h fixupTypes.h fixupUseAndUsingDeclarations.h \
     initializeExplicitScopeData.h insertFortranContainsStatement.h markBackendCompilerSpecificFunctions.h \
     markCompilerGenerated.h markForOutputInCodeGeneration.h markLhsValues.h markOverloadedTemplateInstantiations.h \

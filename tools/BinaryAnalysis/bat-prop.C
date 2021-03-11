@@ -129,9 +129,20 @@ public:
     }
 };
 
+class IsaNameProperty: public Property {
+public:
+    std::string name() const {
+        return "isa";
+    }
 
+    std::string doc() const {
+        return "Name of instruction set architecture.";
+    }
 
-
+    void eval(const P2::Partitioner &partitioner) const {
+        std::cout <<partitioner.instructionProvider().disassembler()->name() <<"\n";
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Container for all known properties
@@ -240,6 +251,7 @@ main(int argc, char *argv[]) {
     properties.define(new BasicBlockCountProperty);
     properties.define(new DataBlockCountProperty);
     properties.define(new InsnCountProperty);
+    properties.define(new IsaNameProperty);
 
     P2::Engine engine;
     std::vector<std::string> args = parseCommandLine(argc, argv, engine, properties);

@@ -56,6 +56,9 @@ string get_type_name(SgType* t)
 #if 0
      printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
 #endif
+#if 0
+     unp->u_sage->curprint("/* In get_type_name() */ ");
+#endif
 
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
@@ -593,8 +596,11 @@ string get_type_name(SgType* t)
         }
 //#endif
 
-#if 0
+#if 1
      printf ("Leaving get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
+#endif
+#if 0
+     unp->u_sage->curprint("/* Leaving get_type_name() */ ");
 #endif
    }
 

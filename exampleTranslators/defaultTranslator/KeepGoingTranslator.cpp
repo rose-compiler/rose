@@ -40,6 +40,8 @@ Refactored and documented: Liao, 4/13/2017
 int
 main(int argc, char * argv[])
 {
+    ROSE_INITIALIZE;
+
   // Using home may be a better choice, no scattered log files in every subdirectories.  
   //  report_filename__fail(boost::filesystem::path(getenv("HOME")).native()+"/rose-failed_files.txt");
   //  report_filename__pass(boost::filesystem::path(getenv("HOME")).native()+"/rose-passed_files.txt");

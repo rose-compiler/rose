@@ -190,11 +190,11 @@ ROSE_DLL_API SgTypeShort*    buildShortType();
 ROSE_DLL_API SgTypeFloat80*  buildFloat80Type();
 ROSE_DLL_API SgTypeFloat128* buildFloat128Type();
 
-// Rasmussen (2/20/2020): Added builder for Jovial fixed type
+// CR (2/20/2020): Added builder for Jovial fixed type
 //! Build a Jovial fixed type with a fraction specifier and a scale specifier
 ROSE_DLL_API SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale);
 
-// Rasmussen (5/5/2020): Added builder for Jovial bit type
+// CR (5/5/2020): Added builder for Jovial bit type
 //! Build a Jovial bit type of a given size
 ROSE_DLL_API SgJovialBitType* buildJovialBitType(SgExpression* size);
 
@@ -230,7 +230,7 @@ ROSE_DLL_API SgTypeUnknown * buildUnknownType();
 
 ROSE_DLL_API SgAutoType * buildAutoType();
 
-// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+// CR (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
 //! Builder functions for primitive types with type size (kind) expressions
 ROSE_DLL_API SgTypeBool * buildBoolType(SgExpression* kind_expr);
 ROSE_DLL_API SgTypeInt * buildIntType(SgExpression* kind_expr);
@@ -507,6 +507,9 @@ ROSE_DLL_API SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal(unsigned long
 ROSE_DLL_API SgUnsignedLongLongIntVal* buildUnsignedLongLongIntValHex(unsigned long long v = 0);
 ROSE_DLL_API SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal_nfi(unsigned long long v, const std::string& str);
 
+//! Build a Jovial bit value expression
+ROSE_DLL_API SgJovialBitVal* buildJovialBitVal_nfi(const std::string& str);
+
 //! Build an template parameter value expression
 ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal(int template_parameter_position = -1);
 ROSE_DLL_API SgTemplateParameterVal* buildTemplateParameterVal_nfi(int template_parameter_position, const std::string& str);
@@ -624,6 +627,7 @@ BUILD_BINARY_PROTO(AndOp)
 BUILD_BINARY_PROTO(ArrowExp)
 BUILD_BINARY_PROTO(ArrowStarOp)
 BUILD_BINARY_PROTO(AssignOp)
+BUILD_BINARY_PROTO(AtOp)
 BUILD_BINARY_PROTO(BitAndOp)
 BUILD_BINARY_PROTO(BitOrOp)
 BUILD_BINARY_PROTO(BitXorOp)
@@ -856,7 +860,7 @@ ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 
-//! Build noecept operator expression with an expression parameter
+//! Build noexcept operator expression with an expression parameter
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp_nfi(SgExpression* exp);
 
@@ -1072,6 +1076,10 @@ buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return
 ROSE_DLL_API SgTemplateFunctionDeclaration*
 buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefining_declaration);
 
+// DQ (11/8/2020): Define a function to build a default constructor for a class.
+// ROSE_DLL_API SgMemberFunctionDeclaration* buildConstructor ( const SgName & typeName, SgClassType* initializedName_classType, SgClassDefinition* classDefinition);
+ROSE_DLL_API SgMemberFunctionDeclaration* buildDefaultConstructor ( SgClassType* classType );
+
 //! Build a prototype member function declaration
 // SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 // SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
@@ -1140,6 +1148,12 @@ ROSE_DLL_API SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgN
 ROSE_DLL_API SgProcedureHeaderStatement*
 buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope, SgProcedureHeaderStatement* first_nondefining_declaration );
 
+// CR (9/24/2020)
+//! Build a nondefining SgProcedureHeaderStatement, handle function type, symbol etc transparently
+ROSE_DLL_API SgProcedureHeaderStatement*
+buildNondefiningProcedureHeaderStatement(const SgName & name, SgType* return_type, SgFunctionParameterList* param_list,
+                                         SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope=NULL);
+
 //! Build a regular function call statement
 ROSE_DLL_API SgExprStatement*
 buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
@@ -1199,7 +1213,7 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 
 ROSE_DLL_API SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
-// Rasmussen (9/3/2018)
+// CR (9/3/2018)
 //! Build a Fortran do construct
 ROSE_DLL_API SgFortranDo * buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body);
 
@@ -1401,6 +1415,10 @@ ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const
 ROSE_DLL_API SgJovialDefineDeclaration * buildJovialDefineDeclaration_nfi (const SgName& name, const std::string& params,
                                                                            const std::string& def_string, SgScopeStatement* scope=NULL);
 
+//! Build a Jovial loop statement. Two variants are FOR and WHILE.
+ROSE_DLL_API SgJovialForThenStatement* buildJovialForThenStatement_nfi(SgExpression* init_expr, SgExpression* incr_expr,
+                                                                       SgExpression* test_expr);
+
 //! Build an SgDerivedTypeStatement Fortran derived type declaration with a
 //! class declaration and definition (creating both the defining and nondefining declarations as required).
 ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& name, SgScopeStatement* scope=NULL);
@@ -1559,17 +1577,17 @@ ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str,
 //! Build a SgFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project = NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgFile node and attach it to SgProject
 /*! The file will be build with an empty global scope to support declarations being added.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgSourceFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles = false);
 
 // DQ (11/8/2019): Support function for the new file (to support changing the file names in the source position info objects of each AST subtree node.
 //! Change the source file associated with the source position information in the AST.
@@ -1608,7 +1626,13 @@ ROSE_DLL_API void fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* ins
                                                                 SgNode* node_copy, SgNode* node_original);
 ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
 ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the original function (modified slightly, but mostly I have defined a new function that 
+// will not effect the AST snippet support that is used by this function.
 ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the new function (modified in API and made suitable for the codeSegregation support).
+ROSE_DLL_API SgDeclarationStatement* findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 
 //! Error checking the inserted snippet AST.
 ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);
@@ -1722,7 +1746,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 
 //---------------------binary expressions-----------------------
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp,buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(),buildAtOp, buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp,buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */
@@ -1743,7 +1767,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
    return result;
  }
 
-//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(),buildAtOp, buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildReplicationOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion.
  */

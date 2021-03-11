@@ -8,14 +8,21 @@ exports
     CharString                 %% 8.1
     Name                       %% 8.2.1  
     ReservedWord               %% 8.2.2
+    IfKeyword                                %% Added to ensure 'IF...' can be an identifier/name
     BeadSize Bead              %% 8.3.2
 
     SignedTypeDesc             %% 2.1.1.1
     UnsignedTypeDesc           %% 2.1.1.1
+    FloatingTypeDesc           %% 2.1.1.2
+    FixedTypeDesc              %% 2.1.1.3
     BitTypeDesc                %% 2.1.1.5
     PointerTypeDesc            %% 2.1.1.7
     StrucSpecT                 %% 2.1.2.2
     DefString                  %% 2.4
+    ANDOperator                %% 5.1
+    OROperator                 %% 5.1
+    EQVOperator                %% 5.1
+    XOROperator                %% 5.1
 
   lexical syntax
 
@@ -29,6 +36,14 @@ exports
   'S'                       -> SignedTypeDesc
   'U'                       -> UnsignedTypeDesc
 
+%% 2.1.1.2
+%%
+  'F'                       -> FloatingTypeDesc
+
+%% 2.1.1.3
+%%
+  'A'                       -> FixedTypeDesc
+
 %% 2.1.1.5
 %%
   'B'                       -> BitTypeDesc
@@ -41,13 +56,22 @@ exports
 %%
   'T'                       -> StrucSpecT
 
-
 %%%%%%%%%%
 %% 2.4 DEFINE DECLARATIONS
 %%%%%%%%%%
 
   [\?] (Mark | Digit | Letter | [\n\r])*  [\?]  -> DefString
 
+%%%%%%%%%%
+%% 5.1 OPERATORS
+%%%%%%%%%%
+
+%% 5.1
+%%
+  'AND'                      -> ANDOperator
+  'OR'                       ->  OROperator
+  'EQV'                      -> EQVOperator
+  'XOR'                      -> XOROperator
 
 %%%%%%%%%%
 %% 8.0 BASIC ELEMENTS
@@ -117,6 +141,10 @@ exports
 
 %% 8.2.2 RESERVED WORDS
 %%
+
+%% IfKeyword is needed so that 'ifvar' is not split into 'if' 'var'
+  'IF'                      -> IfKeyword
+
   'ABORT'                   -> ReservedWord
   'ABS'                     -> ReservedWord
   'AND'                     -> ReservedWord
@@ -159,7 +187,7 @@ exports
 
   'HANDLER*'                -> ReservedWord
 
-  'IF'                      -> ReservedWord
+  IfKeyword                 -> ReservedWord
   'IN*'                     -> ReservedWord
   'INLINE'                  -> ReservedWord
   'INSTANCE'                -> ReservedWord
@@ -252,9 +280,19 @@ exports
     SignedTypeDesc   -/- [A-Za-z0-9]
     UnsignedTypeDesc -/- [A-Za-z0-9]
     BitTypeDesc      -/- [A-Za-z0-9]
+    FixedTypeDesc    -/- [A-Za-z0-9]
+    FloatingTypeDesc -/- [A-Za-z0-9]
 
     PointerTypeDesc  -/- [A-Za-z0-9]
     StrucSpecT       -/- [A-Za-z0-9]
+
+    IfKeyword        -/- [A-Za-z0-9]
+    ReservedWord     -/- [A-Za-z0-9]
+
+    ANDOperator      -/- [A-Za-z0-9]
+    OROperator       -/- [A-Za-z0-9]
+    EQVOperator      -/- [A-Za-z0-9]
+    XOROperator      -/- [A-Za-z0-9]
 
   context-free restrictions
 

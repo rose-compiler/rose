@@ -2,7 +2,6 @@
 #define VARIABLEIDMAPPING_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
  *************************************************************/
 
@@ -35,13 +34,16 @@ namespace CodeThorn {
     virtual ~VariableIdMapping();
     typedef std::set<VariableId> VariableIdSet;
 
-    /*
-      create the mapping between symbols in the AST and associated
-      variable-ids. Each variable in the project is assigned one
-      variable-id (including global variables, local variables,
-      class/struct/union data members)
+    /**
+     * create the mapping between symbols in the AST and associated
+     * variable-ids. Each variable in the project is assigned one
+     * variable-id (including global variables, local variables,
+     * class/struct/union data members)
+     * 
+     * param[in] project: The Rose AST we're going to act on
+     * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
-    virtual void computeVariableSymbolMapping(SgProject* project);
+    virtual void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3);
     
     /* create a new unique variable symbol (should be used together with
        deleteUniqueVariableSymbol) this is useful if additional
@@ -133,6 +135,8 @@ namespace CodeThorn {
     //void setModeVariableIdForEachArrayElement(bool active);
     //bool getModeVariableIdForEachArrayElement();
 
+    bool hasAssignInitializer(VariableId arrayVar);
+    bool isAggregateWithInitializerList(VariableId arrayVar);
     SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
     size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
     size_t getArrayElementCount(SgArrayType* t);
@@ -176,6 +180,9 @@ namespace CodeThorn {
     typedef std::set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
     TemporaryVariableIdMapping temporaryVariableIdMapping;
     VariableId addNewSymbol(SgSymbol* sym);
+
+    // used for link analysis of global variables based on mangled names
+    std::map<std::string,SgSymbol*> mappingGlobalVarNameToSymbol;
 
     // used for mapping in both directions
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
