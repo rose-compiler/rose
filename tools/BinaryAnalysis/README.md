@@ -97,7 +97,9 @@ up-to-date list.
 
 * MIPS. ROSE can disassemble these instructions but does not know what they do.
 
-* ARM AArch A64.
+* ARM AArch64 A64.
+
+* ARM AArch32 A64/T32.
 
 
 # Dependencies

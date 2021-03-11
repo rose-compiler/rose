@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on process-functions
+#include "CTAnalysis.h" // dependency on process-functions
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -162,7 +162,7 @@ namespace PredefinedSemanticFunctions {
         //cout<<"DEBUG: currentPosValue:"<<currentPosValue.toString()<<endl;
         // if the memory location that is read, does not exist, it is an out-of-bounds access
         if(currentPosValue.isBot()) {
-          cout<<estate.pstate()->toString()<<endl;
+          //cout<<estate.pstate()->toString()<<endl;
           exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
           break;
         }

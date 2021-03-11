@@ -1,0 +1,7 @@
+START
+PROGRAM main ;
+BEGIN
+!COPY 'blank' ;
+STOP 1;
+END
+TERM

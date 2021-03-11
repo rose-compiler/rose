@@ -1,0 +1,20 @@
+START
+
+DEF PROC halting U;
+  BEGIN
+
+    ITEM aa F;
+    ITEM bb F;
+
+    aa = 3.3;
+    bb = 13.0;
+
+    WHILE aa <> 0.0 AND bb >= 12.0 AND TRUE;
+      BEGIN
+        aa = aa - 1.1;
+        bb = bb - 1.0;
+      END
+
+  END
+
+TERM

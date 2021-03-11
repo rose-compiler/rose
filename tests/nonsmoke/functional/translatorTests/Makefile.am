@@ -31,6 +31,7 @@ noinst_PROGRAMS = \
 	testConstDeclarations \
 	testPragmaInBody \
 	querySubTree \
+	moveStatementsBetweenBlocks \
 	testCopyAndDelete \
         testTraversalOfTemplateInstantiations \
 	testTranslator2013_01 \
@@ -46,6 +47,7 @@ roseCompiler_SOURCES = roseCompiler.C
 testPlugins_SOURCES = testPlugins.C
 
 # Example translators used in regression tests
+moveStatementsBetweenBlocks_SOURCES = moveStatementsBetweenBlocks.C
 bug125_SOURCES = bug125.C
 qualifiedName_SOURCES = qualifiedName.C
 testDataMemberOfConst_SOURCES = testDataMemberOfConst.C
@@ -86,6 +88,9 @@ test125.pdf: bug125
 	./bug125 -c $(srcdir)/inputbug125.C
 
 # testqualifiedName: qualifiedName
+
+input_moveStatementsBetweenBlocks.o:moveStatementsBetweenBlocks
+	./moveStatementsBetweenBlocks -c $(srcdir)/input_moveStatementsBetweenBlocks.C  && touch $@
 
 jacobi.o: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c

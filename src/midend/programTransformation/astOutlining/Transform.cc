@@ -265,19 +265,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
     if (Outliner::enable_debug)
     {
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      cout<<"Transform.cc Outliner::outlineBlock() -----Found "<<readOnlyVars.size()<<" read only variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
           iter!=readOnlyVars.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<pdSyms.size()<<" varaibles to be replaced as pointer dereferencing variables..:";
       for (ASTtools::VarSymSet_t::const_iterator iter = pdSyms.begin();
           iter!=pdSyms.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
       cout<<endl;
 
-      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+      cout<<"Outliner::outlineBlock() -----Found "<<liveOuts.size()<<" live out variables..:";
       for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
           iter!=liveOuts.end(); iter++)
         cout<<" "<<(*iter)->get_name().getString()<<" ";
@@ -363,7 +363,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
   // insert (func, glob_scope, s); //Outliner::insert() 
-     DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
+     DeferredTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
 
   // Liao 2/4/2020   
   // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
@@ -482,6 +482,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
       appendExpression(exp_list_exp, wrapper_exp);
     }
+    else
+      appendExpression(exp_list_exp, buildIntVal(0)); // NULL pointer as parameter
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
@@ -1018,20 +1020,39 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 #endif
 
       if (enable_debug)
+      {
         printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+        //generateDOTforMultipleFile(*project);   // this is too large
+      //  string filename = SageInterface::generateProjectName(project);
+       // generateWholeGraphOfAST(filename+".WholeAST");
+      }
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
       new_file->get_file_info()->set_filenameString(new_file_name);
 
 #if 1
-   // DQ (3/28/2019): The conversion of functions with definitions to function prrototypes must preserve the 
+   // DQ (3/28/2019): The conversion of functions with definitions to function prototypes must preserve the 
    // associated comments and CPP directives (else the #includes will be missing and types will not be defined.
    // This is an issue with the astOutliner test code jacobi.c.
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
    // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
    // convertFunctionDefinitionsToFunctionPrototypes(new_file);
-      SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      //Liao, 2020/8/11 We only convert non-static functions into prototypes. 
+      //Static function definitions should be preserved or undefined function during making of shared lib.
+      std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(new_file);
+
+      std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+      while (i != functionList.end())
+      { 
+        SgFunctionDeclaration* functionDeclaration = *i;
+        ROSE_ASSERT(functionDeclaration != NULL);
+        // Transform into prototype.
+        if (!isStatic(functionDeclaration))
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+        i++;
+      }
 #endif
 
 #if 0

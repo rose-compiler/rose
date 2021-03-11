@@ -1,0 +1,12 @@
+START
+PROGRAM main;
+BEGIN
+   ITEM temp1 S;
+
+   for temp1 : 5;;
+   for temp1 : 5 then 6;;
+   for temp1 : 5 While temp1 < 10;;
+   for temp1 : 5 By 2;;
+
+END
+TERM

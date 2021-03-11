@@ -36,6 +36,21 @@ void checkZ3Options(CodeThornOptions& ctOpt) {
 #endif	
 }
 
+void checkNumThreads(CodeThornOptions& ctOpt) {
+  int numThreads=ctOpt.threads; // default is 1
+  if(numThreads<=0) {
+    cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+    exit(1);
+  }
+}
+
+void checkReportMode(CodeThornOptions& ctOpt) {
+  if(ctOpt.csvReportModeString!="generate" && ctOpt.csvReportModeString!="append") {
+    cerr<<"Error: unsupported argument for --csv-report-mode : "<<ctOpt.csvReportModeString<<endl;
+    exit(1);
+  }
+}
+
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
                                                 CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
@@ -65,6 +80,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
+    ("ltl-rers-mapping-file",po::value< string >(&ltlOpt.ltlRersMappingFileName),"File containing input/ouput alphabets and mapping (as provided in RERS)")
     ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
     ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
@@ -88,6 +104,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
+    ("rose:ast:write", po::value<bool>(&ctOpt.roseAstWrite),"write AST binary file.")
+    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstWrite),"merge ASTs of read files (is implict for rose:ast:read).")
     ;
 
   cegpraOptions.add_options()
@@ -95,7 +113,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr)->default_value(-1),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
     ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations)->default_value(-1),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
-    ("viz-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
+    ("vis-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
     ;
 
   visualizationOptions.add_options()
@@ -114,8 +132,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("tg2-estate-properties", po::value< bool >(&ctOpt.visualization.tg2EStateProperties)->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >(&ctOpt.visualization.tg2EStatePredicate)->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >(&ctOpt.visualization.visualizeRWSets)->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
-    ("viz", po::value< bool >(&ctOpt.visualization.viz)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
-    ("viz-tg2", po::value< bool >(&ctOpt.visualization.vizTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
+    ("vis", po::value< bool >(&ctOpt.visualization.vis)->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
+    ("vis-tg2", po::value< bool >(&ctOpt.visualization.visTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
     ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "same as --icfg.")
     ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
     ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
@@ -152,30 +170,37 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   experimentalOptions.add_options()
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
-    ("normalize-all", po::value< bool >(&ctOpt.normalizeAll)->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
-    ("normalize-fcalls", po::value< bool >(&ctOpt.normalizeFCalls)->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
+    ("normalize-level", po::value< int >(&ctOpt.normalizeLevel)->default_value(0),"Normalize all expressions (2), only fcalls (1), turn off (0).")
     ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
     ("normalize-phase-info", po::value<bool > (&ctOpt.normalizePhaseInfo)->default_value(false)->implicit_value(true),"Print phase progression info on stdout during normalization.")
     ("strict-checking", po::value<bool >(&ctOpt.strictChecking)->default_value(false)->implicit_value(true),"Perform strict checking in semantics (mostly useful for testing), otherwise compute conservative value.")
     ("inline", po::value< bool >(&ctOpt.inlineFunctions)->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >(&ctOpt.inlineFunctionsDepth)->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
-    ("eliminate-compound-assignments", po::value< bool >(&ctOpt.eliminateCompoundStatements)->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
     ("annotate-terms", po::value< bool >(&ctOpt.annotateTerms)->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >(&ctOpt.eliminateSTGBackEdges)->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions", po::value< bool >(&ctOpt.generateAssertions)->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints", po::value< bool >(&ctOpt.precisionExactConstraints)->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
     ("stg-trace-file", po::value< string >(&ctOpt.stgTraceFileName), "Generate STG computation trace and write to file <arg>.")
     ("arrays-not-in-state", po::value< bool >(&ctOpt.arraysNotInState)->default_value(false)->implicit_value(true),"Arrays are not represented in state. Only correct if all arrays are read-only (manual optimization - to be eliminated).")
-    ("z3", po::value< bool >(&ctOpt.z3BasedReachabilityAnalysis)->default_value(false)->implicit_value(true), "RERS specific reachability analysis using z3.")	
-    ("rers-upper-input-bound", po::value< int >(&ctOpt.z3UpperInputBound)->default_value(-1), "RERS specific parameter for z3.")
+    // ("z3", po::value< bool >(&ctOpt.z3BasedReachabilityAnalysis)->default_value(false)->implicit_value(true), "RERS specific reachability analysis using z3.")	
+    // ("rers-upper-input-bound", po::value< int >(&ctOpt.z3UpperInputBound)->default_value(-1), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(&ctOpt.z3VerifierErrorNumber)->default_value(-1), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >(&ctOpt.ssa)->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
-    ("null-pointer-analysis",po::value< bool >(&ctOpt.nullPointerAnalysis)->default_value(false)->implicit_value(true),"Perform null pointer analysis and print results.")
-    ("out-of-bounds-analysis",po::value< bool >(&ctOpt.outOfBoundsAnalysis)->default_value(false)->implicit_value(true),"Perform out-of-bounds analysis and print results.")
-    ("uninitialized-analysis",po::value< bool >(&ctOpt.uninitializedMemoryAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
-    ("null-pointer-analysis-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
-    ("out-of-bounds-analysis-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")
-    ("uninitialized-analysis-file",po::value< string >(&ctOpt.uninitializedMemoryAnalysisFileName),"Perform uninitialized analysis and write results to file [arg].")
+
+    ("null-pointer",po::value< bool >(&ctOpt.nullPointerAnalysis)->default_value(false)->implicit_value(true),"Perform null pointer analysis and print results.")
+    ("out-of-bounds",po::value< bool >(&ctOpt.outOfBoundsAnalysis)->default_value(false)->implicit_value(true),"Perform out-of-bounds analysis and print results.")
+    ("uninitialized",po::value< bool >(&ctOpt.uninitializedMemoryAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
+    ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
+    ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
+
+    ("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
+    ("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")
+    ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
+    ("out-of-bounds-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")
+    ("uninitialized-file",po::value< string >(&ctOpt.uninitializedMemoryAnalysisFileName),"Perform uninitialized analysis and write results to file [arg].")
+    ("dead-code-file",po::value< string >(&ctOpt.deadCodeAnalysisFileName),"Report dead code to CSV file [arg].")
+    ("opaque-predicates-file",po::value< string >(&ctOpt.constantConditionAnalysisFileName),"Report constant conditions to CSV file [arg]")
+
     ("program-stats-only",po::value< bool >(&ctOpt.programStatsOnly)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs and exit.")
     ("program-stats",po::value< bool >(&ctOpt.programStats)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >(&ctOpt.inStateStringLiterals)->default_value(false)->implicit_value(true),"create string literals in initial state.")
@@ -185,15 +210,24 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ignore-unknown-functions",po::value< bool >(&ctOpt.ignoreUnknownFunctions)->default_value(true)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     ("context-sensitive",po::value< bool >(&ctOpt.contextSensitive)->default_value(true)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
-    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
+    ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking), 2: approximating merge (separate solver)")
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
+    ("filter-unused-vars", po::value< bool > (&ctOpt.initialStateFilterUnusedVariables),"Filter unused variables when creating initial state.")
+    ("global-vars-abstraction-level", po::value< int > (&ctOpt.initialStateGlobalVarsAbstractionLevel),"Override abstraction level for global variables in initial state.")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
-    ("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    ("options-set",po::value< int >(&ctOpt.optionsSet)->default_value(0)->implicit_value(0),"Use a predefined set of default options (0:default|1..3:abstract)|11:concrete)).")
+    //("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
+    //("options-set",po::value< int >(&ctOpt.optionsSet)->default_value(0)->implicit_value(0),"Use a predefined set of default options (0:default|1..3:abstract)|11:concrete)).")
     ("callstring-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
+    ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
+    ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
+    ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
+    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.")
+    ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
+    ("fork-function-enabled",po::value< bool >(&ctOpt.forkFunctionEnabled),"sets fork function name (also requires --set-fork-function-name)")
+    ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
     ;
 
   rersOptions.add_options()
@@ -233,7 +267,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync|topologic-sort)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")
@@ -251,6 +285,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("start-function", po::value< string >(&ctOpt.startFunctionName), "Name of function to start the analysis from.")
     ("external-function-calls-file",po::value< string >(&ctOpt.externalFunctionCallsFileName), "write a list of all function calls to external functions (functions for which no implementation exists) to a CSV file.")
     ("status", po::value< bool >(&ctOpt.status)->default_value(false)->implicit_value(true), "Show status messages.")
+    ("null-pointer-dereference-keep-going", po::value< bool >(&ctOpt.nullPointerDereferenceKeepGoing)->implicit_value(true), "Keep going even when null pointer dereference is detected.")
     ("reduce-cfg", po::value< bool >(&ctOpt.reduceCfg)->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
     ("cl-args",po::value< string >(&ctOpt.analyzedProgramCLArgs),"Specify command line options for the analyzed program (as one quoted string).")
@@ -260,7 +295,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
     ("max-transitions",po::value< int >(&ctOpt.maxTransitions)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed.")
     ("max-iterations",po::value< int >(&ctOpt.maxIterations)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> loop iterations have been explored. Currently requires --exploration-mode=loop-aware[-sync].")
-    ("max-memory",po::value< long int >(&ctOpt.maxMemory)->default_value(-1),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached.")
+    ("max-memory",po::value< long int >(&ctOpt.maxMemory)->default_value(-1),"Stop computing the STG after a total physical memory consumption of approximately <arg> bytes has been reached.")
     ("max-time",po::value< long int >(&ctOpt.maxTime)->default_value(-1),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached.")
     ("max-transitions-forced-top",po::value< int >(&ctOpt.maxTransitionsForcedTop)->default_value(-1),"Performs approximation after <arg> transitions.")
     ("max-iterations-forced-top",po::value< int >(&ctOpt.maxIterationsForcedTop)->default_value(-1),"Performs approximation after <arg> loop iterations. Currently requires --exploration-mode=loop-aware[-sync].")
@@ -279,7 +314,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   infoOptions.add_options()
     ("print-variable-id-mapping",po::value< bool >(&ctOpt.info.printVariableIdMapping)->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
-    ("print-function-id-mapping",po::value< bool >(&ctOpt.info.printFunctionIdMapping)->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ("ast-stats-print",po::value< bool >(&ctOpt.info.printAstNodeStats)->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(&ctOpt.info.astNodeStatsCSVFileName),"Write ast node statistics to CSV file [arg].")
     ("ast-traversal-csv",po::value< string >(&ctOpt.info.astTraversalCSVFileName),"Write ast node traversal (sequence of node types) to file [arg].")
@@ -386,6 +420,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       ROSE_ASSERT(i+1<argc);
       argv[i+1]= strdup("");
       continue;
+    } else if (currentArg == "--rose:ast:write"||currentArg == "--rose:ast:merge") {
+      argv[i] = strdup("");
+      continue;
     }
     if (currentArg[0] != '-' ){
       continue;  // not an option      
@@ -414,7 +451,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   checkSpotOptions(ltlOpt,parProOpt);
   checkZ3Options(ctOpt);
-
+  checkNumThreads(ctOpt);
+  checkReportMode(ctOpt);
+  
   return args;
 }
 

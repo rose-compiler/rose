@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -805,7 +803,7 @@ AbstractValue ConstraintSet::varAbstractValue(const AbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-SetOfVariableId ConstraintSet::getEqVars(const AbstractValue varId) const {
+std::set<AbstractValue> ConstraintSet::getEqVars(const AbstractValue varId) const {
   return equalityMaintainer.equalElements(varId);
 }
 
@@ -849,7 +847,7 @@ void ConstraintSet::removeAllConstraintsOfVar(AbstractValue varId) {
   // => simply remove all (we do not loose information)
 
   bool isDedicatedVar=(equalityMaintainer.determineDedicatedElement(varId)==varId);
-  AbstractValueSet equalVars=equalityMaintainer.equalElements(varId);
+  std::set<AbstractValue> equalVars=equalityMaintainer.equalElements(varId);
   if(isDedicatedVar && (equalVars.size()>=2)) {
     // find an element different to the dedicated var (the 2nd element must be correct)
     AbstractValueSet::iterator i=equalVars.begin();

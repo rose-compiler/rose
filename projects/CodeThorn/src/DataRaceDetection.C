@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include "DataRaceDetection.h"
 #include "Specialization.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "AstTerm.h"
 #include "OmpSupport.h"
 #include "CodeThornCommandLineOptions.h"
@@ -34,7 +34,7 @@ DataRaceDetection::Options::Options():active(false),
 {
 }
 
-void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
+void DataRaceDetection::handleCommandLineOptions(CTAnalysis& analyzer) {
   //cout<<"DEBUG: initializing data race detection"<<endl;
   if(analyzer.getOptionsRef().dr.failOnError || (analyzer.getOptionsRef().dr.csvResultsFile.size()>0)) {
     analyzer.getOptionsRef().dr.detection=true;
@@ -90,7 +90,7 @@ void DataRaceDetection::reportResult(int verifyUpdateSequenceRaceConditionsResul
   }
 }
 
-bool DataRaceDetection::run(Analyzer& analyzer) {
+bool DataRaceDetection::run(CTAnalysis& analyzer) {
   if(options.active) {
     try {
       SAR_MODE sarMode=SAR_SSA;
@@ -121,7 +121,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       // TODO: SUBST remove substitution if faster without
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       
-      SgNode* root=analyzer.startFunRoot;
+      SgNode* root=analyzer.getStartFunRoot();
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
       logger[TRACE]<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;

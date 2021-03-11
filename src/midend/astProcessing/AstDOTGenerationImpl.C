@@ -14,7 +14,7 @@
 #  include "sageInterface.h"
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #  include "AsmUnparser_compat.h"
 #endif
 
@@ -48,7 +48,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 //      }
         string nodelabel=string("\\n")+node->class_name();
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
         // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
         SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
         if (genericInstruction != NULL)
@@ -362,7 +362,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
 
         // case V_SgFile: 
           case V_SgSourceFile: 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite: 
 #endif
                  {

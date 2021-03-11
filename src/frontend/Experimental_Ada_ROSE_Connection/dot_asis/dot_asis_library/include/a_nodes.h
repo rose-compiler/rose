@@ -231,7 +231,6 @@ enum Pragma_Kinds {
 // May take ??*4 bytes:
 struct Pragma_Struct {
   enum Pragma_Kinds   Pragma_Kind;
-  Pragma_Element_ID_List Pragmas;
   Program_Text        Pragma_Name_Image;
   Association_List    Pragma_Argument_Associations;
 };
@@ -767,6 +766,12 @@ struct Declaration_Struct {
   //  A_Task_Body_Declaration,                  // 9.1(6)
   //  A_Protected_Body_Declaration,             // 9.4(7)
   bool                           Is_Subunit;
+  //  ONLY present if Is_Subunit is true:
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   Declaration_ID                 Corresponding_Body_Stub;
   //  A_Generic_Procedure_Declaration,          // 12.1(2)
   //  A_Generic_Function_Declaration,           // 12.1(2)
@@ -1054,8 +1059,17 @@ typedef struct _Constraint_Struct {
 } Constraint_Struct;
 
 typedef struct _Component_Definition_Struct {
+  bool       Has_Aliased;
+  // These fields are only valid for the Ada versions above them:
+  // Pre-Ada 2005:
+  Definition Component_Subtype_Indication;
+  // Ada 2005 and after:
   Definition Component_Definition_View;
 } Component_Definition_Struct;
+
+// Discrete_Subtype_Definition_Struct and Discrete_Range_Struct are the same 
+// because discrete_subtype_definition  - LRM 3.6(6) and 
+// discrete_range - LRM 3.6.1(3) are the same.
 
 typedef struct _Discrete_Subtype_Definition_Struct {
   Discrete_Range_Kinds Discrete_Range_Kind;
@@ -1063,6 +1077,11 @@ typedef struct _Discrete_Subtype_Definition_Struct {
   // A_Discrete_Subtype_Indication
   Expression           Subtype_Mark;
   Constraint           Subtype_Constraint;
+  // A_Discrete_Simple_Expression_Range
+  Expression           Lower_Bound;
+  Expression           Upper_Bound;
+  // A_Discrete_Range_Attribute_Reference
+  Expression           Range_Attribute;
 } Discrete_Subtype_Definition_Struct;
 
 typedef struct _Discrete_Range_Struct {
@@ -1815,10 +1834,9 @@ typedef enum _Representation_Clause_Kinds {
 typedef struct _Representation_Clause_Struct {
   Representation_Clause_Kinds Representation_Clause_Kind;
   Name                        Representation_Clause_Name;
-
   // These fields are only valid for the kinds above them:
   // A_Record_Representation_Clause
-  Pragma_Element_ID_List         Pragmas;
+  Pragma_Element_ID_List      Pragmas;
   // An_Attribute_Definition_Clause
   // An_Enumeration_Representation_Clause
   // An_At_Clause
@@ -1841,9 +1859,6 @@ struct Clause_Struct {
   Name_List         Clause_Names;
   //   A_Component_Clause  
   Name_ID           Representation_Clause_Name;
-  Expression_ID     Representation_Clause_Expression;
-  Expression_ID     Mod_Clause_Expression;
-  Element_ID_List      Component_Clauses;
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
   //   A_Representation_Clause

@@ -734,7 +734,7 @@ int main(int argc, char *argv[]) {
 
     if (mustDisassemble) {
         engine.runPartitioner(partitioner);
-        if (partitioner.functions().empty() && engine.startingVas().empty())
+        if (partitioner.functions().empty() && engine.functionStartingVas().empty())
             mlog[WARN] <<"no starting points for recursive disassembly; perhaps you need --start?\n";
     }
 

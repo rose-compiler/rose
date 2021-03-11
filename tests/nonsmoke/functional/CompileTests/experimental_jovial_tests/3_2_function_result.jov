@@ -1,0 +1,13 @@
+START
+DEF PROC trials() S;
+  BEGIN
+    trials = 13;
+  END
+
+DEF PROC noreturn();
+  BEGIN
+    ITEM noreturn S;
+    noreturn = 13;
+  END
+
+TERM

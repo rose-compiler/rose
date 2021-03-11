@@ -10,6 +10,7 @@
 //
 class SgBasicBlock;
 class SgCaseOptionStmt;
+class SgCastExp;
 class SgCommonBlock;
 class SgCommonBlockObject;
 class SgDefaultOptionStmt;
@@ -27,18 +28,23 @@ class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
 class SgIfStmt;
+class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
+class SgPntrArrRefExp;
 class SgPrintStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
+class SgReplicationOp;
+class SgReturnStmt;
 class SgScopeStatement;
 class SgSourceFile;
 class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgVarRefExp;
 class SgWhileStmt;
 
 // Jovial specific classes
@@ -49,6 +55,7 @@ class SgJovialForThenStatement;
 class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
+enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
 
 namespace Rose {
 namespace builder {
@@ -66,8 +73,10 @@ struct SourcePosition {
 };
 
  struct TraversalContext {
-    TraversalContext() : type(nullptr), actual_function_param_scope(nullptr) {}
+    TraversalContext() : type(nullptr), is_initialization(false),
+                         actual_function_param_scope(nullptr) {}
     SgType* type;
+    bool is_initialization;
     SgScopeStatement* actual_function_param_scope;
  };
 
@@ -92,29 +101,39 @@ public:
 class SageTreeBuilder {
 public:
 
+   // C++11
+   // enum class LanguageEnum{Fortran, Jovial};
+   enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+
+   // C++11
+   // Don't allow default constructor, ...
+   SageTreeBuilder() = delete;
+   SageTreeBuilder(SageTreeBuilder::LanguageEnum language) : language_(language) {}
+
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
 
-   void Leave(SgScopeStatement* &);
+   void Enter(SgScopeStatement* &);
+   void Leave(SgScopeStatement*);
 
    void Enter(SgBasicBlock* &);
    void Leave(SgBasicBlock*);
 
    void Enter(SgProgramHeaderStatement* &,
-              const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
+              const boost::optional<std::string> &, const std::vector<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
 
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
-   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
+   void Enter(SgFunctionParameterList* &, SgScopeStatement* &, const std::string &, SgType*, bool);
+   void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
-                                        const LanguageTranslation::FunctionModifierList &);
-   void Leave(SgFunctionDeclaration*, SgBasicBlock*);
+                                        const LanguageTranslation::FunctionModifierList &, bool);
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -124,6 +143,10 @@ public:
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
+
+// Multiple variable form
+   void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
+   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
@@ -153,6 +176,9 @@ public:
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
 
+   void Enter(SgReturnStmt* &, const boost::optional<SgExpression*> &);
+   void Leave(SgReturnStmt*);
+
    void Enter(SgCaseOptionStmt* &, SgExprListExp*);
    void Leave(SgCaseOptionStmt*);
 
@@ -165,11 +191,23 @@ public:
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+   void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
+#ifdef CPP_ELEVEN
+   void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
+#else
+   void Enter(SgImplicitStatement* &);
+#endif
+   void Leave(SgImplicitStatement*);
+
+   SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
 // Expressions
 //
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
+   void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
+   void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
+   void Enter(SgPntrArrRefExp* &, const std::string &name, SgExprListExp* subscripts, SgExprListExp* cosubscripts);
+   void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
 //
@@ -179,7 +217,9 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*);
+   void Enter(SgJovialForThenStatement* &, const std::string &);
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
+                                           SgJovialForThenStatement::loop_statement_type_enum);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
@@ -197,21 +237,42 @@ public:
    void Leave(SgCommonBlock* common_block);
 
 private:
+
+   LanguageEnum language_;
    TraversalContext context_;
+   std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::map<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
+   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
+
 public:
+   bool is_Fortran_language() {return (language_ == e_language_fortran);}
+   bool is_Jovial_language()  {return (language_ == e_language_jovial);}
+
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+   void setInitializationContext(bool flag) {context_.is_initialization = flag;}
+   bool  isInitializationContext()          {return context_.is_initialization;}
 
 // Helper function
    bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
      {
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
+
+// Builder function manages implicitly declared variable references
+   SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
+
+// Builder function manages pointer references to undeclared types
+   SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
+
+// Symbols (Jovial specific, should this go in SageInterface?)
+   void injectAliasSymbol(const std::string &name);
 
 };
 
@@ -264,6 +325,9 @@ namespace SageBuilderCpp17 {
 
 // Other
    SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
+// This is new and should be added to SageBuilder?
+   SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
+                                                        SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
 
 } // namespace SageBuilderCpp17
 } // namespace builder

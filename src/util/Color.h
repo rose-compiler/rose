@@ -2,14 +2,119 @@
 #define ROSE_Color_H
 
 #include <algorithm>
+#include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <string>
 #include <rosedll.h>
+
+// Name space pollution cleanup
+#ifdef _MSC_VER
+  #undef RGB
+#endif
 
 namespace Rose {
 
 /** Colors. */
 namespace Color {
+
+/** Whether colored output is enabled. */
+namespace Enabled {                                     // done this way because ROSE must use only C++03
+enum Flag {
+    OFF,                                                /**< Disable colored output. */
+    ON,                                                 /**< Force colored output. */
+    AUTO                                                /**< Use colored output if standard output is a terminal. */
+};
+} // namespace
+
+/** Color theme.
+ *
+ *  Controls whether to use dark text on a light background, or light text on a dark background. */
+namespace Theme {                                       // done this way because ROSE must use only C++03
+enum Flag {
+    DARK_ON_LIGHT,                                      /**< Dark text on light background. */
+    LIGHT_ON_DARK                                       /**< Light text on dark background. */
+};
+} // namespace
+
+/** Control colored command output. */
+struct Colorization {
+    Sawyer::Optional<Enabled::Flag> enabled;            /**< Whether colored output is enabled. */
+    Sawyer::Optional<Theme::Flag> theme;                /**< The color theme. */
+
+    /** True if color is enabled in this situation. */
+    bool isEnabled() const;
+
+    /** Merge this color and another to produce a result. */
+    Colorization merge(const Colorization&) const;
+};
+
+/** Layer to which color applies. */
+namespace Layer {
+enum Flag {
+    NONE,                                               /**< No specific layer. */
+    FOREGROUND,                                         /**< Foreground colors. */
+    BACKGROUND                                          /**< Background colors. */
+};
+} // namespace
+
+/** Parses an output color specification. */
+class ColorizationParser: public Sawyer::CommandLine::ValueParser {
+protected:
+    ColorizationParser() {}
+    ColorizationParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
+        : Sawyer::CommandLine::ValueParser(valueSaver) {}
+
+public:
+    /** Shared ownership pointer to a @ref OutputParser. See @ref heap_object_shared_ownership. */
+    typedef Sawyer::SharedPointer<ColorizationParser> Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new ColorizationParser);
+    }
+
+    /** Allocating constructor. */
+    static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
+        return Ptr(new ColorizationParser(valueSaver));
+    }
+
+    /** Documentation for parser. */
+    static std::string docString();
+
+    /** Parse a colorized output specification from a C string.
+     *
+     *  Tries to parse a colorized output specification from the @p input string, and if successful adjusts @p rest to point to
+     *  the first character beyond what was parsed. If a syntax error occurs, then an @c std::runtime_error is thrown. */
+    static Colorization parse(const char *input, const char **rest);
+
+    /** Parse a colorized output specification from a C++ string.
+     *
+     *  Tries to parse a colorized output specification from the @p input string. The string may contain leading and trailing
+     *  white space, but any extra characters will cause a syntax error. Syntax errors are reported by throwing @c
+     *  std::runtime_error.  Since the underlying parsing is done on C strings, this function is ill-defined when the @p input
+     *  contains NUL bytes. */
+    static Colorization parse(const std::string &input);
+
+private:
+    virtual Sawyer::CommandLine::ParsedValue
+    operator()(const char *input, const char **rest, const Sawyer::CommandLine::Location &loc) /*override*/;
+};
+
+ColorizationParser::Ptr colorizationParser(Colorization &storage);
+ColorizationParser::Ptr colorizationParser();
+
+// Used internally to merge colorization command-line switch arguments.
+class ColorizationMerge: public Sawyer::CommandLine::ValueAugmenter {
+public:
+    typedef Sawyer::SharedPointer<ColorizationMerge> Ptr;
+
+    static Ptr instance() {
+        return Ptr(new ColorizationMerge);
+    }
+
+    virtual Sawyer::CommandLine::ParsedValues
+    operator()(const Sawyer::CommandLine::ParsedValues &prev, const Sawyer::CommandLine::ParsedValues &cur) /*OVERRIDE*/;
+};
 
 /** Type for color components.
  *
@@ -18,7 +123,6 @@ namespace Color {
  *  doing any heavy lifting of colors; i.e., no large image arrays, just color configuration kinds of things. */
 typedef double Component;
 
-
 /** Clip a floating point value between 0 and 1. */
 template<typename T>
 T clip(T c) {
@@ -26,9 +130,7 @@ T clip(T c) {
 }
 
 class HSV;
-#ifdef _MSC_VER
-  #undef RGB
-#endif
+
 /** Colors in RGB space. */
 class ROSE_UTIL_API RGB {
     Component r_, g_, b_, a_;
@@ -65,7 +167,7 @@ public:
     std::string toHtml() const;
 
     /** Convert to ANSI color escape. */
-    std::string toAnsi() const;
+    std::string toAnsi(Layer::Flag) const;
 };
 
 /** Colors in HSV space.
@@ -107,7 +209,7 @@ public:
     std::string toHtml() const;
 
     /** Convert to ANSI color escape. */
-    std::string toAnsi() const;
+    std::string toAnsi(Layer::Flag) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,6 +314,12 @@ ROSE_UTIL_API HSV lighten(const HSV&, double amount);
  *  saturation, and other values are linearly interpolated between those two extremes. */
 ROSE_UTIL_API HSV fade(const HSV&, double amount);
 
+/** Adjust color for terminal.
+ *
+ *  Given a color suitable for a dark foreground on a light background (typical tty or printed output), convert the color as
+ *  specified by the global color output command-line options. */
+HSV terminal(const HSV &color, const Colorization&);
+
 /** Create an HTML color string.
  *
  *  HTML color strings are of the form "#RRGGBB". */
@@ -221,8 +329,10 @@ ROSE_UTIL_API std::string toHtml(const RGB&);
  *
  * These characters can be emitted to an ANSI terminal after the appropriate escape sequence in order to change the foreground
  * or background color.  The escape sequence is usually "\033[38;2;" for the foreground and "\033[48;2;" for the
- * background. The foreground and background colors can be canceled by emitting "\033[0m". */
-ROSE_UTIL_API std::string toAnsi(const RGB&);
+ * background. The foreground and background colors can be canceled by emitting "\033[0m". If a layer is specified, then the
+ * escape sequence is part of the return value. ANSI doesn't support alphas, so if the alpha is less than 0.5 the return value
+ * is an empty string. */
+ROSE_UTIL_API std::string toAnsi(const RGB&, Layer::Flag layer);
 
 // printing
 std::ostream& operator<<(std::ostream&, const RGB&);

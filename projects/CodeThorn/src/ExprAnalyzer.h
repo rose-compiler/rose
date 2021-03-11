@@ -2,9 +2,7 @@
 #define CT_EXPR_ANALYZER_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <limits.h>
@@ -23,7 +21,7 @@ using namespace std;
 
 namespace CodeThorn {
 
-  class Analyzer;
+  class CTAnalysis;
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -55,9 +53,22 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
-  enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
+  enum InterpreterMode { IM_DISABLED, IM_ENABLED };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
+  
+  class ReadWriteListener {
+  public:
+    // result is value after reading from memLoc in pstate at label lab
+    virtual void readingFromMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& result) {}
+    // pstate is state at label lab before writing newValue to
+    // memLoc. (*pstate).writeToMemoryLocation(memloc,result) gives
+    // state after write
+    virtual void writingToMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
+    // evalResult.value() holds AbstractValue of boolean value
+    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResultConstInt evalResult , const EState* estate) {}
+    virtual void functionCallExternal(Edge edge, const EState* estate) {}
+  };
   
   /*! 
    * \author Markus Schordan
@@ -68,7 +79,7 @@ namespace CodeThorn {
   public:
     enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
     ExprAnalyzer();
-    void setAnalyzer(Analyzer* analyzer);
+    void setAnalyzer(CTAnalysis* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
     list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate);
@@ -80,14 +91,16 @@ namespace CodeThorn {
     //! uses AbstractValue::getVariableIdMapping()
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
     void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
+
     void setSkipUnknownFunctionCalls(bool skip);
     bool getSkipUnknownFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
-    void setIgnoreUndefinedDereference(bool skip);
+
+    // obtained from ctOpt
     bool getIgnoreUndefinedDereference();
-    void setIgnoreFunctionPointers(bool skip);
     bool getIgnoreFunctionPointers();
+
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
     // deprecated
@@ -133,7 +146,7 @@ namespace CodeThorn {
     bool getOptionOutputWarnings();
 
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
-    bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by Analyzer
+    bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by CTAnalysis
 
     list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
@@ -170,12 +183,17 @@ namespace CodeThorn {
     int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
-  protected:
     static void initDiagnostics();
+
+    // if set to 0 then no listner active. By default it is 0.
+    void setReadWriteListener(ReadWriteListener* listener);
+    ReadWriteListener* getReadWriteListener();
+    
+  protected:
     static Sawyer::Message::Facility logger;
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
+    ReadWriteListener* _readWriteListener=nullptr;
     
-   
     // evaluation state
 #ifdef EXPR_VISITOR
     SingleEvalResultConstInt res;
@@ -360,9 +378,9 @@ namespace CodeThorn {
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
     bool _ignoreFunctionPointers=false;
-    Analyzer* _analyzer=nullptr;
+    CTAnalysis* _analyzer=nullptr;
     bool _printDetectedViolations=false;
-    enum InterpreterMode _interpreterMode=IM_ABSTRACT;
+    enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
   public:

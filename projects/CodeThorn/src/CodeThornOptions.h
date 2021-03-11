@@ -7,24 +7,26 @@
 #include <list>
 
 namespace CodeThorn {
-  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
+  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_DEAD_CODE, ANALYSIS_OPAQUE_PREDICATE, ANALYSIS_NUM };
 }
 
 
-struct CodeThornOptions : public Options {
+struct CodeThornOptions : public CodeThorn::Options {
   // hidden options
-  int maxTransitionsForcedTop1;
-  int maxTransitionsForcedTop2;
-  int maxTransitionsForcedTop3;
-  int maxTransitionsForcedTop4;
-  int maxTransitionsForcedTop5;
-  int solver;
+  int maxTransitionsForcedTop1=-1;
+  int maxTransitionsForcedTop2=-1;
+  int maxTransitionsForcedTop3=-1;
+  int maxTransitionsForcedTop4=-1;
+  int maxTransitionsForcedTop5=-1;
+  int solver=5;
 
   // pass on to ROSE
   std::vector<std::string> includeDirs;
   std::vector<std::string> preProcessorDefines;
-  bool edgNoWarningsFlag;
+  bool edgNoWarningsFlag=true;
   std::string roseAstReadFileName;
+  bool roseAstWrite=false;
+  bool roseAstMerge=false;
   
   // visualization
   struct Visualization {
@@ -43,22 +45,20 @@ struct CodeThornOptions : public Options {
     bool tg2EStateProperties=false;
     bool tg2EStatePredicate=false;
     bool visualizeRWSets=false;
-    bool viz=false;
-    bool vizTg2=false;
+    bool vis=false;
+    bool visTg2=false;
     std::string icfgFileName;
     std::string callGraphFileName;
   } visualization;
   
   // experimental options
   bool ompAst=false;
-  bool normalizeAll=false;
-  bool normalizeFCalls=false;
+  int normalizeLevel=0;
   bool normalizePhaseInfo=false;
   bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;
-  bool eliminateCompoundStatements=false;
   bool annotateTerms=false; // unparsing
   bool eliminateSTGBackEdges=false;
   bool generateAssertions=false; // unparsing
@@ -69,12 +69,22 @@ struct CodeThornOptions : public Options {
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
   bool ssa=false; // transformation
+  bool traceMode=false; // trace mode in solver 16
+  
   bool nullPointerAnalysis=false;
   bool outOfBoundsAnalysis=false;
   bool uninitializedMemoryAnalysis=false;
+  bool deadCodeAnalysis=false;
+  bool constantConditionAnalysis=false;
+
+  std::string reportFileName;
+  std::string functionReportFileName;
   std::string nullPointerAnalysisFileName;
   std::string outOfBoundsAnalysisFileName;
   std::string uninitializedMemoryAnalysisFileName;
+  std::string deadCodeAnalysisFileName;
+  std::string constantConditionAnalysisFileName;
+
   bool programStatsOnly=false;
   bool programStats=false;
   bool inStateStringLiterals=false;
@@ -82,17 +92,29 @@ struct CodeThornOptions : public Options {
   bool ignoreFunctionPointers=false;
   bool ignoreUndefinedDereference=false;
   bool ignoreUnknownFunctions=true;
+  bool nullPointerDereferenceKeepGoing=false;
   int functionResolutionMode=4;
   bool contextSensitive=false; // abitrary length call strings
   int abstractionMode=0;
   int interpreterMode=0;
+
+  bool initialStateFilterUnusedVariables=false;
+  int initialStateGlobalVarsAbstractionLevel=1;
+  
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
-  bool printViolations=false;
-  int optionsSet=0;
-  int callStringLength=-1; // not used yet
+  //bool printViolations=false;
+  int optionsSet=0; // obsolete
+  int callStringLength=-1;
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
-      
+  int testSelector=0;
+  bool intraProcedural=false;
+  int precisionLevel=1;
+  bool pointerSetsEnabled=false; // used in more precise pointer analysis
+  std::string csvReportModeString="generate";
+
+  bool forkFunctionEnabled=false;
+  std::string forkFunctionName="";
   
   // RERS C-subset program options
   struct Rers {
@@ -181,7 +203,6 @@ struct CodeThornOptions : public Options {
 
   struct Info {
     bool printVariableIdMapping=false;
-    bool printFunctionIdMapping=false;
     bool printAstNodeStats=false;
     std::string astNodeStatsCSVFileName;
     std::string astTraversalCSVFileName;
@@ -191,16 +212,16 @@ struct CodeThornOptions : public Options {
 
   } info;
 
-   bool activeOptionsRequireZ3Library();
-   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
-   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
-   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
-   AnalysisListType analysisList() const;
+  bool getInterProceduralFlag();
+  bool activeOptionsRequireZ3Library();
+  bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
+  std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
+  typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
+  AnalysisListType analysisList() const;
 
-   // default hard code init values
-   int maxExactMemorySizeRepresentation=10;
-   bool exprEvalTest=false;
-   
+  // default hard code init values
+  int maxExactMemorySizeRepresentation=10;
+  bool exprEvalTest=false;
 };
 
 #endif

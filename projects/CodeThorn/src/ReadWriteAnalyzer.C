@@ -1,5 +1,5 @@
 #include "ReadWriteAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "AstNodeInfo.h"
 #include "CollectionOperators.h"
 #include "CodeThornException.h"
@@ -23,150 +23,13 @@ void ReadWriteAnalyzer::initDiagnostics() {
   }
 }
 
-void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
-  ROSE_ASSERT(root);
-  std::string funtofind=functionToStartAt;
-  RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) {
-    std::cout << "Function '"<<funtofind<<"' not found.\n";
-    exit(1);
-  } else {
-    logger[TRACE]<< "INFO: starting at function '"<<funtofind<<"'."<<endl;
-  }
-  logger[TRACE]<< "INIT: Initializing AST node info."<<endl;
-  initAstNodeInfo(root);
+void ReadWriteAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
 
-  logger[TRACE]<< "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
-  logger[TRACE]<< "INIT: Initializing VariableIdMapping."<<endl;
-  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  logger[TRACE]<< "INIT: Creating CFAnalysis."<<endl;
-  cfanalyzer=new CFAnalysis(labeler,true);
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
-
-  logger[TRACE]<< "INIT: Building CFGs."<<endl;
-
-  if(oneFunctionOnly)
-    flow=cfanalyzer->flow(startFunRoot);
-  else
-    flow=cfanalyzer->flow(root);
-
-  logger[TRACE]<< "STATUS: Building CFGs finished."<<endl;
-  if(_ctOpt.reduceCfg) {
-    int cnt=cfanalyzer->optimizeFlow(flow);
-    logger[TRACE]<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
-  }
-  logger[TRACE]<< "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
-  if(oneFunctionOnly) {
-    logger[TRACE]<<"INFO: analyzing one function only."<<endl;
-  }
-  InterFlow interFlow=cfanalyzer->interFlow(flow);
-  logger[TRACE]<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  cfanalyzer->intraInterFlow(flow,interFlow);
-  logger[TRACE]<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
-
-
+  ROSE_ASSERT(false);
+  IOAnalyzer::initializeSolver3(functionToStartAt,root,tc);
   /////////////////////////////////////////////////////////////////////
 
-  // create and store initial PState
-  PState initialPState;
-  // TODO1: add formal paramters of solo-function
-  // SgFunctionDefinition* startFunRoot: node of function
-  // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
-  VariableId argcVarId;
-  VariableId argvVarId;
-  size_t mainFunArgNr=0;
-  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
-    VariableId varId=variableIdMapping->variableId(*i);
-    if(functionName=="main") {
-      //string varName=getVariableIdMapping()->variableName(varId)) {
-      switch(mainFunArgNr) {
-      case 0: argcVarId=varId;break;
-      case 1: argvVarId=varId;break;
-      default:
-        throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
-      }
-      mainFunArgNr++;
-    }
-    ROSE_ASSERT(varId.isValid());
-    // initialize all formal parameters of function (of extremal label) with top
-    //initialPState[varId]=AbstractValue(CodeThorn::Top());
-    initialPState.writeTopToMemoryLocation(varId);
-  }
-  if(_commandLineOptions.size()>0) {
-    // create command line option array argv and argc in initial pstate
-    int argc=0;
-    VariableId argvArrayMemoryId=variableIdMapping->createAndRegisterNewMemoryRegion("$argv",(int)_commandLineOptions.size());
-    AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
-    initialPState.writeToMemoryLocation(argvVarId,argvAddress);
-    for (auto argvElem:_commandLineOptions) {
-      cout<<"Initial state: "
-          <<variableIdMapping->variableName(argvVarId)<<"["<<argc+1<<"]: "
-          <<argvElem;
-      int regionSize=(int)string(argvElem).size();
-      cout<<" size: "<<regionSize<<endl;
-      argc++;
-    }
-    cout<<"Initial state argc:"<<argc<<endl;
-    AbstractValue abstractValueArgc(argc);
-    initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
-    cout<<"Warning: Argv initialization not implemented yet."<<endl;
-    // TODO: alloc mem for argv elements
-    // TODO: initialPState.writeToMemoryLocation(abstractMemLocArgc,abstractValueArgc);
-  }
-  const PState* initialPStateStored=pstateSet.processNew(initialPState);
-  ROSE_ASSERT(initialPStateStored);
-
-
-  logger[TRACE]<< "INIT: initial state(stored): "<<initialPStateStored->toString()<<endl;
-  ROSE_ASSERT(cfanalyzer);
-  ConstraintSet cset;
-  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-
-
-  /////////////////////////////////////////////////////////////////////
-
-
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-  EState estate(startLabel,initialPStateStored,emptycsetstored);
-
-  if(SgProject* project=isSgProject(root)) {
-    logger[TRACE]<< "STATUS: Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    logger[TRACE]<< globalVars.size()<<endl;
-
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
-
-    logger[TRACE]<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=variableIdMapping->variableId(*i);
-      // TODO: investigate why array variables get filtered (but should not)
-      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        //globalVarName2VarIdMapping[variableIdMapping->variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
-        estate=analyzeVariableDeclaration(*i,estate,estate.label());
-      } else {
-        filteredVars++;
-      }
-    }
-    logger[TRACE]<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-    if(_variablesToIgnore.size()>0)
-      logger[TRACE]<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
-  } else {
-    logger[TRACE]<< "INIT: no global scope.";
-  }
-  const EState* currentEState=estateSet.processNew(estate);
-  ROSE_ASSERT(currentEState);
-
-
-  /////////////////////////////////////////////////////////////////////
-
-
+#if 0
   ReadWriteHistory initialRWHistory;
   const ReadWriteHistory* initRWHistoryPointer = rWHistorySet.processNew(initialRWHistory);
   ROSE_ASSERT(initRWHistoryPointer);
@@ -178,6 +41,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   addToWorkList(initRWStatePointer);
 
   logger[TRACE]<< "INIT: finished."<<endl;
+#endif
 }
 
 void ReadWriteAnalyzer::addToWorkList(const RWState* state) {
@@ -240,7 +104,7 @@ void ReadWriteAnalyzer::runSolver() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentStatePtr);
-        Flow edgeSet=flow.outEdges(currentStatePtr->eState()->label());
+        Flow edgeSet=getFlow()->outEdges(currentStatePtr->eState()->label());
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
 	  list<RWState> newStateList = bigStep(currentStatePtr);
@@ -291,7 +155,7 @@ list<RWState> ReadWriteAnalyzer::bigStep(const RWState* state) {
  */
 list<RWState> ReadWriteAnalyzer::transfer(RWState& state) {
   list<RWState> result;
-  Flow edgeSet=flow.outEdges(state.eState()->label());
+  Flow edgeSet=getFlow()->outEdges(state.eState()->label());
   for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
     Edge edge = move(*i);
     list<EState> successors = transferEdgeEState(edge, state.eState()); //TODO: return type will change

@@ -1,15 +1,18 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "MemoryMap.h"
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+#include <MemoryMap.h>
 
-#include "Diagnostics.h"
-#include "FileSystem.h"
-#include "rose_getline.h"
-#include "rose_strtoull.h"
+#include <Diagnostics.h>
+#include <FileSystem.h>
+#include <rose_getline.h>
+#include <rose_strtoull.h>
+#include <SRecord.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <boost/config.hpp>
 #ifndef BOOST_WINDOWS
@@ -73,7 +76,6 @@ void
 MemoryMap::Inconsistent::print(std::ostream &o, bool verbose) const
 {
     o <<leader("inconsistent mapping") <<" for " <<new_range <<" vs. " <<old_range <<details(verbose);
-        
 }
 
 void
@@ -107,7 +109,7 @@ MemoryMap::SyntaxError::print(std::ostream &o, bool verbose) const
 std::string
 MemoryMap::segmentTitle(const Segment &segment) {
     std::string s;
-    
+
     s += (segment.accessibility() & READABLE)  !=0 ? "r" : "-";
     s += (segment.accessibility() & WRITABLE)  !=0 ? "w" : "-";
     s += (segment.accessibility() & EXECUTABLE)!=0 ? "x" : "-";
@@ -123,7 +125,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 
     if (otherAccess != 0)
         s += " access=" + StringUtility::addrToString(otherAccess, 8*sizeof otherAccess);
-    
+
     if (!segment.name().empty()) {
         static const size_t limit = 100;
         std::string name = escapeString(segment.name());
@@ -227,7 +229,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
         if (!optionalVa)
             throw insertFileError(locatorString, "virtual address expected");
     }
-    
+
     // Virtual size
     Sawyer::Optional<size_t> optionalVSize;
     if ('+'==*s) {
@@ -272,7 +274,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
         if (!optionalOffset)
             throw insertFileError(locatorString, "file offset expected");
     }
-    
+
     // File size
     Sawyer::Optional<size_t> optionalFSize;
     if ('+'==*s) {
@@ -295,9 +297,9 @@ MemoryMap::insertFile(const std::string &locatorString) {
         throw insertFileError(locatorString, "invalid file name");
     std::string segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
 
-    //-------------------------------- 
+    //--------------------------------
     // Open the file and read the data
-    //-------------------------------- 
+    //--------------------------------
 
     // Open the file and seek to the start of data
     std::ifstream file(fileName.c_str());
@@ -398,6 +400,211 @@ MemoryMap::insertFile(const std::string &locatorString) {
 }
 
 std::string
+MemoryMap::adjustMapDocumentation() {
+    return ("Beginning with the first colon, a meta resource string has the form "
+            "\":@v{region}:@v{command}\" The @v{region} describes the region of the virtual address space on "
+            "which the @v{command} applies, and is of the form \"@v{address}[+@v{size}]\". If the @v{size} is "
+            "absent then the region extends to the maximum address. The following @v{command} forms are recognized:"
+
+            "@named{Print meta information}{The \"print\" command prints meta information about the mapping to standard output. "
+            "This command ignores the @v{region}, always printing the entire map.}"
+
+            "@named{Change permissions}{The \"perm @v{op} @v{value}\" command changes the permissions of mapped memory "
+            "that falls within the @v{region} (white space is optional). The operation, @v{op} is one of \"=\" to set "
+            "the permissions as specified, \"-\" to remove the specified permissions, or \"+\" to add the specified "
+            "permissions. The permissions are any combination of the letters \"r\" (read), \"w\" (write), and \"x\" (execute) "
+            "in any order.}"
+
+            "@named{Remove mapping}{The \"unmap\" command unmaps the specified region of memory.}"
+
+            "@named{Hexdump output}{The \"hexdump[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using a format similar to the \"hexdump -Cv\" command.}"
+
+            "@named{S-Record output}{The \"srec[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using Motorola S-Record format.}"
+
+            "@named{Intel HEX output}{The \"hex[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using Intel HEX format.}");
+}
+
+static std::runtime_error
+adjustMapError(const std::string &locatorString, const std::string &mesg) {
+    throw std::runtime_error("MemoryMap::adjust: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
+}
+
+void
+MemoryMap::adjustMap(const std::string &locatorString) {
+    const char *s = locatorString.c_str();
+    if (':' != *s++)
+        throw adjustMapError(locatorString, "not a locator string");
+
+    // Virtual address
+    while (isspace(*s)) ++s;
+    Sawyer::Optional<rose_addr_t> va = parseInteger<rose_addr_t>(s /*in,out*/);
+    if (!va)
+        throw adjustMapError(locatorString, "virtual address expected");
+
+    // Size of region
+    AddressInterval region;
+    while (isspace(*s)) ++s;
+    if ('+' == *s) {
+        ++s;
+        Sawyer::Optional<rose_addr_t> size = parseInteger<rose_addr_t>(s /*in,out*/);
+        if (!size)
+            throw adjustMapError(locatorString, "region size expected after '+'");
+        if (!*size)
+            throw adjustMapError(locatorString, "region cannot be empty");
+        region = AddressInterval::baseSize(*va, *size);
+    } else {
+        region = AddressInterval::hull(*va, AddressInterval::whole().greatest());
+    }
+
+    // Commands
+    while (isspace(*s)) ++s;
+    if (':' != *s++)
+        throw adjustMapError(locatorString, "expected colon after region specification");
+    while (isspace(*s)) ++s;
+    if (!strncmp(s, "perm", 4)) {
+        // match /perm[-+=][rwx]+/
+        s += 4;
+        while (isspace(*s)) ++s;
+        if ('+' != *s && '-' != *s && '=' != *s)
+            throw adjustMapError(locatorString, "invalid perm operator");
+        char op = *s++;
+        unsigned perm = 0;
+        while ('r' == *s || 'w' == *s || 'x' == *s) {
+            switch (*s++) {
+                case 'r':
+                    perm |= READABLE;
+                    break;
+                case 'w':
+                    perm |= WRITABLE;
+                    break;
+                case 'x':
+                    perm |= EXECUTABLE;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid permission operator");
+            }
+        }
+        switch (op) {
+            case '-':
+                within(region).changeAccess(0, perm);
+                break;
+            case '+':
+                within(region).changeAccess(perm, 0);
+                break;
+            case '=':
+                within(region).changeAccess(perm, ~perm);
+                break;
+        }
+
+    } else if (!strncmp(s, "hexdump", 7)) {
+        s += 7;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        HexdumpFormat fmt;
+        while (AddressInterval selected = atOrAfter(region.least()).singleSegment().available()) {
+            selected = selected & region;
+            rose_addr_t va = selected.least();
+            const ConstNodeIterator inode = at(va).nodes().begin();
+            const MemoryMap::Segment &segment = inode->value();
+            rose_addr_t bufferOffset = segment.offset() + selected.least() - inode->key().least();
+            const uint8_t *data = segment.buffer()->data() + bufferOffset;
+            out <<"# segment " <<segmentTitle(segment) <<"\n";
+
+            // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print out some
+            // stuff to get the rest aligned if necessary.
+            rose_addr_t nRemain = selected.size();
+            rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
+            if (nLeader != 16) {
+                SgAsmExecutableFileFormat::hexdump(out, va, data, nLeader, fmt);
+                va += nLeader;
+                data += nLeader;
+                nRemain -= nLeader;
+                out <<"\n";
+            }
+            if (nRemain > 0) {
+                SgAsmExecutableFileFormat::hexdump(out, va, data, nRemain, fmt);
+                out <<"\n";
+            }
+            if (selected.greatest() == region.greatest())
+                break;
+            region = AddressInterval::hull(selected.greatest()+1, region.greatest());
+        }
+
+    } else if (!strncmp(s, "srec", 4)) {
+        s += 4;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        MemoryMap::Ptr tmpMap = shallowCopy();
+        tmpMap->at(region).keep();
+        if (!tmpMap->isEmpty()) {
+            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_MOTOROLA);
+            BOOST_FOREACH (const SRecord &srec, srecs)
+                out <<srec.toString() <<"\n";
+        }
+
+    } else if (!strncmp(s, "hex", 3)) {
+        s += 3;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        MemoryMap::Ptr tmpMap = shallowCopy();
+        tmpMap->at(region).keep();
+        if (!tmpMap->isEmpty()) {
+            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_INTEL);
+            BOOST_FOREACH (const SRecord &srec, srecs)
+                out <<srec.toString() <<"\n";
+        }
+
+    } else if (!strncmp(s, "print", 5)) {
+        s += 5;
+        dump();
+
+    } else if (!strncmp(s, "unmap", 5)) {
+        s += 5;
+        within(region).prune();
+
+    } else {
+        throw adjustMapError(locatorString, "unrecognized command");
+    }
+
+    while (isspace(*s)) ++s;
+    if (*s)
+        throw adjustMapError(locatorString, "unexpected extra text after command");
+}
+
+std::string
 MemoryMap::insertDataDocumentation() {
     return ("Beginning with the first colon, a data resource string has the form "
             "\":@v{memory_properties}:@v{data_properties}:@v{data}\" where @v{memory_properties} and "
@@ -432,7 +639,7 @@ MemoryMap::insertData(const std::string &locatorString) {
         if (!optionalVa)
             throw insertDataError(locatorString, "virtual address expected");
     }
-    
+
     // Virtual size
     Sawyer::Optional<size_t> optionalVSize;
     if ('+' == *s) {
@@ -460,7 +667,7 @@ MemoryMap::insertData(const std::string &locatorString) {
             accessFlags |= EXECUTABLE;
         }
     }
-    
+
     // Second colon
     if (':'!=*s) {
         if (*s && accessFlags)
@@ -497,7 +704,7 @@ MemoryMap::insertData(const std::string &locatorString) {
         mlog[WARN] <<"data is empty; nothing to map for \"" <<StringUtility::cEscape(locatorString) <<"\"\n";
         return AddressInterval();
     }
-    
+
     // Find a place to map the file
     ASSERT_require(optionalVSize);
     if (!optionalVa) {
@@ -574,48 +781,80 @@ MemoryMap::insertProcess(const std::string &locatorString) {
     }
     if (':'!=*s++)
         throw insertProcessError("second colon expected in \"" + StringUtility::cEscape(locatorString) + "\"");
-    
+
     pid_t pid = 0;
     if (!parseInteger<pid_t>(s /*in,out*/).assignTo(pid))
         throw insertProcessError("process ID expected");
     insertProcess(pid, doAttach);
 }
 
-// FIXME[Robb P. Matzke 2014-10-09]: No idea how to do this in Microsoft Windows!
-#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-10]
-MemoryMap::insertProcess(int pid, Attach::Boolean doAttach) {
-    throw std::runtime_error("MemoryMap::insertProcess is not available on Microsoft Windows");
+// class method
+std::vector<MemoryMap::ProcessMapRecord>
+MemoryMap::readProcessMap(pid_t pid) {
+    std::vector<MemoryMap::ProcessMapRecord> records;
+
+    //               1           2               3                    4              5         6         7
+    //               first       last+1          accessibility        offset         device    inode     comment
+    boost::regex re("([0-9a-f]+)-([0-9a-f]+)\\s+([-r][-w][-x][-p])\\s+([0-9a-f]+)\\s+(\\S+)\\s+(\\d+)\\s+(.*)");
+
+    boost::filesystem::path mapsName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/maps";
+    std::ifstream maps(mapsName.c_str());
+    while (maps) {
+        std::string line = rose_getline(maps);
+        boost::smatch matched;
+        if (!boost::regex_match(line, matched, re))
+            break;
+
+        // virtual addresses
+        ProcessMapRecord record;
+        rose_addr_t beginVa = rose_strtoull(matched.str(1).c_str(), NULL, 16);
+        rose_addr_t endVa = rose_strtoull(matched.str(2).c_str(), NULL, 16);
+        if (endVa <= beginVa)
+            break;
+        record.interval = AddressInterval::hull(beginVa, endVa - 1);
+
+        // accessibility
+        if (matched.str(3)[0] == 'r')
+            record.accessibility |= READABLE;
+        if (matched.str(3)[1] == 'w')
+            record.accessibility |= WRITABLE;
+        if (matched.str(3)[2] == 'x')
+            record.accessibility |= EXECUTABLE;
+        if (matched.str(3)[3] == 'p')
+            record.accessibility |= PRIVATE;
+
+        // the rest of the fields
+        record.fileOffset = rose_strtoull(matched.str(4).c_str(), NULL, 16);
+        record.deviceName = matched.str(5);
+        record.inode = boost::lexical_cast<size_t>(matched.str(6));
+        record.comment = matched.str(7);
+        records.push_back(record);
+    }
+    return records;
 }
-#else
+
 void
 MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
+#ifdef __linux__
     // Resources that need to be cleaned up on return or exception
-    struct T {
-        FILE *mapsFile;                                 // file for /proc/xxx/maps
-        char *buf;                                      // line read from /proc/xxx/maps
-        size_t bufsz;                                   // bytes allocated for "buf"
-        int memFile;                                    // file for /proc/xxx/mem
-        pid_t resumeProcess;                            // subordinate process to resume
-        T(): mapsFile(NULL), buf(NULL), bufsz(0), memFile(-1), resumeProcess(-1) {}
-        ~T() {
-            if (mapsFile)
-                fclose(mapsFile);
-            if (buf)
-                free(buf);
-            if (memFile>=0)
+    struct Resources {
+        int memFile;
+        pid_t resumeProcess;
+        Resources(): memFile(-1), resumeProcess(-1) {}
+        ~Resources() {
+            if (-1 != memFile)
                 close(memFile);
-            if (resumeProcess != -1)
+            if (-1 != resumeProcess)
                 ptrace(PTRACE_DETACH, resumeProcess, 0, 0);
         }
-    } local;
+    } r;
 
-
-    // We need to attach to the process with ptrace before we can read from its /proc/xxx/mem file.  We'll have
-    // to detach if anything goes wrong or when we finish.
+    // We need to attach to the process with ptrace before we're allowed to read from its /proc/xxx/mem file. We should also
+    // stop it while we read its state.
     if (doAttach) {
         if (-1 == ptrace(PTRACE_ATTACH, pid, 0, 0))
             throw insertProcessError("cannot attach to", pid, strerror(errno));
-    int wstat = 0;
+        int wstat = 0;
         if (-1 == waitpid(pid, &wstat, 0))
             throw insertProcessError("cannot wait for", pid, strerror(errno));
         if (WIFEXITED(wstat))
@@ -623,113 +862,67 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
         if (WIFSIGNALED(wstat))
             throw insertProcessError("cannot read from", pid, "died with " +
                                      boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat)))));
-        local.resumeProcess = pid;
+        r.resumeProcess = pid;
         ASSERT_require2(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGSTOP, "subordinate process did not stop");
     }
 
-    // Prepare to read subordinate's memory
-    std::string mapsName = "/proc/" + StringUtility::numberToString(pid) + "/maps";
-    if (NULL==(local.mapsFile = fopen(mapsName.c_str(), "r")))
-        throw insertProcessError("cannot open " + mapsName + " for", pid, strerror(errno));
-    std::string memName = "/proc/" + StringUtility::numberToString(pid) + "/mem";
-    if (-1 == (local.memFile = open(memName.c_str(), O_RDONLY)))
+    // Read memory
+    std::vector<ProcessMapRecord> mapRecords = readProcessMap(pid);
+    std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
+    if (-1 == (r.memFile = open(memName.c_str(), O_RDONLY)))
         throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
+    BOOST_FOREACH (ProcessMapRecord &record, mapRecords) {
+        std::string segmentName = "proc:" + boost::lexical_cast<std::string>(pid);
+        if (!record.comment.empty())
+            segmentName += "(" + record.comment + ")";
 
-    // Read each line from the /proc/xxx/maps to figure out what memory is mapped in the subordinate process. The format for
-    // the part we're interested in is /^([0-9a-f]+)-([0-9a-f]+) ([-r][-w][-x])/ where $1 is the inclusive starting address, $2
-    // is the exclusive ending address, and $3 are the permissions.
-    int mapsFileLineNumber = 0;
-    while (rose_getline(&local.buf, &local.bufsz, local.mapsFile)>0) {
-        ++mapsFileLineNumber;
-
-        // Begin address
-        char *s=local.buf, *rest=s;
-        errno = 0;
-        rose_addr_t begin = rose_strtoull(s, &rest, 16);
-        if (errno!=0 || rest==s || '-'!=*rest) {
-            throw insertProcessError("syntax error for beginning address at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-
-        // End address
-        s = rest+1;
-        rose_addr_t end = rose_strtoull(s, &rest, 16);
-        if (errno!=0 || rest==s || ' '!=*rest) {
-            throw insertProcessError("syntax error for ending address at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-        if (begin >= end) {
-            throw insertProcessError("invalid address range at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-
-        // Access permissions
-        s = ++rest;
-        if ((s[0]!='r' && s[0]!='-') || (s[1]!='w' && s[1]!='-') || (s[2]!='x' && s[2]!='-')) {
-            throw insertProcessError("invalid access permissions at " + mapsName + ":" +
-                                     StringUtility::numberToString(mapsFileLineNumber) + " for", pid,
-                                     "\"" + StringUtility::cEscape(local.buf) + "\"");
-        }
-        unsigned accessibility = ('r'==s[0] ? READABLE : 0) | ('w'==s[1] ? WRITABLE : 0) | ('x'==s[2] ? EXECUTABLE : 0);
-
-        // Skip over unused fields
-        for (size_t nSpaces=0; nSpaces<4 && *s; ++s) {
-            if (isspace(*s))
-                ++nSpaces;
-        }
-        while (isspace(*s)) ++s;
-
-        // Segment name according to the kernel
-        std::string kernelSegmentName;
-        while (*s && !isspace(*s))
-            kernelSegmentName += *s++;
-
-        // Create memory segment, but don't insert it until after we read all the data
-        std::string segmentName = "proc:" + StringUtility::numberToString(pid);
-        AddressInterval segmentInterval = AddressInterval::baseSize(begin, end-begin);
-        Segment segment = Segment::anonymousInstance(segmentInterval.size(), accessibility,
-                                                     segmentName + "(" + kernelSegmentName + ")");
-
+#if 0 // [Robb Matzke 2020-08-25]: This would be cool if it worked (No such device: iostream error)
+        // Map data from the subordinate process into our memory segment
+        Buffer::Ptr buffer = MappedBuffer::instance(memName, boost::iostreams::mapped_file::readonly,
+                                                    record.fileOffset, record.interval.size());
+        ASSERT_not_null(buffer);
+#else
         // Copy data from the subordinate process into our memory segment
-        if (-1 == lseek(local.memFile, begin, SEEK_SET))
+        Buffer::Ptr buffer = AllocatingBuffer::instance(record.interval.size());
+        size_t nRemaining = record.interval.size();
+        if (-1 == lseek(r.memFile, record.interval.least(), SEEK_SET))
             throw insertProcessError("seek failed in " + memName + " for", pid, strerror(errno));
-        size_t nRemain = segmentInterval.size();
         rose_addr_t segmentBufferOffset = 0;
-        while (nRemain > 0) {
+        while (nRemaining > 0) {
             uint8_t chunkBuf[8192];
-            size_t chunkSize = std::min(nRemain, sizeof chunkBuf);
-            ssize_t nRead = ::read(local.memFile, chunkBuf, chunkSize);
+            size_t chunkSize = std::min(nRemaining, sizeof chunkBuf);
+            ssize_t nRead = ::read(r.memFile, chunkBuf, chunkSize);
             if (-1==nRead) {
                 if (EINTR==errno)
                     continue;
-                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<kernelSegmentName
-                           <<" at " <<segmentInterval <<"\n";
+                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<record.comment
+                           <<" at " <<record.interval <<"\n";
                 segmentName += "[" + boost::to_lower_copy(std::string(strerror(errno))) + "]";
                 break;
             } else if (0==nRead) {
-                mlog[WARN] <<"short read from " <<memName <<" for segment " <<kernelSegmentName <<" at " <<segmentInterval <<"\n";
+                mlog[WARN] <<"short read from " <<memName <<" for segment " <<record.comment <<" at " <<record.interval <<"\n";
                 segmentName += "[short read]";
                 break;
             }
-            rose_addr_t nWrite = segment.buffer()->write(chunkBuf, segmentBufferOffset, nRead);
+            rose_addr_t nWrite = buffer->write(chunkBuf, segmentBufferOffset, nRead);
             ASSERT_always_require(nWrite == (rose_addr_t)nRead);
-            nRemain -= chunkSize;
+            nRemaining -= chunkSize;
             segmentBufferOffset += chunkSize;
         }
-        if (nRemain > 0) {
-            // If a read failed, map only what we could read
-            segmentInterval = AddressInterval::baseSize(segmentInterval.least(), segmentInterval.size()-nRemain);
-        }
+
+        // If a read failed, map only what we could read
+        if (nRemaining > 0)
+            record.interval = AddressInterval::baseSize(record.interval.least(), record.interval.size()-nRemaining);
+#endif
 
         // Insert segment into memory map
-        if (!segmentInterval.isEmpty())
-            insert(segmentInterval, segment);
+        if (!record.interval.isEmpty())
+            insert(record.interval, Segment(buffer, 0, record.accessibility, segmentName));
     }
-}
+#else
+    throw std::runtime_error("MemoryMap::insertProcess is not available on this system");
 #endif
+}
 
 SgUnsignedCharList
 MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) const
@@ -806,34 +999,54 @@ MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind
 
 Sawyer::Optional<rose_addr_t>
 MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
-                   unsigned requiredPerms, unsigned prohibitedPerms) const
-{
-    if (!limits || bytesToFind.empty())
+                   unsigned requiredPerms, unsigned prohibitedPerms) const {
+    if (limits.isEmpty())
         return Sawyer::Nothing();
 
-    // Read a bunch of bytes at a time.  If the buffer size is large then we'll have fewer read calls before finding a match,
-    // which is good if a match is unlikely.  But if a match is likely, then it's better to use a smaller buffer so we don't
-    // ready more than necessary to find a match.  We'll compromise by starting with a small buffer that grows up to some
-    // limit.
-    size_t nremaining = limits.size();                  // bytes remaining to search (could be zero if limits is universe)
-    size_t bufsize = 8;                                 // initial buffer size
-    uint8_t buffer[4096];                               // full buffer
+    // Start small, then increase to bufMaxSize.
+    std::vector<uint8_t> buf(10 * bytesToFind.size());
+    size_t bufMaxSize = std::max(buf.size(), (size_t)65536);
 
-    Sawyer::Optional<rose_addr_t> atVa = this->at(limits.least()).require(requiredPerms).prohibit(prohibitedPerms).next();
-    while (atVa && *atVa <= limits.greatest()) {
-        if (nremaining > 0)                             // zero implies entire address space
-            bufsize = std::min(bufsize, nremaining);
-        size_t nread = at(*atVa).limit(bufsize).require(requiredPerms).prohibit(prohibitedPerms).read(buffer).size();
-        assert(nread > 0);                              // because of the next() calls
-        for (size_t offset=0; offset<nread; ++offset) {
-            if (std::find(bytesToFind.begin(), bytesToFind.end(), buffer[offset]) != bytesToFind.end())
-                return *atVa + offset;                  // found
+    // Search...
+    rose_addr_t va = limits.least();
+    AddressInterval prevBuffer;                         // location of buffer previous time through loop
+    while (atOrAfter(va).require(requiredPerms).prohibit(prohibitedPerms).next().assignTo(va)) {
+        // Since the thing for which we're searching could overlap between two buffers (the previous loop iteration and this
+        // iteration), we might need to preserve some of the previous buffer contents.
+        size_t bufOffset = 0;                        // where in the buffer to put the memory about to be read
+        if (!prevBuffer.isEmpty() && prevBuffer.greatest() + 1 == va) {
+            bufOffset = bytesToFind.size() - 1;      // number of bytes that need to be preserved from previous iteration
+            memmove(buf.data(), buf.data() + (prevBuffer.size() - bufOffset), bufOffset); // move to front of buffer
         }
-        atVa = at(*atVa+nread).require(requiredPerms).prohibit(prohibitedPerms).next();
-        bufsize = std::min(2*bufsize, sizeof buffer);   // use a larger buffer next time if possible
-        nremaining -= nread;                            // ok if nremaining is already zero
-    }
 
+        // Read memory into the buffer and describe what the buffer contains.
+        size_t maxRead = buf.size() - bufOffset;
+        size_t nRead = at(va).require(requiredPerms).prohibit(prohibitedPerms).limit(maxRead).read(buf.data() + bufOffset).size();
+        ASSERT_require(nRead > 0);
+        AddressInterval curBuffer = AddressInterval::baseSize(va - bufOffset, bufOffset + nRead);
+
+        // Search
+        for (size_t i = 0; i + bytesToFind.size() < curBuffer.size(); ++i) {
+            bool found = true;
+            for (size_t j = 0; j < bytesToFind.size(); ++j) {
+                if (buf[i+j] != bytesToFind[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found)
+                return curBuffer.least() + i;
+        }
+
+        // Avoid overflow
+        if (curBuffer.greatest() == hull().greatest())
+            break;
+        va = curBuffer.greatest() + 1;
+
+        // Next time through the loop, maybe read even more.
+        buf.resize(std::min(bufMaxSize, 2*buf.size()));
+        prevBuffer = curBuffer;
+    }
     return Sawyer::Nothing();
 }
 
@@ -923,6 +1136,11 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
             <<segmentTitle(segment)
             <<"\n";
     }
+}
+
+void
+MemoryMap::dump() const {
+    dump(std::cout, "");
 }
 
 } // namespace

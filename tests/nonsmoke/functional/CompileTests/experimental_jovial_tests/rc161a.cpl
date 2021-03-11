@@ -1,0 +1,9 @@
+%
+  This file needs to be preprocessed with:
+  jov386 -define -reformat rc161a.pre.cpl rc161a.cpl -compool
+%
+START
+!COMPOOL ('RC161B');
+COMPOOL RC161A;
+DEFINE DEFINE'1 "DEFINE'2";
+TERM

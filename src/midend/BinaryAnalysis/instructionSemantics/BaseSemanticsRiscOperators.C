@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BaseSemanticsRiscOperators.h>
 
@@ -139,6 +139,35 @@ RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahe
     carryOut = extract(carries, nBits-1, nBits);
     overflowed = xor_(carryOut, extract(carries, nBits-2, nBits-1));
     return difference;
+}
+
+SValuePtr
+RiscOperators::countLeadingZeros(const SValuePtr &a) {
+    SValuePtr idx = mostSignificantSetBit(a);
+    SValuePtr width = number_(a->get_width(), a->get_width());
+    SValuePtr diff = subtract(number_(a->get_width(), a->get_width()-1), idx);
+    return ite(equalToZero(a), width, diff);
+}
+
+SValuePtr
+RiscOperators::countLeadingOnes(const SValuePtr &a) {
+    return countLeadingZeros(invert(a));
+}
+
+SValuePtr
+RiscOperators::reverseElmts(const SValuePtr &a, size_t elmtNBits) {
+    ASSERT_not_null(a);
+    ASSERT_require(elmtNBits > 0);
+    ASSERT_require(elmtNBits <= a->get_width());
+    ASSERT_require(a->get_width() % elmtNBits == 0);
+    size_t nElmts = a->get_width() / elmtNBits;
+    SValuePtr result;
+    for (size_t i = 0; i < nElmts; ++i) {
+        SValuePtr elmt = extract(a, i*elmtNBits, (i+1)*elmtNBits);
+        result = result ? concatHiLo(result, elmt) : elmt;
+    }
+    ASSERT_require(result->get_width() == a->get_width());
+    return result;
 }
 
 SValuePtr

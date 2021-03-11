@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "rose.h"
@@ -28,13 +26,13 @@
 #include "RewriteSystem.h"
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "ArrayElementAccessData.h"
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
@@ -47,6 +45,7 @@
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
+#include "TimingCollector.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -88,107 +87,11 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.6";
-
-// handler for generating backtrace
-void handler(int sig) {
-  void *array[10];
-  size_t size;
-
-  size = backtrace (array, 10);
-  printf ("Obtained %zd stack frames.\n", size);
-
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
-}
-
-bool isExprRoot(SgNode* node) {
-  if(SgExpression* exp=isSgExpression(node)) {
-    return isSgStatement(exp->get_parent());
-  }
-  return false;
-}
-
-list<SgExpression*> exprRootList(SgNode *node) {
-  RoseAst ast(node);
-  list<SgExpression*> exprList;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(isExprRoot(*i)) {
-      SgExpression* expr=isSgExpression(*i);
-      ROSE_ASSERT(expr);
-      exprList.push_back(expr);
-      i.skipChildrenOnForward();
-    }
-  }
-  return exprList;
-}
-
-static IOAnalyzer* global_analyzer=0;
-
-set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(root);
-  RoseAst ast(root) ;
-  set<AbstractValue> compoundIncVarsSet;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
-      if(lhsVar) {
-        compoundIncVarsSet.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return compoundIncVarsSet;
-}
-
-set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* root) {
-  ROSE_ASSERT(vim);
-  ROSE_ASSERT(root);
-  RoseAst ast(root) ;
-  set<VariableId> constAssignVars;
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
-      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
-      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
-      if(lhsVar && rhsIntVal) {
-        constAssignVars.insert(vim->variableId(lhsVar));
-      }
-    }
-  }
-  return constAssignVars;
-}
-
-AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
-  AbstractValueSet usedVarsInAssertConditions;
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
-      SgNode* cond=SgNodeHelper::getCond(ifstmt);
-      if(cond) {
-        int errorLabelCode=-1;
-        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
-        if(errorLabelCode>=0) {
-          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
-          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
-          std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
-          //cout<<"Num of vars: "<<vars.size()<<endl;
-          for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
-            VariableId varId=variableIdMapping->variableId(*j);
-            usedVarsInAssertConditions.insert(AbstractValue(varId));
-          }
-        }
-      }
-    }
-  }
-  return usedVarsInAssertConditions;
-}
+const std::string versionString="0.8.0";
 
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
                    CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
-  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
   // this must be set early, as subsequent initialization depends on this flag
   if (ltlOpt.ltlDriven) {
@@ -269,38 +172,32 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   }
 
-  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
   if(ctOpt.maxTransitionsForcedTop!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
   } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
   } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
   } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
   } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
     analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
-    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
   }
 
-  if (ctOpt.maxMemory!=1) {
-    analyzer->setMaxBytes(ctOpt.maxMemory);
-  }
   if (ctOpt.maxTime!=1) {
     analyzer->setMaxSeconds(ctOpt.maxTime);
-  }
-  if (ctOpt.maxMemoryForcedTop!=-1) {
-    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
   }
   if (ctOpt.maxTimeForcedTop!=-1) {
     analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
@@ -355,36 +252,6 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
   analyzer->setSolver(solver);
 }
 
-void configureRose() {
-  ROSE_INITIALIZE;
-  CodeThorn::initDiagnostics();
-  CodeThorn::initDiagnosticsLTL();
-
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
-
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-    +"Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  // result string must be checked
-  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-  if(result!="") {
-    cerr<<result<<endl;
-    cerr<<"Error in logger initialization."<<endl;
-    exit(1);
-  }
-
-  // see class Options in src/roseSupport/utility_functions.h
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
-
-  signal(SIGSEGV, handler);   // install handler for backtrace
-}
-
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
   // only included in hybrid RERS analyzers.
@@ -398,9 +265,16 @@ void configureRersSpecialization() {
 #endif
 }
 
+#ifndef HAVE_SPOT
+int main( int argc, char * argv[] ) {
+  cerr<<"Error: parprothorn was compiled without SPOT, but SPOT is required for parprothorn."<<endl;
+  exit(1);
+}
+#else
 int main( int argc, char * argv[] ) {
   try {
-    configureRose();
+    ROSE_INITIALIZE;
+    CodeThorn::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;
@@ -423,13 +297,14 @@ int main( int argc, char * argv[] ) {
 
     IOAnalyzer* analyzer;
     if(ctOpt.dr.checkShuffleAlgorithm) {
-      analyzer = new ReadWriteAnalyzer();
+      cout<<"Error: ReadWriteAnalyzer not supported."<<endl;
+      exit(1);
+      //analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
     analyzer->setOptions(ctOpt);
     analyzer->setLtlOptions(ltlOpt);
-    global_analyzer=analyzer;
 
     if(ctOpt.internalChecks) {
       mfacilities.shutdown();
@@ -440,29 +315,14 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
-    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
-    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
     analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
 
-    switch(int mode=ctOpt.interpreterMode) {
-    case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
-    case 1: analyzer->setInterpreterMode(IM_CONCRETE); break;
-    default:
-      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
-      exit(1);
-    }
-    string outFileName=ctOpt.interpreterModeOuputFileName;
-    if(outFileName!="") {
-      analyzer->setInterpreterModeOutputFileName(outFileName);
-      CppStdUtilities::writeFile(outFileName,""); // touch file
-    }
     {
       switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
-      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
       case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
       default: 
         cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
@@ -529,9 +389,6 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
     }
-    if(ctOpt.ignoreUndefinedDereference) {
-      analyzer->setIgnoreUndefinedDereference(true);
-    }
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
@@ -567,7 +424,7 @@ int main( int argc, char * argv[] ) {
 
     // Build the AST used by ROSE
     if(ctOpt.status) {
-      cout<< "STATUS: Parsing and creating AST started!"<<endl;
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
 
     SgProject* sageProject = 0;
@@ -597,17 +454,11 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(ctOpt.normalizeFCalls) {
-      lowering.normalizeAst(sageProject,1);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
-    }
-
-    if(ctOpt.normalizeAll) {
+    if(ctOpt.normalizeLevel>0) {
       if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
-      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
-      lowering.normalizeAst(sageProject,2);
+      lowering.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
@@ -677,8 +528,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    // TODO: introduce ProgramAbstractionLayer
-    analyzer->initializeVariableIdMapping(sageProject);
+    analyzer->initialize(ctOpt, sageProject,nullptr);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
@@ -710,7 +560,7 @@ int main( int argc, char * argv[] ) {
       {
         SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
         CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
-        list<SgExpression*> exprList=exprRootList(sageProject);
+        list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
         logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
         for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
           EvalResult r=evaluator->traverse(*i);
@@ -785,19 +635,9 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
+      AbstractValueSet varsInAssertConditions=AstUtility::determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
       SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
-    }
-
-    if(ctOpt.eliminateCompoundStatements) {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
-      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-      rewriteSystem.resetStatistics();
-      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
-      SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
 
     if(ctOpt.rers.eliminateArrays) {
@@ -820,8 +660,9 @@ int main( int argc, char * argv[] ) {
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
+    TimingCollector tc; // new feature, other timers can be removed
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,tc);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -847,16 +688,10 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver3(startFunction,sageProject,tc);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
-    // function-id-mapping is initialized in initializeSolver.
-    if(ctOpt.info.printFunctionIdMapping) {
-      ROSE_ASSERT(analyzer->getCFAnalyzer());
-      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
-      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
-    }
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
@@ -929,64 +764,6 @@ int main( int argc, char * argv[] ) {
         exit(0);
       }
 #endif	
-
-    if(ctOpt.ssa) {
-      SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-      ssaGen->generateSSAForm();
-      exit(0);
-    }
-
-    for(auto analysisInfo : ctOpt.analysisList()) {
-      AnalysisSelector analysisSel=analysisInfo.first;
-      string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
-          if(locations.numTotalLocations()>0) {
-            locations.writeResultToStream(cout,analyzer->getLabeler());
-          } else {
-            cout<<"No violations detected."<<endl;
-          }
-        }
-        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          if(!ctOpt.quiet)
-            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-          locations.writeResultFile(fileName,analyzer->getLabeler());
-        }
-      }
-    }
-
-    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
-      string s=analyzer->analyzedFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
-      string fileName=ctOpt.analyzedFilesCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
-      string s=analyzer->analyzedFilesToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
-
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
-      if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
-      string s=analyzer->externalFunctionsToString();
-      if(!CppStdUtilities::writeFile(fileName, s)) {
-        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
-      }
-    }
 
     long pstateSetSize=analyzer->getPStateSet()->size();
     long pstateSetBytes=analyzer->getPStateSet()->memorySize();
@@ -1103,22 +880,37 @@ int main( int argc, char * argv[] ) {
       }
 
       timer.start();
-      std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
-      //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
+
+      LtlRersMapping ltlRersMapping;
       if (ltlOpt.ltlInAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlInAlphabet;
-        ltlInAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
+        ltlRersMapping.addInputAsciiValueSetWithOffsetA(ltlOpt.ltlInAlphabet);
       }
-      //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
-      std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (ltlOpt.ltlOutAlphabet.size()>0) {
-        string setstring=ltlOpt.ltlOutAlphabet;
-        ltlOutAlphabet=Parse::integerSet(setstring);
-        SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
-      } else {
-        // TODO: fail, if no output alphabet is provided
+        ltlRersMapping.addOutputAsciiValueSetWithOffsetA(ltlOpt.ltlOutAlphabet);
       }
+      if(ltlOpt.ltlRersMappingFileName.size()>0) {
+        // load and parse file into ltlInAlphabet and ltlOutAlphabet
+        // input/output alphabet
+        if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+          cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
+          exit(1);
+        }
+        // set input/output alphabets here as well
+      }
+   
+      std::set<int> ltlInAlphabet;// = analyzer->getInputVarValues();
+      std::set<int> ltlOutAlphabet;
+      ltlInAlphabet=ltlRersMapping.getInputValueSet();
+      ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+      if(ltlInAlphabet.size()==0) {
+        cerr<<"Error: no LTL input alphabet provided."<<endl;
+        exit(1);
+      }
+      if(ltlOutAlphabet.size()==0) {
+        cerr<<"Error: no LTL output alphabet provided."<<endl;
+        exit(1);
+      }
+
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
@@ -1131,9 +923,9 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
       if (ltlOpt.propertyNrToCheck!=-1) {
         int propertyNum = ltlOpt.propertyNrToCheck;
-        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       } else {
-        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlRersMapping, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
@@ -1155,11 +947,11 @@ int main( int argc, char * argv[] ) {
           ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
         }
         if (ltlOpt.cegpra.checkAllProperties) {
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlRersMapping);
         } else {  // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
           int property = ltlOpt.cegpra.ltlPropertyNr;
-          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+          ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlRersMapping);
         }
       }
 
@@ -1405,8 +1197,8 @@ int main( int argc, char * argv[] ) {
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(ctOpt.visualization.viz) {
-        cout << "generating graphviz files:"<<endl;
+      if(ctOpt.visualization.vis) {
+        cout << "generating graphvis files:"<<endl;
         visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
@@ -1421,24 +1213,24 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
-        assert(analyzer->startFunRoot);
+        //assert(analyzer->startFunRoot);
         //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
         //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
         analyzer->generateAstNodeInfo(sageProject);
         cout << "generating AST node info ... "<<endl;
         dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
         write_file("ast.dot", dotFile);
         cout << "generated ast.dot."<<endl;
 
-        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
         write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(ctOpt.visualization.vizTg2) {
+      if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
@@ -1551,3 +1343,4 @@ int main( int argc, char * argv[] ) {
   return 0;
 }
 
+#endif // HAVE_SPOT

@@ -1,5 +1,5 @@
 #include "FIPointerAnalysis.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 CodeThorn::FIPointerAnalysis::FIPointerAnalysis(VariableIdMapping* vim, FunctionIdMapping* fim, SgProject* project):_variableIdMapping(vim), _functionIdMapping(fim), _astRoot(project) {
 }
@@ -14,7 +14,7 @@ void CodeThorn::FIPointerAnalysis::run() {
 }
 
 void CodeThorn::FIPointerAnalysis::initialize() {
-  VariableIdSet usedVarsInProgram = AnalysisAbstractionLayer::usedVariablesInsideFunctions(_astRoot, _variableIdMapping);
+  VariableIdSet usedVarsInProgram = AstUtility::usedVariablesInsideFunctions(_astRoot, _variableIdMapping);
   _fipi=new FlowInsensitivePointerInfo(_astRoot, *_variableIdMapping, *_functionIdMapping, usedVarsInProgram);
   //cout<<"DEBUG: _modVariableIds.size(): "<<_modVariableIds.size()<<endl;
 }

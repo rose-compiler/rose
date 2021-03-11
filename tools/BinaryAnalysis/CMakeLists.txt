@@ -22,6 +22,12 @@ if(enable-binary-analysis)
   add_executable(bat-dis bat-dis.C)
   target_link_libraries(bat-dis bat ROSE_DLL)
 
+  add_executable(bat-insnfreq bat-insnfreq.C)
+  target_link_libraries(bat-insnfreq bat ROSE_DLL)
+
+  add_executable(bat-insnfreq-cmp bat-insnfreq-cmp.C)
+  target_link_libraries(bat-insnfreq-cmp bat ROSE_DLL)
+
   add_executable(bat-entropy bat-entropy.C)
   target_link_libraries(bat-entropy bat ROSE_DLL)
 

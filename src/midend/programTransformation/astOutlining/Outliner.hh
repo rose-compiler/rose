@@ -87,8 +87,13 @@ namespace Outliner
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
-  struct DeferedTransformation
+#if 0
+  // DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+  // So I need to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
+  struct DeferredTransformation
      {
+    // DQ (11/15/2020): Need to add the concept of deffered transformation to cover replaceStatement operations.
+
     // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
     // into class declaration (when this is required to support the outlined function's access to protected or private data members).
     // This is part of an optimization to support the optimization of header file unparsing (limiting the overhead of supporting any 
@@ -105,13 +110,14 @@ namespace Outliner
        FuncDeclList_t targetFriends;
 
     // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
-       ROSE_DLL_API DeferedTransformation();
-       ROSE_DLL_API DeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
-       ROSE_DLL_API DeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
-       ROSE_DLL_API ~DeferedTransformation (void); //! Shallow; does not delete fields.
+       ROSE_DLL_API DeferredTransformation();
+       ROSE_DLL_API DeferredTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+       ROSE_DLL_API DeferredTransformation (const DeferredTransformation& X); //! Copy constructor.
+       ROSE_DLL_API ~DeferredTransformation (void); //! Shallow; does not delete fields.
 
-       ROSE_DLL_API DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
+       ROSE_DLL_API DeferredTransformation & operator= (const DeferredTransformation& X); //! operator=()
      };
+#endif
 
   //! Stores the main results of an outlining transformation.
   struct Result
@@ -131,15 +137,19 @@ namespace Outliner
     SgDeclarationStatement* target_class_member;
     SgDeclarationStatement* new_function_prototype;
 
+ // DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
-    DeferedTransformation deferedTransformation;
+ // DeferredTransformation deferredTransformation;
+    SageInterface::DeferredTransformation deferredTransformation;
 
  // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
     ROSE_DLL_API Result (void); //! Sets all fields to 0
 
-  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+ // DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
+ // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
  // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
-    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
+ // ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferredTransformation deferredTransformation);
+    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, SageInterface::DeferredTransformation deferredTransformation);
 
     ROSE_DLL_API Result (const Result&); //! Copy constructor.
     ROSE_DLL_API ~Result (void) {}; //! Shallow; does not delete fields.
@@ -366,9 +376,11 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
      *  This information is used to insert the prototypes into the correct places in
      *  the AST.
      */
+ // DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
  // DQ (8/15/2019): Adding support to defer the transformations to header files.
  // ROSE_DLL_API void insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* target_outlined_code )
-    ROSE_DLL_API DeferedTransformation insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* outlining_target );
+ // ROSE_DLL_API DeferredTransformation insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* outlining_target );
+    ROSE_DLL_API SageInterface::DeferredTransformation insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* outlining_target );
 
     /*!
      *  \brief Generates a function call parameter list using a set of symbols

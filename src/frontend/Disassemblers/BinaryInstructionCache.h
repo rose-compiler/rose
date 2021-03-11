@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionCache_H
 #define ROSE_BinaryAnalysis_InstructionCache_H
-#include <rosePublicConfig.h>
-#if defined(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT) && __cplusplus >= 201103L
+#include <featureTests.h>
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
 #include <memory>
 #include <unordered_map>
 

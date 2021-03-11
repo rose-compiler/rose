@@ -12,14 +12,19 @@ using namespace Fortran;
 
 // The Build functions need to be turned into a class (global variable used for now)
 //
-   SageTreeBuilder builder{};
+//   SageTreeBuilder builder{};
+//      enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+//      : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_jovial))
+
+   SageTreeBuilder builder(SageTreeBuilder::e_language_fortran);
 // TODO: change this to a reference
-   parser::CookedSource* cooked_{nullptr};
+   parser::AllCookedSources* cooked_{nullptr};
 
 template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::Statement<T> &x, Order from)
 {
    std::optional<SourcePosition> pos{std::nullopt};
 
+   //#if FIX_SOURCE_POSITION
    if (auto sourceInfo{cooked_->GetSourcePositionRange(x.source)}) {
       if (from == Order::begin)
          pos.emplace(SourcePosition{sourceInfo->first.file.path(), sourceInfo->first.line, sourceInfo->first.column});
@@ -27,8 +32,11 @@ template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::S
          pos.emplace(SourcePosition{sourceInfo->second.file.path(), sourceInfo->second.line, sourceInfo->second.column});
    }
    else {
+     //#endif
       pos.emplace(SourcePosition{});
+      //#if FIX_SOURCE_POSITION
    }
+   //#endif
 
    return pos.value();
 }
@@ -89,7 +97,7 @@ std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPar
 }
 
 // Converts parsed program to ROSE Sage nodes
-void Build(const parser::Program &x, parser::CookedSource &cooked)
+void Build(const parser::Program &x, parser::AllCookedSources &cooked)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "\n";
@@ -138,7 +146,7 @@ void Build(const parser::MainProgram &x, T* scope)
 
    const auto & end_program_stmt{std::get<4>(x.t)};
 
-   std::list<std::string> labels{};
+   std::vector<std::string> labels{};
    std::optional<SourcePosition> srcPosBody{std::nullopt};
    std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(program_stmt, Order::begin)};
    SourcePosition srcPosEnd{BuildSourcePosition(end_program_stmt, Order::end)};
@@ -272,6 +280,7 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
          // common:: Indirection - AssociateConstruct, BlockConstruct, CaseConstruct, ChangeTeamConstruct,
          // CriticalConstruct, DoConstruct, IfConstruct, SelectRankConstruct, SelectTypeConstruct,
          // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OpenACCConstruct, OmpEndLoopDirective
+         // AccEndCombinedDirective
          [&] (const auto &y) { Build(y.value(), scope); },
       },
       x.u);
@@ -508,17 +517,6 @@ void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntrinsicBinary)\n";
 #endif
-}
-
-void Build(const parser::ConstantValue &x, SgExpression* &expr)
-{
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ConstantValue)\n";
-#endif
-
-   // LiteralConstant, NamedConstant
-   auto ConstantValueVisitor = [&] (const auto &y) { Build(y, expr); };
-   std::visit(ConstantValueVisitor, x.u);
 }
 
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
@@ -1242,11 +1240,13 @@ void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(DataStmtConstant)\n";
 #endif
 
+   //     std::variant<LiteralConstant, SignedIntLiteralConstant,
+   //      SignedRealLiteralConstant, SignedComplexLiteralConstant, NullInit,
+   //      common::Indirection<Designator>, StructureConstructor>  u;
+
    std::visit(
       common::visitors{
-         [&] (const parser::Scalar<parser::ConstantValue> &y) { Build(y.thing, expr); },
-         // Scalar<ConstantSubobject>, SignedIntLiteralConstant, SignedRealLiteralConstant,
-         // SignedComplexLiteralConstant, NullInit, InitialDataTarget, StructureConstructor
+         [&] (const parser::Scalar<parser::LiteralConstant> &y) { Build(y.thing, expr); },
          [&] (const auto &y) { ; }
       },
       x.u);
@@ -1347,6 +1347,12 @@ void Build(const parser::ExitStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExitStmt)\n";
 #endif
+   // std::optional<Name> v;
+
+   // TODO: exit with a name
+   SgProcessControlStatement* exit_stmt{nullptr};
+   builder.Enter(exit_stmt, "exit", boost::none, boost::none);
+   builder.Leave(exit_stmt);
 }
 
 template<typename T>
@@ -1534,6 +1540,26 @@ void Build(const parser::StopStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StopStmt)\n";
 #endif
+   //  std::tuple<Kind, std::optional<StopCode>, std::optional<ScalarLogicalExpr>> t;
+
+   SgProcessControlStatement* stop_stmt{nullptr};
+   SgExpression* stop_code{nullptr};
+   boost::optional<SgExpression*> boost_code{boost::none};
+   std::string kind = parser::StopStmt::EnumToString(std::get<0>(x.t));
+
+   // edit strings to match builder function
+   if (kind == "Stop") {
+      kind = "stop";
+   } else if (kind == "ErrorStop") {
+      kind = "error_stop";
+   }
+
+   if (auto & opt = std::get<1>(x.t)) {
+      Build(opt.value().v.thing, stop_code);
+      boost_code = stop_code;
+   }
+
+   builder.Enter(stop_stmt, kind, boost_code);
 }
 
 template<typename T>
@@ -2352,6 +2378,32 @@ void Build(const parser::IfConstruct&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfConstruct)\n";
 #endif
+   //   std::tuple<Statement<IfThenStmt>, Block, std::list<ElseIfBlock>,
+   //      std::optional<ElseBlock>, Statement<EndIfStmt>>
+}
+
+template<typename T>
+void Build(const parser::IfThenStmt&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(IfThenStmt)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseBlock&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ElseBlock)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseIfBlock&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ElseIfBlock)\n";
+#endif
 }
 
 template<typename T>
@@ -2408,6 +2460,12 @@ void Build(const parser::OpenACCConstruct&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OpenACConstruct)\n";
 #endif
+}
+
+template<typename T>
+void Build(const parser::AccEndCombinedDirective&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(AccEndCombinedDirective)\n";
 }
 
 template<typename T>

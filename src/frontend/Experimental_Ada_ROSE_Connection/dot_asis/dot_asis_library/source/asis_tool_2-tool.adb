@@ -5,18 +5,26 @@ with Asis.Implementation;
 with Asis.Extensions;
 with Gnat.OS_Lib;
 
+with Asis_Tool_2.Unit;
+
 package body Asis_Tool_2.Tool is
 
    ------------
    -- EXPORTED:
    ------------
    procedure Process
-     (This       : in out Class;
-      File_Name  : in     String;
-      Output_Dir : in     String := "";
-      GNAT_Home  : in     String;
-      Debug      : in     Boolean)
+     (This                         : in out Class;
+      File_Name                    : in     String;
+      Output_Dir                   : in     String := "";
+      GNAT_Home                    : in     String;
+      Process_Predefined_Units     : in     Boolean;
+      Process_Implementation_Units : in     Boolean;
+      Debug                        : in     Boolean)
    is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+
       package AD renames Ada.Directories;
       Full_File_Name   : constant String := AD.Full_Name (File_Name);
       Source_File_Dir  : constant String :=
@@ -24,23 +32,23 @@ package body Asis_Tool_2.Tool is
       Simple_File_Name : aliased String := AD.Simple_Name (Full_File_Name);
       Base_File_Name   : constant String := AD.Base_Name (Simple_File_Name);
 
-      Tree_File_Dir    : constant String := AD.Compose (Source_File_Dir, "obj");
+      Tree_File_Dir    : constant String := AD.Compose (AD.Current_Directory, "obj");
       Tree_File_Name   : constant String :=
         AD.Compose (Tree_File_Dir, Base_File_Name, "adt");
       Real_Output_Dir  : constant String :=
         (if Output_Dir = "" then AD.Current_Directory else Output_Dir);
 
-      procedure Log (Message : in String) is
-      begin
-         Put_Line ("Asis_Tool_2.Tool.Process:  " & message);
-      end;
-
       -- LEAKS (only intended to be called once per program execution):
       procedure Init_And_Process_Context is
+         Unit_Options : Unit.Options_Record; -- Initialized
       begin
          -- -dall - All the ASIS-for-GNAT debug flags are set ON
          -- Asis.Implementation.Initialize (Parameters => "-dall");
          Asis.Implementation.Initialize;
+         Unit_Options.Process_If_Origin_Is (Asis.A_Predefined_Unit) :=
+           Process_Predefined_Units;
+         Unit_Options.Process_If_Origin_Is (Asis.An_Implementation_Unit) :=
+           Process_Implementation_Units;
          This.Outputs.Output_Dir := ASU.To_Unbounded_String (Real_Output_Dir);
          This.Outputs.Text := new Indented_Text.Class;
          This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
@@ -48,6 +56,7 @@ package body Asis_Tool_2.Tool is
          This.Outputs.A_Nodes := new A_Nodes.Class;
          -- TODO: use File_Name:
          This.My_Context.Process (Tree_File_Name => Tree_File_Name,
+                                  Unit_Options   => Unit_Options,
                                   Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
            (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
@@ -67,6 +76,7 @@ package body Asis_Tool_2.Tool is
       Create_Missing_Dirs : aliased String := "-p";
       Project_File        : aliased String :=
         "-P" & Source_File_Dir & "/default.gpr";
+      Relocate_build_tree : aliased String := "--relocate-build-tree";
       -- From GNAT docs:
       -- "Args contains only needed -I, -gnatA, -gnatec options, and project
       -- file in case of the GPRBUILD call."
@@ -74,7 +84,8 @@ package body Asis_Tool_2.Tool is
       -- the pointed-to strings out of scope:
       GPRBUILD_Args       : Gnat.OS_Lib.Argument_List :=
         (1 => Create_Missing_Dirs'Unchecked_Access,
-         2 => Project_File'Unchecked_Access);
+         2 => Project_File'Unchecked_Access,
+         3 => Relocate_build_tree'Unchecked_Access);
    begin
       Asis_Tool_2.Trace_On := Debug;
       Log ("BEGIN");
@@ -111,6 +122,15 @@ package body Asis_Tool_2.Tool is
          raise External_Error with "*** Asis.Extensions.Compile FAILED. Exiting.";
       end if;
       Log ("END");
+   exception
+      when X : External_Error =>
+         Log_Exception (X);
+         Log ("Reraising");
+         raise;
+      when X: others =>
+         Log_Exception (X);
+         Log ("Raising Internal_Error");
+         raise Internal_Error;
    end Process;
 
    ------------
@@ -118,9 +138,17 @@ package body Asis_Tool_2.Tool is
    ------------
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Nodes_Struct is
+      return a_nodes_h.Nodes_Struct
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Get_Nodes";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
    begin
       return This.Outputs.A_Nodes.Get_Nodes;
+   exception
+      when X : others =>
+         Log_Exception (X);
+         raise Internal_Error;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

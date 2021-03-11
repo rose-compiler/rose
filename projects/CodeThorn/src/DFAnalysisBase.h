@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #ifndef DFANALYSISBASE_H
@@ -12,6 +10,7 @@
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
+#include "DFAnalysisBaseWithoutData.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
@@ -22,96 +21,48 @@
 
 namespace CodeThorn {
 
-  using std::set;
-  using std::vector;
-  using std::string;
-
 #include "PropertyState.h"
 
-class DFAnalysisBase {
- public:  
-  DFAnalysisBase();
-  virtual ~DFAnalysisBase();
-  void setExtremalLabels(LabelSet extremalLabels);
-  virtual void initializeExtremalValue(Lattice* element);
-  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr);
+  class DFAnalysisBase : public DFAnalysisBaseWithoutData {
+  public:  
+    DFAnalysisBase();
+    virtual ~DFAnalysisBase();
 
-  void setForwardAnalysis();
-  void setBackwardAnalysis();
-  bool isForwardAnalysis();
-  bool isBackwardAnalysis();
-  bool getNoTopologicalSort();
-  void setNoTopologicalSort(bool);
-  // computes state for global variable initializations
-  virtual Lattice* initializeGlobalVariables(SgProject* root);
-  // initializes an element with the combined global initialization state and the extremal value
-  virtual void initializeTransferFunctions();
-  virtual void initializeSolver();
-  void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
-  void run();
+    virtual Lattice* getPreInfo(Label lab);
+    virtual Lattice* getPostInfo(Label lab);
+    virtual void setPostInfo(Label lab,Lattice*);
+ 
+    void initialize(CodeThornOptions& ctOpt, SgProject* root, ProgramAbstractionLayer* programAbstractionLayer) override;
 
-  vector<Lattice*>& getResultAccess();
-#if 0
-  void attachResultsToAst(string);
-#endif
-  virtual Labeler* getLabeler() const;
-  virtual CFAnalysis* getCFAnalyzer();
-  virtual VariableIdMappingExtended* getVariableIdMapping();
-  virtual FunctionIdMapping* getFunctionIdMapping();
-  virtual Flow* getFlow() const;
-  virtual Lattice* getPreInfo(Label lab);
-  virtual Lattice* getPostInfo(Label lab);
-  void attachInInfoToAst(string attributeName);
-  void attachOutInfoToAst(string attributeName);
+    void run();
 
-  void attachInfoToAst(string attributeName,bool inInfo);
-  void setSolverTrace(bool trace) { _solver->setTrace(trace); }
+    void attachInInfoToAst(string attributeName);
+    void attachOutInfoToAst(string attributeName);
 
-  // optional: allows to set a pointer analysis (if not set, then the default behavior is used (everything is modified through any pointer)).
-  void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
-  CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
-  void setSkipUnknownFunctionCalls(bool defer);
-  ProgramAbstractionLayer* getProgramAbstractionLayer() { return _programAbstractionLayer; }
+    void attachInfoToAst(string attributeName,bool inInfo);
+    void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
- protected:
-  enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
-  virtual void solve();
-  ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
-  LabelSet _extremalLabels;
-  // following members are initialized by function initialize()
-  Flow* _flow=nullptr;
-  long _numberOfLabels=0;
-  vector<Lattice*> _analyzerDataPreInfo;
-  vector<Lattice*> _analyzerDataPostInfo;
-  WorkListSeq<Edge> _workList;
-  void setInitialElementFactory(PropertyStateFactory*);
-  PropertyStateFactory* getInitialElementFactory();
+    void setSkipUnknownFunctionCalls(bool defer);
 
-#if 0
-  typedef vector<Lattice*>::iterator iterator;
-  iterator begin();
-  iterator end();
-  size_t size();
-#endif
- protected:
-  virtual DFAstAttribute* createDFAstAttribute(Lattice*);
-  void computeAllPreInfo();
-  void computeAllPostInfo();
-  bool _preInfoIsValid=false;
-  bool _postInfoIsValid=false;
- public:
-  DFTransferFunctions* _transferFunctions=nullptr;
- protected:
-  DFAbstractSolver* _solver=nullptr;
-  AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
-  bool _no_topological_sort=false;
- private:
-  PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
-  PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
-  Lattice* _globalVariablesState=nullptr;
-  bool _skipSelectedFunctionCalls=false;
-  bool _programAbstractionLayerOwner=true;
-};
+    WorkListSeq<Edge>* getWorkList();
+  
+    virtual void initializeSolver();
+  protected:
+    virtual void initializeAnalyzerDataInfo();
+    virtual void computeAllPreInfo();
+    virtual void computeAllPostInfo();
+    virtual void solve();
+
+    bool _preInfoIsValid=false;
+    bool _postInfoIsValid=false;
+
+    virtual DFAstAttribute* createDFAstAttribute(Lattice*);
+    std::vector<Lattice*> _analyzerDataPreInfo;
+    std::vector<Lattice*> _analyzerDataPostInfo;
+    WorkListSeq<Edge> _workList;
+  private:
+    bool _skipSelectedFunctionCalls=false;
+  };
 
 } // end of namespace
 

@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_Engine_H
 #define ROSE_Partitioner2_Engine_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
@@ -618,6 +618,8 @@ public:
      *
      *  @li If a @p hint is supplied, then use it.
      *
+     *  @li If the engine @ref doDisassemble property is false, return no disassembler (nullptr).
+     *
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
@@ -637,22 +639,24 @@ public:
     /** Create a bare partitioner.
      *
      *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
-     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor
-     *  is not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler and
-     *  @ref memoryMap properties already either assigned explicitly or as the result of earlier steps. */
+     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor is
+     *  not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler (if @ref
+     *  doDisassemble is set) and @ref memoryMap properties already either assigned explicitly or as the result of earlier
+     *  steps. */
     virtual Partitioner createBarePartitioner();
 
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  engine must have @ref disassembler and @ref memoryMap properties assigned already, either explicitly or as the result
-     *  of earlier steps. */
+     *  engine must have @ref disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned
+     *  already, either explicitly or as the result of earlier steps. */
     virtual Partitioner createGenericPartitioner();
 
     /** Create a tuned partitioner.
      *
      *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
-     *  disassembler and @ref memoryMap properties assigned already, either explicitly or as the result of earlier steps. */
+     *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
+     *  or as the result of earlier steps. */
     virtual Partitioner createTunedPartitioner();
 
     /** Create a partitioner from an AST.
@@ -1177,10 +1181,19 @@ public:
     virtual void environmentInsertions(const std::vector<std::string> &vars) { settings_.loader.envInsert = vars; }
     /** @} */
 
+    /** Property: Perform disassembly.
+     *
+     *  If true, then disassembly is performed, otherwise it's skipped.
+     *
+     * @{ */
+    bool doDisassemble() const /*final*/ { return settings_.disassembler.doDisassemble; }
+    virtual void doDisassemble(bool b) { settings_.disassembler.doDisassemble = b; }
+    /** @} */
+
     /** Property: Disassembler.
      *
      *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
-     *  a disassembler based on the binary container.
+     *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
      *
      * @{ */
     Disassembler *disassembler() const /*final*/ { return disassembler_; }

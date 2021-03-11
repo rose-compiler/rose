@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 #define ROSE_BinaryAnalysis_Partitioner2_InstructionProvider_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
@@ -184,6 +184,12 @@ public:
 
     /** Default memory byte order. */
     ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
+
+    /** Word size in bits. */
+    size_t wordSize() const { return 8 * disassembler_->wordSizeBytes(); }
+
+    /** Alignment requirement for instructions. */
+    size_t instructionAlignment() const { return disassembler_->instructionAlignment(); }
 
     /** Instruction dispatcher.
      *

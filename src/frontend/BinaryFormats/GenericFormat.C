@@ -1,6 +1,6 @@
 /* Classes describing basic features of a binary file that are in common to all file formats. (SgAsmGenericFormat class) */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "stringify.h"

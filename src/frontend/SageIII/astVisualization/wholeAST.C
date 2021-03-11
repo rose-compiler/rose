@@ -8,7 +8,7 @@
 #include "transformationTracking.h"
 #include "wholeAST.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -1075,7 +1075,7 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
      if (isSgAsmExecutableFileFormat(node) != NULL)
         {
@@ -1087,7 +1087,7 @@ CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
      if (isSgAsmType(node) != NULL)
         {
@@ -1653,7 +1653,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationDecl:
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString  = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string flagString2 = (classDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
@@ -1698,7 +1698,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationTypedefDeclaration:
                   {
                     SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString  = (templateInstantiationTypedefDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string flagString2 = (templateInstantiationTypedefDeclaration->get_isAutonomousDeclaration() == true) ? "isAutonomousDeclaration" : "!isAutonomousDeclaration";
                     labelWithSourceCode = "\\n  " + templateInstantiationTypedefDeclaration->get_name().getString() + 
@@ -1749,7 +1749,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgNamespaceDeclarationStatement:
                   {
                     SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + namespaceDeclaration->get_name().getString() + 
                                           "\\n  " + StringUtility::numberToString(namespaceDeclaration) + "  ";
                     break;
@@ -1757,7 +1757,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                case V_SgNamespaceDefinitionStatement:
                   {
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
                     SgNamespaceDefinitionStatement* ns = isSgNamespaceDefinitionStatement(node);
                     ROSE_ASSERT(ns != NULL);
@@ -1782,7 +1782,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgNamespaceAliasDeclarationStatement:
                   {
                     SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + namespaceAliasDeclaration->get_name().getString() + 
                                           "\\n  " + StringUtility::numberToString(namespaceAliasDeclaration) + "  ";
                     break;
@@ -2100,13 +2100,17 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
 #endif
                   {
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                 // DQ (10/18/2020): Added more information to make it clearer when using buildSourceFile().
+                 // labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                    labelWithSourceCode = string("\\n  getFileName = ") + file->getFileName() + "  ";
+                    labelWithSourceCode += string("\\n  sourceFileNameWithPath = ") + file->get_sourceFileNameWithPath() + "  ";
+
                     labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(file) + "  ";
                  // printf ("########## SgFile = %s \n",file->get_sourceFileNameWithPath().c_str());
                     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
@@ -2118,7 +2122,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgIncludeFile:
                   {
                     SgIncludeFile* include_file = isSgIncludeFile(node);
-                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
                  // DQ (5/6/2020): Trigger the root fo the include tree associated with the input source file to be collored differently.
                     if (include_file->get_isRootSourceFile() == true)
@@ -2321,25 +2325,25 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
     // Liao 11/5/2010, move out of SgSupport
        if (isSgInitializedName(node) != NULL) 
     // case V_SgInitializedName:
-          {
-            SgInitializedName* initializedName = isSgInitializedName(node);
-            string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
-            string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
-                                  string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
+       {
+         SgInitializedName* initializedName = isSgInitializedName(node);
+         string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+         string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
+           string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
 #if 1
          // DQ (1/24/2016): Adding support for __device__ keyword to be used for CUDA in function calls.
          // This implements an idea suggested by Jeff Keasler.
-            labelWithSourceCode += string("\\n  ") + "using_device_keyword = " + (initializedName->get_using_device_keyword() ? "true" : "false") + "  ";
+         labelWithSourceCode += string("\\n  ") + "using_device_keyword = " + (initializedName->get_using_device_keyword() ? "true" : "false") + "  ";
 #endif
          // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
- //           break;
- 
-          AST_NODE_ID id = TransformationTracking::getId(node) ;
-          if (id != 0)
-            labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
-            NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
-            addNode(graphNode);
-          }
+         //           break;
+
+         AST_NODE_ID id = TransformationTracking::getId(node) ;
+         if (id != 0)
+           labelWithSourceCode = string("\\n  ID: ") +StringUtility::numberToString (id) + "  ";
+         NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+         addNode(graphNode);
+       }
 
 
 #if 1
@@ -2404,7 +2408,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
         }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmType(node) != NULL)
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2427,7 +2431,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmNode(node) != NULL)
         {
        // Color selection for the binary file format and binary instruction IR nodes.
@@ -2753,6 +2757,7 @@ CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_commandline_help()
   cout<<"   -rose:dotgraph:variableDefinitionFilter         [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
 
   cout<<"   -rose:dotgraph:noFilter                         [0|1]  Disable or enable no filtering"<<endl;
+  cout<<"   -DSKIP_ROSE_BUILTIN_DECLARATIONS                Enable builtin function filtering, defaut is to show all of them"<<endl;
 }
 
 

@@ -895,7 +895,7 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &mesg
         ptr = me.value().buffer()->data() + offset;
         if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
             (void)munmap((void*)ptr, sz);
-    } catch (const MemoryMap::NotMapped) {
+    } catch (const MemoryMap::NotMapped&) {
     }
 
     /* Erase the mapping from the simulation */

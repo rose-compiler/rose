@@ -1,11 +1,13 @@
 START
-!COMPOOL ('CMPLMOD');
+!COMPOOL ('SIMPLECOMPOOL');
 !ORDER ;
 !REDUCIBLE ;
-PROGRAM testOrder;
+PROGRAM TestDirectives;
 BEGIN
    ITEM ITEM'1 F;
 
    ITEM'1 = 1.0;
+   ff = item'1;    % ff declared in SIMPLECOMPOOL %
+
 END
 TERM

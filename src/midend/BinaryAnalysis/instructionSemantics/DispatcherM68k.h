@@ -1,7 +1,7 @@
 #ifndef ROSE_DispatcherM68k_H
 #define ROSE_DispatcherM68k_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 
@@ -70,6 +70,7 @@ protected:
         regcache_init();
         iproc_init();
         memory_init();
+        initializeState(ops->currentState());
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */

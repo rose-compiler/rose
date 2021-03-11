@@ -92,7 +92,7 @@ package body A_Nodes is
       exception
          when X : Usage_Error =>
             Print_Exception_Info (Module_Name, X);
-            ATI.Put_Line ("Continuing...");
+            raise;
       end;
       List_Node.Unit := Unit;
       if This.Nodes.Units = null then
@@ -124,7 +124,7 @@ package body A_Nodes is
       exception
          when X : Usage_Error =>
             Print_Exception_Info (Module_Name, X);
-            ATI.Put_Line ("Continuing...");
+            raise;
       end;
       List_Node.Element := Element;
       if This.Nodes.Elements = null then
@@ -145,6 +145,16 @@ package body A_Nodes is
    begin
       This.Not_Implemented := This.Not_Implemented + 1;
    end Add_Not_Implemented;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function Get_Not_Implemented
+     (This : access Class)
+      return Natural is
+   begin
+      return This.Not_Implemented;
+   end Get_Not_Implemented;
 
    ------------
    -- EXPORTED:
@@ -173,7 +183,7 @@ package body A_Nodes is
       Put_Line ("Highest Unit ID    :" & This.Highest_Unit_ID'Image);
       Put_Line ("Total Elements     :" & This.Element_Ids.Length'Image);
       Put_Line ("Highest Element ID :" & This.Highest_Element_ID'Image);
-      Put_Line ("Not Implemented    :" & This.Not_Implemented'Image);
+      Put_Line ("Not_Implemented    :" & This.Not_Implemented'Image);
    end Print_Stats;
 
 

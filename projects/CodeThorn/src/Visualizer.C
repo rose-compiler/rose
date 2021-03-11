@@ -1,7 +1,5 @@
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "sage3basic.h"
@@ -37,7 +35,7 @@ private:
   string _precond;
 };
 
-AssertionExtractor::AssertionExtractor(Analyzer* analyzer)
+AssertionExtractor::AssertionExtractor(CTAnalysis* analyzer)
 {
   setLabeler(analyzer->getLabeler());
   setVariableIdMapping(analyzer->getVariableIdMapping());
@@ -120,7 +118,7 @@ Visualizer::Visualizer():
 {}
 
 //! The analyzer provides all necessary information
-Visualizer::Visualizer(Analyzer* analyzer):
+Visualizer::Visualizer(CTAnalysis* analyzer):
   tg1(false),
   tg2(false),
   optionTransitionGraphDotHtmlNode(true)
@@ -565,7 +563,7 @@ string Visualizer::transitionGraphWithIOToDot() {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();
-        num+='A'-1;
+        num+='A'-1; // TODO: introduce RERS mapping 2020
         char numc=num;
         stringstream ss;
         ss<<numc;

@@ -62,7 +62,8 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
         for (auto function: functions) {
             debug <<"insert staring point " <<StringUtility::addrToString(function->address())
                   <<" from function prologue matcher\n";
-            pp.makeInstruction(function->address());
+            PP::InsnInfo::Ptr insn = pp.makeInstruction(function->address());
+            insn->functionReasons(function->reasons());
             pp.scheduleDecodeInstruction(function->address());
         }
         if (searchVa == p.memoryMap()->hull().greatest())
@@ -145,8 +146,8 @@ printCfgInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
 void
 printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
     using namespace Rose::StringUtility;
-    std::string green = "\033[38;2;" + Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi();
-    std::string red = "\033[38;2;" + Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi();
+    std::string green = Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi(Rose::Color::Layer::FOREGROUND);
+    std::string red = Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi(Rose::Color::Layer::BACKGROUND);
     std::string endColor = "\033[0m";
 
     auto cfgInsns = insnsByAddr(pp);
@@ -208,8 +209,8 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
 void
 printInsnsFromBoth(PP::Partitioner &pp, P2::Partitioner &p) {
     using namespace Rose::StringUtility;
-    const std::string green = "\033[38;2;" + Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi();
-    const std::string red = "\033[38;2;" + Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi();
+    const std::string green = Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi(Rose::Color::Layer::FOREGROUND);
+    const std::string red = Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi(Rose::Color::Layer::BACKGROUND);
     const std::string endColor = "\033[0m";
 
     std::vector<PP::InsnInfo::Ptr> insns1 = insnsByAddr(pp);

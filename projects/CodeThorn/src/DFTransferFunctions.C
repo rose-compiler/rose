@@ -9,7 +9,7 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 using namespace CodeThorn;
 
@@ -346,6 +346,7 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
 }
 
 void DFTransferFunctions::addParameterPassingVariables() {
+  ROSE_ASSERT(getVariableIdMapping());
   std::string nameprefix="$p";
   /* this variable is necessary to know the id-range where parameter
      passing variable-ids are starting in the id-range.
@@ -503,9 +504,9 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
 Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
-  VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,getVariableIdMapping());
-  VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,getVariableIdMapping());
-  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,getVariableIdMapping());
+  VariableIdSet globalVars=AstUtility::globalVariables(root,getVariableIdMapping());
+  VariableIdSet usedVarsInFuncs=AstUtility::usedVariablesInsideFunctions(root,getVariableIdMapping());
+  VariableIdSet usedVarsInGlobalVarsInitializers=AstUtility::usedVariablesInGlobalVariableInitializers(root,getVariableIdMapping());
   VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
   //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
   //        usedVarsInGlobalVarsInitializers.end());
@@ -540,7 +541,14 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   for (VariableInitialzationMap::value_type& init : varinit) {
     ROSE_ASSERT(init.second);
 
-    transfer(getLabeler()->getLabel(init.second), *elem);
+    Label lbl = getLabeler()->getLabel(init.second);
+    
+    if (lbl == Label())
+    {
+      std::cerr << "no label: " << init.second->unparseToString() << std::endl;
+    }
+
+    transfer(lbl, *elem);
   }
 
   //~ std::cout << "INIT: initial state (after " << varinit.size() << ") vars: ";

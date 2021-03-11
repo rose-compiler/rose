@@ -2,9 +2,7 @@
 #define ESTATE_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <string>
@@ -32,7 +30,7 @@ typedef int EStateId;
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
 
 /*! 
   * \author Markus Schordan
@@ -69,14 +67,13 @@ namespace CodeThorn {
     bool isRersTopified(CodeThorn::VariableIdMapping* vid) const;
     std::string predicateToString(CodeThorn::VariableIdMapping* vid) const;
     std::string programPosToString(Labeler* labeler) const;
+
     // uses isApproximatedBy of PState
     bool isApproximatedBy(const CodeThorn::EState* other) const;
 
     // required for PropertyState class
-    bool approximatedBy(PropertyState& other) const;
-    // required for PropertyState class
     bool isBot() const; 
-    // required for PropertyState class
+    bool approximatedBy(PropertyState& other) const;
     void combine(PropertyState& other);
     
   private:
@@ -85,6 +82,8 @@ namespace CodeThorn {
     const CodeThorn::ConstraintSet* _constraints;
   public:
     CodeThorn::InputOutput io;
+    void setCallString(CallString cs);
+    CallString getCallString() const;
     CallString callString;
     
   };

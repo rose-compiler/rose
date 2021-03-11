@@ -1,5 +1,8 @@
 // Author: Marc Jasper, 2014, 2015.
 
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "CounterexampleAnalyzer.h"
 #include "CodeThornCommandLineOptions.h"
 
@@ -236,24 +239,27 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
 }
 
 PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, 
-									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+									LtlRersMapping ltlRersMapping) {
   PropertyValueTable* currentResults = spotConnection.getLtlResults();
   // call the counterexample-guided prefix refinement for all analyzed LTL properties
   for (unsigned int i=0; i < spotConnection.getLtlResults()->size(); i++) { 
-    currentResults = cegarPrefixAnalysisForLtl(i, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+    currentResults = cegarPrefixAnalysisForLtl(i, spotConnection, ltlRersMapping);
   }
   return currentResults;
 }
 
 PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, 
-									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+									LtlRersMapping ltlRersMapping) {
+  std::set<int> ltlInAlphabet=ltlRersMapping.getInputValueSet();
+  //std::set<int> ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
+
   // visualizer for in-depth model outputs (.dot files)
   Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(),
                           _analyzer->getFlow(),_analyzer->getPStateSet(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
-  string vizFilenamePrefix = "";
-  if(args.isDefined("viz-cegpra-detailed")) {
-    vizFilenamePrefix=args.getString("viz-cegpra-detailed");
-    string filename = vizFilenamePrefix + "_cegpra_init.dot";
+  string visFilenamePrefix = "";
+  if(args.isDefined("vis-cegpra-detailed")) {
+    visFilenamePrefix=args.getString("vis-cegpra-detailed");
+    string filename = visFilenamePrefix + "_cegpra_init.dot";
     writeDotGraphToDisk(filename, visualizer);
   }
   // OVERVIEW
@@ -279,7 +285,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     cout << "STATUS: property " << property << " was already analyzed. CEGAR analysis will not be started." << endl;
     return currentResults;
   }
-  spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
+  spotConnection.checkSingleProperty(property, *model, ltlRersMapping, true, true);
   currentResults = spotConnection.getLtlResults();
   // (0.5) prepare for the continuous tracing of concrete states (will become the prefix of a refined abstract model)
   // store connectors in the over-approx. part of the model (single row of input states in the initial "topified" model)
@@ -316,9 +322,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
        }
     }
     model->setIsPrecise(true);
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // (2) add a trace to the prefix according to the most recent counterexample. Analyze the counterexample while adding the trace.
@@ -339,9 +345,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     } else {
       assert(0);  //counterexample analysis not successfully completed
     }
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // (3) reconnect both parts of the model
@@ -364,9 +370,9 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       }
     }
     model->setIsComplete(true);
-    if(args.isDefined("viz-cegpra-detailed")) {
+    if(args.isDefined("vis-cegpra-detailed")) {
       stringstream filenameStream;
-      filenameStream << vizFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
+      filenameStream << visFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // if falsified: after reconnecting, leave the analysis loop, report size of the model and return the results
@@ -375,11 +381,11 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     }
     // (4) check if the property holds on the refined model
     spotConnection.resetLtlResults(property);
-    spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
+    spotConnection.checkSingleProperty(property, *model, ltlRersMapping, true, true);
     currentResults = spotConnection.getLtlResults();
   }
   // (5) check all properties using the current model and return the result
-  spotConnection.checkLtlProperties(*model, ltlInAlphabet, ltlOutAlphabet, true, false);
+  spotConnection.checkLtlProperties(*model, ltlRersMapping, true, false);
   currentResults = spotConnection.getLtlResults();
   printStgSizeAndCeCount(model, loopCount, property);
   if (_csvOutput) {
@@ -742,3 +748,4 @@ void CounterexampleAnalyzer::printStgSizeAndCeCount(TransitionGraph* model, int 
   }
 }
 
+#endif // HAVE_SPOT

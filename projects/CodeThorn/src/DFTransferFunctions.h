@@ -1,11 +1,11 @@
 #ifndef PATRANSFERFUNCTIONS_H
 #define PATRANSFERFUNCTIONS_H
 
+#include "ProgramAbstractionLayer.h"
 #include "Labeler.h"
 #include "Lattice.h"
 #include "Flow.h"
 #include "PointerAnalysisInterface.h"
-#include "ProgramAbstractionLayer.h"
 #include "PropertyState.h"
 #include "PropertyStateFactory.h"
 

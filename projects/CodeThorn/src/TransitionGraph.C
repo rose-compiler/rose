@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 #include "TransitionGraph.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CodeThornException.h"
 #include "CodeThornCommandLineOptions.h"
 
@@ -152,7 +152,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
     }
     if(_outEdges[estate].size()==0) {
       ROSE_ASSERT(_analyzer);
-      Analyzer::SubSolverResultType subSolverResult;
+      CTAnalysis::SubSolverResultType subSolverResult;
       if(_analyzer) {
 	subSolverResult = _analyzer->subSolver(estate);
       } else {

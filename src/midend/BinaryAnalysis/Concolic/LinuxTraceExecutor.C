@@ -1,15 +1,11 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/LinuxTraceExecutor.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <BinaryConcolic.h>
 #include <boost/filesystem.hpp>
-#include <memory.h>
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxTraceExecutor::Result);
-#endif
+#include <memory.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,13 +14,15 @@ namespace Concolic {
 LinuxTraceExecutor::LinuxTraceExecutor(const Database::Ptr &db)
     : ConcreteExecutor(db) {}
 
+LinuxTraceExecutor::~LinuxTraceExecutor() {}
+
 // class method
 LinuxTraceExecutor::Ptr
 LinuxTraceExecutor::instance(const Database::Ptr &db) {
     return Ptr(new LinuxTraceExecutor(db));
 }
 
-ConcreteExecutor::Result*
+ConcreteExecutorResult*
 LinuxTraceExecutor::execute(const TestCase::Ptr &testCase) {
 
     // FIXME[Robb Matzke 2020-07-15]: This temp dir should be automatically removed.
@@ -67,7 +65,7 @@ LinuxTraceExecutor::execute(const TestCase::Ptr &testCase) {
     for (TestCaseId otherId: database()->testCases()) {
         TestCase::Ptr other = database()->object(otherId);
         if (other != testCase) {
-            std::unique_ptr<ConcreteExecutor::Result> otherResult_ = database()->readConcreteResult(otherId);
+            std::unique_ptr<ConcreteExecutorResult> otherResult_ = database()->readConcreteResult(otherId);
             if (auto otherResult = dynamic_cast<const LinuxTraceExecutor::Result*>(otherResult_.get())) {
                 if (result->executedVas == otherResult->executedVas) {
                     result->isInteresting(false);
@@ -82,14 +80,14 @@ LinuxTraceExecutor::execute(const TestCase::Ptr &testCase) {
 }
 
 int
-LinuxTraceExecutor::exitStatus(const ConcreteExecutor::Result *result_) {
+LinuxTraceExecutor::exitStatus(const ConcreteExecutorResult *result_) {
     auto result = dynamic_cast<const Result*>(result_);
     ASSERT_not_null(result);
     return result->exitStatus;
 }
 
 const AddressSet&
-LinuxTraceExecutor::executedVas(const ConcreteExecutor::Result *result_) {
+LinuxTraceExecutor::executedVas(const ConcreteExecutorResult *result_) {
     auto result = dynamic_cast<const Result*>(result_);
     ASSERT_not_null(result);
     return result->executedVas;
@@ -98,4 +96,7 @@ LinuxTraceExecutor::executedVas(const ConcreteExecutor::Result *result_) {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxTraceExecutor::Result);
+
 #endif

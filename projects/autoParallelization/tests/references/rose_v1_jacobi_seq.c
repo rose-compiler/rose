@@ -71,10 +71,10 @@ void initialize()
   int xx;
   int yy;
 //  double PI = 3.1415926;
-// -->dx@112:2
   dx = 2.0 / (n - 1);
-//-->dy@113:2
+// -->dx@112:2
   dy = 2.0 / (m - 1);
+//-->dy@113:2
 /* Initialize initial condition and RHS */
 //#pragma omp parallel for private(i,j,xx,yy)
   
@@ -83,10 +83,10 @@ void initialize()
     
 #pragma omp parallel for private (xx,yy,j) firstprivate (alpha,dx,dy)
     for (j = 0; j <= m - 1; j += 1) {
-/* -1 < x < 1 */
       xx = ((int )(- 1.0 + dx * (i - 1)));
-/* -1 < y < 1 */
+/* -1 < x < 1 */
       yy = ((int )(- 1.0 + dy * (j - 1)));
+/* -1 < y < 1 */
       u[i][j] = 0.0;
       f[i][j] = - 1.0 * alpha * (1.0 - (xx * xx)) * (1.0 - (yy * yy)) - 2.0 * (1.0 - (xx * xx)) - 2.0 * (1.0 - (yy * yy));
     }
@@ -127,12 +127,12 @@ void jacobi()
   omega = relax;
 /*
 * Initialize coefficients */
-/* X-direction coef */
   ax = 1.0 / (dx * dx);
-/* Y-direction coef */
+/* X-direction coef */
   ay = 1.0 / (dy * dy);
-/* Central coeff */
+/* Y-direction coef */
   b = - 2.0 / (dx * dx) - 2.0 / (dy * dy) - alpha;
+/* Central coeff */
   error = 10.0 * tol;
   k = 1;
   while(k <= mits && error > tol){
@@ -163,8 +163,8 @@ void jacobi()
 /* Error check */
 //  k = k + 1;
     error = sqrt(error) / (n * m);
-/*  End iteration loop */
   }
+/*  End iteration loop */
   printf("Total Number of Iterations:%d\n",k);
   printf("Residual:%E\n",error);
 }

@@ -1,0 +1,12 @@
+%
+  This file needs to be preprocessed with:
+  jov386 -define -reformat rc161.pre.jov rc161.jov
+%
+START
+!COMPOOL ('RC161B');
+!COMPOOL ('RC161A');
+DEF PROC PROC'1;
+  BEGIN
+    STOP DEFINE'1;
+  END
+TERM

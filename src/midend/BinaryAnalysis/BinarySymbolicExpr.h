@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExpr_H
 #define ROSE_BinaryAnalysis_SymbolicExpr_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -138,8 +138,8 @@ enum Operator {
     OP_FP_ISNEG,            /**< Floating-point negative class. Argument is the FP value to check. */
     OP_FP_ISPOS,            /**< Floating-point positive class. Argument is the FP value to check. */
 
-    OP_CONVERT,             /**< Convert from one type to another. Argument is the destination type. */
-    OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the destination type. */
+    OP_CONVERT,             /**< Convert from one type to another. Argument is the source value. */
+    OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the source value. */
 
     OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 
@@ -1602,7 +1602,7 @@ Ptr makeZerop(const Ptr &a,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::ostream& operator<<(std::ostream &o, Node&);
+std::ostream& operator<<(std::ostream &o, const Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */

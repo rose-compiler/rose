@@ -94,7 +94,10 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr map = createInput(settings);
 
     // Obtain a disassembler
-    if (!Disassembler::lookup(settings.isa)) {
+    try {
+        if (!Disassembler::lookup(settings.isa))
+            throw Disassembler::Exception("not found");
+    } catch (const Disassembler::Exception&) {
         std::cerr <<"disassembler " <<settings.isa <<" is not supported in this configuration of ROSE\n";
         std::cerr <<"test is being skipped\n";
         return 0; // lack of a disassembler is not a test failure

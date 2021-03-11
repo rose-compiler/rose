@@ -1,6 +1,6 @@
 /* ELF Sections (SgAsmElfSection and related classes) */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.

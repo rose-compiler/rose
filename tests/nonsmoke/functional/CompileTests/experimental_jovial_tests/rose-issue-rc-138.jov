@@ -1,0 +1,7 @@
+START
+DEF PROC PROC'1;
+  BEGIN
+    ITEM ITEM'1 B 32;
+    BIT(ITEM'1, 0, 1) = (* B *) (0);
+  END
+TERM

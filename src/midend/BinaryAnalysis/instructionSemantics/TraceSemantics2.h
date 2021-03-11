@@ -1,7 +1,7 @@
 #ifndef Rose_TraceSemantics2_H
 #define Rose_TraceSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"

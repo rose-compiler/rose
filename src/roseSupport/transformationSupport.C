@@ -2016,7 +2016,7 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
      return const_cast<SgSourceFile*>(file);
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
 SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
@@ -2567,10 +2567,14 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
 
 
 #if 0
-// Moved to SgTemplateArgument!!!
+// DQ (11/24/2020): corrected this comment.
+// Moved to sageInterface.C file
 SgScopeStatement*
 TransformationSupport::getScope( const SgNode* astNode )
    {
+
+#error "DEAD CODE!"
+
   // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
 
      const SgNode* parentNode = astNode;
@@ -2579,13 +2583,15 @@ TransformationSupport::getScope( const SgNode* astNode )
           parentNode = parentNode->get_parent();
         }
 
+#error "DEAD CODE!"
+
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
      if ( isSgScopeStatement(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-          printf ("Error: could not trace back to SgScopeStatement node \n");
+          printf ("Error: In TransformationSupport::getScope(): could not trace back to SgScopeStatement node \n");
           ROSE_ABORT();
         }
        else
@@ -2596,6 +2602,8 @@ TransformationSupport::getScope( const SgNode* astNode )
                return NULL;
              }
         }
+
+#error "DEAD CODE!"
 
   // Make sure we have a SgStatement node
      const SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);

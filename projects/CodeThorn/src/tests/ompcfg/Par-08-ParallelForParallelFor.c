@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
 #pragma omp parallel for
     for (int j = 0; j < 4; ++j) {
-      b[j] += a[j];
+      b[j] = b[j] + a[j];
     }
 
   return 0;

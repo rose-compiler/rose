@@ -491,7 +491,7 @@ class ValCompare  : public CompareOperator
                    if (result == REL_UNKNOWN)
                       result = (index == 1)? SelectCompare(v1,v,GetFunc())(v2)
                                   : Reverse(SelectCompare(v2,v,GetFunc())(v1));
-                      break;
+                   break;
              default:
                    assert(false);
             }

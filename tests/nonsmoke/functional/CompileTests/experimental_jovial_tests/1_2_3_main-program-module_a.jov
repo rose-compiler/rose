@@ -1,4 +1,4 @@
 START
 PROGRAM main ;
-  ivar = 13 ;
+  STOP ;
 TERM

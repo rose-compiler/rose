@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include <Partitioner2/ControlFlowGraph.h>
@@ -39,6 +39,7 @@ CfgVertex::optionalAddress() const {
     switch (type()) {
         case V_BASIC_BLOCK:
         case V_USER_DEFINED:
+        case V_NONEXISTING:
             return address();
         default:
             return Sawyer::Nothing();
@@ -55,6 +56,7 @@ CfgVertex::optionalLastAddress() const {
                 return address();
             }
         case V_USER_DEFINED:
+        case V_NONEXISTING:
             return address();
         default:
             return Sawyer::Nothing();
@@ -67,6 +69,7 @@ CfgVertex::isEntryBlock() const {
     switch (type()) {
         case V_BASIC_BLOCK:
         case V_USER_DEFINED:
+        case V_NONEXISTING:
             BOOST_FOREACH (const Function::Ptr &function, owningFunctions_.values()) {
                 if (function->address() == address()) {
                     retval = function;
@@ -76,7 +79,6 @@ CfgVertex::isEntryBlock() const {
             break;
         case V_INDETERMINATE:
         case V_UNDISCOVERED:
-        case V_NONEXISTING:
             break;
     }
     return retval;

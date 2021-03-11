@@ -10,12 +10,12 @@ void CodeThorn::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
   SgProject* project=isSgProject(root);
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
-  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,&variableIdMapping);
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"Statistics:"<<endl;
   cout<<"Number of functions          : "<<SgNodeHelper::listOfFunctionDefinitions(project).size()<<endl;
   cout<<"Number of global variables   : "<<SgNodeHelper::listOfGlobalVars(project).size()<<endl;
-  cout<<"Number of global variableIds : "<<AnalysisAbstractionLayer::globalVariables(project,&variableIdMapping).size()<<endl;
+  cout<<"Number of global variableIds : "<<AstUtility::globalVariables(project,&variableIdMapping).size()<<endl;
   cout<<"Number of used variables     : "<<setOfUsedVars.size()<<endl;
   cout<<"----------------------------------------------------------------------"<<endl;
   cout<<"VariableIdMapping-size       : "<<variableIdMapping.getVariableIdSet().size()<<endl;
@@ -100,8 +100,8 @@ CodeThorn::ComputationInfo CodeThorn::ProgramStatistics::computeComputationInfo(
   ComputationInfo ci;
   if(SgFunctionCallExp* callExp=isSgFunctionCallExp(node)) {
     SgNode* functionCallParams=callExp->get_args();
-    VariableIdSet readMemLocSet=AnalysisAbstractionLayer::useVariables(functionCallParams, *vidm);
-    VariableIdSet writeMemLocSet=AnalysisAbstractionLayer::defVariables(functionCallParams, *vidm);
+    VariableIdSet readMemLocSet=AstUtility::useVariables(functionCallParams, *vidm);
+    VariableIdSet writeMemLocSet=AstUtility::defVariables(functionCallParams, *vidm);
     ci.numReadMemLoc[CIT_TOTAL]=readMemLocSet.size();
     ci.numWriteMemLoc[CIT_TOTAL]=writeMemLocSet.size();
   }
@@ -109,8 +109,8 @@ CodeThorn::ComputationInfo CodeThorn::ProgramStatistics::computeComputationInfo(
 
   //cout<<ci.toString()<<endl;
   if(isSgVariableDeclaration(node)||isSgExpression(node)||isSgInitializedName(node)) {
-    VariableIdSet readMemLocSet=AnalysisAbstractionLayer::useVariables(node, *vidm);
-    VariableIdSet writeMemLocSet=AnalysisAbstractionLayer::defVariables(node, *vidm);
+    VariableIdSet readMemLocSet=AstUtility::useVariables(node, *vidm);
+    VariableIdSet writeMemLocSet=AstUtility::defVariables(node, *vidm);
     ci.numReadMemLoc[CIT_TOTAL]=readMemLocSet.size();
     ci.numWriteMemLoc[CIT_TOTAL]=writeMemLocSet.size();
     //if(writeMemLocSet.size()>0) cout<<"found SOMETHING!"<<ci.numWriteMemLoc[CIT_TOTAL]<<endl;

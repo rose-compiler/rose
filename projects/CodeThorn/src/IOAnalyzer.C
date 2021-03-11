@@ -7,6 +7,9 @@
 #include "CodeThornException.h"
 #include "TimeMeasurement.h"
 #include "CodeThornCommandLineOptions.h"
+#include "Miscellaneous2.h"
+#include "CtxCallStrings.h"
+#include "CppStdUtilities.h"
 
 #include <unordered_set>
 
@@ -25,13 +28,13 @@ void IOAnalyzer::initDiagnostics() {
   }
 }
 
-IOAnalyzer::IOAnalyzer() {
+IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
-  Analyzer::initializeSolver(functionToStartAt, root, oneFunctionOnly);
-  const EState* currentEState=*(estateWorkListCurrent->begin());
+void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
+  super::initializeSolver3(functionToStartAt, root, tc);
+  const EState* currentEState=estateWorkListCurrent->front();
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
     setStartEState(currentEState);
@@ -68,9 +71,9 @@ void IOAnalyzer::addCounterexample(int assertCode, const EState* assertEState) {
   if(RersCounterexample* rersCe = dynamic_cast<RersCounterexample*>(trace)) {
     string ceString;
     if (_ltlOpt.counterExamplesWithOutput) {
-      ceString = rersCe->toRersIOString();
+      ceString = rersCe->toRersIOString(_ltlRersMapping); // MS 8/6/20: changed to use mapping
     } else {
-      ceString = rersCe->toRersIString();
+      ceString = rersCe->toRersIString(_ltlRersMapping); // MS 8/6/20: changed to use mapping
     }
     reachabilityResults.strictUpdateCounterexample(assertCode, ceString);    
     delete rersCe;
@@ -94,7 +97,7 @@ void IOAnalyzer::removeOutputOutputTransitions() {
         const EState* pred = (*k)->source;
         if (pred->io.isStdOutIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an output -> output transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an output -> output transition." << endl;
         }
       }
     }
@@ -115,7 +118,7 @@ void IOAnalyzer::removeInputInputTransitions() {
         const EState* succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
-          logger[DEBUG]<< "erased an input -> input transition." << endl;
+          SAWYER_MESG(logger[DEBUG])<< "erased an input -> input transition." << endl;
         }
       }
     }
@@ -195,7 +198,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     estateWorkListCurrent = &newEStateWorkList;
     TransitionGraph newTransitionGraph;
     transitionGraph = newTransitionGraph;
-    Label startLabel=cfanalyzer->getLabel(startFunRoot);
+    Label startLabel=getFlow()->getStartLabel();
     transitionGraph.setStartLabel(startLabel);
     list<int> newInputSequence;
     _inputSequence = newInputSequence;
@@ -231,7 +234,7 @@ void IOAnalyzer::continueAnalysisFrom(EState * newStartEState) {
 }
 
 void IOAnalyzer::resetAnalysis() {
-  Analyzer::resetAnalysis();
+  CTAnalysis::resetAnalysis();
   _prevStateSetSizeDisplay = 0;
   _prevStateSetSizeResource = 0;
 }
@@ -282,9 +285,213 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
     ss << "Number of iterations           : "<<getIterations()<<"-"<<getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
-  ss << "=============================================================="<<endl;
+  // ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  //ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  //ss << "=============================================================="<<endl;
   ss <<color("normal");
   printStatusMessage(ss.str());
+}
+
+void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
+                       CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+  analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
+
+  // this must be set early, as subsequent initialization depends on this flag
+  if (ltlOpt.ltlDriven) {
+    analyzer->setModeLTLDriven(true);
+  }
+
+  if (ltlOpt.cegpra.ltlPropertyNrIsSet() || ltlOpt.cegpra.checkAllProperties) {
+    analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
+    ltlOpt.noInputInputTransitions=true;
+    ltlOpt.withLTLCounterExamples=true;
+    ltlOpt.counterExamplesWithOutput=true;
+    cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
+    cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG." << endl;
+  }
+
+  if (ltlOpt.counterExamplesWithOutput) {
+    ltlOpt.withLTLCounterExamples=true;
+  }
+
+  if(ctOpt.stgTraceFileName.size()>0) {
+    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
+  }
+
+  if(ctOpt.analyzedProgramCLArgs.size()>0) {
+    string clOptions=ctOpt.analyzedProgramCLArgs;
+    vector<string> clOptionsVector=CodeThorn::Parse::commandLineArgs(clOptions);
+    analyzer->setCommandLineOptions(clOptionsVector);
+  }
+
+  if(ctOpt.inputValues.size()>0) {
+    cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
+    set<int> intSet=Parse::integerSet(ctOpt.inputValues);
+    for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
+      analyzer->insertInputVarValue(*i);
+    }
+    cout << "STATUS: input-values stored."<<endl;
+  }
+
+  if(ctOpt.inputSequence.size()>0) {
+    cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
+    list<int> intList=Parse::integerList(ctOpt.inputSequence);
+    for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
+      analyzer->addInputSequenceValue(*i);
+    }
+  }
+
+  if(ctOpt.explorationMode.size()>0) {
+    string explorationMode=ctOpt.explorationMode;
+    if(explorationMode=="depth-first") {
+      analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
+    } else if(explorationMode=="breadth-first") {
+      analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
+    } else if(explorationMode=="loop-aware") {
+      analyzer->setExplorationMode(EXPL_LOOP_AWARE);
+    } else if(explorationMode=="loop-aware-sync") {
+      analyzer->setExplorationMode(EXPL_LOOP_AWARE_SYNC);
+    } else if(explorationMode=="random-mode1") {
+      analyzer->setExplorationMode(EXPL_RANDOM_MODE1);
+    } else if(explorationMode=="topologic-sort") {
+      analyzer->setExplorationMode(EXPL_TOPOLOGIC_SORT);
+    } else {
+      logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
+      exit(1);
+    }
+  } else {
+    // default value
+    analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
+  }
+
+  if (ctOpt.maxIterations!=-1 || ctOpt.maxIterationsForcedTop!=-1) {
+    if(ctOpt.explorationMode!="loop-aware" && ctOpt.explorationMode!="loop-aware-sync") {
+      cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
+      exit(1);
+    }
+  }
+
+  analyzer->setAbstractionMode(ctOpt.abstractionMode);
+  analyzer->setMaxTransitions(ctOpt.maxTransitions);
+  analyzer->setMaxIterations(ctOpt.maxIterations);
+
+  if(ctOpt.maxIterationsForcedTop!=-1) {
+    analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
+  }
+
+  // TODO: CTAnalysis::GTM_IO is only mode used now, all others are deprecated
+  if(ctOpt.maxTransitionsForcedTop!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
+  } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IO);
+  } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCF);
+  } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_IOCFPTR);
+  } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_COMPOUNDASSIGN);
+  } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
+    analyzer->setGlobalTopifyMode(CTAnalysis::GTM_FLAGS);
+  }
+
+  int gigaByteMultiply=1; //1024*1024*1024;
+  if (ctOpt.maxMemory!=1) {
+    analyzer->setMaxBytes(ctOpt.maxMemory*gigaByteMultiply);
+  }
+  if (ctOpt.maxTime!=1) {
+    analyzer->setMaxSeconds(ctOpt.maxTime);
+  }
+  if (ctOpt.maxMemoryForcedTop!=-1) {
+    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop*gigaByteMultiply);
+  }
+  if (ctOpt.maxTimeForcedTop!=-1) {
+    analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
+  }
+
+  if(ctOpt.displayDiff!=-1) {
+    analyzer->setDisplayDiff(ctOpt.displayDiff);
+  }
+  if(ctOpt.resourceLimitDiff!=-1) {
+    analyzer->setResourceLimitDiff(ctOpt.resourceLimitDiff);
+  }
+
+  // overwrite solver ID based on other options
+  if(analyzer->getModeLTLDriven()) {
+    ctOpt.solver=11;
+  }
+  int solverId=ctOpt.solver;
+  // solverId sanity checks
+  if(analyzer->getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
+     solverId != 12) {
+    logger[ERROR] <<"Exploration mode loop-aware-sync requires solver 12, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+  if(analyzer->getModeLTLDriven() &&
+     solverId != 11) {
+    logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+}
+
+void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt) {
+  setOptions(ctOpt);
+  setLtlOptions(ltlOpt);
+  AbstractValue::byteMode=ctOpt.byteMode;
+  AbstractValue::strictChecking=ctOpt.strictChecking;
+
+  SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
+  if (ctOpt.callStringLength >= 2) 
+    setFiniteCallStringMaxLength(ctOpt.callStringLength);
+
+  optionStringLiteralsInState=ctOpt.inStateStringLiterals;
+  setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
+  setStdFunctionSemantics(ctOpt.stdFunctions);
+
+  setup(this, logger, ctOpt, ltlOpt, parProOpt);
+    
+  switch(int mode=ctOpt.interpreterMode) {
+  case 0: setInterpreterMode(IM_DISABLED); break;
+  case 1: setInterpreterMode(IM_ENABLED); break;
+  default:
+    cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+    exit(1);
+  }
+  string outFileName=ctOpt.interpreterModeOuputFileName;
+  if(outFileName!="") {
+    setInterpreterModeOutputFileName(outFileName);
+    CppStdUtilities::writeFile(outFileName,""); // touch file
+  }
+
+  setFunctionResolutionModeInCFAnalysis(ctOpt);
+
+  setNumberOfThreadsToUse(ctOpt.threads);
+
+  // handle RERS mode: reconfigure options
+  if(ctOpt.rers.rersMode) {
+    SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+    ctOpt.rers.stdErrLikeFailedAssert=true;
+  }
+  setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
+
+  if(ctOpt.svcomp.svcompMode) {
+    enableSVCompFunctionSemantics();
+    string errorFunctionName="__VERIFIER_error";
+    setExternalErrorFunctionName(errorFunctionName);
+  }
+
+  if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
+    setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
+  }
+
+  // Build the AST used by ROSE
+  if(ctOpt.status) {
+    cout<< "STATUS: Parsing and creating AST started."<<endl;
+  }
 }

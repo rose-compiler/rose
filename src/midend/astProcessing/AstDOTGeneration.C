@@ -22,7 +22,7 @@
 #undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -439,7 +439,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
        // DQ (4/2/2020): Need to add more detail to the graph output so that we can debug Cxx_tests/test2020_02.C.
           nodelabel += string("\\n isExtern = ") + (genericDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true " : "false ");
-          
+
+       // DQ (10/18/2020): Add the reference to the defining and non-defining declarations. Debugging outlining into seperate file.
+          nodelabel += string("\\n firstNondefiningDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_firstNondefiningDeclaration());
+          nodelabel += string("\\n definingDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_definingDeclaration());
+
           nodelabel += string("\\n") + name;
         }
 
@@ -525,6 +529,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
           ROSE_ASSERT(functionSymbol != NULL);
 
+       // DQ (10/18/2020): Adding more inforamtion to the generated dot graphs.
+          nodelabel += string("\\n functionSymbol = ") + StringUtility::numberToString(functionSymbol);
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionSymbol->get_declaration());
+          nodelabel += string("\\n functionDeclaration = ") + StringUtility::numberToString(functionDeclaration);
+          if (functionDeclaration != NULL)
+             {
+               nodelabel += string("\\n defining functionDeclaration = ") + StringUtility::numberToString(functionDeclaration->get_definingDeclaration());
+               nodelabel += string("\\n nondefining functionDeclaration = ") + StringUtility::numberToString(functionDeclaration->get_firstNondefiningDeclaration());
+             }
+
           string name = "unknown";
           if (functionSymbol != NULL)
              {
@@ -570,6 +584,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
         }
 
+  // DQ (9/4/2020): Added support for output of the kind of cast in the SgCastExp IR nodes.
+     SgCastExp* castExpression = isSgCastExp(node);
+     if (castExpression != NULL)
+        {
+          string name = SgCastExp::cast_type_to_string(castExpression->cast_type()).c_str();;
+          nodelabel += string("\\n cast kind = ") + name;
+        }
+
 #if 0
   // DQ (4/27/2014): This causes the snippet test code: testJava5a.passed, to fail.
   // DQ (4/24/2014): Added support for output of the type name for expression IR nodes.
@@ -585,7 +607,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
 #if 1
-  // DQ (4/6/2018): Adding support to output lvvalue information.
+  // DQ (4/6/2018): Adding support to output lvalue information.
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
@@ -595,7 +617,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
         {
@@ -922,7 +944,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
        // case V_SgFile:
           case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite:
 #endif
              {

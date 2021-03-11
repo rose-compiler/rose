@@ -9,8 +9,7 @@
 #include "CFAnalysis.h"
 #include "LVLattice.h"
 #include "DFAnalysisBase.h"
-#include "WorkList.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 #include "DFAstAttribute.h"
 #include "LVTransferFunctions.h"
 

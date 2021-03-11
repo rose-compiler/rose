@@ -32,6 +32,15 @@ namespace CppStdUtilities {
     }
   }
   
+  bool writeFile(string mode, std::string filename, std::string data) {
+    if(mode=="generate")
+      return writeFile(filename, data);
+    else if(mode=="append")
+      return appendFile(filename, data);
+    else
+      return false;
+  }
+
   bool writeFile(std::string filename, std::string data) {
     std::ofstream myfile;
     myfile.open(filename.c_str(),std::ios::out);
@@ -69,9 +78,12 @@ namespace CppStdUtilities {
     }
   }
 
-#if GCC_VERSION >= 40900
   std::vector<std::string> splitByComma(const string& input) {
     return splitByRegex(input,",");
+  }
+
+  std::vector<std::string> splitByTab(const string& input) {
+    return splitByRegex(input,"\\t");
   }
 
   std::vector<std::string> splitBySpaces(const string& input) {
@@ -84,5 +96,4 @@ namespace CppStdUtilities {
     std::sregex_token_iterator first{input.begin(), input.end(), re, -1},last;
     return {first, last};
   }
-#endif
 }

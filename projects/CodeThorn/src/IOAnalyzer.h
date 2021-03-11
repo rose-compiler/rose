@@ -1,30 +1,33 @@
 #ifndef IO_ANALYZER_H
 #define IO_ANALYZER_H
 
-#include "Analyzer.h"
+#include "CTAnalysis.h"
+#include "ParProOptions.h"
 
 namespace CodeThorn {
   /*! 
   * \author Marc Jasper
   * \date 2017.
-  * \brief Analyzer with additional input/output-related functionality
+  * \brief CTAnalysis with additional input/output-related functionality
  */
-  class IOAnalyzer : public Analyzer {
+  class IOAnalyzer : public CTAnalysis {
 
     friend class Solver8;
     friend class Solver10;
 
   public:
-    IOAnalyzer();
-
+  IOAnalyzer();
+    
   protected:
     static Sawyer::Message::Facility logger;
-
+    
   public:
     static void initDiagnostics();
-
+    void configureOptions(CodeThornOptions ctOpt, LTLOptions ltlOpt, ParProOptions parProOpt);
+    void setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
+               CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
-    virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) override;
     void resetAnalysis();
     void printAnalyzerStatistics(double totalRunTime, string title = "state transition system computed");
     // only used in LTL-driven mode
@@ -52,8 +55,6 @@ namespace CodeThorn {
 
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
     const EState* getLatestErrorEState() {return _latestErrorEState;}
-    std::set<int> getInputVarValues() { return _inputVarValues; }
-
   private:
     // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
     void addCounterexample(int assertCode, const EState* assertEState);

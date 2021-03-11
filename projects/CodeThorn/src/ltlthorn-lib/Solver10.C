@@ -415,6 +415,23 @@ bool Solver10::containsPatternTwoRepetitions(std::list<int>& sequence, int start
   return !mismatch;
 }
 
+// only used in Solver 10 (pattern search)
+// deprecated, use ltlRersMapping.getIOString(ioVal) instead, only use remains here by Solver 10
+std::string int2PropName_deprecated(int ioVal, int maxInputVal)  {
+  std::string result;
+  if (ioVal >maxInputVal && ioVal <= 26) {
+    result = "o";  //an output variable follows (RERS mapping)
+  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
+    result = "i";  //an input variable follows (RERS mapping)
+  } else {
+    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
+    assert(0);
+  }
+  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
+  result += boost::lexical_cast<string>(atomicProp);
+  return result;
+}
+
 /*! 
   * \author Marc Jasper
   * \date 2014.
@@ -428,13 +445,13 @@ string Solver10::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
     if (!firstElem) {
       ss << ";";
     }
-    ss << spotConnection.int2PropName(*i, maxInputVal);
+    ss << int2PropName_deprecated(*i, maxInputVal);
     firstElem = false;
   }
   ss << "]";
   return ss.str();
 }
- 
+
 void Solver10::initSolverState() {
   if (args.isDefined("pattern-search-exploration")) {
     string chosenMode = args.getString("pattern-search-exploration");

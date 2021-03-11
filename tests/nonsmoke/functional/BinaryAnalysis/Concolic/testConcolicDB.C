@@ -243,7 +243,7 @@ void addTestToSuite( concolic::Database::Ptr db,
  */
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
-  typedef std::auto_ptr<concolic::ConcreteExecutor::Result> ExecutionResult;
+  typedef std::auto_ptr<concolic::ConcreteExecutorResult> ExecutionResult;
 
   concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance(db);
   concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);

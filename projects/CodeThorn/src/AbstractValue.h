@@ -2,9 +2,7 @@
 #define ABSTRACT_VALUE_H
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include <climits>
@@ -25,6 +23,7 @@ namespace CodeThorn {
   
   class AbstractValue;
   class AlignedMemLoc;
+  class AbstractValueSet;
   
   bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
@@ -39,7 +38,13 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED };
+  /* the following are extensions that allocate more memory than a single abstract value
+     they can only be created through merging abstract value
+     - PTR_SET allows to represent a set of values pointers.
+     - INTERVAL represents an interval of abstract number values // TODO
+     - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
+  */
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED, PTR_SET, /*INTERVAL, INDEX_RANGE*/ };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -48,6 +53,11 @@ class AbstractValue {
   AbstractValue(CodeThorn::Bot e);
   // type conversion
   AbstractValue(Label lab); // for modelling function addresses
+  // copy constructor
+  AbstractValue(const AbstractValue& other);
+  // assignment op
+  AbstractValue& operator=(AbstractValue other);
+ 
   AbstractValue(signed char x);
   AbstractValue(unsigned char x);
   AbstractValue(short int x);
@@ -64,6 +74,7 @@ class AbstractValue {
   // -Wno-psabi allows to turn this off
   //AbstractValue(long double x);
   AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
+  ~AbstractValue(); // also deallocates extensions
   void initInteger(CodeThorn::BuiltInType btype, long int ival);
   void initFloat(CodeThorn::BuiltInType btype, double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
@@ -82,9 +93,13 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isPtrSet() const;
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
+  // if the type is PTR_SET it determines whether the set contains a null pointer (zero)
+  bool ptrSetContainsNullPtr() const;
+  size_t getPtrSetSize() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
   AbstractValue operatorOr(AbstractValue other);
@@ -118,6 +133,10 @@ class AbstractValue {
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   static AbstractValue createTop();
   static AbstractValue createBot();
+  static AbstractValue createAbstractValuePtrSet(AbstractValueSet*);
+  void setAbstractValueSetPtr(AbstractValueSet* avPtr);
+  AbstractValueSet* getAbstractValueSet() const;
+
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
@@ -170,20 +189,30 @@ class AbstractValue {
   // returns a memLoc aligned to the declared element size of the memory region it's referring to
   // with the offset into the element. If the offset is 0, then it's exactly aligned.
   AlignedMemLoc alignedMemLoc();
+  static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
  private:
+  // functions used for (de)allocating additional memory for some abstractions
+  AbstractValueSet* abstractValueSetCopy() const;
+  void copy(const AbstractValue& other);
+  void allocateExtension(ValueType);
+  void deallocateExtension();
+  void addSetElement(AbstractValue av); // requires this to be PTR_SET, adds av to PTR_SET
+  void setExtension(void*);
   AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
-  //union {
-  long int intValue=0;
-  double floatValue;
-  //};
+  union {
+    long intValue=0;
+    double floatValue;
+    void* extension; // not used yet
+  };
   Label label;
   CodeThorn::TypeSize typeSize=0;
   CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations
  public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements
+  static bool pointerSetsEnabled;
 };
 
 // arithmetic operators
@@ -204,7 +233,12 @@ class AbstractValue {
     bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-  typedef std::set<AbstractValue> AbstractValueSet;
+  //typedef std::set<AbstractValue> AbstractValueSet;
+  class AbstractValueSet : public std::set<AbstractValue> {
+  public:
+    bool isEqual(AbstractValueSet& other) const;
+    std::string toString(VariableIdMapping* vim) const;
+  };
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 
   struct AlignedMemLoc {

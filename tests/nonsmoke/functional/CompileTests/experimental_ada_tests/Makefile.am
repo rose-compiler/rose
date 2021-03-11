@@ -1,10 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = \
+	dot_asis_tests \
+  compile_tests
+
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
-ROSE_FLAGS    ?= -rose:skipfinalCompileStep
-ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
+ROSE_FLAGS ?= -rose:skipfinalCompileStep --asis:process_predefined_units --asis:process_implementation_units
 
+
+
+# ROSE_COMPILER ?= $(abs_top_builddir)/src/rose-compiler
+ROSE_COMPILER ?= $(abs_builddir)/../../testTranslator
 
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -21,107 +28,44 @@ ROSE_COMPILER ?= $(top_builddir)/src/rose-compiler
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:cs -c $(srcdir)/$(@:.o=.cs)
 # endif
 
+#
+# include test lists
+#
+# passing-incomplete-tests-list, rose-backend-todo-list, rose-frontend-todo-list.mk,
+# asis-todo-list.mk are not included, b/c they are currently not full-circle tested.
 
-# TESTCODES_REQUIRED_TO_PASS = minimal.adb empty_package.ads ordinary_type_declaration.ads task_type_declaration.ads variable_declaration.ads \
-#   constant_declaration.ads component_declaration.ads procedure_declaration.ads function_declaration.ads parameter_declaration.ads \
-#   all_modes.ads procedure_declaration.adb function_declaration.adb package_with_body.adb task_with_body.adb entry_declaration.ads \
-#   exception_declaration.ads choice_parameter_specification.adb tagged_definition.ads derived_record.ads simple_expression_range.ads \
-#   function_call.adb operator.adb selected_component.ads type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
-#   loop_statement.adb procedure_call.adb raise_statement.adb
+include $(srcdir)/passing-tests-list.mk
+#~ include $(srcdir)/passing-incomplete-tests-list.mk
+#~ include $(srcdir)/rose-backend-todo-list.mk
+#~ include $(srcdir)/rose-frontend-todo-list.mk
+#~ include $(srcdir)/asis-todo-list.mk
+include $(srcdir)/AdaTest.mk
 
-# TESTCODES_REQUIRED_TO_PASS = empty_package.ads
-
-ORIGINAL_FILE_LIST := minimal.adb empty_package.ads ordinary_type_declaration.ads task_type_declaration.ads variable_declaration.ads \
-   constant_declaration.ads component_declaration.ads procedure_declaration.ads function_declaration.ads parameter_declaration.ads \
-   all_modes.ads procedure_declaration.adb function_declaration.adb package_with_body.adb task_with_body.adb entry_declaration.ads \
-   exception_declaration.ads choice_parameter_specification.adb tagged_definition.ads derived_record.ads simple_expression_range.ads \
-   function_call.adb operator.adb selected_component.ads type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
-   loop_statement.adb procedure_call.adb raise_statement.adb
-
-PASSING_TESTS :=                       \
-  pkgrename.ads                        \
-  accept_statement.adb                 \
-  all_modes.ads                        \
-  case_function.adb                    \
-  case_function.ads                    \
-  choice_parameter_specification.adb   \
-  component_declaration.ads            \
-  constant_declaration.ads             \
-  constants.ads                        \
-  derived_record.ads                   \
-  empty_package.ads                    \
-  entry_call.adb                       \
-  entry_declaration.ads                \
-  exception_declaration.ads            \
-  fib.adb                              \
-  for_loop.adb                         \
-  function_call.adb                    \
-  function_declaration.adb             \
-  function_declaration.ads             \
-  gototest.adb                         \
-  gototest.ads                         \
-  hello_world.adb                      \
-  if_statement.adb                     \
-  iterateRange.adb                     \
-  loop_exit.adb                        \
-  loop_statement.adb                   \
-  minimal.adb                          \
-  nested_package.ads                   \
-  operator.adb                         \
-  ordinary_type_declaration.ads        \
-  package_with_body.adb                \
-  package_with_body.ads                \
-  parameter_declaration.ads            \
-  procedure_call.adb                   \
-  procedure_declaration.adb            \
-  procedure_declaration.ads            \
-  raise_statement.adb                  \
-  real_typedecl.ads                    \
-  recursive_call.adb                   \
-  selected_component.ads               \
-  short_circuit.adb                    \
-  simple_expression_range.ads          \
-  some_modes.ads                       \
-  subtypes.ads                         \
-  tagged_definition.ads                \
-  task_type_declaration.ads            \
-  task_with_body.adb                   \
-  task_with_body.ads                   \
-  test.adb                             \
-  test.ads                             \
-  test_unit.adb                        \
-  test_unit.ads                        \
-  type_conversion.adb                  \
-  unit_1.adb                           \
-  unit_2.adb                           \
-  unit_2.ads                           \
-  unit_3.ads                           \
-  variable_declaration.ads             \
-  while_loop_statement.adb             
-  
-# PASSING_TESTS   
-
-INCOMPLETE_FRONTEND := 
-
-# INCOMPLETE_FRONTEND
-
-INCOMPLETE_ASIS := 
-
-# INCOMPLETE_ASIS
+NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+  comm.ads                             \
+  mpi.ads                              \
+  EndOfList
 
 #
 # define test suite
-TEST_TARGETS := $(PASSING_TESTS)
-ALL_TEST_TARGETS := $(PASSING_TESTS) $(INCOMPLETE_FRONTEND) $(INCOMPLETE_ASIS)
+ROSE_OUTPUT_DIR := rose-ada-output
+# ROSE_OUTPUT_DIR := .
+
+TEST_TARGETS := $(addprefix $(ROSE_OUTPUT_DIR)/,$(ROSE_PASSING_ADA_TESTS))
+
+
+TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
 #
 # targets
-
 .PHONY: all
-all: $(ALL_TEST_TARGETS)
+all: passing
 
 .PHONY: passing
 passing: $(TEST_TARGETS)
+
+.PHONY: $(ROSE_OUTPUT_DIR)/EndOfList
+$(ROSE_OUTPUT_DIR)/EndOfList:
 
 .PHONY: print
 print:
@@ -130,25 +74,65 @@ print:
 	@echo "TEST_Source_passed   = $(TEST_Source_passed)"
 	@echo "TEST_Objects_passed  = $(TEST_Objects_passed)"
 
-$(top_builddir)/src/rose-compiler:
+#compile_tests/$(ROSE_OUTPUT_DIR)/default.gpr: $(srcdir)/tests/default.gpr
+#	cp $< $@
+
+$(abs_top_builddir)/src/rose-compiler:
 	$(MAKE) -C $(top_builddir)/src rose-compiler
-	
-%.ads:$(abs_srcdir)/tests/%.ads
+
+# testTranslator runs the AST consistency checks
+$(abs_builddir)/../../testTranslator:
+	$(MAKE) -C../.. testTranslator
+
+
+compile_tests/$(ROSE_OUTPUT_DIR)/%:
+	make -C compile_tests $(ROSE_OUTPUT_DIR)/%
+
+$(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
-	
-%.adb:$(abs_srcdir)/tests/%.adb
+
+$(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
+
+check-test-number:
+	@test "$(words $(ADA_TESTS))" = "$(shell ls $(srcdir)/tests/*.ad[b,s] | wc -l)" \
+         || { echo $(shell ls $(srcdir)/tests/*.ad[b,s] | wc -l) tests available but $(words $(ADA_TESTS)) used; exit 2; } \
+         && { echo Total $(words $(ADA_TESTS)) test files used for Ada testing; }
 
 .PHONY: clean-local
 clean-local:
-	rm -f *.adb *.ads *.ali tests/obj/* *.dot
+	rm -rf ./rose-ada-output ./obj
+	rm -f *.dot
+
+.PHONY: print-tests
+print-tests:
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@echo "$(ADA_TESTS)"
+else
+	@echo "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not set"
+endif
+
 
 .PHONY: check-local
 check-local:
 	@echo "Tests for experimental Ada frontend."
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@$(MAKE) check-test-number
 	@$(MAKE) $(PASSING_TEST_Objects_ads)
 	@$(MAKE) $(PASSING_TEST_Objects_adb)
+#	TOTALFILE=$(words $(ADA_TESTS))
+#	TOTALFILE=$(shell  ls $(srcdir)/tests/*.ad[b,s] | wc -l )
+#	TOTALADSFILE=$(words $(filter %.ads,$(ADA_TESTS)))
+#	TOTALADBFILE=$(words $(filter %.adb,$(ADA_TESTS)))
+#	TOTALROSEPASSFILE=$(words $(filter %.adb %.ads,$(ROSE_PASSING_ADA_TESTS)))
+#	TOTALASISPASSFILE=$(words $(filter %.adb %.ads,$(ASIS_PASSING_TESTS)))
+#	FEDOTFILE=$(shell  ls $(builddir)/dot_asis_tests/*.ad[b,s].dot | wc -l )
+#	BEOUTFILE=$(shell  ls $(builddir)/compile_tests/rose-ada-output/*.ad[b,s] | wc -l )
+	@echo "$(words $(ADA_TESTS)) total Ada tests"
+	@echo "$(words $(ASIS_PASSING_TESTS)) passing ASIS tests"
+	@echo "$(words $(ROSE_PASSING_ADA_TESTS)) passing ROSE AST tests"
+	@echo "$(words $(ADA_TRANSLATOR_PASSING_TESTS)) passing Ada-to-C++ tests"
+
 	@echo "***********************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_ada_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************************"

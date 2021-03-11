@@ -894,7 +894,7 @@ SOURCE_PE_COFF_SYMBOL_START
 SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
    : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(fhdr, symtab, strtab, idx);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -924,7 +924,7 @@ SOURCE_NE_ENTRY_POINT_END
 SOURCE_NE_RELOC_ENTRY_START
 SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(relocs, at, rec_size);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -937,7 +937,7 @@ SOURCE_NE_RELOC_ENTRY_END
 SOURCE_NE_SECTION_TABLE_ENTRY_START
 SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(disk);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -955,7 +955,7 @@ SOURCE_LE_PAGE_TABLE_ENTRY_START
 SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(sex, disk);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -969,7 +969,7 @@ SOURCE_LE_ENTRY_POINT_START
 SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(sex, disk);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
@@ -987,7 +987,7 @@ SOURCE_LE_ENTRY_POINT_END
 SOURCE_LE_SECTION_TABLE_ENTRY_START
 SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      ctor(sex, disk);
 #else
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");

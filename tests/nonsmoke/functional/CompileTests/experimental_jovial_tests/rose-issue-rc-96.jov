@@ -1,0 +1,11 @@
+START
+PROGRAM main;
+BEGIN
+  ITEM VAR3 S;
+  ITEM VAR2 S;
+  VAR3 = 5;
+  VAR3 = VAR3 * (1 + 3);
+  VAR2 = (VAR3 + (-17));
+  VAR2 = (VAR2 - (+17));
+END
+TERM

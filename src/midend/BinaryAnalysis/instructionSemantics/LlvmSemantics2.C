@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -24,7 +24,18 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     if (cond->is_number() && !cond->get_number())
         return dflt;
     size_t nbits = dflt->get_width();
-    SValuePtr addr = SValue::promote(addr_);
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+    }
+
+
+    SValuePtr addr = SValue::promote(adjustedVa);
     return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->get_width(), nbits), addr->get_expression(),
                                               solver()));
 }
@@ -35,7 +46,17 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 {
     if (cond->is_number() && !cond->get_number())
         return;
-    SValuePtr addr = SValue::promote(addr_);
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+    }
+
+    SValuePtr addr = SValue::promote(adjustedVa);
     SValuePtr data = SValue::promote(data_);
     mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->get_width(), data->get_width()),
                                                  addr->get_expression(), data->get_expression(), solver())

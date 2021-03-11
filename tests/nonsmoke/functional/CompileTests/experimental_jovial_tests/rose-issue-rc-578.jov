@@ -1,0 +1,11 @@
+START
+  TYPE aU2type U 2;
+  TYPE uU2type U 2;
+  DEF TABLE aTable W 1;
+    BEGIN
+      ITEM anItem U 2 POS(*,0);
+      % ItemTypeDeclaration starting with letter 'a' has been problematic %
+      ITEM a2Item aU2type POS(*,1);
+      ITEM a3Item uU2type POS(*,2);
+    END
+TERM

@@ -1080,7 +1080,7 @@ void ProcessExpression::processRHS(SgNode *node, struct AliasRelationNode &arNod
         }
         else
             sym = new_variables[new_exp];
-            derefLevel = derefLevel - 1;
+        derefLevel = derefLevel - 1;
        }
        break;     
        default:

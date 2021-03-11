@@ -1,0 +1,50 @@
+#!/bin/bash
+# First parm - file to watch
+# Remaining parms - command to run and its parms
+# Will check ${file_to_watch} every ${secs_to_sleep} seconds and at the end of 
+# each run.  When it changes, will run ${command_to_run}.
+
+# Sets strict, defines log, log_then_run, etc.:
+source `which utility_functions.sh`
+log_start
+
+secs_to_sleep=3
+file_to_watch="$1"
+shift
+command_to_run="$*"
+
+get_file_time() {
+  #       %W     time of file birth, seconds since Epoch; 0 if unknown
+  #       %X     time of last access, seconds since Epoch
+  #       %Y     time of last modification, seconds since Epoch
+  #       %Z     time of last change, seconds since Epoch
+  file_time=`stat --format=%Z ${file_to_watch}`
+}
+
+log_waiting () {
+  log_separator_3
+  log "Waiting for \"${file_to_watch}\" to change."
+  log_separator_3
+}
+
+log_separator_1
+log "Will check \"${file_to_watch}\" every ${secs_to_sleep} seconds, and at the end of each run.  When it changes, will run \"${command_to_run}\"."
+log_separator_1
+log_separator_0
+
+get_file_time
+last_file_time=${file_time}
+log_waiting
+
+# Want to keep looping even if the command fails:
+set +o errexit
+while true; do
+  get_file_time
+  if [[ "${file_time}" != "$last_file_time" ]]; then
+    log_then_run ${command_to_run}
+    last_file_time=${file_time}
+    log_waiting
+  else
+    sleep ${secs_to_sleep}
+  fi
+done

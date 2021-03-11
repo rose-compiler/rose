@@ -1,0 +1,7 @@
+START
+PROGRAM main;
+BEGIN
+  ITEM ff F = 3.1459;
+  ff = ff ** 3.3;
+END
+TERM

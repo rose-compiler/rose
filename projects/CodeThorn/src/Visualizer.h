@@ -2,15 +2,13 @@
 #define VISUALIZER
 
 /*************************************************************
- * Copyright: (C) 2012 by Markus Schordan                    *
  * Author   : Markus Schordan                                *
- * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "EState.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
 
@@ -20,7 +18,7 @@
 #include "tgba/tgba.hh"
 #endif
 
-using CodeThorn::Analyzer;
+using CodeThorn::CTAnalysis;
 using CodeThorn::PStateSet;
 using CodeThorn::EStateSet;
 using namespace std;
@@ -29,7 +27,7 @@ using namespace CodeThorn;
 
 class AssertionExtractor {
  public:
-  AssertionExtractor(Analyzer* analyzer);
+  AssertionExtractor(CTAnalysis* analyzer);
   void computeLabelVectorOfEStates();
   void annotateAst();
   void setLabeler(CodeThorn::Labeler* x);
@@ -48,7 +46,7 @@ class AssertionExtractor {
 class Visualizer {
  public:
   Visualizer();
-  Visualizer(CodeThorn::Analyzer* analyzer);
+  Visualizer(CodeThorn::CTAnalysis* analyzer);
   Visualizer(CodeThorn::IOLabeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
   void setLabeler(CodeThorn::IOLabeler* x);

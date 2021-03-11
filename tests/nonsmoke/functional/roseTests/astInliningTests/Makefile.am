@@ -41,7 +41,6 @@ inlineEverything_specimens =			\
 	specimen20_1.C				\
 	specimen21_1.C				\
 	specimen22_1.C                          \
-        operatorPlusOverloading.C \
 	specimen25_1.C
 # current failing 	
 #	specimen26_1.C , with system header, failing postprocessing 
@@ -53,6 +52,13 @@ inlineEverything_cpp11_specimens =			\
         simplest_raja.C \
 	simplest_raja_v2.C \
 	lambda_001.C
+
+# DQ (9/19/2020): This test fails for Clang++.
+# Previously the roseTests was only tested for GNU compilers.
+if !USING_CLANG_COMPILER
+inlineEverything_specimens += \
+        operatorPlusOverloading.C 
+endif
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 

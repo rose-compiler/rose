@@ -34,7 +34,7 @@ namespace CodeThorn {
   class SpotTgba : public spot::tgba {
   public:
     SpotTgba(TransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap, 
-             spot::bdd_dict& dic, std::set<int> inVars, std::set<int> outVars);
+             spot::bdd_dict& dic, LtlRersMapping ltlRersMapping);
     ~SpotTgba();
     // return the initial state of this tgba
     spot::state* get_init_state() const;
@@ -59,7 +59,7 @@ namespace CodeThorn {
 
   private: 
     // a simple translation from letter to integer (LTL variables a.k.a. I/O alphabet)
-    int propName2Int(std::string propName);
+    int propName2Int(std::string propName) const;
   private:
     // CodeThorn's TransitionGraph (adaptee) 
     TransitionGraph& stg;
@@ -69,8 +69,7 @@ namespace CodeThorn {
     // corresponding slots in the bdd_dict dictionary table. 
     std::map<int, int> propNum2DictNum;
     //sets of atomic propositions containing all possible input/output values (int representation)
-    std::set<int> ltlInVars;
-    std::set<int> ltlOutVars;
+    LtlRersMapping _ltlRersMapping;
   };
 }  //end of namespace CodeThorn
 

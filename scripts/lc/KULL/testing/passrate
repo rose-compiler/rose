@@ -1,0 +1,12 @@
+#!/bin/bash
+# Prints total / passed
+
+# Use sort to remove duplicates:
+passed=`sort -u passed.txt | wc -l`
+failed=`sort -u failed.txt | wc -l`
+
+let total=passed+failed
+echo "Passed: ${passed}, $((passed*100/total))%"
+echo "Failed: ${failed}, $((failed*100/total))%"
+echo "Total : ${total}"
+

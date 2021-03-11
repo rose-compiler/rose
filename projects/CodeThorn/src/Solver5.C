@@ -1,13 +1,13 @@
 #include "sage3basic.h"
 #include "Solver5.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
 
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 
 Sawyer::Message::Facility Solver5::logger;
 // initialize static member flag
@@ -26,6 +26,7 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
+  logger[INFO]<<"Running solver "<<getId()<<endl;
   //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
@@ -96,7 +97,7 @@ void Solver5::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
+        Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
@@ -138,7 +139,6 @@ void Solver5::run() {
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
                 case 1:
-                case 3:
                   {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
@@ -151,10 +151,24 @@ void Solver5::run() {
                       // graph as an existing estate.
                       newEStatePtr=summaryEState; 
                     } else {
+                      stringstream condss;
                       EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       const EState* newEStatePtr2=pres.second;
+
+                      // DEBUG
+#if 0
+                      int checkId=220;
+                      int id=newEStatePtr2->label().getId();
+                      if(id==checkId) {
+                        cout<<"--------------------------------------------------"<<endl;
+                        cout<<"@"<<id<<": APPROX-BY-1:"<<newEStatePtr->toString()<<endl;
+                        cout<<"@"<<id<<": APPROX-BY-2:"<<summaryEState->toString()<<endl;
+                        cout<<"@"<<id<<": MERGED     :"<<newEStatePtr2->toString()<<endl;
+                      }
+#endif
+                      
                       if(pres.first==true) {
                         newEStatePtr=newEStatePtr2;
                       } else {
@@ -162,12 +176,18 @@ void Solver5::run() {
                       }
                       ROSE_ASSERT(newEStatePtr);
                       _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+#if 0
+                      if(id==checkId) {
+                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
+                        cout<<"--------------------------------------------------"<<endl;
+                      }
+#endif
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  
                   break;
                   case 2: 
-                    cout<<"Mode 2 (topifying) not available for this option yet."<<endl;
+                    cerr<<"Error: abstraction mode 2 not suppored in solver 5."<<endl;
                     exit(1);
                 }
                 default:

@@ -9,7 +9,6 @@
 //~ #include <deque>
 //~ #include <list>
 
-//~ #include <rose.h>
 #include <sage3basic.h>
 #include <Labeler.h>
 
@@ -523,8 +522,8 @@ struct FiniteCallString
     //~ typedef std::deque<Label>                         sequence;
     //~ typedef std::list<Label>                          sequence;
     
-    //~ typedef ContextSequence< sequence >               context_string;
-    typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
+    typedef ContextSequence< sequence >               context_string;
+    //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
     
     // string comparison reverses "normal" sort to place NO_LABEL first.
     //   (required by callsite merging in FiniteReturnHandler)

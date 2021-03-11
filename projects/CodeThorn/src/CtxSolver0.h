@@ -37,7 +37,7 @@ struct CtxLatticeRange
 
 
 /// A context-aware solver  
-// \note derived from PASolver1
+// \note derived from DFSolver1
 struct CtxSolver0 : DFAbstractSolver
 {
     // define your call context
@@ -59,8 +59,6 @@ struct CtxSolver0 : DFAbstractSolver
     void runSolver() ROSE_OVERRIDE;
     void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
     
-    void setTrace(bool) ROSE_OVERRIDE { /* supported in name only */ }
-
   private:
     //
     // internal types
@@ -93,6 +91,16 @@ struct CtxSolver0 : DFAbstractSolver
     /// and adds all of @ref tgt out-edges to the worklist @ref wkl
     void
     propagate(const ContextString&, Lattice& lat, Label tgt, InternalWorklist& wkl);
+    
+    /// activates a @ref callLbl's return node
+    /// \details
+    ///    this is necessary b/c when the call context becomes imprecise the call return node
+    ///    might receive states while the call label has not been traversed. The context
+    ///    mapping will return an empty set and no state will be propagated.
+    ///    When, eventually, the traversal of the call node does not yield to new state's
+    ///    in the callee, the return node will not be traversed again.
+    void
+    activateReturnNode(const ContextString& tgtctx, Label callLbl, InternalWorklist& wkl);
     
     /// accesses the labeler
     Labeler&

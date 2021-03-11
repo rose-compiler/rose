@@ -10,7 +10,8 @@
 using namespace CodeThorn;
 using namespace std;
 
-Edge::Edge():_source(0),_target(0),_annotation(""){
+Edge::Edge() {
+  // all default constructed values for the 4 private member variables are as intended
 }
 Edge::Edge(Label source0,Label target0):_source(source0),_target(target0),_annotation(""){
   // _types is an empty set by default (we may want to use EDGE_UNKNOWN instead)
@@ -20,6 +21,10 @@ Edge::Edge(Label source0,EdgeType et,Label target0):_source(source0),_target(tar
 }
 Edge::Edge(Label source0,set<EdgeType> tset,Label target0):_source(source0),_target(target0),_annotation(""){
   _types=tset;
+}
+
+bool Edge::isValid() const {
+  return _source.isValid() && _target.isValid();
 }
 
 bool Edge::isType(EdgeType et) const {
@@ -199,6 +204,20 @@ string InterFlow::toString() const {
   return res;
 }
 
+std::string InterFlow::dotCallGraphEdges(LabelToFunctionMap& map) const {
+  stringstream ss;
+  for(InterFlow::iterator i=begin();i!=end();++i) {
+    InterEdge ie=*i;
+    if(ie.entry.isValid()&&ie.exit.isValid()) {
+      ss<<map[ie.call].toString()<<"->"<<ie.entry.toString()<<endl;
+    }
+  }
+  return ss.str();
+}
+std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
+  return "digraph G {\n"+dotCallGraphEdges(map)+"}\n";
+}
+
 bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
     return e1.call<e2.call;
@@ -222,16 +241,12 @@ bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
 }
 
 bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
 bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
 bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
-  assert(&e1);
-  assert(&e2);
   if(e1.source()!=e2.source())
     return e1.source()<e2.source();
   if(e1.target()!=e2.target())
@@ -261,6 +276,36 @@ long Edge::hash() const {
 
 Flow::Flow() {
   resetDotOptions(); 
+}
+
+Label Flow::getStartLabel() {
+  if(_startLabelSet.size()==1) {
+    return *_startLabelSet.begin();
+  } else if(_startLabelSet.size()==0) {
+    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
+    Label lab;
+    return lab; // intentionally returns invalid label
+  } else {
+    //cout<<"WARNING: start label requested, but more than one start label available. Choosing randomly one of the registered start labels."<<endl;
+    return *_startLabelSet.begin();
+  }
+}
+void Flow::setStartLabel(Label label) {
+  LabelSet ls;
+  ls.insert(label);
+  _startLabelSet=ls;
+}
+
+void Flow::addStartLabel(Label label) {
+  _startLabelSet.insert(label);
+}
+
+void Flow::setStartLabelSet(LabelSet labelSet) {
+  _startLabelSet = labelSet;
+}
+
+LabelSet Flow::getStartLabelSet() {
+  return _startLabelSet;
 }
 
 CodeThorn::Flow Flow::reverseFlow() {
@@ -636,6 +681,16 @@ Flow Flow::inEdges(Label label) {
   return flow;
 }
 
+Edge Flow::outEdgeOfType(Label label, EdgeType type) {
+  Flow flow=outEdgesOfType(label,type);
+  if(flow.size()==1) {
+    return *flow.begin();
+  } else {
+    Edge invalidEdge;
+    return invalidEdge;
+  }
+}
+
 Flow Flow::outEdges(Label label) {
   Flow flow;
 #ifdef USE_SAWYER_GRAPH
@@ -754,6 +809,40 @@ set<string> Flow::getAllAnnotations() {
     result.insert((*i).getAnnotation());
   }
   return result;
+}
+
+LabelSet Flow::reachableNodes(Label start) {
+  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
+}
+
+LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
+  LabelSet reachableNodes;
+  reachableNodes.insert(start);
+  if(target==start) {
+    return reachableNodes;
+  }
+  LabelSet toVisitSet=succ(start);
+  size_t oldSize=0;
+  size_t newSize=0;
+  do {
+    LabelSet newToVisitSet;
+    for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
+      if(*i==target) {
+        reachableNodes.insert(*i);
+        continue;
+      }
+      LabelSet succSet=succ(*i);
+      for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+        if(reachableNodes.find(*j)==reachableNodes.end())
+          newToVisitSet.insert(*j);
+      }
+    }
+    toVisitSet=newToVisitSet;
+    oldSize=reachableNodes.size();
+    reachableNodes+=toVisitSet;
+    newSize=reachableNodes.size();
+  } while(oldSize!=newSize);
+  return reachableNodes;
 }
 
 #ifdef USE_SAWYER_GRAPH

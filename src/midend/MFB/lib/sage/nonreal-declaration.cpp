@@ -68,7 +68,7 @@ bool Driver<Sage>::resolveValidParent<SgNonrealSymbol>(SgNonrealSymbol * symbol)
 template <>
 void  Driver<Sage>::loadSymbols<SgNonrealDecl>(size_t file_id, SgSourceFile * file) {
   std::vector<SgNonrealDecl *> nonreal_decl = SageInterface::querySubTree<SgNonrealDecl>(file);
-#if VERBOSE || 1
+#if VERBOSE
     std::cout << "[Debug] (MFB::Driver<Sage>::loadSymbols<SgNonrealDecl>) nonreal_decl.size() = " << nonreal_decl.size() << std::endl;
 #endif
 
@@ -76,7 +76,7 @@ void  Driver<Sage>::loadSymbols<SgNonrealDecl>(size_t file_id, SgSourceFile * fi
   std::vector<SgNonrealDecl *>::const_iterator it_nonreal_decl;
   for (it_nonreal_decl = nonreal_decl.begin(); it_nonreal_decl != nonreal_decl.end(); it_nonreal_decl++) {
     SgNonrealDecl * nonreal_decl = *it_nonreal_decl;
-#if VERBOSE || 1
+#if VERBOSE
     std::cout << "[Debug] (MFB::Driver<Sage>::loadSymbols<SgNonrealDecl>) nonreal_decl = " << nonreal_decl << " (" << nonreal_decl->get_name().str() << ")" << std::endl;
 #endif
 

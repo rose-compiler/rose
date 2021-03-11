@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Partitioner2/ModulesPe.h>
 
@@ -206,6 +206,8 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
                 iatExtent.insert(AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size()));
         }
     }
+    if (iatExtent.isEmpty())
+        return;
 
     // Build an index that maps addresses to entries in the import tables.  The addresses are the addresses where the imported
     // functions are expected to be mapped.

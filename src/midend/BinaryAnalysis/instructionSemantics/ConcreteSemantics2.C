@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "ConcreteSemantics2.h"
 
@@ -556,6 +556,20 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
@@ -563,7 +577,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
 
         // Use the lazily updated initial memory state if there is one.
         if (initialState()) {
@@ -618,6 +632,16 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
     if (cond->is_number() && !cond->get_number())
         return;
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+    }
+
     SValuePtr value = SValue::promote(value_->copy());
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
@@ -637,7 +661,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
         }
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
         currentState()->writeMemory(byte_addr, byte_value, this, this);
     }
 }

@@ -519,16 +519,19 @@ AC_LANG(C++)
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
-# echo "_AC_LANG_ABBREV              = $_AC_LANG_ABBREV"
-# echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
-# echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
+# DQ (10/27/2020): Fixed to avoid output spew.
+AC_MSG_NOTICE([_AC_LANG_ABBREV              = "$_AC_LANG_ABBREV"])
+AC_MSG_NOTICE([ax_cv_c_compiler_vendor      = "$ax_cv_c_compiler_vendor"])
+AC_MSG_NOTICE([ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"])
+
 AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 unset ax_cv_cxx_compiler_vendor
 
+# DQ (9/20/20): Moving the setup of compiler flags to after the macros that define the compiler versions are computed.
 # Setup default options for C and C++ compilers compiling ROSE source code.
-ROSE_FLAG_C_OPTIONS
-ROSE_FLAG_CXX_OPTIONS
+# ROSE_FLAG_C_OPTIONS
+# ROSE_FLAG_CXX_OPTIONS
 
 # echo "Exiting after computing the frontend compiler vendor"
 # exit 1
@@ -885,6 +888,11 @@ AC_MSG_NOTICE([in configure.in ... CXX = "$CXX"])
 # upon the selection of the back-end compiler.
 GET_COMPILER_SPECIFIC_DEFINES
 ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+
+# DQ (9/20/20): Moving the setup of compiler flags to after the macros that define the compiler versions are computed.
+# Setup default options for C and C++ compilers compiling ROSE source code.
+ROSE_FLAG_C_OPTIONS
+ROSE_FLAG_CXX_OPTIONS
 
 # This must go after the setup of the headers options
 # Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
@@ -2043,7 +2051,6 @@ projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/RaaS/Makefile
 projects/RaaS/src/Makefile
-projects/RaaS/include/nlohmann/Makefile
 projects/RaaS/examples/demo/Makefile
 projects/RaaS/examples/demo/compile_commands.json
 projects/CompilationDB/Makefile
@@ -2081,7 +2088,6 @@ projects/ShiftCalculus4/Makefile
 projects/TemplateAnalysis/Makefile
 projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/include/ROSE/proposed/Makefile
-projects/TemplateAnalysis/include/nlohmann/Makefile
 projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
 projects/TemplateAnalysis/src/Makefile
@@ -2181,6 +2187,8 @@ python/Rose/BinaryAnalysis/Makefile
 python/Rose/BinaryAnalysis/Partitioner2/Makefile
 python/Rose/BinaryAnalysis/Unparser/Makefile
 scripts/Makefile
+src/3rdPartyLibraries/json/Makefile
+src/3rdPartyLibraries/json/nlohmann/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
@@ -2216,6 +2224,9 @@ src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
@@ -2351,6 +2362,7 @@ tests/nonsmoke/functional/CompileTests/C99_tests/Makefile
 tests/nonsmoke/functional/CompileTests/C11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx03_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile
@@ -2372,6 +2384,8 @@ tests/nonsmoke/functional/CompileTests/Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
@@ -2425,6 +2439,7 @@ tests/nonsmoke/functional/CompilerOptionsTests/testGnuOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testNostdincOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile

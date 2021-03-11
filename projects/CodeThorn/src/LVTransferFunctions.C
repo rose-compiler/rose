@@ -4,7 +4,7 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "LVTransferFunctions.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 CodeThorn::LVTransferFunctions::LVTransferFunctions() {
 }
@@ -24,7 +24,7 @@ void CodeThorn::LVTransferFunctions::transferExpression(Label lab, SgExpression*
   // KILL
   // (for programs with pointers we require a set here)
   ROSE_ASSERT(_pointerAnalysisInterface);
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information
@@ -34,7 +34,7 @@ void CodeThorn::LVTransferFunctions::transferExpression(Label lab, SgExpression*
     element.removeVariableId(var);
   }
   // GEN
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet useVarIds=AstUtility::useVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -50,7 +50,7 @@ void CodeThorn::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDe
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
+  VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information add information
 
@@ -63,7 +63,7 @@ void CodeThorn::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDe
   }
 
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);  
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::astSubTreeVariables(initExp,*getVariableIdMapping());  
+  VariableIdSet useVarIds=AstUtility::astSubTreeVariables(initExp,*getVariableIdMapping());  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }

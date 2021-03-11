@@ -1,11 +1,13 @@
 #include <sage3basic.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <BinarySmtCommandLine.h>
 #endif
 
 #include <boost/algorithm/string/predicate.hpp>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace CommandLine {
@@ -93,6 +95,17 @@ createEmptyParser(const std::string &purpose, const std::string &description) {
 #endif
     parser.version(v, ROSE_CONFIGURE_DATE);
     parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
+    parser.errorStream(Diagnostics::mlog[FATAL]);       // probably overridden by individual tools
+
+    parser.environmentVariable("ROSE_ARGS");
+    parser.doc("Environment variables",
+               "The ROSE_ARGS environment variable contains a string which is prepended to the command-line arguments "
+               "in order to supply default command-line switches on a per-user basis for all ROSE tools that use the "
+               "Sawyer-based parser. The string is split at white space boundaries, but quotes can be used to protect "
+               "white space from splitting. When setting the environment variable from a shell, you may need to protect "
+               "the quotes from the shell itself with additional quoting. A common use of the environment variable is to "
+               "specify whether output should be colorized, and whether to use dark or light foreground colors.");
+
     return parser;
 }
 
@@ -103,6 +116,10 @@ createEmptyParserStage(const std::string &purpose, const std::string &descriptio
 
 // Global place to store result of parsing genericSwitches.
 GenericSwitchArgs genericSwitchArgs;
+
+// Global place to store the string printed by --version.  This static variable is initialized by the ROSE_INITIALIZE macro
+// called from every ROSE tool's "main" function.
+std::string versionString;
 
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
@@ -115,6 +132,19 @@ genericSwitches() {
     gen.insert(Switch("help", 'h')
                .doc("Show this documentation.")
                .action(showHelpAndExit(0)));
+
+    gen.insert(Switch("color")
+               .argument("how", Color::colorizationParser(genericSwitchArgs.colorization), "on,dark")
+               .whichValue(SAVE_AUGMENTED)
+               .valueAugmenter(Color::ColorizationMerge::instance())
+               .doc("Whether to use color in the output, and the theme to use. " +
+                    Color::ColorizationParser::docString() +
+                    " The @s{color} switch with no argument is the same as @s{color}=on,dark, and @s{no-color} is "
+                    "shorthand for @s{color}=off."));
+    gen.insert(Switch("no-color")
+               .key("color")
+               .intrinsicValue("off", Color::colorizationParser(genericSwitchArgs.colorization))
+               .hidden(true));
 
     gen.insert(Switch("log")
                .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
@@ -133,15 +163,9 @@ genericSwitches() {
                     "switch shows only the dotted quad of the ROSE library itself."));
 
     gen.insert(Switch("version", 'V')
-#if defined(ROSE_PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
-#elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(PACKAGE_VERSION, 0))
-#else
-               .action(showVersionAndExit("unknown", 0))
-#endif
-               .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
-                    "information."));
+               .action(showVersionAndExit(versionString, 0))
+               .doc("Shows the version and then exits.  See also @s{version-long}, which prints much more "
+                    "information about the ROSE library and supporting software."));
 
     // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
@@ -161,7 +185,7 @@ genericSwitches() {
                     "same number of threads as there is hardware concurrency (or one thread if the hardware "
                     "concurrency can't be determined)."));
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
     // Global SMT solver name. This is used by any analysis that needs a solver and for which the user hasn't told that
     // specific analysis which solver to use. Specific analyses may override this global solver with other command-line
     // switches. The value "list" means generate a list of available solvers. So far this is only impelemented for the SMT
@@ -179,7 +203,14 @@ genericSwitches() {
 
     gen.insert(Switch("license")
                .action(ShowLicenseAndExit::instance())
-               .doc("Show the ROSE software license and exiit."));
+               .doc("Show the ROSE software license and exit."));
+
+    // This undocumented switch is used for internal testing during "make check" and similar. If a tool is disabled due to ROSE
+    // being compiled with too old a compiler or without some necessary software prerequisite, then the tool will print an
+    // error message that it is disabled but will still exit with a successful status (i.e., main returns zero).
+    gen.insert(Switch("no-error-if-disabled")
+               .intrinsicValue(false, genericSwitchArgs.errorIfDisabled)
+               .hidden(true));
 
     return gen;
 }

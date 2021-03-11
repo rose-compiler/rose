@@ -67,8 +67,8 @@ void foo(class XX *xx)
       case 8:
       aa = xx -> aa[6];
       break; 
-/* do nothing */
       default:
+/* do nothing */
       ;
     }
     switch(b){

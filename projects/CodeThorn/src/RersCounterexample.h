@@ -2,12 +2,13 @@
 #define RERS_COUNTEREXAMPLE_H
 
 #include "ExecutionTrace.h"
+#include "LTLRersMapping.h"
 
 namespace CodeThorn {
 
   class EState;
   class TransitionGraph;
-  class Analyzer;
+  class CTAnalysis;
 
 /**
  * @brief An input/output counterexample in a syntax resembling that of RERS
@@ -18,15 +19,13 @@ namespace CodeThorn {
   class RersCounterexample : public ExecutionTrace {
 
   public:
-    std::string toRersIString() const;
-    std::string toRersIOString() const;
-
     RersCounterexample onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const;
     RersCounterexample onlyIStates() const;
     RersCounterexample onlyIOStates() const;
+    std::string toRersIString(LtlRersMapping& ltlRersMapping) const;  // MS 8/6/20: changed to use mapping
+    std::string toRersIOString(LtlRersMapping& ltlRersMapping) const; // MS 8/6/20: changed to use mapping
   private:
-    std::string toRersIOString(bool withOutput) const;
-    char toRersChar(int value) const;
+    std::string toRersIOString(LtlRersMapping& ltlRersMapping, bool withOutput) const; // MS 8/6/20: changed to use mapping
   };
 }
 

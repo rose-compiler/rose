@@ -104,8 +104,11 @@ class Unparse_MOD_SAGE
 
           void directives(SgLocatedNode* lnode);
 
+       // DQ (8/15/2020): Add state to the SgUnparse_Info class to record when we are using extern "C".
        // DQ (8/29/2005): Added to support differences in the order of "extern C" and "template<>" with g++ version 3.3.x and 3.4.x
-          void outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt );
+       // void outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt );
+          void outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info );
+
           void outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt );
 
 

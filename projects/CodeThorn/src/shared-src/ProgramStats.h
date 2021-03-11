@@ -8,7 +8,7 @@
 #include "RDLattice.h"
 #include "RDAstAttribute.h"
 #include "Miscellaneous.h"
-#include "AnalysisAbstractionLayer.h"
+#include "AstUtility.h"
 
 namespace CodeThorn {
 

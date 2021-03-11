@@ -37,8 +37,8 @@ void func2(int len)
 /* … */
     }
     for (int i = 0; i < len; ++i) {
-// here is live in!
       tmp = g(i) + tmp;
+// here is live in!
       y = goo(tmp);
 /* … */
     }

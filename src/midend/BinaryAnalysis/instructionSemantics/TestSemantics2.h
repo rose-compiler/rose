@@ -1,8 +1,8 @@
 // Perform basic sanity checks on instruction semantics
 #ifndef Rose_TestSemantics2_H
 #define Rose_TestSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 #include "CommandLine.h"
@@ -121,7 +121,6 @@ public:
 
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         const RegisterDescriptor reg32 = regdict->findOrThrow("eip");
-        const RegisterDescriptor segreg = regdict->findOrThrow("ss");
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,12 +483,12 @@ public:
             // the NullSemantics doesn't have this property.
 
             BaseSemantics::SValuePtr dflt8 = ops->number_(8, 0);
-            BaseSemantics::SValuePtr ops_v36 = ops->readMemory(segreg, v32a, dflt8, v1);
+            BaseSemantics::SValuePtr ops_v36 = ops->readMemory(RegisterDescriptor(), v32a, dflt8, v1);
             check_sval_type(ops_v36, "RiscOperators::readMemory byte");
             require(ops_v36->get_width()==8, "RiscOperators::readMemory byte width");
 
             BaseSemantics::SValuePtr dflt32 = ops->number_(32, 0);
-            BaseSemantics::SValuePtr ops_v37 = ops->readMemory(segreg, v32a, dflt32, v1);
+            BaseSemantics::SValuePtr ops_v37 = ops->readMemory(RegisterDescriptor(), v32a, dflt32, v1);
             check_sval_type(ops_v37, "RiscOperators::readMemory word");
             require(ops_v37->get_width()==32, "RiscOperators::readMemory word width");
 
@@ -498,7 +497,7 @@ public:
             // entirely up to the implementation, so we can't even test that writing a value to an address and then reading
             // from that address returns the value that was written (e.g., NullSemantics doesn't have this property).
 
-            ops->writeMemory(segreg, v32a, dflt32, v1);
+            ops->writeMemory(RegisterDescriptor(), v32a, dflt32, v1);
 
         }
 

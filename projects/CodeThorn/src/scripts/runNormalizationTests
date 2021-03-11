@@ -18,7 +18,8 @@ function NormalizationTests {
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/NORM${testNumber};
-        for benchmark in ${benchmarkprefix}*.[cC]; do
+        # do not allow for re-compiling as C anymore (because references are always introduced)
+        for benchmark in ${benchmarkprefix}*.[C]; do
             benchmarkname=$(basename $benchmark)
             if [[ $benchmark = *.c ]]; then
                 echo -n "Testing C $benchmarkname: "
@@ -27,7 +28,7 @@ function NormalizationTests {
                 echo -n "Testing C++ $benchmarkname: "
                 g++ $benchmark
             fi
-            ./codethorn $benchmark --normalize-all=yes --unparse=yes --quiet --abstraction-mode=1 > /dev/null
+            ./codethorn $benchmark --normalize-level=2 --unparse=yes --quiet --abstraction-mode=1 > /dev/null
             if [ ! $? -eq 0 ]
             then
 	            echo "FAIL"
@@ -44,7 +45,7 @@ function NormalizationTests {
                 exit 1
             else
 	        echo "PASS"
-		rm -f rose_${benchmarkname}
+		    rm -f rose_${benchmarkname}
             fi
         done
     done

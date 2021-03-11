@@ -1,6 +1,9 @@
 START
 PROGRAM testloop ;
 BEGIN
+  ITEM ivar U;
+  ITEM ibbr U;
+
   ivar = 0;
   ibbr = 1;
   FOR ivar:0 by 1 while ivar<25;

@@ -88,6 +88,7 @@ void makeEdge(NodeT from, NodeT to, vector<EdgeT>& result) {
 
 static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vector<CFGEdge>& result) {
   bool hasLabel = false;
+  ROSE_ASSERT(stmt != NULL);
   if (index == 0 && stmt->get_numeric_label()) hasLabel = true;
   if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
   if (index == 0 &&
@@ -170,6 +171,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
   SgNode* parent = n->get_parent();
 
+  ROSE_ASSERT(parent != NULL);
+
 #if DEBUG_CALLGRAPH
   printf ("In getNodeJustAfterInContainer(): n = %p = %s parent = %p = %s \n",n,n->class_name().c_str(),parent,parent->class_name().c_str());
 #endif
@@ -225,15 +228,17 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
           printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
 #endif
           parent = parentLabelStatement->get_parent();
+          ROSE_ASSERT(parent != NULL);
           unsigned int idx;
 #if 0
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #else
           // MS (12/9/2019 ) - handling sequences of labels
           while(isSgLabelStatement(parent)) {
-            parentLabelStatement=isSgLabelStatement(parent);
-            parent=parent->get_parent();
+            parentLabelStatement = isSgLabelStatement(parent);
+            parent = parent->get_parent();
           }
+          ROSE_ASSERT(parent != NULL);
           idx = parent->cfgFindNextChildIndex(parentLabelStatement);
 #endif
 
@@ -270,10 +275,6 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
 #endif
              }
         }
-
-
-// DQ (10/12/2012): Added assertion.
-  ROSE_ASSERT(parent != NULL);
 
   unsigned int idx = parent->cfgFindNextChildIndex(n);
   if ( idx > parent->cfgIndexForEnd() ) {
@@ -675,10 +676,10 @@ unsigned int SgForStatement::cfgFindChildIndex(SgNode* n)
                        {
                          cerr<<"Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
                          cerr<<n->class_name()<<endl;
-                         if (isSgLocatedNode(n))
-                         {
-                           ROSE_ASSERT(isSgLocatedNode(n) != NULL);
-                           isSgLocatedNode(n)->get_file_info()->display();
+                         SgLocatedNode* locNode = isSgLocatedNode(n);
+                         if (locNode != NULL) {
+                           ROSE_ASSERT(locNode != NULL);
+                           locNode->get_file_info()->display();
                          }
                          ROSE_ASSERT (!"Bad child in for statement");
                        }
@@ -834,9 +835,10 @@ unsigned int SgRangeBasedForStatement::cfgFindChildIndex(SgNode* n)
                                       {
                                         cerr << "Error: SgForStatement::cfgFindChildIndex(): cannot find a matching child for SgNode n:";
                                         cerr << n->class_name() << endl;
-                                        if (isSgLocatedNode(n))
+                                        SgLocatedNode* located = isSgLocatedNode(n);
+                                        if (located != NULL)
                                            {
-                                             isSgLocatedNode(n)->get_file_info()->display();
+                                             located->get_file_info()->display();
                                            }
                                         ROSE_ASSERT (!"Bad child in range based for statement");
                                       }
@@ -2078,32 +2080,32 @@ SgAdaExitStmt::cfgIsIndexInteresting(unsigned int) const
 }
 
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaExitStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  const bool           has_condition = !isSgNullExpression(get_condition()); 
+  const bool           has_condition = !isSgNullExpression(get_condition());
   unsigned int         caseIdx = idx;
-  
+
   if (!has_condition) ++caseIdx;
 
-#if THIS_IS_AN_ADA_EXAMPLE  
-  x: loop   // one out edge 
-    exit x when i > 0; // two out edges 
+#if THIS_IS_AN_ADA_EXAMPLE
+  x: loop   // one out edge
+    exit x when i > 0; // two out edges
   end loop; // one out edge
-#endif /* THIS_IS_AN_ADA_EXAMPLE */ 
-  
+#endif /* THIS_IS_AN_ADA_EXAMPLE */
+
   switch (caseIdx) {
-    case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); 
+    case 0: makeEdge(CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result);
             break;
 
     case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this->get_loop()), result);
-            
-            // the following out edge could be optional depending if there is a condition or not; 
+
+            // the following out edge could be optional depending if there is a condition or not;
             if (has_condition)
             {
-              makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); 
+              makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
             }
-            
+
             break;
 
     default: ROSE_ASSERT (!"Bad index for SgAdaExitStmt");
@@ -2111,14 +2113,55 @@ SgAdaExitStmt::cfgOutEdges(unsigned int idx) {
   return result;
 }
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaExitStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  
+
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_condition()->cfgForEnd(), CFGNode(this, idx), result); break; 
+    case 1: makeEdge(this->get_condition()->cfgForEnd(), CFGNode(this, idx), result); break;
     default: ROSE_ASSERT (!"Bad index for SgAdaExitStmt");
+  }
+  return result;
+}
+
+unsigned int
+SgAdaDelayStmt::cfgIndexForEnd() const {
+  return 2;
+}
+
+bool
+SgAdaDelayStmt::cfgIsIndexInteresting(unsigned int) const
+{
+  // \pp what does interesting mean?
+  return false;
+}
+
+
+std::vector<CFGEdge>
+SgAdaDelayStmt::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_time()->cfgForBeginning(), result);
+            break;
+
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this->get_time()), result);
+            break;
+
+    default: ROSE_ASSERT (!"Bad index for SgAdaDelayStmt");
+  }
+  return result;
+}
+
+std::vector<CFGEdge>
+SgAdaDelayStmt::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_time()->cfgForEnd(), CFGNode(this, idx), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgAdaDelayStmt");
   }
   return result;
 }
@@ -2137,18 +2180,18 @@ SgAdaAcceptStmt::cfgIsIndexInteresting(unsigned int idx) const
 
 unsigned int
 SgAdaLoopStmt::cfgIndexForEnd() const {
-  return 2; 
+  return 2;
 }
 
 unsigned int
 SgAdaAcceptStmt::cfgIndexForEnd() const {
-  return 1; 
+  return 1;
 }
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaLoopStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  
+
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), CFGNode(this, 0),                    result); break;
@@ -2157,10 +2200,10 @@ SgAdaLoopStmt::cfgOutEdges(unsigned int idx) {
   return result;
 }
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaAcceptStmt::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  
+
   switch (idx) {
     case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), getNodeJustBeforeInContainer(this),  result); break;
@@ -2169,25 +2212,25 @@ SgAdaAcceptStmt::cfgOutEdges(unsigned int idx) {
   return result;
 }
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaLoopStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  
+
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
+    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break;
     default: ROSE_ASSERT (!"Bad index for SgAdaLoopStmt");
   }
   return result;
 }
 
-std::vector<CFGEdge> 
+std::vector<CFGEdge>
 SgAdaAcceptStmt::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  
+
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break; 
+    case 1: makeEdge(this->get_body()->cfgForEnd(),      CFGNode(this, idx), result); break;
     default: ROSE_ASSERT (!"Bad index for SgAdaAcceptStmt");
   }
   return result;
@@ -3565,7 +3608,7 @@ SgAssociateStatement::cfgIndexForEnd() const {
 std::vector<CFGEdge> SgAssociateStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
-    case 0: /* ROSE_ASSERT (!"No longer support, having SgDeclarationStatementPtrList instead");*/ break; 
+    case 0: /* ROSE_ASSERT (!"No longer support, having SgDeclarationStatementPtrList instead");*/ break;
            // makeEdge(CFGNode(this, idx), this->get_variable_declaration()->cfgForBeginning(), result); break;
     case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
     case 2: {
@@ -6438,6 +6481,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all continue statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgContinueStmt*> contVec = SageInterface::findContinueStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < contVec.size(); ++i) {
             makeEdge(CFGNode(contVec[i], 0), CFGNode(this, idx), result);
@@ -6449,6 +6493,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
         // Do we need to get all break statements that can jump here ?
         // YES
         SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        ROSE_ASSERT(thisFunction != NULL);
         std::vector<SgBreakStmt*> brkVec = SageInterface::findBreakStmts(thisFunction, this->get_label().getString());
         for (unsigned int i = 0; i < brkVec.size(); ++i) {
             makeEdge(CFGNode(brkVec[i], 0), CFGNode(this, idx), result);

@@ -1015,9 +1015,9 @@ PreprocessingInfo::display (const string & label) const
 
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
-{
-    return stringifyPreprocessingInfoRelativePositionType(position);
-}
+   {
+     return stringifyPreprocessingInfoRelativePositionType(position);
+   }
 
 
 PreprocessingInfo::RelativePositionType
@@ -1028,7 +1028,7 @@ PreprocessingInfo::getRelativePosition(void) const
      return relativePosition;
    }
 
-  void
+void
 PreprocessingInfo::setRelativePosition( RelativePositionType relPos )
    {
      ROSE_ASSERT(this != NULL);
@@ -1061,6 +1061,64 @@ PreprocessingInfo::set_file_info( Sg_File_Info* info )
      file_info = info;
      ROSE_ASSERT(file_info != NULL);
    }
+
+// DQ (8/26/2020): include directive have a filename imbedded inside, and we need to  
+// extract that for from tools (e.g. the fixup for initializers from include files).
+std::string PreprocessingInfo::get_filename_from_include_directive()
+   {
+     std::string s;
+
+  // s = "#line 12345\"foobar.h\"6789";
+  // s = "#line \"foobar.h\"";
+  // s = "#line <foobar.h>";
+  // s = "#line 12345<foobar.h>6789";
+
+     if (this->getTypeOfDirective() == CpreprocessorIncludeDeclaration)
+        {
+       // std::string line = s;
+          std::string line = internalString;
+          std::string name;
+
+          std::string tester="\"";
+
+          size_t findPos  = line.find(tester); //finds first quote mark
+
+          if (findPos == string::npos)
+             {
+#if 0
+               printf ("Could not find quoted substring, might be using <> syntax: line = %s \n",line.c_str());
+#endif
+               tester="<";
+               findPos  = line.find(tester); //finds first quote mark
+               tester=">";
+#if 0
+               printf ("Exitng as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          size_t findPos2 = line.find(tester, findPos+1); //finds second quote mark
+          ROSE_ASSERT(findPos2 > findPos);
+#if 0
+          printf ("findPos = %zu findPos2 = %zu \n",findPos,findPos2);
+#endif
+          name = line.substr(findPos+1,(findPos2-findPos)-1); //copies the name into name
+
+       // printf ("before adding terminal: name = |%s| \n",name.c_str());
+#if 0
+          printf ("In PreprocessingInfo::get_filename_from_include_directive(): name = |%s| \n",name.c_str());
+#endif
+          s = name;
+        }
+       else
+        {
+          printf ("Error: In PreprocessingInfo::get_filename_from_include_directive(): getTypeOfDirective != CpreprocessorIncludeDeclaration \n"); 
+          ROSE_ASSERT(false);
+        }
+
+     return s;
+   }
+
 
 // DQ (11/28/2008): Support for CPP generated linemarkers
 int
@@ -2686,10 +2744,20 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                  // ROSE_ASSERT(quotedFilename[0] == '\"');
                     if (quotedFilename[0] == '\"')
                        {
-                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
-                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                      // DQ (8/22/2020): C_tests/test2020_22.c demonstrates that this is not reasonable.
+                      // ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+
+                      // DQ (8/22/2020): find the closing quote.
+                         size_t positionOfNextQuote = quotedFilename.find("\"",1);
 #if 0
-                         printf ("filename = %s \n",filename.c_str());
+                         printf ("positionOfNextQuote     = %zu \n",positionOfNextQuote);
+                         printf ("quotedFilename.length() = %zu \n",quotedFilename.length());
+#endif
+                      // std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+                         ROSE_ASSERT(positionOfNextQuote <= quotedFilename.length()-1);
+                         std::string filename = quotedFilename.substr(1,positionOfNextQuote-1);
+#if 0
+                         printf ("In generateFileIdListFromLineDirectives(): filename = |%s| \n",filename.c_str());
 #endif
                       // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
                          Sg_File_Info::addFilenameToMap(filename);
