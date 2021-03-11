@@ -29,7 +29,7 @@ namespace CodeThorn {
   }
   
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset) {
-    cout<<"DEBUG: register class members:"<<endl;
+    //cout<<"DEBUG: register class members:"<<endl;
     std::list<SgVariableDeclaration*> memberList=memberVariableDeclarationsList(classType);
     return registerClassMembers(classType,memberList,offset);
   }
@@ -45,22 +45,22 @@ namespace CodeThorn {
 
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
     ROSE_ASSERT(classType!=nullptr);
-    cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
+    //cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     int numClassMembers=0;
     for(auto memberVarDecl : memberList) {
       SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(memberVarDecl);
       if(sym->get_symbol_basis()!=0) {
-	cout<<"Register member decl:"<<memberVarDecl->unparseToString()<<endl;
+	//cout<<"Register member decl:"<<memberVarDecl->unparseToString()<<endl;
 	registerNewSymbol(sym);
 	numClassMembers++;
 	VariableId varId=variableId(sym);
 	registerClassMemberVar(classType,varId);
 	getVariableIdInfoPtr(varId)->variableScope=VS_MEMBER;
 	setOffset(varId,offset);
-	classMembers[classType].push_back(varId);
+	registerClassMemberVar(classType,varId);
 	ROSE_ASSERT(varId.isValid());
 	SgType* type=strippedType(sym->get_type());
-	cout<<"Type:"<<type->unparseToString()<<endl;
+	//cout<<"Type:"<<type->unparseToString()<<endl;
 	if(SgClassType* memberClassType=isSgClassType(type)) {
 	  CodeThorn::TypeSize typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
 	  offset+=typeSize;
@@ -125,7 +125,7 @@ namespace CodeThorn {
       for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	CodeThorn::TypeSize totalSize=0;
 	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-	  cout<<"DEBUG: var decl: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
+	  //cout<<"DEBUG: var decl: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
 	  SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
 	  if(sym->get_symbol_basis()!=0) {
 	    registerNewSymbol(sym);
@@ -136,10 +136,10 @@ namespace CodeThorn {
 	      getVariableIdInfoPtr(varId)->variableScope=VS_LOCAL;
 	    }
 	    SgType* type=strippedType(sym->get_type());// strip typedef and const
-	    cout<<"DEBUG:     type: "<<type->unparseToString()<<endl;
+	    //cout<<"DEBUG:     type: "<<type->unparseToString()<<endl;
 	    if(SgClassType* classType=isSgClassType(type)) {
 	      getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
-	      cout<<"DEBUG: register class members:"<<endl;
+	      //cout<<"DEBUG: register class members:"<<endl;
 	      std::list<SgVariableDeclaration*> memberVariableDeclarationList=memberVariableDeclarationsList(classType);
 	      CodeThorn::TypeSize totalTypeSize=registerClassMembers(classType,memberVariableDeclarationList,0); // start with offset 0
 	      setNumberOfElements(varId,numClassMembers(classType));
@@ -230,29 +230,71 @@ namespace CodeThorn {
   }
 }
 
+void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* type, int32_t nestingLevel) {
+  ROSE_ASSERT(nestingLevel>0);
+  ROSE_ASSERT(type);
+  string nestingLevelIndent=std::string(nestingLevel, '@');
+  for(auto mvarId : classMembers[type]) {
+    os<<"     "<<nestingLevelIndent;
+    os<<setw(2)<<mappingVarIdToInfo[mvarId].offset<<": ";
+    os<<"id:"+mvarId.toString()+":\""+mvarId.toString(this)+"\"";
+    os<<","<<getVariableIdInfo(mvarId).aggregateTypeToString();
+    os<<endl;
+    if(mappingVarIdToInfo[mvarId].aggregateType==AT_STRUCT) {
+      // recurse into nested type and increase nesting level by 1
+      classMemberOffsetsToStream(os,getType(mvarId),nestingLevel+1);
+    }
+  }
+}
+
 void VariableIdMappingExtended::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
-    os<<i
-      <<","<<varId.toString(this)
-      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
-      //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
-      <<","<<getVariableIdInfo(varId).variableScopeToString()
-      <<","<<getVariableIdInfo(varId).aggregateTypeToString()
-      <<",elems:"<<getNumberOfElements(varId)
-      <<",elemsize:"<<getElementSize(varId)
-      <<",total:"<<getTotalSize(varId)
-      <<",offset:"<<getOffset(varId);
-    if(isStringLiteralAddress(varId)) {
-      os<<","<<"<non-symbol-string-literal-id>";
-    } else if(isTemporaryVariableId(varId)) {
-      os<<","<<"<non-symbol-memory-region-id>";
-    } else if(SgSymbol* sym=getSymbol(varId)) {
-      os<<","<<variableName(varId);
-    } else {
-      os<<","<<"<missing-symbol>";
+    if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
+      os<<std::right<<std::setw(3)<<i
+	<<", "<<std::setw(25)<<std::left<<"id:"+varId.toString()+":\""+varId.toString(this)+"\""
+	//<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
+	//<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
+	<<","<<std::setw(8)<<getVariableIdInfo(varId).variableScopeToString()
+	<<","<<std::setw(8)<<getVariableIdInfo(varId).aggregateTypeToString();
+      switch(getVariableIdInfo(varId).aggregateType) {
+      case AT_STRUCT:
+	os<<",elems:"<<getNumberOfElements(varId)
+	  <<",total:"<<getTotalSize(varId);
+	break;
+      case AT_ARRAY:
+	os<<",elems:"<<getNumberOfElements(varId)
+	  <<",elemsize:"<<getElementSize(varId)
+	  <<",total:"<<getTotalSize(varId);
+	break;
+      case AT_SINGLE:
+	os<<",elems:"<<getNumberOfElements(varId)
+	  <<",elemsize:"<<getElementSize(varId)
+	  <<",total:"<<getTotalSize(varId);
+	break;
+      case AT_UNKNOWN:
+	os<<"???";
+	break;
+      default:
+	cerr<<"Error: VariableIdMappingExtended::toStream: Undefined aggregate type in variable id mapping."<<endl;
+	exit(1);
+      }
+      if(isStringLiteralAddress(varId)) {
+	os<<","<<"<non-symbol-string-literal-id>";
+      } else if(isTemporaryVariableId(varId)) {
+	os<<","<<"<non-symbol-memory-region-id>";
+      } else if(SgSymbol* sym=getSymbol(varId)) {
+	os<<","<<variableName(varId);
+      } else {
+	os<<","<<"<missing-symbol>";
+      }
+      os<<endl;
+
+      if(mappingVarIdToInfo[varId].aggregateType==AT_STRUCT) {
+	int32_t nestingLevel=1;
+	classMemberOffsetsToStream(os,getType(varId),nestingLevel);
+      }
     }
-    os<<endl;
   }
 }
 
