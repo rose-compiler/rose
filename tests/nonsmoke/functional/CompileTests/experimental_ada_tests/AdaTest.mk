@@ -164,7 +164,12 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   dynamic_array.adb                                 \
   extension_aggregate.adb                           \
   fixed_point_definition.ads                        \
+  function_instantiation.adb                        \
+  generic_function_declaration.ads                  \
+  generic_package_declaration.ads                   \
   ordinary_type_declaration_range_constraint.ads    \
+  package_instantiation.adb                         \
+  procedure_instantiation.adb                       \
   protected_type_declaration.ads                    \
   qualified_expression.adb                          \
   signed_integer_type_definition.ads                \
