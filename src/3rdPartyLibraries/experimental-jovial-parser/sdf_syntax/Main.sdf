@@ -702,7 +702,9 @@ context-free syntax
   CharacterItemDescription    -> CharacterTypeDescription
   CharacterTypeName           -> CharacterTypeDescription  {reject} %% Using ItemTypeName
 
-  'C' OptCharacterSize        -> CharacterItemDescription  {cons("CharacterItemDescription")}
+%% 'C'
+  CharacterTypeDesc
+     OptCharacterSize         -> CharacterItemDescription  {cons("CharacterItemDescription")}
 
   CompileTimeNumericFormula   -> CharacterSize             {cons("ItemSize")}
 

@@ -914,11 +914,12 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterItemDescription(ATerm term,
    printf("... traverse_CharacterItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_size;
+   ATerm t_char_type_desc, t_size;
    Sawyer::Optional<SgExpression*> size;
 
-   if (ATmatch(term, "CharacterItemDescription(<term>)", &t_size)) {
+   if (ATmatch(term, "CharacterItemDescription(<term>,<term>)", &t_char_type_desc, &t_size)) {
       // MATCHED CharacterItemDescription
+      // The first term, t_char_type_desc, comes from the lexer and is direct user input: "C", "c".
    } else return ATfalse;
 
    if (traverse_OptItemSize(t_size, size)) {
@@ -1815,11 +1816,12 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    ATerm t_name, t_item_desc, t_pack_spec, t_preset;
    char* name;
 
-   SgType* item_type = nullptr;
+   SgType* declared_type = nullptr;
    SgExpression* preset = nullptr;
    SgVariableDeclaration* var_decl = nullptr;
    Sawyer::Optional<SgExpression*> status_size;
    SgEnumDeclaration* enum_decl = nullptr;
+   bool is_anonymous = false;
 
    std::string label = "";
 
@@ -1829,15 +1831,39 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
          // MATCHED TableItemName
       } else return ATfalse;
 
-      if (traverse_ItemTypeDescription(t_item_desc, item_type)) {
-         // MATCHED ItemTypeDescription without StatusItemDescription
-      } else if (traverse_StatusItemDescription(t_item_desc, enum_decl, status_size)) {
-         // MATCHED StatusItemDescription
+      if (match_StatusItemDescription(t_item_desc)) {
+         // Build EnumDecl so that StatusItemDescription traversal has it to use
 
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
-         cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration with StatusItemDescription\n";
-         ROSE_ASSERT(false);
-      } else return ATfalse;
+         // This status variable declaration has an anonymous type declaration
+         // TODO: test to see if this holds if a type name is used for the item/variable type
+         is_anonymous = true;
+         std::string anon_type_name = std::string("_anon_typeof_") + name;
+
+      // Begin SageTreeBuilder for enum
+         sage_tree_builder.Enter(enum_decl, anon_type_name);
+         setSourcePosition(enum_decl, term);
+      }
+
+      if (traverse_ItemTypeDescription(t_item_desc, declared_type)) {
+         // MATCHED ItemTypeDescription without StatusItemDescription
+      }
+      else if (traverse_StatusItemDescription(t_item_desc, enum_decl, status_size)) {
+         // MATCHED StatusItemDescription: Note that they are handled differently
+         // than other ItemTypeDescriptions because they require different arguments
+
+         if (status_size) {
+            SgType* field_type = SageBuilder::buildIntType(*status_size);
+            enum_decl->set_field_type(field_type);
+         }
+
+         // End SageTreeBuilder for enum
+         sage_tree_builder.Leave(enum_decl);
+
+         ROSE_ASSERT(enum_decl);
+         declared_type = isSgEnumType(enum_decl->get_type());
+         ROSE_ASSERT(declared_type);
+      }
+      else return ATfalse;
 
       if (traverse_TablePreset(t_preset, preset)) {
          // MATCHED TablePreset
@@ -1845,19 +1871,30 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
 
    } else return ATfalse;
 
-   if (item_type == NULL) {
-      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - item_type is null \n";
+   if (declared_type == NULL) {
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - declared_type is null \n";
       ROSE_ASSERT(false);
    }
 
-// Begin SageTreeBuilder
-   sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
+// Begin SageTreeBuilder for variable
+   sage_tree_builder.Enter(var_decl, std::string(name), declared_type, preset);
    setSourcePosition(var_decl, term);
 
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
 
+   if (is_anonymous) {
+      SgEnumType* enum_type = isSgEnumType(declared_type);
+      ROSE_ASSERT(enum_type);
+      SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
+      ROSE_ASSERT(decl);
+      SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
+      ROSE_ASSERT(def_decl);
+      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   }
+
+// End SageTreeBuilder for variable
    sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
@@ -3324,36 +3361,12 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleDef(ATerm term)
    printf("... traverse_SimpleDef: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_simple_def, t_amb;
+   ATerm t_simple_def;
 
    if (ATmatch(term, "SimpleDef(<term>)", &t_simple_def)) {
-      // MATCHED SimpleDef
-
-      // SimpleDef can have an ambiguity if an ItemDescription has a type name starting with "a"
-      if (ATmatch(t_simple_def, "amb(<term>)", &t_amb)) {
-         // MATCHED an ambiguity, choose the one with a named type
-         ATerm t_name, t_alloc, t_type, t_preset;
-         std::string name;
-         ATermList tail = (ATermList) ATmake("<term>", t_amb);
-
-         while (! ATisEmpty(tail)) {
-            t_simple_def = ATgetFirst(tail);
-            tail = ATgetNext(tail);
-
-            // Search for ItemDeclaration with a named type
-            if (ATmatch(t_simple_def, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
-               if (traverse_Name(t_type, name)) {
-                 // Success, found a named type
-                 break;
-               }
-            }
-         }
-      }
-   }
-   else return ATfalse;
-
-   if (traverse_DefSpecificationChoice(t_simple_def)) {
-      // MATCHED DefSpecificationChoice
+      if (traverse_DefSpecificationChoice(t_simple_def)) {
+         // MATCHED DefSpecificationChoice
+      } else return ATfalse;
    }
    else return ATfalse;
 
