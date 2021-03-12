@@ -1,14 +1,12 @@
 
-
-#ifndef _SAGEINTERFACE_ADA_H
-#define _SAGEINTERFACE_ADA_H 1
-
-
 #include "sageInterfaceAda.h"
 #include "sageInterface.h"
 #include "sageGeneric.h"
 
 #include <iostream>
+#include <exception>
+
+namespace si = SageInterface;
 
 namespace
 {
@@ -20,126 +18,280 @@ namespace
     skipAdaDerivedType       = (1 << 1),
     skipTypedefType          = (1 << 2),
     skipModifierType         = (1 << 3),
-    skipArrayType            = (1 << 4),
-    skipPointerType          = (1 << 5),
-    skipReferenceType        = (1 << 6),  /* C++ */
-    skipRvalueReferenceType  = (1 << 7),  /* C++ */
+    skipPointerType          = (1 << 4),
+    skipReferenceType        = (1 << 5),  /* C++ */
+    skipRvalueReferenceType  = (1 << 6),  /* C++ */
     skipAllReferenceTypes    = (skipReferenceType | skipRvalueReferenceType),  /* C++ */
-    skipAdaAccessType        = (1 << 8),
+    skipAdaAccessType        = (1 << 7),
     //~ skipUsingDecls           = (1 << 8),  /* C++ */
     //~ skipAdaUseTypes      = (1 << 9),  /* Ada */
     skipLast                 = (1 << 30)
   };
 
 
-  struct BaseType : sg::DispatchHandler<SgType*>
+  struct ArrayType : sg::DispatchHandler<SgArrayType*>
   {
-      typedef sg::DispatchHandler<SgType*> base;
-
-      explicit
-      BaseType(TypeSkip skipped)
-      : base(NULL), skipWhat(skipped)
-      {}
-
       static
-      SgType& find(SgType* n, TypeSkip skipWhat = skipNone);
+      SgArrayType* find(SgType* n);
+      //~ find(SgType* n, TypeSkip skipWhat = skipNone);
 
-      SgType* recurse(SgType* n);
-
-      template <class SageTypeNode>
-      SgType*
-      skipIf(SageTypeNode& n, TypeSkip nodeKind)
-      {
-        const bool skipNode = (skipWhat & nodeKind) == nodeKind;
-
-        return skipNode ? recurse(n.get_base_type()) : &n;
-      }
+      ReturnType recurse(SgType* n);
 
       // invalid case
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
-      // base case
-      void handle(SgType& n)                { res = &n; }
+      // base cases
+      void handle(SgType&)                  { res = NULL; }
+      void handle(SgArrayType& n)           { res = &n; }
 
       // possibly skipped types
-      void handle(SgAdaSubtype& n)          { res = skipIf(n, skipAdaSubtype); }
-      void handle(SgAdaDerivedType& n)      { res = skipIf(n, skipAdaDerivedType); }
-      void handle(SgTypedefType& n)         { res = skipIf(n, skipTypedefType); }
-      void handle(SgModifierType& n)        { res = skipIf(n, skipModifierType); }
-      void handle(SgArrayType& n)           { res = skipIf(n, skipArrayType); }
-      void handle(SgPointerType& n)         { res = skipIf(n, skipPointerType); }
-      void handle(SgReferenceType& n)       { res = skipIf(n, skipReferenceType); }
-      void handle(SgRvalueReferenceType& n) { res = skipIf(n, skipRvalueReferenceType); }
-      void handle(SgAdaAccessType& n)       { res = skipIf(n, skipAdaAccessType); }
-
-    private:
-      TypeSkip skipWhat;
+      void handle(SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
+      void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
+      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
+      //~ void handle(SgPointerType& n)         { res = recurse(n.get_base_type()); }
+      //~ void handle(SgReferenceType& n)       { res = recurse(n.get_base_type()); }
+      //~ void handle(SgRvalueReferenceType& n) { res = recurse(n.get_base_type()); }
+      //~ void handle(SgAdaAccessType& n)       { res = recurse(n.get_base_type()); }
   };
 
-  SgType&
-  BaseType::find(SgType* n, TypeSkip skipWhat)
+  SgArrayType*
+  ArrayType::find(SgType* n)
   {
-    SgType* res = sg::dispatch(BaseType(skipWhat), n);
+    SgArrayType* res = sg::dispatch(ArrayType(), n);
+
+    return res;
+  }
+
+  ArrayType::ReturnType
+  ArrayType::recurse(SgType* n)
+  {
+    return ArrayType::find(n);
+  }
+
+  struct DimRange : sg::DispatchHandler<SgExpression*>
+  {
+    static
+    SgExpression& find(SgNode* n);
+
+    ReturnType recurse(SgNode* n);
+
+    // invalid case
+    void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
+
+    // base cases for expressions
+    //~ void handle(SgExpression&)            { res = NULL; }
+    void handle(SgRangeExp& n)            { res = &n; }
+    void handle(SgAdaAttributeExp& n)     { res = &n; }
+
+    // switch from expression to types
+    void handle(SgTypeExpression& n)      { res = recurse(n.get_type()); }
+
+    // base case for types
+    //~ void handle(SgType& n)                { res = NULL; }
+
+    // type expressions
+    void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
+
+    void handle(SgAdaSubtype& n)
+    {
+      SgAdaRangeConstraint& range = SG_DEREF(isSgAdaRangeConstraint(n.get_constraint()));
+
+      res = recurse(range.get_range());
+    }
+  };
+
+  SgExpression&
+  DimRange::find(SgNode* n)
+  {
+    SgExpression* res = sg::dispatch(DimRange(), n);
 
     return SG_DEREF(res);
   }
 
-  SgType*
-  BaseType::recurse(SgType* n)
+  DimRange::ReturnType
+  DimRange::recurse(SgNode* n)
   {
-    return &BaseType::find(n, skipWhat);
+    return &DimRange::find(n);
   }
 
-
-#if 0
-       * get_typeptr(): SgAdaSubtype
-       ** get_typeptr(): SgTypedefType // type
-       *** get_declaration() : SgTypedefDeclaration
-       **** get_base_type(): SgArrayType  // array type for Vector only
-       ** get_constraint() SgAdaIndexConstraint // constraints on type
-       *** get_indexRanges(): SgTypeExpression
-       **** get_type() SgTypedefType
-       ***** get_declaration() SgTypedefDeclaration // Index_Range_1
-       ****** get_base_type() : SgAdaSubtype
-       ******* get_constraint():  SgAdaRangeConstraint  // constraint on
-       ******** get_range(): SgRangeExp
-#endif /* USE_CASE */
-/*
-  struct ArrayBase : sg::DispatchHandler<SgType*>
+  struct ArrayBounds : sg::DispatchHandler<std::vector<SgExpression*> >
   {
-    static
-    SgType& find(const SgArrayType&);
+      static
+      ReturnType
+      find(SgType* n, SgArrayType* baseType);
 
-    // invalid case
-    void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+      ReturnType
+      recurse(SgType* n);
 
-    // base case
-    void handle(SgType& n)      { res = &n; }
+      // invalid case
+      void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
-    // recurse on array types
-    void handle(SgArrayType& n) { res = &find(n); }
+      // base cases
+      //~ void handle(SgType&)                  { /* do nothing */; }
+
+      // skipped types
+      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
+      void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
+      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
+
+      // subtype -> get the dimension info for each
+      void handle(SgAdaSubtype& n)
+      {
+        // the first subtype must be an index constraint
+        SgAdaIndexConstraint& idx = SG_DEREF(isSgAdaIndexConstraint(n.get_constraint()));
+        SgExpressionPtrList&  idxlst = idx.get_indexRanges();
+
+        for (size_t i = 0; i < idxlst.size(); ++i)
+        {
+          SgExpression* expr = idxlst[i];
+
+          res.push_back(&DimRange::find(expr));
+        }
+      }
+
+      void handle(SgArrayType& n)
+      {
+        SgExprListExp&        idx = SG_DEREF(n.get_dim_info());
+        SgExpressionPtrList&  idxlst = idx.get_expressions();
+
+        res.insert(res.end(), idxlst.begin(), idxlst.end());
+      }
   };
-*/
 
-  SgType&
-  findArrayBase(const SgArrayType& arrayType)
+  ArrayBounds::ReturnType
+  ArrayBounds::find(SgType* n, SgArrayType* baseType)
   {
-    SgType& ty = BaseType::find( arrayType.get_base_type(),
-                                 TypeSkip(skipTypedefType | skipAdaDerivedType | skipAdaSubtype)
-                               );
+    if (!baseType)
+      return ArrayBounds::ReturnType();
 
-    if (SgArrayType* arr = isSgArrayType(&ty))
-      return findArrayBase(*arr);
-
-    return ty;
+    return sg::dispatch(ArrayBounds(), n);
   }
 
-  std::vector<SgExpression*>
-  findBounds(const SgArrayType& arrayType)
+  ArrayBounds::ReturnType
+  ArrayBounds::recurse(SgType* n)
   {
-    std::vector<SgExpression*> res;
+    return sg::dispatch(ArrayBounds(), n);
+  }
 
-    return res;
+  struct IntegralValue : sg::DispatchHandler<long long int>
+  {
+    void handle(SgNode& n)     { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgExpression& n)
+    {
+      static const char* const msg = "sageInterface::ada: Expected constant integral value, got ";
+
+      throw std::runtime_error(msg + n.unparseToString());
+    }
+
+    void handle(SgIntVal& n)                 { res = n.get_value(); }
+    void handle(SgLongIntVal& n)             { res = n.get_value(); }
+    void handle(SgLongLongIntVal& n)         { res = n.get_value(); }
+    void handle(SgShortVal& n)               { res = n.get_value(); }
+    void handle(SgUnsignedCharVal& n)        { res = n.get_value(); }
+    void handle(SgUnsignedIntVal& n)         { res = n.get_value(); }
+    void handle(SgUnsignedLongLongIntVal& n) { res = n.get_value(); }
+    void handle(SgUnsignedLongVal& n)        { res = n.get_value(); }
+    void handle(SgUnsignedShortVal& n)       { res = n.get_value(); }
+  };
+
+  size_t dimValue(SgExprListExp& args)
+  {
+    SgExpressionPtrList& exprlst = args.get_expressions();
+
+    if (exprlst.size() == 0)
+      return 1;
+
+    ROSE_ASSERT(exprlst.size() == 1);
+    return sg::dispatch(IntegralValue(), exprlst[0]);
+  }
+
+  struct RangeExp : sg::DispatchHandler<SgRangeExp*>
+  {
+      typedef sg::DispatchHandler<SgRangeExp*> base;
+
+      explicit
+      RangeExp(size_t whichDimension)
+      : base(), dim(whichDimension)
+      {}
+
+      static
+      ReturnType
+      find(SgNode* n, size_t dim);
+
+      ReturnType
+      recurse(SgNode* n);
+
+      void notFound() const { ROSE_ASSERT(!res); }
+
+      size_t dimension() const
+      {
+        ROSE_ASSERT(dim > 0);
+
+        return dim-1;
+      }
+
+      //
+      // handlers
+
+      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+
+      // success
+      void handle(SgRangeExp& n)           { res = &n; }
+
+      // not found
+      void handle(SgType&)                 { notFound(); }
+
+      // For any expressions, try with the expression's type
+      // \note the ROSE AST may not yet compute the correct type for all
+      //       Ada expressions. Rather than putting on band aid here,
+      //       this would need to be fixed in the AST (if this is an issue).
+      void handle(SgExpression& n)         { res = recurse(n.get_type()); }
+
+      void handle(SgAdaAttributeExp& n)    { res = ::si::ada::range(n); }
+
+      void handle(SgAdaRangeConstraint& n) { res = recurse(n.get_range()); }
+
+      void handle(SgAdaIndexConstraint& n)
+      {
+        res = find(n.get_indexRanges().at(dimension()), 1);
+      }
+
+      void handle(SgAdaSubtype& n)
+      {
+        SgNode* constraint = n.get_constraint();
+
+        res = recurse(constraint ? constraint : n.get_base_type());
+      }
+
+      void handle(SgArrayType& n)
+      {
+        if (::si::ada::unconstrained(n))
+          return notFound();
+
+        SgExprListExp& exprlst = SG_DEREF(n.get_dim_info());
+
+        res = find(exprlst.get_expressions().at(dimension()), 1);
+      }
+
+      void handle(SgAdaDerivedType& n)     { res = recurse(n.get_base_type()); }
+      void handle(SgTypedefType& n)        { res = recurse(n.get_base_type()); }
+
+    private:
+      size_t dim;
+  };
+
+  RangeExp::ReturnType
+  RangeExp::find(SgNode* n, size_t dim)
+  {
+    return sg::dispatch(RangeExp(dim), n);
+  }
+
+  RangeExp::ReturnType
+  RangeExp::recurse(SgNode* n)
+  {
+    return find(n, dim);
   }
 }
 
@@ -147,26 +299,54 @@ namespace SageInterface
 {
 namespace ada
 {
-  bool withPrivateDefinition(const SgDeclarationStatement* n)
+  bool withPrivateDefinition(const SgDeclarationStatement& dcl)
   {
     // \todo check that dcl refers to a type
-
-    const SgDeclarationStatement& dcl = SG_DEREF(n);
     const SgDeclarationStatement* def = dcl.get_definingDeclaration();
 
     return def && def->get_declarationModifier().get_accessModifier().isPrivate();
   }
 
-  std::pair<SgType*, std::vector<SgExpression*> >
-  flattenArrayType(const SgArrayType* arrayType)
+  bool withPrivateDefinition(const SgDeclarationStatement* n)
   {
-    ROSE_ASSERT(arrayType);
+    return withPrivateDefinition(SG_DEREF(n));
+  }
 
-    return std::make_pair( &findArrayBase(*arrayType),
-                           findBounds(*arrayType)
-                         );
+  std::pair<SgArrayType*, std::vector<SgExpression*> >
+  flattenArrayType(SgType* atype)
+  {
+    SgArrayType* restype = ArrayType::find(atype);
+
+    return std::make_pair(restype, ArrayBounds::find(atype, restype));
+  }
+
+  SgRangeExp*
+  range(const SgAdaAttributeExp& rangeAttribute)
+  {
+    if (rangeAttribute.get_attribute() != "RANGE")
+      return NULL;
+
+    const size_t dim = dimValue(SG_DEREF(rangeAttribute.get_args()));
+
+    return RangeExp::find(rangeAttribute.get_object(), dim);
+  }
+
+  SgRangeExp*
+  range(const SgAdaAttributeExp* rangeAttribute)
+  {
+    return range(SG_DEREF(rangeAttribute));
+  }
+
+
+  bool unconstrained(const SgArrayType& ty)
+  {
+    return ty.get_is_variable_length_array();
+  }
+
+  bool unconstrained(const SgArrayType* ty)
+  {
+    return unconstrained(SG_DEREF(ty));
   }
 } // Ada
 } // SageInterface
 
-#endif /* _SAGEINTERFACE_ADA_H */
