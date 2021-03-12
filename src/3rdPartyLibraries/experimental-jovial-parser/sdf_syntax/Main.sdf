@@ -707,6 +707,7 @@ context-free syntax
      OptCharacterSize         -> CharacterItemDescription  {cons("CharacterItemDescription")}
 
   CompileTimeNumericFormula   -> CharacterSize             {cons("ItemSize")}
+  EQ                          -> CharacterSize             {reject}
 
   CharacterSize               -> OptCharacterSize
   % empty %                   -> OptCharacterSize          {cons("no-item-size")}
