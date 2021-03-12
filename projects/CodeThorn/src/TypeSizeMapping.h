@@ -29,11 +29,11 @@ namespace CodeThorn {
     TypeSizeMapping();
     ~TypeSizeMapping();
     static BuiltInType determineBuiltInTypeId(SgType* sgType);
+    CodeThorn::TypeSize getBuiltInTypeSize(CodeThorn::BuiltInType bitype);
     // sets sizes of all types (same as reported by sizeof on respective architecture)
     void setBuiltInTypeSizes(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
     void setTypeSize(BuiltInType bitype, CodeThorn::TypeSize size);
-    CodeThorn::TypeSize getTypeSize(CodeThorn::BuiltInType bitype);
     bool isUndefinedTypeSize(CodeThorn::TypeSize size);
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();

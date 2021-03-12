@@ -31,11 +31,11 @@ namespace CodeThorn {
     CodeThorn::TypeSize getTypeSize(VariableId varId);
     void setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize);
     void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
+    CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
 
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
-    CodeThorn::TypeSize getTypeSize(enum CodeThorn::BuiltInType);
     CodeThorn::TypeSize numClassMembers(SgType*); // from classMembers map
   private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);

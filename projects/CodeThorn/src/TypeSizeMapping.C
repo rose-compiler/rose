@@ -32,14 +32,14 @@ namespace CodeThorn {
     _mapping[bitype]=size;
   }
   
-  CodeThorn::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
+  CodeThorn::TypeSize TypeSizeMapping::getBuiltInTypeSize(BuiltInType bitype) {
     ROSE_ASSERT(bitype<_mapping.size());
     return _mapping[bitype];
   }
 
   std::size_t TypeSizeMapping::sizeOfOp(BuiltInType bitype) {
     ROSE_ASSERT(bitype<_mapping.size());
-    return getTypeSize(bitype);
+    return getBuiltInTypeSize(bitype);
   }
   
   bool TypeSizeMapping::isCpp11StandardCompliant() {
@@ -150,7 +150,7 @@ namespace CodeThorn {
     }
 
     default:
-      return getTypeSize(determineBuiltInTypeId(sgType));
+      return getBuiltInTypeSize(determineBuiltInTypeId(sgType));
       //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
     }

@@ -125,7 +125,7 @@ CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
 
 CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_variableIdMapping);
-  return AbstractValue::_variableIdMapping->getTypeSize(btype);
+  return AbstractValue::_variableIdMapping->getBuiltInTypeSize(btype);
 }
 
 void AbstractValue::setValue(long int val) {
