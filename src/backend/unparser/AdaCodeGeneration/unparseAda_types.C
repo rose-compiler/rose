@@ -7,14 +7,9 @@
 #include "unparser.h" //charles4:  I replaced this include:   #include "unparseX10.h"
 
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-//~ #include "rose_config.h"
-
-
-//~ void replaceString (std::string& str, const std::string& from, const std::string& to);
+namespace si = SageInterface;
 
 namespace
 {
@@ -138,7 +133,7 @@ namespace
     {
       prn(" array");
       prn("(");
-      arrayDimList(SG_DEREF(n.get_dim_info()), (n.get_is_variable_length_array() ? " range <>" : ""));
+      arrayDimList(SG_DEREF(n.get_dim_info()), (si::ada::unconstrained(n) ? " range <>" : ""));
       prn(")");
       prn(" of");
       type(n.get_base_type());
@@ -252,6 +247,9 @@ namespace
   std::string
   AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
   {
+    if (info.get_current_scope() == NULL)
+      return "<missing-scope>";
+
     SgScopeStatement& current = SG_DEREF(info.get_current_scope());
 
     return unparser.computeScopeQual(current, SG_DEREF(remote.get_scope()));
