@@ -321,20 +321,20 @@ namespace ada
   }
 
   SgRangeExp*
-  range(const SgAdaAttributeExp& rangeAttribute)
+  range(const SgAdaAttributeExp& n)
   {
-    if (rangeAttribute.get_attribute() != "RANGE")
+    if (boost::to_upper_copy(n.get_attribute()) != "RANGE")
       return NULL;
 
-    const size_t dim = dimValue(SG_DEREF(rangeAttribute.get_args()));
+    const size_t dim = dimValue(SG_DEREF(n.get_args()));
 
-    return RangeExp::find(rangeAttribute.get_object(), dim);
+    return RangeExp::find(n.get_object(), dim);
   }
 
   SgRangeExp*
-  range(const SgAdaAttributeExp* rangeAttribute)
+  range(const SgAdaAttributeExp* n)
   {
-    return range(SG_DEREF(rangeAttribute));
+    return range(SG_DEREF(n));
   }
 
 
