@@ -61,7 +61,7 @@ void ModuleBuilder::setInputDirs(SgProject* project)
   }
 }
 
-void ModuleBuilder::loadModule(const std::string &module_name, SgGlobal* file_scope)
+void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::string> &import_names, SgGlobal* file_scope)
 {
   SgNamespaceDeclarationStatement* namespace_decl = nullptr;
   SgNamespaceDefinitionStatement*  namespace_defn = nullptr;
@@ -85,22 +85,30 @@ void ModuleBuilder::loadModule(const std::string &module_name, SgGlobal* file_sc
 
   // inject namespace symbols into the file_scope of the caller
   if (namespace_symbols) {
-#if 0
-    std::cout << "--> inserting symbols from found namespace symbol  " << namespace_symbol->get_name() << " " << namespace_symbol << std::endl;
-#endif
-
+    ROSE_ASSERT(file_scope);
     BOOST_FOREACH(SgNode* node, namespace_symbols->get_symbols()) {
       SgSymbol* symbol = isSgSymbol(node);
       ROSE_ASSERT(symbol);
 
-      if (file_scope->symbol_exists(symbol->get_name()) == false) {
+      SgName symbol_name = symbol->get_name();
+      if (file_scope->symbol_exists(symbol_name) == false) {
+        if (import_names.size() > 0) {
+          // Only import names from the list (list shouldn't be too long so don't worry about repeated lookup time)
+          std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
+          if (it == import_names.end()) {
+            // symbol is not in the import name list so don't load it
+            symbol = nullptr;
+          }
+        }
+        if (symbol) {
 #if 0
         std::cout << "    : inserting symbol " << symbol->get_name()
                   << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
-        SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-        ROSE_ASSERT(alias_symbol);
-        file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+          SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
+          ROSE_ASSERT(alias_symbol);
+          file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+        }
       }
     }
   }
@@ -114,19 +122,12 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   typename ModuleMapType::iterator mapIterator = moduleNameMap.find(module_name);
   SgSourceFile* module_file = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
 
-#if 0
-  std::cout << "--> searching for module: " << module_name << std::endl;
-#endif
-
   // No need to read the module file if file was already parsed
   if (module_file) {
     // Since the module file wasn't parsed the file scope won't be on the stack, so push it
     SgGlobal* file_scope = module_file->get_globalScope();
     SageBuilder::pushScopeStack(file_scope);
-#if 0
-    std::cout << "    found existing module in map: " << module_name << std::endl;
-    std::cout << "    file scope is : " << file_scope << std::endl;
-#endif
+
     return module_file;
   }
 
@@ -142,10 +143,6 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
     ROSE_ASSERT(false);
   }
   else {
-#if 0
-    std::cout << "    storing module in map: " << module_name << std::endl;
-#endif
-
     // Store the parsed module file into the map (this is the only location where the map is modified)
     moduleNameMap.insert(ModuleMapType::value_type(module_name, module_file));
   }

@@ -1519,6 +1519,8 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
    ROSE_ASSERT(table_decl);
 
 // End SageTreeBuilder
+
+
    sage_tree_builder.Leave(table_decl);
 
    return ATtrue;
@@ -7023,6 +7025,13 @@ ATbool ATermToSageJovialTraversal::traverse_BoundsFunction(ATerm term, SgFunctio
 
    // Find symbol and table name or table type name
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(table_or_type_name, SageBuilder::topScopeStack());
+   if (!symbol) {
+      // could be anonymous type with variable declaration not seen yet
+      std::string anon_type_name = std::string("_anon_typeof_") + table_or_type_name;
+      symbol = SageInterface::lookupSymbolInParentScopes(anon_type_name, SageBuilder::topScopeStack());
+      // Not done yet, this is not the correct path
+      ROSE_ASSERT(false);
+   }
    ROSE_ASSERT(symbol);
 
    SgType* type = symbol->get_type();
@@ -7720,7 +7729,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 #endif
 
    ATerm t_dir_list, t_compool_name, t_decl_name;
+   char* declared_name;
    std::string compool_name;
+   std::vector<std::string> declared_name_list;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
 
    if (ATmatch(term, "CompoolDirective(<term>)", &t_dir_list)) {
@@ -7745,8 +7756,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
          while (! ATisEmpty(tail)) {
             ATerm head = ATgetFirst(tail);
             tail = ATgetNext(tail);
-            if (traverse_Name(head, compool_name)) {
-               // MATCHED Name
+            if (ATmatch(head, "<str>", &declared_name)) {
+              // CompoolDeclaredName is a list of names to be used by the current module
+              declared_name_list.push_back(std::string(declared_name));
             } else return ATfalse;
          }
       } else return ATfalse;
@@ -7763,7 +7775,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
       compool_name = compool_name.substr(1,len-2);
    }
 
-   sage_tree_builder.Enter(directive_stmt, compool_name, /*is_compool*/true);
+   sage_tree_builder.Enter(directive_stmt, compool_name, declared_name_list);
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_compool);
 
    sage_tree_builder.Leave(directive_stmt);
