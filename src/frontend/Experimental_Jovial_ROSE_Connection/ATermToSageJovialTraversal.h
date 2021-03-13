@@ -54,6 +54,7 @@ ATbool traverse_SubroutineDefinitionList(ATerm term);
 ATbool traverse_IntegerMachineParameter (ATerm term, SgExpression* &expr);
 ATbool traverse_FloatingMachineParameter(ATerm term, SgExpression* &expr);
 ATbool traverse_FixedMachineParameter   (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericMachineParameter (ATerm term, SgExpression* &expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term);
