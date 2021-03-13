@@ -368,6 +368,94 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineDefinitionList(ATerm term)
 }
 
 //========================================================================================
+// 1.4 IMPLEMENTATION PARAMETERS
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, SgExpression* &expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntegerMachineParameter: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
+
+   if (ATmatch(term, "BITSINBYTE")) {
+#if PRINT_WARNINGS
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
+#endif
+   }
+   else if (ATmatch(term, "BITSINWORD")) {
+     expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
+     setSourcePosition(expr, term);
+   }
+   else if (ATmatch(term, "LOCSINWORD")) {
+#if PRINT_WARNINGS
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
+#endif
+   }
+   else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
+#if PRINT_WARNINGS
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
+#endif
+      // MATCHED BYTEPOS
+      if (traverse_Formula(t_formula, expr)) {
+         // MATCHED CompileTimeNumericFormula
+      } else return ATfalse;
+   }
+
+   //TODO: 'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
+   //      'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
+   //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
+   //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
+   //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
+   //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
+
+
+   else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
+#if PRINT_WARNINGS
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
+#endif
+      // MATCHED IMPLFLOATPRECISION
+      if (traverse_Formula(t_precision, expr)) {
+         // MATCHED Precision
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+#if PRINT_WARNINGS
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
+#endif
+      // MATCHED IMPLFIXEDPRECISION
+      if (traverse_Formula(t_scale_spec, expr)) {
+         // MATCHED ScaleSpecifier
+      } else return ATfalse;
+      if (traverse_Formula(t_frac_spec, expr)) {
+         // MATCHED FractionSpecifier
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_NumericMachineParameter(ATerm term, SgExpression* &expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_NumericMachineParameter: %s\n", ATwriteToString(term));
+#endif
+
+   if (traverse_IntegerMachineParameter(term, expr)) {
+      // MATCHED IntegerMachineParameter
+   }
+   else return ATfalse;
+
+   if (expr == nullptr) {
+      cerr << "WARNING UNIMPLEMENTED: NumericMachineParameter\n";
+      ROSE_ASSERT(expr);
+   }
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 2.0 DECLARATIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::traverse_Declaration(ATerm term)
@@ -1519,8 +1607,6 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
    ROSE_ASSERT(table_decl);
 
 // End SageTreeBuilder
-
-
    sage_tree_builder.Leave(table_decl);
 
    return ATtrue;
@@ -5995,6 +6081,8 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
      // MATCHED ByteFunctionVariable
    } else if (traverse_RepFunctionVariable(term, var)) {
      // MATCHED RepFunctionVariable
+   } else if (traverse_NumericMachineParameter(term, var)) {
+     // MATCHED NumericMachineParameter
    }
    else return ATfalse;
 
