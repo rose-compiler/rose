@@ -1341,6 +1341,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgExprListExp* attr_list = nullptr;
    SgExprListExp* dim_info = nullptr;
    SgExpression* preset = nullptr;
+   bool table_needs_body = false;
    std::string table_var_name, table_type_name, anon_type_name;
 
    TableSpecifier table_spec;
@@ -1408,8 +1409,15 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //    with a body for the table definition member variables. The declaration will be anonymous
 //    and associated with the variable declaration (via baseTypeDefiningDeclaration).
 //
-   else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, preset, table_spec)) {
+//    This is the first pass to create the table type from which a variable declaration
+//    can be declared.  A second pass will be required to insert the body of the table.
+//    The body can't be read before the variable is created because a table item may
+//    reference the table name (in particular, UBOUND(table_name,0)).
+//
+   else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl)) {
       ROSE_ASSERT(table_decl);
+
+      table_needs_body = true;
 
       table_type = isSgJovialTableType(table_decl->get_type());
       ROSE_ASSERT(table_type);
@@ -1424,35 +1432,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
    ROSE_ASSERT(type);
    ROSE_ASSERT(table_type);
-
-// Set the structure specifier if present
-   const StructureSpecifier& struct_spec = table_spec.struct_spec;
-   if (struct_spec.is_parallel) {
-      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
-   }
-   else if (struct_spec.is_tight) {
-      table_type->set_structure_specifier(SgJovialTableType::e_tight);
-      table_type->set_bits_per_entry(struct_spec.bits_per_entry);
-   }
-
-// TODO: DELETE_ME - StructureSpecifier information has been placed in SgJovialTableType
-// If this works out, this code should be removed and the node deleted in ROSETTA
-#if 0
-   // Wrap the type in an SgStructureModifier if needed
-   if (struct_spec.is_parallel || struct_spec.is_tight) {
-      SgModifierType* modifiers = SageBuilder::buildModifierType(type);
-      if (struct_spec.is_parallel) {
-         modifiers->get_typeModifier().get_structureModifier().setParallel();
-      }
-      else if (struct_spec.is_tight) {
-         modifiers->get_typeModifier().get_structureModifier().setTight();
-         modifiers->get_typeModifier().get_structureModifier().set_bits_per_entry(struct_spec.bits_per_entry);
-      }
-
-   // Reset the type to the SgModifierType wrapper
-      type = modifiers;
-   }
-#endif
 
    if (constant) {
    // Create const SgModifierType with declared_type as base_type
@@ -1476,13 +1455,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
-   if (table_spec.packing_spec != e_packing_spec_unknown) {
-      SgStorageModifier& storage_mod = var_decl->get_declarationModifier().get_storageModifier();
-      if      (table_spec.packing_spec == e_packing_spec_none)  storage_mod.setPackingNone();
-      else if (table_spec.packing_spec == e_packing_spec_mixed) storage_mod.setPackingMixed();
-      else if (table_spec.packing_spec == e_packing_spec_dense) storage_mod.setPackingDense();
-   }
-
    SgClassDefinition* def = def_decl->get_definition();
    ROSE_ASSERT(def);
    ROSE_ASSERT(def->isCaseInsensitive());
@@ -1492,6 +1464,65 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    sage_tree_builder.injectAliasSymbol(table_var_name);
 
    sage_tree_builder.Leave(var_decl);
+
+// Traverse the table description a second time (if required) to insert the table members
+// from the table body. See description in comment #3 above as to why this is required.
+   if (table_needs_body) {
+     // There should not be a preset because it is read with the table body
+     ROSE_ASSERT(preset == nullptr);
+     ROSE_ASSERT(table_decl);
+     ROSE_ASSERT(var_decl);
+
+     // Insert the table members and get the preset
+     ROSE_ASSERT( traverse_TableDescriptionBody(t_table_desc, table_decl, preset, table_spec) );
+
+     // If there is a preset, an initializer must be set now because it wasn't possible when
+     // the variable was declared.
+     if (preset) {
+       SgAssignInitializer* init_expr = SageBuilder::buildAssignInitializer_nfi(preset, type);
+       SgInitializedName* init_name = var_decl->get_decl_item(table_var_name);
+       ROSE_ASSERT(init_name);
+
+       init_name->set_initializer(init_expr);
+       init_expr->set_parent(init_name);
+     }
+   }
+
+// Set the structure specifier if present
+   const StructureSpecifier& struct_spec = table_spec.struct_spec;
+   if (struct_spec.is_parallel) {
+      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
+   }
+   else if (struct_spec.is_tight) {
+      table_type->set_structure_specifier(SgJovialTableType::e_tight);
+      table_type->set_bits_per_entry(struct_spec.bits_per_entry);
+   }
+
+   if (table_spec.packing_spec != e_packing_spec_unknown) {
+      SgStorageModifier& storage_mod = var_decl->get_declarationModifier().get_storageModifier();
+      if      (table_spec.packing_spec == e_packing_spec_none)  storage_mod.setPackingNone();
+      else if (table_spec.packing_spec == e_packing_spec_mixed) storage_mod.setPackingMixed();
+      else if (table_spec.packing_spec == e_packing_spec_dense) storage_mod.setPackingDense();
+   }
+
+// TODO: DELETE_ME - StructureSpecifier information has been placed in SgJovialTableType
+// If this works out, this code should be removed and the node deleted in ROSETTA
+#if 0
+   // Wrap the type in an SgStructureModifier if needed
+   if (struct_spec.is_parallel || struct_spec.is_tight) {
+      SgModifierType* modifiers = SageBuilder::buildModifierType(type);
+      if (struct_spec.is_parallel) {
+         modifiers->get_typeModifier().get_structureModifier().setParallel();
+      }
+      else if (struct_spec.is_tight) {
+         modifiers->get_typeModifier().get_structureModifier().setTight();
+         modifiers->get_typeModifier().get_structureModifier().set_bits_per_entry(struct_spec.bits_per_entry);
+      }
+
+   // Reset the type to the SgModifierType wrapper
+      type = modifiers;
+   }
+#endif
 
    return ATtrue;
 }
@@ -1575,39 +1606,66 @@ traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset,
    return ATtrue;
 }
 
+// First Pass: This version of the overloaded function creates the table type declaration
+//
 ATbool ATermToSageJovialTraversal::
-traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableStatement* &table_decl,
-                                          SgExpression* &preset, TableSpecifier &table_spec)
+traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableStatement* &table_decl)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_TableDescription: %s\n", ATwriteToString(term));
+   printf("... traverse_TableDescription(create table_decl phase): %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_struct_spec, t_entry_spec;
 
    table_decl = nullptr;
-   StructureSpecifier& struct_spec = table_spec.struct_spec;
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
 
    // Begin SageTreeBuilder
       Rose::builder::SourcePositionPair sources;
       sage_tree_builder.Enter(table_decl, type_name, sources);
+      ROSE_ASSERT(table_decl);
+
+   // End SageTreeBuilder
+      sage_tree_builder.Leave(table_decl);
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+// Second Pass: This version of the overloaded function traverses the table body members and preset
+//
+ATbool ATermToSageJovialTraversal::
+traverse_TableDescriptionBody(ATerm term, SgJovialTableStatement* table_decl,
+                                          SgExpression* &preset, TableSpecifier &table_spec)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_TableDescription(add body phase): %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_struct_spec, t_entry_spec;
+
+   ROSE_ASSERT(table_decl);
+   StructureSpecifier& struct_spec = table_spec.struct_spec;
+
+   if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
 
       if (traverse_OptStructureSpecifier(t_struct_spec, struct_spec)) {
          // MATCHED OptStructureSpecifier
       } else return ATfalse;
 
-      if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset, table_spec)){
-         // MATCHED EntrySpecifierBody
+      SgClassDefinition* table_def = table_decl->get_definition();
+      ROSE_ASSERT(table_def);
+      SageBuilder::pushScopeStack(table_def);
+
+      if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset, table_spec)) {
+        // MATCHED EntrySpecifierBody
       } else return ATfalse;
+
+      SageBuilder::popScopeStack();
    }
    else return ATfalse;
-
-   ROSE_ASSERT(table_decl);
-
-// End SageTreeBuilder
-   sage_tree_builder.Leave(table_decl);
 
    return ATtrue;
 }
