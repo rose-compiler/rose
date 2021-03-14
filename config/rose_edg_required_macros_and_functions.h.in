@@ -72,7 +72,11 @@
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
 #ifdef __INTEL_COMPILER
-  #define __inline inline
+#   define __inline inline
+#   if (__INTEL_COMPILER <= 1900) && defined(__cplusplus)
+       template<typename _Tp>
+       _Tp* __builtin_addressof(_Tp& __r); 
+#   endif
 #endif
 
 
