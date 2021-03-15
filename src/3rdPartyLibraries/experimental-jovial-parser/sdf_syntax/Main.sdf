@@ -668,6 +668,7 @@ context-free syntax
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeNumericFormula   -> ScaleSpecifier          {cons("ScaleSpecifier")}
+  EQ                          -> ScaleSpecifier          {reject}
   CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
   EQ                          -> FractionSpecifier       {reject}
 %% What to do here
