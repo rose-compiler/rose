@@ -3834,7 +3834,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
    printf("... traverse_ProcedureDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_proc_heading, t_decl;
+   ATerm t_proc_heading, t_directives, t_decl;
 
    std::string name;
    std::list<FormalParameter> param_name_list;
@@ -3844,7 +3844,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "ProcedureDeclaration(<term>,<term>)", &t_proc_heading, &t_decl)) {
+   if (ATmatch(term, "ProcedureDeclaration(<term>,<term>,<term>)", &t_proc_heading, &t_directives, &t_decl)) {
 
       if (traverse_ProcedureHeading(t_proc_heading, name, param_name_list, modifiers)) {
          // MATCHED ProcedureHeading
@@ -3854,6 +3854,10 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, nullptr, is_defining_decl);
+
+      if (traverse_DirectiveList(t_directives)) {
+         // MATCHED PostProcDirective*
+      } else return ATfalse;
 
    // These declarations will stored in the function parameter scope
       if (traverse_Declaration(t_decl)) {
@@ -3880,7 +3884,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
    printf("... traverse_ProcedureDefinition: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_proc_heading, t_proc_body;
+   ATerm t_proc_heading, t_directives, t_proc_body;
 
    std::string name;
    std::list<FormalParameter> param_name_list;
@@ -3890,7 +3894,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
+   if (ATmatch(term, "ProcedureDefinition(<term>,<term>,<term>)", &t_proc_heading, &t_directives, &t_proc_body)) {
 
       if (traverse_ProcedureHeading(t_proc_heading, name, param_name_list, modifiers)) {
          // MATCHED ProcedureHeading
@@ -3898,6 +3902,10 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, nullptr, is_defining_decl);
+
+      if (traverse_DirectiveList(t_directives)) {
+         // MATCHED PostProcDirective*
+      } else return ATfalse;
 
    // These declarations will stored in the function parameter scope
       if (traverse_SubroutineBody(t_proc_body)) {
@@ -4018,7 +4026,7 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    printf("... traverse_FunctionDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_func_heading, t_decl;
+   ATerm t_func_heading, t_directives, t_decl;
 
    std::string name;
    SgType* return_type = NULL;
@@ -4029,7 +4037,7 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "FunctionDeclaration(<term>,<term>)", &t_func_heading, &t_decl)) {
+   if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_directives, &t_decl)) {
 
       if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
@@ -4039,6 +4047,10 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
+
+      if (traverse_DirectiveList(t_directives)) {
+         // MATCHED PostProcDirective*
+      } else return ATfalse;
 
       if (traverse_Declaration(t_decl)) {
          // MATCHED Declaration
@@ -4064,7 +4076,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    printf("... traverse_FunctionDefinition: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_func_heading, t_proc_body;
+   ATerm t_func_heading, t_directives, t_proc_body;
 
    std::string name;
    SgType* return_type = NULL;
@@ -4075,7 +4087,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    SgScopeStatement* param_scope = nullptr;
    bool is_defining_decl = true;
 
-   if (ATmatch(term, "FunctionDefinition(<term>,<term>)", &t_func_heading, &t_proc_body)) {
+   if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_directives, &t_proc_body)) {
 
       if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
@@ -4083,6 +4095,10 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
    // Enter SageTreeBuilder for SgFunctionParameterList
       sage_tree_builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
+
+      if (traverse_DirectiveList(t_directives)) {
+         // MATCHED PostProcDirective*
+      } else return ATfalse;
 
       if (traverse_SubroutineBody(t_proc_body)) {
          // MATCHED FunctionBody
