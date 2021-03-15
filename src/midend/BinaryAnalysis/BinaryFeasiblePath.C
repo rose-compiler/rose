@@ -648,6 +648,7 @@ FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::Const
 
 FeasiblePath::Statistics&
 FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
+    nPathsExplored += other.nPathsExplored;
     maxVertexVisitHits += other.maxVertexVisitHits;
     maxPathLengthHits += other.maxPathLengthHits;
     maxCallDepthHits += other.maxCallDepthHits;
@@ -2096,6 +2097,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         makeSubstitutions(subst, sem.ops); // so symbolic expression parsers use the latest state when expanding register and memory references.
 
         while (!path.isEmpty()) {
+            ++stats_.nPathsExplored;
             size_t pathNInsns = pathLength(path);
             progress.value(pathNInsns);
             dfsDebugCurrentPath(debug, path, solver, effectiveMaxPathLength);

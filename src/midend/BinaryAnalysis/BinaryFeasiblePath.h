@@ -128,6 +128,7 @@ public:
 
     /** Statistics from path searching. */
     struct Statistics {
+        size_t nPathsExplored;                          /**< Number of paths explored. */
         size_t maxVertexVisitHits;                      /**< Number of times settings.maxVertexVisit was hit. */
         size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
         size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
@@ -135,7 +136,7 @@ public:
         Sawyer::Container::Map<rose_addr_t, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
 
         Statistics()
-            : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
+            : nPathsExplored(0), maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
 
         Statistics& operator+=(const Statistics&);
     };
