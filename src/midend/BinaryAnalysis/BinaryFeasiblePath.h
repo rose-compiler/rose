@@ -358,11 +358,12 @@ private:
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
-    Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
 
+    mutable SAWYER_THREAD_TRAITS::Mutex statsMutex_;    // protects the following data member
+    Statistics stats_;                                  // statistical results of the analysis
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Construction, destruction
@@ -390,8 +391,11 @@ public:
         resetStatistics();
     }
 
-    /** Reset only statistics. */
+    /** Reset only statistics.
+     *
+     *  Thread safety: This method is thread safe. */
     void resetStatistics() {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         stats_ = Statistics();
     }
 
@@ -647,8 +651,11 @@ public:
 
     /** Cumulative statistics about prior analyses.
      *
-     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics. */
+     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics.
+     *
+     *  Thread safety: This method is thread safe. */
     Statistics statistics() const {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         return stats_;
     }
 
