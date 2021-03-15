@@ -14,7 +14,7 @@
 // Work around a bug in boost::serialization for 1.74.0
 #include <boost/version.hpp>
 #if BOOST_VERSION == 107400
-#include <boost/serialization/library_version_type.hpp>
+     #include <boost/serialization/library_version_type.hpp>
 #endif
 
 #include <boost/foreach.hpp>
