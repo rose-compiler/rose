@@ -116,22 +116,28 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
 
          SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
          SgBinaryOp* bin_op_parent = isSgBinaryOp(prev_var_ref->get_parent());
-         ROSE_ASSERT(bin_op_parent);
-         ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
 
-         SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
-         SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
-         func_call->set_parent(bin_op_parent);
-         bin_op_parent->set_rhs_operand(func_call);
+         if (bin_op_parent) {
+           ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
 
-      // The dangling variable reference has been fixed
-         it = forward_var_refs_.erase(it);
+           SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+           SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
+           func_call->set_parent(bin_op_parent);
+           bin_op_parent->set_rhs_operand(func_call);
 
-      // Delete the previous variable reference, symbol and initialized name
-         delete prev_init_name;
-         delete prev_var_sym;
-         delete prev_var_ref;
+        // The dangling variable reference has been fixed
+           it = forward_var_refs_.erase(it);
 
+        // Delete the previous variable reference, symbol and initialized name
+           delete prev_init_name;
+           delete prev_var_sym;
+           delete prev_var_ref;
+         }
+       else {
+         // not sure what this is, prev_var_ref->get_parent() is an SgExprStatement
+         std::cout << "{" << it->first << ": " << it->second << "}\n";
+         it++;
+       }
        }
        else {
          std::cout << "{" << it->first << ": " << it->second << "}\n";
@@ -357,11 +363,9 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
        if (symbol == nullptr) {
-#ifdef PRINT_WARNINGS
-         std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
+         std::cerr << "SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
                    << param.name << "\n";
          ROSE_ASSERT(symbol);
-#endif
        }
 
     // Create a new initialized name for the parameter list
