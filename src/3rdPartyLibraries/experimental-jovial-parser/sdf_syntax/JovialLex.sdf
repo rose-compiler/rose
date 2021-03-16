@@ -265,6 +265,8 @@ exports
 
 %% 8.4 COMMENTS
 %%
+  [\%][\%]                  -> LAYOUT
+  [\"][\"]                  -> LAYOUT
   [\%] ~[\%]+ [\%]          -> LAYOUT
   [\"] ~[\"]+ [\"]          -> LAYOUT
 
