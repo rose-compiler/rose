@@ -21067,13 +21067,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
             SgInitializedName * init_name = (*ii);
 
+            // Rasmussen (3/16/2021): Use the base type in case type is modified (i.e., const)
+            SgType* var_type = init_name->get_type();
+            if (SgModifierType* mod_type = isSgModifierType(var_type))
+            {
+              var_type = mod_type->get_base_type();
+            }
+
             // Rasmussen (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
             // moved. This is fixed below. Note that SgJovialTableType derives from SgClassType, it may
             // be that class types are not moved correctly either.
             //
-            if (isSgEnumType(init_name->get_type()))
+            if (isSgEnumType(var_type))
             {
-              SgEnumType* enum_type = isSgEnumType(init_name->get_type());
+              SgEnumType* enum_type = isSgEnumType(var_type);
               SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
               SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
               SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(decl->get_firstNondefiningDeclaration());
@@ -21093,9 +21100,9 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
                 }
               }
             }
-            else if (isSgJovialTableType(init_name->get_type()))
+            else if (isSgJovialTableType(var_type))
             {
-              SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
+              SgJovialTableType* table_type = isSgJovialTableType(var_type);
               SgDeclarationStatement* decl = table_type->get_declaration();
               if (decl->get_scope() == sourceBlock)
               {
