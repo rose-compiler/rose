@@ -323,7 +323,7 @@ namespace ada
   SgRangeExp*
   range(const SgAdaAttributeExp& n)
   {
-    if (boost::to_upper_copy(n.get_attribute()) != "RANGE")
+    if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
       return NULL;
 
     const size_t dim = dimValue(SG_DEREF(n.get_args()));
