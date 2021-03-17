@@ -786,7 +786,7 @@ namespace
     if (!n) return;
 
     SgRangeExp* rangeExpr = si::ada::range(n);
-    const bool  rangeAttr = boost::to_upper_copy(n->get_attribute()) == "RANGE";
+    const bool  rangeAttr = boost::to_upper_copy(n->get_attribute().getString()) == "RANGE";
 
     std::string out = "<null>";
 
