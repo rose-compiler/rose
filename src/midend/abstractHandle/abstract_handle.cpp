@@ -380,12 +380,14 @@ namespace AbstractHandle{
         cerr<<"error, expecting a number in fromString(specifier&,string) but get "
            <<value_str<<endl;
         assert(false);
+        abort();
       }
     } else
     {
       //TODO labels
       cerr<<"error, unhandled specifier type in fromString(specifier&,string) "<<endl;
       assert(false);
+      abort();
     }
     result.set_type(stype);
     result.set_value(svalue);

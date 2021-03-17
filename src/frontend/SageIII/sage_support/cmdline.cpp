@@ -2720,6 +2720,7 @@ ExpandArglist (const std::string& arglist_string)
           << "on the command line. Should be @<filename>."
           << std::endl;
       ROSE_ASSERT(false);
+      abort();
   }
   else
   {
