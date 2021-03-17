@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef VAR_SETS_H
 #define VAR_SETS_H
 
@@ -88,4 +91,5 @@ namespace varSets
 
 }//namespace varSets
 
+#endif
 #endif
