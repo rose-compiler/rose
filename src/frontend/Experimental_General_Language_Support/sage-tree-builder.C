@@ -1118,7 +1118,7 @@ Leave(SgJovialDefineDeclaration* define_decl)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, bool is_compool)
+Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
@@ -1128,15 +1128,42 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
 
 // The first nondefining declaration must be set
    directive->set_firstNondefiningDeclaration(directive);
+}
 
-   if (is_compool)
-     {
-        // Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
-        // because API can't see Sage nodes until C++17, so set it correctly as it is known here.
-        directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+void SageTreeBuilder::
+Enter(SgJovialDirectiveStatement* &directive, const std::string &compool_name, std::vector<std::string> &import_names)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
-        importModule(directive_string);
+   std::string directive_string = "'" + compool_name + "'";
+   if (import_names.size() == 0) {
+     directive_string = "(" + directive_string + ")";
+   } else {
+     bool first = true;
+     BOOST_FOREACH(std::string &name, import_names) {
+       if (first) {
+         directive_string += " " + name;
+         first = false;
+       }
+       else {
+         directive_string += ", " + name;
+       }
      }
+   }
+
+   directive = new SgJovialDirectiveStatement(directive_string, SgJovialDirectiveStatement::e_unknown);
+   ROSE_ASSERT(directive);
+   SageInterface::setSourcePosition(directive);
+
+// The first nondefining declaration must be set
+   directive->set_firstNondefiningDeclaration(directive);
+
+// Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
+// because API can't see Sage nodes until C++17, so set it correctly as it is known here.
+   directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+
+   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
+   compool_builder.loadModule(compool_name, import_names, isSgGlobal(SageBuilder::topScopeStack()));
 }
 
 void SageTreeBuilder::
@@ -1587,16 +1614,6 @@ void SageTreeBuilder::
 Leave(SgTypedefDeclaration* type_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
-}
-
-void SageTreeBuilder::
-importModule(const std::string &module_name)
-{
-   mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
-   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
-
-   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
-   compool_builder.loadModule(module_name, isSgGlobal(SageBuilder::topScopeStack()));
 }
 
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to

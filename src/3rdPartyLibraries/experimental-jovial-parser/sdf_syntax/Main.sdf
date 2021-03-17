@@ -32,6 +32,7 @@ CompoolFileName
 CompoolDeclaredName
 OptCompoolFileName
 CompoolDirectiveList
+PostProcDirective
 OrderDirective
 InitializeDirective
 RearrangeDirective
@@ -957,7 +958,7 @@ context-free syntax
 %%Added UserDefinedFunctionCall to remove ambiguities
 %% when there is a PresetValuesOption that is a TableItem
 %% TableItems can only be parsed as UserDefinedFunctionCall
-  UserDefinedFunctionCall         -> OptItemPresetValue      {prefer}
+  FunctionCall                    -> OptItemPresetValue      {prefer}
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
 
@@ -1181,9 +1182,11 @@ context-free syntax
 %% 3.1 PROCEDURES
 %%
   ProcedureHeading ';'
+    PostProcDirective*
     Declaration                   -> ProcedureDeclaration   {cons("ProcedureDeclaration")}
 
   ProcedureHeading ';'
+    PostProcDirective*
     ProcedureBody                 -> ProcedureDefinition    {cons("ProcedureDefinition")}
 
   'PROC'
@@ -1214,12 +1217,11 @@ context-free syntax
 %% 3.2 FUNCTIONS
 %%
   FunctionHeading ';'
-%%  Directives are now Declarations
-%%  ReducibleDirective*
+    PostProcDirective*
     Declaration                   -> FunctionDeclaration    {cons("FunctionDeclaration")}
 
   FunctionHeading ';'
-%%  ReducibleDirective*
+    PostProcDirective*
     FunctionBody                  -> FunctionDefinition      {cons("FunctionDefinition")}
 
   'PROC'
@@ -1541,6 +1543,7 @@ context-free syntax
   '(' Formula ')'                 -> Primary            {cons("Parens")}
   StatusConstant                  -> Primary            {cons("StatusFormula")}
   Conversion                      -> Primary
+  NumericMachineParameter         -> Primary
 
   Primary                         -> Level1Expr
   ControlLetter                   -> Level1Expr
@@ -2154,10 +2157,8 @@ context-free syntax
   SkipDirective            -> Directive
   BeginDirective           -> Directive
   EndDirective             -> Directive
-  LinkageDirective         -> Directive
   TraceDirective           -> Directive
   InterferenceDirective    -> Directive
-  ReducibleDirective       -> Directive
   NolistDirective          -> Directive
   ListDirective            -> Directive
   EjectDirective           -> Directive
@@ -2171,6 +2172,10 @@ context-free syntax
   RearrangeDirective       -> Directive
   InitializeDirective      -> Directive
   OrderDirective           -> Directive
+
+  LinkageDirective         -> PostProcDirective  %% only after ProcedureHeading
+  ReducibleDirective       -> PostProcDirective  %% only after FunctionHeading (but SEA compiler is flexible)
+
 
 %% 9.1 COMPOOL DIRECTIVE
 %%
