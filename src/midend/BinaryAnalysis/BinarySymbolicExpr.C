@@ -3642,7 +3642,7 @@ makeAdd(const Ptr&a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 
 Ptr
 makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_AND, a, b, solver, comment, flags);
+    return Interior::instance(OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr

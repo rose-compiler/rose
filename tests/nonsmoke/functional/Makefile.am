@@ -137,7 +137,7 @@ testAtermGraphGeneration_SOURCES = testAtermGraphGeneration.C
 endif
 
 # Ignores internal ROSE failures, see `rose --help` for info on `-rose:keep_going`
-KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
+#KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 
 # DQ (7/2/2015): Added test that marks templates to be output with instantiations.
 testTemplates_SOURCES = testTemplates.C
