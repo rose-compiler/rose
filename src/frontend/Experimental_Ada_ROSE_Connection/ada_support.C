@@ -62,8 +62,6 @@ int main(int argc, char** argv)
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
-     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
-
      Ada_ROSE_Translation::Settings settings;
 
      scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
@@ -115,6 +113,8 @@ int main(int argc, char** argv)
      if (settings.logInfo)  warninglevels += ", info";
 
      logctrl.control(warninglevels);
+
+     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
 
   // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
      const char *gnat_home   = std::getenv("GNAT_HOME");

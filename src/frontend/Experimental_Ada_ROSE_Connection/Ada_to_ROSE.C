@@ -693,12 +693,12 @@ namespace
       else if (parentID > 0)
       {
         // parentID == 1.. is 1 used for the package standard??
-        logError() << "unknown unit dependency: "
-                   << pos->first.name << ' '
-                   << (pos->first.isbody ? "[body]" : "[spec]")
-                   << "#" << pos->second.unit->ID
-                   << " -> #" << parentID
-                   << std::endl;
+        logWarn() << "unknown unit dependency: "
+                  << pos->first.name << ' '
+                  << (pos->first.isbody ? "[body]" : "[spec]")
+                  << "#" << pos->second.unit->ID
+                  << " -> #" << parentID
+                  << std::endl;
       }
 
       addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
@@ -786,7 +786,7 @@ namespace
     if (!n) return;
 
     SgRangeExp* rangeExpr = si::ada::range(n);
-    const bool  rangeAttr = n->get_attribute() == "RANGE";
+    const bool  rangeAttr = boost::to_upper_copy(n->get_attribute().getString()) == "RANGE";
 
     std::string out = "<null>";
 
