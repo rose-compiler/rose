@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include <assert.h>
@@ -79,3 +81,4 @@ void pointerRuleAnn::lookup(procedureAnn * procedure,
   // -- Looking up the effects is handled by procedureAnn
 }
 
+#endif

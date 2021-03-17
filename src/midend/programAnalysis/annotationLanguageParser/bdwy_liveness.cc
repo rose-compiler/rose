@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include "bdwy_liveness.h"
@@ -90,3 +92,4 @@ void bdwyLivenessAnalyzer::at_threeAddr(stmtLocation * stmt,
   _automatically_live = false;
 }
 
+#endif

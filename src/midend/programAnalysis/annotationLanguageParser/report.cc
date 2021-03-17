@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
@@ -404,4 +406,5 @@ void reportAnn::report(ostream & out,
   Annotations::Verbose_properties = old_verbose_val;
 }
 
+#endif
 #endif
