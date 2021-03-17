@@ -180,11 +180,13 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.info.printVariableIdMapping) {
       cout<<"VariableIdMapping:"<<endl;
       VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      //AbstractValue::setVariableIdMapping(vim);
+
       vim->computeVariableSymbolMapping(sageProject,0);
       vim->toStream(cout);
       exit(0);
     }
-
+    
     optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);

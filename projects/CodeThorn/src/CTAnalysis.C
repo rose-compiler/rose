@@ -1487,18 +1487,28 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           setElementSize(initDeclVarId,variableType);
         }
 
+	SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
         PState newPState=*currentEState.pstate();
         if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
           // add default array elements to PState
-          size_t length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-          //cout<<"DEBUG: DECLARING ARRAY: size: "<<decl->unparseToString()<<length<<endl;
-          for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
-            AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-            // set default init value
-            getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
-          }
+          auto length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+	  if(length>0) {
+	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of size: "<<decl->unparseToString()<<":"<<length<<endl;
+	    for(CodeThorn::TypeSize elemIndex=0;elemIndex<length;elemIndex++) {
+	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+	      // set default init value
+	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
+	    }
+	  } else {
+	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
+	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
+	      // set default init value
+	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr); // TODO: reserve summary memory location	    
+	  }
 
         } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: class"<<endl;
           // create only address start address of struct (on the
           // stack) alternatively addresses for all member variables
           // can be created; however, a member var can only be
@@ -1511,6 +1521,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           // TODO: STRUCT VARIABLE DECLARATION
           getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
         } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,pointerVal);
@@ -1521,6 +1532,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
           getExprAnalyzer()->reserveMemoryLocation(label,&newPState,AbstractValue::createAddressOfVariable(initDeclVarId));
         }
+	SAWYER_MESG(logger[TRACE])<<"Creating new EState"<<endl;
         return createEState(targetLabel,cs,newPState,cset);
       }
     } else {

@@ -163,6 +163,8 @@ namespace CodeThorn {
     return determineTypeSize(elementType);
   }
 
+  CodeThorn::TypeSize unknownSizeValue() { return -1; }
+  
   //! Calculate the number of elements of an array type
   CodeThorn::TypeSize TypeSizeMapping::determineNumberOfElements(SgArrayType* t) {
     //return SageInterface::getArrayElementCount(sgType);
@@ -172,7 +174,7 @@ namespace CodeThorn {
   
     // assume dimension default to 1 if not specified ,such as a[] 
     if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
-      result = 0;
+      result = unknownSizeValue();
     } else { 
       if(AbstractValue::getVariableIdMapping()==nullptr) {
         //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
@@ -181,7 +183,7 @@ namespace CodeThorn {
         if(!(valExp || valExpInt)) {
           //SAWYER_MESG(CodeThorn::logger[ERROR])<<"Unexpected value: determineNumberOfElements: "<<indexExp->class_name()<<endl;
           //exit(1);
-          return 0;
+          return unknownSizeValue();
         } else {
           if (valExp)
             result = valExp->get_value(); 
@@ -196,14 +198,17 @@ namespace CodeThorn {
           result=abstractSize.getIntValue();
         } else {
           // TODO: make the result of this entire function an abstract value
-          result=0;
+	  cout<<"DEBUG:P2"<<endl;
+          result=unknownSizeValue();
         }
       }
     }
     // consider multi dimensional case 
+#if 0
     SgArrayType* arraybase = isSgArrayType(t->get_base_type());
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
+#endif
     return result;
   }
   

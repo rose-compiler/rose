@@ -914,12 +914,16 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
         // the size of the memory region of a string is its length + 1 (for terminating 0).
         setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
-        setElementSize(newVariableId,1);
+	int elementSize=1; // char
+        setElementSize(newVariableId,elementSize);
+	setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
+	setOffset(newVariableId,unknownSizeValue());
+	getVariableIdInfoPtr(newVariableId)->aggregateType=AT_ARRAY; // string literals are maintained as arrays with known length (includes terminating 0)
+
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
-        //cout<<"registered."<<endl;
       } else {
-        //cout<<"NOT registered."<<endl;
+        // already registered
       }
     }
   }
