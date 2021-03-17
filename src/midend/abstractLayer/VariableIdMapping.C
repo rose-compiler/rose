@@ -388,7 +388,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
         //type = closureVar->get_type();
-      } else if(initName = isSgInitializedName(*i)) {
+      } else if((initName = isSgInitializedName(*i))) {
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
