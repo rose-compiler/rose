@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "sequenceStructAnalysis.h"
 
 int sequenceStructAnalysisDebugLevel=0;
@@ -462,3 +465,5 @@ void printSeqStructAnalysisStates(SeqStructAnalysis* ssa, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

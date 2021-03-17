@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef LATTICE_H
 #define LATTICE_H
 
@@ -137,4 +140,5 @@ class InfiniteLattice : public virtual Lattice
         virtual bool widenUpdate(InfiniteLattice* that)=0;
 };
 
+#endif
 #endif

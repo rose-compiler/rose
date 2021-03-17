@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #if !defined(FUNCTION_STATE_H) && !defined(NO_FUNCTION_STATE_H)
 #define FUNCTION_STATE_H
 
@@ -64,4 +67,5 @@ class CollectFunctions : public TraverseCallGraphUnordered/*TraverseCallGraphBot
         virtual ~CollectFunctions() {}
 };
 
+#endif
 #endif
