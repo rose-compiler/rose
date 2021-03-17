@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_LOCALVARIABLE_H
 #define BDWY_LOCALVARIABLE_H
@@ -219,3 +221,4 @@ public:
 };
 
 #endif /*  */
+#endif
