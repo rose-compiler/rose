@@ -41,7 +41,7 @@ public:
    void setCurrentProject(SgProject* project);
    SgProject* getCurrentProject() { return SageInterface::getProject(); }
 
-   void loadModule(const std::string &module_name, SgGlobal* file_scope);
+   void loadModule(const std::string &module_name, std::vector<std::string> &import_names, SgGlobal* file_scope);
    SgSourceFile* getModule(const std::string &module_name);
    void addMapping(const std::string &module_name, SgSourceFile* module_stmt);
 

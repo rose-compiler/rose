@@ -54,6 +54,7 @@ ATbool traverse_SubroutineDefinitionList(ATerm term);
 ATbool traverse_IntegerMachineParameter (ATerm term, SgExpression* &expr);
 ATbool traverse_FloatingMachineParameter(ATerm term, SgExpression* &expr);
 ATbool traverse_FixedMachineParameter   (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericMachineParameter (ATerm term, SgExpression* &expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term);
@@ -103,7 +104,8 @@ ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0, bool con
 ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgExpression* &preset);
 ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset,
                                                     SgExprListExp* attr_list, TableSpecifier &table_spec);
-ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl,
+ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl);
+ATbool traverse_TableDescriptionBody   (ATerm term, SgJovialTableStatement* sg_table_decl,
                                                     SgExpression* &preset, TableSpecifier &table_spec);
 ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset,
                                                     SgExprListExp* attr_list, TableSpecifier &table_spec);

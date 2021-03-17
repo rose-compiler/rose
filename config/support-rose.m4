@@ -2440,6 +2440,7 @@ tests/nonsmoke/functional/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testNostdincOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testAnsiOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
