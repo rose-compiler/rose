@@ -125,7 +125,7 @@ CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
 
 CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_variableIdMapping);
-  return AbstractValue::_variableIdMapping->getTypeSize(btype);
+  return AbstractValue::_variableIdMapping->getBuiltInTypeSize(btype);
 }
 
 void AbstractValue::setValue(long int val) {
@@ -765,7 +765,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
         <<variableId.toUniqueString(vim)
@@ -1283,7 +1283,7 @@ bool AbstractValue::isReferenceVariableAddress() {
     return true;
   }
   if(isPtr()||isRef()) {
-    return getVariableIdMapping()->hasReferenceType(getVariableId());
+    return getVariableIdMapping()->isOfReferenceType(getVariableId());
   }
   return false;
 }

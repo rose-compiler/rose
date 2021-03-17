@@ -48,7 +48,7 @@ void CodeThorn::TransformationOperators::substituteUsesWithAvailableExpRhsOfDef(
             Label def=*varDefs.begin(); // guaranteed to be one
             SgNode* defRootNode=labeler->getNode(def);
             // only substitute variables
-            if(variableIdMapping->hasIntegerType(*i)||variableIdMapping->hasFloatingPointType(*i)) {
+            if(variableIdMapping->isOfIntegerType(*i)||variableIdMapping->isOfFloatingPointType(*i)) {
               //cout<<"Found UD Attribute with one def. variable:"<<variableIdMapping->uniqueVariableName(*i)<<" ";
               //cout<<"DEF:"<<defRootNode->unparseToString()<<endl;
               // somewhat combersome to determime the rhs of the def

@@ -148,7 +148,7 @@ void checkStaticArrayBounds(SgProject* root, CodeThorn::IntervalAnalysis* interv
             VariableId indexVarId=variableIdMapping->variableId(indexVar);
             IntervalPropertyState* intervalPropertyState=dynamic_cast<IntervalPropertyState*>(intervalAnalysis->getPreInfo(*j));
             ROSE_ASSERT(intervalPropertyState);
-            if(!variableIdMapping->hasArrayType(arrayVarId)) {
+            if(!variableIdMapping->isOfArrayType(arrayVarId)) {
               cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
               exit(1);
             }

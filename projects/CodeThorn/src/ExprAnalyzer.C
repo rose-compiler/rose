@@ -885,7 +885,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       PState pstate2=*const_pstate; // also removes constness
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
-      if(_variableIdMapping->hasArrayType(arrayVarId)) {
+      if(_variableIdMapping->isOfArrayType(arrayVarId)) {
         if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
           // function parameter of array type contains a pointer value in C/C++
           arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter only (without index)
@@ -894,7 +894,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
         }
-      } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+      } else if(_variableIdMapping->isOfPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
         if(pstate2.varExists(arrayVarId)) {
@@ -914,7 +914,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         }
-      } else if(_variableIdMapping->hasReferenceType(arrayVarId)) {
+      } else if(_variableIdMapping->isOfReferenceType(arrayVarId)) {
         SAWYER_MESG(logger[TRACE])<<"reference array variable access"<<endl;
         arrayPtrValue=readFromReferenceMemoryLocation(estate.label(),&pstate2,arrayVarId);
         if(arrayPtrValue.isBot()) {
@@ -990,7 +990,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           return resultList;
         }
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId)) {
+        if(_variableIdMapping->isOfArrayType(arrayVarId)) {
           if(_variableIdMapping->hasAssignInitializer(arrayVarId)) {
             // special case of string initializer: x[2]="";
             SAWYER_MESG(logger[WARN])<<"array assign initializer is not supported yet (assuming any value):"<<node->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -1505,7 +1505,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     //return listify(res);
   }
   if(pstate->varExists(varId)) {
-    if(_variableIdMapping->hasArrayType(varId)) {
+    if(_variableIdMapping->isOfArrayType(varId)) {
       SAWYER_MESG(logger[TRACE])<<"DEBUG: lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
@@ -1516,7 +1516,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
+    if(_variableIdMapping->isOfArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       SAWYER_MESG(logger[TRACE])<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
@@ -1606,15 +1606,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     return listify(res);
   }
   // TODO: as rvalue it represents the entire class
-  if(_variableIdMapping->hasClassType(varId)) {
+  if(_variableIdMapping->isOfClassType(varId)) {
     res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
   }
   if(pstate->varExists(varId)) {
-    if(_variableIdMapping->hasArrayType(varId)) {
+    if(_variableIdMapping->isOfArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
-      if(_variableIdMapping->hasReferenceType(varId)) {
+      if(_variableIdMapping->isOfReferenceType(varId)) {
         res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
       } else {
         res.result=readFromMemoryLocation(estate.label(),pstate,varId);
@@ -1625,7 +1625,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
+    if(_variableIdMapping->isOfArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       res.result=AbstractValue::createAddressOfArray(varId);

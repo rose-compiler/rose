@@ -222,7 +222,7 @@ void EStateTransferFunctions::initDiagnostics() {
       // test formal parameter (instead of argument type) to allow for expressions in arguments
       VariableId formalParameterVarId=_analyzer->getVariableIdMapping()->variableId(formalParameterName);
       AbstractValue evalResultValue;
-      if(_analyzer->getVariableIdMapping()->hasClassType(formalParameterVarId)) {
+      if(_analyzer->getVariableIdMapping()->isOfClassType(formalParameterVarId)) {
         if(getOptionOutputWarnings()) {
           cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top)."<<endl;
         }
