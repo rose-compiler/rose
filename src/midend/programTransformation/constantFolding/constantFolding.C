@@ -175,6 +175,7 @@ static int cf_get_int_value(SgValueExp * sg_value_exp)
   {
     cerr<<"error: wrong value exp type for cf_get_int_value():"<<sg_value_exp->class_name()<<endl;
     ROSE_ASSERT(false);
+    abort();
   }
   return rtval;
 }

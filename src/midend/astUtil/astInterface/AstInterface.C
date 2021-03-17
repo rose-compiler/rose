@@ -269,6 +269,7 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
        assert(false);
+       abort();
     }
 }
 
@@ -1320,6 +1321,7 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
     }
     cerr << "Error: not recognizable function type : " << s->sage_class_name() << endl;
     assert(false);
+    abort();
 }
 
 bool AstInterface::
@@ -2017,6 +2019,7 @@ AstNodeType AstInterface::GetType(const string& name)
        if (c == 0) {
           cerr << "Error: not recognize type name : " << name << endl;
           assert(false);
+          abort();
        }
        else
           return AstNodeTypeImpl(new SgClassType(c->get_declaration()));
@@ -3042,6 +3045,7 @@ CreateConstant( const string& valtype, const string& val)
   else {
        cerr << "Error: non-recognized value type for creating constant AST: " << valtype << endl;
         assert(false);
+        abort();
   }
 }
 
