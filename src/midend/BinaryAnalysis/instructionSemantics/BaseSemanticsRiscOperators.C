@@ -103,7 +103,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 
 std::pair<SValuePtr /*low*/, SValuePtr /*high*/>
 RiscOperators::split(const SValuePtr &a, size_t splitPoint) {
-    return std::make_pair(extract(a, 0, splitPoint), extract(a, splitPoint, a->get_width()));
+    return std::make_pair(extract(a, 0, splitPoint), extract(a, splitPoint, a->nBits()));
 }
 
 SValuePtr
@@ -111,8 +111,8 @@ RiscOperators::addCarry(const SValuePtr &a, const SValuePtr &b,
                         SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    ASSERT_require(a->get_width() == b->get_width());
-    size_t nBits = a->get_width();
+    ASSERT_require(a->nBits() == b->nBits());
+    size_t nBits = a->nBits();
     SValuePtr carries;
     SValuePtr sum = addWithCarries(a, b, boolean_(false), carries /*out*/);
     carryOut = extract(carries, nBits-1, nBits);
@@ -130,8 +130,8 @@ RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahe
                              SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/) {
     ASSERT_not_null(minuend);
     ASSERT_not_null(subtrahend);
-    ASSERT_require(minuend->get_width() == subtrahend->get_width());
-    size_t nBits = minuend->get_width();
+    ASSERT_require(minuend->nBits() == subtrahend->nBits());
+    size_t nBits = minuend->nBits();
     ASSERT_require(nBits > 1);
     SValuePtr negatedSubtrahend = negate(subtrahend);
     SValuePtr carries;
@@ -144,8 +144,8 @@ RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahe
 SValuePtr
 RiscOperators::countLeadingZeros(const SValuePtr &a) {
     SValuePtr idx = mostSignificantSetBit(a);
-    SValuePtr width = number_(a->get_width(), a->get_width());
-    SValuePtr diff = subtract(number_(a->get_width(), a->get_width()-1), idx);
+    SValuePtr width = number_(a->nBits(), a->nBits());
+    SValuePtr diff = subtract(number_(a->nBits(), a->nBits()-1), idx);
     return ite(equalToZero(a), width, diff);
 }
 
@@ -158,15 +158,15 @@ SValuePtr
 RiscOperators::reverseElmts(const SValuePtr &a, size_t elmtNBits) {
     ASSERT_not_null(a);
     ASSERT_require(elmtNBits > 0);
-    ASSERT_require(elmtNBits <= a->get_width());
-    ASSERT_require(a->get_width() % elmtNBits == 0);
-    size_t nElmts = a->get_width() / elmtNBits;
+    ASSERT_require(elmtNBits <= a->nBits());
+    ASSERT_require(a->nBits() % elmtNBits == 0);
+    size_t nElmts = a->nBits() / elmtNBits;
     SValuePtr result;
     for (size_t i = 0; i < nElmts; ++i) {
         SValuePtr elmt = extract(a, i*elmtNBits, (i+1)*elmtNBits);
         result = result ? concatHiLo(result, elmt) : elmt;
     }
-    ASSERT_require(result->get_width() == a->get_width());
+    ASSERT_require(result->nBits() == a->nBits());
     return result;
 }
 
@@ -182,10 +182,10 @@ RiscOperators::isNotEqual(const SValuePtr &a, const SValuePtr &b) {
 
 SValuePtr
 RiscOperators::isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b) {
-    SValuePtr wideA = unsignedExtend(a, a->get_width()+1);
-    SValuePtr wideB = unsignedExtend(b, b->get_width()+1);
+    SValuePtr wideA = unsignedExtend(a, a->nBits()+1);
+    SValuePtr wideB = unsignedExtend(b, b->nBits()+1);
     SValuePtr diff = subtract(wideA, wideB);
-    return extract(diff, diff->get_width()-1, diff->get_width()); // A < B iff sign(wideA - wideB) == -1
+    return extract(diff, diff->nBits()-1, diff->nBits()); // A < B iff sign(wideA - wideB) == -1
 }
 
 SValuePtr
@@ -205,8 +205,8 @@ RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr 
 
 SValuePtr
 RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
-    ASSERT_require(a->get_width() == b->get_width());
-    size_t nBits = a->get_width();
+    ASSERT_require(a->nBits() == b->nBits());
+    size_t nBits = a->nBits();
     SValuePtr wideA = signExtend(a, nBits+1);
     SValuePtr wideB = signExtend(b, nBits+1);
     SValuePtr difference = subtract(wideA, wideB);
@@ -242,14 +242,14 @@ RiscOperators::interrupt(const SValuePtr &majr, const SValuePtr &minr, const SVa
     ASSERT_require(enabled->nBits() == 1);
 
     // Default implementation requires concrete values.
-    if (!majr->is_number() || !minr->is_number() || !enabled->is_number())
+    if (!majr->isConcrete() || !minr->isConcrete() || !enabled->isConcrete())
         throw Exception("interrupt operands must be concrete", currentInstruction());
     if (majr->nBits() > sizeof(int) || minr->nBits() > sizeof(int))
         throw Exception("interrupt operands are too wide", currentInstruction());
 
-    if (enabled->get_number()) {
-        int majrN = majr->get_number();
-        int minrN = minr->get_number();
+    if (enabled->isTrue()) {
+        int majrN = majr->toUnsigned().get();
+        int minrN = minr->toUnsigned().get();
         interrupt(majrN, minrN);
     }
 }
@@ -470,9 +470,9 @@ SValuePtr
 RiscOperators::reinterpret(const SValuePtr &a, SgAsmType *type) {
     ASSERT_not_null(a);
     ASSERT_not_null(type);
-    if (a->get_width() != type->get_nBits()) {
+    if (a->nBits() != type->get_nBits()) {
         throw Exception("reinterpret type has different size (" + StringUtility::plural(type->get_nBits(), "bits") + ")"
-                        " than value (" + StringUtility::plural(a->get_width(), "bits") + ")", currentInsn_);
+                        " than value (" + StringUtility::plural(a->nBits(), "bits") + ")", currentInsn_);
     }
     return a->copy();
 }

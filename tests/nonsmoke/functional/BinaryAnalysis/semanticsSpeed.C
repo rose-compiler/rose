@@ -146,9 +146,9 @@ main(int argc, char *argv[])
             dispatcher->processInstruction(insn);
             ++ninsns;
             BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
-            if (!ip->is_number())
+            if (!ip->isConcrete())
                 break;
-            va = ip->get_number();
+            va = ip->toUnsigned().get();
             if (had_alarm)
                 break;
         }

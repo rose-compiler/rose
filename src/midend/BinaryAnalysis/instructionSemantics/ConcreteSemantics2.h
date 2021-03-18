@@ -95,7 +95,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }

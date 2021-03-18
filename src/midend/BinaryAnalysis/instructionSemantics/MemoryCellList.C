@@ -19,7 +19,7 @@ MemoryCellList::clear() {
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     CellList::iterator cursor = get_cells().begin();
-    CellList cells = scan(cursor /*in,out*/, addr, dflt->get_width(), addrOps, valOps);
+    CellList cells = scan(cursor /*in,out*/, addr, dflt->nBits(), addrOps, valOps);
     SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
     updateReadProperties(cells);
     if (cells.empty()) {
@@ -47,7 +47,7 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
 SValuePtr
 MemoryCellList::peekMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     CellList::iterator cursor = get_cells().begin();
-    CellList cells = scan(cursor /*in,out*/, addr, dflt->get_width(), addrOps, valOps);
+    CellList cells = scan(cursor /*in,out*/, addr, dflt->nBits(), addrOps, valOps);
     SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
 
     // If there's no must_equal match and at least one may_equal match, then merge the default into the return value.
@@ -61,7 +61,7 @@ void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
     ASSERT_not_null(addr);
-    ASSERT_require(!byteRestricted() || value->get_width() == 8);
+    ASSERT_require(!byteRestricted() || value->nBits() == 8);
     MemoryCellPtr newCell = protocell->create(addr, value);
 
     if (addrOps->currentInstruction() || valOps->currentInstruction()) {
@@ -92,7 +92,7 @@ MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperat
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
     for (size_t offset = 0; offset < nBytes; ++offset) {
-        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->nBits(), offset));
         CellList::const_iterator cursor = get_cells().begin();
         if (scan(cursor/*in,out*/, byteAddress, 8, addrOps, valOps).empty())
             return false;
@@ -139,7 +139,7 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
         BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
             if (cell == otherCell) {
                 break;
-            } else if (otherCell->get_address()->must_equal(cell->get_address(), addrOps->solver())) {
+            } else if (otherCell->get_address()->mustEqual(cell->get_address(), addrOps->solver())) {
                 isOccluded = true;
             }
         }
@@ -245,7 +245,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
             if (cell == otherCell) {
                 break;
-            } else if (otherAddress->must_equal(cell->get_address(), addrOps->solver())) {
+            } else if (otherAddress->mustEqual(cell->get_address(), addrOps->solver())) {
                 isOccluded = true;
             }
         }
@@ -264,7 +264,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
             InputOutputPropertySet thisProps = thisCell->ioProperties();
             SAWYER_MESG(debug) <<"      destination cell addr=" <<*thisAddress <<" value=" <<*thisValue <<"\n";
 
-            if (otherAddress->must_equal(thisCell->get_address(), addrOps->solver())) {
+            if (otherAddress->mustEqual(thisCell->get_address(), addrOps->solver())) {
                 bool cellChanged = false;
                 SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
                 if (mergedValue)
@@ -325,7 +325,7 @@ MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, Ri
     BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
         // Get the cell's value. If the cell value is not the same width as the desired return value then we've go more work to
         // do. This isn't implemented yet. [Robb P. Matzke 2015-08-17]
-        SValuePtr cellValue = valOps->unsignedExtend(cell->get_value(), dflt->get_width());
+        SValuePtr cellValue = valOps->unsignedExtend(cell->get_value(), dflt->nBits());
 
         if (!retval) {
             retval = cellValue;

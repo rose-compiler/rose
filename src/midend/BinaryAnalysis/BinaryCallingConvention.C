@@ -903,11 +903,7 @@ Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalSt
     SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
-    if (stackDelta->is_number() && stackDelta->get_width()<=64) {
-        stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);
-    } else {
-        stackDelta_ = Sawyer::Nothing();
-    }
+    stackDelta_ = stackDelta->toSigned();
 }
 
 void

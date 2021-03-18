@@ -283,7 +283,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }
@@ -312,7 +312,7 @@ public:
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
-        ASSERT_require(nbits==get_width());
+        ASSERT_require(nbits==nBits());
     }
 
     virtual bool isBottom() const ROSE_OVERRIDE;
@@ -1113,7 +1113,7 @@ public:
      *  SymbolicSemantics::RiscOperatorsPtr operators = ...;
      *  SymbolicSemantics::SValuePtr original_esp = ...; //probably read from the initial state
      *  BaseSemantics::SValuePtr stack_frame = operators->undefined_(32);
-     *  stack_frame->set_comment("stack_frame"); //just so output looks nice
+     *  stack_frame->comment("stack_frame"); //just so output looks nice
      *  SymbolicSemantics::SValuePtr rhs = SymbolicSemantics::SValue::promote(
      *      operators->add(stack_frame, operators->number_(32, 4))
      *  );

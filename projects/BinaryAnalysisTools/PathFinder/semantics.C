@@ -183,19 +183,19 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
                           const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
 
     BaseSemantics::SValuePtr dflt = dflt_;
-    const size_t nBytes = dflt->get_width() / 8;
-    if (cond->is_number() && !cond->get_number())
+    const size_t nBytes = dflt->nBits() / 8;
+    if (cond->isFalse())
         return dflt_;
 
     // If we know the address and that memory exists, then read the memory to obtain the default value.
     uint8_t buf[8];
-    if (addr->is_number() && nBytes < sizeof(buf) &&
-        nBytes == partitioner_->memoryMap()->at(addr->get_number()).limit(nBytes).read(buf).size()) {
+    if (addr->isConcrete() && nBytes < sizeof(buf) &&
+        nBytes == partitioner_->memoryMap()->at(addr->toUnsigned().get()).limit(nBytes).read(buf).size()) {
         // FIXME[Robb P. Matzke 2015-05-25]: assuming little endian
         uint64_t value = 0;
         for (size_t i=0; i<nBytes; ++i)
             value |= (uint64_t)buf[i] << (8*i);
-        dflt = number_(dflt->get_width(), value);
+        dflt = number_(dflt->nBits(), value);
     }
 
     // Read from the symbolic state, and update the state with the default from real memory if known.
@@ -213,7 +213,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
     // Save a description for its addresses
     for (size_t i=0; i<nBytes; ++i) {
-        SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
+        SValuePtr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
             State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
@@ -230,7 +230,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return;
     Super::writeMemory(segreg, addr, value, cond);
 
@@ -242,9 +242,9 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     }
 
     // Save a description for its addresses
-    size_t nBytes = value->get_width() / 8;
+    size_t nBytes = value->nBits() / 8;
     for (size_t i=0; i<nBytes; ++i) {
-        SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
+        SValuePtr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
             State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);

@@ -396,7 +396,7 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
     /* Allocate the stack */
     static const size_t stack_size = 0x00016000;
     RegisterDescriptor SP = thread->get_process()->disassembler()->stackPointerRegister();
-    rose_addr_t origSp = thread->operators()->readRegister(SP)->get_number();
+    rose_addr_t origSp = thread->operators()->readRegister(SP)->toUnsigned().get();
     rose_addr_t sp = origSp;
     rose_addr_t stack_addr = sp - stack_size;
     process->get_memory()->insert(AddressInterval::baseSize(stack_addr, stack_size),

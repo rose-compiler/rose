@@ -1404,7 +1404,7 @@ struct IP_mtcrf: P {
             result = result ? ops->concat(result, field) : field;
         }
         ASSERT_not_null(result);
-        ASSERT_require(result->get_width() == 32);
+        ASSERT_require(result->nBits() == 32);
         ops->writeRegister(d->REG_CR, result);
     }
 };
@@ -1551,7 +1551,7 @@ struct IP_rldcl: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6); // not 64
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t mb = d->read(args[3])->get_number();
+        size_t mb = d->read(args[3])->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(mb, 63, 64));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1569,7 +1569,7 @@ struct IP_rldcr: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6); // not 64
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t me = d->read(args[3])->get_number();
+        size_t me = d->read(args[3])->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(0, me, 64));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1587,8 +1587,8 @@ struct IP_rldic: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t mb = d->read(args[3], 6)->get_number();
-        size_t me = 63 - amount->get_number();
+        size_t mb = d->read(args[3], 6)->toUnsigned().get();
+        size_t me = 63 - amount->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(mb, me, 64));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1606,7 +1606,7 @@ struct IP_rldicl: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t mb = d->read(args[3], 6)->get_number();
+        size_t mb = d->read(args[3], 6)->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(mb, 63, 64));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1624,7 +1624,7 @@ struct IP_rldicr: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t me = d->read(args[3], 6)->get_number();
+        size_t me = d->read(args[3], 6)->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(0, me, 64));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1642,8 +1642,8 @@ struct IP_rldimi: P {
         BaseSemantics::SValuePtr src = d->read(args[1], 64);
         BaseSemantics::SValuePtr amount = d->read(args[2], 6);
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
-        size_t mb = d->read(args[3], 6)->get_number();
-        size_t me = 63 - amount->get_number();
+        size_t mb = d->read(args[3], 6)->toUnsigned().get();
+        size_t me = 63 - amount->toUnsigned().get();
         BaseSemantics::SValuePtr mask = ops->number_(64, buildMask(mb, me, 64));
         BaseSemantics::SValuePtr origBits = d->read(args[0], 64);
         BaseSemantics::SValuePtr preserved = ops->and_(origBits, ops->invert(mask));
@@ -1666,8 +1666,8 @@ struct IP_rlwimi: P {
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
         if (d->addressWidth() == 64)
             rotated = ops->concat(rotated, rotated);
-        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
-        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskBegin = d->read(args[3], 5)->toUnsigned().get() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->toUnsigned().get() + (d->addressWidth()-32);
         BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
         BaseSemantics::SValuePtr origBits = d->read(args[0], d->addressWidth());
         BaseSemantics::SValuePtr preserved = ops->and_(origBits, ops->invert(mask));
@@ -1690,8 +1690,8 @@ struct IP_rlwinm: P {
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
         if (d->addressWidth() == 64)
             rotated = ops->concat(rotated, rotated);
-        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
-        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskBegin = d->read(args[3], 5)->toUnsigned().get() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->toUnsigned().get() + (d->addressWidth()-32);
         BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -1711,8 +1711,8 @@ struct IP_rlwnm: P {
         BaseSemantics::SValuePtr rotated = ops->rotateLeft(src, amount);
         if (d->addressWidth() == 64)
             rotated = ops->concat(rotated, rotated);
-        size_t maskBegin = d->read(args[3], 5)->get_number() + (d->addressWidth()-32);
-        size_t maskEnd = d->read(args[4], 5)->get_number() + (d->addressWidth()-32);
+        size_t maskBegin = d->read(args[3], 5)->toUnsigned().get() + (d->addressWidth()-32);
+        size_t maskEnd = d->read(args[4], 5)->toUnsigned().get() + (d->addressWidth()-32);
         BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), buildMask(maskBegin, maskEnd, d->addressWidth()));
         BaseSemantics::SValuePtr result = ops->and_(rotated, mask);
         d->write(args[0], result);
@@ -2776,7 +2776,7 @@ DispatcherPowerpc::callReturnRegister() const {
 void
 DispatcherPowerpc::setXerOverflow(const BaseSemantics::SValuePtr &overflow) {
     ASSERT_not_null(overflow);
-    ASSERT_require(overflow->get_width() == 1);
+    ASSERT_require(overflow->nBits() == 1);
     operators()->writeRegister(REG_XER_OV, overflow);
     operators()->writeRegister(REG_XER_SO, operators()->ite(overflow, overflow, operators()->readRegister(REG_XER_SO)));
 }
@@ -2784,7 +2784,7 @@ DispatcherPowerpc::setXerOverflow(const BaseSemantics::SValuePtr &overflow) {
 void
 DispatcherPowerpc::updateCr0(const BaseSemantics::SValuePtr &result) {
     ASSERT_not_null(result);
-    size_t nBits = result->get_width();
+    size_t nBits = result->nBits();
 
     // Three-bit constants
     BaseSemantics::SValuePtr one = operators()->number_(3, 1);

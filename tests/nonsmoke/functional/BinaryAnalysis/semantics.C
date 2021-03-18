@@ -225,9 +225,9 @@ analyze_interp(SgAsmInterpretation *interp)
 
             /* Get next instruction of this block */
             BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
-            if (!ip->is_number())
+            if (!ip->isConcrete())
                 break;
-            rose_addr_t next_addr = ip->get_number();
+            rose_addr_t next_addr = ip->toUnsigned().get();
             si = insns.find(next_addr);
             if (si==insns.end()) break;
             insn = si->second;
@@ -239,7 +239,7 @@ analyze_interp(SgAsmInterpretation *interp)
         if (do_test_subst) {
             SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
             BaseSemantics::SValuePtr newvar = operators->undefined_(32);
-            newvar->set_comment("frame_pointer");
+            newvar->comment("frame_pointer");
             SymbolicSemantics::SValuePtr to =
                 SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
             std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";

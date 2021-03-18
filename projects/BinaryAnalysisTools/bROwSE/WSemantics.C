@@ -60,7 +60,7 @@ public:
                 return leaf->bits().toHex();
             }
         }
-        return "? " + StringUtility::plural(valueBase->get_width(), "bits");
+        return "? " + StringUtility::plural(valueBase->nBits(), "bits");
     }
 
     void reload(const BaseSemantics::StatePtr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {
@@ -146,9 +146,8 @@ public:
                     ASSERT_require(SP.nBits() % 8 == 0);
                     const size_t wordNBytes = SP.nBits() / 8;
                     BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordNBytes)) {
-                        if (var.isAddress() && var.nBytes()>0 &&
-                            var.getAddress()->is_number() && var.getAddress()->get_width()<=64) {
-                            rose_addr_t va = var.getAddress()->get_number();
+                        if (var.isAddress() && var.nBytes() > 0 && var.getAddress()->toUnsigned()) {
+                            rose_addr_t va = var.getAddress()->toUnsigned().get();
                             std::string name = ctx_.partitioner.addressName(va);
                             if (name.empty())
                                 name = StringUtility::addrToString(va);

@@ -21,9 +21,9 @@ BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return dflt;
-    size_t nbits = dflt->get_width();
+    size_t nbits = dflt->nBits();
 
     // Offset the address by the value of the segment register.
     BaseSemantics::SValuePtr adjustedVa;
@@ -31,12 +31,12 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         adjustedVa = addr_;
     } else {
         BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
 
     SValuePtr addr = SValue::promote(adjustedVa);
-    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->get_width(), nbits), addr->get_expression(),
+    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
                                               solver()));
 }
 
@@ -44,7 +44,7 @@ void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond)
 {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return;
 
     // Offset the address by the value of the segment register.
@@ -53,12 +53,12 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
         adjustedVa = addr_;
     } else {
         BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-        adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
     SValuePtr addr = SValue::promote(adjustedVa);
     SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->get_width(), data->get_width()),
+    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->nBits(), data->nBits()),
                                                  addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
 }
@@ -212,13 +212,13 @@ RiscOperators::get_modified_registers()
             ASSERT_require(!name.empty());
             BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
-            if (0==cur_value->get_comment().compare(name + "_0")) {
+            if (0==cur_value->comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
                 // written won't even get this far in the loop due to the is_partly_stored() check above.
                 continue;
             } else if (prev_regstate!=NULL && prev_regstate->is_partly_stored(regs[i])) {
                 SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
-                if (cur_value->must_equal(prev_value))
+                if (cur_value->mustEqual(prev_value))
                     continue;
             }
             retval.push_back(regs[i]);
@@ -347,8 +347,8 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
     //    3. It is the fall-through address added by transcodeBasicBlock for an instruction for which semantics failed when
     //       quiet-errors mode is enabled, and therefore might be completely invalid.
-    if (eip->is_number()) {
-        SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
+    if (auto eipVal = eip->toUnsigned()) {
+        SgAsmInstruction *dst_insn = insns.get_value_or(*eipVal, NULL);
         SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
         if (!dst_func) {
             o <<prefix() <<"unreachable\n";
@@ -364,7 +364,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
                 o <<prefix() <<"br label %" <<addr_label(ret_addr) <<"\n";
             }
         } else {
-            o <<prefix() <<"br label %" <<addr_label(eip->get_number()) <<"\n";
+            o <<prefix() <<"br label %" <<addr_label(*eipVal) <<"\n";
         }
         return;
     }

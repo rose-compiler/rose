@@ -41,7 +41,7 @@ Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
                             const SmtSolverPtr &solver) const {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width() == other->get_width());
+    ASSERT_require(nBits() == other->nBits());
     MergerPtr merger = merger_.dynamicCast<Merger>();
     bool changed = false;
     unsigned mergedFlags = get_expression()->flags() | other->get_expression()->flags();
@@ -53,11 +53,11 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     if (isBottom())
         return Sawyer::Nothing(); // no change
     if (other->isBottom())
-        return bottom_(get_width());
+        return bottom_(nBits());
 
     // If the values are different types then return bottom.
     if (get_expression()->type() != other->get_expression()->type())
-        return bottom_(get_width());
+        return bottom_(nBits());
 
     // Merge symbolic expressions. The merge of x and y is the set {x, y}. If the size of this set is greater than the set size
     // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
@@ -143,7 +143,7 @@ bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    if (get_width() != other->get_width())
+    if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
         return true;
@@ -154,7 +154,7 @@ bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    if (get_width() != other->get_width())
+    if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
         return false;
@@ -222,7 +222,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
     DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
 
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->get_width(), dflt->get_width());
+    ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->nBits(), dflt->nBits());
     InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
@@ -233,7 +233,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
             valDefiners.insert(definers.begin(), definers.end());
         }
     }
-    SValuePtr retval = SValue::promote(valOps->undefined_(dflt->get_width()));
+    SValuePtr retval = SValue::promote(valOps->undefined_(dflt->nBits()));
     retval->set_expression(SymbolicExpr::makeRead(expr, address->get_expression(), valOps->solver()));
     retval->set_defining_instructions(valDefiners);
     return retval;
@@ -263,7 +263,7 @@ BaseSemantics::SValuePtr
 MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                   AllowSideEffects::Flag allowSideEffects) {
-    size_t nBits = dflt->get_width();
+    size_t nBits = dflt->nBits();
     SValuePtr address = SValue::promote(address_);
     ASSERT_require(8==nBits); // SymbolicSemantics::MemoryListState assumes that memory cells contain only 8-bit data
 
@@ -290,7 +290,7 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, cons
         updateReadProperties(cells);
 
     SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
-    ASSERT_require(retval->get_width()==8);
+    ASSERT_require(retval->nBits()==8);
     return retval;
 }
 
@@ -310,7 +310,7 @@ void
 MemoryListState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
-    ASSERT_require(8==value->get_width());
+    ASSERT_require(8==value->nBits());
     BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }
 
@@ -391,9 +391,9 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAnd(a->get_expression(), b->get_expression(), solver()));
 
@@ -415,9 +415,9 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeOr(a->get_expression(), b->get_expression(), solver()));
 
@@ -439,17 +439,19 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval;
     // We leave these simplifications here because SymbolicExpr doesn't yet have a way to pass an SMT solver to its
     // simplifier.
-    if (a->is_number() && b->is_number() && a->get_width()<=64) {
-        retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        retval = svalue_number(a->nBits(), *aNum ^ *bNum);
     } else if (a->get_expression()->mustEqual(b->get_expression(), solver())) {
-        retval = svalue_number(a->get_width(), 0);
+        retval = svalue_number(a->nBits(), 0);
     } else {
         retval = svalue_expr(SymbolicExpr::makeXor(a->get_expression(), b->get_expression(), solver()));
     }
@@ -472,7 +474,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
     SValuePtr retval = svalue_expr(SymbolicExpr::makeInvert(a->get_expression(), solver()));
 
     switch (computingDefiners_) {
@@ -491,7 +493,7 @@ BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
     if (a->isBottom())
         return filterResult(bottom_(end_bit-begin_bit));
@@ -501,16 +503,16 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
-            if (retval->get_width() == a->get_width())
+            if (retval->nBits() == a->nBits())
                 retval->add_defining_instructions(a);   // preserve definers if this extract is a no-op
             break;
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // old definers and...
-            if (retval->get_width() != a->get_width())  // ...new definer but only if this extract is not a no-op
+            if (retval->nBits() != a->nBits())  // ...new definer but only if this extract is not a no-op
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
         case TRACK_LATEST_DEFINER:
-            if (retval->get_width() != a->get_width()) {
+            if (retval->nBits() != a->nBits()) {
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             } else {
                 retval->add_defining_instructions(a);   // preserve definers if this extract is a no-op
@@ -526,7 +528,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
     SValuePtr lo = SValue::promote(lo_bits_);
     SValuePtr hi = SValue::promote(hi_bits_);
     if (lo->isBottom() || hi->isBottom())
-        return filterResult(bottom_(lo->get_width() + hi->get_width()));
+        return filterResult(bottom_(lo->nBits() + hi->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeConcat(hi->get_expression(), lo->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -569,22 +571,22 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(1==sel->get_width());
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(1==sel->nBits());
+    ASSERT_require(a->nBits()==b->nBits());
 
     // (ite bottom A B) should be A when A==B. However, SymbolicExpr would have already simplified that to A.
     if (sel->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval;
-    if (sel->is_number()) {
-        retval = SValue::promote(sel->get_number() ? a->copy() : b->copy());
+    if (auto selNum = sel->toUnsigned()) {
+        retval = SValue::promote(*selNum ? a->copy() : b->copy());
         switch (computingDefiners_) {
             case TRACK_NO_DEFINERS:
                 break;
             case TRACK_ALL_DEFINERS:
 #if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                retval->add_defining_instructions(sel->get_number() ? a : b);
+                retval->add_defining_instructions(*selNum ? a : b);
 #endif
                 retval->add_defining_instructions(sel); // fall through...
             case TRACK_LATEST_DEFINER:
@@ -663,7 +665,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeLssb(a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -683,7 +685,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeMssb(a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -704,7 +706,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeRol(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -726,7 +728,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeRor(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -748,7 +750,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeShl0(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -770,7 +772,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeShr0(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -792,7 +794,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAsr(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -823,7 +825,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            if (retval->get_width() != a->get_width())
+            if (retval->nBits() != a->nBits())
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
@@ -835,9 +837,9 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAdd(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -857,17 +859,17 @@ BaseSemantics::SValuePtr
 RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                               const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/)
 {
-    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
+    ASSERT_require(a->nBits()==b->nBits() && c->nBits()==1);
     if (a->isBottom() || b->isBottom() || c->isBottom()) {
-        carry_out = bottom_(a->get_width());
-        return filterResult(bottom_(a->get_width()));
+        carry_out = bottom_(a->nBits());
+        return filterResult(bottom_(a->nBits()));
     }
-    BaseSemantics::SValuePtr aa = unsignedExtend(a, a->get_width()+1);
-    BaseSemantics::SValuePtr bb = unsignedExtend(b, a->get_width()+1);
-    BaseSemantics::SValuePtr cc = unsignedExtend(c, a->get_width()+1);
+    BaseSemantics::SValuePtr aa = unsignedExtend(a, a->nBits()+1);
+    BaseSemantics::SValuePtr bb = unsignedExtend(b, a->nBits()+1);
+    BaseSemantics::SValuePtr cc = unsignedExtend(c, a->nBits()+1);
     BaseSemantics::SValuePtr sumco = add(aa, add(bb, cc));
-    carry_out = filterResult(extract(xor_(aa, xor_(bb, sumco)), 1, a->get_width()+1));
-    return filterResult(add(a, add(b, unsignedExtend(c, a->get_width()))));
+    carry_out = filterResult(extract(xor_(aa, xor_(bb, sumco)), 1, a->nBits()+1));
+    return filterResult(add(a, add(b, unsignedExtend(c, a->nBits()))));
 }
 
 BaseSemantics::SValuePtr
@@ -875,7 +877,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeNegate(a->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -896,7 +898,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedDiv(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -918,7 +920,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(b->get_width()));
+        return filterResult(bottom_(b->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMod(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -939,7 +941,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(retwidth));
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMul(a->get_expression(), b->get_expression(), solver()));
@@ -962,7 +964,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(a->get_width()));
+        return filterResult(bottom_(a->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeDiv(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -984,7 +986,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return filterResult(bottom_(b->get_width()));
+        return filterResult(bottom_(b->nBits()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeMod(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
@@ -1005,7 +1007,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(retwidth));
 
@@ -1038,7 +1040,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            if (retval->get_width() != a->get_width())
+            if (retval->nBits() != a->nBits())
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
@@ -1159,7 +1161,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     }
 
     if (reinterpretRegisterReads_)
-        result = SValue::promote(reinterpret(result, SageBuilderAsm::buildTypeU(result->get_width())));
+        result = SValue::promote(reinterpret(result, SageBuilderAsm::buildTypeU(result->nBits())));
     return filterResult(result);
 }
 
@@ -1167,9 +1169,9 @@ BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
-    ASSERT_require(result!=NULL && result->get_width() == reg.nBits());
+    ASSERT_require(result!=NULL && result->nBits() == reg.nBits());
     if (reinterpretRegisterReads_)
-        result = reinterpret(result, SageBuilderAsm::buildTypeU(result->get_width()));
+        result = reinterpret(result, SageBuilderAsm::buildTypeU(result->nBits()));
     return filterResult(result);
 }
 
@@ -1202,7 +1204,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
                                 const BaseSemantics::SValuePtr &address,
                                 const BaseSemantics::SValuePtr &dflt,
                                 AllowSideEffects::Flag allowSideEffects) {
-    size_t nbits = dflt->get_width();
+    size_t nbits = dflt->nBits();
     ASSERT_require(0 == nbits % 8);
     SValuePtr retval;
 
@@ -1219,14 +1221,14 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
         } else {
             segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
         }
-        adjustedVa = add(address, signExtend(segregValue, address->get_width()));
+        adjustedVa = add(address, signExtend(segregValue, address->nBits()));
     }
 
     // Short circuit if address is Bottom.
     if (adjustedVa->isBottom()) {
-        retval = SValue::promote(bottom_(dflt->get_width()));
+        retval = SValue::promote(bottom_(dflt->nBits()));
         if (reinterpretMemoryReads_)
-            retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->get_width())));
+            retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->nBits())));
         return retval;
     }
 
@@ -1238,7 +1240,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==currentMem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->get_width(), bytenum));
+        BaseSemantics::SValuePtr byte_addr = add(adjustedVa, number_(adjustedVa->nBits(), bytenum));
 
         // Read the default value from the initial memory state first. We want to use whatever value is in the initial memory
         // state if the address is not present in the current memory state. As a side effect, if this value is not in the
@@ -1279,7 +1281,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
         }
     }
 
-    ASSERT_require(retval!=NULL && retval->get_width()==nbits);
+    ASSERT_require(retval!=NULL && retval->nBits()==nbits);
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1291,7 +1293,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     }
 
     if (reinterpretMemoryReads_)
-        retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->get_width())));
+        retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->nBits())));
 
     return filterResult(retval);
 }
@@ -1302,8 +1304,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition) {
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    if (condition->is_number() && !condition->get_number())
+    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
+    if (condition->isFalse())
         return filterResult(dflt);
     return readOrPeekMemory(segreg, address, dflt, AllowSideEffects::YES);
 }
@@ -1320,8 +1322,8 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    if (condition->is_number() && !condition->get_number())
+    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
+    if (condition->isFalse())
         return;
 
     PartialDisableUsedef du(this);
@@ -1332,13 +1334,13 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
         adjustedVa = SValue::promote(address);
     } else {
         BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-        adjustedVa = SValue::promote(add(address, signExtend(segregValue, address->get_width())));
+        adjustedVa = SValue::promote(add(address, signExtend(segregValue, address->nBits())));
     }
 
     if (adjustedVa->isBottom())
         return;
     SValuePtr value = SValue::promote(value_);
-    size_t nbits = value->get_width();
+    size_t nbits = value->nBits();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
@@ -1357,7 +1359,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 
         SValuePtr byte_value = SValue::promote(extract(value, 8*byteOffset, 8*byteOffset+8));
         byte_value->add_defining_instructions(value);
-        SValuePtr byte_addr = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), bytenum)));
+        SValuePtr byte_addr = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), bytenum)));
         byte_addr->add_defining_instructions(adjustedVa);
         currentState()->writeMemory(byte_addr, byte_value, this, this);
 

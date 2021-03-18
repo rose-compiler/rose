@@ -3346,7 +3346,7 @@ DispatcherAarch32::accessedRegister(SgAsmExpression *expr) {
 
 bool
 DispatcherAarch32::mustBeSet(const SValuePtr &bit) {
-    return bit && bit->nBits() == 1 && bit->is_number() && bit->get_number() == 1;
+    return bit && bit->nBits() == 1 && bit->isTrue();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

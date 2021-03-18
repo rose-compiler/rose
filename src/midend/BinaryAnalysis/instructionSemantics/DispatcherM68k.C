@@ -732,9 +732,9 @@ struct IP_cmp: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -764,9 +764,9 @@ struct IP_cmpa: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -796,9 +796,9 @@ struct IP_cmpi: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -827,9 +827,9 @@ struct IP_cmpm: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -1041,7 +1041,7 @@ struct IP_divs: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1066,7 +1066,7 @@ struct IP_divsl: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1124,7 +1124,7 @@ struct IP_divu: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1149,7 +1149,7 @@ struct IP_divul: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -2159,7 +2159,7 @@ struct IP_mac: P {
         SValuePtr isSf3 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -3)));
         SValuePtr v1 = ops->ite(isSf3, ops->shiftRight(product, ops->number_(8, 1)), product);
         product = ops->ite(isSf1, ops->shiftLeft(product, ops->number_(8, 1)), v1);
-        ASSERT_require(product->get_width()==32 || product->get_width()==64);
+        ASSERT_require(product->nBits()==32 || product->nBits()==64);
 
         // MAC operational bits. I cannot find documentation that describes these bits adequately. In particular, does a 1 mean
         // signed or unsigned for the MACSR_SU bit; does a 1 mean fractional or integer mode for the MACSR_FI bit?
@@ -2184,8 +2184,8 @@ struct IP_mac: P {
         }
         SValuePtr macAcc = ops->readRegister(macAccReg);
         SValuePtr macExt = ops->readRegister(macExtReg);
-        ASSERT_require(macAcc->get_width()==32);
-        ASSERT_require(macExt->get_width()==16);
+        ASSERT_require(macAcc->nBits()==32);
+        ASSERT_require(macExt->nBits()==16);
 
         // When the accumulator is operating in integer mode, the lower 40 bits of the shifted product is added to the
         // low-order 40 bits of the 48-bit (macExt|macAcc) concatenation.  The upper 8 bits of the concatenation are not
@@ -2194,7 +2194,7 @@ struct IP_mac: P {
         SValuePtr accInt = ops->concat(macAcc, macExt);
         SValuePtr v2 = ops->extract(accInt, 40, 48);
         SValuePtr newAccInt = ops->concat(ops->add(ops->unsignedExtend(accInt, 40), productInt), v2);
-        ASSERT_require(newAccInt->get_width()==48);
+        ASSERT_require(newAccInt->nBits()==48);
 
         // When the accumulator is operating in fractional mode, the upper 40 bits of the shifted product is extended to 48
         // bits (signed or unsigned depending on the MACSR register), and then added to the 48 bit accumulator. The 48 bit
@@ -2206,7 +2206,7 @@ struct IP_mac: P {
         SValuePtr v4 = ops->concat(macAcc, ops->extract(macExt, 8, 16));
         SValuePtr accFrac = ops->concat(ops->extract(macExt, 0, 8), v4);
         SValuePtr newAccFrac = ops->add(accFrac, productFrac);
-        ASSERT_require(newAccFrac->get_width()==48);
+        ASSERT_require(newAccFrac->nBits()==48);
 
         // The new macAcc and macExt values
         SValuePtr v5 = ops->unsignedExtend(newAccInt, 32);
@@ -2229,7 +2229,7 @@ struct IP_mac: P {
             toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
                               toMove,                       // don't use the mask
                               v9);
-            ASSERT_require(toMove->get_width()==32);
+            ASSERT_require(toMove->nBits()==32);
             d->write(args[6], toMove);
         }
         
@@ -2544,7 +2544,7 @@ struct IP_muls: P {
             isOverflow = ops->boolean_(false);
         }
 
-        size_t resultNBits = result->get_width();
+        size_t resultNBits = result->nBits();
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
@@ -2598,7 +2598,7 @@ struct IP_mulu: P {
             isOverflow = ops->boolean_(false);
         }
 
-        size_t resultNBits = result->get_width();
+        size_t resultNBits = result->nBits();
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
@@ -3915,10 +3915,10 @@ DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SV
     // Set FPSR EXC INAN bit if either argument is nan; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
-    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_require(a->nBits() == aType->get_nBits());
     ASSERT_not_null(b);
     ASSERT_not_null(bType);
-    ASSERT_require(b->get_width() == bType->get_nBits());
+    ASSERT_require(b->nBits() == bType->get_nBits());
 
 
     SValuePtr aIsNan;
@@ -3944,10 +3944,10 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
     // Set FPSR EXC IDE bit if either argument is denormalized; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
-    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_require(a->nBits() == aType->get_nBits());
     ASSERT_not_null(b);
     ASSERT_not_null(bType);
-    ASSERT_require(b->get_width() == bType->get_nBits());
+    ASSERT_require(b->nBits() == bType->get_nBits());
 
     SValuePtr aIsDenorm;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
@@ -3970,7 +3970,7 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
 void
 DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
     ASSERT_not_null(dstType);
 
@@ -4000,7 +4000,7 @@ DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, 
 void
 DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
     ASSERT_not_null(dstType);
 

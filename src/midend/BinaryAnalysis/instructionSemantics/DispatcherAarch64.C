@@ -57,7 +57,7 @@ struct IP_add: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result;
 
         if (auto vectorType = isSgAsmVectorType(args[0]->get_type())) {
@@ -84,7 +84,7 @@ struct IP_addp: P {
         if (args.size() == 2) {
             SValuePtr a = d->read(args[1]);
             SValuePtr aLo = ops->extract(a, 0, args[0]->get_nBits());
-            SValuePtr aHi = ops->extract(a, args[0]->get_nBits(), a->get_width());
+            SValuePtr aHi = ops->extract(a, args[0]->get_nBits(), a->nBits());
             SValuePtr result = ops->add(aLo, aHi);
             d->write(args[0], result);
         } else {
@@ -127,10 +127,10 @@ struct IP_and: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->and_(a, b);
         if (insn->get_updatesFlags()) {
-            ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+            ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
             ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
             ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
             ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -153,7 +153,7 @@ struct IP_b: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         SValuePtr targetVa = d->read(args[0]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr nextIp = ops->ite(cond, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
@@ -163,8 +163,8 @@ struct IP_b: P {
 struct IP_bfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->bitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -173,8 +173,8 @@ struct IP_bfm: P {
 struct IP_bfxil: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -203,7 +203,7 @@ struct IP_bic: P {
             SValuePtr b = d->read(args[2]);
             SValuePtr result = ops->and_(a, ops->invert(b));
             if (insn->get_updatesFlags()) {
-                ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+                ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
                 ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
                 ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
                 ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -227,7 +227,7 @@ struct IP_blr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         SValuePtr targetVa = d->read(args[0]);
-        SValuePtr returnVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr returnVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         ops->writeRegister(d->REG_LR, returnVa);
         ops->writeRegister(d->REG_PC, targetVa);
     }
@@ -244,7 +244,7 @@ struct IP_br: P {
 struct IP_brk: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t imm = d->read(args[0])->get_number();
+        size_t imm = d->read(args[0])->toUnsigned().get();
         ops->interrupt((int)Aarch64Exception::brk, imm);
     }
 };
@@ -255,7 +255,7 @@ struct IP_cbnz: P {
         SValuePtr value = d->read(args[0]);
         SValuePtr isZero = ops->equalToZero(value);
         SValuePtr targetVa = d->read(args[1]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(isZero, fallThroughVa, targetVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -267,7 +267,7 @@ struct IP_cbz: P {
         SValuePtr value = d->read(args[0]);
         SValuePtr isZero = ops->equalToZero(value);
         SValuePtr targetVa = d->read(args[1]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(isZero, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -279,7 +279,7 @@ struct IP_ccmn: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr flagsSpecified = d->read(args[2]);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, b, ops->boolean_(false), carryOut);
         DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
@@ -296,7 +296,7 @@ struct IP_ccmp: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr flagsSpecified = d->read(args[2]);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, ops->invert(b), ops->boolean_(true), carryOut);
         DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
@@ -362,7 +362,7 @@ struct IP_cmeq: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isEqual(a, b), ones, zeros);
         }
@@ -387,7 +387,7 @@ struct IP_cmge: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedGreaterThanOrEqual(a, b), ones, zeros);
         }
@@ -412,7 +412,7 @@ struct IP_cmgt: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedGreaterThan(a, b), ones, zeros);
         }
@@ -437,7 +437,7 @@ struct IP_cmhi: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isUnsignedGreaterThan(a, b), ones, zeros);
         }
@@ -462,7 +462,7 @@ struct IP_cmhs: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isUnsignedGreaterThanOrEqual(a, b), ones, zeros);
         }
@@ -487,7 +487,7 @@ struct IP_cmle: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedLessThanOrEqual(a, b), ones, zeros);
         }
@@ -512,7 +512,7 @@ struct IP_cmlt: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedLessThan(a, b), ones, zeros);
         }
@@ -524,7 +524,7 @@ struct IP_cmn: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr sum = ops->addWithCarries(a, b, ops->boolean_(false), carryOut);
         d->updateNZCV(sum, carryOut);
@@ -535,7 +535,7 @@ struct IP_cmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr rn = d->read(args[0]);
-        SValuePtr notRm = ops->signExtend(ops->invert(d->read(args[1])), rn->get_width());
+        SValuePtr notRm = ops->signExtend(ops->invert(d->read(args[1])), rn->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(rn, notRm, carryIn, carryOut);
@@ -548,7 +548,7 @@ struct IP_cinc: P {
         assert_args(insn, args, 2);
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr src = d->read(args[1]);
-        SValuePtr srcInc = ops->add(src, ops->number_(src->get_width(), 1));
+        SValuePtr srcInc = ops->add(src, ops->number_(src->nBits(), 1));
         SValuePtr result = ops->ite(cond, srcInc, src);
         d->write(args[0], result);
     }
@@ -612,7 +612,7 @@ struct IP_csinc: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
-        SValuePtr binc = ops->add(b, ops->number_(b->get_width(), 1));
+        SValuePtr binc = ops->add(b, ops->number_(b->nBits(), 1));
         SValuePtr result = ops->ite(cond, a, binc);
         d->write(args[0], result);
     }
@@ -651,9 +651,9 @@ struct IP_dup: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr src = d->read(args[1]);
-        ASSERT_require(args[0]->get_nBits() >= src->get_width());
-        size_t nElmts = args[0]->get_nBits() / src->get_width();
-        ASSERT_require(nElmts * src->get_width() == args[0]->get_nBits());
+        ASSERT_require(args[0]->get_nBits() >= src->nBits());
+        size_t nElmts = args[0]->get_nBits() / src->nBits();
+        ASSERT_require(nElmts * src->nBits() == args[0]->get_nBits());
         SValuePtr toWrite;
         for (size_t i = 0; i < nElmts; ++i)
             toWrite = toWrite ? ops->concatLoHi(toWrite, src) : src;
@@ -665,7 +665,7 @@ struct IP_eon: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->xor_(a, ops->invert(b));
         d->write(args[0], result);
     }
@@ -675,7 +675,7 @@ struct IP_eor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->xor_(a, b);
         d->write(args[0], result);
     }
@@ -686,7 +686,7 @@ struct IP_extr: P {
         assert_args(insn, args, 4);
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
-        size_t lsb = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[3])->toUnsigned().get();
         SValuePtr src = ops->concatHiLo(a, b);
         SValuePtr result = ops->extract(src, lsb, lsb + args[0]->get_nBits());
         d->write(args[0], result);
@@ -762,9 +762,9 @@ struct IP_ldp: P {
         size_t regSize = args[0]->get_type()->get_nBits();
         ASSERT_require(args[1]->get_type()->get_nBits() == regSize);
         SValuePtr pair = d->read(args[2]);
-        ASSERT_require(pair->get_width() == 2 * regSize);
+        ASSERT_require(pair->nBits() == 2 * regSize);
         SValuePtr first = ops->extract(pair, 0, regSize);
-        SValuePtr second = ops->extract(pair, regSize, pair->get_width());
+        SValuePtr second = ops->extract(pair, regSize, pair->nBits());
         d->write(args[0], first);
         d->write(args[1], second);
     }
@@ -942,7 +942,7 @@ struct IP_madd: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
         SValuePtr c = d->read(args[3]);
-        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->get_width());
+        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->nBits());
         SValuePtr sum = ops->add(product, c);
         d->write(args[0], sum);
     }
@@ -981,7 +981,7 @@ struct IP_movk: P {
         size_t shiftAmount = 0;
         if (auto lsl = isSgAsmBinaryLsl(args[1])) {
             newBits = d->read(lsl->get_lhs(), 16);
-            shiftAmount = d->read(lsl->get_rhs())->get_number();
+            shiftAmount = d->read(lsl->get_rhs())->toUnsigned().get();
         } else {
             newBits = d->read(args[1], 16);
         }
@@ -993,8 +993,8 @@ struct IP_movk: P {
         } else {
             result = newBits;
         }
-        if (shiftAmount + 16 < oldBits->get_width())
-            result = ops->concatLoHi(result, ops->extract(oldBits, shiftAmount+16, oldBits->get_width()));
+        if (shiftAmount + 16 < oldBits->nBits())
+            result = ops->concatLoHi(result, ops->extract(oldBits, shiftAmount+16, oldBits->nBits()));
         d->write(args[0], result);
     }
 };
@@ -1024,7 +1024,7 @@ struct IP_msub: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
         SValuePtr c = d->read(args[3]);
-        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->get_width());
+        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->nBits());
         SValuePtr diff = ops->subtract(c, product);
         d->write(args[0], diff);
     }
@@ -1096,7 +1096,7 @@ struct IP_negs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr value = d->read(args[1]);
-        SValuePtr zero = ops->number_(value->get_width(), 0);
+        SValuePtr zero = ops->number_(value->nBits(), 0);
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(zero, ops->invert(value), carryIn, carryOut);
@@ -1109,7 +1109,7 @@ struct IP_ngc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[1]);                 // the value to negate
-        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->get_width());
+        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(b, ops->invert(a), carryIn, carryOut);
@@ -1121,7 +1121,7 @@ struct IP_ngcs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[1]);                 // the value to negate
-        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->get_width());
+        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(b, ops->invert(a), carryIn, carryOut);
@@ -1148,7 +1148,7 @@ struct IP_orn: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->or_(a, ops->invert(b));
         d->write(args[0], result);
     }
@@ -1207,7 +1207,7 @@ struct IP_rev: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr value = d->read(args[1]);
-        size_t nBytes = value->get_width() / 8;
+        size_t nBytes = value->nBits() / 8;
         SValuePtr result;
         for (size_t i = 0; i < nBytes; ++i) {
             SValuePtr byte = ops->extract(value, i*8, (i+1)*8);
@@ -1264,8 +1264,8 @@ struct IP_sbc: P {
 struct IP_sbfiz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = -lsb % args[0]->get_nBits();
         uint64_t immS = width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1276,8 +1276,8 @@ struct IP_sbfiz: P {
 struct IP_sbfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->signedBitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -1286,8 +1286,8 @@ struct IP_sbfm: P {
 struct IP_sbfx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1525,7 +1525,7 @@ struct IP_sub: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr minuend = d->read(args[1]);
-        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->get_width());
+        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->nBits());
         SValuePtr result;
 
         if (auto vectorType = isSgAsmVectorType(args[0]->get_type())) {
@@ -1552,7 +1552,7 @@ struct IP_subs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr minuend = d->read(args[1]);
-        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->get_width());
+        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(minuend, ops->invert(subtrahend), carryIn, carryOut);
@@ -1596,9 +1596,9 @@ struct IP_tbnz: P {
         assert_args(insn, args, 3);
         SValuePtr index = d->read(args[1]);
         SValuePtr value = d->read(args[0]);
-        SValuePtr bit = ops->extract(value, index->get_number(), index->get_number()+1);
+        SValuePtr bit = ops->extract(value, index->toUnsigned().get(), index->toUnsigned().get()+1);
         SValuePtr targetVa = d->read(args[2]);
-        SValuePtr fallThroughVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(bit, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -1609,9 +1609,9 @@ struct IP_tbz: P {
         assert_args(insn, args, 3);
         SValuePtr index = d->read(args[1]);
         SValuePtr value = d->read(args[0]);
-        SValuePtr bit = ops->extract(value, index->get_number(), index->get_number()+1);
+        SValuePtr bit = ops->extract(value, index->toUnsigned().get(), index->toUnsigned().get()+1);
         SValuePtr targetVa = d->read(args[2]);
-        SValuePtr fallThroughVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(bit, fallThroughVa, targetVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -1621,9 +1621,9 @@ struct IP_tst: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr result = ops->and_(a, b);
-        ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+        ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
         ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -1633,8 +1633,8 @@ struct IP_tst: P {
 struct IP_ubfiz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = -lsb % args[0]->get_nBits();
         uint64_t immS = width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1645,8 +1645,8 @@ struct IP_ubfiz: P {
 struct IP_ubfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->unsignedBitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -1655,8 +1655,8 @@ struct IP_ubfm: P {
 struct IP_ubfx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -2044,15 +2044,15 @@ DispatcherAarch64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
 DispatcherAarch64::NZCV
 DispatcherAarch64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     ASSERT_not_null(sum);
-    ASSERT_require(sum->get_width() > 1);
+    ASSERT_require(sum->nBits() > 1);
     ASSERT_not_null(carries);
-    ASSERT_require(carries->get_width() == sum->get_width());
+    ASSERT_require(carries->nBits() == sum->nBits());
 
-    SValuePtr isNeg = operators()->extract(sum, sum->get_width()-1, sum->get_width());
+    SValuePtr isNeg = operators()->extract(sum, sum->nBits()-1, sum->nBits());
     SValuePtr isZero = operators()->equalToZero(sum);
-    SValuePtr isCarry = operators()->extract(carries, carries->get_width()-1, carries->get_width());
-    SValuePtr isOverflow = operators()->xor_(operators()->extract(carries, carries->get_width()-1, carries->get_width()),
-                                             operators()->extract(carries, carries->get_width()-2, carries->get_width()-1));
+    SValuePtr isCarry = operators()->extract(carries, carries->nBits()-1, carries->nBits());
+    SValuePtr isOverflow = operators()->xor_(operators()->extract(carries, carries->nBits()-1, carries->nBits()),
+                                             operators()->extract(carries, carries->nBits()-2, carries->nBits()-1));
 
     return NZCV(isNeg, isZero, isCarry, isOverflow);
 }

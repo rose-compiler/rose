@@ -212,7 +212,7 @@ public:
             adjustedVa = addr;
         } else {
             BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-            adjustedVa = add(addr, signExtend(segregValue, addr->get_width()));
+            adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
         }
 
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
