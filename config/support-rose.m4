@@ -2544,6 +2544,7 @@ tools/BinaryAnalysis/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/featureVector/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

@@ -1,0 +1,4 @@
+featureVector : 
+This tool is designed to assist checking the differences between two source code by comparing the featureVector.
+A featureVector is the list of AST nodes, in the corresponding ID, that are shown in the source code.  
+The AST nodes collected are only the class of SgLocatedNode,  representing the notion of an expression or statement which has a position within the source code.
