@@ -1181,41 +1181,6 @@ Leave(SgJovialDirectiveStatement* directive)
      {
        case SgJovialDirectiveStatement::e_compool: {
           SageBuilder::popScopeStack();
-
-// DELETE_ME - replaced by code in loadModule
-#if 0
-       // Save and then pop the scope of the compool module loaded by the compool directive
-          SgScopeStatement* compool_file_scope = SageBuilder::topScopeStack();
-          SageBuilder::popScopeStack();
-       // Insert aliases for all symbols in the compool scope into the current scope
-          SgSymbolTable* symbol_table = compool_file_scope->get_symbol_table();
-          SgScopeStatement* current_scope = SageBuilder::topScopeStack();
-          ROSE_ASSERT(current_scope);
-
-          BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
-            SgSymbol* symbol = isSgSymbol(node);
-            ROSE_ASSERT(symbol);
-            SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-            ROSE_ASSERT(alias_symbol);
-            current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-         // Also insert aliases for any namespace symbols
-            if (SgNamespaceSymbol* namespace_symbol = isSgNamespaceSymbol(node)) {
-              SgNamespaceDeclarationStatement* namespace_decl = nullptr;
-              SgNamespaceDefinitionStatement* namespace_defn = nullptr;
-              SgSymbolTable* namespace_symbol_table = nullptr;
-              namespace_decl = isSgNamespaceDeclarationStatement(namespace_symbol->get_declaration());
-              namespace_defn = isSgNamespaceDefinitionStatement(namespace_decl->get_definition());
-              namespace_symbol_table = namespace_defn->get_symbol_table();
-              BOOST_FOREACH(SgNode* node, namespace_symbol_table->get_symbols()) {
-                SgSymbol* symbol = isSgSymbol(node);
-                ROSE_ASSERT(symbol);
-                SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-                ROSE_ASSERT(alias_symbol);
-                current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-              }
-            }
-          }
-#endif
           break;
        }
        case SgJovialDirectiveStatement::e_unknown:
@@ -1603,10 +1568,21 @@ void SageTreeBuilder::
 Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
 
-   type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
-   // This should be done in SageBuilder.
+   type_def = SageBuilder::buildTypedefDeclaration_nfi(name, type, scope, nullptr);
+
+   // These things should be setup properly in SageBuilder?
+   SgTypedefSymbol* symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, scope);
+   ROSE_ASSERT(symbol);
+   SgTypedefType* typedef_type = type_def->get_type();
+   ROSE_ASSERT(typedef_type);
+
    type_def->set_base_type(type);
+   type_def->set_parent_scope(symbol);
+   typedef_type->set_parent_scope(symbol);
+   ROSE_ASSERT(type_def->get_parent_scope());
+   ROSE_ASSERT(typedef_type->get_parent_scope());
 
 // Fix forward type references
    reset_forward_type_ref(name, type_def->get_type());

@@ -108,46 +108,35 @@ joinMangledQualifiers (const SgName& base, const SgName& name)
 const SgFunctionDefinition*
 findRootFunc (const SgScopeStatement* scope)
    {
-  // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C (added support for SgTemplateFunctionDefinition).
-
-  // printf ("Inside of findRootFunc(scope = %p) \n",scope);
-
-     if (scope != NULL)
+   // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C
+   // (added support for SgTemplateFunctionDefinition).
+      if (scope != nullptr)
         {
-          if (scope->variantT () == V_SgFunctionDefinition)
-             {
-               return isSgFunctionDefinition (scope);
-             }
-            else
-             {
-               if (scope->variantT () == V_SgTemplateFunctionDefinition)
-                  {
-                    return isSgTemplateFunctionDefinition (scope);
-                  }
-                 else
-                  {
-                 // DQ (12/13/2011): Adding test for improperly set scope.
-                 // printf ("In findRootFunc(): scope = %p = %s \n",scope,scope->class_name().c_str());
+          switch (scope->variantT())
+            {
+              case V_SgFunctionDefinition:
+                return isSgFunctionDefinition (scope);
 
-                    SgScopeStatement* nextOuterScope = scope->get_scope();
-                    ROSE_ASSERT(nextOuterScope != NULL);
+              case V_SgTemplateFunctionDefinition:
+                return isSgTemplateFunctionDefinition (scope);
 
-                 // CR (10/19/2020): Allowing nextOuterScope == scope. Otherwise (see issue RC-227)
-                 // SgTypedefDeclaration::get_mangled_name() causes havoc for Jovial. It may be that
-                 // I'm not prepending typedef_ to the typename. But then I'm not sure how symbol
-                 // lookup goes.
-                 // ROSE_ASSERT(nextOuterScope != scope);
-                    if (nextOuterScope == scope) {
-                      return NULL;
-                    }
+              case V_SgGlobal:
+                // Rasmussen (3/17/2021): Reached end of the line (of scopes), return nullptr
+                // Note: get_mangled_name() causes havoc for Jovial. See issues RC-227 and RC-765.
+                // Returning nullptr at global scope helps solve Jovial problems.
+                return nullptr;
 
-                    return findRootFunc(scope->get_scope());
-                  }
-             }
+              default:
+                // DQ (12/13/2011): Adding test for improperly set scope.
+                SgScopeStatement* nextOuterScope = scope->get_scope();
+                ROSE_ASSERT(nextOuterScope != nullptr);
+                ROSE_ASSERT(nextOuterScope != scope);
+                return findRootFunc(nextOuterScope);
+            }
         }
 
   // Not found.
-     return NULL;
+     return nullptr;
    }
 
 
@@ -231,8 +220,6 @@ mangleQualifiersToString (const SgScopeStatement* scope)
   // DQ (3/14/2012): I would like to make this assertion (part of required C++ support).
      ROSE_ASSERT(scope != NULL);
 
-  // DQ (3/19/2011): Make this a valid string.
-  // string mangled_name = "";
      string mangled_name = "";
      if (scope != NULL)
         {
@@ -363,13 +350,21 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 
             // DQ (9/27/2012): Added this case to be the same as that for SgFunctionDefinition (removed case below).
                case V_SgTemplateFunctionDefinition:
-
                case V_SgFunctionDefinition:
                   {
-                 // 'scope' is part of scope for locally defined classes
-                    const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
-                    ROSE_ASSERT(def != NULL);
-                    mangled_name = def->get_mangled_name().getString();
+                    // Rasmussen (3/17/2021): Jovial doesn't need name mangling for functions as
+                    // they can cause infinite recursion because a typedef may be a function argument.
+                    if (SageInterface::is_Jovial_language())
+                      {
+                        mangled_name = "";
+                      }
+                    else
+                      {
+                     // 'scope' is part of scope for locally defined classes
+                        const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
+                        ROSE_ASSERT(def != nullptr);
+                        mangled_name = def->get_mangled_name().getString();
+                      }
                     break;
                   }
 
@@ -383,8 +378,6 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgWhileStmt:
                case V_SgBasicBlock:
                   {
-                 // printf ("In mangleQualifiersToString(scope = %p = %s) \n",scope,scope->class_name().c_str());
-
                     const SgScopeStatement* stmt = isSgScopeStatement(scope);
                     ROSE_ASSERT (stmt != NULL);
                     string stmt_name      = mangleLocalScopeToString (stmt);
