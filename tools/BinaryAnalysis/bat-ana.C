@@ -132,7 +132,7 @@ public:
             bool modified = false;
             for (size_t i=0; i<succs.size(); ++i) {
                 BOOST_FOREACH (const SValueSValue &rewrite, rewrites_) {
-                    if (succs[i].expr()->must_equal(rewrite.first)) {
+                    if (succs[i].expr()->mustEqual(rewrite.first)) {
                         succs[i] = P2::BasicBlock::Successor(rewrite.second, succs[i].type(), succs[i].confidence());
                         modified = true;
                         break;

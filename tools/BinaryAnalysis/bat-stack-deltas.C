@@ -92,22 +92,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     return input.empty() ? std::string("-") : input[0];
 }
 
-boost::int64_t
-toSigned(const BaseSemantics::SValuePtr &expr) {
-    ASSERT_not_null(expr);
-    ASSERT_require(expr->is_number());
-    ASSERT_require(expr->get_width() <= 64);
-    return IntegerOps::signExtend2<boost::uint64_t>(expr->get_number(), expr->get_width(), 64);
-}
-
 void
 insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &intervals,
                  const BaseSemantics::SValuePtr &preDelta, const BaseSemantics::SValuePtr &postDelta) {
     StackDeltaPair sdpair;
-    if (preDelta && preDelta->is_number() && preDelta->get_width() <= 64)
-        sdpair.preDelta = toSigned(preDelta);
-    if (postDelta && postDelta->is_number() && postDelta->get_width() <= 64)
-        sdpair.postDelta = toSigned(postDelta);
+    if (preDelta)
+        preDelta->toSigned().assignTo(sdpair.preDelta);
+    if (postDelta)
+        postDelta->toSigned().assignTo(sdpair.postDelta);
 
     if (sdpair.preDelta || sdpair.postDelta) {
         BOOST_FOREACH (const AddressInterval &interval, intervals.intervals())
@@ -119,10 +111,10 @@ void
 insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressInterval &interval,
                  const BaseSemantics::SValuePtr &preDelta, const BaseSemantics::SValuePtr &postDelta) {
     StackDeltaPair sdpair;
-    if (preDelta && preDelta->is_number() && preDelta->get_width() <= 64)
-        sdpair.preDelta = toSigned(preDelta);
-    if (postDelta && postDelta->is_number() && postDelta->get_width() <= 64)
-        sdpair.postDelta = toSigned(postDelta);
+    if (preDelta)
+        preDelta->toSigned().assignTo(sdpair.preDelta);
+    if (postDelta)
+        postDelta->toSigned().assignTo(sdpair.postDelta);
 
     if (sdpair.preDelta || sdpair.postDelta)
         sdmap.insert(interval, sdpair);
@@ -133,8 +125,8 @@ insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &inte
                  const BaseSemantics::SValuePtr &postDelta) {
     StackDeltaPair sdpair;
     sdpair.preDelta = 0;
-    if (postDelta && postDelta->is_number() && postDelta->get_width() <= 64)
-        sdpair.postDelta = toSigned(postDelta);
+    if (postDelta)
+        postDelta->toSigned().assignTo(sdpair.postDelta);
 
     BOOST_FOREACH (const AddressInterval &interval, intervals.intervals())
         sdmap.insert(interval, sdpair);
