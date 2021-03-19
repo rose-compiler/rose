@@ -233,7 +233,7 @@ PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string
     out <<"      " <<title <<"\n";
     if (state) {
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        ");
         out <<(*state + fmt);
     } else {
@@ -480,7 +480,7 @@ YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &tit
         writeln(out, "      semantics:", title);
         writeln(out, "      state:");
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        - ");
         out <<(*state + fmt);
     }
