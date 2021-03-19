@@ -215,7 +215,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
                                                     BaseSemantics::RiscOperators *valOps, const CellList &cells)
 {
     if (1==cells.size())
-        return SValue::promote(cells.front()->get_value()->copy());
+        return SValue::promote(cells.front()->value()->copy());
 
     RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
     ASSERT_not_null(valOpsSymbolic);
@@ -225,8 +225,8 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
     ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->nBits(), dflt->nBits());
     InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
-        SValuePtr cell_addr = SValue::promote((*ci)->get_address());
-        SValuePtr cell_value  = SValue::promote((*ci)->get_value());
+        SValuePtr cell_addr = SValue::promote((*ci)->address());
+        SValuePtr cell_value  = SValue::promote((*ci)->value());
         expr = SymbolicExpr::makeWrite(expr, cell_addr->get_expression(), cell_value->get_expression(), valOps->solver());
         if (valDefinersMode != TRACK_NO_DEFINERS) {
             const InsnSet &definers = cell_value->get_defining_instructions();
@@ -245,7 +245,7 @@ MemoryListState::CellCompressorSimple::operator()(const SValuePtr &address, cons
                                                   const CellList &cells)
 {
     if (1==cells.size())
-        return SValue::promote(cells.front()->get_value()->copy());
+        return SValue::promote(cells.front()->value()->copy());
     return SValue::promote(dflt);
 }
 
@@ -356,10 +356,10 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
         MemSubst(const SValuePtr &from, const SValuePtr &to, const SmtSolverPtr &solver)
             : from(from), to(to), solver(solver) {}
         virtual void operator()(BaseSemantics::MemoryCellPtr &cell) {
-            SValuePtr addr = SValue::promote(cell->get_address());
-            cell->set_address(addr->substitute(from, to, solver));
-            SValuePtr val = SValue::promote(cell->get_value());
-            cell->set_value(val->substitute(from, to, solver));
+            SValuePtr addr = SValue::promote(cell->address());
+            cell->address(addr->substitute(from, to, solver));
+            SValuePtr val = SValue::promote(cell->value());
+            cell->value(val->substitute(from, to, solver));
         }
     } memsubst(from, to, solver());
     MemoryState::promote(state->memoryState())->traverse(memsubst);

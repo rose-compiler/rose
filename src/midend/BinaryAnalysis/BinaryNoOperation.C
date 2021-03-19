@@ -71,8 +71,8 @@ public:
         // Erase memory that is above (lower address) and near the current stack pointer.
         if (ignorePoppedMemory) {
             BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
-                ops->and_(ops->isUnsignedLessThan(cell->get_address(), stackCurVa),
-                          ops->isUnsignedGreaterThanOrEqual(cell->get_address(), stackMinVa));
+                ops->and_(ops->isUnsignedLessThan(cell->address(), stackCurVa),
+                          ops->isUnsignedGreaterThanOrEqual(cell->address(), stackMinVa));
             return isPopped->isTrue();
         }
 

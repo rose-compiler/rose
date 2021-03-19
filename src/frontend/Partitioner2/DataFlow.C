@@ -407,9 +407,9 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     OffsetAddress offsetAddresses;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
-        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
-        ASSERT_require2(0 == cell->get_value()->nBits() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->nBits() / 8;
+        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->address());
+        ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
         if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
             Variables::OffsetInterval location = Variables::OffsetInterval::baseSize(*stackOffset, nBytes);
@@ -498,10 +498,10 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
     SymbolicAddresses symbolicAddrs;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
-        ASSERT_require2(0 == cell->get_value()->nBits() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->nBits() / 8;
+        ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
-        if (auto va = cell->get_address()->toUnsigned()) {
+        if (auto va = cell->address()->toUnsigned()) {
             // There may have been many writers for an address. Rather than write an algorithm to find the largest sets of
             // addresses written by the same writer, we'll just arbitrarily choose the least address.
             const BaseSemantics::MemoryCell::AddressSet &allWriters = cell->getWriters();
@@ -509,7 +509,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
             if (!allWriters.isEmpty())
                 leastWriter = allWriters.least();
             stackWriters.insert(AddressInterval::baseSize(*va, nBytes), leastWriter);
-            symbolicAddrs.insert(*va, cell->get_address());
+            symbolicAddrs.insert(*va, cell->address());
         }
     }
 

@@ -17,19 +17,19 @@ bool
 MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
-    if (8==value_->nBits() && 8==other->get_value()->nBits())
-        return address_->mayEqual(other->get_address(), addrOps->solver());
+    if (8==value_->nBits() && 8==other->value()->nBits())
+        return address_->mayEqual(other->address(), addrOps->solver());
 
     size_t addr_nbits = address_->nBits();
-    ASSERT_require(other->get_address()->nBits()==addr_nbits);
+    ASSERT_require(other->address()->nBits()==addr_nbits);
 
     ASSERT_require(value_->nBits() % 8 == 0);       // memory is byte addressable, so values must be multiples of a byte
     SValuePtr lo1 = address_;
     SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->nBits(), value_->nBits() / 8));
 
-    ASSERT_require(other->get_value()->nBits() % 8 == 0);
-    SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->get_value()->nBits() / 8));
+    ASSERT_require(other->value()->nBits() % 8 == 0);
+    SValuePtr lo2 = other->address();
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->value()->nBits() / 8));
 
     // Two cells may_alias iff we can prove that they are not disjoint.  The two cells are disjoint iff lo2 >= hi1 or lo1 >=
     // hi2. Two things complicate this: first, the values might not be known quantities, depending on the semantic domain.
@@ -54,19 +54,19 @@ bool
 MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
-    if (8==value_->nBits() && 8==other->get_value()->nBits())
-        return address_->mustEqual(other->get_address(), addrOps->solver());
+    if (8==value_->nBits() && 8==other->value()->nBits())
+        return address_->mustEqual(other->address(), addrOps->solver());
 
     size_t addr_nbits = address_->nBits();
-    ASSERT_require(other->get_address()->nBits()==addr_nbits);
+    ASSERT_require(other->address()->nBits()==addr_nbits);
 
     ASSERT_require(value_->nBits() % 8 == 0);
     SValuePtr lo1 = address_;
     SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->nBits(), value_->nBits() / 8));
 
-    ASSERT_require(other->get_value()->nBits() % 8 == 0);
-    SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->get_value()->nBits() / 8));
+    ASSERT_require(other->value()->nBits() % 8 == 0);
+    SValuePtr lo2 = other->address();
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->value()->nBits() / 8));
 
     // Two cells must_alias iff hi2 >= lo1 and hi1 >= lo2. Two things complicate this: first, the values might not be known
     // quantities, depending on the semantic domain.  Second, the RiscOperators does not define a greater-than-or-equal

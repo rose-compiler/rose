@@ -700,7 +700,7 @@ VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellStatePtr &
         std::set<SymbolicExpr::Ptr> addresses;
 
         void operator()(S2::BaseSemantics::MemoryCellPtr &cell) {
-            SymbolicExpr::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->get_address())->get_expression();
+            SymbolicExpr::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
             addresses.insert(addr);
         }
     } visitor;

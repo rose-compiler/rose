@@ -365,7 +365,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
         BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())
-            conditionallySavePointer(cell->get_address(), addrSeen, dataWordSize, dataPointers_);
+            conditionallySavePointer(cell->address(), addrSeen, dataWordSize, dataPointers_);
     }
 
     // Find code pointers

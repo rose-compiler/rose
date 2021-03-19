@@ -64,7 +64,7 @@ protected:
     MemoryCellMap(const MemoryCellMap &other)
         : MemoryCellState(other) {
         BOOST_FOREACH (const MemoryCellPtr &cell, other.cells.values())
-            cells.insert(other.generateCellKey(cell->get_address()), cell->clone());
+            cells.insert(other.generateCellKey(cell->address()), cell->clone());
     }
 
 private:

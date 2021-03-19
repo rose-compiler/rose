@@ -42,7 +42,7 @@ protected:
     MemoryCellState() {}                                // for serialization
 
     explicit MemoryCellState(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->get_address(), protocell->get_value()), protocell(protocell) {}
+        : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
 
     MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {}
