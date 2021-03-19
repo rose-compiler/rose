@@ -81,7 +81,8 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &in
 
     // Quick method based only on the kind of instruction
     if (x86_call==last->get_kind() || x86_farcall==last->get_kind()) {
-        last->getBranchTarget(target);
+        if (target)
+            last->branchTarget().assignTo(*target);
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
@@ -247,17 +248,15 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
         case x86_call:
         case x86_farcall:
         case x86_jmp:
-        case x86_farjmp: {
+        case x86_farjmp:
             /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
              * fall-through address. */
-            rose_addr_t va;
-            if (getBranchTarget(&va)) {
-                retval.insert(va);
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+                retval.insert(*va);
             } else {
                 complete = false;
             }
             break;
-        }
 
         case x86_ja:
         case x86_jae:
@@ -280,17 +279,15 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
         case x86_js:
         case x86_loop:
         case x86_loopnz:
-        case x86_loopz: {
+        case x86_loopz:
             /* Conditional branches to operand-specified address */
-            rose_addr_t va;
-            if (getBranchTarget(&va)) {
-                retval.insert(va);
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+                retval.insert(*va);
             } else {
                 complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
-        }
 
         case x86_int:                                   // assumes interrupts return
         case x86_int1:
@@ -333,8 +330,8 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
     return retval;
 }
 
-bool
-SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
+Sawyer::Optional<rose_addr_t>
+SgAsmX86Instruction::branchTarget() {
     // Treats far destinations as "unknown"
     switch (get_kind()) {
         case x86_call:
@@ -361,19 +358,15 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
         case x86_js:
         case x86_loop:
         case x86_loopnz:
-        case x86_loopz: {
-            const SgAsmExpressionPtrList &args = get_operandList()->get_operands();
-            if (args.size()!=1)
-                return false;
-            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[0]);
-            if (!ival)
-                return false;
-            if (target)
-                *target = ival->get_absoluteValue();
-            return true;
-        }
+        case x86_loopz:
+            if (nOperands() == 1) {
+                if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operand(0)))
+                    return ival->get_absoluteValue();
+            }
+            return Sawyer::Nothing();
+
         default:
-            return false; // do not modify *target
+            return Sawyer::Nothing();
     }
 }
 
