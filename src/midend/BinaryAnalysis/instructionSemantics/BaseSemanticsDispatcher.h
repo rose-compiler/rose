@@ -48,7 +48,7 @@ protected:
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
-    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
+    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iprocKey() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
@@ -114,23 +114,23 @@ public:
     /** Lookup the processor for an instruction.  Looks up the functor that has been registered to process the given
      *  instruction. Returns the null pointer if the instruction cannot be processed. Instruction processor objects are
      *  managed by the caller; the instruction itself is only used for the duration of this call. */
-    virtual InsnProcessor *iproc_lookup(SgAsmInstruction *insn);
+    virtual InsnProcessor *iprocLookup(SgAsmInstruction *insn);
 
     /** Replace an instruction processor with another.  The processor for the specified instruction is replaced with the
      *  specified processor, which may be the null pointer.  Instruction processor objects are managed by the caller; the
      *  instruction itself is only used for the duration of this call. */
-    virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
+    virtual void iprocReplace(SgAsmInstruction *insn, InsnProcessor *iproc);
 
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
-    virtual int iproc_key(SgAsmInstruction*) const = 0;
+    virtual int iprocKey(SgAsmInstruction*) const = 0;
 
     /** Set an iproc table entry to the specified value.
      *
      *  The @p iproc object will become owned by this dispatcher and deleted when this dispatcher is destroyed. */
-    virtual void iproc_set(int key, InsnProcessor *iproc);
+    virtual void iprocSet(int key, InsnProcessor *iproc);
 
     /** Obtain an iproc table entry for the specified key. */
-    virtual InsnProcessor *iproc_get(int key);
+    virtual InsnProcessor *iprocGet(int key);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object

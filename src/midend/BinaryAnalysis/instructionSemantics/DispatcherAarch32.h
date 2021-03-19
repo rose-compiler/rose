@@ -114,7 +114,7 @@ protected:
     void initializeMemory();
 
 protected:
-    int iproc_key(SgAsmInstruction*) const override;
+    int iprocKey(SgAsmInstruction*) const override;
     RegisterDescriptor instructionPointerRegister() const override;
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor callReturnRegister() const override;

@@ -402,7 +402,7 @@ The new API allows you to implement a new instruction like this:
 The instruction is added to a dispatcher with:
 
  Dispatcher *dispatcher = ...;
- dispatcher->iproc_set(x86_mov, new IP_mov);
+ dispatcher->iprocSet(x86_mov, new IP_mov);
 
 With a little boilerplate it can be even simpler.  Here's the actual definition from DispatcherX86.C:
 

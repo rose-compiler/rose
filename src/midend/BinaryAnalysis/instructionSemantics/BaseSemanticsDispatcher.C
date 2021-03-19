@@ -78,7 +78,7 @@ void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
     operators()->startInstruction(insn);
-    InsnProcessor *iproc = iproc_lookup(insn);
+    InsnProcessor *iproc = iprocLookup(insn);
     try {
         if (!iproc)
             throw Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
@@ -94,21 +94,21 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
 }
 
 InsnProcessor *
-Dispatcher::iproc_lookup(SgAsmInstruction *insn)
+Dispatcher::iprocLookup(SgAsmInstruction *insn)
 {
-    int key = iproc_key(insn);
+    int key = iprocKey(insn);
     ASSERT_require(key>=0);
-    return iproc_get(key);
+    return iprocGet(key);
 }
 
 void
-Dispatcher::iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc)
+Dispatcher::iprocReplace(SgAsmInstruction *insn, InsnProcessor *iproc)
 {
-    iproc_set(iproc_key(insn), iproc);
+    iprocSet(iprocKey(insn), iproc);
 }
 
 void
-Dispatcher::iproc_set(int key, InsnProcessor *iproc)
+Dispatcher::iprocSet(int key, InsnProcessor *iproc)
 {
     ASSERT_require(key>=0);
     if ((size_t)key>=iproc_table.size())
@@ -117,7 +117,7 @@ Dispatcher::iproc_set(int key, InsnProcessor *iproc)
 }
 
 InsnProcessor *
-Dispatcher::iproc_get(int key)
+Dispatcher::iprocGet(int key)
 {
     if (key<0 || (size_t)key>=iproc_table.size())
         return NULL;

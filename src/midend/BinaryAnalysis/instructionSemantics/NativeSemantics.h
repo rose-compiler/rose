@@ -429,14 +429,14 @@ public:
     /** Disabled in this class.
      *
      * @{ */
-    virtual void iproc_replace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
-        notApplicable("iproc_replace");
+    virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+        notApplicable("iprocReplace");
     }
-    virtual void iproc_set(int key, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
-        notApplicable("iproc_set");
+    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+        notApplicable("iprocSet");
     }
-    virtual int iproc_key(SgAsmInstruction*) const ROSE_OVERRIDE {
-        notApplicable("iproc_key");
+    virtual int iprocKey(SgAsmInstruction*) const ROSE_OVERRIDE {
+        notApplicable("iprocKey");
     }
     /** @} */
 

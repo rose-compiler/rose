@@ -120,7 +120,7 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
     virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         return insn->get_kind();

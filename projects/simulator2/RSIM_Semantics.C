@@ -94,8 +94,8 @@ createDispatcher(RSIM_Thread *owningThread) {
     switch (arch) {
         case ARCH_X86:
             dispatcher = DispatcherX86::instance(ops, wordSize, regs);
-            dispatcher->iproc_set(x86_cpuid, new IP_cpuid);
-            dispatcher->iproc_set(x86_sysenter, new IP_sysenter);
+            dispatcher->iprocSet(x86_cpuid, new IP_cpuid);
+            dispatcher->iprocSet(x86_sysenter, new IP_sysenter);
             ops->allocateOnDemand(false);               // OS controls what memory is available
             break;
         case ARCH_M68k:

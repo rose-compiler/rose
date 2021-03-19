@@ -127,7 +127,7 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
     virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
