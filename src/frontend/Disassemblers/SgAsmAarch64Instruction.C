@@ -64,7 +64,8 @@ SgAsmAarch64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>
         //case Kind::ARM64_INS_BLRAAZ: -- not in capstone
         //case Kind::ARM64_INS_BLRAB: -- not in capstone
         //case Kind::ARM64_INS_BLRABZ: -- not in capstone
-            last->getBranchTarget(target);
+            if (target)
+                last->branchTarget().assignTo(*target);
             if (return_va)
                 *return_va = last->get_address() + last->get_size();
             return true;
@@ -176,8 +177,8 @@ SgAsmAarch64Instruction::getSuccessors(bool &complete) {
     return retval;
 }
 
-bool
-SgAsmAarch64Instruction::getBranchTarget(rose_addr_t *target) {
+Sawyer::Optional<rose_addr_t>
+SgAsmAarch64Instruction::branchTarget() {
     using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
     switch (get_kind()) {
@@ -187,11 +188,8 @@ SgAsmAarch64Instruction::getBranchTarget(rose_addr_t *target) {
         case Kind::ARM64_INS_BR:
             // First argument is the branch target
             ASSERT_require(exprs.size() == 1);
-            if (auto ival = isSgAsmIntegerValueExpression(exprs[0])) {
-                if (target)
-                    *target = ival->get_absoluteValue();
-                return true;
-            }
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[0]))
+                return ival->get_absoluteValue();
             break;
 
         case Kind::ARM64_INS_BRK:
@@ -206,11 +204,8 @@ SgAsmAarch64Instruction::getBranchTarget(rose_addr_t *target) {
         case Kind::ARM64_INS_CBNZ:
         case Kind::ARM64_INS_CBZ:
             ASSERT_require(exprs.size() == 2);
-            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
-                if (target)
-                    *target = ival->get_absoluteValue();
-                return true;
-            }
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1]))
+                return ival->get_absoluteValue();
             break;
 
         case Kind::ARM64_INS_HLT:
@@ -220,11 +215,8 @@ SgAsmAarch64Instruction::getBranchTarget(rose_addr_t *target) {
         case Kind::ARM64_INS_TBNZ:
         case Kind::ARM64_INS_TBZ:
             ASSERT_require(exprs.size() == 3);
-            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
-                if (target)
-                    *target = ival->get_absoluteValue();
-                return true;
-            }
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1]))
+                return ival->get_absoluteValue();
             break;
         default:
             break;

@@ -486,8 +486,8 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
         //
         //    Opcode:      95 9d 87 ad
         //    ARM syntax:  stp q21, q7, [x12, #0xf0]!
-        //    ROSE syntax: stp q21, q7, u128 [x12 + 0xf0]   (before the transformation)
-        //    ROSE syntax: stp q21, q7, u128 [x12 += 0xf0]  (after the transformation)
+        //    ROSE syntax: stp q21, q7, u128 [x12 + 0xf0]                  (before the transformation)
+        //    ROSE syntax: stp q21, q7, u128 [x12 after x12 = x12 + 0xf0]  (after the transformation)
         //
         // Semantically, the above means that the value in register x12 is added to the constant 0xf0 resulting in the first
         // (lowest) address where data is written to memory.
@@ -497,8 +497,8 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
         //
         //    Opcode:       95 9d 87 ac
         //    ARM syntax:   stp q21, q7, [x12], #0xf0
-        //    ROSE syntax:  stp q21, q7, u128 [x12], 0xf0             (before the transformation)
-        //    ROSE syntax:  stp q21, q7, u128 [x12 then x12 += 0xf0]  (after the transofmration)
+        //    ROSE syntax:  stp q21, q7, u128 [x12], 0xf0                  (before the transformation)
+        //    ROSE syntax:  stp q21, q7, u128 [x12 then x12 = x12 + 0xf0]  (after the transofmration)
         //
         // Semantically, the value stored originally in x12 is used as the memory address, and then the register is incremented
         // by 0xf0. ROSE combines these two arguments into a single expression containing a SgAsmBinaryAddPostupdate node.
@@ -516,41 +516,37 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
                     }
                     SgAsmType *type = add->get_type();
                     ASSERT_not_null(type);
-                    SgAsmExpression *lhs = add->get_lhs();
-                    ASSERT_require(isSgAsmDirectRegisterExpression(lhs));
-                    add->set_lhs(nullptr);
-                    lhs->set_parent(nullptr);
-                    SgAsmExpression *rhs = add->get_rhs();
-                    add->set_rhs(nullptr);
-                    rhs->set_parent(nullptr);
-                    mre->set_address(nullptr);
-                    add->set_parent(nullptr);
-#if 0 // FIXME: Deleting parts of an AST is unsafe because ROSE has no formal ownership rules for its nodes.
-                    delete add;
-#else // instead, we'll just drop it
-                    add = nullptr;
-#endif
-                    // Construct the replacement and link it into the tree.
-                    auto newNode = SageBuilderAsm::buildAddPreupdateExpression(lhs, rhs, type);
-                    mre->set_address(newNode);
-                    newNode->set_parent(mre);
+
+                    // Create a new register reference expression for the lhs of the pre-update operator.
+                    ASSERT_require(isSgAsmDirectRegisterExpression(add->get_lhs()));
+                    auto lhs = new SgAsmDirectRegisterExpression(isSgAsmDirectRegisterExpression(add->get_lhs())->get_descriptor());
+                    lhs->set_type(type);
+
+                    // Unlink things from the AST and construct a new address, linking it back into the AST.
+                    mre->set_address(nullptr); add->set_parent(nullptr);
+                    auto preUpdate = SageBuilderAsm::buildPreupdateExpression(lhs, add);
+                    mre->set_address(preUpdate); preUpdate->set_parent(mre);
                     return;
 
                 } else {
                     // The memory reference must be a post-increment, in which case it must the the penultimate argument. The
                     // address must be a register reference. First unlink things from the tree...
                     ASSERT_require(i + 2 == operands->get_operands().size());
-                    SgAsmExpression *lhs = mre->get_address();
-                    mre->set_address(nullptr);
-                    lhs->set_parent(nullptr);
-                    SgAsmExpression *rhs = operands->get_operands()[i+1];
-                    operands->get_operands().erase(operands->get_operands().begin() + i + 1);
-                    rhs->set_parent(nullptr);
+                    auto postLhs = isSgAsmDirectRegisterExpression(mre->get_address());
+                    ASSERT_not_null(postLhs);
+                    mre->set_address(nullptr); postLhs->set_parent(nullptr);
+                    auto inc = operands->get_operands()[i + 1];
+                    operands->get_operands().pop_back();
+                    inc->set_parent(nullptr);
 
-                    // Construct the replacement and link it into the tree
-                    auto newNode = SageBuilderAsm::buildAddPostupdateExpression(lhs, rhs, lhs->get_type());
-                    mre->set_address(newNode);
-                    newNode->set_parent(mre);
+                    // Create a new register reference expression that's the old value of the register
+                    auto oldValue = new SgAsmDirectRegisterExpression(postLhs->get_descriptor());
+                    oldValue->set_type(postLhs->get_type());
+
+                    // Create the post-update expression and link it into the AST
+                    auto newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
+                    auto postUpdate = SageBuilderAsm::buildPostupdateExpression(postLhs, newValue);
+                    mre->set_address(postUpdate); postUpdate->set_parent(mre);
                     return;
                 }
             }

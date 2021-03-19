@@ -42,6 +42,21 @@ protected:
 protected:
     void outputExpr(std::ostream&, SgAsmExpression*, State &) const;
     void outputRegister(std::ostream&, SgAsmRegisterReferenceExpression*, State&) const;
+
+private:
+    // Precedence for the sake of emitting expressions. Higher return value is higher precedence.
+    static int operatorPrecedence(SgAsmExpression*);
+
+    // Parentheses for emitting expressions with inverted precedences
+    struct Parens {
+        std::string left, right;
+        Parens() {}
+        Parens(const std::string &left, const std::string &right)
+            : left(left), right(right) {}
+    };
+
+    // What parens to use when the operator has rootPrec and the left or right operand is as specified.
+    static Parens parensForPrecedence(int rootPrec, SgAsmExpression*);
 };
 
 } // namespace

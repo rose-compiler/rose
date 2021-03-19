@@ -118,10 +118,11 @@ struct PltEntryMatcher: public InstructionMatcher {
     rose_addr_t gotEntry_;                              // address read from the GOT if the address is mapped (or zero)
     size_t nBytesMatched_;                              // number of bytes matched for PLT entry
     rose_addr_t functionNumber_;                        // function number argument for the dynamic linker (usually a push)
+    rose_addr_t pltEntryAlignment_;                     // must PLT entries be aligned, and by how much?
 
 public:
     explicit PltEntryMatcher(rose_addr_t gotVa)
-        : gotVa_(gotVa), gotEntryVa_(0), gotEntryNBytes_(0), gotEntry_(0), nBytesMatched_(0) {}
+        : gotVa_(gotVa), gotEntryVa_(0), gotEntryNBytes_(0), gotEntry_(0), nBytesMatched_(0), pltEntryAlignment_(1) {}
     static Ptr instance(rose_addr_t gotVa) {
         return Ptr(new PltEntryMatcher(gotVa));
     }
@@ -132,6 +133,9 @@ public:
 
     /** Size of the PLT entry in bytes. */
     size_t nBytesMatched() const { return nBytesMatched_; }
+
+    /** Alignment of PLT entries w.r.t. the beginning of the PLT section. */
+    rose_addr_t pltEntryAlignment() const { return pltEntryAlignment_; }
 
     /** Address of the corresponding GOT entry. */
     rose_addr_t gotEntryVa() const { return gotEntryVa_; }
@@ -158,6 +162,9 @@ private:
                                       rose_addr_t &indirectNBytes /*out*/);
     SgAsmInstruction* matchAarch64Add(const Partitioner&, rose_addr_t va);
     SgAsmInstruction* matchAarch64Br(const Partitioner&, rose_addr_t va);
+    SgAsmInstruction* matchAarch32CopyPcToIp(const Partitioner&, rose_addr_t va, uint32_t &result);
+    SgAsmInstruction* matchAarch32AddConstToIp(const Partitioner&, rose_addr_t va, uint32_t &addend);
+    SgAsmInstruction* matchAarch32IndirectBranch(const Partitioner&, rose_addr_t va, uint32_t &addend);
 };
 
 /** Build may-return white and black lists. */

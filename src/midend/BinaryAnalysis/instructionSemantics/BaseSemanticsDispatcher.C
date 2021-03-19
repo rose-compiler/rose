@@ -196,42 +196,54 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
 }
 
 void
-Dispatcher::preUpdate(SgAsmExpression *e) {
+Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabled) {
     struct T1: AstSimpleProcessing {
         Dispatcher *self;
-        T1(Dispatcher *self)
-            : self(self) {}
+        BaseSemantics::SValuePtr enabled;
+        T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
+            : self(self), enabled(enabled) {}
         void visit(SgNode *node) ROSE_OVERRIDE {
-            if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(node)) {
-                SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(op->get_lhs());
-                ASSERT_not_null(rre);
-                BaseSemantics::SValuePtr lhs = self->effectiveAddress(op->get_lhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr rhs = self->effectiveAddress(op->get_rhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr sum = self->operators()->add(lhs, rhs);
-                self->operators()->writeRegister(rre->get_descriptor(), sum);
+            if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(node)) {
+                if (enabled->is_number() && enabled->get_number()) {
+                    // Definitely updating, therefore not necessary to read old value
+                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    self->write(op->get_lhs(), newValue);
+                } else if (!enabled->is_number() || enabled->get_number() != 0) {
+                    // Maybe updating (but not "definitely not updating")
+                    BaseSemantics::SValuePtr oldValue = self->read(op->get_lhs());
+                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValuePtr maybe = self->operators()->ite(enabled, newValue, oldValue);
+                    self->write(op->get_lhs(), maybe);
+                }
             }
         }
-    } t1(this);
+    } t1(this, enabled);
     t1.traverse(e, postorder);
 }
 
 void
-Dispatcher::postUpdate(SgAsmExpression *e) {
+Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabled) {
     struct T1: AstSimpleProcessing {
         Dispatcher *self;
-        T1(Dispatcher *self)
-            : self(self) {}
+        BaseSemantics::SValuePtr enabled;
+        T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
+            : self(self), enabled(enabled) {}
         void visit(SgNode *node) ROSE_OVERRIDE {
-            if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(node)) {
-                SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(op->get_lhs());
-                ASSERT_not_null(rre);
-                BaseSemantics::SValuePtr lhs = self->effectiveAddress(op->get_lhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr rhs = self->effectiveAddress(op->get_rhs(), rre->get_descriptor().nBits());
-                BaseSemantics::SValuePtr sum = self->operators()->add(lhs, rhs);
-                self->operators()->writeRegister(rre->get_descriptor(), sum);
+            if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(node)) {
+                if (enabled->is_number() && enabled->get_number()) {
+                    // Definitely updating, therefore not necessary to read old value
+                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    self->write(op->get_lhs(), newValue);
+                } else if (!enabled->is_number() || enabled->get_number() != 0) {
+                    // Maybe updating (but not "definitely not updating")
+                    BaseSemantics::SValuePtr oldValue = self->read(op->get_lhs());
+                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValuePtr maybe = self->operators()->ite(enabled, newValue, oldValue);
+                    self->write(op->get_lhs(), maybe);
+                }
             }
         }
-    } t1(this);
+    } t1(this, enabled);
     t1.traverse(e, postorder);
 }
     
@@ -248,16 +260,19 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
-        RegisterDescriptor reg = rre->get_descriptor();
-        retval = operators()->readRegister(reg);
+        retval = read(rre, nbits);
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->add(lhs, rhs);
-    } else if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(e)) {
+    } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators()->subtract(lhs, rhs);
+    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(e)) {
         // The add operation is ignored here, but performed by preUpdate.
         retval = effectiveAddress(op->get_lhs(), nbits);
-    } else if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(e)) {
+    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(e)) {
         // The add operation is ignored here, but performed by postUpdate.
         retval = effectiveAddress(op->get_lhs(), nbits);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
@@ -279,6 +294,18 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->shiftLeft(lhs, rhs);
+    } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators()->shiftRight(lhs, rhs);
+    } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators()->shiftRightArithmetic(lhs, rhs);
+    } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators()->rotateRight(lhs, rhs);
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->unsignedExtend(lhs, op->get_nBits());
@@ -409,6 +436,10 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
     } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->signExtend(lhs, op->get_nBits());
+    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(e)) {
+        return read(op->get_lhs(), value_nbits, addr_nbits);
+    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(e)) {
+        return read(op->get_lhs(), value_nbits, addr_nbits);
     } else {
         ASSERT_not_implemented(e->class_name());
     }
