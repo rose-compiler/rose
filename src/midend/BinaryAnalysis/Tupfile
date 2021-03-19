@@ -7,7 +7,7 @@ run $(librose_compile) \
     BinaryPointerDetection.C BinaryReachability.C BinaryReturnValueUsed.C BinarySmtCommandLine.C BinarySmtSolver.C \
     BinarySmtlibSolver.C BinarySourceLocations.C BinaryStackDelta.C BinaryString.C BinarySymbolicExpr.C \
     BinarySymbolicExprParser.C BinarySystemCall.C BinaryTaintedFlow.C BinaryToSource.C BinaryVariables.C BinaryYicesSolver.C \
-    BinaryZ3Solver.C DwarfLineMapper.C
+    BinaryZ3Solver.C
 
 run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h BinaryBestMapAddress.h \
     BinaryCallingConvention.h BinaryCodeInserter.h BinaryConcolic.h BinaryControlFlow.h BinaryDataFlow.h BinaryDebugger.h \
@@ -15,4 +15,4 @@ run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h Bi
     BinaryMagic.h BinaryMatrix.h BinaryNoOperation.h BinaryPointerDetection.h BinaryReachability.h BinaryReturnValueUsed.h \
     BinarySmtCommandLine.h BinarySmtSolver.h BinarySmtlibSolver.h BinarySourceLocations.h BinaryStackDelta.h BinaryStackVariable.h \
     BinaryString.h BinarySymbolicExpr.h BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h \
-    BinaryVariables.h BinaryYicesSolver.h BinaryZ3Solver.h DwarfLineMapper.h ether.h
+    BinaryVariables.h BinaryYicesSolver.h BinaryZ3Solver.h ether.h
