@@ -1430,7 +1430,9 @@ EasyStorageMapEntry <std::string,AstAttribute*> :: rebuildDataStoredInEasyStorag
       std::string storedAttributeName = attributeName.rebuildDataStoredInEasyStorageClass();
       if ( regAttr.find ( storedAttributeName ) != regAttr.end() )
          {
+            assert(ret != NULL); // but how could ret be non-NULL?
             ret = (ret->*regAttr[ storedAttributeName ]) ();
+            assert(ret != NULL);
             ret->unpacked_data( attributeData.getSizeOfData(), attributeData.rebuildDataStoredInEasyStorageClass() );
          }
       else
