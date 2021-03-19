@@ -6685,7 +6685,13 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       SgVariableSymbol* var_sym = isSgVariableSymbol(symbol);
 
       if (var_sym) init_name = isSgInitializedName(var_sym->get_declaration());
-      if (init_name) table_type = isSgJovialTableType(init_name->get_type());
+      if (init_name) {
+        if (SgModifierType* mod_type = isSgModifierType(init_name->get_type())) {
+          table_type = isSgJovialTableType(mod_type->get_base_type());
+        } else {
+          table_type = isSgJovialTableType(init_name->get_type());
+        }
+      }
       if (!table_type) {
          // Variable could be a member of a table
          SgVariableDeclaration* var_decl = nullptr;
