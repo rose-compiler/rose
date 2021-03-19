@@ -1946,7 +1946,7 @@ context-free syntax
 %%%%%%%%%%
 
   BitTypeConversion           -> BitConversion
-  RepConversion               -> BitConversion
+  RepConversion               -> BitConversion        {reject} %% fixes ambiguity, RepFunctionVariable and BitPrimaryConversion
 
   '(*'
     BitTypeDescription
