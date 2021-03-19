@@ -119,7 +119,7 @@ public:
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            return svalue_number(subordinate_->readRegister(reg));
+            return svalueNumber(subordinate_->readRegister(reg));
         } catch (const std::runtime_error &e) {
             RegisterNames rname(currentState()->registerState()->registerDictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
@@ -150,7 +150,7 @@ public:
         BitVector bits(dflt->nBits());
         for (size_t i=0; i<nRead; ++i)
             bits.fromInteger(BitVector::BitRange::baseSize(8*i, 8), buf[i]);
-        return svalue_number(bits);
+        return svalueNumber(bits);
     }
 
 public:

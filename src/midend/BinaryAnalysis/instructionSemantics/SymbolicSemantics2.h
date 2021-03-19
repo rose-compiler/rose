@@ -934,31 +934,61 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
+    SValuePtr svalueExpr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
         SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;
     }
 
-    SValuePtr svalue_undefined(size_t nbits) {
+    SValuePtr svalueUndefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
     }
 
-    SValuePtr svalue_bottom(size_t nbits) {
+    SValuePtr svalueBottom(size_t nbits) {
         return SValue::promote(bottom_(nbits));
     }
 
-    SValuePtr svalue_unspecified(size_t nbits) {
+    SValuePtr svalueUnspecified(size_t nbits) {
         return SValue::promote(unspecified_(nbits));
     }
 
-    SValuePtr svalue_number(size_t nbits, uint64_t value) {
+    SValuePtr svalueNumber(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
 
-    SValuePtr svalue_boolean(bool b) {
+    SValuePtr svalueBoolean(bool b) {
         return SValue::promote(boolean_(b));
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_number(size_t nbits, uint64_t value) ROSE_DEPRECATED("use svalueNumber instead") {
+        return svalueNumber(nbits, value);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_boolean(bool b) ROSE_DEPRECATED("use svalueBoolean instead") {
+        return svalueBoolean(b);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_unspecified(size_t nbits) ROSE_DEPRECATED("use svalueUnspecified instead") {
+        return svalueUnspecified(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_bottom(size_t nbits) ROSE_DEPRECATED("use svalueBottom instead") {
+        return svalueBottom(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_undefined(size_t nbits) ROSE_DEPRECATED("use svalueUndefined instead") {
+        return svalueUndefined(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) ROSE_DEPRECATED("use svalueExpr instead") {
+        return svalueExpr(expr, defs);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

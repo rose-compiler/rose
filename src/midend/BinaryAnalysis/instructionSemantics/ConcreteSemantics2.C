@@ -199,8 +199,8 @@ MemoryState::print(std::ostream &out, Formatter &fmt) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SValuePtr
-RiscOperators::svalue_number(const Sawyer::Container::BitVector &bits) {
-    SValuePtr retval = SValue::promote(svalue_number(bits.size(), 0));
+RiscOperators::svalueNumber(const Sawyer::Container::BitVector &bits) {
+    SValuePtr retval = SValue::promote(svalueNumber(bits.size(), 0));
     retval->bits(bits);
     return retval;
 }
@@ -214,28 +214,28 @@ BaseSemantics::SValuePtr
 RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     BitVector result = SValue::promote(a_)->bits();
     result.bitwiseAnd(SValue::promote(b_)->bits());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     BitVector result = SValue::promote(a_)->bits();
     result.bitwiseOr(SValue::promote(b_)->bits());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     BitVector result = SValue::promote(a_)->bits();
     result.bitwiseXor(SValue::promote(b_)->bits());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_) {
     BitVector result = SValue::promote(a_)->bits();
     result.invert();
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
@@ -244,7 +244,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     ASSERT_require(begin_bit < end_bit);
     BitVector result(end_bit - begin_bit);
     result.copy(result.hull(), SValue::promote(a_)->bits(), BitRange::hull(begin_bit, end_bit-1));
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
@@ -254,59 +254,59 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     result.resize(resultNBits);
     result.copy(BitRange::baseSize(a_->nBits(), b_->nBits()),
                 SValue::promote(b_)->bits(), BitRange::baseSize(0, b_->nBits()));
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) {
     uint64_t count = SValue::promote(a_)->bits().leastSignificantSetBit().orElse(0);
-    return svalue_number(a_->nBits(), count);
+    return svalueNumber(a_->nBits(), count);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) {
     uint64_t count = SValue::promote(a_)->bits().mostSignificantSetBit().orElse(0);
-    return svalue_number(a_->nBits(), count);
+    return svalueNumber(a_->nBits(), count);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
     BitVector result = SValue::promote(a_)->bits();
     result.rotateLeft(sa_->toUnsigned().get());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
     BitVector result = SValue::promote(a_)->bits();
     result.rotateRight(sa_->toUnsigned().get());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
     BitVector result = SValue::promote(a_)->bits();
     result.shiftLeft(sa_->toUnsigned().get());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
     BitVector result = SValue::promote(a_)->bits();
     result.shiftRight(sa_->toUnsigned().get());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
     BitVector result = SValue::promote(a_)->bits();
     result.shiftRightArithmetic(sa_->toUnsigned().get());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_) {
-    return svalue_boolean(SValue::promote(a_)->bits().isEqualToZero());
+    return svalueBoolean(SValue::promote(a_)->bits().isEqualToZero());
 }
 
 BaseSemantics::SValuePtr
@@ -323,21 +323,21 @@ BaseSemantics::SValuePtr
 RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) {
     BitVector result = SValue::promote(a_)->bits();
     result.resize(new_width);
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) {
     BitVector result(new_width);
     result.signExtend(SValue::promote(a_)->bits());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     BitVector result = SValue::promote(a_)->bits();
     result.add(SValue::promote(b_)->bits());
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
@@ -361,17 +361,17 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     co.bitwiseXor(se);
     co.shiftRight(1);
     co.resize(nbits);
-    carry_out = svalue_number(co);
+    carry_out = svalueNumber(co);
 
     se.resize(nbits);
-    return svalue_number(se);
+    return svalueNumber(se);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_) {
     BitVector result = SValue::promote(a_)->bits();
     result.negate();
-    return svalue_number(result);
+    return svalueNumber(result);
 }
 
 BaseSemantics::SValuePtr
@@ -386,7 +386,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
     if (0==b)
         throw BaseSemantics::Exception("division by zero", currentInstruction());
-    return svalue_number(a_->nBits(), a/b);
+    return svalueNumber(a_->nBits(), a/b);
 }
 
 BaseSemantics::SValuePtr
@@ -401,7 +401,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
     if (0==b)
         throw BaseSemantics::Exception("division by zero", currentInstruction());
-    return svalue_number(b_->nBits(), a % b);
+    return svalueNumber(b_->nBits(), a % b);
 }
 
 BaseSemantics::SValuePtr
@@ -427,7 +427,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
         BitVector product(128);
         product.fromInteger(BitRange::baseSize( 0, 64), (c1 << 32) | c0);
         product.fromInteger(BitRange::baseSize(64, 64), c2);
-        return svalue_number(product);
+        return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
         throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
                                        "] * y[" + StringUtility::addrToString(b_->nBits()) +
@@ -436,7 +436,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
         int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
-        return svalue_number(a_->nBits() + b_->nBits(), a * b);
+        return svalueNumber(a_->nBits() + b_->nBits(), a * b);
     }
 }
 
@@ -462,7 +462,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
         BitVector resultBits(128);
         resultBits.fromInteger(BitRange::baseSize(0, 64), ratio_lo);
         resultBits.fromInteger(BitRange::baseSize(64, 64), ratio_hi);
-        return svalue_number(resultBits);
+        return svalueNumber(resultBits);
     }
 #endif
 
@@ -477,7 +477,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     uint64_t bn = b->toUnsigned().get();
     if (0==bn)
         throw BaseSemantics::Exception("division by zero", currentInstruction());
-    return svalue_number(a->nBits(), an/bn);
+    return svalueNumber(a->nBits(), an/bn);
 }
 
 BaseSemantics::SValuePtr
@@ -497,7 +497,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
         if (0 == denominator)
             throw BaseSemantics::Exception("division by zero", currentInstruction());
         uint64_t remainder = numerator % denominator;
-        return svalue_number(64, remainder);
+        return svalueNumber(64, remainder);
     }
 #endif
 
@@ -511,7 +511,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     uint64_t bn = b->toUnsigned().get();
     if (0==bn)
         throw BaseSemantics::Exception("division by zero", currentInstruction());
-    return svalue_number(b->nBits(), an % bn);
+    return svalueNumber(b->nBits(), an % bn);
 }
 
 BaseSemantics::SValuePtr
@@ -537,7 +537,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
         BitVector product(128);
         product.fromInteger(BitRange::baseSize( 0, 64), (c1 << 32) | c0);
         product.fromInteger(BitRange::baseSize(64, 64), c2);
-        return svalue_number(product);
+        return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
         throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
                                        "] * y[" + StringUtility::addrToString(b_->nBits()) +
@@ -546,7 +546,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         uint64_t a = a_->toUnsigned().get();
         uint64_t b = b_->toUnsigned().get();
-        return svalue_number(a_->nBits() + b_->nBits(), a * b);
+        return svalueNumber(a_->nBits() + b_->nBits(), a * b);
     }
 }
 
@@ -699,7 +699,7 @@ RiscOperators::doubleToExpr(double d, SgAsmFloatType *retType) {
             int64_t i;
         } u;
         u.fp = d;
-        return svalue_number(64, u.i);
+        return svalueNumber(64, u.i);
     } else if (retType == SageBuilderAsm::buildIeee754Binary32()) {
         ASSERT_require(sizeof(float) == sizeof(int32_t));
         union {
@@ -707,7 +707,7 @@ RiscOperators::doubleToExpr(double d, SgAsmFloatType *retType) {
             int32_t i;
         } u;
         u.fp = d;
-        return svalue_number(32, u.i);
+        return svalueNumber(32, u.i);
     } else {
         throw BaseSemantics::NotImplemented("doubleToExpr type not supported", currentInstruction());
     }

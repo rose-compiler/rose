@@ -36,8 +36,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
 
     SValuePtr addr = SValue::promote(adjustedVa);
-    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
-                                              solver()));
+    return svalueExpr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
+                                             solver()));
 }
 
 void

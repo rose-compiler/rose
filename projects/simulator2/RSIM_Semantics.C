@@ -254,7 +254,7 @@ RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const
         default:
             ASSERT_not_reachable("invalid architecture");
     }
-    BaseSemantics::SValuePtr retval = svalue_number(bv);
+    BaseSemantics::SValuePtr retval = svalueNumber(bv);
 
     SAWYER_MESG(mesg) <<"-> " <<*retval <<"\n";
     return retval;
