@@ -1,0 +1,7 @@
+START
+DEF PROC main;
+BEGIN
+   ITEM ITEM1 B;
+   ITEM1 = REP(ITEM1) <> 1B'0';
+END
+TERM
