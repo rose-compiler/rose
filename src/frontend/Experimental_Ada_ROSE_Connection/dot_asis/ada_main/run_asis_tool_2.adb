@@ -25,9 +25,11 @@ procedure Run_Asis_Tool_2 is
    Options : aliased Options_Record; -- Initialized
    Tool    : Asis_Tool_2.Tool.Class; -- Initialized
 
-   procedure Log (Message : in String) is
+   procedure Log (Message : in String; Debug : in Boolean) is
    begin
-      Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+      if Debug then
+        Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+      end if;
    end;
 
    procedure Get_Options is
@@ -53,7 +55,7 @@ procedure Run_Asis_Tool_2 is
       GCL.Getopt (Options.Config);
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.");
+         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.",  Options.Debug);
          raise;
    end Get_Options;
 
@@ -65,7 +67,7 @@ procedure Run_Asis_Tool_2 is
 
 begin
    Get_Options;
-   Log ("BEGIN");
+   Log ("BEGIN", Options.Debug);
    dot_asisinit;
    Tool.Process
      (File_Name                    => Options.File_Name.all,
@@ -75,5 +77,5 @@ begin
       Process_Implementation_Units => Options.Process_Implementation_Units,
       Debug                        => Options.Debug);
    dot_asisfinal;
-   Log ("END");
+   Log ("END", Options.Debug);
 end Run_Asis_Tool_2;
