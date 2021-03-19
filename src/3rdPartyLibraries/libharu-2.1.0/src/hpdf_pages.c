@@ -43,11 +43,13 @@ static HPDF_PageSizeValue HPDF_PREDEFINED_PAGE_SIZES[] = {
     {297, 684}      /* HPDF_PAGE_SIZE_COMM10 */
 };
 
-
+#if 0 // [Robb Matzke 2021-03-17]: unused
 static const HPDF_RGBColor DEF_RGB_COLOR = {0, 0, 0};
+#endif
 
+#if 0 // [Robb Matzke 2021-03-17]: unused
 static const HPDF_CMYKColor DEF_CMYK_COLOR = {0, 0, 0, 0};
-
+#endif
 
 static HPDF_STATUS
 Pages_BeforeWrite  (HPDF_Dict    obj);
@@ -340,7 +342,7 @@ HPDF_Page_New  (HPDF_MMgr   mmgr,
     /* add requiered elements */
     ret += HPDF_Dict_AddName (page, "Type", "Page");
     ret += HPDF_Dict_Add (page, "MediaBox", HPDF_Box_Array_New (page->mmgr,
-                HPDF_ToBox (0, 0, HPDF_DEF_PAGE_WIDTH, HPDF_DEF_PAGE_HEIGHT)));
+        HPDF_ToBox (0, 0, (HPDF_INT16)HPDF_DEF_PAGE_WIDTH, (HPDF_INT16)HPDF_DEF_PAGE_HEIGHT)));
     ret += HPDF_Dict_Add (page, "Contents", attr->contents);
 
     ret += AddResource (page);
