@@ -261,9 +261,9 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
 
     if (registers) {
         ASSERT_not_null(ops);
-        out <<"registers " <<registers->get_register_dictionary()->get_architecture_name() <<"\n";
-        RegisterDictionary::RegisterDescriptors regs = registers->get_register_dictionary()->get_largest_registers();
-        RegisterNames registerName(registers->get_register_dictionary());
+        out <<"registers " <<registers->registerDictionary()->get_architecture_name() <<"\n";
+        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->get_largest_registers();
+        RegisterNames registerName(registers->registerDictionary());
         BOOST_FOREACH (RegisterDescriptor reg, regs) {
             BaseSemantics::SValuePtr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
             if (auto number = val->toUnsigned())

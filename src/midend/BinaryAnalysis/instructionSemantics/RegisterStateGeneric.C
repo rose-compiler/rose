@@ -810,9 +810,9 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
-    const RegisterDictionary *regdict = fmt.get_register_dictionary();
+    const RegisterDictionary *regdict = fmt.registerDictionary();
     if (!regdict)
-        regdict = get_register_dictionary();
+        regdict = registerDictionary();
     RegisterNames regnames(regdict);
 
     // First pass is to get the maximum length of the register names; second pass prints

@@ -354,14 +354,14 @@ class Dispatcher: public BaseSemantics::Dispatcher {
 protected:
     Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval)
         : process_(process) {
-        set_register_dictionary(process_->registerDictionary());
+        registerDictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
         operators(RiscOperators::instance(protoval, process_));
     }
 
     Dispatcher(const BaseSemantics::RiscOperatorsPtr &ops)
         : process_(RiscOperators::promote(ops)->process()) {
-        set_register_dictionary(process_->registerDictionary());
+        registerDictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
         operators(ops);
     }

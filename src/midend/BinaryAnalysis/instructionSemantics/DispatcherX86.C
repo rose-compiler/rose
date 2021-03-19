@@ -64,7 +64,7 @@ InsnProcessor::check_arg_width(D d, I insn, A args) {
         T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDictionary *regdict = d->get_register_dictionary();
+                const RegisterDictionary *regdict = d->registerDictionary();
                 ASSERT_not_null(regdict);
                 if (regdict->lookup(rre->get_descriptor()).empty())
                     throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +

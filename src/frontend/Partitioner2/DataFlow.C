@@ -555,7 +555,7 @@ BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
-    const RegisterDictionary *regDict = cpu_->get_register_dictionary();
+    const RegisterDictionary *regDict = cpu_->registerDictionary();
     ops->currentState(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);

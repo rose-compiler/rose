@@ -82,7 +82,7 @@ RiscOperators::register_name(RegisterDescriptor a)
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
         regstate = state->registerState();
-    RegisterNames regnames(regstate!=NULL ? regstate->get_register_dictionary() : NULL);
+    RegisterNames regnames(regstate!=NULL ? regstate->registerDictionary() : NULL);
     return regnames(a);
 }
 

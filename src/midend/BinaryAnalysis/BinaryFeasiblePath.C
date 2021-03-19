@@ -272,7 +272,7 @@ private:
 
     /** Description a variable stored in a register. */
     FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-        const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
+        const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
@@ -997,7 +997,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->find("df"))
+    if (const RegisterDescriptor REG_DF = cpu->registerDictionary()->find("df"))
         ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();

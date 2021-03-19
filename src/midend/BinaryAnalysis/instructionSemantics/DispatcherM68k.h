@@ -24,8 +24,8 @@ public:
 public:
     /** Cached register.
      *
-     *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). Changing the register
-     *  dictionary via set_register_dictionary() invalidates all entries of the cache.
+     *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). Changing the @ref
+     *  registerDictionary property invalidates all entries of the cache.
      *
      * @{ */
     RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
@@ -76,7 +76,9 @@ protected:
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    /** Load the cached register descriptors.
+     *
+     *  This happens at construction when the @ref registerDictionary property is changed. */
     void regcache_init();
 
     /** Make sure memory is set up correctly. For instance, byte order should be big endian. */
@@ -101,7 +103,7 @@ public:
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (!regs)
-            regs = get_register_dictionary();
+            regs = registerDictionary();
         return instance(ops, addrWidth, regs);
     }
 

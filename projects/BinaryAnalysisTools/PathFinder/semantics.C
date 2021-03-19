@@ -67,7 +67,7 @@ RiscOperators::varComment(const std::string &varName, const std::string &comment
 
 std::string
 RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-    const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
     if (pathInsnIndex_ == INVALID_INDEX && currentInstruction() == NULL) {
         varComment += " by initialization";

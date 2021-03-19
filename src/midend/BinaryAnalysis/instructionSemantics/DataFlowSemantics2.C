@@ -393,7 +393,7 @@ public:
 void
 RiscOperators::init(const BaseSemantics::RiscOperatorsPtr &userDomain) {
     name("DataFlow(Outer)");
-    regdict_ = userDomain->currentState()->registerState()->get_register_dictionary();
+    regdict_ = userDomain->currentState()->registerState()->registerDictionary();
     InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->solver());
     innerDomainId_ = add_subdomain(innerDomain, "DataFlow(Inner)");
     userDomainId_ = add_subdomain(userDomain, userDomain->name());

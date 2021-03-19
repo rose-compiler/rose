@@ -193,7 +193,7 @@ public:
         // Virtual constructors
         BaseSemantics::RegisterStatePtr rs3 = rs1->create(protoval, regdict);
         check_type<RegisterStatePtr>(rs3, "create()");
-        require(rs3->get_register_dictionary()==regdict, "RegisterState::create() register dictionary");
+        require(rs3->registerDictionary()==regdict, "RegisterState::create() register dictionary");
         require(rs3 != rs1, "RegisterState::create() must return a new object");
         BaseSemantics::SValuePtr rs3v1 = rs3->protoval();
         check_sval_type(rs3v1, "RegisterState::protoval() after create()");
@@ -201,7 +201,7 @@ public:
         BaseSemantics::RegisterStatePtr rs4 = rs1->clone();
         check_type<RegisterStatePtr>(rs4, "clone()");
         require(rs4 != rs1, "RegisterState::clone() must return a new object");
-        require(rs4->get_register_dictionary()==rs1->get_register_dictionary(),
+        require(rs4->registerDictionary()==rs1->registerDictionary(),
                 "RegisterState::clone() must use the register dictionary from the source state");
         BaseSemantics::SValuePtr rs4v1 = rs4->protoval();
         check_sval_type(rs4v1, "RegisterState::protoval() after clone()");

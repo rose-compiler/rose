@@ -70,7 +70,7 @@ RiscOperators::reset()
     BaseSemantics::RegisterStatePtr regs = state->registerState();
     BaseSemantics::MemoryStatePtr mem = state->memoryState();
 
-    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->get_register_dictionary()));
+    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
     BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 
@@ -86,7 +86,7 @@ RiscOperators::reset()
 void
 RiscOperators::emit_changed_state(std::ostream &o)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     RegisterDescriptors modified_registers = get_modified_registers();
     emit_prerequisites(o, modified_registers, dictionary);
     emit_register_definitions(o, modified_registers);
@@ -109,7 +109,7 @@ RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
         ASSERT_not_null(currentState());
-        const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+        const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
 
         // General-purpose registers
         important_registers.push_back(dictionary->findOrThrow("eax"));
@@ -178,7 +178,7 @@ RiscOperators::get_stored_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
@@ -204,7 +204,7 @@ RiscOperators::get_modified_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr cur_regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = cur_regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = cur_regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
@@ -231,7 +231,7 @@ RiscOperators::get_modified_registers()
 RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     return dictionary->findOrThrow("eip");
 }
 
@@ -302,7 +302,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 void
 RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescriptors &regs)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -314,7 +314,7 @@ void
 RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescriptors &regs)
 {
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = regstate->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());

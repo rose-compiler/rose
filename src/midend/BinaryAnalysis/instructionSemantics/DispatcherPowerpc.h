@@ -28,9 +28,12 @@ class DispatcherPowerpc: public BaseSemantics::Dispatcher {
 public:
     typedef BaseSemantics::Dispatcher Super;
 
-    /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
-     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
-     * @{ */
+    /** Cached register.
+     *
+     *  This register is cached so that there are not so many calls to Dispatcher::findRegister(). The register descriptor is
+     *  updated only when the @ref registerDictionary property is changed.
+     *
+     *  @{ */
     RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_XER_CA, REG_XER_OV, REG_XER_SO, REG_CTR;
     RegisterDescriptor REG_CR, REG_CR0, REG_CR0_LT;
     /** @}*/
@@ -75,7 +78,9 @@ protected:
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    /** Load the cached register descriptors.
+     *
+     *  This happens at construction and when the @ref registerDictionary is changed. */
     void regcache_init();
 
     /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
@@ -105,7 +110,7 @@ public:
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (!regs)
-            regs = get_register_dictionary();
+            regs = registerDictionary();
         return instance(ops, addrWidth, regs);
     }
 

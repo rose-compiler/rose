@@ -127,7 +127,7 @@ Dispatcher::iproc_get(int key)
 RegisterDescriptor
 Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
-    const RegisterDictionary *regdict = get_register_dictionary();
+    const RegisterDictionary *regdict = registerDictionary();
     if (!regdict)
         throw Exception("no register dictionary", currentInstruction());
 
@@ -345,7 +345,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
     } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
         SValuePtr offset = operators()->readRegister(re->get_offset());
         if (!offset->isConcrete()) {
-            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            std::string offset_name = registerDictionary()->lookup(re->get_offset());
             offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
             throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
         }
@@ -382,7 +382,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
     } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
         SValuePtr offset = operators()->readRegister(re->get_offset());
         if (!offset->isConcrete()) {
-            std::string offset_name = get_register_dictionary()->lookup(re->get_offset());
+            std::string offset_name = registerDictionary()->lookup(re->get_offset());
             offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
             throw Exception("indirect register offset " + offset_name + "must have a concrete value", NULL);
         }

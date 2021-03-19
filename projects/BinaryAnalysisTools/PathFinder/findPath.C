@@ -570,7 +570,7 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     }
 
     // Direction flag (DF) is always set
-    const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df");
+    const RegisterDescriptor REG_DF = cpu->registerDictionary()->findOrThrow("df");
     ASSERT_forbid(REG_DF.isEmpty());
     ops->writeRegister(REG_DF, ops->boolean_(true));
 }
@@ -857,7 +857,7 @@ public:
     }
     SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
         BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-        const RegisterDescriptor regp = regState->get_register_dictionary()->find(token.lexeme());
+        const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
         if (!regp)
             return SymbolicExpr::Ptr();
         if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {

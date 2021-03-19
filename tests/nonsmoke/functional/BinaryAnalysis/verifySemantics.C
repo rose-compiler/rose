@@ -121,7 +121,7 @@ public:
         try {
             return svalue_number(subordinate_->readRegister(reg));
         } catch (const std::runtime_error &e) {
-            RegisterNames rname(currentState()->registerState()->get_register_dictionary());
+            RegisterNames rname(currentState()->registerState()->registerDictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
                                            currentInstruction());
         }
@@ -159,7 +159,7 @@ public:
         bool areSame = true;
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         RegisterState::RegPairs cells = regs->get_stored_registers();
-        RegisterNames rname(currentState()->registerState()->get_register_dictionary());
+        RegisterNames rname(currentState()->registerState()->registerDictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
             Sawyer::Container::BitVector nativeValue;
             try {

@@ -776,7 +776,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
-    regDict_ = cpu_->get_register_dictionary();
+    regDict_ = cpu_->registerDictionary();
 
     // Build the initial state
     StatePtr initialState = xfer.initialState();

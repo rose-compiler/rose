@@ -152,7 +152,7 @@ RiscOperators::dumpState() {
 
     if (ARCH_X86 == architecture_) {
         out <<"  segments:\n";
-        RegisterNames regNames(currentState()->registerState()->get_register_dictionary());
+        RegisterNames regNames(currentState()->registerState()->registerDictionary());
         BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
             Rose::BinaryAnalysis::RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
             out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)

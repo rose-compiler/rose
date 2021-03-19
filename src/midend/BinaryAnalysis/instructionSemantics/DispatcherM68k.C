@@ -2142,7 +2142,7 @@ struct IP_mac: P {
             d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
             d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
             throw BaseSemantics::Exception("MAC registers are not available for " +
-                                           d->get_register_dictionary()->get_architecture_name(),
+                                           d->registerDictionary()->get_architecture_name(),
                                            insn);
         }
         

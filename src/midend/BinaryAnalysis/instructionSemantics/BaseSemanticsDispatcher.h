@@ -43,7 +43,7 @@ class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
     RiscOperatorsPtr operators_;
 
 protected:
-    const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
+    const RegisterDictionary *regdict;                  /**< See @ref registerDictionary property. */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
@@ -173,24 +173,39 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods related to registers
 public:
-    /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).  This
-     *  dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to read
-     *  from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to
-     *  the @ref RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the
-     *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
-     *  superset thereof.
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary defines the set of registers over which the RISC operators may operate. This should be same
+     *  registers (or superset thereof) whose values are stored in the machine state(s).  This dictionary is used by the
+     *  Dispatcher class to translate register names to register descriptors.  For instance, to read from the "eax" register,
+     *  the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to the @ref
+     *  RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the instruction is
+     *  disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a superset thereof.
      *
      *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
      *  may query the dictionary and cache the resultant register descriptors.
+     *
+     *  This function should not be redefined in subclasses. Instead, override @ref get_register_dictionary or @ref
+     *  set_register_dictionary.
+     *
      * @{ */
+    const RegisterDictionary* registerDictionary() const /*final*/ {
+        return get_register_dictionary();
+    }
+    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
+        set_register_dictionary(rd);
+    }
+    /** @} */
+
+
+    // Old names, the ones which are overridden in subclasses if necessary. These are deprecated and might go away someday, so
+    // it's in your best interrest to use C++11 "override" in your declarations.
     virtual const RegisterDictionary *get_register_dictionary() const {
         return regdict;
     }
     virtual void set_register_dictionary(const RegisterDictionary *regdict) {
         this->regdict = regdict;
     }
-    /** @} */
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid

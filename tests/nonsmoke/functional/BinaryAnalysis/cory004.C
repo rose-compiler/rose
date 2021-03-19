@@ -31,7 +31,7 @@ public:
 
     void myclear() {
         DispatcherX86Ptr dispatcher = RoseDispatcherX86::instance();
-        dispatcher->set_register_dictionary(regdict);
+        dispatcher->registerDictionary(regdict);
         initialize_nonoverlapping(dispatcher->get_usual_registers(), false);
     }
 };

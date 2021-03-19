@@ -135,7 +135,7 @@ RiscOperators::substitute(const BaseSemantics::SValuePtr &expression) {
 std::string
 RiscOperators::registerVariableName(RegisterDescriptor reg) {
     using namespace StringUtility;
-    const RegisterDictionary *registers = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *registers = currentState()->registerState()->registerDictionary();
     std::string name = registers->lookup(reg);
     if (name.empty()) {
         return ("R_" + numberToString(reg.majorNumber()) +

@@ -72,7 +72,7 @@ public:
                 case WSemantics::REG_INIT:
                 case WSemantics::REG_FINAL: {
                     RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->registerState());
-                    RegisterNames regName(regState->get_register_dictionary());
+                    RegisterNames regName(regState->registerDictionary());
                     BOOST_FOREACH (const RegisterStateGeneric::RegPair &reg_val, regState->get_stored_registers()) {
                         RegisterDescriptor reg = reg_val.desc;
 

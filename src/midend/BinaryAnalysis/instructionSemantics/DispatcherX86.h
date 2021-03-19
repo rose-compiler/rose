@@ -32,7 +32,7 @@ protected:
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
-     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     *  register descriptor is updated only when the @ref registerDictionary property is changed.
      *
      *  Register names like REG_anyAX have sizes that depend on the architecture: 16 bits for 16-bit architectures, 32 bits for
      *  32-bit architectures, etc.  The other register names have specific sizes--such as REG_EAX being 32 bits--and are
@@ -109,7 +109,9 @@ public:
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    /** Load the cached register descriptors.
+     *
+     *  This happens at construction and when the @ref registerDictionary property is changed. */
     void regcache_init();
 
     /** Make sure memory properties are set up correctly. For instance, byte order should be little endian. */
@@ -140,7 +142,7 @@ public:
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (NULL==regs)
-            regs = get_register_dictionary();
+            regs = registerDictionary();
         return instance(ops, addrWidth, regs);
     }
 
