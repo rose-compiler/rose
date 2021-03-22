@@ -178,7 +178,9 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   object_renaming_declaration.adb                   \
   entry_body_declaration.adb                        \
   function_body_stub.adb                            \
+  generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.ads          \
+  generic_procedure_renaming_declaration.ads        \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
