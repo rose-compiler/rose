@@ -648,6 +648,7 @@ FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::Const
 
 FeasiblePath::Statistics&
 FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
+    nPathsExplored += other.nPathsExplored;
     maxVertexVisitHits += other.maxVertexVisitHits;
     maxPathLengthHits += other.maxPathLengthHits;
     maxCallDepthHits += other.maxCallDepthHits;
@@ -1466,6 +1467,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
     ssize_t callDepth = path.callDepth();
     ASSERT_require(callDepth >= 0);
     if ((size_t)callDepth >= settings_.maxCallDepth) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxCallDepthHits;
         return false;
     }
@@ -1482,6 +1484,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
         if ((size_t)callDepth >= settings_.maxRecursionDepth) {
+            SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
             ++stats_.maxRecursionDepthHits;
             return false;
         }
@@ -1722,8 +1725,10 @@ FeasiblePath::pathLength(const P2::CfgPath &path, int position) {
 
 void
 FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
-    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress()) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.reachedBlockVas.insertMaybe(*addr, 0);
+    }
 }
 
 void
@@ -1970,6 +1975,7 @@ FeasiblePath::adjustEffectiveK(P2::CfgPath &path, double k) {
     if (nVertexVisits > settings_.maxVertexVisit) {
         SAWYER_MESG(mlog[TRACE]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                  <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxVertexVisitHits;
         return 0.0;                                   // limit reached
     } else if (nVertexVisits > 1 && !rose_isnan(settings_.kCycleCoefficient)) {
@@ -1989,6 +1995,7 @@ FeasiblePath::adjustEffectiveK(P2::CfgPath &path, double k) {
                                  <<" path length is " <<StringUtility::plural(nSteps, "steps")
                                  <<", effective limit is " <<k
                                  <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxPathLengthHits;
         return 0.0;
     }
@@ -2096,6 +2103,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         makeSubstitutions(subst, sem.ops); // so symbolic expression parsers use the latest state when expanding register and memory references.
 
         while (!path.isEmpty()) {
+            {
+                SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
+                ++stats_.nPathsExplored;
+            }
             size_t pathNInsns = pathLength(path);
             progress.value(pathNInsns);
             dfsDebugCurrentPath(debug, path, solver, effectiveMaxPathLength);

@@ -7,7 +7,7 @@
 #                     * Else require SQLite3 to exist at specified location and use it
 #
 #  OUTPUTS:
-#    SQLITE3_FOOUND     -- Boolean: whether the sqlite3 executable or the SQLite3 library was found.
+#    SQLITE3_FOUND      -- Boolean: whether the sqlite3 executable or the SQLite3 library was found.
 #    SQLITE3_FOUND_EXE  -- Boolean: whether the sqlite executable was found
 #    SQLITE3_FOUND_LIB  -- Boolean: whether the SQLite3 library was found
 #    SQLITE3_EXECUTABLE -- String:  the sqlite3 executable name
