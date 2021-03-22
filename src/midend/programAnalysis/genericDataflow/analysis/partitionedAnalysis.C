@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 // WE ASSUME THAT EACH CFG NODE CONTAINS ONLY ONE NODE STATE.
 // IN PARTICULAR, WE ASSUME THAT IF THERE IS AN ANALYSIS SPLIT
 // THE PARTITIONS WILL CORRESPOND TO SUCCEEDING CFG NODES, NOT 
@@ -1087,3 +1090,5 @@ bool IntraPartitionFWDataflow::propagateFWStateToNextNode(
 
         return modified;
 }
+
+#endif

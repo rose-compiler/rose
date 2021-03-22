@@ -426,7 +426,7 @@ Printer::print_ret(Sawyer::Message::Stream &m, int64_t retval) {
 Printer&
 Printer::eret() {
     RegisterDescriptor reg = thread_->get_process()->get_simulator()->syscallReturnRegister();
-    uint64_t unsignedRetval = thread_->operators()->readRegister(reg)->get_number();
+    uint64_t unsignedRetval = thread_->operators()->readRegister(reg)->toUnsigned().get();
     int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.nBits(), 64);
     return eret(signedRetval);
 }

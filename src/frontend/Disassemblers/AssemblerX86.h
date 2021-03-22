@@ -24,8 +24,8 @@ namespace BinaryAnalysis {
  *
  *  The dictionary is generated directly from the Intel "Instruction Set Reference" PDF documentation as augmented by a small
  *  text file in this directory. The IntelAssemblyBuilder perl script generates AssemblerX86Init.h and AssemblerX86Init.C, which
- *  contain the X86InstructionKind enumeration, a function to initialize the dictionary (AssemblerX86::initAssemblyRules()),
- *  and a function for converting an X86InstructionKind constant to a string (AssemblerX86::to_str()). */
+ *  contain the X86InstructionKind enumeration, and a function to initialize the dictionary (AssemblerX86::initAssemblyRules()).
+ */
 class AssemblerX86: public Assembler {
 public:
     AssemblerX86()

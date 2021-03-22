@@ -43,12 +43,12 @@ class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
     RiscOperatorsPtr operators_;
 
 protected:
-    const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
+    const RegisterDictionary *regdict;                  /**< See @ref registerDictionary property. */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
-    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
+    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iprocKey() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
@@ -114,23 +114,23 @@ public:
     /** Lookup the processor for an instruction.  Looks up the functor that has been registered to process the given
      *  instruction. Returns the null pointer if the instruction cannot be processed. Instruction processor objects are
      *  managed by the caller; the instruction itself is only used for the duration of this call. */
-    virtual InsnProcessor *iproc_lookup(SgAsmInstruction *insn);
+    virtual InsnProcessor *iprocLookup(SgAsmInstruction *insn);
 
     /** Replace an instruction processor with another.  The processor for the specified instruction is replaced with the
      *  specified processor, which may be the null pointer.  Instruction processor objects are managed by the caller; the
      *  instruction itself is only used for the duration of this call. */
-    virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
+    virtual void iprocReplace(SgAsmInstruction *insn, InsnProcessor *iproc);
 
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
-    virtual int iproc_key(SgAsmInstruction*) const = 0;
+    virtual int iprocKey(SgAsmInstruction*) const = 0;
 
     /** Set an iproc table entry to the specified value.
      *
      *  The @p iproc object will become owned by this dispatcher and deleted when this dispatcher is destroyed. */
-    virtual void iproc_set(int key, InsnProcessor *iproc);
+    virtual void iprocSet(int key, InsnProcessor *iproc);
 
     /** Obtain an iproc table entry for the specified key. */
-    virtual InsnProcessor *iproc_get(int key);
+    virtual InsnProcessor *iprocGet(int key);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
@@ -173,24 +173,39 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods related to registers
 public:
-    /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).  This
-     *  dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to read
-     *  from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to
-     *  the @ref RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the
-     *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
-     *  superset thereof.
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary defines the set of registers over which the RISC operators may operate. This should be same
+     *  registers (or superset thereof) whose values are stored in the machine state(s).  This dictionary is used by the
+     *  Dispatcher class to translate register names to register descriptors.  For instance, to read from the "eax" register,
+     *  the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to the @ref
+     *  RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the instruction is
+     *  disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a superset thereof.
      *
      *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
      *  may query the dictionary and cache the resultant register descriptors.
+     *
+     *  This function should not be redefined in subclasses. Instead, override @ref get_register_dictionary or @ref
+     *  set_register_dictionary.
+     *
      * @{ */
+    const RegisterDictionary* registerDictionary() const /*final*/ {
+        return get_register_dictionary();
+    }
+    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
+        set_register_dictionary(rd);
+    }
+    /** @} */
+
+
+    // Old names, the ones which are overridden in subclasses if necessary. These are deprecated and might go away someday, so
+    // it's in your best interrest to use C++11 "override" in your declarations.
     virtual const RegisterDictionary *get_register_dictionary() const {
         return regdict;
     }
     virtual void set_register_dictionary(const RegisterDictionary *regdict) {
         this->regdict = regdict;
     }
-    /** @} */
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid

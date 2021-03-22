@@ -22,13 +22,13 @@ Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
                             const SmtSolverPtr&) const {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width() == other->get_width());
+    ASSERT_require(nBits() == other->nBits());
     BaseSemantics::SValuePtr retval;
 
     if (isBottom())
         return Sawyer::Nothing();                       // no change
     if (other->isBottom())
-        return bottom_(get_width());
+        return bottom_(nBits());
 
     Intervals newIntervals = intervals_;
     BOOST_FOREACH (const Interval &interval, other->intervals_.intervals())
@@ -38,11 +38,11 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
         return Sawyer::Nothing();                       // no change
 
     if (newIntervals.nIntervals() > maxComplexity) {
-        retval = instance_hull(get_width(), newIntervals.least(), newIntervals.greatest());
+        retval = instance_hull(nBits(), newIntervals.least(), newIntervals.greatest());
         return retval;
     }
 
-    retval = instance_intervals(get_width(), newIntervals);
+    retval = instance_intervals(nBits(), newIntervals);
     return retval;
 }
 
@@ -92,11 +92,11 @@ bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    if (get_width() != other->get_width())
+    if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
         return true;
-    if (must_equal(other))      // this is faster
+    if (mustEqual(other))      // this is faster
         return true;
     return get_intervals().contains(other->get_intervals());
 }
@@ -105,11 +105,13 @@ bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    if (get_width() != other->get_width())
+    if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
         return false;
-    return is_number() && other->is_number() && get_number()==other->get_number();
+    auto thisU = this->toUnsigned();
+    auto otherU = other->toUnsigned();
+    return thisU && otherU && *thisU == *otherU;
 }
 
 uint64_t
@@ -119,7 +121,7 @@ SValue::possible_bits() const
     BOOST_FOREACH (const Interval &interval, intervals_.intervals()) {
         uint64_t lo = interval.least(), hi = interval.greatest();
         bits |= lo | hi;
-        for (uint64_t bitno=0; bitno<get_width(); ++bitno) {
+        for (uint64_t bitno=0; bitno<nBits(); ++bitno) {
             uint64_t bit = IntegerOps::shl1<uint64_t>(bitno);
             if (0 == (bits & bit)) {
                 uint64_t base = lo & ~IntegerOps::genMask<uint64_t>(bitno);
@@ -144,7 +146,7 @@ toString(uint64_t n, size_t nbits) {
 
 void
 SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
-    Intervals::Scalar maxValue = IntegerOps::genMask<Intervals::Scalar>(get_width());
+    Intervals::Scalar maxValue = IntegerOps::genMask<Intervals::Scalar>(nBits());
     if (isBottom()) {
         output <<"bottom";
     } else if (intervals_.nIntervals() == 1 && intervals_.hull() == Interval::hull(0, maxValue)) {
@@ -154,13 +156,13 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
         BOOST_FOREACH (const Interval &interval, intervals_.intervals()) {
             if (interval.least() != intervals_.hull().least())
                 output <<", ";
-            output <<toString(interval.least(), get_width());
+            output <<toString(interval.least(), nBits());
             if (!interval.isSingleton())
-                output <<".." <<toString(interval.greatest(), get_width());
+                output <<".." <<toString(interval.greatest(), nBits());
         }
         output <<"}";
     }
-    output <<"[" <<get_width() <<"]";
+    output <<"[" <<nBits() <<"]";
 }
 
 /*******************************************************************************************************************************
@@ -201,17 +203,17 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
-    uint64_t ak = a->is_number() ? a->get_number() : 0;
-    uint64_t bk = b->is_number() ? b->get_number() : 0;
-    uint64_t au = a->is_number() ? 0 : a->possible_bits();
-    uint64_t bu = b->is_number() ? 0 : b->possible_bits();
+        return bottom_(a->nBits());
+    uint64_t ak = a->toUnsigned().orElse(0);
+    uint64_t bk = b->toUnsigned().orElse(0);
+    uint64_t au = a->isConcrete() ? 0 : a->possible_bits();
+    uint64_t bu = b->isConcrete() ? 0 : b->possible_bits();
     uint64_t r = ak & bk & au & bu;
     if (au || bu)
-        return svalue_from_bits(a->get_width(), r);
-    return number_(a->get_width(), r);
+        return svalue_from_bits(a->nBits(), r);
+    return number_(a->nBits(), r);
 }
 
 BaseSemantics::SValuePtr
@@ -219,16 +221,18 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
-    if (a->is_number() && b->is_number()) {
-        uint64_t result = a->get_number() | b->get_number();
-        return number_(a->get_width(), result);
+        return bottom_(a->nBits());
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        uint64_t result = *aNum | *bNum;
+        return number_(a->nBits(), result);
     }
     uint64_t abits = a->possible_bits(), bbits = b->possible_bits();
     uint64_t rbits = abits | bbits; // bits that could be set in the result
-    return svalue_from_bits(a->get_width(), rbits);
+    return svalue_from_bits(a->nBits(), rbits);
 }
 
 BaseSemantics::SValuePtr
@@ -236,14 +240,16 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
-    if (a->is_number() && b->is_number())
-        return number_(a->get_width(), a->get_number() ^ b->get_number());
+        return bottom_(a->nBits());
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum)
+        return number_(a->nBits(), *aNum ^ *bNum);
     uint64_t abits = a->possible_bits(), bbits = b->possible_bits();
     uint64_t rbits = abits | bbits; // yes, OR, not XOR
-    return svalue_from_bits(a->get_width(), rbits);
+    return svalue_from_bits(a->nBits(), rbits);
 }
 
 BaseSemantics::SValuePtr
@@ -251,15 +257,15 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return bottom_(a->nBits());
     Intervals result;
-    uint64_t mask = IntegerOps::genMask<uint64_t>(a->get_width());
+    uint64_t mask = IntegerOps::genMask<uint64_t>(a->nBits());
     BOOST_FOREACH (const Interval &interval, a->get_intervals().intervals()) {
         uint64_t lo = ~interval.greatest() & mask;
         uint64_t hi = ~interval.least() & mask;
         result.insert(Interval::hull(lo, hi));
     }
-    return svalue_from_intervals(a->get_width(), result);
+    return svalue_from_intervals(a->nBits(), result);
 }
 
 BaseSemantics::SValuePtr
@@ -267,19 +273,19 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
 {
     using namespace IntegerOps;
     SValuePtr a = SValue::promote(a_);
-    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return bottom_(a->nBits());
     Intervals result;
     uint64_t discard_mask = ~genMask<uint64_t>(end_bit); // hi-order bits being discarded
-    uint64_t src_mask = genMask<uint64_t>(a->get_width()); // significant bits in the source operand
+    uint64_t src_mask = genMask<uint64_t>(a->nBits()); // significant bits in the source operand
     uint64_t dst_mask = genMask<uint64_t>(end_bit-begin_bit); // significant bits in the result
     BOOST_FOREACH (const Interval &iv, a->get_intervals().intervals()) {
-        uint64_t d1 = shiftRightLogical2(iv.least()     & discard_mask, end_bit, a->get_width()); // discarded part, lo
-        uint64_t d2 = shiftRightLogical2(iv.greatest()  & discard_mask, end_bit, a->get_width()); // discarded part, hi
-        uint64_t k1 = shiftRightLogical2(iv.least()     & src_mask, begin_bit, a->get_width()) & dst_mask; // keep part, lo
-        uint64_t k2 = shiftRightLogical2(iv.greatest()  & src_mask, begin_bit, a->get_width()) & dst_mask; // keep part, hi
+        uint64_t d1 = shiftRightLogical2(iv.least()     & discard_mask, end_bit, a->nBits()); // discarded part, lo
+        uint64_t d2 = shiftRightLogical2(iv.greatest()  & discard_mask, end_bit, a->nBits()); // discarded part, hi
+        uint64_t k1 = shiftRightLogical2(iv.least()     & src_mask, begin_bit, a->nBits()) & dst_mask; // keep part, lo
+        uint64_t k2 = shiftRightLogical2(iv.greatest()  & src_mask, begin_bit, a->nBits()) & dst_mask; // keep part, hi
         if (d1==d2) {                   // no overflow in the kept bits
             ASSERT_require(k1<=k2);
             result.insert(Interval::hull(k1, k2));
@@ -299,17 +305,17 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retsize = a->get_width() + b->get_width();
+    size_t retsize = a->nBits() + b->nBits();
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width() + b->get_width());
+        return bottom_(a->nBits() + b->nBits());
     Intervals result;
-    uint64_t mask_a = IntegerOps::genMask<uint64_t>(a->get_width());
-    uint64_t mask_b = IntegerOps::genMask<uint64_t>(b->get_width());
+    uint64_t mask_a = IntegerOps::genMask<uint64_t>(a->nBits());
+    uint64_t mask_b = IntegerOps::genMask<uint64_t>(b->nBits());
     BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
         BOOST_FOREACH (const Interval &bv, b->get_intervals().intervals()) {
-            uint64_t lo = (IntegerOps::shiftLeft2(bv.least() & mask_b, retsize, a->get_width()) |
+            uint64_t lo = (IntegerOps::shiftLeft2(bv.least() & mask_b, retsize, a->nBits()) |
                            (av.least() & mask_a));
-            uint64_t hi = (IntegerOps::shiftLeft2(bv.greatest() & mask_b, retsize, a->get_width()) |
+            uint64_t hi = (IntegerOps::shiftLeft2(bv.greatest() & mask_b, retsize, a->nBits()) |
                            (av.greatest() & mask_a));
             result.insert(Interval::hull(lo, hi));
         }
@@ -321,14 +327,13 @@ BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    size_t nbits = a->get_width();
+    size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
-    if (a->is_number()) {
-        uint64_t av = a->get_number();
-        if (av) {
+    if (auto av = a->toUnsigned()) {
+        if (*av) {
             for (size_t i=0; i<nbits; ++i) {
-                if (av & IntegerOps::shl1<uint64_t>(i))
+                if (*av & IntegerOps::shl1<uint64_t>(i))
                     return number_(nbits, i);
             }
         }
@@ -354,14 +359,13 @@ BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    size_t nbits = a->get_width();
+    size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
-    if (a->is_number()) {
-        uint64_t av = a->get_number();
-        if (av) {
+    if (auto av = a->toUnsigned()) {
+        if (*av) {
             for (size_t i=nbits; i>0; --i) {
-                if (av && IntegerOps::shl1<uint64_t>((i-1)))
+                if (*av && IntegerOps::shl1<uint64_t>((i-1)))
                     return number_(nbits, i-1);
             }
         }
@@ -388,13 +392,14 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
-    if (a->is_number() && b->is_number()) {
-        uint64_t bn = b->get_number();
-        uint64_t result = ((a->get_number() << bn) & IntegerOps::genMask<uint64_t>(nbitsa)) |
-                          ((a->get_number() >> (nbitsa-bn)) & IntegerOps::genMask<uint64_t>(bn));
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        uint64_t result = ((*aNum << *bNum) & IntegerOps::genMask<uint64_t>(nbitsa)) |
+                          ((*aNum >> (nbitsa - *bNum)) & IntegerOps::genMask<uint64_t>(*bNum));
         return number_(nbitsa, result);
     }
     uint64_t abits = a->possible_bits();
@@ -413,13 +418,14 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
-    if (a->is_number() && b->is_number()) {
-        uint64_t bn = b->get_number();
-        uint64_t result = ((a->get_number() >> bn) & IntegerOps::genMask<uint64_t>(nbitsa-bn)) |
-                          ((a->get_number() << (nbitsa-bn)) & IntegerOps::genMask<uint64_t>(nbitsa));
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        uint64_t result = ((*aNum >> *bNum) & IntegerOps::genMask<uint64_t>(nbitsa - *bNum)) |
+                          ((*aNum << (nbitsa - *bNum)) & IntegerOps::genMask<uint64_t>(nbitsa));
         return number_(nbitsa, result);
     }
     uint64_t abits = a->possible_bits();
@@ -439,11 +445,13 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
-    if (a->is_number() && b->is_number()) {
-        uint64_t result = b->get_number()<nbitsa ? a->get_number() << b->get_number() : (uint64_t)0;
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        uint64_t result = *bNum < nbitsa ? *aNum << *bNum : (uint64_t)0;
         return number_(nbitsa, result);
     }
     uint64_t abits = a->possible_bits();
@@ -460,19 +468,18 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
-    if (b->is_number()) {
-        uint64_t bn = b->get_number();
-        if (bn >= nbitsa)
+    if (auto bNum = b->toUnsigned()) {
+        if (*bNum >= nbitsa)
             return number_(nbitsa, 0);
-        if (a->is_number())
-            return number_(nbitsa, a->get_number() >> bn);
+        if (auto aNum = a->toUnsigned())
+            return number_(nbitsa, *aNum >> *bNum);
         Intervals result;
         BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
-            uint64_t lo = av.least() >> bn;
-            uint64_t hi = av.greatest() >> bn;
+            uint64_t lo = av.least() >> *bNum;
+            uint64_t hi = av.greatest() >> *bNum;
             result.insert(Interval::hull(lo, hi));
         }
         return svalue_from_intervals(nbitsa, result);
@@ -495,14 +502,15 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
-    if (a->is_number() && b->is_number()) {
-        uint64_t bn = b->get_number();
-        uint64_t result = a->get_number() >> bn;
-        if (IntegerOps::signBit2(a->get_number(), nbitsa))
-            result |= IntegerOps::genMask<uint64_t>(nbitsa) ^ IntegerOps::genMask<uint64_t>(nbitsa-bn);
+    auto aNum = a->toUnsigned();
+    auto bNum = b->toUnsigned();
+    if (aNum && bNum) {
+        uint64_t result = *aNum >> *bNum;
+        if (IntegerOps::signBit2(*aNum, nbitsa))
+            result |= IntegerOps::genMask<uint64_t>(nbitsa) ^ IntegerOps::genMask<uint64_t>(nbitsa - *bNum);
         return number_(nbitsa, result);
     }
     uint64_t abits = a->possible_bits();
@@ -523,8 +531,8 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
         return bottom_(1);
-    if (a->is_number())
-        return 0==a->get_number() ? boolean_(true) : boolean_(false);
+    if (auto aNum = a->toUnsigned())
+        return boolean_(0 == *aNum);
     if (!a->get_intervals().contains(Interval(0)))
         return boolean_(false);
     return undefined_(1);
@@ -534,20 +542,20 @@ BaseSemantics::SValuePtr
 RiscOperators::ite(const BaseSemantics::SValuePtr &cond_, const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
 {
     SValuePtr cond = SValue::promote(cond_);
-    ASSERT_require(1==cond_->get_width());
+    ASSERT_require(1==cond_->nBits());
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (cond->isBottom()) {
-        if (a->must_equal(b))
+        if (a->mustEqual(b))
             return a->copy();
-        return bottom_(a->get_width());
+        return bottom_(a->nBits());
     }
-    if (cond->is_number())
-        return cond->get_number() ? a->copy() : b->copy();
+    if (auto condVal = cond->toUnsigned())
+        return *condVal ? a->copy() : b->copy();
     Intervals result = a->get_intervals();
     result.insertMultiple(b->get_intervals());
-    return svalue_from_intervals(a->get_width(), result);
+    return svalue_from_intervals(a->nBits(), result);
 }
 
 BaseSemantics::SValuePtr
@@ -555,15 +563,15 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
 {
     SValuePtr a = SValue::promote(a_);
 
-    if (a->get_width() == new_width)
+    if (a->nBits() == new_width)
         return a->copy();
 
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return bottom_(a->nBits());
 
-    if (new_width < a->get_width()) {
+    if (new_width < a->nBits()) {
         uint64_t lo = IntegerOps::shl1<uint64_t>(new_width);
-        uint64_t hi = IntegerOps::genMask<uint64_t>(a->get_width());
+        uint64_t hi = IntegerOps::genMask<uint64_t>(a->nBits());
         Intervals retval = a->get_intervals();
         retval.erase(Interval::hull(lo, hi));
         return svalue_from_intervals(new_width, retval);
@@ -576,19 +584,19 @@ BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
-    if (a->get_width() == new_width)
+    if (a->nBits() == new_width)
         return a->copy();
     if (a->isBottom())
         return bottom_(new_width);
 
-    uint64_t old_signbit = IntegerOps::shl1<uint64_t>(a->get_width()-1);
+    uint64_t old_signbit = IntegerOps::shl1<uint64_t>(a->nBits()-1);
     uint64_t new_signbit = IntegerOps::shl1<uint64_t>(new_width-1);
     Intervals result;
     BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
-        uint64_t lo = IntegerOps::signExtend2(av.least(), a->get_width(), new_width);
-        uint64_t hi = IntegerOps::signExtend2(av.greatest(), a->get_width(), new_width);
+        uint64_t lo = IntegerOps::signExtend2(av.least(), a->nBits(), new_width);
+        uint64_t hi = IntegerOps::signExtend2(av.greatest(), a->nBits(), new_width);
         if (0==(lo & new_signbit) && 0!=(hi & new_signbit)) {
-            result.insert(Interval::hull(lo, IntegerOps::genMask<uint64_t>(a->get_width()-1)));
+            result.insert(Interval::hull(lo, IntegerOps::genMask<uint64_t>(a->nBits()-1)));
             result.insert(Interval::hull(old_signbit, hi));
         } else {
             result.insert(Interval::hull(lo, hi));
@@ -602,8 +610,8 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    size_t nbits = a->get_width();
+    ASSERT_require(a->nBits()==b->nBits());
+    size_t nbits = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbits);
 
@@ -635,22 +643,22 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    size_t nbits = a->get_width();
+    ASSERT_require(a->nBits()==b->nBits());
+    size_t nbits = a->nBits();
     SValuePtr c = SValue::promote(c_);
-    ASSERT_require(c->get_width()==1);
+    ASSERT_require(c->nBits()==1);
     if (a->isBottom() || b->isBottom() || c->isBottom())
         return bottom_(nbits);
 
     SValuePtr wide_carry = SValue::promote(unsignedExtend(c, nbits));
     SValuePtr retval = SValue::promote(add(add(a, b), wide_carry));
 
-    uint64_t known1 = a->is_number() ? a->get_number() : 0;
-    uint64_t known2 = b->is_number() ? b->get_number() : 0;
-    uint64_t known3 = c->is_number() ? c->get_number() : 0;
-    uint64_t unkwn1 = a->is_number() ? 0 : a->possible_bits();
-    uint64_t unkwn2 = b->is_number() ? 0 : b->possible_bits();
-    uint64_t unkwn3 = c->is_number() ? 0 : c->possible_bits();
+    uint64_t known1 = a->toUnsigned().orElse(0);
+    uint64_t known2 = b->toUnsigned().orElse(0);
+    uint64_t known3 = c->toUnsigned().orElse(0);
+    uint64_t unkwn1 = a->toUnsigned() ? 0 : a->possible_bits();
+    uint64_t unkwn2 = b->toUnsigned() ? 0 : b->possible_bits();
+    uint64_t unkwn3 = c->toUnsigned() ? 0 : c->possible_bits();
     enum Carry { C_FALSE, C_TRUE, C_UNKNOWN };
     Carry cin = C_FALSE; // carry propagated across loop iterations
     uint64_t known_co=0, unkwn_co=0; // known or possible carry-out bits
@@ -677,7 +685,7 @@ BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    size_t nbits = a->get_width();
+    size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
     Intervals result;
@@ -705,8 +713,8 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
-    size_t nbitsb = b->get_width();
+    size_t nbitsa = a->nBits();
+    size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
     if (!IntegerOps::signBit2(a->possible_bits(), nbitsa) && !IntegerOps::signBit2(b->possible_bits(), nbitsb))
@@ -719,8 +727,8 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
-    size_t nbitsb = b->get_width();
+    size_t nbitsa = a->nBits();
+    size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsb);
     if (!IntegerOps::signBit2(a->possible_bits(), nbitsa) && !IntegerOps::signBit2(b->possible_bits(), nbitsb))
@@ -733,8 +741,8 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
-    size_t nbitsb = b->get_width();
+    size_t nbitsa = a->nBits();
+    size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa+nbitsb);
     if (!IntegerOps::signBit2(a->possible_bits(), nbitsa) && !IntegerOps::signBit2(b->possible_bits(), nbitsb))
@@ -747,7 +755,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
+    size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
     Intervals result;
@@ -769,17 +777,16 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t nbitsa = a->get_width();
-    size_t nbitsb = b->get_width();
+    size_t nbitsa = a->nBits();
+    size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsb);
-    if (b->is_number()) {
+    if (auto bNum = b->toUnsigned()) {
         // If B is a power of two then mask away the high bits of A
-        uint64_t bn = b->get_number();
         uint64_t limit = IntegerOps::genMask<uint64_t>(nbitsa);
         for (size_t i=0; i<nbitsb; ++i) {
             uint64_t twopow = IntegerOps::shl1<uint64_t>(i);
-            if (bn==twopow) {
+            if (*bNum == twopow) {
                 Intervals result = a->get_intervals();
                 result.erase(Interval::hull(twopow, limit));
                 return svalue_from_intervals(nbitsb, result);
@@ -795,7 +802,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width() + b->get_width());
+        return bottom_(a->nBits() + b->nBits());
     Intervals result;
     BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
         BOOST_FOREACH (const Interval &bv, b->get_intervals().intervals()) {
@@ -805,7 +812,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
             result.insert(Interval::hull(lo, hi));
         }
     }
-    return svalue_from_intervals(a->get_width()+b->get_width(), result);
+    return svalue_from_intervals(a->nBits()+b->nBits(), result);
 }
 
 BaseSemantics::SValuePtr

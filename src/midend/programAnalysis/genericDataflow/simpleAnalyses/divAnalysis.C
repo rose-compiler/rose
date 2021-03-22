@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "divAnalysis.h"
 
 #include <boost/bind.hpp>
@@ -773,3 +776,5 @@ void printDivAnalysisStates(DivAnalysis* da, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

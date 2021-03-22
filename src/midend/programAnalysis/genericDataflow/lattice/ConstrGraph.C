@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 // #################################################
 // ############## CONSTRAINT GRAPHS ################
 // #################################################
@@ -5063,3 +5066,4 @@ void ConstrGraph::endTransaction(string indent)
         Dbg::dbg << "\n";*/
 }
 
+#endif

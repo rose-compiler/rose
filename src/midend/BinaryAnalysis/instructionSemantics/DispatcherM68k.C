@@ -732,9 +732,9 @@ struct IP_cmp: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -764,9 +764,9 @@ struct IP_cmpa: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -796,9 +796,9 @@ struct IP_cmpi: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -827,9 +827,9 @@ struct IP_cmpm: P {
         d->incrementRegisters(args[0]);
         SValuePtr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->get_width()-1, a0->get_width());
-        SValuePtr dm = ops->extract(a1, a1->get_width()-1, a1->get_width());
-        SValuePtr rm = ops->extract(diff, diff->get_width()-1, diff->get_width());
+        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
         SValuePtr isNegative = rm;
         SValuePtr isZero = ops->equalToZero(diff);
@@ -1041,7 +1041,7 @@ struct IP_divs: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1066,7 +1066,7 @@ struct IP_divsl: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1124,7 +1124,7 @@ struct IP_divu: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -1149,7 +1149,7 @@ struct IP_divul: P {
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(quotient));
-        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->get_width()-1, quotient->get_width()));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(quotient, quotient->nBits()-1, quotient->nBits()));
     }
 };
 
@@ -2142,7 +2142,7 @@ struct IP_mac: P {
             d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
             d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
             throw BaseSemantics::Exception("MAC registers are not available for " +
-                                           d->get_register_dictionary()->get_architecture_name(),
+                                           d->registerDictionary()->get_architecture_name(),
                                            insn);
         }
         
@@ -2159,7 +2159,7 @@ struct IP_mac: P {
         SValuePtr isSf3 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -3)));
         SValuePtr v1 = ops->ite(isSf3, ops->shiftRight(product, ops->number_(8, 1)), product);
         product = ops->ite(isSf1, ops->shiftLeft(product, ops->number_(8, 1)), v1);
-        ASSERT_require(product->get_width()==32 || product->get_width()==64);
+        ASSERT_require(product->nBits()==32 || product->nBits()==64);
 
         // MAC operational bits. I cannot find documentation that describes these bits adequately. In particular, does a 1 mean
         // signed or unsigned for the MACSR_SU bit; does a 1 mean fractional or integer mode for the MACSR_FI bit?
@@ -2184,8 +2184,8 @@ struct IP_mac: P {
         }
         SValuePtr macAcc = ops->readRegister(macAccReg);
         SValuePtr macExt = ops->readRegister(macExtReg);
-        ASSERT_require(macAcc->get_width()==32);
-        ASSERT_require(macExt->get_width()==16);
+        ASSERT_require(macAcc->nBits()==32);
+        ASSERT_require(macExt->nBits()==16);
 
         // When the accumulator is operating in integer mode, the lower 40 bits of the shifted product is added to the
         // low-order 40 bits of the 48-bit (macExt|macAcc) concatenation.  The upper 8 bits of the concatenation are not
@@ -2194,7 +2194,7 @@ struct IP_mac: P {
         SValuePtr accInt = ops->concat(macAcc, macExt);
         SValuePtr v2 = ops->extract(accInt, 40, 48);
         SValuePtr newAccInt = ops->concat(ops->add(ops->unsignedExtend(accInt, 40), productInt), v2);
-        ASSERT_require(newAccInt->get_width()==48);
+        ASSERT_require(newAccInt->nBits()==48);
 
         // When the accumulator is operating in fractional mode, the upper 40 bits of the shifted product is extended to 48
         // bits (signed or unsigned depending on the MACSR register), and then added to the 48 bit accumulator. The 48 bit
@@ -2206,7 +2206,7 @@ struct IP_mac: P {
         SValuePtr v4 = ops->concat(macAcc, ops->extract(macExt, 8, 16));
         SValuePtr accFrac = ops->concat(ops->extract(macExt, 0, 8), v4);
         SValuePtr newAccFrac = ops->add(accFrac, productFrac);
-        ASSERT_require(newAccFrac->get_width()==48);
+        ASSERT_require(newAccFrac->nBits()==48);
 
         // The new macAcc and macExt values
         SValuePtr v5 = ops->unsignedExtend(newAccInt, 32);
@@ -2229,7 +2229,7 @@ struct IP_mac: P {
             toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
                               toMove,                       // don't use the mask
                               v9);
-            ASSERT_require(toMove->get_width()==32);
+            ASSERT_require(toMove->nBits()==32);
             d->write(args[6], toMove);
         }
         
@@ -2544,7 +2544,7 @@ struct IP_muls: P {
             isOverflow = ops->boolean_(false);
         }
 
-        size_t resultNBits = result->get_width();
+        size_t resultNBits = result->nBits();
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
@@ -2598,7 +2598,7 @@ struct IP_mulu: P {
             isOverflow = ops->boolean_(false);
         }
 
-        size_t resultNBits = result->get_width();
+        size_t resultNBits = result->nBits();
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
@@ -3481,235 +3481,235 @@ struct IP_unpk: P {
 
 void
 DispatcherM68k::iproc_init() {
-    iproc_set(m68k_abcd,        new M68k::IP_abcd);
-    iproc_set(m68k_add,         new M68k::IP_add);
-    iproc_set(m68k_adda,        new M68k::IP_adda);
-    iproc_set(m68k_addi,        new M68k::IP_addi);
-    iproc_set(m68k_addq,        new M68k::IP_addq);
-    iproc_set(m68k_addx,        new M68k::IP_addx);
-    iproc_set(m68k_and,         new M68k::IP_and);
-    iproc_set(m68k_andi,        new M68k::IP_andi);
-    iproc_set(m68k_asl,         new M68k::IP_asl);
-    iproc_set(m68k_asr,         new M68k::IP_asr);
-    iproc_set(m68k_bra,         new M68k::IP_bra);
-    iproc_set(m68k_bsr,         new M68k::IP_bsr);
-    iproc_set(m68k_bhi,         new M68k::IP_bhi);
-    iproc_set(m68k_bls,         new M68k::IP_bls);
-    iproc_set(m68k_bcc,         new M68k::IP_bcc);
-    iproc_set(m68k_bcs,         new M68k::IP_bcs);
-    iproc_set(m68k_bne,         new M68k::IP_bne);
-    iproc_set(m68k_beq,         new M68k::IP_beq);
-    iproc_set(m68k_bvc,         new M68k::IP_bvc);
-    iproc_set(m68k_bvs,         new M68k::IP_bvs);
-    iproc_set(m68k_bpl,         new M68k::IP_bpl);
-    iproc_set(m68k_bmi,         new M68k::IP_bmi);
-    iproc_set(m68k_bge,         new M68k::IP_bge);
-    iproc_set(m68k_blt,         new M68k::IP_blt);
-    iproc_set(m68k_bgt,         new M68k::IP_bgt);
-    iproc_set(m68k_ble,         new M68k::IP_ble);
-    iproc_set(m68k_bchg,        new M68k::IP_bchg);
-    iproc_set(m68k_bclr,        new M68k::IP_bclr);
-    iproc_set(m68k_bfchg,       new M68k::IP_bfchg);
-    iproc_set(m68k_bfclr,       new M68k::IP_bfclr);
-    iproc_set(m68k_bfexts,      new M68k::IP_bfexts);
-    iproc_set(m68k_bfextu,      new M68k::IP_bfextu);
-    iproc_set(m68k_bfins,       new M68k::IP_bfins);
-    iproc_set(m68k_bfset,       new M68k::IP_bfset);
-    iproc_set(m68k_bftst,       new M68k::IP_bftst);
-    iproc_set(m68k_bkpt,        new M68k::IP_bkpt);
-    iproc_set(m68k_bset,        new M68k::IP_bset);
-    iproc_set(m68k_btst,        new M68k::IP_btst);
-    iproc_set(m68k_callm,       new M68k::IP_callm);
-    iproc_set(m68k_cas,         new M68k::IP_cas);
-    iproc_set(m68k_cas2,        new M68k::IP_cas2);
-    iproc_set(m68k_chk,         new M68k::IP_chk);
-    iproc_set(m68k_chk2,        new M68k::IP_chk2);
-    iproc_set(m68k_clr,         new M68k::IP_clr);
-    iproc_set(m68k_cmp,         new M68k::IP_cmp);
-    iproc_set(m68k_cmpa,        new M68k::IP_cmpa);
-    iproc_set(m68k_cmpi,        new M68k::IP_cmpi);
-    iproc_set(m68k_cmpm,        new M68k::IP_cmpm);
-    iproc_set(m68k_cmp2,        new M68k::IP_cmp2);
-    iproc_set(m68k_cpushl,      new M68k::IP_cpushl);
-    iproc_set(m68k_cpushp,      new M68k::IP_cpushp);
-    iproc_set(m68k_cpusha,      new M68k::IP_cpusha);
-    iproc_set(m68k_dbt,         new M68k::IP_dbt);
-    iproc_set(m68k_dbf,         new M68k::IP_dbf);
-    iproc_set(m68k_dbhi,        new M68k::IP_dbhi);
-    iproc_set(m68k_dbls,        new M68k::IP_dbls);
-    iproc_set(m68k_dbcc,        new M68k::IP_dbcc);
-    iproc_set(m68k_dbcs,        new M68k::IP_dbcs);
-    iproc_set(m68k_dbne,        new M68k::IP_dbne);
-    iproc_set(m68k_dbeq,        new M68k::IP_dbeq);
-    iproc_set(m68k_dbvc,        new M68k::IP_dbvc);
-    iproc_set(m68k_dbvs,        new M68k::IP_dbvs);
-    iproc_set(m68k_dbpl,        new M68k::IP_dbpl);
-    iproc_set(m68k_dbmi,        new M68k::IP_dbmi);
-    iproc_set(m68k_dbge,        new M68k::IP_dbge);
-    iproc_set(m68k_dblt,        new M68k::IP_dblt);
-    iproc_set(m68k_dbgt,        new M68k::IP_dbgt);
-    iproc_set(m68k_dble,        new M68k::IP_dble);
-    iproc_set(m68k_divs,        new M68k::IP_divs);
-    iproc_set(m68k_divsl,       new M68k::IP_divsl);
-    iproc_set(m68k_divu,        new M68k::IP_divu);
-    iproc_set(m68k_divul,       new M68k::IP_divul);
-    iproc_set(m68k_eor,         new M68k::IP_eor);
-    iproc_set(m68k_eori,        new M68k::IP_eori);
-    iproc_set(m68k_exg,         new M68k::IP_exg);
-    iproc_set(m68k_ext,         new M68k::IP_ext);
-    iproc_set(m68k_extb,        new M68k::IP_extb);
-    iproc_set(m68k_fabs,        new M68k::IP_fabs);
-    iproc_set(m68k_fsabs,       new M68k::IP_fsabs);
-    iproc_set(m68k_fdabs,       new M68k::IP_fdabs);
-    iproc_set(m68k_fadd,        new M68k::IP_fadd);
-    iproc_set(m68k_fsadd,       new M68k::IP_fp_add(m68k_fsadd));
-    iproc_set(m68k_fdadd,       new M68k::IP_fp_add(m68k_fdadd));
-    iproc_set(m68k_fbeq,        new M68k::IP_fbeq);
-    iproc_set(m68k_fbne,        new M68k::IP_fbne);
-    iproc_set(m68k_fbgt,        new M68k::IP_fbgt);
-    iproc_set(m68k_fbngt,       new M68k::IP_fbngt);
-    iproc_set(m68k_fbge,        new M68k::IP_fbge);
-    iproc_set(m68k_fbnge,       new M68k::IP_fbnge);
-    iproc_set(m68k_fblt,        new M68k::IP_fblt);
-    iproc_set(m68k_fbnlt,       new M68k::IP_fbnlt);
-    iproc_set(m68k_fble,        new M68k::IP_fble);
-    iproc_set(m68k_fbnle,       new M68k::IP_fbnle);
-    iproc_set(m68k_fbgl,        new M68k::IP_fbgl);
-    iproc_set(m68k_fbngl,       new M68k::IP_fbngl);
-    iproc_set(m68k_fbgle,       new M68k::IP_fbgle);
-    iproc_set(m68k_fbngle,      new M68k::IP_fbngle);
-    iproc_set(m68k_fbogt,       new M68k::IP_fbogt);
-    iproc_set(m68k_fbule,       new M68k::IP_fbule);
-    iproc_set(m68k_fboge,       new M68k::IP_fboge);
-    iproc_set(m68k_fbult,       new M68k::IP_fbult);
-    iproc_set(m68k_fbolt,       new M68k::IP_fbolt);
-    iproc_set(m68k_fbuge,       new M68k::IP_fbuge);
-    iproc_set(m68k_fbole,       new M68k::IP_fbole);
-    iproc_set(m68k_fbugt,       new M68k::IP_fbugt);
-    iproc_set(m68k_fbogl,       new M68k::IP_fbogl);
-    iproc_set(m68k_fbueq,       new M68k::IP_fbueq);
-    iproc_set(m68k_fbor,        new M68k::IP_fbor);
-    iproc_set(m68k_fbun,        new M68k::IP_fbun);
-    iproc_set(m68k_fbf,         new M68k::IP_fbf);
-    iproc_set(m68k_fbt,         new M68k::IP_fbt);
-    iproc_set(m68k_fbsf,        new M68k::IP_fbsf);
-    iproc_set(m68k_fbst,        new M68k::IP_fbst);
-    iproc_set(m68k_fbseq,       new M68k::IP_fbseq);
-    iproc_set(m68k_fbsne,       new M68k::IP_fbsne);
-    iproc_set(m68k_fcmp,        new M68k::IP_fp_sub(m68k_fcmp));
-    iproc_set(m68k_fdiv,        new M68k::IP_fdiv);
-    iproc_set(m68k_fsdiv,       new M68k::IP_fsdiv);
-    iproc_set(m68k_fddiv,       new M68k::IP_fddiv);
-    iproc_set(m68k_fint,        new M68k::IP_fint);
-    iproc_set(m68k_fintrz,      new M68k::IP_fintrz);
-    iproc_set(m68k_fmove,       new M68k::IP_fp_move(m68k_fmove));
-    iproc_set(m68k_fsmove,      new M68k::IP_fp_move(m68k_fsmove));
-    iproc_set(m68k_fdmove,      new M68k::IP_fp_move(m68k_fdmove));
-    iproc_set(m68k_fmovem,      new M68k::IP_fmovem);
-    iproc_set(m68k_fmul,        new M68k::IP_fmul);
-    iproc_set(m68k_fsmul,       new M68k::IP_fp_mul(m68k_fsmul));
-    iproc_set(m68k_fdmul,       new M68k::IP_fp_mul(m68k_fdmul));
-    iproc_set(m68k_fneg,        new M68k::IP_fneg);
-    iproc_set(m68k_fsneg,       new M68k::IP_fsneg);
-    iproc_set(m68k_fdneg,       new M68k::IP_fdneg);
-    iproc_set(m68k_fnop,        new M68k::IP_fnop);
-    iproc_set(m68k_fsqrt,       new M68k::IP_fsqrt);
-    iproc_set(m68k_fssqrt,      new M68k::IP_fssqrt);
-    iproc_set(m68k_fdsqrt,      new M68k::IP_fdsqrt);
-    iproc_set(m68k_fsub,        new M68k::IP_fsub);
-    iproc_set(m68k_fssub,       new M68k::IP_fp_sub(m68k_fssub));
-    iproc_set(m68k_fdsub,       new M68k::IP_fp_sub(m68k_fdsub));
-    iproc_set(m68k_ftst,        new M68k::IP_ftst);
-    iproc_set(m68k_illegal,     new M68k::IP_illegal);
-    iproc_set(m68k_jmp,         new M68k::IP_jmp);
-    iproc_set(m68k_jsr,         new M68k::IP_jsr);
-    iproc_set(m68k_lea,         new M68k::IP_lea);
-    iproc_set(m68k_link,        new M68k::IP_link);
-    iproc_set(m68k_lsl,         new M68k::IP_lsl);
-    iproc_set(m68k_lsr,         new M68k::IP_lsr);
-    iproc_set(m68k_mac,         new M68k::IP_mac);
-    iproc_set(m68k_mov3q,       new M68k::IP_mov3q);
-    iproc_set(m68k_movclr,      new M68k::IP_movclr);
-    iproc_set(m68k_move,        new M68k::IP_move);
-    iproc_set(m68k_move16,      new M68k::IP_move16);
-    iproc_set(m68k_movea,       new M68k::IP_movea);
-    iproc_set(m68k_movec,       new M68k::IP_move_no_ccr);
-    iproc_set(m68k_movem,       new M68k::IP_movem);
-    iproc_set(m68k_movep,       new M68k::IP_movep);
-    iproc_set(m68k_moveq,       new M68k::IP_moveq);
-    iproc_set(m68k_move_acc,    new M68k::IP_move_acc);
-    iproc_set(m68k_move_accext, new M68k::IP_move_accext);
-    iproc_set(m68k_move_ccr,    new M68k::IP_move_ccr);
-    iproc_set(m68k_move_macsr,  new M68k::IP_move_macsr);
-    iproc_set(m68k_move_mask,   new M68k::IP_move_mask);
-    iproc_set(m68k_move_sr,     new M68k::IP_move_no_ccr);
-    iproc_set(m68k_msac,        new M68k::IP_msac);
-    iproc_set(m68k_muls,        new M68k::IP_muls);
-    iproc_set(m68k_mulu,        new M68k::IP_mulu);
-    iproc_set(m68k_mvs,         new M68k::IP_mvs);
-    iproc_set(m68k_mvz,         new M68k::IP_mvz);
-    iproc_set(m68k_nbcd,        new M68k::IP_nbcd);
-    iproc_set(m68k_neg,         new M68k::IP_neg);
-    iproc_set(m68k_negx,        new M68k::IP_negx);
-    iproc_set(m68k_nop,         new M68k::IP_nop);
-    iproc_set(m68k_not,         new M68k::IP_not);
-    iproc_set(m68k_or,          new M68k::IP_or);
-    iproc_set(m68k_ori,         new M68k::IP_ori);
-    iproc_set(m68k_pack,        new M68k::IP_pack);
-    iproc_set(m68k_pea,         new M68k::IP_pea);
-    iproc_set(m68k_rol,         new M68k::IP_rol);
-    iproc_set(m68k_ror,         new M68k::IP_ror);
-    iproc_set(m68k_roxl,        new M68k::IP_roxl);
-    iproc_set(m68k_roxr,        new M68k::IP_roxr);
-    iproc_set(m68k_rtd,         new M68k::IP_rtd);
-    iproc_set(m68k_rtm,         new M68k::IP_rtm);
-    iproc_set(m68k_rtr,         new M68k::IP_rtr);
-    iproc_set(m68k_rts,         new M68k::IP_rts);
-    iproc_set(m68k_sbcd,        new M68k::IP_sbcd);
-    iproc_set(m68k_st,          new M68k::IP_st);
-    iproc_set(m68k_sf,          new M68k::IP_sf);
-    iproc_set(m68k_shi,         new M68k::IP_shi);
-    iproc_set(m68k_sls,         new M68k::IP_sls);
-    iproc_set(m68k_scc,         new M68k::IP_scc);
-    iproc_set(m68k_scs,         new M68k::IP_scs);
-    iproc_set(m68k_sne,         new M68k::IP_sne);
-    iproc_set(m68k_seq,         new M68k::IP_seq);
-    iproc_set(m68k_svc,         new M68k::IP_svc);
-    iproc_set(m68k_svs,         new M68k::IP_svs);
-    iproc_set(m68k_spl,         new M68k::IP_spl);
-    iproc_set(m68k_smi,         new M68k::IP_smi);
-    iproc_set(m68k_sge,         new M68k::IP_sge);
-    iproc_set(m68k_slt,         new M68k::IP_slt);
-    iproc_set(m68k_sgt,         new M68k::IP_sgt);
-    iproc_set(m68k_sle,         new M68k::IP_sle);
-    iproc_set(m68k_sub,         new M68k::IP_sub);
-    iproc_set(m68k_suba,        new M68k::IP_suba);
-    iproc_set(m68k_subi,        new M68k::IP_subi);
-    iproc_set(m68k_subq,        new M68k::IP_subq);
-    iproc_set(m68k_subx,        new M68k::IP_subx);
-    iproc_set(m68k_swap,        new M68k::IP_swap);
-    iproc_set(m68k_tas,         new M68k::IP_tas);
-    iproc_set(m68k_trap,        new M68k::IP_trap);
-    iproc_set(m68k_trapt,       new M68k::IP_trapt);
-    iproc_set(m68k_trapf,       new M68k::IP_trapf);
-    iproc_set(m68k_traphi,      new M68k::IP_traphi);
-    iproc_set(m68k_trapls,      new M68k::IP_trapls);
-    iproc_set(m68k_trapcc,      new M68k::IP_trapcc);
-    iproc_set(m68k_trapcs,      new M68k::IP_trapcs);
-    iproc_set(m68k_trapne,      new M68k::IP_trapne);
-    iproc_set(m68k_trapeq,      new M68k::IP_trapeq);
-    iproc_set(m68k_trapvc,      new M68k::IP_trapvc);
-    iproc_set(m68k_trapvs,      new M68k::IP_trapvs);
-    iproc_set(m68k_trappl,      new M68k::IP_trappl);
-    iproc_set(m68k_trapmi,      new M68k::IP_trapmi);
-    iproc_set(m68k_trapge,      new M68k::IP_trapge);
-    iproc_set(m68k_traplt,      new M68k::IP_traplt);
-    iproc_set(m68k_trapgt,      new M68k::IP_trapgt);
-    iproc_set(m68k_traple,      new M68k::IP_traple);
-    iproc_set(m68k_trapv,       new M68k::IP_trapv);
-    iproc_set(m68k_tst,         new M68k::IP_tst);
-    iproc_set(m68k_unlk,        new M68k::IP_unlk);
-    iproc_set(m68k_unpk,        new M68k::IP_unpk);
+    iprocSet(m68k_abcd,        new M68k::IP_abcd);
+    iprocSet(m68k_add,         new M68k::IP_add);
+    iprocSet(m68k_adda,        new M68k::IP_adda);
+    iprocSet(m68k_addi,        new M68k::IP_addi);
+    iprocSet(m68k_addq,        new M68k::IP_addq);
+    iprocSet(m68k_addx,        new M68k::IP_addx);
+    iprocSet(m68k_and,         new M68k::IP_and);
+    iprocSet(m68k_andi,        new M68k::IP_andi);
+    iprocSet(m68k_asl,         new M68k::IP_asl);
+    iprocSet(m68k_asr,         new M68k::IP_asr);
+    iprocSet(m68k_bra,         new M68k::IP_bra);
+    iprocSet(m68k_bsr,         new M68k::IP_bsr);
+    iprocSet(m68k_bhi,         new M68k::IP_bhi);
+    iprocSet(m68k_bls,         new M68k::IP_bls);
+    iprocSet(m68k_bcc,         new M68k::IP_bcc);
+    iprocSet(m68k_bcs,         new M68k::IP_bcs);
+    iprocSet(m68k_bne,         new M68k::IP_bne);
+    iprocSet(m68k_beq,         new M68k::IP_beq);
+    iprocSet(m68k_bvc,         new M68k::IP_bvc);
+    iprocSet(m68k_bvs,         new M68k::IP_bvs);
+    iprocSet(m68k_bpl,         new M68k::IP_bpl);
+    iprocSet(m68k_bmi,         new M68k::IP_bmi);
+    iprocSet(m68k_bge,         new M68k::IP_bge);
+    iprocSet(m68k_blt,         new M68k::IP_blt);
+    iprocSet(m68k_bgt,         new M68k::IP_bgt);
+    iprocSet(m68k_ble,         new M68k::IP_ble);
+    iprocSet(m68k_bchg,        new M68k::IP_bchg);
+    iprocSet(m68k_bclr,        new M68k::IP_bclr);
+    iprocSet(m68k_bfchg,       new M68k::IP_bfchg);
+    iprocSet(m68k_bfclr,       new M68k::IP_bfclr);
+    iprocSet(m68k_bfexts,      new M68k::IP_bfexts);
+    iprocSet(m68k_bfextu,      new M68k::IP_bfextu);
+    iprocSet(m68k_bfins,       new M68k::IP_bfins);
+    iprocSet(m68k_bfset,       new M68k::IP_bfset);
+    iprocSet(m68k_bftst,       new M68k::IP_bftst);
+    iprocSet(m68k_bkpt,        new M68k::IP_bkpt);
+    iprocSet(m68k_bset,        new M68k::IP_bset);
+    iprocSet(m68k_btst,        new M68k::IP_btst);
+    iprocSet(m68k_callm,       new M68k::IP_callm);
+    iprocSet(m68k_cas,         new M68k::IP_cas);
+    iprocSet(m68k_cas2,        new M68k::IP_cas2);
+    iprocSet(m68k_chk,         new M68k::IP_chk);
+    iprocSet(m68k_chk2,        new M68k::IP_chk2);
+    iprocSet(m68k_clr,         new M68k::IP_clr);
+    iprocSet(m68k_cmp,         new M68k::IP_cmp);
+    iprocSet(m68k_cmpa,        new M68k::IP_cmpa);
+    iprocSet(m68k_cmpi,        new M68k::IP_cmpi);
+    iprocSet(m68k_cmpm,        new M68k::IP_cmpm);
+    iprocSet(m68k_cmp2,        new M68k::IP_cmp2);
+    iprocSet(m68k_cpushl,      new M68k::IP_cpushl);
+    iprocSet(m68k_cpushp,      new M68k::IP_cpushp);
+    iprocSet(m68k_cpusha,      new M68k::IP_cpusha);
+    iprocSet(m68k_dbt,         new M68k::IP_dbt);
+    iprocSet(m68k_dbf,         new M68k::IP_dbf);
+    iprocSet(m68k_dbhi,        new M68k::IP_dbhi);
+    iprocSet(m68k_dbls,        new M68k::IP_dbls);
+    iprocSet(m68k_dbcc,        new M68k::IP_dbcc);
+    iprocSet(m68k_dbcs,        new M68k::IP_dbcs);
+    iprocSet(m68k_dbne,        new M68k::IP_dbne);
+    iprocSet(m68k_dbeq,        new M68k::IP_dbeq);
+    iprocSet(m68k_dbvc,        new M68k::IP_dbvc);
+    iprocSet(m68k_dbvs,        new M68k::IP_dbvs);
+    iprocSet(m68k_dbpl,        new M68k::IP_dbpl);
+    iprocSet(m68k_dbmi,        new M68k::IP_dbmi);
+    iprocSet(m68k_dbge,        new M68k::IP_dbge);
+    iprocSet(m68k_dblt,        new M68k::IP_dblt);
+    iprocSet(m68k_dbgt,        new M68k::IP_dbgt);
+    iprocSet(m68k_dble,        new M68k::IP_dble);
+    iprocSet(m68k_divs,        new M68k::IP_divs);
+    iprocSet(m68k_divsl,       new M68k::IP_divsl);
+    iprocSet(m68k_divu,        new M68k::IP_divu);
+    iprocSet(m68k_divul,       new M68k::IP_divul);
+    iprocSet(m68k_eor,         new M68k::IP_eor);
+    iprocSet(m68k_eori,        new M68k::IP_eori);
+    iprocSet(m68k_exg,         new M68k::IP_exg);
+    iprocSet(m68k_ext,         new M68k::IP_ext);
+    iprocSet(m68k_extb,        new M68k::IP_extb);
+    iprocSet(m68k_fabs,        new M68k::IP_fabs);
+    iprocSet(m68k_fsabs,       new M68k::IP_fsabs);
+    iprocSet(m68k_fdabs,       new M68k::IP_fdabs);
+    iprocSet(m68k_fadd,        new M68k::IP_fadd);
+    iprocSet(m68k_fsadd,       new M68k::IP_fp_add(m68k_fsadd));
+    iprocSet(m68k_fdadd,       new M68k::IP_fp_add(m68k_fdadd));
+    iprocSet(m68k_fbeq,        new M68k::IP_fbeq);
+    iprocSet(m68k_fbne,        new M68k::IP_fbne);
+    iprocSet(m68k_fbgt,        new M68k::IP_fbgt);
+    iprocSet(m68k_fbngt,       new M68k::IP_fbngt);
+    iprocSet(m68k_fbge,        new M68k::IP_fbge);
+    iprocSet(m68k_fbnge,       new M68k::IP_fbnge);
+    iprocSet(m68k_fblt,        new M68k::IP_fblt);
+    iprocSet(m68k_fbnlt,       new M68k::IP_fbnlt);
+    iprocSet(m68k_fble,        new M68k::IP_fble);
+    iprocSet(m68k_fbnle,       new M68k::IP_fbnle);
+    iprocSet(m68k_fbgl,        new M68k::IP_fbgl);
+    iprocSet(m68k_fbngl,       new M68k::IP_fbngl);
+    iprocSet(m68k_fbgle,       new M68k::IP_fbgle);
+    iprocSet(m68k_fbngle,      new M68k::IP_fbngle);
+    iprocSet(m68k_fbogt,       new M68k::IP_fbogt);
+    iprocSet(m68k_fbule,       new M68k::IP_fbule);
+    iprocSet(m68k_fboge,       new M68k::IP_fboge);
+    iprocSet(m68k_fbult,       new M68k::IP_fbult);
+    iprocSet(m68k_fbolt,       new M68k::IP_fbolt);
+    iprocSet(m68k_fbuge,       new M68k::IP_fbuge);
+    iprocSet(m68k_fbole,       new M68k::IP_fbole);
+    iprocSet(m68k_fbugt,       new M68k::IP_fbugt);
+    iprocSet(m68k_fbogl,       new M68k::IP_fbogl);
+    iprocSet(m68k_fbueq,       new M68k::IP_fbueq);
+    iprocSet(m68k_fbor,        new M68k::IP_fbor);
+    iprocSet(m68k_fbun,        new M68k::IP_fbun);
+    iprocSet(m68k_fbf,         new M68k::IP_fbf);
+    iprocSet(m68k_fbt,         new M68k::IP_fbt);
+    iprocSet(m68k_fbsf,        new M68k::IP_fbsf);
+    iprocSet(m68k_fbst,        new M68k::IP_fbst);
+    iprocSet(m68k_fbseq,       new M68k::IP_fbseq);
+    iprocSet(m68k_fbsne,       new M68k::IP_fbsne);
+    iprocSet(m68k_fcmp,        new M68k::IP_fp_sub(m68k_fcmp));
+    iprocSet(m68k_fdiv,        new M68k::IP_fdiv);
+    iprocSet(m68k_fsdiv,       new M68k::IP_fsdiv);
+    iprocSet(m68k_fddiv,       new M68k::IP_fddiv);
+    iprocSet(m68k_fint,        new M68k::IP_fint);
+    iprocSet(m68k_fintrz,      new M68k::IP_fintrz);
+    iprocSet(m68k_fmove,       new M68k::IP_fp_move(m68k_fmove));
+    iprocSet(m68k_fsmove,      new M68k::IP_fp_move(m68k_fsmove));
+    iprocSet(m68k_fdmove,      new M68k::IP_fp_move(m68k_fdmove));
+    iprocSet(m68k_fmovem,      new M68k::IP_fmovem);
+    iprocSet(m68k_fmul,        new M68k::IP_fmul);
+    iprocSet(m68k_fsmul,       new M68k::IP_fp_mul(m68k_fsmul));
+    iprocSet(m68k_fdmul,       new M68k::IP_fp_mul(m68k_fdmul));
+    iprocSet(m68k_fneg,        new M68k::IP_fneg);
+    iprocSet(m68k_fsneg,       new M68k::IP_fsneg);
+    iprocSet(m68k_fdneg,       new M68k::IP_fdneg);
+    iprocSet(m68k_fnop,        new M68k::IP_fnop);
+    iprocSet(m68k_fsqrt,       new M68k::IP_fsqrt);
+    iprocSet(m68k_fssqrt,      new M68k::IP_fssqrt);
+    iprocSet(m68k_fdsqrt,      new M68k::IP_fdsqrt);
+    iprocSet(m68k_fsub,        new M68k::IP_fsub);
+    iprocSet(m68k_fssub,       new M68k::IP_fp_sub(m68k_fssub));
+    iprocSet(m68k_fdsub,       new M68k::IP_fp_sub(m68k_fdsub));
+    iprocSet(m68k_ftst,        new M68k::IP_ftst);
+    iprocSet(m68k_illegal,     new M68k::IP_illegal);
+    iprocSet(m68k_jmp,         new M68k::IP_jmp);
+    iprocSet(m68k_jsr,         new M68k::IP_jsr);
+    iprocSet(m68k_lea,         new M68k::IP_lea);
+    iprocSet(m68k_link,        new M68k::IP_link);
+    iprocSet(m68k_lsl,         new M68k::IP_lsl);
+    iprocSet(m68k_lsr,         new M68k::IP_lsr);
+    iprocSet(m68k_mac,         new M68k::IP_mac);
+    iprocSet(m68k_mov3q,       new M68k::IP_mov3q);
+    iprocSet(m68k_movclr,      new M68k::IP_movclr);
+    iprocSet(m68k_move,        new M68k::IP_move);
+    iprocSet(m68k_move16,      new M68k::IP_move16);
+    iprocSet(m68k_movea,       new M68k::IP_movea);
+    iprocSet(m68k_movec,       new M68k::IP_move_no_ccr);
+    iprocSet(m68k_movem,       new M68k::IP_movem);
+    iprocSet(m68k_movep,       new M68k::IP_movep);
+    iprocSet(m68k_moveq,       new M68k::IP_moveq);
+    iprocSet(m68k_move_acc,    new M68k::IP_move_acc);
+    iprocSet(m68k_move_accext, new M68k::IP_move_accext);
+    iprocSet(m68k_move_ccr,    new M68k::IP_move_ccr);
+    iprocSet(m68k_move_macsr,  new M68k::IP_move_macsr);
+    iprocSet(m68k_move_mask,   new M68k::IP_move_mask);
+    iprocSet(m68k_move_sr,     new M68k::IP_move_no_ccr);
+    iprocSet(m68k_msac,        new M68k::IP_msac);
+    iprocSet(m68k_muls,        new M68k::IP_muls);
+    iprocSet(m68k_mulu,        new M68k::IP_mulu);
+    iprocSet(m68k_mvs,         new M68k::IP_mvs);
+    iprocSet(m68k_mvz,         new M68k::IP_mvz);
+    iprocSet(m68k_nbcd,        new M68k::IP_nbcd);
+    iprocSet(m68k_neg,         new M68k::IP_neg);
+    iprocSet(m68k_negx,        new M68k::IP_negx);
+    iprocSet(m68k_nop,         new M68k::IP_nop);
+    iprocSet(m68k_not,         new M68k::IP_not);
+    iprocSet(m68k_or,          new M68k::IP_or);
+    iprocSet(m68k_ori,         new M68k::IP_ori);
+    iprocSet(m68k_pack,        new M68k::IP_pack);
+    iprocSet(m68k_pea,         new M68k::IP_pea);
+    iprocSet(m68k_rol,         new M68k::IP_rol);
+    iprocSet(m68k_ror,         new M68k::IP_ror);
+    iprocSet(m68k_roxl,        new M68k::IP_roxl);
+    iprocSet(m68k_roxr,        new M68k::IP_roxr);
+    iprocSet(m68k_rtd,         new M68k::IP_rtd);
+    iprocSet(m68k_rtm,         new M68k::IP_rtm);
+    iprocSet(m68k_rtr,         new M68k::IP_rtr);
+    iprocSet(m68k_rts,         new M68k::IP_rts);
+    iprocSet(m68k_sbcd,        new M68k::IP_sbcd);
+    iprocSet(m68k_st,          new M68k::IP_st);
+    iprocSet(m68k_sf,          new M68k::IP_sf);
+    iprocSet(m68k_shi,         new M68k::IP_shi);
+    iprocSet(m68k_sls,         new M68k::IP_sls);
+    iprocSet(m68k_scc,         new M68k::IP_scc);
+    iprocSet(m68k_scs,         new M68k::IP_scs);
+    iprocSet(m68k_sne,         new M68k::IP_sne);
+    iprocSet(m68k_seq,         new M68k::IP_seq);
+    iprocSet(m68k_svc,         new M68k::IP_svc);
+    iprocSet(m68k_svs,         new M68k::IP_svs);
+    iprocSet(m68k_spl,         new M68k::IP_spl);
+    iprocSet(m68k_smi,         new M68k::IP_smi);
+    iprocSet(m68k_sge,         new M68k::IP_sge);
+    iprocSet(m68k_slt,         new M68k::IP_slt);
+    iprocSet(m68k_sgt,         new M68k::IP_sgt);
+    iprocSet(m68k_sle,         new M68k::IP_sle);
+    iprocSet(m68k_sub,         new M68k::IP_sub);
+    iprocSet(m68k_suba,        new M68k::IP_suba);
+    iprocSet(m68k_subi,        new M68k::IP_subi);
+    iprocSet(m68k_subq,        new M68k::IP_subq);
+    iprocSet(m68k_subx,        new M68k::IP_subx);
+    iprocSet(m68k_swap,        new M68k::IP_swap);
+    iprocSet(m68k_tas,         new M68k::IP_tas);
+    iprocSet(m68k_trap,        new M68k::IP_trap);
+    iprocSet(m68k_trapt,       new M68k::IP_trapt);
+    iprocSet(m68k_trapf,       new M68k::IP_trapf);
+    iprocSet(m68k_traphi,      new M68k::IP_traphi);
+    iprocSet(m68k_trapls,      new M68k::IP_trapls);
+    iprocSet(m68k_trapcc,      new M68k::IP_trapcc);
+    iprocSet(m68k_trapcs,      new M68k::IP_trapcs);
+    iprocSet(m68k_trapne,      new M68k::IP_trapne);
+    iprocSet(m68k_trapeq,      new M68k::IP_trapeq);
+    iprocSet(m68k_trapvc,      new M68k::IP_trapvc);
+    iprocSet(m68k_trapvs,      new M68k::IP_trapvs);
+    iprocSet(m68k_trappl,      new M68k::IP_trappl);
+    iprocSet(m68k_trapmi,      new M68k::IP_trapmi);
+    iprocSet(m68k_trapge,      new M68k::IP_trapge);
+    iprocSet(m68k_traplt,      new M68k::IP_traplt);
+    iprocSet(m68k_trapgt,      new M68k::IP_trapgt);
+    iprocSet(m68k_traple,      new M68k::IP_traple);
+    iprocSet(m68k_trapv,       new M68k::IP_trapv);
+    iprocSet(m68k_tst,         new M68k::IP_tst);
+    iprocSet(m68k_unlk,        new M68k::IP_unlk);
+    iprocSet(m68k_unpk,        new M68k::IP_unpk);
 }
 
 void
@@ -3915,10 +3915,10 @@ DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SV
     // Set FPSR EXC INAN bit if either argument is nan; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
-    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_require(a->nBits() == aType->get_nBits());
     ASSERT_not_null(b);
     ASSERT_not_null(bType);
-    ASSERT_require(b->get_width() == bType->get_nBits());
+    ASSERT_require(b->nBits() == bType->get_nBits());
 
 
     SValuePtr aIsNan;
@@ -3944,10 +3944,10 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
     // Set FPSR EXC IDE bit if either argument is denormalized; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
-    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_require(a->nBits() == aType->get_nBits());
     ASSERT_not_null(b);
     ASSERT_not_null(bType);
-    ASSERT_require(b->get_width() == bType->get_nBits());
+    ASSERT_require(b->nBits() == bType->get_nBits());
 
     SValuePtr aIsDenorm;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
@@ -3970,7 +3970,7 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
 void
 DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
     ASSERT_not_null(dstType);
 
@@ -4000,7 +4000,7 @@ DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, 
 void
 DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
     ASSERT_not_null(dstType);
 

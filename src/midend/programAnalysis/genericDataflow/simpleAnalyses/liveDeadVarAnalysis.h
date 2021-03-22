@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef LIVE_DEAD_VAR_ANALYSIS_H
 #define LIVE_DEAD_VAR_ANALYSIS_H
 
@@ -401,4 +404,5 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
 // prints the Lattices set by the given LiveDeadVarsAnalysis 
 void printLiveDeadVarsAnalysisStates(LiveDeadVarsAnalysis* da, std::string indent="");
 
+#endif
 #endif

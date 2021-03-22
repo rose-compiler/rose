@@ -71,8 +71,8 @@ RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescri
             val = protoval()->number_(regs[i].nBits(), 0);
         } else {
             val = protoval()->undefined_(regs[i].nBits());
-            if (!name.empty() && val->get_comment().empty())
-                val->set_comment(name+"_0");
+            if (!name.empty() && val->comment().empty())
+                val->comment(name+"_0");
         }
         registers_.insertMaybeDefault(regs[i]).push_back(RegPair(regs[i], val));
     }
@@ -102,8 +102,8 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
                       <<", list=" <<rnode.key().majr <<"." <<rnode.key().minr;
             } else if (regpair.value == NULL) {
                 error <<"value is null for register " <<regpair.desc;
-            } else if (regpair.value->get_width() != regpair.desc.nBits()) {
-                error <<"value width (" <<regpair.value->get_width() <<") is incorrect for register " <<regpair.desc;
+            } else if (regpair.value->nBits() != regpair.desc.nBits()) {
+                error <<"value width (" <<regpair.value->nBits() <<") is incorrect for register " <<regpair.desc;
             } else if (foundLocations.isOverlapping(regpair.location())) {
                 error <<"register " <<regpair.desc <<" is stored multiple times in the list";
             }
@@ -181,8 +181,8 @@ SValuePtr
 RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
-    ASSERT_require2(reg.nBits() == dflt->get_width(), "value being read must be same size as register" +
-                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->get_width()).str());
+    ASSERT_require2(reg.nBits() == dflt->nBits(), "value being read must be same size as register" +
+                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->nBits()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of read", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
@@ -200,8 +200,8 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
         std::string regname = regdict->lookup(reg);
         boost::erase_all(regname, "[");
         boost::erase_all(regname, "]");
-        if (!regname.empty() && newval->get_comment().empty())
-            newval->set_comment(regname + "_0");
+        if (!regname.empty() && newval->comment().empty())
+            newval->comment(regname + "_0");
         registers_.insertMaybeDefault(reg).push_back(RegPair(reg, newval));
         assertStorageConditions("at end of read", reg);
         return newval;
@@ -241,7 +241,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
     BOOST_FOREACH (const RegPair &regpair, retvalParts)
         retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
-    ASSERT_require(retval->get_width() == reg.nBits());
+    ASSERT_require(retval->nBits() == reg.nBits());
 
     // Update the register state -- write parts that didn't exist and maybe combine or split some locations.
     if (adjustLocations) {
@@ -267,7 +267,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
                     part = ops->concat(part, accessedParts[i].value);
                 }
                 RegisterDescriptor tmpReg(reg.majorNumber(), reg.minorNumber(), firstOffset, nextOffset-firstOffset);
-                ASSERT_require(tmpReg.nBits() == part->get_width());
+                ASSERT_require(tmpReg.nBits() == part->nBits());
                 pairList.push_back(RegPair(tmpReg, part));
             }
         }
@@ -284,8 +284,8 @@ BaseSemantics::SValuePtr
 RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
-    ASSERT_require2(reg.nBits() == dflt->get_width(), "value being read must be same size as register" +
-                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->get_width()).str());
+    ASSERT_require2(reg.nBits() == dflt->nBits(), "value being read must be same size as register" +
+                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->nBits()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of read", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
@@ -324,7 +324,7 @@ RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
     BOOST_FOREACH (const RegPair &regpair, retvalParts)
         retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
-    ASSERT_require(retval->get_width() == reg.nBits());
+    ASSERT_require(retval->nBits() == reg.nBits());
 
     assertStorageConditions("at end of peek", reg);
     return retval;
@@ -334,8 +334,8 @@ void
 RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_not_null(value);
-    ASSERT_require2(reg.nBits()==value->get_width(), "value written to register must be the same width as the register" +
-                    (boost::format(": %|u| -> %|u|") % value->get_width() % reg.nBits()).str());
+    ASSERT_require2(reg.nBits()==value->nBits(), "value written to register must be the same width as the register" +
+                    (boost::format(": %|u| -> %|u|") % value->nBits() % reg.nBits()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of write", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
@@ -408,7 +408,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, hiValue) : hiValue;
                 }
                 ASSERT_not_null(valueToWrite);
-                ASSERT_require(valueToWrite->get_width() == regpair.desc.nBits());
+                ASSERT_require(valueToWrite->nBits() == regpair.desc.nBits());
                 regpair.value = valueToWrite;
             }
         }
@@ -418,7 +418,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
             size_t extractBegin = newLocation.least() - accessedLocation.least();
             size_t extractEnd = extractBegin + newLocation.size();
             SValuePtr valueToWrite = ops->extract(value, extractBegin, extractEnd);
-            ASSERT_require(valueToWrite->get_width() == newLocation.size());
+            ASSERT_require(valueToWrite->nBits() == newLocation.size());
             RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
             pairList.push_back(RegPair(subreg, valueToWrite));
         }
@@ -505,7 +505,7 @@ RegisterStateGeneric::traverse(Visitor &visitor)
     BOOST_FOREACH (RegPairs &pairlist, registers_.values()) {
         BOOST_FOREACH (RegPair &pair, pairlist) {
             if (SValuePtr newval = (visitor)(pair.desc, pair.value)) {
-                ASSERT_require(newval->get_width() == pair.desc.nBits());
+                ASSERT_require(newval->nBits() == pair.desc.nBits());
                 pair.value = newval;
             }
         }
@@ -810,9 +810,9 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
-    const RegisterDictionary *regdict = fmt.get_register_dictionary();
+    const RegisterDictionary *regdict = fmt.registerDictionary();
     if (!regdict)
-        regdict = get_register_dictionary();
+        regdict = registerDictionary();
     RegisterNames regnames(regdict);
 
     // First pass is to get the maximum length of the register names; second pass prints
@@ -824,8 +824,8 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
             std::sort(regPairs.begin(), regPairs.end(), sortByOffset);
             BOOST_FOREACH (const RegPair &pair, regPairs) {
                 std::string regname = regnames(pair.desc);
-                if (!fmt.get_suppress_initial_values() || pair.value->get_comment().empty() ||
-                    0!=pair.value->get_comment().compare(regname+"_0")) {
+                if (!fmt.get_suppress_initial_values() || pair.value->comment().empty() ||
+                    0!=pair.value->comment().compare(regname+"_0")) {
                     if (0==i) {
                         maxlen = std::max(maxlen, regname.size());
                     } else {

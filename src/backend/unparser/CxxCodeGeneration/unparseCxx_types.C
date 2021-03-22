@@ -591,6 +591,7 @@ string get_type_name(SgType* t)
              {
                printf("Error: unparse_type.C get_type_name(): Default case reached in switch: %s\n", t->class_name().c_str());
                ROSE_ASSERT(false);
+               abort();
                break;
              }
         }

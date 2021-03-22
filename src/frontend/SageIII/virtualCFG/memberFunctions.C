@@ -1921,7 +1921,7 @@ std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx) {
         case V_SgFortranDo: newIndex = 6; break;
         case V_SgJavaForEachStatement: newIndex = 3; break;
         case V_SgJavaLabelStatement: newIndex = 1; break;
-        default: ROSE_ASSERT (false);
+        default: ROSE_ASSERT (false); abort();
       }
       makeEdge(CFGNode(this, idx), CFGNode(enc, newIndex), result);
       break;
@@ -1966,7 +1966,7 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
         case V_SgFortranDo: newIndex = 5; break;
         case V_SgJavaForEachStatement: newIndex = 1; break;
         case V_SgJavaLabelStatement: newIndex = 0; break;
-        default: ROSE_ASSERT (false);
+        default: ROSE_ASSERT (false); abort();
       }
       makeEdge(CFGNode(this, idx), CFGNode(loop, newIndex), result);
       break;
@@ -5948,6 +5948,7 @@ bool SgFunctionCallExp::isLValue() const
           {
              cerr<<"SgFunctionCallExp function class name:"<<func->class_name()<<endl;
              ROSE_ASSERT(!"Error when handling a member function call in SgFunctionCallExp::isLValue");
+             abort();
           }
         }
         else
@@ -5957,8 +5958,7 @@ bool SgFunctionCallExp::isLValue() const
                 cerr<<"SgFunctionCallExp function base type:"<<type->class_name()<<endl;
                 cerr<<"unparsed: " << unparseToString() << endl;
                 ROSE_ASSERT(!"Error calling a function through a non-function type in isLValue on SgFunctionCallExp");
-                return true;
-
+                abort();
         }
 }
 

@@ -53,7 +53,6 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\
     Concolic/Utility.C						\
-    DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/BaseSemanticsDispatcher.C		\
     instructionSemantics/BaseSemanticsException.C		\
@@ -132,7 +131,6 @@ pkginclude_HEADERS =					\
     BinaryVariables.h					\
     BinaryYicesSolver.h					\
     BinaryZ3Solver.h					\
-    DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
     instructionSemantics/BaseSemanticsDispatcher.h	\

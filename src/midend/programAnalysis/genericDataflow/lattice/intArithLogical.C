@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include <math.h>
 #include "intArithLogical.h"
 #include <list>
@@ -2503,3 +2506,5 @@ const IntArithLogical& getIntArithLogical(const DataflowNode& n)
         else
                 return defaultIAL;
 }
+
+#endif

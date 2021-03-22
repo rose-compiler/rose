@@ -596,7 +596,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
             if (regState) {
                 RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
                 BaseSemantics::SValuePtr sp = ops->readRegister(SP);
-                unsigned magic = sp->is_number() ? sp->get_number() : 0;
+                unsigned magic = sp->toUnsigned().orElse(0);
                 unsigned settings = (magic & 0xfffffffc) == 0x137017c0 ? (magic & 3) : 3;
                 regState->accessModifiesExistingLocations(settings & 1);
                 regState->accessCreatesLocations(settings & 2);

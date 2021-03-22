@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include "ref_clone_changer.h"
@@ -321,4 +323,4 @@ stmtNode * actionAnn::generate_replacement(callsiteEntry * callsite,
   return 0;
 }
 
-
+#endif

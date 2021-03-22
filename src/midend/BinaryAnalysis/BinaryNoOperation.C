@@ -61,7 +61,7 @@ public:
     CellErasurePredicate(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &stackCurVa,
                          rose_addr_t closeness)
         : ignorePoppedMemory(closeness!=0), ops(ops), stackCurVa(stackCurVa) {
-        stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->get_width(), closeness));
+        stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->nBits(), closeness));
     }
 
     virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) const ROSE_OVERRIDE {
@@ -71,9 +71,9 @@ public:
         // Erase memory that is above (lower address) and near the current stack pointer.
         if (ignorePoppedMemory) {
             BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
-                ops->and_(ops->isUnsignedLessThan(cell->get_address(), stackCurVa),
-                          ops->isUnsignedGreaterThanOrEqual(cell->get_address(), stackMinVa));
-            return isPopped->is_number() && isPopped->get_number();
+                ops->and_(ops->isUnsignedLessThan(cell->address(), stackCurVa),
+                          ops->isUnsignedGreaterThanOrEqual(cell->address(), stackMinVa));
+            return isPopped->isTrue();
         }
 
         return false;
@@ -93,7 +93,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
     BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
         BaseSemantics::SValuePtr ip = ops->peekRegister(cpu->instructionPointerRegister());
-        if (ip->is_number()) {
+        if (ip->isConcrete()) {
             state = state->clone();
             isCloned = true;
             rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());

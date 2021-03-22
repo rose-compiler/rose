@@ -99,7 +99,7 @@ DisassemblerPowerpc::init() {
     REG_SP = regdict->findOrThrow("r1");
     REG_LINK = regdict->findOrThrow("lr");
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
-    d->set_register_dictionary(regdict);
+    d->registerDictionary(regdict);
     p_proto_dispatcher = d;
     registerDictionary(regdict);
 }

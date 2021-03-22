@@ -11,7 +11,7 @@ AbstractLocation::mayAlias(const AbstractLocation &other, const SmtSolverPtr &so
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
     } else if (isAddress() && other.isAddress()) {
-        return addr_->may_equal(other.addr_, solver);
+        return addr_->mayEqual(other.addr_, solver);
     } else if (!isValid() && !other.isValid()) {
         return true;
     } else {
@@ -24,7 +24,7 @@ AbstractLocation::mustAlias(const AbstractLocation &other, const SmtSolverPtr &s
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
     } else if (isAddress() && other.isAddress()) {
-        return addr_->must_equal(other.addr_, solver);
+        return addr_->mustEqual(other.addr_, solver);
     } else if (!isValid() && !other.isValid()) {
         return true;
     } else {

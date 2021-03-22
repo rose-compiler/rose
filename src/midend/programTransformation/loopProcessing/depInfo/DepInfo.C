@@ -92,7 +92,7 @@ std::string DepType2String(DepType t)
   case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";
   case DEPTYPE_TRANS: return  "TRANS_DEP;";
   case DEPTYPE_NONE : return  "TYPE_NONE";
-  default: assert(false);
+  default: assert(false); abort();
   }
 }
 

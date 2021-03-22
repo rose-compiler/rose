@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef PRINT_ANALYSIS_STATES_H
 #define PRINT_ANALYSIS_STATES_H
 
@@ -29,4 +32,5 @@ class printAnalysisStates : public UnstructuredPassIntraAnalysis
         void visit(const Function& func, const DataflowNode& n, NodeState& state);
 };
 
+#endif
 #endif
