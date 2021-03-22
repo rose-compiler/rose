@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef SCALAR_FW_DATAFLOW_H
 #define SCALAR_FW_DATAFLOW_H
 
@@ -76,4 +79,4 @@ class ConstrGraphAnalysis : public IntraFWDataflow
 void printConstrGraphAnalysisStates(ConstrGraphAnalysis* cga, string indent="");
 
 #endif
-
+#endif

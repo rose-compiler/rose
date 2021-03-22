@@ -194,6 +194,7 @@ namespace AbstractMemoryObject {
       {
         cerr<<"Error in ConstIndexSet::ConstIndexSet(), unexpected integer valued SgValueExp type: " << v_exp->class_name()<<endl;
         assert(false);
+        abort();
       }
     }
     return get_inst (v);

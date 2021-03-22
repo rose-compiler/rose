@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef DATAFLOW_H
 #define DATAFLOW_H
 
@@ -503,4 +506,5 @@ class ContextInsensitiveInterProceduralDataflow : virtual public InterProcedural
         void visit(const CGFunction* func);
 };
 
+#endif
 #endif

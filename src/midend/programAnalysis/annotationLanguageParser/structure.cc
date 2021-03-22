@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include <assert.h>
@@ -154,4 +156,4 @@ void structureAnn::print(ostream & o) const
   o << "\"" << _target->name() << "\"";
 }
 
-
+#endif

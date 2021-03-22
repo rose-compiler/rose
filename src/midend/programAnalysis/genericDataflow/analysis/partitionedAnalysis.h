@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef PARTITIONED_ANALYSIS_H
 #define PARTITIONED_ANALYSIS_H
 
@@ -439,4 +442,5 @@ class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
              const std::vector<Lattice*>& nextNodeState, DataflowNode nextDFNode);
 };
 
+#endif
 #endif

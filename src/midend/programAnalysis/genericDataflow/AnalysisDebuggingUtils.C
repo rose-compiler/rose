@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "AnalysisDebuggingUtils.h"
 #include <fstream>
 #include <iostream>
@@ -787,3 +790,5 @@ void dbgStream::addDOT(string imgFName, string graphName, string dot, ostream& r
   }
 
 } // namespace Dbg
+
+#endif

@@ -1131,6 +1131,7 @@ std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQu
              {
                printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
                ROSE_ASSERT (false);
+               abort();
              }
         } /* End switch-case */
          return std::ptr_fun(__x);
@@ -1156,6 +1157,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
              {
                printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
                ROSE_ASSERT (false);
+               abort();
              }
         }
          return std::ptr_fun(__x);

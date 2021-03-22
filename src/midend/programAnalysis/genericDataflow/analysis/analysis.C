@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
@@ -967,3 +970,5 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 }
         }
 }
+
+#endif

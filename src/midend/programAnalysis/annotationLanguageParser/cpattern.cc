@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 
@@ -414,3 +416,4 @@ Node * patternExpander::at_type(typeNode * the_type, Order ord)
   return the_type;
 }
 
+#endif

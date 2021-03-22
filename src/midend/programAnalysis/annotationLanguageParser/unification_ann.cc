@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "unification_ann.h"
 
@@ -429,3 +431,4 @@ UnificationBasedPtr *UnificationBasedPtr_Ann::analyze_all(Linker &linker,
   return U;
 } // analyze_all
 
+#endif

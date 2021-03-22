@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "affineInequality.h"
 #include <algorithm>
 
@@ -2050,3 +2053,4 @@ void affineInequality::orUpd(LogicalCond& that)
         *this += (affineInequality&)that;
 }*/
 
+#endif

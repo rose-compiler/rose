@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include <cassert>
@@ -1139,3 +1141,4 @@ void procedureAnn::print(ostream & o) const
   o << "}" << endl;
 }
 
+#endif

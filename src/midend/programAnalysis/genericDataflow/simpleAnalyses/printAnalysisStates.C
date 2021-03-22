@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "printAnalysisStates.h"
 
 printAnalysisStates::printAnalysisStates(Analysis* creator, vector<int>& factNames, vector<int>& latticeNames, ab latSide, string indent="")
@@ -39,3 +42,5 @@ void printAnalysisStates::visit(const Function& func, const DataflowNode& n, Nod
         //printf("    creator=%p, masterLat.size()=%lu\n", creator, (unsigned long)(masterLat->size()));
         Dbg::exitFunc(funcName.str());
 }
+
+#endif

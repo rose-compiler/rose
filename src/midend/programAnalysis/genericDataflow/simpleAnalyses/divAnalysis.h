@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef DIV_ANALYSIS_H
 #define DIV_ANALYSIS_H
 
@@ -238,4 +241,5 @@ class DivAnalysis : public IntraFWDataflow
 // prints the Lattices set by the given DivAnalysis 
 void printDivAnalysisStates(DivAnalysis* da, std::string indent="");
 
+#endif
 #endif

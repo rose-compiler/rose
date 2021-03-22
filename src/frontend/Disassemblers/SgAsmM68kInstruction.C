@@ -186,10 +186,9 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
         SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
-        if (ip->is_number()) {
-            rose_addr_t target_va = ip->get_number();
-            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(target_va, NULL));
-            if (!target_func || target_va!=target_func->get_entry_va())
+        if (auto target_va = ip->toUnsigned()) {
+            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*target_va, NULL));
+            if (!target_func || *target_va!=target_func->get_entry_va())
                 return false;
         }
 
@@ -197,15 +196,14 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         SValuePtr sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
         SValuePtr stack_delta = SValue::promote(ops->add(sp, ops->negate(orig_sp)));
         SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, 31, 32));
-        if (stack_delta_sign->is_number() && 0==stack_delta_sign->get_number())
+        if (stack_delta_sign->isFalse())
             return false;
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
         SValuePtr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), sp, sp->undefined_(32)));
-        if (top->is_number()) {
-            rose_addr_t va = top->get_number();
-            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
+        if (auto va = top->toUnsigned()) {
+            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*va, NULL));
             if (!return_func || return_func!=func) {
                 return false;
             }
@@ -215,10 +213,10 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
 
         // Since the instruction pointer might point to a function entry address and since the top of the stack contains a
         // pointer to an instruction in this function, we assume that this is a function call.
-        if (target_va && ip->is_number())
-            *target_va = ip->get_number();
-        if (return_va && top->is_number())
-            *return_va = top->get_number();
+        if (target_va)
+            ip->toUnsigned().assignTo(*target_va);
+        if (return_va)
+            top->toUnsigned().assignTo(*return_va);
         return true;
     }
 
@@ -244,14 +242,13 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         // Look at the top of the stack
         SValuePtr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), ops->peekRegister(dispatcher->REG_A[7]),
                                                         ops->protoval()->undefined_(32)));
-        if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
+        if (top->toUnsigned().orElse(0) == last->get_address() + last->get_size()) {
             if (target_va) {
                 SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
-                if (ip->is_number())
-                    *target_va = ip->get_number();
+                ip->toUnsigned().assignTo(*target_va);
             }
             if (return_va)
-                *return_va = top->get_number();
+                top->toUnsigned().assignTo(*return_va);
             return true;
         }
     }
@@ -459,9 +456,9 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
                     debug << "  state after " <<insns[i]->toString() <<"\n" <<*ops;
             }
             SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
-            if (ip->is_number()) {
+            if (auto number = ip->toUnsigned()) {
                 successors.clear();
-                successors.insert(ip->get_number());
+                successors.insert(*number);
                 complete = true; /*this is the complete set of successors*/
             }
         } catch(const BaseSemantics::Exception& e) {

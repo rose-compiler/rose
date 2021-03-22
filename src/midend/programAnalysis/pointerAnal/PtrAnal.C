@@ -47,9 +47,10 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
    if (fa.IsVarRef(field, 0, &name)) {
        assert(name != "");
        return "d:" + name;
-    }
+   }
    std::cerr << "Not field name: " << AstInterface::AstToString(field) << "\n";
-    assert(false);
+   assert(false);
+   abort();
 }
 
 static std::string
