@@ -192,7 +192,8 @@ namespace  AbstractMemoryObject
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s toString() is not allowed."<<endl;
     assert (false);
-    return "";  
+    abort();
+    return "";
    }
 
    bool IndexVector::operator ==( const IndexVector & other) const

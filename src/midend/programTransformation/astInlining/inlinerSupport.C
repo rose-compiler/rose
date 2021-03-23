@@ -671,7 +671,9 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
   SgInitializedName* initname;
   SgExpression* initexpr;
   bool needSimpleContext;
+#if 0 // [Robb Matzke 2021-03-17]: unused
   bool& changes;
+#endif
 
   public:
   SubexpressionExpansionVisitor(SgInitializedName* initname,
@@ -679,7 +681,11 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
                                 bool needSimpleContext,
                                 bool& changes):
     initname(initname), initexpr(initexpr), 
-    needSimpleContext(needSimpleContext), changes(changes) {}
+    needSimpleContext(needSimpleContext)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+    , changes(changes)
+#endif
+        {}
 
   virtual void visit(SgNode* n) {
     if (isSgVarRefExp(n)) {

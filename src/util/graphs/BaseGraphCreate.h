@@ -98,7 +98,7 @@ class BaseGraphCreateWrap : public BaseGraphCreate
    case GraphAccess::EdgeOut: return GraphImpl::EdgeOut;
    case GraphAccess::EdgeIn: return GraphImpl::EdgeIn;
    default:
-     assert(false);
+       assert(false); abort();
    }
   }
 

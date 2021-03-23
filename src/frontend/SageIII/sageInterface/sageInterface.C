@@ -7883,6 +7883,7 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
         }
 
      ROSE_ASSERT(false); // unreachable code
+     abort();
    }
 
 #define DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE 0
@@ -12699,8 +12700,10 @@ void SageInterface::setLoopStride(SgNode* loop, SgExpression* stride)
       exprstmt->set_expression(plusassignop);
     }
 
+#if 0 // [Robb Matzke 2021-03-17]
     // DQ (1/3/2007): I think this is a meaningless statement.
     testList.empty();
+#endif
     // case 3: i=i + X or i =X +i  i
     // TODO; what if users use i*=,etc ??
     //      send out a warning: not canonical FOR/DO loop
@@ -13180,7 +13183,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
         gen = new OrOpGenerator(isSgOrOp(*ai)); break;
       case V_SgConditionalExp:
         gen = new ConditionalExpGenerator(isSgConditionalExp(*ai)); break;
-      default: assert (!"Should not happen");
+      default: assert (!"Should not happen"); abort();
     }
     replaceExpressionWithStatement(*ai, gen);
     delete gen;
@@ -23260,6 +23263,7 @@ bool SageInterface::getForLoopInformations(
     case V_SgNotEqualOp:
     default:
       assert(false);
+      abort();
   }
 
   SgExpression * increment = for_loop->get_increment();
@@ -24790,6 +24794,7 @@ void printAST2TextFile (SgNode* node, std::string filename)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
   ROSE_ASSERT(false);
+  abort();
   printAST2TextFile (node, filename.c_str());
 }
 

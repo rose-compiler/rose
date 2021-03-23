@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "analysis.h"
 #include "dataflow.h"
 #include <assert.h>
@@ -453,3 +456,4 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
         return modified;
 }
 
+#endif

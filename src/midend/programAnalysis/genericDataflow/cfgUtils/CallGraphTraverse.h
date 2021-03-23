@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef CALL_GRAPH_TRAVERSE_H
 #define CALL_GRAPH_TRAVERSE_H
 
@@ -487,4 +490,5 @@ int getNumCallers(const Function* fDecl);
 }*/
 //}
 
+#endif
 #endif

@@ -197,6 +197,7 @@ std::string RelToString( CompareRel r)
   case REL_UNKNOWN: return "?";
   default:
     assert(false);
+    abort();
   }
 }
 
@@ -234,6 +235,7 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
                                val1.CodeGen(fa), val2.CodeGen(fa));
   default:
      assert(false);
+     abort();
   }
 }
 

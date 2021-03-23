@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "dominatorAnalysis.h"
 #include <assert.h>
 #include <algorithm>
@@ -346,3 +349,5 @@ void printDominatorAnalysisStates(DominatorAnalysis* da, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "liveDeadVarAnalysis.h"
 
 int liveDeadAnalysisDebugLevel=0;
@@ -1306,3 +1309,5 @@ void printLiveDeadVarsAnalysisStates(LiveDeadVarsAnalysis* ldva, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif
