@@ -1,3 +1,6 @@
 include_rules
+ifneq (@(LINKAGE),static)
 
-run $(python_package) --output=python/Rose/BinaryAnalysis __init__.py
+      run $(python_package) --output=python/Rose/BinaryAnalysis __init__.py
+
+endif
