@@ -1626,7 +1626,9 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                const SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(declaration);
                ROSE_ASSERT(templateInstantiationDirective != NULL);
                ROSE_ASSERT(templateInstantiationDirective->get_declaration() != NULL);
+#if 0
                printf ("declaration->get_declaration() = %p = %s \n",templateInstantiationDirective->get_declaration(),templateInstantiationDirective->get_declaration()->class_name().c_str());
+#endif
                name += get_name(templateInstantiationDirective->get_declaration());
                break;
              }
@@ -16096,7 +16098,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                       // DQ (12/31/2020): Set the whitespace around the statement as being modified.
                          (*j)->set_containsTransformationToSurroundingWhitespace(true);
 #endif
-#if 1
+#if 0
                          SgDeclarationStatement* declarationStatement = *j;
 
                       // DQ (1/5/2021): Don't call unparseToString, since this triggers the unparer which then unparses 

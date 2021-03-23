@@ -171,9 +171,20 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
 #if DEBUG_USING_CURPRINT
      curprint("\n/* In unparseStatementFromTokenStream(stmt,stmt,start,end,info,bool): */");
+     string s1 = string("\n/* --- stmt_1 = ") + stmt_1->class_name().c_str() + " */";
+     curprint (s1);
+     string s2 = string("\n/* --- stmt_2 = ") + stmt_2->class_name().c_str() + " */";
+     curprint (s2);
      curprint( string("\n/* --- stmt_1: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_1->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
      curprint( string("\n/* --- stmt_2: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_2->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
 #endif
+
+  // DQ (3/22/2021): Exit to debug test_125.cpp.
+     if (isSgVariableDeclaration(stmt_1) != NULL && isSgGlobal(stmt_2) != NULL)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 
      if ( SgProject::get_verbose() > 0 )
         {
@@ -264,7 +275,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                i->second->display("unparseStatementFromTokenStream(stmt,stmt): token sequence");
 #endif
 
-#if 0
+#if 1
             // DQ (12/26/2018): Declaration moved to location above, but in this function.
             // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
             // int tokenVectorSize = tokenVector.size();
@@ -332,8 +343,15 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
   // DQ (12/10/2014): The mapping for stmt_2 might not exist, e.g. if it was added as part of a transformation.
   // in this case then there is no associated token stream to output.
   // ASSERT_not_null(tokenSubsequence_2);
-     if (tokenSubsequence_1 != NULL && tokenSubsequence_2 != NULL)
+  // if (tokenSubsequence_1 != NULL && tokenSubsequence_2 != NULL)
+     if (tokenSubsequence_1 != NULL && tokenSubsequence_2 != NULL && tokenSubsequence_1->token_subsequence_start != -1 && tokenSubsequence_2->token_subsequence_start != -1)
         {
+       // DQ (3/22/2021): This fails for test_20_2019.cpp in the codeSegregation regression tests.
+          if (tokenSubsequence_1->token_subsequence_start == -1)
+             {
+               printf ("tokenSubsequence_1->token_subsequence_start = %d \n",tokenSubsequence_1->token_subsequence_start);
+               printf ("tokenSubsequence_2->token_subsequence_start = %d \n",tokenSubsequence_2->token_subsequence_start);
+             }
           ROSE_ASSERT(tokenSubsequence_1->token_subsequence_start != -1);
           ROSE_ASSERT(tokenSubsequence_2->token_subsequence_start != -1);
 
@@ -474,7 +492,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     if (end == tokenVectorSize)
                        {
                       // DQ (12/27/2018): This case is special to the last token in the file that is unparsed with its own call to unparseStatementFromTokenStream().
-#if 0
+#if 1
                          printf ("NOTE: ALLOW out of range value: make sure there is no access: start = %d end = %d tokenVectorSize = %d (reset end to start) \n",start,end,tokenVectorSize);
 #endif
                        }
@@ -515,6 +533,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     case e_leading_whitespace_start:  end = tokenSubsequence_2->leading_whitespace_start;  break;
                     case e_leading_whitespace_end:    end = tokenSubsequence_2->leading_whitespace_end;    break;
                     case e_token_subsequence_start:   end = tokenSubsequence_2->token_subsequence_start;   break;
+#error "DEAD CODE!"
                     case e_token_subsequence_end:     end = tokenSubsequence_2->token_subsequence_end;     break;
                     case e_trailing_whitespace_start: end = tokenSubsequence_2->trailing_whitespace_start; break;
                     case e_trailing_whitespace_end:   end = tokenSubsequence_2->trailing_whitespace_end;   break;
@@ -643,6 +662,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                  // then we only want to use the non-whitespace that is at the end of the leading whitespace for the statement.
 
                     SgTokenPtrList whitespaceTokens;
+#if DEBUG_USING_CURPRINT
+                    curprint ("/* (unparseOnlyWhitespace == true): */ \n");
+#endif
 #if 0
                     printf ("(unparseOnlyWhitespace == true): end = %d \n",end);
 #endif
@@ -710,6 +732,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                   }
                  else
                   {
+#if DEBUG_USING_CURPRINT
+                    curprint ("/* (unparseOnlyWhitespace == false): */ \n");
+#endif
                  // DQ (12/27/2018): Now that we enforce uniformally that the end is in bounds of the token vector, we DO want to unparse the end.
                  // It seems that we can't handle this issue this way.
                  // We don't want to unparse the token at the end.
@@ -719,6 +744,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                       // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
                           ROSE_ASSERT(j < (int)tokenVector.size());
 
+#if DEBUG_USING_CURPRINT
+                         curprint(string("\n/* In unparseStatementFromTokenStream(): non-whitespaceTokens = ") + tokenVector[j]->get_lexeme_string() + " */ \n");
+#endif
 #if DEBUG_TOKEN_STREAM_UNPARSING
                          printf ("iterate j=start to j < end: unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
@@ -733,7 +761,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
              }
             else
              {
-            // DQ (1/10/2015): The case of SgGlobalScope does not permit the output of a trailing whitespce (since it is not defined).
+            // DQ (1/10/2015): The case of SgGlobalScope does not permit the output of a trailing whitespace (since it is not defined).
                if (isSgGlobal(stmt_1) == NULL || isSgGlobal(stmt_2) == NULL)
                   {
                     printf ("ERROR: unparseStatementFromTokenStream(): skipped output of token range: start = %d end = %d tokenVectorSize = %d \n",start,end,tokenVectorSize);
@@ -753,6 +781,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
        // DQ (11/4/2018): This is not an error when using the unparse to header files with the token-based unparsing.
           printf ("ERROR: Token subsequence position unavailable: tokenSubsequence_1 = %p tokenSubsequence_2 = %p \n",tokenSubsequence_1,tokenSubsequence_2);
        // ROSE_ASSERT(false);
+#endif
+#if DEBUG_USING_CURPRINT
+          curprint("\n/* ERROR: unparseStatementFromTokenStream(): This will likely cause an error since some subsequence of the token stream will not be unparsed */ \n");
 #endif
         }
 
@@ -1801,7 +1832,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #if DEBUG_USING_CURPRINT
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
 #endif
-#if 0
+#if DEBUG_USING_CURPRINT && 0
      ASSERT_not_null(stmt->get_startOfConstruct());
   // ASSERT_not_null(stmt->getAttachedPreprocessingInfo());
      int numberOfComments = -1;
@@ -2116,6 +2147,26 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 #if DEBUG_USING_CURPRINT
      curprint ( string("\n/* Leaving unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+#endif
+
+#if 0
+     printf ("stmt->get_file_info()->get_filenameString()    = %s \n",stmt->get_file_info()->get_filenameString().c_str());
+     printf ("stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
+     printf ("info.get_current_source_file()->getFileName()  = %s \n",info.get_current_source_file()->getFileName().c_str());
+#endif
+#if 0
+     if (info.get_current_source_file()->getFileName() == "rose_test_142_lib.cpp")
+        {
+       // DQ (3/16/2021): Debugging code segregation test_142.cpp.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
+  // DQ (3/16/2021): Debugging code segregation test_142.cpp.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -3819,6 +3870,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                          SgStatementPtrList::iterator q = representativeStatementForWhitespace;
                          if (q != basic_stmt->get_statements().end())
                             {
+#error "DEAD CODE!"
                            // Found a statement in the basic block that we can use to represent representative whitespace.
                               bool unparseOnlyWhitespace = true;
 #if 1
@@ -3826,6 +3878,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                             }
                            else
+#error "DEAD CODE!"
                             {
                            // The least we can do is to output a CR in this case where we have no representative whitespace.
                            // curprint("\n");
@@ -3837,6 +3890,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
                               curprint("\n/* no representative whitespace available */ ");
 #endif
+#error "DEAD CODE!"
                             }
 #else
                       // DQ (11/20/2015): This implementation uses a previously prepared map of representative statements in 

@@ -6276,6 +6276,11 @@ NameQualificationTraversal::traverseTemplatedClass(SgBaseClass* baseClass, SgNod
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReference);
 
+       // DQ (3/16/2021): Need to set the assocated file, else it is caught in unparseStatement().
+       // After review, I think we may not need this.
+       // SgSourceFile* sourceFile = xxx;
+       // unparseInfoPointer->set_current_source_file(xxx);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           mfprintf(mlog [ WARN ] ) ("Calling globalUnparseToString() \n");
 #endif
