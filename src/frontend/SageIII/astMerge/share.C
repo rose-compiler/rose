@@ -130,6 +130,7 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
 #if DEBUG_NameBasedSharing
       std::cout << "#    " << it_map->first << " -> " << nodes.size() << std::endl;
 #endif
+      if (nodes.size() == 1) continue;
 
       std::vector<SgNode *>::const_iterator it_node = nodes.begin();
       SgNode * reference_node = *(it_node++);
@@ -168,6 +169,9 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
         SgNode * duplicate_node = *(it_node++);
         ROSE_ASSERT(duplicate_node != NULL);
         if (duplicate_node != reference_node) {
+#if DEBUG_NameBasedSharing
+          std::cout << "#      remove = " << std::hex << duplicate_node << " ( " << duplicate_node->class_name() << " )" << std::endl;
+#endif
           replacements.insert(std::pair<SgNode*, SgNode*>(duplicate_node, reference_node));
         }
       }

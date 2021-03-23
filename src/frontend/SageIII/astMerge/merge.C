@@ -81,6 +81,7 @@ static void nodes_and_syms_to_graphviz_tree(
   std::set<SgNode *> seens;
 
   os << "digraph G {" << std::endl;
+  os << "  ranksep=4;" << std::endl;
 
   for (auto node: nodes) {
     SgDeclarationStatement * decl = isSgDeclarationStatement(node);
@@ -232,14 +233,16 @@ void merge(SgProject * project) {
 
   int nodes_start = numberOfNodes();
 #if ENABLE_plot_links
-  std::ofstream ofs_in("mergelink-before.dot");
-  plot_links(ofs_in);
+  { std::ofstream ofs("mergelink-before.dot"); plot_links(ofs); }
 #endif
 #if TAKE_MEMPOOL_SNAPSHOT
   Rose::MemPool::snapshot("mempool-astmerge-before.csv");
 #endif
 
   shareRedundantNodes(project);
+#if ENABLE_plot_links
+  { std::ofstream ofs("mergelink-shared.dot"); plot_links(ofs); }
+#endif
 #if TAKE_MEMPOOL_SNAPSHOT
   Rose::MemPool::snapshot("mempool-astmerge-shared.csv");
 #endif
@@ -247,25 +250,22 @@ void merge(SgProject * project) {
   deleteIslands(project);
 
 #if ENABLE_plot_links
-  std::ofstream ofs_mid("mergelink-middle.dot");
-  plot_links(ofs_mid);
+  { std::ofstream ofs("mergelink-pruned.dot"); plot_links(ofs); }
 #endif
 #if TAKE_MEMPOOL_SNAPSHOT
   Rose::MemPool::snapshot("mempool-astmerge-pruned.csv");
 #endif
-
 
   link_variable(project);
   link_function(project);
   link_class(project);
   link_namespace(project);
 
+#if ENABLE_plot_links
+  { std::ofstream ofs("mergelink-linked.dot"); plot_links(ofs); }
+#endif
 #if TAKE_MEMPOOL_SNAPSHOT
   Rose::MemPool::snapshot("mempool-astmerge-linked.csv");
-#endif
-#if ENABLE_plot_links
-  std::ofstream ofs_out("mergelink-after.dot");
-  plot_links(ofs_out);
 #endif
 
 #if !DEBUG__ROSE_AST_MERGE
