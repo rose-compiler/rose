@@ -37,21 +37,24 @@ namespace CodeThorn {
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
     CodeThorn::TypeSize numClassMembers(SgType*); // from classMembers map
+
   private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
     SgType* strippedType(SgType* type);
+
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
-    void recordWarning(std::string);
-    std::list<std::string> _warnings;
 
     // maintaining class members for each type (required for operations such as copy struct)
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
+
+    void recordWarning(std::string);
+    std::list<std::string> _warnings;
 
   };
 }

@@ -40,11 +40,11 @@ class AbstractValue {
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
   /* the following are extensions that allocate more memory than a single abstract value
      they can only be created through merging abstract value
-     - PTR_SET allows to represent a set of values pointers.
+     - AV_SET allows to represent a set of values pointers.
      - INTERVAL represents an interval of abstract number values // TODO
      - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
   */
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED, PTR_SET, /*INTERVAL, INDEX_RANGE*/ };
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED, AV_SET, /*INTERVAL, INDEX_RANGE*/ };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -97,9 +97,11 @@ class AbstractValue {
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;
-  // if the type is PTR_SET it determines whether the set contains a null pointer (zero)
+  // if the type is AV_SET it determines whether the set contains a null pointer (zero)
   bool ptrSetContainsNullPtr() const;
+  // deprecated
   size_t getPtrSetSize() const;
+  size_t getAVSetSize() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
   AbstractValue operatorOr(AbstractValue other);
@@ -196,7 +198,7 @@ class AbstractValue {
   void copy(const AbstractValue& other);
   void allocateExtension(ValueType);
   void deallocateExtension();
-  void addSetElement(AbstractValue av); // requires this to be PTR_SET, adds av to PTR_SET
+  void addSetElement(AbstractValue av); // requires this to be AV_SET, adds av to AV_SET
   void setExtension(void*);
   AbstractValue topOrError(std::string) const;
   ValueType valueType;

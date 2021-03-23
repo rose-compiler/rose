@@ -493,7 +493,7 @@ void PState::rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractVa
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
-  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::PTR_SET);
+  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::AV_SET);
   AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 

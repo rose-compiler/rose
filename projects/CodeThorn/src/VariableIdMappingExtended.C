@@ -213,6 +213,7 @@ namespace CodeThorn {
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(VariableId varId) {
     return getTypeSize(getType(varId));
   }
+
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
     return typeSizeMapping.toString();
   }
