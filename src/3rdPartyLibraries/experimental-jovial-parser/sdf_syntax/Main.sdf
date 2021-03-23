@@ -1734,6 +1734,7 @@ context-free syntax
 
   Dereference                 -> TableDereference      {prefer}
 
+  '@' Name Subscript          -> Dereference           {cons("TableDereference")}
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
   '@' '(' Formula ')'         -> Dereference           {cons("Dereference")}
   '@' '(' PointerLiteral ')'  -> Dereference           {cons("Dereference"), reject}  %% This prevents NULL from being dereferenced

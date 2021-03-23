@@ -6215,7 +6215,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
 
    if (ATmatch(term, "TableItem(<term>,<term>,<term>)" , &t_name, &t_subscript, &t_tblderef)) {
    // Shall have a name
-      if (ATmatch(t_name, "<str>" , &name)) {
+      if (ATmatch(t_name, "<str>", &name)) {
          var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
          ROSE_ASSERT(var_ref);
          setSourcePosition(var_ref, t_name);
@@ -6232,15 +6232,15 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
             }
          }
       }
-      else {
-#if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size (probably 0?) " << subscript.size() << std::endl;
-#endif
-      }
 
-      if (traverse_TableDereference(t_tblderef, deref_var, /*build_ptr_ref*/false)) {
+   // Grammar could be better designed (Dereference is a TableDereference here)
+      if (traverse_TableDereference(t_tblderef, deref_var)) {
          // MATCHED TableDereference
-      } else return ATfalse;
+      }
+      else if (traverse_Dereference(t_tblderef, deref_var, false)) {
+         // MATCHED Dereference
+      }
+      else return ATfalse;
    }
    else return ATfalse;
 
@@ -6288,17 +6288,42 @@ ATbool ATermToSageJovialTraversal::traverse_Subscript(ATerm term, std::vector<Sg
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpression* &formula, bool build_ptr_ref)
+ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpression* &table_array_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDereference: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_name, t_subscript;
+   char* name;
+   std::vector<SgExpression*> subscript;
+   SgVarRefExp* var_ref = nullptr;
+
+   table_array_ref = nullptr;
+
    if (ATmatch(term, "no-table-dereference")) {
       // MATCHED no-table-dereference
-   } else if (traverse_Dereference(term, formula, build_ptr_ref)) {
-      // MATCHED Dereference
+      return ATtrue;
+   }
+   else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_name, &t_subscript)) {
+      if (ATmatch(t_name, "<str>", &name)) {
+         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         ROSE_ASSERT(var_ref);
+         setSourcePosition(var_ref, t_name);
+      }
    } else return ATfalse;
+
+   if (traverse_Subscript(t_subscript, subscript)) {
+      SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+      setSourcePosition(array_subscripts, t_subscript);
+      for (int i=0; i< subscript.size(); i++) {
+         array_subscripts->get_expressions().push_back(subscript[i]);
+      }
+      table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+   } else return ATfalse;
+
+   ROSE_ASSERT(table_array_ref);
+   setSourcePosition(table_array_ref, term);
 
    return ATtrue;
 }
