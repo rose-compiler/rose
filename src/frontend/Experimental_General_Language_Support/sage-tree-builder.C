@@ -115,15 +115,20 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          ROSE_ASSERT(prev_var_sym);
 
          SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
-         SgBinaryOp* bin_op_parent = isSgBinaryOp(prev_var_ref->get_parent());
+         SgNode* prev_parent = prev_var_ref->get_parent();
 
-         if (bin_op_parent) {
-           ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
-
+      // There may be more options but only two known so far
+         if (isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
            SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
            SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
-           func_call->set_parent(bin_op_parent);
-           bin_op_parent->set_rhs_operand(func_call);
+           func_call->set_parent(prev_parent);
+
+           if (SgExprStatement* expr_stmt = isSgExprStatement(prev_parent)) {
+             expr_stmt->set_expression(func_call);
+           }
+           else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
+             bin_op->set_rhs_operand(func_call);
+           }
 
         // The dangling variable reference has been fixed
            it = forward_var_refs_.erase(it);
@@ -134,8 +139,8 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
            delete prev_var_ref;
          }
        else {
-         // not sure what this is, prev_var_ref->get_parent() is an SgExprStatement
-         std::cout << "{" << it->first << ": " << it->second << "}\n";
+         // Unexpected previous parent node
+         std::cout << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
          it++;
        }
        }
