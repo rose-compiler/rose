@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef NODE_CONST_ANALYSIS_H
 #define NODE_CONST_ANALYSIS_H
 
@@ -150,4 +153,5 @@ nodeConstAnalysis* runNodeConstAnalysis();
 // prints the Lattices set by the given nodeConstAnalysis 
 void printNodeConstAnalysisStates(nodeConstAnalysis* da, std::string indent="");
 
+#endif
 #endif

@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef PLACE_UIDS_H
 #define PLACE_UIDS_H
 
@@ -52,4 +55,5 @@ void runPlaceUniqueIDs();
 // Returns the Unique ID recorded in the given NodeState
 int getNodeID(const NodeState& state);
 
+#endif
 #endif

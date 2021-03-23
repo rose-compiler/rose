@@ -42,7 +42,7 @@ HotPatch::apply(const RiscOperatorsPtr &ops) const {
             case Record::PATCH_REGISTER:
                 if (!record.reg().isEmpty() && record.oldValue() != NULL) {
                     SValuePtr currentValue = ops->peekRegister(record.reg());
-                    if (record.oldValue()->must_equal(currentValue)) {
+                    if (record.oldValue()->mustEqual(currentValue)) {
                         ASSERT_not_null(record.newValue());
                         SAWYER_MESG(mlog[DEBUG]) <<"changing " <<record.reg()
                                                  <<" from " <<*currentValue

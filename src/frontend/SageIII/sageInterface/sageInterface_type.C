@@ -2014,6 +2014,7 @@ if (!sgClassType) { \
         }
         
         ROSE_ASSERT(0 && "NYI, don't know what type to accept for this API");
+        abort();
         ENSURE_CLASS_TYPE(type, false);
     }
 

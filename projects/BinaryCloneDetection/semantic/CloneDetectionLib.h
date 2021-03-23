@@ -1237,12 +1237,12 @@ public:
     }
 
     // Returns true if two memory addresses can be equal.
-    static bool may_alias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
+    static bool mayAlias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
         return addr1.known_value()==addr2.known_value();
     }
 
     // Returns true if two memory address are equivalent.
-    static bool must_alias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
+    static bool mustAlias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
         return addr1.known_value()==addr2.known_value();
     }
 

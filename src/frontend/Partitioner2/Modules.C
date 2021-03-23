@@ -114,7 +114,7 @@ IpRewriter::operator()(bool chain, const Args &args) {
         for (size_t i = 0; i < succs.size(); ++i) {
             BOOST_FOREACH (const AddressPair &rewrite, rewrites_) {
                 BaseSemantics::SValuePtr oldValue = ops->number_(wordSize, rewrite.first);
-                if (succs[i].expr()->must_equal(oldValue)) {
+                if (succs[i].expr()->mustEqual(oldValue)) {
                     Semantics::SValuePtr newValue = Semantics::SValue::promote(ops->number_(wordSize, rewrite.second));
                     succs[i] = BasicBlock::Successor(newValue, succs[i].type(), succs[i].confidence());
                     isModified = true;
@@ -496,14 +496,13 @@ MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
     for (size_t i=0; i<found.nInsns; ++i)
         bb->append(partitioner, insns[i]);
     BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
-        if (successor.expr()->is_number()) {
-            rose_addr_t targetVa = successor.expr()->get_number();
-            if (Function::Ptr thunkTarget = partitioner.functionExists(targetVa)) {
+        if (auto targetVa = successor.expr()->toUnsigned()) {
+            if (Function::Ptr thunkTarget = partitioner.functionExists(*targetVa)) {
                 thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
                 if (thunkTarget->reasonComment().empty())
                     thunkTarget->reasonComment("target of thunk " + thunk->printableName());
             } else {
-                thunkTarget = Function::instance(targetVa, SgAsmFunction::FUNC_THUNK_TARGET);
+                thunkTarget = Function::instance(*targetVa, SgAsmFunction::FUNC_THUNK_TARGET);
                 thunkTarget->reasonComment("target of thunk " + thunk->printableName());
                 insertUnique(functions_, thunkTarget, sortFunctionsByAddress);
             }
@@ -801,7 +800,7 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
     BaseSemantics::SValuePtr isEqual =
         sem.operators->equalToZero(sem.operators->add(retAddr, sem.operators->negate(ip)));
-    bool isReturn = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+    bool isReturn = isEqual->isTrue();
 
     if (debug) {
         debug <<"    stackOffset  = " <<*stackOffset <<"\n";

@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 // DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
 // NOTE: This fails if we only include sage3basic.h.
@@ -1128,3 +1130,5 @@ void appendToScopeStmt(SgNode *target, SgNode *newNode, void* data)
 }
 
 }
+
+#endif

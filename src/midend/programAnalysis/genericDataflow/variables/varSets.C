@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "varSets.h"
 #include<vector>
 #include <set>
@@ -273,3 +276,5 @@ namespace varSets
   }
 
 }//namespace varSets
+
+#endif

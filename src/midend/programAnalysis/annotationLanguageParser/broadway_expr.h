@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_EXPR_H
 #define BDWY_EXPR_H
@@ -644,3 +646,4 @@ public:
 #endif /* __IDNODE_ANN */
 
 #endif /* BDWY_EXPR_H */
+#endif

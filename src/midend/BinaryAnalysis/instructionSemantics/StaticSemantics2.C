@@ -202,17 +202,17 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
 
 BaseSemantics::SValuePtr
 RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_filterCallTarget, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterCallTarget, a);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_filterReturnTarget, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterReturnTarget, a);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_filterIndirectJumpTarget, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterIndirectJumpTarget, a);
 }
 
 void
@@ -232,22 +232,22 @@ RiscOperators::rdtsc() {
 
 BaseSemantics::SValuePtr
 RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_and_, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_and_, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_or_, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_or_, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_xor_, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_xor_, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_invert, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_invert, a);
 }
 
 BaseSemantics::SValuePtr
@@ -261,42 +261,42 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size
 
 BaseSemantics::SValuePtr
 RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width()+b->get_width(), SgAsmRiscOperation::OP_concat, a, b);
+    return makeSValue(a->nBits()+b->nBits(), SgAsmRiscOperation::OP_concat, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_leastSignificantSetBit, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_leastSignificantSetBit, a);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_mostSignificantSetBit, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_mostSignificantSetBit, a);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_rotateLeft, a, sa);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_rotateLeft, a, sa);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_rotateRight, a, sa);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_rotateRight, a, sa);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_shiftLeft, a, sa);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftLeft, a, sa);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_shiftRight, a, sa);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftRight, a, sa);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_shiftRightArithmetic, a, sa);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftRightArithmetic, a, sa);
 }
 
 BaseSemantics::SValuePtr
@@ -306,7 +306,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
 
 BaseSemantics::SValuePtr
 RiscOperators::ite(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_ite, sel, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_ite, sel, a, b);
 }
 
 BaseSemantics::SValuePtr
@@ -375,54 +375,54 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t new_width) {
 
 BaseSemantics::SValuePtr
 RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_add, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_add, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                               const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/) {
-    carry_out = makeSValue(a->get_width(), SgAsmRiscOperation::OP_addCarries, a, b, c);
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_add, a, b, c);
+    carry_out = makeSValue(a->nBits(), SgAsmRiscOperation::OP_addCarries, a, b, c);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_add, a, b, c);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::subtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_subtract, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_subtract, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_negate, a);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_negate, a);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_signedDivide, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_signedDivide, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(b->get_width(), SgAsmRiscOperation::OP_signedModulo, a, b);
+    return makeSValue(b->nBits(), SgAsmRiscOperation::OP_signedModulo, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width() + b->get_width(), SgAsmRiscOperation::OP_signedMultiply, a, b);
+    return makeSValue(a->nBits() + b->nBits(), SgAsmRiscOperation::OP_signedMultiply, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width(), SgAsmRiscOperation::OP_unsignedDivide, a, b);
+    return makeSValue(a->nBits(), SgAsmRiscOperation::OP_unsignedDivide, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(b->get_width(), SgAsmRiscOperation::OP_unsignedModulo, a, b);
+    return makeSValue(b->nBits(), SgAsmRiscOperation::OP_unsignedModulo, a, b);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    return makeSValue(a->get_width() + b->get_width(), SgAsmRiscOperation::OP_unsignedMultiply, a, b);
+    return makeSValue(a->nBits() + b->nBits(), SgAsmRiscOperation::OP_unsignedMultiply, a, b);
 }
 
 void
@@ -455,9 +455,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     if (!segreg.isEmpty()) {
         BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
-        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory, segRegExpr, address, dflt, cond);
+        return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_readMemory, segRegExpr, address, dflt, cond);
     } else {
-        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory,             address, dflt, cond);
+        return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_readMemory,             address, dflt, cond);
     }
 }
 
@@ -466,9 +466,9 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
                           const BaseSemantics::SValuePtr &dflt) {
     if (!segreg.isEmpty()) {
         BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
-        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
+        return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
     } else {
-        return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
+        return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
     }
 }
 

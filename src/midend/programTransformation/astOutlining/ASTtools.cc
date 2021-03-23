@@ -457,9 +457,11 @@ ASTtools::getClassName (const SgMemberFunctionDeclaration* mem_func)
       return nrdecl->get_name ();
     } else {
       ROSE_ASSERT(false);
+      abort();
     }
   } else {
     ROSE_ASSERT(false);
+    abort();
   }
 }
 

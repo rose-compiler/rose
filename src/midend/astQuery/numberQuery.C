@@ -292,6 +292,7 @@ std::pointer_to_unary_function<SgNode*, NumberQuerySynthesizedAttributeType> Num
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
         ROSE_ASSERT (false);
+        abort();
       }
   } /* End switch-case */
   return std::ptr_fun(__x);
@@ -318,6 +319,7 @@ std::pointer_to_binary_function<SgNode*, std::string, NumberQuerySynthesizedAttr
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
         ROSE_ASSERT (false);
+        abort();
       }
   }
   return std::ptr_fun(__x);

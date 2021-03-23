@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #ifdef __FOO
@@ -764,3 +766,4 @@ FILE * Annotations::_open_input_file()
   return in_file;
 }
 
+#endif

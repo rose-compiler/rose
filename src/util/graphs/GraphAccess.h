@@ -17,6 +17,7 @@ class GraphAccess {
        case BiEdge: return BiEdge;
       }
       assert(false);
+      abort();
     }
 };
 
