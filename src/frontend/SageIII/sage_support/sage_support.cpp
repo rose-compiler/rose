@@ -3913,6 +3913,30 @@ SgFile::secondaryPassOverSourceFile()
 #endif
 #if 0
           printf ("DONE: Building token stream mapping map! \n");
+          printf ("In SgProject::parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
+#endif
+
+#if 0
+       // DQ (3/14/2021): Test this on our regression tests.
+       // void buildFirstAndLastStatementsForIncludeFiles(SgSourceFile* sourceFile);
+          SgSourceFile* sourceFile = isSgSourceFile(this);
+          if (sourceFile != NULL)
+             {
+
+               printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+
+               std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+#if 0
+               printf (" --- tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+#endif
+            // SageInterface::translateToUseCppDeclarations(sourceFile);
+            // DQ (3/8/2021): Build a map of the first and last statement in each include file.
+            // buildFirstAndLastStatementsForIncludeFiles(sourceFile);
+             }
+#if 0
+          printf ("DONE: buildFirstAndLastStatementsForIncludeFiles! \n");
+          printf ("In SgProject::parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
+#endif
 #endif
         }
 
@@ -3995,6 +4019,9 @@ SgFile::secondaryPassOverSourceFile()
         }
   // ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
 #endif
+
+  // DQ (3/14/2021): Not clear if this needs to be here.
+  // SageInterface::translateToUseCppDeclarations(sourceFile);
 
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
