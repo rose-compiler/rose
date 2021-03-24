@@ -111,17 +111,17 @@ Sage<SgTypedefDeclaration>::object_desc_t::object_desc_t(
 
 template <>
 Sage<SgTypedefDeclaration>::build_result_t Driver<Sage>::build<SgTypedefDeclaration>(const Sage<SgTypedefDeclaration>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 Sage<SgTypedefDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgTypedefDeclaration>(const Sage<SgTypedefDeclaration>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgTypedefDeclaration>(Sage<SgTypedefDeclaration>::symbol_t symbol, size_t target_file_id) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 }

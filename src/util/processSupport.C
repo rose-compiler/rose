@@ -133,9 +133,7 @@ FILE* popenReadFromVector(const vector<string>& argv) {
 #else
         // tps: does not work right now. Have not hit this assert yet.
   printf ("Error: no MSVS implementation available popenReadFromVector() (not implemented) \n");
-  assert(false);
-
-  return NULL;
+  ROSE_ABORT();
 #endif
 }
 
@@ -150,7 +148,7 @@ int pcloseFromVector(FILE* f)
   /* pid_t err = */ wait(&status);
 #else
      printf ("Error: no MSVS implementation available pcloseFromVector()(not implemented) \n");
-     assert(false);
+     ROSE_ABORT();
 #endif
 
      fclose(f);

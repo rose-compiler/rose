@@ -744,7 +744,7 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
    if (isSgTypedefSymbol(symbol) == nullptr  && isSgEnumSymbol(symbol) == nullptr) {
       std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgCastExp* ...) for name "
                 << name << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
    }
 
    SgType* conv_type = symbol->get_type();

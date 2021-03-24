@@ -177,7 +177,7 @@ namespace AbstractHandle
     {
       cerr<<"error: unrecognized sage node to get a file name:"
         <<mNode->class_name()<<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 
     return result;
@@ -321,7 +321,7 @@ namespace AbstractHandle
       else
       {
         cerr<<"error: unhandled specifier type in roseNode::findNode()"<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
     }//end for
 

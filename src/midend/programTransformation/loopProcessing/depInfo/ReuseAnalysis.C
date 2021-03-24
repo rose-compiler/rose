@@ -3,6 +3,7 @@
 
 #include <ReuseAnalysis.h>
 #include <DepInfoAnal.h>
+#include <ROSE_ABORT.h>
 #include <ROSE_ASSERT.h>
 
 int GetConstArrayBound( const AstNodePtr& array,
@@ -34,7 +35,7 @@ class AstRefGetAccessStride : public ProcessAstNode
   {
    AstInterface::AstNodeList subs;
    if (! LoopTransformInterface::IsArrayAccess(r, 0, &subs))
-      assert(false);
+      ROSE_ABORT();
    name = ivar;
    AstInterface::AstNodeList::iterator  listp = subs.begin();
    for (int i = 0; listp != subs.end() && i < dim; ++listp,++i);

@@ -37,9 +37,10 @@ checkPhysicalSourcePosition(SgNode *ast)
                          printf ("Detected inconsistant physical source position information: %p parent = %p = %s \n",finfo,parent,parent->class_name().c_str());
                          finfo->display("checkPhysicalSourcePosition()");
 
-                         ROSE_ASSERT(false);
-
+                         ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreachable
                          ++nviolations;
+#endif
                        }
                   }
              }

@@ -11,6 +11,7 @@
 // The various definistions of ROSE_ASSERT have been moved in to the
 // following file. JFR 2020-Jun-05
 
+#include <ROSE_ABORT.h>
 #include <ROSE_ASSERT.h>
 
 ROSE_UTIL_API int systemFromVector(const std::vector<std::string>& argv);

@@ -249,7 +249,7 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   if (module_file == nullptr) {
     mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: "
                 << lc_module_name << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
   else {
     // Store the parsed module file into the map (this is the only location where the map is modified)
@@ -269,7 +269,7 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
 
   if (boost::filesystem::exists(module_filename) == false) {
     mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present) \n";
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 
   argv.push_back(SKIP_SYNTAX_CHECK);

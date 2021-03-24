@@ -132,7 +132,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      sourceFile = file;
@@ -147,7 +147,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
      if (sourceFile->get_unparseHeaderFiles() == false)
         {
           printf ("ERROR: sourceFile->get_unparseHeaderFiles() == false and should be true for testing unparseHeaderTests test8 \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -178,7 +178,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -187,7 +187,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
    }
@@ -285,7 +285,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           printf ("locatedNode is not a SgLocatedNode object \n");
 
        // DQ (12/16/2008): I think this should be an error.
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -524,7 +524,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     if (currentPreprocessingInfoPtr->getString().find("test2020_03.h") != string::npos)
                       {
                         printf ("Exiting as a test! \n");
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                       }
 #endif
                     SgNode* parentNode = locatedNode->get_parent();
@@ -621,7 +621,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     if (sourceFile->get_unparseHeaderFiles() == false)
                        {
                          printf ("ERROR: sourceFile->get_unparseHeaderFiles() == false and should be true for testing unparseHeaderTests test8 \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 
@@ -696,7 +696,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -822,7 +822,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
   // DQ (8/17/2020): I think this function is no longer used.
      printf ("This function: buildCommentAndCppDirectiveList() is no longer used! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (4/29/2020): Introduce test for recursive call.
@@ -1043,7 +1043,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
 #if 0
                     printf ("Done with processing of separate lexical pass to gather comments and CPP directives \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 #if 0
                  // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
@@ -1054,7 +1054,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
 #if 0
                printf ("Done with processing of separate lexical pass to gather Fortran specific CPP directives and comments from the token stream \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
 // #else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -1206,7 +1206,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
 #if 0
           printf ("Exiting as a test in evaluation of token list in ROSE! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1256,7 +1256,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -1488,7 +1488,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           if (currentFileNameId < 0)
              {
                printf ("Error (currentFileNameId < 0): currentFileNameId = %d (return from evaluateInheritedAttribute function) \n",currentFileNameId);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
                return inheritedAttribute;
              }
@@ -1518,12 +1518,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
           printf ("Exiting as a test so that we can get the token information attached to the SgSourceFile \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -1543,7 +1543,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                     if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
                        {
                          printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -1651,7 +1651,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                printf ("This can be a redundant call to getListOfAttributes() \n");
 
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
        // DQ (4/29/2020): This is a redundnat call but it.
@@ -1752,7 +1752,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                if (currentFileNameId == 1 && source_file_id == 1)
                   {
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 #if 0
@@ -1926,7 +1926,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                     if (isSgFunctionParameterList(n) != NULL)
                        {
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                   }
@@ -1944,7 +1944,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           if (isSgForStatement(n) != NULL && currentListOfAttributes->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
              {
                printf ("Exiting upon finding a SgForStatement! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 
@@ -2064,11 +2064,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
                   {
                     printf ("Exiting as a test in evaluateSynthesizedAttribute() in the include file \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -2372,8 +2372,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgBinaryComposite:
                         {
                           printf ("Error: SgBinaryComposite need not be in the switch since we don't attach CPP directives or comments to it ... \n");
-                          ROSE_ASSERT(false);
-                          break;
+                          ROSE_ABORT();
                         }
 #endif
 
@@ -2430,7 +2429,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());
 #endif
                               // DQ (9/12/2010): This is something caught in compiling the Fortran LLNL_POP code file: prognostic.F90
-                              // ROSE_ASSERT(false);
+                              // ROSE_ABORT();
                               // printf ("Skipping abort in processing a Fortran LLNL_POP code file: prognostic.F90 (unclear how to handle this error, if it is an error) \n");
 
                               // DQ (9/25/2013): FIXME: I don't like this design using a break statement at this specific location (in the middle of the case implementation) in this case.
@@ -2457,7 +2456,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             if (source_file_id == 1)
                                {
                                  printf ("Exiting as a test after calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() from evaluateSynthisizedAttribute(): case SgFile \n");
-                                 ROSE_ASSERT(false);
+                                 ROSE_ABORT();
                                }
 #endif
                          // DQ (12/19/2008): Output debugging information (needs to be output before we reset the attributeMapForAllFiles map entries
@@ -2625,11 +2624,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                                    {
                                                   // DQ (11/21/2018): Adding.
                                                      printf ("Global scope is empty! \n");
-                                                     ROSE_ASSERT(false);
+                                                     ROSE_ABORT();
                                                    }
 #if 0
                                                 printf ("Exiting as a test! \n");
-                                                ROSE_ASSERT(false);
+                                                ROSE_ABORT();
 #endif
                                               }
                                              else
@@ -2657,11 +2656,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                      if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
                                         {
                                           printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
-                                          ROSE_ASSERT(false);
+                                          ROSE_ABORT();
                                         }
 #if 0
                                      printf ("Exiting as a test! \n");
-                                     ROSE_ASSERT(false);
+                                     ROSE_ABORT();
 #endif
                                     }
                                }

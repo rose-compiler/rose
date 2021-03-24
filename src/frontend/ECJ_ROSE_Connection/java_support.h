@@ -123,7 +123,7 @@ public:
                      << (isSgClassDefinition(n) ? isSgClassDefinition(n) -> get_qualified_name().getString() : n -> class_name())
                      << " as an SgExpression"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgExpression *) n;
     }
@@ -145,7 +145,7 @@ public:
                       << n -> class_name()
                       << " as an SgStatement"
                       << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgStatement *) n;
     }
@@ -157,7 +157,7 @@ public:
                      << n -> class_name()
                      << " as an SgType"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgType *) n;
     }
@@ -234,7 +234,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgGlobal"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgGlobal *) n;
     }
@@ -246,7 +246,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgNamespaceDefinitionStatement"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgNamespaceDefinitionStatement *) n;
     }
@@ -258,14 +258,14 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         else if (! isSgJavaPackageDeclaration(isSgClassDefinition(n) -> get_declaration())) {
             cerr << "Invalid attempt to pop a Stack node of type "
                      << n -> class_name()
                      << " as an SgJavaPackageDeclaration"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgClassDefinition *) n;
     }
@@ -277,7 +277,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgClassDefinition *) n;
     }
@@ -289,7 +289,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgBasicBlock"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgBasicBlock *) n;
     }
@@ -301,7 +301,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgIfStmt"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgIfStmt *) n;
     }
@@ -313,7 +313,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgSwitchStatement"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgSwitchStatement *) n;
     }
@@ -325,7 +325,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgCatchOptionStmt"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgCatchOptionStmt *) n;
     }
@@ -337,7 +337,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgWhileStmt"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgWhileStmt *) n;
     }
@@ -349,7 +349,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgDoWhileStmt"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgDoWhileStmt *) n;
     }
@@ -361,7 +361,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgForStatement"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgForStatement *) n;
     }
@@ -373,7 +373,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgJavaForEachStatement"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgJavaForEachStatement *) n;
     }
@@ -385,7 +385,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgJavaLabelStatement"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgJavaLabelStatement *) n;
     }
@@ -397,7 +397,7 @@ cout.flush();
                      << n -> class_name()
                      << " as an SgFunctionDefinition"
                      << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgFunctionDefinition *) n;
     }

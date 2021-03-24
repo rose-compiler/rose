@@ -61,7 +61,7 @@ HasValueCodeGen :: operator() (AstInterface* const& fa, const AstNodePtr& orig)
   }
   AstNodeType valtype;
   if (fa->IsExpression( orig, &valtype) == AST_NULL)
-     assert(false);
+     ROSE_ABORT();
   std::string varname = fa->NewVar( valtype);
   AstNodePtr var = fa->CreateVarRef (varname);
   astmap[orig] = var;
@@ -82,7 +82,7 @@ void HasValueMapReplace :: VisitFunction (const SymbolicFunction& u)
     const SymbolicDotExp *dot = dynamic_cast<const SymbolicDotExp*>(&u);
     if (dot != 0 && dot->first_arg().GetValType() == VAL_AST) {
        AstNodePtr curast;
-       if (!dot->first_arg().isAstWrap(curast)) assert(false);
+       if (!dot->first_arg().isAstWrap(curast)) ROSE_ABORT();
        std::string field = dot->last_arg().toString();
        HasValueDescriptor curval;
        SymbolicValDescriptor replval;

@@ -138,7 +138,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Fortran type_enum %d \n", type_enum);
-                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+                 ROSE_ABORT();  // NOT IMPLEMENTED
                }
             }
           break;
@@ -229,7 +229,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Jovial type_enum %d \n", type_enum);
-                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+                 ROSE_ABORT();  // NOT IMPLEMENTED
                }
             }
           break;
@@ -254,7 +254,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Cobol type_enum %d \n", type_enum);
-                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+                 ROSE_ABORT();  // NOT IMPLEMENTED
                }
             }
           break;
@@ -263,7 +263,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
       default:
         {
           fprintf(stderr, "UntypedBuilder::buildType: unimplemented for language_enum %d \n", language_enum);
-          ROSE_ASSERT(0);  // NOT IMPLEMENTED
+          ROSE_ABORT();  // NOT IMPLEMENTED
         }
 
     } // switch(language_enum)
@@ -343,7 +343,7 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildArrayType: unimplemented for Fortran type_enum %d \n", type_enum);
-                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+                 ROSE_ABORT();  // NOT IMPLEMENTED
                }
             }
           break;
@@ -384,7 +384,7 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
              default:
                {
                  fprintf(stderr, "UntypedBuilder::buildArrayType: unimplemented for Jovial type_enum %d \n", type_enum);
-                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+                 ROSE_ABORT();  // NOT IMPLEMENTED
                }
             }
           break;
@@ -393,7 +393,7 @@ SgUntypedArrayType* buildArrayType(SgUntypedType::type_enum type_enum, SgUntyped
       default:
         {
           fprintf(stderr, "UntypedBuilder::buildArrayType: unimplemented for language_enum %d \n", language_enum);
-          ROSE_ASSERT(0);  // NOT IMPLEMENTED
+          ROSE_ABORT();  // NOT IMPLEMENTED
         }
 
     } // switch(language_enum)

@@ -394,8 +394,7 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
 unsigned int
 SgStatement::cfgIndexForEnd() const {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
-    ROSE_ASSERT (false);
-    return 0;
+    ROSE_ABORT ();
   }
 
 bool
@@ -421,15 +420,13 @@ SgStatement::cfgFindNextChildIndex(SgNode* n) {
 std::vector<CFGEdge>
 SgStatement::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgOutEdges()" << std::endl;
-    ROSE_ASSERT (false);
-    return std::vector<CFGEdge>();
+    ROSE_ABORT ();
   }
 
 std::vector<CFGEdge>
 SgStatement::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgInEdges()" << std::endl;
-    ROSE_ASSERT (false);
-    return std::vector<CFGEdge>();
+    ROSE_ABORT ();
   }
 
 //---------------------------------------
@@ -997,54 +994,42 @@ std::vector<CFGEdge> SgForAllStatement::cfgInEdges(unsigned int idx) {
 unsigned int SgUpcForAllStatement::cfgIndexForEnd() const
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
+     ROSE_ABORT();
   // return doForallCfgIndexForEnd(this);
    }
 
 bool SgUpcForAllStatement::cfgIsIndexInteresting(unsigned int idx) const
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return false;
+     ROSE_ABORT();
   // return doForallCfgIsIndexInteresting(this, idx);
    }
 
 unsigned int SgUpcForAllStatement::cfgFindChildIndex(SgNode* n)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
+     ROSE_ABORT();
   // return doForallCfgFindChildIndex(this, n);
    }
 
 unsigned int SgUpcForAllStatement::cfgFindNextChildIndex(SgNode* n)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
+     ROSE_ABORT();
   // return doForallCfgFindNextChildIndex(this, n);
    }
 
 std::vector<CFGEdge> SgUpcForAllStatement::cfgOutEdges(unsigned int idx)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return std::vector<CFGEdge>();
+     ROSE_ABORT();
   // return doForallCfgOutEdges(this, idx);
    }
 
 std::vector<CFGEdge> SgUpcForAllStatement::cfgInEdges(unsigned int idx)
    {
      printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return std::vector<CFGEdge>();
+     ROSE_ABORT();
   // return doForallCfgInEdges(this, idx);
    }
 
@@ -1921,7 +1906,7 @@ std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx) {
         case V_SgFortranDo: newIndex = 6; break;
         case V_SgJavaForEachStatement: newIndex = 3; break;
         case V_SgJavaLabelStatement: newIndex = 1; break;
-        default: ROSE_ASSERT (false); abort();
+        default: ROSE_ABORT ();
       }
       makeEdge(CFGNode(this, idx), CFGNode(enc, newIndex), result);
       break;
@@ -1966,7 +1951,7 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
         case V_SgFortranDo: newIndex = 5; break;
         case V_SgJavaForEachStatement: newIndex = 1; break;
         case V_SgJavaLabelStatement: newIndex = 0; break;
-        default: ROSE_ASSERT (false); abort();
+        default: ROSE_ABORT ();
       }
       makeEdge(CFGNode(this, idx), CFGNode(loop, newIndex), result);
       break;
@@ -3657,10 +3642,7 @@ unsigned int
 SgExpression::cfgIndexForEnd() const
    {
      std::cerr << "Bad expression case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
-     ROSE_ASSERT (false);
-
-  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
-     return 0;
+     ROSE_ABORT ();
    }
 
 bool
@@ -3707,18 +3689,12 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
 
   std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
-    ROSE_ASSERT (false);
-
-  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
-     return std::vector<CFGEdge>();
+    ROSE_ABORT ();
   }
 
   std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int idx) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
-    ROSE_ASSERT (false);
-
-  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
-     return std::vector<CFGEdge>();
+    ROSE_ABORT ();
   }
 
 unsigned int

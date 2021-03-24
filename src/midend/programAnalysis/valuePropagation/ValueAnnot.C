@@ -4,6 +4,7 @@
 #include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <ValueAnnot.h>
+#include <ROSE_ABORT.h>
 #include <ROSE_ASSERT.h>
 
 bool DebugValuePropogate();
@@ -201,7 +202,7 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
       RestrictValueDescriptor cur = *p;
       AstNodePtr curast;
       if (!cur.first.get_val().isAstWrap(curast))
-         assert(false);
+         ROSE_ABORT();
       HasValueDescriptor curval = cur.second;
       if (repl(curval)) {
          if (DebugValuePropogate()) {

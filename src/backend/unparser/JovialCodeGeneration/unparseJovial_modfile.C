@@ -67,7 +67,7 @@ generateJovialCompoolFile(SgFile *sfile)
 
           if (output_stream.is_open() == false) {
              mlog[ERROR] << "Error detected in opening file " << output_filename << "for output\n";
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
           }
 
        // Output header at the top of the generate *.rcmp file.

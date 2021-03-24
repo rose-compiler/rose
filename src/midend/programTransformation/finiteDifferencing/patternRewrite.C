@@ -74,7 +74,7 @@ void replaceChild(SgNode* parent, SgNode* from, SgNode* to) {
   ROSE_ASSERT (to != parent);
   if (parent->get_childIndex(from) == Rose::INVALID_INDEX) {
     cerr << "From not found: from is a " << from->class_name() << " and parent is a " << parent->class_name() << endl;
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   }
   ROSE_ASSERT (parent->get_childIndex(to) == Rose::INVALID_INDEX);
   if (isSgExpression(parent) && isSgExpression(from) && isSgExpression(to)) {
@@ -280,8 +280,7 @@ class AddIntsPattern: public Pattern {
   AddIntsPattern(string a, string b): a(a), b(b) {}
 
   virtual bool match(SgNode* top, PatternVariables& vars) const {
-    ROSE_ASSERT (false);
-    abort();
+    ROSE_ABORT ();
 
 #ifdef _MSC_VER
         #pragma message ("patternRewrite: Returning arbitrary value")

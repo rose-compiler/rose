@@ -244,7 +244,7 @@ struct SubKernelDesc {
         return ::MDCG::Tools::StaticInitializer::createPointer<SubkernelConfig<generator_tpl> >(driver, field_class, *input.first, file_id, decl_name.str());
       }
       default:
-        assert(false);
+        ROSE_ABORT();
     }
   }
 };
@@ -304,7 +304,7 @@ struct VersionDesc {
         return ::MDCG::Tools::StaticInitializer::createPointer<VersionSelector<language_tpl, generator_tpl> >(driver, field_class, *input.first, file_id, decl_name.str());
       }
       default:
-        assert(false);
+        ROSE_ABORT();
     }
   }
 };
@@ -366,7 +366,7 @@ struct KernelContainer {
         return res;
       }
       default:
-        assert(false);
+        ROSE_ABORT();
     }
   }
 };

@@ -8,7 +8,7 @@ void insertFortranContainsStatement (SgNode* node)
 
   // DQ (10/3/2008): This bug in OFP is now fixed so no fixup is required.
      printf ("Error: fixup of contains statement no longer required. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      InsertFortranContainsStatement astFixupTraversal;
 
@@ -22,7 +22,7 @@ InsertFortranContainsStatement::visit ( SgNode* node )
    {
   // DQ (10/3/2008): This bug in OFP is now fixed so no fixup is required.
      printf ("Error: fixup of contains statement no longer required. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
      ROSE_ASSERT(node != NULL);

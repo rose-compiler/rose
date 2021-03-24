@@ -188,7 +188,7 @@ class LDVAExpressionTransfer : public ROSE_VisitorPatternDefaultBase
 
 public:
   // Should only be called on expressions
-  void visit(SgNode *) { assert(0); }
+  void visit(SgNode *) { ROSE_ABORT(); }
   // Catch up any other expressions that are not yet handled
   void visit(SgExpression *)
   {

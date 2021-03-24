@@ -96,7 +96,7 @@ ProcessLoop( AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
     GraphAccessInterface::Node *n = graph->CreateNodeImpl(l, GetStmtDomain(l));
     AstNodePtr init,cond,incr;
     if (!fa.IsLoop(l, &init, &cond, &incr))
-        assert(false);
+        ROSE_ABORT();
     for (StmtStackType::Iterator p(stmtNodes); !p.ReachEnd(); ++p) {
       if (init != AST_NULL)
          ComputeDataDep(*p, StmtNodeInfo(n,init), DEPTYPE_DATA );

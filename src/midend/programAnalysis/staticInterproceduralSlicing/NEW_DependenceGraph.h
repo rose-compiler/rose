@@ -581,7 +581,7 @@ class InterproceduralInfo
   {
     if (formal_in.size()>nr && nr>=0)
       return formal_in[nr];
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
     
   SgNode * getFormalReturn()

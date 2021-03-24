@@ -43,7 +43,7 @@ string output (IMG_TYPE image_type)
           default:
              {
                printf ("Error: default reached in switch image_type = %u \n",image_type);
-               assert(false);
+               ROSE_ABORT();
              }
         }
 
@@ -87,7 +87,7 @@ string output (SEC_TYPE section_type)
           default:
              {
                printf ("Error: default reached in switch section_type = %u \n",section_type);
-               assert(false);
+               ROSE_ABORT();
              }
         }
 

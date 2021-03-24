@@ -493,7 +493,7 @@ MidLevelInterfaceNodeCollection::compileSortedStringsToGenerateNodeCollection( S
 #if 0
      display("In MidLevelInterfaceNodeCollection::compileSortedStringsToGenerateNodeCollection(): After fileStringToNodeCollection() \n");
      printf ("Exiting in MidLevelInterfaceNodeCollection::compileSortedStringsToGenerateNodeCollection() ... \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -882,13 +882,13 @@ insertStatementList (
                                  }
                               default:
                                    printf ("Error, default reached in switch parentNode = %s \n",parentNode->sage_class_name());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                             }
                        }
                       else
                        {
                          printf ("Found a NULL parent pointer at a %s \n",target->sage_class_name());
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
                        }
                   }
 #endif
@@ -1873,7 +1873,7 @@ MidLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, b
 
                          default:
                               printf ("Error, default reached in switch parentNode = %s \n",parentNode->sage_class_name());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                        }
                   }
                  else
@@ -2122,7 +2122,7 @@ HighLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, 
                             }
                          default:
                               printf ("Error, default reached in switch parentNode = %s \n",parentNode->sage_class_name());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                         }
                   }
                  else

@@ -36,7 +36,7 @@ IsUniqueArray( AstInterface& fa, const AstNodePtr& array)
   if (prev != 0 &&  prev->IsUniqueArray(fa, array))
        return true;
   AstNodeType t;
-  if (!fa.IsVarRef(array, &t)) assert(0);
+  if (!fa.IsVarRef(array, &t)) ROSE_ABORT();
 
   return false;
 }
