@@ -4,7 +4,7 @@
 
 #include <CommandOptions.h>
 #include <PtrAnal.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 

@@ -9,7 +9,7 @@
 #include <CompSliceImpl.h>
 #include <CompSliceObserver.h>
 #include <LoopInfoInterface.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class CompSlice::ObserveImpl
    : public ObserveObject <CompSliceObserver>

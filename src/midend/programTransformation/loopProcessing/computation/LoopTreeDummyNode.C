@@ -7,7 +7,7 @@
 #include <LoopTreeDummyNode.h>
 #include <ProcessAstTree.h>
 #include <StmtInfoCollect.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 LoopTreeRestrLoopRange::  LoopTreeRestrLoopRange(  LoopTreeNode *l, int align,
                           SymbolicVal _lb, SymbolicVal _ub )

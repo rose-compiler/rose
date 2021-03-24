@@ -5,7 +5,7 @@
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
 #include "CPPAstInterface.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 #include <string.h>
 
 using namespace std;

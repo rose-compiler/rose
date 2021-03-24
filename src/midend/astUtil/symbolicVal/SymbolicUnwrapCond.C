@@ -1,5 +1,5 @@
 #include "SymbolicExpr.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 //store condition for a variable
 // coeff*variable + result Relation 0
 // e.g.   5*i+1 <=0

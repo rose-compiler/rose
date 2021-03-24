@@ -166,7 +166,7 @@ const char *rose_exception::what() const throw()
      return what_;
    }
 
-void ROSE_ABORT( const char *message )
+void throw_rose_exception( const char *message )
 {
     throw rose_exception( message );
 }

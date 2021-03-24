@@ -1,5 +1,6 @@
 #include <rose_config.h>
 #include <rosePublicConfig.h>
+#include <ROSE_ABORT.h>
 
 #include "StringUtility.h"
 #include <string.h>

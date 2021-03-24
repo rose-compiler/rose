@@ -6,7 +6,7 @@
 #include <DepGraphBuild.h>
 #include <DomainInfo.h>
 #include <PtrSet.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class DepGraphEdgeCreate : public CollectObject<DepInfo>
 {
