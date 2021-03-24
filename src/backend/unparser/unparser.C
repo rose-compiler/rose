@@ -1052,7 +1052,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                Unparse_Python unparser(this,file->get_unparse_output_filename());
                unparser.unparseGlobalStmt(globalScope, info);
 #else
-               throw_rose_exception("unparsing Python requires ROSE_USE_PYTHON be set");
+               ASSERT_not_implemented("unparsing Python requires ROSE to have been configured with Python analysis support\n");
 #endif
                break;
              }
