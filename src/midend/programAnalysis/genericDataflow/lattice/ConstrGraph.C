@@ -2074,11 +2074,11 @@ bool ConstrGraph::assign(varID x, varID y, int a, int b, int c, string indent)
         // x*a = x*1
         else if(x==y && b==1 && c==0)
         {
-                ROSE_ASSERT(0);
+                ROSE_ABORT();
         }
         else
                 // x*a = x*b + c
-                ROSE_ASSERT(0);
+                ROSE_ABORT();
         
         constrChanged = constrChanged || modified;
         

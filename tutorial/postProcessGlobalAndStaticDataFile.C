@@ -7,6 +7,7 @@
 #include<list>
 
 #include<assert.h>
+#include <ROSE_ABORT.h>
 
 using namespace std;
 
@@ -25,14 +26,14 @@ main(int argc, char *argv[])
      if (argc != 3)
         {
           printf ("Error: Usage: uniqueStrings <input file> <output file> \n");
-          assert(false);
+          ROSE_ABORT();
         }
 
      ifstream inputFile ( argv[1] , ios::in );
      if ( inputFile.good() == false )
         {
           printf ("inputFile failed to open \n");
-          assert(false);
+          ROSE_ABORT();
         }
 
   // ofstream outputFile ( argv[2] , ios::out | ios::app );
@@ -40,7 +41,7 @@ main(int argc, char *argv[])
      if ( outputFile.good() == false )
         {
           printf ("outputFile failed to open \n");
-          assert(false);
+          ROSE_ABORT();
         }
 
      char buffer[1000];

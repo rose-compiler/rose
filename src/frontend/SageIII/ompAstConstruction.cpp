@@ -257,7 +257,7 @@ namespace OmpSupport
         {
           cerr<<"error: buildOmpDefaultClase() Unacceptable default option from OmpAttribute:"
             <<OmpSupport::toString(dv)<<endl;
-          ROSE_ASSERT(false) ;  
+          ROSE_ABORT() ;
         }
     }//end switch
     SgOmpDefaultClause* result = new SgOmpDefaultClause(sg_dv);
@@ -291,7 +291,7 @@ namespace OmpSupport
         {
           cerr<<"error: buildOmpProcBindClause () Unacceptable default option from OmpAttribute:"
             <<OmpSupport::toString(dv)<<endl;
-          ROSE_ASSERT(false) ;  
+          ROSE_ABORT() ;
         }
     }//end switch
     SgOmpProcBindClause* result = new SgOmpProcBindClause(sg_dv);
@@ -327,7 +327,7 @@ namespace OmpSupport
         {
           cerr<<"error: "<<__FUNCTION__ << " Unacceptable default option from OmpAttribute:"
             <<OmpSupport::toString(dv)<<endl;
-          ROSE_ASSERT(false) ;  
+          ROSE_ABORT() ;
         }
     }//end switch
 
@@ -487,7 +487,7 @@ namespace OmpSupport
           else
           {
               printf("error in checkOmpExpressionClause(): no expression found in an expression clause\n");
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
           }
       }
       
@@ -565,7 +565,7 @@ namespace OmpSupport
         {
           printf("error in buildOmpExpressionClause(): unacceptable clause type:%s\n",
               OmpSupport::toString(clause_type).c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
     }
 
@@ -697,7 +697,7 @@ namespace OmpSupport
         {
           cerr<<"error: buildOmpScheduleClause() Unacceptable schedule kind from OmpAttribute:"
             <<OmpSupport::toString(oa_kind)<<endl;
-          ROSE_ASSERT(false) ;  
+          ROSE_ABORT() ;
         }
     }
     SgExpression* chunksize_exp = att->getExpression(e_schedule).second;
@@ -737,8 +737,7 @@ namespace OmpSupport
       default:
         {
           printf("error: unacceptable omp construct enum for map operator conversion:%s\n", OmpSupport::toString(at_op).c_str());
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
     }
     ROSE_ASSERT(result != SgOmpClause::e_omp_map_unknown);
@@ -844,8 +843,7 @@ namespace OmpSupport
       default:
         {
           printf("error: unacceptable omp construct enum for reduction operator conversion:%s\n", OmpSupport::toString(at_op).c_str());
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
     }
     ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unknown);
@@ -889,7 +887,7 @@ namespace OmpSupport
       else
       {
           cerr<<"error: unhandled type of variable within a list:"<< ((*iter).second)->class_name();
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
       }
     }
   }
@@ -936,8 +934,7 @@ namespace OmpSupport
      default:
         {
           printf("error: unacceptable omp construct enum for dependence type conversion:%s\n", OmpSupport::toString(at_op).c_str());
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
     }
     ROSE_ASSERT(result != SgOmpClause::e_omp_depend_unknown);
@@ -1020,7 +1017,7 @@ namespace OmpSupport
        } else 
        {
          cerr<<"error. buildOmpMapClause() :unrecognized source dist data policy enum:"<<src_pair.first <<endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
       } // end for iter2
      } // end for iter
      convertedDistMap[s]= converted_vec;
@@ -1090,13 +1087,13 @@ namespace OmpSupport
      case e_reduction:
         {
           printf("error: buildOmpVariableClause() does not handle reduction\n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
       default:
         {
           cerr<<"error: buildOmpVariableClause() Unacceptable clause type:"
             <<OmpSupport::toString(clause_type)<<endl;
-          ROSE_ASSERT(false) ;  
+          ROSE_ABORT() ;
         }
     } //end switch
 
@@ -1197,8 +1194,7 @@ namespace OmpSupport
      case e_reduction:
         {
           printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
       case e_begin:
         {
@@ -1213,8 +1209,7 @@ namespace OmpSupport
       default:
         {
           printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause_type).c_str());
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
     }
@@ -1336,8 +1331,7 @@ namespace OmpSupport
         default:
           {
             printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause).c_str());
-            ROSE_ASSERT(false);
-            break;
+            ROSE_ABORT();
           }
       }
       ROSE_ASSERT(result != NULL);
@@ -1498,7 +1492,7 @@ namespace OmpSupport
       default:
         {
           cerr<<"error: unacceptable omp construct for buildOmpBodyStatement():"<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
     }
     ROSE_ASSERT(result != NULL);
@@ -1638,7 +1632,7 @@ namespace OmpSupport
       default:
         {
           cerr<<"error: unacceptable directive type in buildOmpParallelStatementFromCombinedDirectives(): "<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
     } //end switch
 
@@ -1701,7 +1695,7 @@ namespace OmpSupport
             {
               printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do [simd]\n");
               att->print();
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
             }
           }
         case e_private:
@@ -1750,7 +1744,7 @@ namespace OmpSupport
         default:
           {
             cerr<<"error: unacceptable clause for combined parallel for directive:"<<OmpSupport::toString(c_clause)<<endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
       }
     } // end clause allocations 
@@ -1955,8 +1949,7 @@ This is no perfect solution until we handle preprocessing information as structu
           default:
             { 
                cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
-                assert (false);
-               break;
+                ROSE_ABORT ();
             }
         }
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
@@ -2128,7 +2121,7 @@ This is no perfect solution until we handle preprocessing information as structu
       {
         cerr<<"merge_Matching_Fortran_Pragma_pairs(): cannot find required end directive for: "<< endl;
         cerr<<decl->get_pragma()->get_pragma()<<endl;
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
       else 
         return; // There is nothing further to do if the optional end directives do not exist
@@ -2305,7 +2298,7 @@ This is no perfect solution until we handle preprocessing information as structu
       else
       {
         cerr<<"ompAstConstruction.cpp , illegal PreprocessingInfo::RelativePositionType:"<<position<<endl;
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
       //cout<<"debug at after appendStmt:"<<stmt <<" " << stmt->getAttachedPreprocessingInfo ()->size() <<endl;
     } // end for omp_comment_list
@@ -2429,7 +2422,7 @@ This is no perfect solution until we handle preprocessing information as structu
         {
           cerr<<"postParsingProcessing(): cannot find required end directive for: "<< endl;
           cerr<<decl->get_pragma()->get_pragma()<<endl;
-          ROSE_ASSERT (false);
+          ROSE_ABORT ();
         } // end if sanity check
 
         //at this point, we have found a matching end directive/pragma

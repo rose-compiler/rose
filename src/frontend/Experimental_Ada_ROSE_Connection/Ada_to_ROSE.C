@@ -254,30 +254,26 @@ namespace
       case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
 
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Expression:             // Asis.Expressions
         {
           // handled by getExpr
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Exception_Handler:      // Asis.Statements
         {
           // handled by handleExceptionHandler
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Definition:              // Asis.Definitions

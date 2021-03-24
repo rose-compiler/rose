@@ -190,7 +190,7 @@ public:
   void visit(SgScopeOp *)
   {
     // Documentation says this is no longer used, so explicitly fail if we see it
-    assert(0);
+    ROSE_ABORT();
   }
 
   void visit(SgBitComplementOp *sgn)

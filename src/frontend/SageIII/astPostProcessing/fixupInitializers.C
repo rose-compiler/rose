@@ -205,7 +205,7 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
                                       }
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -216,7 +216,7 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
 #endif
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -248,7 +248,7 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
                               includeDirectiveToRemove.push_back(*i);
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -260,13 +260,13 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
                            // printf (" --- includeFilenameLocationInExpressionFilename = %s \n",includeFilenameLocationInExpressionFilename.c_str());
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
 #if 0
                          if (filenameFromIncludeDirective == "foobar.h")
@@ -274,7 +274,7 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
                               printf ("Found filename from include directive: filenameFromIncludeDirective = %s \n",filenameFromIncludeDirective.c_str());
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #endif
@@ -308,7 +308,7 @@ FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStat
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else

@@ -274,7 +274,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
           default:
              {
                printf ("In Unparser_Nameq::lookup_generated_qualified_name(): Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -368,7 +368,7 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                       else
                        {
                          printf ("key not found in node map nameQualificationReferenceNode = %s \n",nameQualificationReferenceNode->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #error "DEAD CODE!"
 
@@ -398,10 +398,10 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                               default:
                                  {
                                    printf ("Default reached in switch(nameQualificationReferenceNode->variantT()) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #error "DEAD CODE!"
@@ -411,7 +411,7 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
              {
             // This should be an error.
                printf ("Error: nameQualificationReferenceNode == NULL but info.get_name_qualification_length() = %d \n",info.get_name_qualification_length());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
        else

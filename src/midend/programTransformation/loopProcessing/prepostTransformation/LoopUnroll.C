@@ -72,7 +72,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
      AutoTuningInterface* tune = LoopTransformInterface::getAutoTuningInterface();
      if (tune == 0) {
         std::cerr << "ERROR: AutoTuning Interface not defined!\n";
-        assert(0);
+        ROSE_ABORT();
      }
      tune->UnrollLoop(fa,s, unrollsize);
    }

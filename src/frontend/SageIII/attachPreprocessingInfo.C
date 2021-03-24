@@ -97,7 +97,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr, std::map<std::string,ROSEAttr
      tt.traverseWithinFile(sageFilePtr,inh);
 #else
      printf ("Wave support not implemented in new support for CPP directives and comment handling. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 #endif
@@ -256,7 +256,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      if (!instream.is_open())
         {
           std::cerr << "Could not open input file: " << sourceFileName << std::endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // DQ (11/30/2008): What does this do? Please document why this is required.
@@ -331,7 +331,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
 #if ((ROSE_BOOST_VERSION == 105300) && (__cplusplus == 201103L))
      printf ("ERROR: WAVE support not available using BOOST version 1.53 in C++11 mode (fails to compile in C++11 mode) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #else
   // DQ (2/13/2016): The function ctx.add_macro_definition() does not compile with Boost 1.53 
   // in C++11 mode. So this combination is detected and disabled locally where it is a problem.
@@ -674,14 +674,14 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
      if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_28.h")
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -788,7 +788,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -815,7 +815,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #if 0
   // DQ (9/30/2019): Need to trace down where the header files are provided a global scope to support the header file unparsing.
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (6/2/2020): Change the API to pass in the CPP directives and comments list.
@@ -826,7 +826,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
 #if 0
      printf ("Exiting as a test after AttachPreprocessingInfoTreeTrav constructor call! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // When using Wave get all the preprocessing dirctives for all the files.
@@ -838,7 +838,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
        // attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
 #else
           printf ("Boost wave is not available within this configuration \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -876,7 +876,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 
@@ -908,7 +908,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -924,7 +924,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
 #if 0
      printf ("Exiting as a test after either call to sageFilePtr or traverseWithinFile \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0

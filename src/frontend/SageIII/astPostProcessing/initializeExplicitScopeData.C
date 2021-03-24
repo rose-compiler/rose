@@ -230,7 +230,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               else {
                                  printf ("Error: default reached initializedName->get_parent() = NULL \n");
                               }
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 

@@ -51,8 +51,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
         }
    }
 
@@ -73,7 +72,7 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
           case V_SgJovialBitType:   curprint("B");       break;
           default:
              std::cerr << "Unparse_Jovial::unparseTypeDesc for type " << type->class_name() << " case default reached \n";
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
         }
    }
 

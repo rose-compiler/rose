@@ -486,7 +486,7 @@ insertReplaceCurrentStatement (
                   }
                default:
                    printf ("Error: default reached in switch \n");
-                   ROSE_ASSERT (false);
+                   ROSE_ABORT ();
              }
 
        // ROSE_ASSERT (false);
@@ -698,7 +698,7 @@ replaceAppendPrependTreeFragment (
                        {
                       // forStatement->set_init_stmt(newForInitStatement);
                          printf ("Sorry, not implemented forStatement->set_init_stmt(currentForInitStatement) not called! \n");
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
                        }
                     processedReplacementOfTargetStatement = true;
                     break;
@@ -713,7 +713,7 @@ replaceAppendPrependTreeFragment (
                        {
                       // functionDeclarationStatement->set_parameters(newParameterList);
                          printf ("Sorry, not implemented functionDeclarationStatement->set_parameters(newParameterList) not called! \n");
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
                        }
 
                     if (newFunctionDeclaration != NULL)
@@ -763,7 +763,7 @@ replaceAppendPrependTreeFragment (
                       else
                        {
                          printf ("Error: V_SgForInitStatement case in low level rewrite (element not found) \n");
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
                        }
 
                     processedReplacementOfTargetStatement = true;
@@ -773,7 +773,7 @@ replaceAppendPrependTreeFragment (
                default:
                   {
                     printf ("Error: special cases of replacing a SgBasicBlock (default reached) \n");
-                    ROSE_ASSERT (false);
+                    ROSE_ABORT ();
                     break;
                   }
              }
@@ -1187,7 +1187,7 @@ appendPrependTreeFragment (
              {
                newTransformationStatement->get_file_info()->display("In LowLevelRewrite (after insertion into AST): debug");
                printf ("Exiting internally for case of class name == TauTimer \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
         }

@@ -113,7 +113,7 @@ public:
                      << n -> class_name()
                      << " as an SgExpression"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgExpression *) n;
     }
@@ -135,7 +135,7 @@ public:
                       << n -> class_name()
                       << " as an SgStatement"
                       << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgStatement *) n;
     }
@@ -147,7 +147,7 @@ public:
                      << n -> class_name()
                      << " as an SgType"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgType *) n;
     }
@@ -182,7 +182,7 @@ public:
                      << n -> class_name()
                      << " as an SgGlobal"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgGlobal *) n;
     }
@@ -194,7 +194,7 @@ public:
                      << n -> class_name()
                      << " as an SgNamespaceDefinitionStatement"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgNamespaceDefinitionStatement *) n;
     }
@@ -206,14 +206,14 @@ public:
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         else if (! isSgJavaPackageDeclaration(isSgClassDefinition(n) -> get_declaration())) {
             std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgJavaPackageDeclaration"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgClassDefinition *) n;
     }
@@ -225,7 +225,7 @@ public:
                      << n -> class_name()
                      << " as an SgClassDefinition"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgClassDefinition *) n;
     }
@@ -237,7 +237,7 @@ public:
                      << n -> class_name()
                      << " as an SgBasicBlock"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgBasicBlock *) n;
     }
@@ -249,7 +249,7 @@ public:
                      << n -> class_name()
                      << " as an SgIfStmt"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgIfStmt *) n;
     }
@@ -261,7 +261,7 @@ public:
                      << n -> class_name()
                      << " as an SgSwitchStatement"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgSwitchStatement *) n;
     }
@@ -273,7 +273,7 @@ public:
                      << n -> class_name()
                      << " as an SgCatchOptionStmt"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgCatchOptionStmt *) n;
     }
@@ -285,7 +285,7 @@ public:
                      << n -> class_name()
                      << " as an SgWhileStmt"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgWhileStmt *) n;
     }
@@ -297,7 +297,7 @@ public:
                      << n -> class_name()
                      << " as an SgDoWhileStmt"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgDoWhileStmt *) n;
     }
@@ -309,7 +309,7 @@ public:
                      << n -> class_name()
                      << " as an SgForStatement"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgForStatement *) n;
     }
@@ -321,7 +321,7 @@ public:
                      << n -> class_name()
                      << " as an SgJavaForEachStatement"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgJavaForEachStatement *) n;
     }
@@ -333,7 +333,7 @@ public:
                      << n -> class_name()
                      << " as an SgJavaLabelStatement"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgJavaLabelStatement *) n;
     }
@@ -345,7 +345,7 @@ public:
                      << n -> class_name()
                      << " as an SgFunctionDefinition"
                      << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return (SgFunctionDefinition *) n;
     }

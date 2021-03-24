@@ -250,7 +250,7 @@ namespace VirtualBinCFG {
                 ASSERT_not_reachable("no longer supported");
 #else
                 printf ("This function is not supported in the ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT mode.\n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #endif
             }
         };

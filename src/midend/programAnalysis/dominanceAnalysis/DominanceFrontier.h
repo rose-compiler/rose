@@ -34,7 +34,7 @@ namespace DominatorTreesAndDominanceFrontiers
                         else
                         {
                                 std::cerr<<"no such ID ("<<node<<") in dominator-tree\n";
-                                ROSE_ASSERT(false);
+                                ROSE_ABORT();
                         }
                         return std::set<int>();
                 }

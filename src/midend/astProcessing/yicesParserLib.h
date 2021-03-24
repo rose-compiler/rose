@@ -1579,9 +1579,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
        while (!isSgExprListExp(expr[i]->get_SgNode())) {
            i++;
            if (i > (int)expr.size()) {
-               ROSE_ASSERT(false);
-               yices_expr empty = new yices_expr;
-               return empty;
+               ROSE_ABORT();
            }
        }
        int j = i+1;
@@ -1594,9 +1592,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
            yexp.push_back(expr[j]);
            j++;
            if (j >= (int)expr.size()) {
-               ROSE_ASSERT(false);
-               yices_expr empty = new yices_expr;
-               return empty;
+               ROSE_ABORT();
            }
       }
       j++;
@@ -1804,7 +1800,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
             }
             else {
                 //std::cout << "bad logical command" << std::endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
             //yices_assert(ctx, ret);
             return ret;    
@@ -1911,7 +1907,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
            // }
             else {
                 //std::cout << "bad binary op: " << bop << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         return ret;
             //stst << "( " << parsed << " " << mainParse(vec1) << " " << mainParse(vec2) << " ) ";
@@ -1996,7 +1992,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         }
         else {
             //cout << "unsupported atomic type";
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         return ret;
     }
@@ -2334,7 +2330,7 @@ std::string getLogicalSplit(SgNode* n) {
     }
     else {
        // cout << "not a logicalSplit Operator" << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 }
 
@@ -2354,7 +2350,7 @@ std::string getBinaryLogicOp(SgNode* n) {
     }
     else {
         //std::cout << "bad eqOp" << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
     return ss;
 }
@@ -2393,7 +2389,7 @@ std::string getBinaryOp(SgNode* n) {
     }
     else {
         //std::cout << "unknown op in getBinaryOp" << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
     return ss;
 }

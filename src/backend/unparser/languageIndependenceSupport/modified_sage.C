@@ -864,7 +864,7 @@ GetOperatorVariant(SgExpression* expr)
        else
         {
           printf ("Error: default case reached in GetOperatorVariant func_name = %s \n",func_name.c_str());
-          assert(false);
+          ROSE_ABORT();
        /* avoid MSCV warning by adding return stmt */
           return -1;
         }
@@ -2571,7 +2571,7 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
           curprint(" __attribute__((noreturn)) ");
 #if 0
           printf ("Detected initializedName->isGnuAttributeNoReturn() == true: (not implemented) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2619,7 +2619,7 @@ Unparse_MOD_SAGE::printAttributesForType(SgDeclarationStatement* decl_stmt, SgUn
 
 #if 0
      printf ("Exiting as a test of attribute(__noreturn__) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
@@ -2720,7 +2720,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                curprint(" /* from printAttributes(SgDeclarationStatement*) */ __attribute__((packed))");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #else
@@ -2735,7 +2735,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                curprint(" __attribute__((packed)) ");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -2876,8 +2876,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                     case SgDeclarationModifier::e_unspecified_visibility: s = "(\"xxx\")"; break;
                        {
                          printf ("unspecified visibility (trapped) (supressed) \n");
-                         ROSE_ASSERT(false);
-                         break;
+                         ROSE_ABORT();
                        }
 
                     case SgDeclarationModifier::e_hidden_visibility:      s = "(\"hidden\")";    break;
@@ -2888,7 +2887,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
                     default:
                          printf ("ERROR: In printAttributes(SgDeclarationStatement*): Bad visibility specification: visibility = %d \n", visibility);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                   }
 
             // DQ (1/10/2014): Note that later versions of gcc will report use of "unknown" and "error" as an error.

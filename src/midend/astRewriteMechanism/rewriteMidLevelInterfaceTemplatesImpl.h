@@ -215,7 +215,7 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
                printf ("currentStatement->get_parent() = %s \n",currentStatement->get_parent()->sage_class_name());
 #endif
             // abort
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
 
 #if PRINT_DEBUGGING_INFO

@@ -3459,7 +3459,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
        // local else
        // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
           printf ("Error: support for file IO on graph nodes not implemented! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3495,7 +3495,7 @@ EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass()
      // local else
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
      return return_map;
    }
@@ -3544,7 +3544,7 @@ void EasyStorage <rose_graph_hash_multimap> ::storeDataInEasyStorageClass(const 
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3560,7 +3560,7 @@ EasyStorage <rose_graph_hash_multimap> :: rebuildDataStoredInEasyStorageClass() 
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      return return_map;
    }
@@ -3620,7 +3620,7 @@ EasyStorage <rose_undirected_graph_hash_multimap> ::storeDataInEasyStorageClass(
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 // Return by value (consistant with other functions in this file)
@@ -3636,9 +3636,7 @@ EasyStorage <rose_undirected_graph_hash_multimap> :: rebuildDataStoredInEasyStor
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3690,7 +3688,7 @@ void EasyStorage <rose_directed_graph_hash_multimap> ::storeDataInEasyStorageCla
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3706,9 +3704,7 @@ EasyStorage <rose_directed_graph_hash_multimap> :: rebuildDataStoredInEasyStorag
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3760,7 +3756,7 @@ void EasyStorage <rose_graph_node_edge_hash_multimap> ::storeDataInEasyStorageCl
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3776,9 +3772,7 @@ EasyStorage <rose_graph_node_edge_hash_multimap> :: rebuildDataStoredInEasyStora
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3884,7 +3878,7 @@ std::multimap<std::string,int> EasyStorage < std::multimap<std::string,int> > ::
                 data_[tempPair.first] = tempPair.second;
 #else
                 printf ("Error: not implemented support for std::multimap in AST File I/O \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #endif
               }
          }
@@ -3933,7 +3927,7 @@ void EasyStorage <rose_graph_integer_node_hash_map> ::storeDataInEasyStorageClas
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_integer_node_hash_map
@@ -3948,9 +3942,7 @@ EasyStorage <rose_graph_integer_node_hash_map> :: rebuildDataStoredInEasyStorage
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4003,7 +3995,7 @@ void EasyStorage <rose_graph_integer_edge_hash_map> ::storeDataInEasyStorageClas
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -4019,9 +4011,7 @@ EasyStorage <rose_graph_integer_edge_hash_map> :: rebuildDataStoredInEasyStorage
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4074,7 +4064,7 @@ void EasyStorage <rose_graph_integer_edge_hash_multimap> ::storeDataInEasyStorag
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -4090,9 +4080,7 @@ EasyStorage <rose_graph_integer_edge_hash_multimap> :: rebuildDataStoredInEasySt
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4242,7 +4230,7 @@ void EasyStorage <rose_graph_string_integer_hash_multimap> ::storeDataInEasyStor
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_string_integer_hash_multimap
@@ -4257,9 +4245,7 @@ EasyStorage <rose_graph_string_integer_hash_multimap> :: rebuildDataStoredInEasy
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4312,7 +4298,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> ::storeDataInEasySt
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_integerpair_edge_hash_multimap
@@ -4327,9 +4313,7 @@ EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: rebuildDataStoredInEa
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 

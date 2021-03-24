@@ -414,7 +414,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     else if (const SgAdaTaskTypeDecl* tasktype = isSgAdaTaskTypeDecl(parent))
                       mangled_name = tasktype->get_name().getString();
                     else
-                      ROSE_ASSERT(false);
+                      ROSE_ABORT();
                     
                     break;
                   }
@@ -1231,8 +1231,7 @@ mangleValueExp (const SgValueExp* expr)
 
       default:
         std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
-        ROSE_ASSERT (false); // Unhandled case.
-        break;
+        ROSE_ABORT (); // Unhandled case.
       }
 
     return replaceNonAlphaNum (mangled_name);
@@ -1385,7 +1384,7 @@ mangleExpression (const SgExpression* expr)
           } else if (e->get_operand_type()) {
             mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
           } else {
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
           mangled_name << "_eSizeOfOp_";
           break;
@@ -1398,7 +1397,7 @@ mangleExpression (const SgExpression* expr)
           } else if (e->get_operand_type()) {
             mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
           } else {
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
           mangled_name << "_eAlignOfOp_";
           break;
@@ -1455,7 +1454,7 @@ mangleExpression (const SgExpression* expr)
             } else if (eit != NULL) {
               mangled_name << mangleExpression(eit);
             } else {
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
             }
           }
           mangled_name << "_eNodePtrList_";
@@ -1503,7 +1502,7 @@ mangleExpression (const SgExpression* expr)
         }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
       }
     }

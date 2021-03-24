@@ -206,8 +206,7 @@ namespace cfgUtils
       m_varID2bool &rdFromExp, m_varID2bool &wrFromExp, 
       varIDSet arrays, m_varID2str vars2Name)
   {
-    ROSE_ASSERT(0);
-    return false;
+    ROSE_ABORT();
     /*  SgNode* lhs, rhs;
     // indicates whether this is an expression that reads the left-hand-side (i.e. i++)
     bool readlhs;
@@ -370,8 +369,7 @@ bool parseArrayAccess ( SgNode* ast_node,
     m_varID2varID2quad& rdIndexSimp, varIDlist& rdIndexCpx,
     m_varID2str vars2Name)
 {
-  ROSE_ASSERT ( 0 );
-  return false;
+  ROSE_ABORT (  );
   /*
      SgNode* lhs, rhs;
   // indicates whether this is an expression that reads the left-hand-side (i.e. i++)
@@ -524,7 +522,7 @@ return (arraysLhs.size() + arraysRhs.size() > 0);*/
           return NULL;
       }
       printf("getAssignmentLHS: asgn=<%s | %s>\n", n->class_name().c_str(), n->unparseToString().c_str());
-      ROSE_ASSERT(0);
+      ROSE_ABORT();
       }
       else
         return NULL;
@@ -567,7 +565,7 @@ void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs)
   }
 
   printf("getAssignmentRHS: n=<%s | %s>\n", n->class_name().c_str(), n->unparseToString().c_str());
-  ROSE_ASSERT(0);
+  ROSE_ABORT();
 }
 
 

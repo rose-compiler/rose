@@ -643,7 +643,7 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
 
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     ROSE_ASSERT(result != NULL);
@@ -2557,7 +2557,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
                             {
                               std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
                               std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -2566,7 +2566,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
        else
         {
           std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
     return VisitExpr(decl_ref_expr, node) && res;
@@ -2638,7 +2638,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
         else if (D->isArrayRangeDesignator()) {
             ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
         }
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
 
         ROSE_ASSERT(expr != NULL);
 
@@ -3120,8 +3120,7 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
             name = "__PRETTY_FUNCTION__";
             break;
         case clang::PredefinedExpr::PrettyFunctionNoVirtual:
-            ROSE_ASSERT(false);
-            break;
+            ROSE_ABORT();
     }
 
   // Retrieve the associate symbol if it exists

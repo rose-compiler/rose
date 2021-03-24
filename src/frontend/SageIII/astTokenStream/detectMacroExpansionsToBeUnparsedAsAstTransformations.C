@@ -197,7 +197,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                     currentStatement->set_containsTransformation(false);
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -213,7 +213,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
           if (isSgForStatement(n) != NULL)
              {
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
         }
@@ -244,7 +244,7 @@ detectMacroExpansionsToBeUnparsedAsAstTransformations ( SgSourceFile* sourceFile
 
 #if 0
      printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -270,6 +270,6 @@ detectMacroExpansionsToBeUnparsedAsAstTransformations ( SgSourceFile* sourceFile
 
 #if 0
      printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }

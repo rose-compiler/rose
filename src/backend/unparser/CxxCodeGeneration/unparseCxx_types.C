@@ -310,7 +310,7 @@ string get_type_name(SgType* t)
 #endif
 #if 1
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          return get_type_name(btype) + "(" + nameQualifier.str() + get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
                        }
@@ -354,7 +354,7 @@ string get_type_name(SgType* t)
 #endif
 #if 0
                 printf ("In get_type_name(): case T_CLASS: Exiting as a test! \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #endif
                 if (nm.getString() != "")
                     return nm.getString();
@@ -590,9 +590,7 @@ string get_type_name(SgType* t)
           default:
              {
                printf("Error: unparse_type.C get_type_name(): Default case reached in switch: %s\n", t->class_name().c_str());
-               ROSE_ASSERT(false);
-               abort();
-               break;
+               ROSE_ABORT();
              }
         }
 //#endif
@@ -996,8 +994,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                default:
                   {
                     printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
              }
         }
@@ -1165,7 +1162,7 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
 #error "DEAD CODE!"
 
                printf ("Exiting as a test: debug this case seperately for unparseTypeOfType() \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
                unparseType(typeof_node->get_base_type(),info);
              }
@@ -1339,7 +1336,7 @@ Unparse_Type::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info )
 
 #if 1
      printf ("Error: This function should not be called, it represents the wrong approach to the design of the IR \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      SgQualifiedNameType* qualifiedNameType = isSgQualifiedNameType(type);
@@ -1815,7 +1812,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -1883,7 +1880,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -1902,7 +1899,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     curprint(nameQualifier.str());
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 
 #error "DEAD CODE!"
@@ -2076,7 +2073,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
 #if 0
@@ -2232,7 +2229,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -2282,7 +2279,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -2303,7 +2300,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     curprint(nameQualifier.str());
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 
 #error "DEAD CODE!"
@@ -2490,7 +2487,7 @@ void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
   // functions for the types that are derived from the SgNamedType (thus this function should not be here)
 
      printf ("Error: It should be impossible to call this unparseNameType() function (except directly which should not be done!) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      SgNamedType* named_type = isSgNamedType(type);
      ASSERT_not_null(named_type);
@@ -2670,8 +2667,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                            default:
                               {
                                 printf ("Error: default reached in selection of elaborated type \n");
-                                ROSE_ASSERT(false);
-                                break;
+                                ROSE_ABORT();
                               }
                          }
                     }
@@ -2707,7 +2703,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              {
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -2974,7 +2970,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          ASSERT_not_null(classdefn_stmt);
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
@@ -3069,7 +3065,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -3086,7 +3082,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                curprint("/* In unparseClassType(): We need to output the name only in this case */ \n");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -3722,7 +3718,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
                curprint ("/* We need to process the template arguments to include name qualification */ ");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -4204,7 +4200,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
             // DQ (8/19/2012): Temp code while debugging (test2012_192.C).
                printf ("Error: I think this should not be done \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                ninfo.set_isTypeFirstPart();
                unparseType(func_type, ninfo);
@@ -4643,7 +4639,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -4689,7 +4685,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ASSERT_not_null(template_type);
 
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 void
@@ -4789,7 +4785,7 @@ Unparse_Type::foobar( SgUnparse_Info & info )
      outputType(templateArgument,referenceNodeType,info);
 
      printf ("This function should not be called \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #else
 // explicit instantiation of Unparse_Type::outputType
@@ -4828,7 +4824,7 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
      if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -4910,7 +4906,7 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
                  else
                   {
                     printf ("ERROR: referenceNode is not a supported type of IR node. referenceNode kind = %s \n",referenceNode->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }

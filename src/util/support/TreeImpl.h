@@ -5,6 +5,7 @@
 #include <iostream>
 #include <assert.h>
 #include <DoublyLinkedList.h>
+#include <ROSE_ABORT.h>
 
 template<class T>
 class TreeNodeImpl
@@ -64,8 +65,7 @@ class TreeNodeImpl
            holder = parent->children.InsertAfter(entry, pos->holder);
            break;
        default:
-           assert(false);
-           abort();
+           ROSE_ABORT();
        }
      }
   virtual void write(std::ostream& out) const {
@@ -93,8 +93,7 @@ class TreeTraverse
        case ChildrenOnly:
           return n->FirstChild();
        default:
-          assert(false);
-          abort();
+          ROSE_ABORT();
       }
     }
   static T* LastNode( T *n, TraversalOpt opt=PreOrder)
@@ -106,8 +105,7 @@ class TreeTraverse
          return n;
       case ChildrenOnly: return n->LastChild();
       default:
-         assert(false);
-         abort();
+         ROSE_ABORT();
       }
    }
   static T* PrevNode( T *n, TraversalOpt opt=PreOrder)
@@ -133,8 +131,7 @@ class TreeTraverse
       case ChildrenOnly:
           return n->PrevSibling();
       default:
-          assert(false);
-          abort();
+          ROSE_ABORT();
      }
    }
   static T* NextNode( T *n, TraversalOpt opt=PreOrder)
@@ -160,8 +157,7 @@ class TreeTraverse
      case ChildrenOnly:
           return n->NextSibling();
      default:
-          assert(false);
-          abort();
+          ROSE_ABORT();
      }
    }
 };

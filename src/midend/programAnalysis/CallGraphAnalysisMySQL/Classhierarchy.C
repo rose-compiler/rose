@@ -133,8 +133,7 @@ void Classhierarchy::inheritVirtualFunctions()
                 boost::topological_sort(*this, std::back_inserter(torder));
         } catch(boost::not_a_dag) {
                 cerr << "CH -  BOOST ERROR: NOT A DAG!!!!!??? " << endl;
-                assert( false );
-                return;
+                ROSE_ABORT(  );
         }
         //cerr << " TOPO END " << endl;
 

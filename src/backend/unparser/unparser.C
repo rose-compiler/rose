@@ -160,7 +160,7 @@ Unparser::Unparser(const Unparser & X)
      *this = X;
 
      printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 Unparser & Unparser::operator=(const Unparser & X)
@@ -197,7 +197,7 @@ Unparser & Unparser::operator=(const Unparser & X)
      p_resetSourcePosition = false;
 
      printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      return *this;
    }
@@ -415,7 +415,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
                printf ("In Unparser::computeNameQualification(): numberOfModifiedNodesBeforeNameQualification = %zu numberOfModifiedNodesAfterNameQualification = %zu \n",
                     numberOfModifiedNodesBeforeNameQualification,numberOfModifiedNodesAfterNameQualification);
                printf ("ERROR: namequalification step has introduced modified IR nodes in the AST (a problem for the token-based unparsing) \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
         }
@@ -516,7 +516,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                printf ("Error: globalScope == NULL \n");
 #endif
                printf ("Exiting because I think this is an error! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -767,7 +767,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -816,7 +816,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // SgScopeStatement* globalScope = (SgScopeStatement*) (&(file->root()));
@@ -853,7 +853,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           case SgFile::e_error_language:
              {
                printf ("Error: SgFile::e_error_language detected in unparser \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
           case SgFile::e_default_language:
@@ -945,7 +945,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
                     printf ("Exiting as a test before unparsing statements from global scope! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  // const SgStatementPtrList& statements = unparseScope -> getStatementList();
                     SgStatementPtrList statements = unparseScope->generateStatementList();
@@ -967,7 +967,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -988,7 +988,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                break;
@@ -1091,15 +1091,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           case SgFile::e_last_language:
              {
                printf ("Error: SgFile::e_last_language detected in unparser \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           default:
              {
                printf ("Error: default reached in unparser (unknown output language specified) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 
@@ -1226,7 +1224,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #error "DEAD CODE!"
 
                                    printf ("Error: unclear how to unparse the input code! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -1259,7 +1257,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      if (file->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_28.h")
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -1269,7 +1267,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/BAtest_32./rose_BAtest_32_lib.cpp")
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -1390,7 +1388,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
@@ -1506,7 +1504,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
             // printf ("error: (*i)->beginning_fpi.line_num = %d current_line_number = %d \n",(*i)->beginning_fpi.line_num,current_line_number);
                printf ("error: (*i)->beginning_fpi.line_num = %d \n",(*i)->beginning_fpi.line_num);
                printf ("error: current_line_number          = %d \n",current_line_number);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
           if ((*i)->beginning_fpi.column_num != current_column_number)
@@ -1541,7 +1539,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
              {
                printf ("error: (*i)->ending_fpi.line_num = %d \n",(*i)->ending_fpi.line_num);
                printf ("error: current_line_number = %d \n",current_line_number);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
        // The position of the end of the last token is one less than the current position for the next token.
@@ -1549,7 +1547,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
              {
                printf ("error: (*i)->ending_fpi.column_num = %d \n",(*i)->ending_fpi.column_num);
                printf ("error: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #if 0
           printf ("BASE OF LOOP: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
@@ -1575,7 +1573,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
         {
        // throw std::exception("(fstream) error while opening file.");
           printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #if 0
      ASSERT_not_null(cur.output_stream());
@@ -1789,7 +1787,7 @@ unparseScopeStatementWithoutBasicBlockToString ( SgScopeStatement* scope )
           break;
           default:
                printf ("Error, default case in switch within unparseScopeStatementWithoutBasicBlockToString() \n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
         }
 
   // printf ("In unparseScopeStatementWithoutBasicBlockToString(): scopeString = %s \n",scopeString.c_str());
@@ -2098,7 +2096,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                outputFilename = file->get_sourceFileNameWithoutPath();
 
                printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
             else
              {
@@ -2109,7 +2107,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                     printf ("[Warning] Output file name of generated X10 code is the "
                        "same as the input file name, but must be build into a "
                        "separate directory.\n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -2123,7 +2121,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
      ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
 
      printf ("Exiting output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // Name the file with a separate extension.
      outputFilename += ".resetSourcePosition";
@@ -2139,7 +2137,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
         {
        // throw std::exception("(fstream) error while opening file.");
           printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      ROSE_ASSERT(ROSE_OutputFile);
@@ -2887,7 +2885,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 
                       // DQ (4/12/2019): Calling ROSE_ASSERT() is more useful in debugging than calling ROSE_ABORT().
                       // ROSE_ABORT();
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -2903,7 +2901,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     roseUnparser.u_exprStmt->unparseTemplateArgumentList(*templateArgumentList, inheritedAttributeInfo );
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -2915,7 +2913,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     roseUnparser.u_exprStmt->unparseTemplateParameterList(*templateParameterList, inheritedAttributeInfo );
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -3033,14 +3031,14 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         {
           printf ("Why does unparseFile() have a SgScopeStatement* unparseScope parameter: unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
      ROSE_ASSERT(unparseScope == NULL);
 #endif
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -3105,7 +3103,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
 #if 0
                     printf("Exiting as test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -3304,7 +3302,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_error_language:
                   {
                     printf ("Error: SgFile::e_error_language detected in unparser \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 
                case SgFile::e_default_language:
@@ -3348,7 +3346,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 
                  // Liao 12/29/2010, generate cuda source files
@@ -3529,15 +3527,13 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_last_language:
                   {
                     printf ("Error: SgFile::e_last_language detected in unparser \n");
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
 
                default:
                   {
                     printf ("Error: default reached in unparser (unknown output language specified) \n");
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
              }
 
@@ -3567,7 +3563,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
 #if 0
                     printf("Exiting as test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -3639,7 +3635,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -3723,12 +3719,12 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
              {
             // throw std::exception("(fstream) error while opening file.");
                printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
        // file.set_unparse_includes(false);
        // ROSE_ASSERT (file.get_unparse_includes() == false);
@@ -3868,7 +3864,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                default:
                   {
                     printf ("Error: default reached in unparser: file = %s \n",file->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -3880,7 +3876,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // Invoke post-output user-defined callbacks if any.  We must pass the absolute output name because the build system may
@@ -4085,7 +4081,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (10/26/2019): Skip removing files from EDG_ROSE_Translation::edg_include_file_map
@@ -4160,7 +4156,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
        // ROSE_ASSERT(include_file->get_include_file_list().empty() == true);
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
@@ -4177,7 +4173,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
      ASSERT_not_null(include_sourceFile);
@@ -4192,7 +4188,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -4207,7 +4203,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
           printf ("NOTE: global scope pointer will be overwritten: calling set_globalScope() below \n");
 #if 0
           printf ("Exiting to support debugging this case! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -4294,7 +4290,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      ASSERT_not_null(include_sourceFile);
@@ -4377,7 +4373,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -4412,7 +4408,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
           printf ("After call to figureOutWhichFilesToUnparse(): Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -4486,7 +4482,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
        // #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // DQ (11/19/2018): Copy the files that are specified in the filesToCopy list.
@@ -4519,7 +4515,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                   {
 #if 0
                     printf ("Error: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #else
                  // printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
 #endif
@@ -4616,7 +4612,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -4684,7 +4680,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                            // We might want to report this but not stop processing, since multiple files will trigger the same header files the be copied.
 #if 0
                               printf ("Error: this file already exists: newFileName = %s \n",newFileName.c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #else
                               printf ("Note: this file already exists: no need to re-copy it: newFileName = %s \n",newFileName.c_str());
 #endif
@@ -4703,7 +4699,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                        }
 #if 1
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -4712,7 +4708,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -4802,7 +4798,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
                     printf ("Error: originalFileName = %s not found in unparseSourceFileMap added: headerFileOnDemand = %p \n",originalFileName.c_str(),headerFileOnDemand);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #if 1
@@ -4862,7 +4858,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          continue;
                        }
@@ -5017,13 +5013,13 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
 #if 1
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -5032,7 +5028,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                        }
 #if 1
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -5149,7 +5145,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                          if (added_directory == ".")
                             {
                               printf ("Exiting as a test! added_directory = %s \n",added_directory.c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 
                       // DQ (11/8/2018): Debugging code to spot the added include path in the command line for the backend compiler.
@@ -5222,12 +5218,12 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -5256,7 +5252,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
             // ASSERT_not_null(unparsedFile->get_project());
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
             // DQ (9/11/2018): Check that this is a header file (and not the original source file).
                if (unparsedFile->get_isHeaderFile() == true)
@@ -5277,7 +5273,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  // DQ (10/29/2018): We can't just unparse the file using the translation unit's global scope
                  // since we would not visit statements from header files that are nested. So we need to either
@@ -5334,7 +5330,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -5344,13 +5340,13 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
 // #else
@@ -5370,7 +5366,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                if (originalFileName == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/subdirectory/test_63.h")
                   {
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
             // #if DEBUG_UNPARSE_INCLUDE_FILES
@@ -5390,7 +5386,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // DQ (11/18/2018): For any include file that is unparsed, it can cause a nested include file to be missed if it used a
@@ -5482,7 +5478,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -5494,7 +5490,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -5503,7 +5499,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -5598,7 +5594,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 #endif
 #if 0
                printf ("Exiting as a test (after call to display header file report) \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -5609,13 +5605,13 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              }
 #if 0
           printf ("Exiting after computing the name qualification on the first file (as a test for debugging codeSegregation tool) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
 #if 0
      printf ("Exiting as a test (after call to support name qualification) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 
@@ -5625,7 +5621,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test: BEFORE call to unparseIncludedFiles() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // negara1 (06/27/2011)
@@ -5633,7 +5629,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test: AFTER call to unparseIncludedFiles() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -5643,7 +5639,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
@@ -5667,7 +5663,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test: BEFORE call to unparseFileList() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (1/23/2010): refactored the SgFileList
@@ -5675,7 +5671,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test: AFTER call to unparseFileList() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      if ( SgProject::get_verbose() >= 1 )
@@ -5716,7 +5712,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -5750,7 +5746,7 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 
 #if 0
      printf ("In unparseDirectory(): After building directory using system() function: mkdirCommand = %s \n",mkdirCommand.c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // Now change the current working directory to the new directory
@@ -5815,7 +5811,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
   // #endif
 #if 0
      printf ("In unparseFileList(): Exiting as a test: before loop over files \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (9/17/2020): Testing using address sanitizer.
@@ -5926,7 +5922,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
                  // #endif
 #if 0
                     printf ("In unparseFileList(): Exiting as a test: before unparseFile: i = %zu \n",i);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     unparseFile(file, unparseFormatHelp, unparseDelegate);
                   }
@@ -5960,7 +5956,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
           if (i > 0)
              {
                printf ("In unparseFileList(): Exiting as a test! i = %zu \n",i);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
         }//for each
