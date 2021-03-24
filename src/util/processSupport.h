@@ -18,50 +18,6 @@ FILE* popenReadFromVector(const std::vector<std::string>& argv);
 // Assumes there is only one child process
 int pcloseFromVector(FILE* f);
 
-// Introducing class rose_excepction
-// this class gets thrown by rose_throw_exception
-// it should probably inherit from std::runtime_error
-// See also Rose::Diagnostics::FailedAssertion
-class ROSE_UTIL_API rose_exception
-    : public std::exception
-{
-    public:
-        // call constructor with a reason for that exception
-        explicit rose_exception( const char *what = "" );
-
-        virtual const char *what() const throw();
-
-    private:
-        const char *what_;
-};
-
-// DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT is a macro to "abort()" in
-// "stdlib.h".
-// throws rose_exception with the reason "abort" void ROSE_ABORT();
-//
-// [Robb Matzke 2021-03-24]: ROSE had a ROSE_ABORT macro that takes no arguments and always aborts the process, and two
-// ROSE_ABORT functions, one having no arguments and the other taking one C-style string argument. Contrary to their names, the
-// functions do not necessarily abort--instead, they throw an exception which may or may not be caught. In order to simplify
-// this weird macro/function overloading and to have better self-documentation, I've renamed the ROSE_ABORT functions to
-// throw_rose_exception.
-extern "C" {
-    #ifdef USE_ROSE
-        // DQ (9/3/2009): This is required for EDG to correctly compile
-        // tps (01/22/2010) : gcc43 requires abort(void)
-        inline void throw_rose_exception() __THROW __attribute__ ((__noreturn__));
-    #elif defined(_MSC_VER)
-        // DQ (11/28/2009): This is a warning in MSVC ("warning C4273: 'abort' : inconsistent dll linkage")
-        inline ROSE_UTIL_API void throw_rose_exception(void) { throw rose_exception("abort"); }
-    #elif defined(__clang__)
-        inline void throw_rose_exception(void) { throw rose_exception("abort"); }
-    #else
-        inline void throw_rose_exception() throw() { throw rose_exception("abort"); }
-    #endif
-}
-
-// throw rose_exception with user defined abort message
-ROSE_UTIL_API void throw_rose_exception(const char *message);
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Assertion handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
