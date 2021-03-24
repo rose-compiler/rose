@@ -4,7 +4,7 @@
 #include "SymbolicMultiply.h"
 #include "SymbolicSelect.h"
 #include "CommandOptions.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #define COMPARE_MAX  10
 static int comparetime = 0;

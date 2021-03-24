@@ -3,7 +3,7 @@
 #include <CompSliceLocality.h>
 #include <FusionAnal.h>
 #include <CommandOptions.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 //#define DEBUG 1
 

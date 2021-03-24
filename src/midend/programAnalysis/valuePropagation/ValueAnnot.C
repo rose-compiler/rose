@@ -4,7 +4,7 @@
 #include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <ValueAnnot.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 bool DebugValuePropogate();
 

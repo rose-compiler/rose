@@ -2,7 +2,7 @@
 
 #include <DepInfo.h>
 #include <sstream>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class DepEDDTypeInfo : public DepInfoImpl
 {

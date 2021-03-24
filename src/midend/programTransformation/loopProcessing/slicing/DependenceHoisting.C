@@ -10,7 +10,7 @@
 #include <DepCompTransform.h>
 #include <LoopTreeTransform.h>
 #include <LoopInfoInterface.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 struct SliceInfo
 {

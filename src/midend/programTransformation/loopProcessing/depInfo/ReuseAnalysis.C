@@ -3,7 +3,7 @@
 
 #include <ReuseAnalysis.h>
 #include <DepInfoAnal.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 int GetConstArrayBound( const AstNodePtr& array,
                         int dim, unsigned defaultSize)
