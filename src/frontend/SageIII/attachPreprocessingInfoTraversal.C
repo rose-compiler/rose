@@ -293,6 +293,9 @@ AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocat
         }
 #else
   // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
+
+#error "DEAD CODE!"
+
      bool reset_start_index = false;
   // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
      iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( bracedScope, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
@@ -3087,9 +3090,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                       // DQ (6/8/2020): This appear to be NULL in some cases I am debugging currently.
                          ROSE_ASSERT(basicBlock != NULL);
+
+                      // DQ (3/23/2021): Testing the case of a lambda function with Cxx11_tests/test2018_30.C.
 #if 0
                       // DQ (2/16/2021): Refactored code so that we can support comments at the end of a block being attached to the bottom (after) the last statement.
                          bool reset_start_index = false;
+#error "DEAD CODE!"
                          handleBracedScopes(previousLocatedNode, basicBlock, lineOfClosingBrace, reset_start_index, currentListOfAttributes);
 #else
 
@@ -3132,10 +3138,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                                    printf ("(before loop) enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
 #endif
+
 #if 0
                                 // We need to find the associated parent statement that is in the target basicBlock.
                                    while (enclosingStatement->get_scope() != basicBlock)
                                       {
+#error "DEAD CODE!"
                                         enclosingStatement = SageInterface::getEnclosingNode<SgStatement>(enclosingStatement,includingSelf);
                                         ROSE_ASSERT(enclosingStatement != NULL);
 #if 0
@@ -3143,6 +3151,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                                       }
 #endif
+
 #if 0
                                    printf ("(after loop) enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
 #endif
@@ -3151,6 +3160,21 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                    printf ("enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
 #endif
                                 // ROSE_ASSERT(enclosingStatement != statementExpression);
+                                 }
+                                else
+                                 {
+                                   SgLambdaExp* lambdaExpression = isSgLambdaExp(parentLocatedNode);
+                                   if (lambdaExpression != NULL)
+                                      {
+                                        bool includingSelf = false;
+                                        enclosingStatement = SageInterface::getEnclosingNode<SgStatement>(lambdaExpression,includingSelf);
+                                        ROSE_ASSERT(enclosingStatement != NULL);
+#if 0
+                                        printf ("enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+                                        previousStatement = enclosingStatement;
+
+                                      }
                                  }
 #endif
                             }
@@ -3209,6 +3233,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #else
                       // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
                          bool reset_start_index = false;
+#error "DEAD CODE!"
                          iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                             ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
 #endif
@@ -3229,8 +3254,25 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 1
                       // Original code.
                          previousLocatedNode = basicBlock;
-#else
-                         SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+#if 0
+                      // SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+                      // SgLocatedNode* parentLocatedNode = (basicBlock->get_parent());
+                         bool includingSelf = false;
+                         SgLambdaExp* parentLambdaExpression = SageInterface::getEnclosingNode<SgLambdaExp>(basicBlock->get_parent(),includingSelf);
+                      // printf ("case SgBasicBlock: parentLocatedNode = %p = %s = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str(),SageInterface::get_name(parentLocatedNode).c_str());
+                         if (parentLambdaExpression != NULL)
+                            {
+                              printf ("Found parentLambdaExpression as SgLambdaExp: set previousLocatedNode = parent basic block \n");
+
+                           // SgFunctionDefinition* parentfunctionDefinition = SageInterface::getEnclosingNode<SgFunctionDefinition>(parentLambdaExpression,includingSelf);
+                              SgBasicBlock* parentBasicBlock = SageInterface::getEnclosingNode<SgBasicBlock>(parentLambdaExpression,includingSelf);
+
+                           // previousLocatedNode = parentfunctionDefinition;
+                              previousLocatedNode = parentBasicBlock;
+                            }
+#endif
+
+#if 0
                          if (parentLocatedNode != NULL)
                             {
                               printf ("parentLocatedNode = %p = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str());
@@ -3248,6 +3290,34 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                    printf ("Setting previousLocatedNode = basicBlock \n");
                                    previousLocatedNode = basicBlock;
                                  }
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(basicBlock->get_parent() != NULL);
+                              printf ("parentStatement == NULL: basicBlock->get_parent() = %s \n",basicBlock->get_parent()->class_name().c_str());
+                            }
+#endif
+#else
+                         SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+                         if (parentLocatedNode != NULL)
+                            {
+#error "DEAD CODE!"
+                              printf ("parentLocatedNode = %p = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str());
+                              SgStatementExpression* statementExpression = isSgStatementExpression(parentLocatedNode);
+                              if (statementExpression != NULL)
+                                 {
+                                // Not clear what is the best node to set the previousLocatedNode to, so use the parent of the statementExpression.
+                                   printf ("Case of statementExpression != NULL: Setting previousLocatedNode = NULL \n");
+                                // previousLocatedNode = NULL;
+                                   SgLocatedNode* statementExpressionParent = isSgLocatedNode(statementExpression->get_parent());
+                                   previousLocatedNode = statementExpressionParent;
+                                 }
+                                else
+                                 {
+                                   printf ("Setting previousLocatedNode = basicBlock \n");
+                                   previousLocatedNode = basicBlock;
+                                 }
+#error "DEAD CODE!"
                             }
                            else
                             {
