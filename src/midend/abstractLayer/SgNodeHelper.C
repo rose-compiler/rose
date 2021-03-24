@@ -367,6 +367,10 @@ list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
   return globalList;
 }
 
+bool SgNodeHelper::isGlobalVariableDeclaration(SgVariableDeclaration* varDecl) {
+  ROSE_ASSERT(varDecl);
+  return isSgGlobal(varDecl->get_parent())!=0;
+}
 
 /*!
   * \author Markus Schordan

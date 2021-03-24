@@ -322,6 +322,9 @@ bool CodeThorn::operator<(const PState& s1, const PState& s2) {
     }
   }
   assert(i==s1.end() && j==s2.end());
+  // also take info about approximated mem regions into account
+  if(s1.numApproximateMemRegions()!=s2.numApproximateMemRegions())
+    return s1.numApproximateMemRegions()<s2.numApproximateMemRegions();
   return false; // both are equal
 }
 
@@ -336,7 +339,7 @@ bool CodeThorn::operator==(const PState& c1, const PState& c2) {
         return false;
       ++i;++j;
     }
-    return true;
+    return c1.hasEqualMemRegionApproximation(c2); // also true if both are empty
   } else {
     return false;
   }
@@ -344,6 +347,27 @@ bool CodeThorn::operator==(const PState& c1, const PState& c2) {
 
 bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
+}
+
+// additional information required for abstraction of memory regions
+void PState::registerApproximateMemRegion(VariableId memId) {
+  _approximationVarIdSet.insert(memId);
+}
+
+void PState::unregisterApproximateMemRegion(VariableId memId) {
+  _approximationVarIdSet.erase(memId);
+}
+
+bool PState::isApproximateMemRegion(VariableId memId) const {
+  return _approximationVarIdSet.find(memId)!=_approximationVarIdSet.end();
+}
+
+int32_t PState::numApproximateMemRegions() const {
+  return static_cast<int32_t>(_approximationVarIdSet.size());
+}
+
+bool PState::hasEqualMemRegionApproximation(const PState& other) const {
+  return _approximationVarIdSet==other._approximationVarIdSet;
 }
 
 /*! 
@@ -469,7 +493,7 @@ void PState::rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractVa
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
-  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::PTR_SET);
+  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::AV_SET);
   AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 

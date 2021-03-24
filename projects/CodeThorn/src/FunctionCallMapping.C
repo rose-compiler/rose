@@ -35,6 +35,17 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 FunctionCallMapping::FunctionCallMapping():_matchMode(5),classHierarchy(nullptr) {
 }
 
+bool FunctionCallMapping::isFunctionPointerCall(SgFunctionCallExp* fc) {
+  SgExpression*    exp=fc->get_function();
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
+    SgType* type=varRefExp->get_type();
+    if(const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallExp* fc) {
     SgExpression*    exp=fc->get_function();
     FunctionCallInfo fcInfo;

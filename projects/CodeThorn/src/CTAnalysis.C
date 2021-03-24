@@ -1240,7 +1240,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
       }
       */
       // deactivated 05/20/2020
-      //      if(getVariableIdMapping()->hasArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
+      //      if(getVariableIdMapping()->isOfArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -1303,7 +1303,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             }
           }
         }
-        if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
+        if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
           SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
           // TODO: for(offset(membervar) : membervars {initialize(address(initDeclVarId)+offset,eval(initializer+));}
           //AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
@@ -1312,7 +1312,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
-        if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
+        if(getVariableIdMapping()->isOfReferenceType(initDeclVarId)) {
           SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
           SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
           ROSE_ASSERT(assignInit);
@@ -1333,7 +1333,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
             EState estate=currentEState;
             PState newPState=*estate.pstate();
             AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-            //initDeclVarAddr.setRefType(); // known to be ref from hasReferenceType above
+            //initDeclVarAddr.setRefType(); // known to be ref from isOfReferenceType above
             // creates a memory cell in state that contains the address of the referred memory cell
             getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,result);
             ConstraintSet cset=*estate.constraints();
@@ -1345,7 +1345,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           EState estate=evalResult.estate;
           PState newPState=*estate.pstate();
           AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-          //initDeclVarAddr.setRefType(); // known to be ref from hasReferenceType above
+          //initDeclVarAddr.setRefType(); // known to be ref from isOfReferenceType above
           // creates a memory cell in state that contains the address of the referred memory cell
           getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
           ConstraintSet cset=*estate.constraints();
@@ -1487,18 +1487,28 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           setElementSize(initDeclVarId,variableType);
         }
 
+	SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
         PState newPState=*currentEState.pstate();
-        if(getVariableIdMapping()->hasArrayType(initDeclVarId)) {
+        if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
           // add default array elements to PState
-          size_t length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-          //cout<<"DEBUG: DECLARING ARRAY: size: "<<decl->unparseToString()<<length<<endl;
-          for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
-            AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-            // set default init value
-            getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
-          }
+          auto length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+	  if(length>0) {
+	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of size: "<<decl->unparseToString()<<":"<<length<<endl;
+	    for(CodeThorn::TypeSize elemIndex=0;elemIndex<length;elemIndex++) {
+	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+	      // set default init value
+	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
+	    }
+	  } else {
+	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
+	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
+	      // set default init value
+	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr); // TODO: reserve summary memory location	    
+	  }
 
-        } else if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
+        } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: class"<<endl;
           // create only address start address of struct (on the
           // stack) alternatively addresses for all member variables
           // can be created; however, a member var can only be
@@ -1510,7 +1520,8 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
           // TODO: STRUCT VARIABLE DECLARATION
           getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
-        } else if(getVariableIdMapping()->hasPointerType(initDeclVarId)) {
+        } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
+	  SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,pointerVal);
@@ -1521,6 +1532,7 @@ EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* 
           SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
           getExprAnalyzer()->reserveMemoryLocation(label,&newPState,AbstractValue::createAddressOfVariable(initDeclVarId));
         }
+	SAWYER_MESG(logger[TRACE])<<"Creating new EState"<<endl;
         return createEState(targetLabel,cs,newPState,cset);
       }
     } else {
@@ -1968,8 +1980,8 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState
           // only initialize global variable in inter-procedural mode
           estate=analyzeVariableDeclaration(*i,estate,estate.label());
         } else {
-          // do not intialize global variable
-          SAWYER_MESG(logger[TRACE])<<"NOT INITIALIZED GLOBAL VARIABLE:"<<(*i)->unparseToString()<<endl;
+          // initialize global variable to arbitrary value
+	  estate=analyzeVariableDeclaration(*i,estate,estate.label()); // currently the same
         }
       } else {
         filteredVars++;
@@ -1988,7 +2000,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
     SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
 
 #if 1
     // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
@@ -2000,7 +2011,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
 #endif
 
     // START_INIT 6
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
     uint32_t filteredVars=0;
     uint32_t declaredInGlobalState=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -2022,21 +2032,11 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
 	  continue;
 	}
       }
-      if(!_ctOpt.getInterProceduralFlag()) {
-	// do not initialize global vars for intra-procedural analysis (assume arbitrary value, potentially modified by other functions)
-	continue;
-      }
-
-      
-      // only initialize global variable if abstraction level >0 (more abstraction levels for containers to be added)
-      if(_ctOpt.initialStateGlobalVarsAbstractionLevel>0) {
-	// update estate (ref)
-	estate=analyzeVariableDeclaration(*i,estate,estate.label());
-	declaredInGlobalState++;
-      }
+      estate=analyzeVariableDeclaration(*i,estate,estate.label());
+      declaredInGlobalState++;
     }
     SAWYER_MESG(logger[INFO])<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-    if(_ctOpt.status) cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    SAWYER_MESG(logger[INFO])<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
   } else {
     SAWYER_MESG(logger[INFO])<< "INIT: no global scope. Global state remains without entries.";
   }
@@ -2589,27 +2589,27 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
     bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVar);
     if(isLhsVar) {
       EState estate=(*i).estate;
-      if(getVariableIdMapping()->hasClassType(lhsVar)) {
+      if(getVariableIdMapping()->isOfClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
         SAWYER_MESG(logger[WARN])<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
-      } else if(getVariableIdMapping()->hasCharType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfCharType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasIntegerType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfIntegerType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasEnumType(lhsVar)) /* PP */ {
+      } else if(getVariableIdMapping()->isOfEnumType(lhsVar)) /* PP */ {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasFloatingPointType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfFloatingPointType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasBoolType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfBoolType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasPointerType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfPointerType(lhsVar)) {
         // assume here that only arrays (pointers to arrays) are assigned
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(getVariableIdMapping()->getType(lhsVar))) {
         // assume here that only arrays (pointers to arrays) are assigned
         SAWYER_MESG(logger[WARN])<<"DEBUG: LHS assignment: typestring band aid"<<endl;
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
-      } else if(getVariableIdMapping()->hasReferenceType(lhsVar)) {
+      } else if(getVariableIdMapping()->isOfReferenceType(lhsVar)) {
         memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
       } else {
         // other types (e.g. function pointer type)
@@ -2657,10 +2657,10 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
           VariableId arrayVarId=getVariableIdMapping()->variableId(varRefExp);
           AbstractValue arrayPtrValue;
           // two cases
-          if(getVariableIdMapping()->hasArrayType(arrayVarId)) {
+          if(getVariableIdMapping()->isOfArrayType(arrayVarId)) {
             // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
-          } else if(getVariableIdMapping()->hasPointerType(arrayVarId)) {
+          } else if(getVariableIdMapping()->isOfPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
@@ -2677,7 +2677,7 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
                 cout<<"Warning: lhs array access: pointer variable does not exis2t in PState:"<<ptr.toString()<<endl;
               arrayPtrValue=AbstractValue::createTop();
             }
-          } else if(getVariableIdMapping()->hasReferenceType(arrayVarId)) {
+          } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
               arrayPtrValue=getExprAnalyzer()->readFromReferenceMemoryLocation(estate.label(),&pstate2,ptr);
