@@ -93,7 +93,9 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  // deprecated
   bool isPtrSet() const;
+  bool isAVSet() const;
   bool isFunctionPtr() const;
   bool isRef() const;
   bool isNullPtr() const;

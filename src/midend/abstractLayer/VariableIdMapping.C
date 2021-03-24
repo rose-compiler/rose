@@ -417,12 +417,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
           // Register new symbol as normal variable symbol:
-	  // ensure it's a "valid" symbol 
-	  if(sym->get_symbol_basis()!=0) {
-	    registerNewSymbol(sym);
-	    // Remember that this symbol was already registered:
-	    symbolSet.insert(sym);
-	  }
+          // ensure it's a "valid" symbol 
+          if(sym->get_symbol_basis()!=0) {
+            registerNewSymbol(sym);
+            // Remember that this symbol was already registered:
+            symbolSet.insert(sym);
+          }
         }
       } else {
         numWarningsCount++;
@@ -464,12 +464,12 @@ void VariableIdMapping::performLinkAnalysisRemapping() {
       v=variableId(selectLinkSymbol(symSet)); // choose some symbol
       ROSE_ASSERT(v.isValid());
       for (std::set<SgSymbol*>::iterator i=symSet.begin();i!=symSet.end();++i) {
-	SgSymbol* sym=*i;
-	if(sym!=mappingVarIdToInfo[v].sym) {
-	  mappingSymToVarId[sym]=v;
-	  mappingVarIdToInfo[v].sym=sym;
-	  mappingVarIdToInfo[v].relinked=true;
-	}
+        SgSymbol* sym=*i;
+        if(sym!=mappingVarIdToInfo[v].sym) {
+          mappingSymToVarId[sym]=v;
+          mappingVarIdToInfo[v].sym=sym;
+          mappingVarIdToInfo[v].relinked=true;
+        }
       }
     }
   }
@@ -662,8 +662,8 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
       // this check only succeeds for global variables (it filters member variables)
       SgScopeStatement* scope=sym->get_scope();
       if(isSgGlobal(scope)) {
-	SgName name=sym->get_mangled_name();
-	mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
+        SgName name=sym->get_mangled_name();
+        mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
       }
     }
     
@@ -914,11 +914,11 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
         // the size of the memory region of a string is its length + 1 (for terminating 0).
         setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
-	int elementSize=1; // char
+        int elementSize=1; // char
         setElementSize(newVariableId,elementSize);
-	setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
-	setOffset(newVariableId,unknownSizeValue());
-	getVariableIdInfoPtr(newVariableId)->aggregateType=AT_ARRAY; // string literals are maintained as arrays with known length (includes terminating 0)
+        setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
+        setOffset(newVariableId,unknownSizeValue());
+        getVariableIdInfoPtr(newVariableId)->aggregateType=AT_ARRAY; // string literals are maintained as arrays with known length (includes terminating 0)
 
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());

@@ -301,7 +301,9 @@ bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
-bool AbstractValue::isPtrSet() const {return (valueType==AbstractValue::AV_SET);}
+// deprecated
+bool AbstractValue::isPtrSet() const {return (isAVSet());}
+bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
