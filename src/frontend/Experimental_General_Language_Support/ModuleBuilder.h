@@ -59,6 +59,13 @@ public:
 
    SgSourceFile* createSgSourceFile(const std::string &module_name);
 
+   void insertSymbol(SgSymbol* symbol, SgGlobal* file_scope);
+   void loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope);
+   void loadSymbol(SgEnumSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope);
+   void loadSymbol(SgClassSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope);
+   void loadSymbol(SgVariableSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope);
+   void loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, SgGlobal* file_scope);
+
    void clearMap() { moduleNameMap.clear(); }
    void dumpMap();
 };

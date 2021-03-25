@@ -86,7 +86,7 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
   // inject namespace symbols into the file_scope of the caller
   if (namespace_symbols) {
     ROSE_ASSERT(file_scope);
-    BOOST_FOREACH(SgNode* node, namespace_symbols->get_symbols()) {
+    for (SgNode* node : namespace_symbols->get_symbols()) {
       SgSymbol* symbol = isSgSymbol(node);
       ROSE_ASSERT(symbol);
 
@@ -98,19 +98,128 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
           if (it == import_names.end()) {
             // symbol is not in the import name list so don't load it
             symbol = nullptr;
+#if 0
+            std::cout << "    : name not found in import names list -----------> " << symbol_name << std::endl;
+#endif
           }
         }
         if (symbol) {
 #if 0
-        std::cout << "    : inserting symbol " << symbol->get_name()
+          std::cout << "    : inserting symbol " << symbol->get_name()
+                    << " from namespace " << namespace_symbol->get_name() << std::endl;
+#endif
+          loadSymbol(symbol, namespace_symbols, file_scope);
+        }
+      }
+      else {
+#if 0
+        std::cout << "    : exists -> symbol " << symbol->get_name()
                   << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
-          SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-          ROSE_ASSERT(alias_symbol);
-          file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+      }
+    }
+  }
+}
+
+void ModuleBuilder::insertSymbol(SgSymbol* symbol, SgGlobal* file_scope)
+{
+  ROSE_ASSERT(symbol);
+
+  SgName symbol_name = symbol->get_name();
+  if (file_scope->symbol_exists(symbol_name) == false) {
+    // The symbol doesn't exist in the file's scope so insert an alias for it
+    SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
+    ROSE_ASSERT(alias_symbol);
+    file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
+#if 0
+    std::cout << "    :  inserted symbol " << symbol->get_name() << std::endl;
+#endif
+  }
+}
+
+void ModuleBuilder::loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope)
+{
+  ROSE_ASSERT(symbol);
+
+  insertSymbol(symbol, file_scope);
+
+  // Additional symbols may need to be loaded based on symbol type
+  if (SgVariableSymbol* variable_symbol = isSgVariableSymbol(symbol)) {
+    loadSymbol(variable_symbol, symbol_table, file_scope);
+  }
+}
+
+void ModuleBuilder::loadSymbol(SgClassSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope)
+{
+  // Load class members
+  SgClassDeclaration* decl = nullptr;
+  SgClassDefinition* def_decl = nullptr;
+
+  // TODO: def_decl is nullptr so using table statement ...
+  SgJovialTableStatement* defining_decl = nullptr;
+  SgClassDefinition* table_def = nullptr;
+
+  if (symbol) decl = symbol->get_declaration();
+  if (decl) defining_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
+  if (defining_decl) table_def = defining_decl->get_definition();
+
+  if (decl) def_decl = isSgClassDefinition(decl->get_definingDeclaration());
+
+  if (table_def) {
+    for (SgDeclarationStatement* item_decl : table_def->get_members()) {
+      if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(item_decl)) {
+        for (SgInitializedName* init_name : var_decl->get_variables()) {
+          if (SgSymbol* var_symbol = init_name->search_for_symbol_from_symbol_table()) {
+            loadSymbol(var_symbol, symbol_table, file_scope);
+          }
         }
       }
     }
+  }
+}
+
+void ModuleBuilder::loadSymbol(SgEnumSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope)
+{
+  // Load enumerators
+  SgEnumDeclaration* decl = nullptr;
+  if (symbol) decl = symbol->get_declaration();
+  if (decl)   decl = isSgEnumDeclaration(decl->get_definingDeclaration());
+  if (decl) {
+    for (SgInitializedName* init_name : decl->get_enumerators()) {
+      SgName symbol_name = init_name->get_name();
+      if (SgSymbol* enum_symbol = init_name->search_for_symbol_from_symbol_table()) {
+        loadSymbol(enum_symbol, symbol_table, file_scope);
+      }
+    }
+  }
+}
+
+void ModuleBuilder::loadSymbol(SgVariableSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope)
+{
+  if (symbol) {
+    if (SgInitializedName* init_name = symbol->get_declaration()) {
+      if (SgType* type = init_name->get_typeptr()) {
+        loadTypeSymbol(type, symbol_table, file_scope);
+      }
+    }
+  }
+}
+
+void ModuleBuilder::loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, SgGlobal* file_scope)
+{
+  if (SgNamedType* named_type = isSgNamedType(type)) {
+    SgName type_name = named_type->get_name();
+    if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
+      insertSymbol(class_symbol, file_scope);
+      loadSymbol(class_symbol, symbol_table, file_scope);
+    }
+    else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
+      insertSymbol(enum_symbol, file_scope);
+      loadSymbol(enum_symbol, symbol_table, file_scope);
+    }
+  }
+  else if (SgPointerType* pointer_type = isSgPointerType(type)) {
+    loadTypeSymbol(pointer_type->get_base_type(), symbol_table, file_scope);
   }
 }
 
@@ -182,7 +291,7 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
   newFile->runFrontend(errorCode);
 
   if (errorCode != 0) {
-    mlog[ERROR] << "In ModuleBuilder<T>::createSgSourceFile(): frontend returned 0 \n";
+    mlog[ERROR] << "In ModuleBuilder::createSgSourceFile(): frontend returned 0 \n";
     ROSE_ASSERT(errorCode == 0);
   }
 
