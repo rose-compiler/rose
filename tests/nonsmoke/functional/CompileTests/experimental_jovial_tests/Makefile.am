@@ -201,6 +201,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-765.jov                  \
  rose-issue-rc-786.cpl                  \
  rose-issue-rc-787.jov                  \
+ rose-issue-rc-789.jov                  \
  rose-issue-rc-793.jov                  \
  charlie.jov
 
@@ -225,6 +226,7 @@ COMPOOL_TESTCODES = \
  alpha.cpl                              \
  define_dollar.cpl                      \
  multi.cpl                              \
+ rectype.cpl                            \
  simple_compool.cpl                     \
  status_type.cpl                        \
  table_inheritance.cpl                  \
@@ -303,7 +305,8 @@ COMPOOL_TESTCODES = \
  rc687b.cpl                             \
  rc715b.cpl                             \
  rc754.cpl                              \
- beta.cpl
+ beta.cpl                               \
+ parttype.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
