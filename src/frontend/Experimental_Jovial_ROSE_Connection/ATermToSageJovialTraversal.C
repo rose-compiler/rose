@@ -7295,14 +7295,20 @@ ATbool ATermToSageJovialTraversal::traverse_NwdsenFunction(ATerm term, SgFunctio
    // Find symbol and jovial table type
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
    ROSE_ASSERT(symbol);
-   SgJovialTableType* type = isSgJovialTableType(symbol->get_type());
-   ROSE_ASSERT(type);
+
+   SgJovialTableType* table_type = isSgJovialTableType(symbol->get_type());
+   if (table_type == nullptr) {
+     if (SgModifierType* mod_type = isSgModifierType(symbol->get_type())) {
+       table_type = isSgJovialTableType(mod_type->get_base_type());
+     }
+   }
+   ROSE_ASSERT(table_type);
 
    switch (symbol->variantT())
       {
       case V_SgClassSymbol:
          {
-            table_arg = SageBuilder::buildTypeExpression(type);
+            table_arg = SageBuilder::buildTypeExpression(table_type);
             break;
          }
       case V_SgVariableSymbol:
