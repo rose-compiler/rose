@@ -98,29 +98,43 @@ public:
         return false;
     }
 
+    virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
+        stream <<"VOID[" <<nBits() <<"]";
+    }
+
+    virtual void hash(Combinatorics::Hasher &hasher) const override {
+        hasher.insert(0);                               // hash depends on number of SValues hashed, but not any content
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Override legacy members. These now are called by the camelCase names in the base class. Eventually we'll switch the
+    // camelCase names to be the virtual functions and get rid of the snake_case names, so be sure to specify "override" in
+    // your own code so you know when we make the switch.
+public:
+    // See isConcrete
     virtual bool is_number() const ROSE_OVERRIDE {
         return false;
     }
 
+    // See toUnsigned and toSigned
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("not a number");
         uint64_t retval;
         return retval;
     }
 
+    // See mayEqual
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return true;
     }
 
+    // See mustEqual
     virtual bool must_equal(const BaseSemantics::SValuePtr &other,
                             const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
         return this == getRawPointer(other); // must be equal if they're both the same object
     }
 
-    virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        stream <<"VOID[" <<nBits() <<"]";
-    }
 };
 
 
@@ -184,6 +198,8 @@ public:
     virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {}
 
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override {}
+
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
 };
 
@@ -245,6 +261,9 @@ public:
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
         return dflt->copy();
     }
+
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
+                      BaseSemantics::RiscOperators *valOps) const override {}
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
 

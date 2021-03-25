@@ -133,6 +133,16 @@ SValue::possible_bits() const
     return bits;
 }
 
+void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    hasher.insert(nBits());
+    for (const Interval &interval: intervals_.intervals()) {
+        ASSERT_forbid(interval.isEmpty());
+        hasher.insert(interval.least());
+        hasher.insert(interval.greatest());
+    }
+}
+
 static std::string
 toString(uint64_t n, size_t nbits) {
     if (n <= 9) {

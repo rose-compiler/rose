@@ -6,6 +6,7 @@
 #include <BaseSemanticsTypes.h>
 #include <BinaryHotPatch.h>
 #include <BinarySmtSolver.h>
+#include <Combinatorics.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -208,6 +209,11 @@ public:
     virtual const std::string& name() const { return name_; }
     virtual void name(const std::string &s) { name_ = s; }
     /** @} */
+
+    /** Compute hash of current state.
+     *
+     *  Computes a hash of the current state by hashing its registers and memory. */
+    virtual void hash(Combinatorics::Hasher&);
 
     /** Print multi-line output for this object.
      * @{ */

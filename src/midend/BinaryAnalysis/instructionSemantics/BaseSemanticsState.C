@@ -141,6 +141,12 @@ State::merge(const StatePtr &other, RiscOperators *ops) {
 }
 
 void
+State::hash(Combinatorics::Hasher &hasher, RiscOperators *addrOps, RiscOperators *valOps) const {
+    registerState()->hash(hasher, valOps);
+    memoryState()->hash(hasher, addrOps, valOps);
+}
+
+void
 State::print(std::ostream &stream, const std::string &prefix) const {
     Formatter fmt;
     fmt.set_line_prefix(prefix);

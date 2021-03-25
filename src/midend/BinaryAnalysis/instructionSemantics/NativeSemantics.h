@@ -126,6 +126,8 @@ public:
     virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators*) ROSE_OVERRIDE;
 
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
+
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 };
 
@@ -225,6 +227,11 @@ public:
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
+    }
+
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
+                      BaseSemantics::RiscOperators *valOps) const override {
+        ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
     }
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {

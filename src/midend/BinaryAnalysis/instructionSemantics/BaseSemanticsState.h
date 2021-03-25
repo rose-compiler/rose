@@ -191,6 +191,11 @@ public:
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps);
 
+    /** Compute a hash of the state.
+     *
+     *  The state hash is computed by combining the memory hash with the register hash. */
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const;
+
     /** Print the register contents.
      *
      *  This method emits one line per register and contains the register name and its value.
