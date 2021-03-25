@@ -407,6 +407,17 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
   return this->varValue(abstractMemLoc);
 }
 
+void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc,
+							    AbstractValue abstractValue,
+							    bool strongUpdate) {
+  bool weakUpdate=!strongUpdate;
+  if(isApproximateMemRegion(memLoc.getVariableId())||weakUpdate) {
+    combineAtMemoryLocation(memLoc,abstractValue);
+  } else {
+    rawWriteAtAbstractAddress(memLoc,abstractValue);
+  }
+}
+
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
                                    AbstractValue abstractValue,
                                    bool strongUpdate) {
@@ -421,7 +432,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     //cout<<"DEBUG: ptr set recursion."<<endl;
     AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
     for (auto av : avSet) {
-      writeToMemoryLocation(av,abstractValue,false);
+      writeToMemoryLocation(av,abstractValue,false /*weak update*/);
     }
     return;
   } else {
@@ -453,33 +464,18 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
               AbstractValue change=AbstractValue(inStateElemSize);
               abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
               // TODO: check for memory bound
-              rawWriteAtAbstractAddress(abstractMemLoc,AbstractValue::createTop());
+	      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,AbstractValue::createTop(),strongUpdate);
             }
           }
         } else {
-          rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // should not happen (elemsize=0)
+          conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate); // should not happen (elemsize=0)
         }
       } else {
-        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // elem size is the same, keeping precision
+	// elem size is the same, keeping precision
+      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
       }
     } else {
-      // not in byte mode
-      if(abstractMemLoc.isPtrSet()) {
-        AbstractValueSet& set=*abstractMemLoc.getAbstractValueSet();
-        bool moreThanOneElement=set.size()>1;
-        for(auto memLoc : set) {
-          if(moreThanOneElement) {
-            //cout<<"DEBUG: COMBINE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
-            combineAtMemoryLocation(memLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
-          } else {
-            // strong update. TODO: local vars in recursive functions (must be marked as such)
-            //cout<<"DEBUG: WRITE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
-            rawWriteAtAbstractAddress(memLoc,abstractValue);
-          }
-        }
-      } else {
-        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
-      }
+      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
     }
   }
 }

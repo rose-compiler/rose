@@ -36,6 +36,7 @@ namespace CodeThorn {
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
+    void typeSizeOverviewtoStream(std::ostream& os);
     CodeThorn::TypeSize numClassMembers(SgType*); // from classMembers map
 
   private:

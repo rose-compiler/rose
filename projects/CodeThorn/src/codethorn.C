@@ -204,7 +204,15 @@ int main( int argc, char * argv[] ) {
       originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
     }
     if(ctOpt.programStatsOnly) {
+      cout<<"=================================="<<endl;
+      cout<<"Language Feature Usage Overview"<<endl;
+      cout<<"=================================="<<endl;
       originalProgramInfo.printDetailed();
+      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      //AbstractValue::setVariableIdMapping(vim);
+      vim->computeVariableSymbolMapping(sageProject,0);
+      cout<<endl;
+      vim->typeSizeOverviewtoStream(cout);
       exit(0);
     }
 
@@ -215,6 +223,7 @@ int main( int argc, char * argv[] ) {
       ProgramInfo normalizedProgramInfo(sageProject);
       normalizedProgramInfo.compute();
       originalProgramInfo.printCompared(&normalizedProgramInfo);
+      analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
 
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);

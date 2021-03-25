@@ -58,18 +58,21 @@ namespace CodeThorn {
 	ROSE_ASSERT(varId.isValid());
 	SgType* type=strippedType(sym->get_type());
 	//cout<<"Type:"<<type->unparseToString()<<endl;
+	CodeThorn::TypeSize typeSize=unknownSizeValue();
 	if(SgClassType* memberClassType=isSgClassType(type)) {
-	  CodeThorn::TypeSize typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
+	  typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
 	  setTypeSize(type,typeSize);
-	  offset+=typeSize;
 	} else if(SgArrayType* arrayType=isSgArrayType(type)) {
-	  CodeThorn::TypeSize typeSize=typeSizeMapping.determineTypeSize(type);
+	  typeSize=typeSizeMapping.determineTypeSize(type);
 	  setTypeSize(type,typeSize);
-	  offset+=typeSize;
 	} else {
 	  // only built-in scalar types
-	  offset+=typeSizeMapping.determineTypeSize(type);
+	  typeSize=typeSizeMapping.determineTypeSize(type);
 	}
+	if(typeSize!=unknownSizeValue())
+	  offset+=typeSize;
+	else
+	  offset=unknownSizeValue();
       }
     }
     return offset;
@@ -149,7 +152,7 @@ namespace CodeThorn {
 	      std::list<SgVariableDeclaration*> memberVariableDeclarationList=memberVariableDeclarationsList(classType);
 	      CodeThorn::TypeSize totalTypeSize=registerClassMembers(classType,memberVariableDeclarationList,0); // start with offset 0
 	      setNumberOfElements(varId,numClassMembers(classType));
-	      setTypeSize(classType,totalTypeSize);
+	      setTypeSize(classType,totalTypeSize); // size can also be unknown
 	      setTotalSize(varId,totalTypeSize);
 	    } else if(SgArrayType* arrayType=isSgArrayType(type)) {
 	      getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
@@ -256,14 +259,65 @@ void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* 
   }
 }
 
+void VariableIdMappingExtended::typeSizeOverviewtoStream(ostream& os) {
+  int32_t structNum=0;
+  int32_t arrayNum=0;
+  int32_t singleNum=0;
+  int32_t unknownNum=0;
+  CodeThorn::TypeSize maxStructElements=0;
+  CodeThorn::TypeSize maxStructTotalSize=0;
+  CodeThorn::TypeSize maxArrayElements=0;
+  CodeThorn::TypeSize maxArrayElementSize=0;
+  CodeThorn::TypeSize maxArrayTotalSize=0;
+  
+  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
+    VariableId varId=variableIdFromCode(i);
+    switch(getVariableIdInfo(varId).aggregateType) {
+      case AT_STRUCT:
+	structNum++;
+	maxStructElements=max(maxStructElements,getNumberOfElements(varId));
+	if(getTotalSize(varId)!=unknownSizeValue())
+	  cout<<"STRUCT TOT:"<<getTotalSize(varId)<<endl;
+	  maxStructTotalSize=max(maxStructTotalSize,getTotalSize(varId));
+	break;
+      case AT_ARRAY:
+	arrayNum++;
+	if(getNumberOfElements(varId)!=unknownSizeValue())
+	  maxArrayElements=max(maxArrayElements,getNumberOfElements(varId));
+	if(getElementSize(varId)!=unknownSizeValue())
+	  maxArrayElementSize=max(maxArrayElementSize,getElementSize(varId));
+	if(getTotalSize(varId)!=unknownSizeValue())
+	  maxArrayTotalSize=max(maxArrayTotalSize,getElementSize(varId));
+	break;
+      case AT_SINGLE:
+	singleNum++;
+	break;
+      case AT_UNKNOWN:
+	unknownNum++;
+	break;
+    }
+  }
+  cout<<"================================================="<<endl;
+  cout<<"Type Size Overview"<<endl;
+  cout<<"================================================="<<endl;
+  cout<<"Number of struct variables          : "<<structNum<<endl;
+  cout<<"Number of array variables           : "<<arrayNum<<endl;
+  cout<<"Number of built-in type variables   : "<<singleNum<<endl;
+  cout<<"Number of unknown size variables    : "<<unknownNum<<endl;
+  cout<<"Maximum struct size                 : "<<maxStructTotalSize<<" bytes"<<endl;
+  cout<<"Maximum array size                  : "<<maxArrayTotalSize<<" bytes"<<endl;
+  cout<<"Maximum array element size          : "<<maxArrayElementSize<<endl;
+  cout<<"Maximum number of elements in struct: "<<maxStructElements<<endl;
+  cout<<"Maximum number of elements in array : "<<maxArrayElements<<endl;
+  cout<<"================================================="<<endl;
+}
+
 void VariableIdMappingExtended::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
     if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
       os<<std::right<<std::setw(3)<<i
 	<<", "<<std::setw(25)<<std::left<<"id:"+varId.toString()+":\""+varId.toString(this)+"\""
-	//<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
-	//<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
 	<<","<<std::setw(8)<<getVariableIdInfo(varId).variableScopeToString()
 	<<","<<std::setw(8)<<getVariableIdInfo(varId).aggregateTypeToString();
       switch(getVariableIdInfo(varId).aggregateType) {
