@@ -363,7 +363,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
    ROSE_ASSERT(param_scope == SageBuilder::topScopeStack());
 
 // Populate the function parameter list from declarations in the parameter block
-   BOOST_FOREACH(const FormalParameter &param, param_name_list)
+   for (const FormalParameter &param : param_name_list)
      {
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
@@ -1065,22 +1065,26 @@ getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
    SgInitializedName* init_name = nullptr;
 
    SgName name = old_val->get_name();
-#if 1
+#if 0
    std::string status_name;
    std::cout << "--> will look for " << name << " in STATUS " << enum_decl->get_name() << std::endl;
    std::cout << "--> list size is " << enum_list.size() << std::endl;
 #endif
-   BOOST_FOREACH(SgInitializedName* status_constant, enum_list) {
-#if 1
+   for (SgInitializedName* status_constant : enum_list) {
+#if 0
      status_name = status_constant->get_name();
 #endif
       if (status_constant->get_name() == name) {
          init_name = status_constant;
          break;
       }
+#if 0
      std::cout << "--> looking for " << name << " found " << status_name << std::endl;
+#endif
    }
+#if 0
    std::cout << "--> looking for " << name << " did find " << status_name << std::endl;
+#endif
 #if 0
    ROSE_ASSERT(init_name);
 #else
@@ -1149,7 +1153,7 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &compool_name, s
      directive_string = "(" + directive_string + ")";
    } else {
      bool first = true;
-     BOOST_FOREACH(std::string &name, import_names) {
+     for (std::string &name : import_names) {
        if (first) {
          directive_string += " " + name;
          first = false;
@@ -1499,7 +1503,7 @@ Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::Expression
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
 
-   BOOST_FOREACH(LanguageTranslation::ExpressionKind modifier_enum, modifier_enum_list) {
+   for (LanguageTranslation::ExpressionKind modifier_enum : modifier_enum_list) {
       switch(modifier_enum)
        {
          case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
@@ -1831,7 +1835,7 @@ SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
 {
    SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();
 
-   BOOST_FOREACH(SgExpression* expr, list) {
+   for (SgExpression* expr : list) {
       expr_list->get_expressions().push_back(expr);
    }
    return expr_list;

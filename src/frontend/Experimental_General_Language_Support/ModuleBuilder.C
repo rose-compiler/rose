@@ -91,24 +91,23 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
       ROSE_ASSERT(symbol);
 
       SgName symbol_name = symbol->get_name();
-      if (file_scope->symbol_exists(symbol_name) == false) {
-        if (import_names.size() > 0) {
-          // Only import names from the list (list shouldn't be too long so don't worry about repeated lookup time)
-          std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
-          if (it == import_names.end()) {
-            // symbol is not in the import name list so don't load it
-            symbol = nullptr;
-#if 0
-            std::cout << "    : name not found in import names list -----------> " << symbol_name << std::endl;
-#endif
-          }
-        }
-        if (symbol) {
-#if 0
-          std::cout << "    : inserting symbol " << symbol->get_name()
-                    << " from namespace " << namespace_symbol->get_name() << std::endl;
-#endif
+      // Don't import symbols that already exist
+      if (!file_scope->symbol_exists(symbol_name)) {
+        if (import_names.size() == 0) {
+          // Import all namespace symbols
           loadSymbol(symbol, namespace_symbols, file_scope);
+        }
+        else {
+          // Only import names from the list
+          std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
+          if (it != import_names.end()) {
+#if 0
+            std::cout << "    : inserting symbol " << symbol->get_name()
+                      << " from namespace " << namespace_symbol->get_name() << std::endl;
+#endif
+            // Symbol is in the import name list so load it
+            loadSymbol(symbol, namespace_symbols, file_scope);
+          }
         }
       }
       else {
@@ -216,6 +215,12 @@ void ModuleBuilder::loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, Sg
     else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
       insertSymbol(enum_symbol, file_scope);
       loadSymbol(enum_symbol, symbol_table, file_scope);
+    }
+    else if (SgTypedefSymbol* typedef_symbol = symbol_table->find_typedef(type_name)) {
+      insertSymbol(typedef_symbol, file_scope);
+      if (SgTypedefDeclaration* typedef_decl = typedef_symbol->get_declaration()) {
+        loadTypeSymbol(typedef_decl->get_base_type(), symbol_table, file_scope);
+      }
     }
   }
   else if (SgPointerType* pointer_type = isSgPointerType(type)) {
