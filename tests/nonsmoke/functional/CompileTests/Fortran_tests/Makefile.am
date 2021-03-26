@@ -345,6 +345,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2020_commonblock_1.f90 \
      test2020_contiguous_attr.f90 \
      test2021_module_nature.f90 \
+     test2021_componentAttrSpec_contiguous.f90 \
      rose-issue-par-39.f90 \
      canonicalExample.f90 \
      fCaller.f90 \
