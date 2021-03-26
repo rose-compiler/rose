@@ -7,6 +7,8 @@
 
 namespace SageInterface
 {
+
+/// Contains Ada-specific functionality
 namespace ada
 {
   /// defines the result type for \ref flattenArrayType
