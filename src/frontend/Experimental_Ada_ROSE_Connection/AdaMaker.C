@@ -65,10 +65,16 @@ namespace
 
 Sg_File_Info& mkFileInfo()
 {
+  Sg_File_Info& sgnode = SG_DEREF( Sg_File_Info::generateDefaultFileInfoForTransformationNode() );
+
+  sgnode.setOutputInCodeGeneration();
+
+#if NOT_USED
   Sg_File_Info& sgnode = SG_DEREF( Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode() );
 
   //~ sgnode.setOutputInCodeGeneration();
   sgnode.unsetTransformation();
+#endif /* NOT_USED */
   return sgnode;
 }
 
@@ -76,8 +82,8 @@ Sg_File_Info& mkFileInfo(const std::string& file, int line, int col)
 {
   Sg_File_Info& sgnode = mkBareNode<Sg_File_Info>(file, line, col);
 
-  //~ sgnode.setOutputInCodeGeneration();
-  sgnode.unsetTransformation();
+  sgnode.setOutputInCodeGeneration();
+  //~ sgnode.unsetTransformation();
   return sgnode;
 }
 
@@ -103,7 +109,7 @@ void markCompilerGenerated(SgLocatedNode& n)
   n.set_startOfConstruct(&mkFileInfo());
   n.set_endOfConstruct  (&mkFileInfo());
 
-  n.unsetTransformation();
+  //~ n.unsetTransformation();
 }
 
 
@@ -113,16 +119,22 @@ void markCompilerGenerated(SgLocatedNode& n)
 SgAdaRangeConstraint&
 mkAdaRangeConstraint(SgRangeExp& range)
 {
-  return mkBareNode<SgAdaRangeConstraint>(&range);
+  SgAdaRangeConstraint& sgnode = mkLocatedNode<SgAdaRangeConstraint>(&range);
+
+  range.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaIndexConstraint&
 mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 {
-  SgAdaIndexConstraint& sgnode = mkBareNode<SgAdaIndexConstraint>();
+  SgAdaIndexConstraint& sgnode = mkLocatedNode<SgAdaIndexConstraint>();
 
   sgnode.get_indexRanges().swap(ranges);
-  // \todo shall the range pointers' parent point to sgnode?
+
+  for (SgExpression* expr : sgnode.get_indexRanges())
+    SG_DEREF(expr).set_parent(&sgnode);
+
   return sgnode;
 }
 
@@ -130,7 +142,10 @@ mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
 SgAdaSubtype&
 mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr)
 {
-  return mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+  SgAdaSubtype& sgnode = mkNonSharedTypeNode<SgAdaSubtype>(&superty, &constr);
+
+  constr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaDerivedType&
@@ -142,13 +157,21 @@ mkAdaDerivedType(SgType& basetype)
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
-  return mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+  SgAdaModularType& sgnode = mkNonSharedTypeNode<SgAdaModularType>(&modexpr);
+
+  modexpr.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
-  return mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+  SgAdaFloatType& sgnode = mkNonSharedTypeNode<SgAdaFloatType>(&digits, range_opt);
+
+  digits.set_parent(&sgnode);
+  if (range_opt) range_opt->set_parent(&sgnode);
+
+  return sgnode;
 }
 
 SgDeclType&
@@ -691,28 +714,51 @@ mkFunctionParameterList()
 
 namespace
 {
+  void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
+  {
+    // the sage builder overrides this information, so we reset it
+    // \todo needs to be fixed in the sage builder
+    for (SgInitializedName* n : lst.get_args())
+      SG_DEREF(n).set_scope(&parmScope);
+
+    if (SgFunctionParameterScope* fps = isSgFunctionParameterScope(&parmScope))
+    {
+      sg::linkParentChild(decl, *fps, &SgFunctionDeclaration::set_functionParameterScope);
+      return;
+    }
+
+    SgFunctionDefinition* defn = isSgFunctionDefinition(&parmScope);
+    ROSE_ASSERT(defn);
+    sg::linkParentChild(decl, *defn, &SgFunctionDeclaration::set_definition);
+  }
+
+
   /// \private
   /// helps to create a procedure definition:
   ///   attaches the definition to the declaration and returns the *function body*.
   SgScopeStatement&
-  mkProcDef(SgFunctionDeclaration& dcl)
+  //~ mkProcDef(SgFunctionDeclaration& dcl)
+  mkProcDef()
   {
-    SgFunctionDefinition& sgnode = mkLocatedNode<SgFunctionDefinition>(&dcl, nullptr);
+    //~ SgFunctionDefinition& sgnode = mkLocatedNode<SgFunctionDefinition>(&dcl, nullptr);
     SgBasicBlock&         body   = mkBasicBlock();
+    SgFunctionDefinition& sgnode = mkLocatedNode<SgFunctionDefinition>(&mkFileInfo(), &body);
 
-    sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_definition);
-    sg::linkParentChild(sgnode, body, &SgFunctionDefinition::set_body);
+    body.set_parent(&sgnode);
+    //~ sg::linkParentChild(sgnode, body, &SgFunctionDefinition::set_body);
+    //~ sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_definition);
     return sgnode;
   }
 
   /// \private
   /// helps to create a procedure definition as declaration
   SgScopeStatement&
-  mkProcDecl(SgFunctionDeclaration& dcl)
+  //~ mkProcDecl(SgFunctionDeclaration& dcl)
+  mkProcDecl()
   {
     SgFunctionParameterScope& sgnode = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
 
-    sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_functionParameterScope);
+    //~ sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_functionParameterScope);
     return sgnode;
   }
 
@@ -721,15 +767,21 @@ namespace
                        SgScopeStatement& scope,
                        SgType& retty,
                        std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
-                       SgScopeStatement& (*scopeMaker) (SgFunctionDeclaration&)
+                       //~ SgScopeStatement& (*scopeMaker) (SgFunctionDeclaration&)
+                       SgScopeStatement& (*scopeMaker) ()
                      )
   {
     SgFunctionParameterList& lst       = mkFunctionParameterList();
-    SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
-    SgScopeStatement&        parmScope = scopeMaker(sgnode);
+    //~ SgScopeStatement&        parmScope = scopeMaker(sgnode);
+    SgScopeStatement&        parmScope = scopeMaker();
 
     complete(lst, parmScope);
+
+    SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
+
     ROSE_ASSERT(sgnode.get_type() != nullptr);
+
+    linkParameterScope(sgnode, lst, parmScope);
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
@@ -773,8 +825,6 @@ mkProcedureDef( const std::string& nm,
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
 {
-  logWarn() << "proc w/ string" << std::endl;
-
   SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
 
   return mkProcedureDef(ndef, scope, retty, std::move(complete));
@@ -909,13 +959,14 @@ mkParameter( const std::vector<SgInitializedName*>& parms,
   SgDeclarationModifier&    declMods = parmDecl.get_declarationModifier();
 
   // insert initialized names and set the proper declaration node
-  std::for_each( parms.begin(), parms.end(),
-                 [&parmDecl, &names](SgInitializedName* prm)->void
-                 {
-                   prm->set_definition(&parmDecl);
-                   names.push_back(prm);
-                 }
-               );
+  for (SgInitializedName* prm : parms)
+  {
+    // \note set_definition is the same as set_declptr
+    ROSE_ASSERT(prm);
+    prm->set_definition(&parmDecl);
+    names.push_back(prm);
+  }
+
   declMods.get_typeModifier() = parmmode;
 
   si::fixVariableDeclaration(&parmDecl, &scope);
@@ -1101,6 +1152,29 @@ mkRangeExp()
   return mkRangeExp(start, end);
 }
 
+
+namespace
+{
+  SgConstructorInitializer&
+  mkConstructorInitializer(SgExprListExp& args, SgType& ty)
+  {
+    SgConstructorInitializer& sgnode = SG_DEREF(sb::buildConstructorInitializer_nfi(nullptr, &args, &ty, false, false, false, false));
+
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
+}
+
+SgNewExp&
+mkNewExp(SgType& ty, SgExprListExp* args_opt)
+{
+  SgConstructorInitializer* init = args_opt ? &mkConstructorInitializer(*args_opt, ty)
+                                            : nullptr;
+
+  return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
+}
+
+
 SgExpression&
 mkOthersExp()
 {
@@ -1124,6 +1198,20 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
+
+SgCastExp&
+mkCastExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_static_cast));
+}
+
+
+SgExpression&
+mkQualifiedExp(SgExpression& expr, SgType& ty)
+{
+  return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_ada_type_qualification));
+}
+
 
 namespace
 {

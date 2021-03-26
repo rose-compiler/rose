@@ -39,10 +39,10 @@ public:
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         for (size_t i = 0; i < operands.size(); ++i)
-            dispatcher->preUpdate(operands[i]);
+            dispatcher->preUpdate(operands[i], operators->boolean_(true));
         p(dispatcher.get(), operators.get(), insn, operands);
         for (size_t i = 0; i < operands.size(); ++i)
-            dispatcher->postUpdate(operands[i]);
+            dispatcher->postUpdate(operands[i], operators->boolean_(true));
     }
 
     void assert_args(I insn, A args, size_t nargs) {
@@ -57,7 +57,7 @@ struct IP_add: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result;
 
         if (auto vectorType = isSgAsmVectorType(args[0]->get_type())) {
@@ -84,7 +84,7 @@ struct IP_addp: P {
         if (args.size() == 2) {
             SValuePtr a = d->read(args[1]);
             SValuePtr aLo = ops->extract(a, 0, args[0]->get_nBits());
-            SValuePtr aHi = ops->extract(a, args[0]->get_nBits(), a->get_width());
+            SValuePtr aHi = ops->extract(a, args[0]->get_nBits(), a->nBits());
             SValuePtr result = ops->add(aLo, aHi);
             d->write(args[0], result);
         } else {
@@ -127,10 +127,10 @@ struct IP_and: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->and_(a, b);
         if (insn->get_updatesFlags()) {
-            ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+            ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
             ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
             ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
             ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -153,7 +153,7 @@ struct IP_b: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         SValuePtr targetVa = d->read(args[0]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr nextIp = ops->ite(cond, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
@@ -163,8 +163,8 @@ struct IP_b: P {
 struct IP_bfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->bitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -173,8 +173,8 @@ struct IP_bfm: P {
 struct IP_bfxil: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -203,7 +203,7 @@ struct IP_bic: P {
             SValuePtr b = d->read(args[2]);
             SValuePtr result = ops->and_(a, ops->invert(b));
             if (insn->get_updatesFlags()) {
-                ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+                ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
                 ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
                 ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
                 ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -227,7 +227,7 @@ struct IP_blr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         SValuePtr targetVa = d->read(args[0]);
-        SValuePtr returnVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr returnVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         ops->writeRegister(d->REG_LR, returnVa);
         ops->writeRegister(d->REG_PC, targetVa);
     }
@@ -244,7 +244,7 @@ struct IP_br: P {
 struct IP_brk: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t imm = d->read(args[0])->get_number();
+        size_t imm = d->read(args[0])->toUnsigned().get();
         ops->interrupt((int)Aarch64Exception::brk, imm);
     }
 };
@@ -255,7 +255,7 @@ struct IP_cbnz: P {
         SValuePtr value = d->read(args[0]);
         SValuePtr isZero = ops->equalToZero(value);
         SValuePtr targetVa = d->read(args[1]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(isZero, fallThroughVa, targetVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -267,7 +267,7 @@ struct IP_cbz: P {
         SValuePtr value = d->read(args[0]);
         SValuePtr isZero = ops->equalToZero(value);
         SValuePtr targetVa = d->read(args[1]);
-        SValuePtr fallThroughVa = d->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = d->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(isZero, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -279,7 +279,7 @@ struct IP_ccmn: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr flagsSpecified = d->read(args[2]);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, b, ops->boolean_(false), carryOut);
         DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
@@ -296,7 +296,7 @@ struct IP_ccmp: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr flagsSpecified = d->read(args[2]);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(a, ops->invert(b), ops->boolean_(true), carryOut);
         DispatcherAarch64::NZCV flagsComputed = d->computeNZCV(diff, carryOut);
@@ -362,7 +362,7 @@ struct IP_cmeq: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isEqual(a, b), ones, zeros);
         }
@@ -387,7 +387,7 @@ struct IP_cmge: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedGreaterThanOrEqual(a, b), ones, zeros);
         }
@@ -412,7 +412,7 @@ struct IP_cmgt: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedGreaterThan(a, b), ones, zeros);
         }
@@ -437,7 +437,7 @@ struct IP_cmhi: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isUnsignedGreaterThan(a, b), ones, zeros);
         }
@@ -462,7 +462,7 @@ struct IP_cmhs: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isUnsignedGreaterThanOrEqual(a, b), ones, zeros);
         }
@@ -487,7 +487,7 @@ struct IP_cmle: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedLessThanOrEqual(a, b), ones, zeros);
         }
@@ -512,7 +512,7 @@ struct IP_cmlt: P {
                 result = result ? ops->concatLoHi(result, resultElmt) : resultElmt;
             }
         } else {
-            SValuePtr zeros = ops->number_(a->get_width(), 0);
+            SValuePtr zeros = ops->number_(a->nBits(), 0);
             SValuePtr ones = ops->invert(zeros);
             result = ops->ite(ops->isSignedLessThan(a, b), ones, zeros);
         }
@@ -524,7 +524,7 @@ struct IP_cmn: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr carryOut;
         SValuePtr sum = ops->addWithCarries(a, b, ops->boolean_(false), carryOut);
         d->updateNZCV(sum, carryOut);
@@ -535,7 +535,7 @@ struct IP_cmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr rn = d->read(args[0]);
-        SValuePtr notRm = ops->signExtend(ops->invert(d->read(args[1])), rn->get_width());
+        SValuePtr notRm = ops->signExtend(ops->invert(d->read(args[1])), rn->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr diff = ops->addWithCarries(rn, notRm, carryIn, carryOut);
@@ -548,7 +548,7 @@ struct IP_cinc: P {
         assert_args(insn, args, 2);
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr src = d->read(args[1]);
-        SValuePtr srcInc = ops->add(src, ops->number_(src->get_width(), 1));
+        SValuePtr srcInc = ops->add(src, ops->number_(src->nBits(), 1));
         SValuePtr result = ops->ite(cond, srcInc, src);
         d->write(args[0], result);
     }
@@ -612,7 +612,7 @@ struct IP_csinc: P {
         SValuePtr cond = d->conditionHolds(insn->get_condition());
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
-        SValuePtr binc = ops->add(b, ops->number_(b->get_width(), 1));
+        SValuePtr binc = ops->add(b, ops->number_(b->nBits(), 1));
         SValuePtr result = ops->ite(cond, a, binc);
         d->write(args[0], result);
     }
@@ -651,9 +651,9 @@ struct IP_dup: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr src = d->read(args[1]);
-        ASSERT_require(args[0]->get_nBits() >= src->get_width());
-        size_t nElmts = args[0]->get_nBits() / src->get_width();
-        ASSERT_require(nElmts * src->get_width() == args[0]->get_nBits());
+        ASSERT_require(args[0]->get_nBits() >= src->nBits());
+        size_t nElmts = args[0]->get_nBits() / src->nBits();
+        ASSERT_require(nElmts * src->nBits() == args[0]->get_nBits());
         SValuePtr toWrite;
         for (size_t i = 0; i < nElmts; ++i)
             toWrite = toWrite ? ops->concatLoHi(toWrite, src) : src;
@@ -665,7 +665,7 @@ struct IP_eon: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->xor_(a, ops->invert(b));
         d->write(args[0], result);
     }
@@ -675,7 +675,7 @@ struct IP_eor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->xor_(a, b);
         d->write(args[0], result);
     }
@@ -686,7 +686,7 @@ struct IP_extr: P {
         assert_args(insn, args, 4);
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
-        size_t lsb = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[3])->toUnsigned().get();
         SValuePtr src = ops->concatHiLo(a, b);
         SValuePtr result = ops->extract(src, lsb, lsb + args[0]->get_nBits());
         d->write(args[0], result);
@@ -762,9 +762,9 @@ struct IP_ldp: P {
         size_t regSize = args[0]->get_type()->get_nBits();
         ASSERT_require(args[1]->get_type()->get_nBits() == regSize);
         SValuePtr pair = d->read(args[2]);
-        ASSERT_require(pair->get_width() == 2 * regSize);
+        ASSERT_require(pair->nBits() == 2 * regSize);
         SValuePtr first = ops->extract(pair, 0, regSize);
-        SValuePtr second = ops->extract(pair, regSize, pair->get_width());
+        SValuePtr second = ops->extract(pair, regSize, pair->nBits());
         d->write(args[0], first);
         d->write(args[1], second);
     }
@@ -942,7 +942,7 @@ struct IP_madd: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
         SValuePtr c = d->read(args[3]);
-        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->get_width());
+        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->nBits());
         SValuePtr sum = ops->add(product, c);
         d->write(args[0], sum);
     }
@@ -981,7 +981,7 @@ struct IP_movk: P {
         size_t shiftAmount = 0;
         if (auto lsl = isSgAsmBinaryLsl(args[1])) {
             newBits = d->read(lsl->get_lhs(), 16);
-            shiftAmount = d->read(lsl->get_rhs())->get_number();
+            shiftAmount = d->read(lsl->get_rhs())->toUnsigned().get();
         } else {
             newBits = d->read(args[1], 16);
         }
@@ -993,8 +993,8 @@ struct IP_movk: P {
         } else {
             result = newBits;
         }
-        if (shiftAmount + 16 < oldBits->get_width())
-            result = ops->concatLoHi(result, ops->extract(oldBits, shiftAmount+16, oldBits->get_width()));
+        if (shiftAmount + 16 < oldBits->nBits())
+            result = ops->concatLoHi(result, ops->extract(oldBits, shiftAmount+16, oldBits->nBits()));
         d->write(args[0], result);
     }
 };
@@ -1024,7 +1024,7 @@ struct IP_msub: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
         SValuePtr c = d->read(args[3]);
-        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->get_width());
+        SValuePtr product = ops->unsignedExtend(ops->unsignedMultiply(a, b), c->nBits());
         SValuePtr diff = ops->subtract(c, product);
         d->write(args[0], diff);
     }
@@ -1096,7 +1096,7 @@ struct IP_negs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr value = d->read(args[1]);
-        SValuePtr zero = ops->number_(value->get_width(), 0);
+        SValuePtr zero = ops->number_(value->nBits(), 0);
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(zero, ops->invert(value), carryIn, carryOut);
@@ -1109,7 +1109,7 @@ struct IP_ngc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[1]);                 // the value to negate
-        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->get_width());
+        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(b, ops->invert(a), carryIn, carryOut);
@@ -1121,7 +1121,7 @@ struct IP_ngcs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[1]);                 // the value to negate
-        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->get_width());
+        SValuePtr b = ops->unsignedExtend(ops->readRegister(d->REG_CPSR_C), a->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(b, ops->invert(a), carryIn, carryOut);
@@ -1148,7 +1148,7 @@ struct IP_orn: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[2]), a->nBits());
         SValuePtr result = ops->or_(a, ops->invert(b));
         d->write(args[0], result);
     }
@@ -1207,7 +1207,7 @@ struct IP_rev: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr value = d->read(args[1]);
-        size_t nBytes = value->get_width() / 8;
+        size_t nBytes = value->nBits() / 8;
         SValuePtr result;
         for (size_t i = 0; i < nBytes; ++i) {
             SValuePtr byte = ops->extract(value, i*8, (i+1)*8);
@@ -1264,8 +1264,8 @@ struct IP_sbc: P {
 struct IP_sbfiz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = -lsb % args[0]->get_nBits();
         uint64_t immS = width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1276,8 +1276,8 @@ struct IP_sbfiz: P {
 struct IP_sbfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->signedBitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -1286,8 +1286,8 @@ struct IP_sbfm: P {
 struct IP_sbfx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1525,7 +1525,7 @@ struct IP_sub: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr minuend = d->read(args[1]);
-        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->get_width());
+        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->nBits());
         SValuePtr result;
 
         if (auto vectorType = isSgAsmVectorType(args[0]->get_type())) {
@@ -1552,7 +1552,7 @@ struct IP_subs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
         SValuePtr minuend = d->read(args[1]);
-        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->get_width());
+        SValuePtr subtrahend = ops->signExtend(d->read(args[2]), minuend->nBits());
         SValuePtr carryIn = ops->boolean_(true);
         SValuePtr carryOut;
         SValuePtr result = ops->addWithCarries(minuend, ops->invert(subtrahend), carryIn, carryOut);
@@ -1596,9 +1596,9 @@ struct IP_tbnz: P {
         assert_args(insn, args, 3);
         SValuePtr index = d->read(args[1]);
         SValuePtr value = d->read(args[0]);
-        SValuePtr bit = ops->extract(value, index->get_number(), index->get_number()+1);
+        SValuePtr bit = ops->extract(value, index->toUnsigned().get(), index->toUnsigned().get()+1);
         SValuePtr targetVa = d->read(args[2]);
-        SValuePtr fallThroughVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(bit, targetVa, fallThroughVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -1609,9 +1609,9 @@ struct IP_tbz: P {
         assert_args(insn, args, 3);
         SValuePtr index = d->read(args[1]);
         SValuePtr value = d->read(args[0]);
-        SValuePtr bit = ops->extract(value, index->get_number(), index->get_number()+1);
+        SValuePtr bit = ops->extract(value, index->toUnsigned().get(), index->toUnsigned().get()+1);
         SValuePtr targetVa = d->read(args[2]);
-        SValuePtr fallThroughVa = ops->number_(targetVa->get_width(), insn->get_address() + insn->get_size());
+        SValuePtr fallThroughVa = ops->number_(targetVa->nBits(), insn->get_address() + insn->get_size());
         SValuePtr nextIp = ops->ite(bit, fallThroughVa, targetVa);
         ops->writeRegister(d->REG_PC, nextIp);
     }
@@ -1621,9 +1621,9 @@ struct IP_tst: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[0]);
-        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->get_width());
+        SValuePtr b = ops->unsignedExtend(d->read(args[1]), a->nBits());
         SValuePtr result = ops->and_(a, b);
-        ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->get_width()-1, result->get_width()));
+        ops->writeRegister(d->REG_CPSR_N, ops->extract(result, result->nBits()-1, result->nBits()));
         ops->writeRegister(d->REG_CPSR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CPSR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CPSR_V, ops->boolean_(false));
@@ -1633,8 +1633,8 @@ struct IP_tst: P {
 struct IP_ubfiz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = -lsb % args[0]->get_nBits();
         uint64_t immS = width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1645,8 +1645,8 @@ struct IP_ubfiz: P {
 struct IP_ubfm: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t immR = d->read(args[2])->get_number();
-        size_t immS = d->read(args[3])->get_number();
+        size_t immR = d->read(args[2])->toUnsigned().get();
+        size_t immS = d->read(args[3])->toUnsigned().get();
         bool n = 64 == args[0]->get_nBits();
         d->unsignedBitfieldMove(ops, args[0], args[1], n, immR, immS);
     }
@@ -1655,8 +1655,8 @@ struct IP_ubfm: P {
 struct IP_ubfx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 4);
-        size_t lsb = d->read(args[2])->get_number();
-        size_t width = d->read(args[3])->get_number();
+        size_t lsb = d->read(args[2])->toUnsigned().get();
+        size_t width = d->read(args[3])->toUnsigned().get();
         uint64_t immR = lsb;
         uint64_t immS = lsb + width - 1;
         bool n = 64 == args[0]->get_nBits();
@@ -1793,152 +1793,152 @@ struct IP_yield: P {
 
 void
 DispatcherAarch64::initializeInsnDispatchTable() {
-    iproc_set(ARM64_INS_ADD,    new Aarch64::IP_add);
-    iproc_set(ARM64_INS_ADDP,   new Aarch64::IP_addp);
-    //iproc_set(ARM64_INS_ADDS,   new Aarch64::IP_adds); -- see ARM64_INS_ADD
-    iproc_set(ARM64_INS_ADR,    new Aarch64::IP_adr);
-    iproc_set(ARM64_INS_ADRP,   new Aarch64::IP_adrp);
-    iproc_set(ARM64_INS_AND,    new Aarch64::IP_and);
-    iproc_set(ARM64_INS_ASR,    new Aarch64::IP_asr);
-    //iproc_set(ARM64_INS_ASRV,   new Aarch64::IP_asrv); -- see ARM64_INS_ASR
-    iproc_set(ARM64_INS_B,      new Aarch64::IP_b);
-    iproc_set(ARM64_INS_BFM,    new Aarch64::IP_bfm);
-    iproc_set(ARM64_INS_BFXIL,  new Aarch64::IP_bfxil);
-    iproc_set(ARM64_INS_BIC,    new Aarch64::IP_bic);
-    iproc_set(ARM64_INS_BL,     new Aarch64::IP_bl);
-    iproc_set(ARM64_INS_BLR,    new Aarch64::IP_blr);
-    iproc_set(ARM64_INS_BR,     new Aarch64::IP_br);
-    iproc_set(ARM64_INS_BRK,    new Aarch64::IP_brk);
-    iproc_set(ARM64_INS_CBNZ,   new Aarch64::IP_cbnz);
-    iproc_set(ARM64_INS_CBZ,    new Aarch64::IP_cbz);
-    iproc_set(ARM64_INS_CCMN,   new Aarch64::IP_ccmn);
-    iproc_set(ARM64_INS_CCMP,   new Aarch64::IP_ccmp);
-    iproc_set(ARM64_INS_CINC,   new Aarch64::IP_cinc);
-    iproc_set(ARM64_INS_CINV,   new Aarch64::IP_cinv);
-    iproc_set(ARM64_INS_CLS,    new Aarch64::IP_cls);
-    iproc_set(ARM64_INS_CLZ,    new Aarch64::IP_clz);
-    iproc_set(ARM64_INS_CMEQ,   new Aarch64::IP_cmeq);
-    iproc_set(ARM64_INS_CMGE,   new Aarch64::IP_cmge);
-    iproc_set(ARM64_INS_CMGT,   new Aarch64::IP_cmgt);
-    iproc_set(ARM64_INS_CMHI,   new Aarch64::IP_cmhi);
-    iproc_set(ARM64_INS_CMHS,   new Aarch64::IP_cmhs);
-    iproc_set(ARM64_INS_CMLE,   new Aarch64::IP_cmle);
-    iproc_set(ARM64_INS_CMLT,   new Aarch64::IP_cmlt);
-    iproc_set(ARM64_INS_CMN,    new Aarch64::IP_cmn);
-    iproc_set(ARM64_INS_CMP,    new Aarch64::IP_cmp);
-    iproc_set(ARM64_INS_CNEG,   new Aarch64::IP_cneg);
-    iproc_set(ARM64_INS_CSEL,   new Aarch64::IP_csel);
-    iproc_set(ARM64_INS_CSET,   new Aarch64::IP_cset);
-    iproc_set(ARM64_INS_CSETM,  new Aarch64::IP_csetm);
-    iproc_set(ARM64_INS_CSINC,  new Aarch64::IP_csinc);
-    iproc_set(ARM64_INS_CSINV,  new Aarch64::IP_csinv);
-    iproc_set(ARM64_INS_CSNEG,  new Aarch64::IP_csneg);
-    iproc_set(ARM64_INS_DMB,    new Aarch64::IP_dmb);
-    iproc_set(ARM64_INS_DUP,    new Aarch64::IP_dup);
-    iproc_set(ARM64_INS_EON,    new Aarch64::IP_eon);
-    iproc_set(ARM64_INS_EOR,    new Aarch64::IP_eor);
-    iproc_set(ARM64_INS_EXTR,   new Aarch64::IP_extr);
-    iproc_set(ARM64_INS_HINT,   new Aarch64::IP_hint);
-    iproc_set(ARM64_INS_INS,    new Aarch64::IP_ins);
-    iproc_set(ARM64_INS_LDAR,   new Aarch64::IP_ldar);
-    iproc_set(ARM64_INS_LDARB,  new Aarch64::IP_ldarb);
-    iproc_set(ARM64_INS_LDARH,  new Aarch64::IP_ldarh);
-    iproc_set(ARM64_INS_LDAXR,  new Aarch64::IP_ldaxr);
-    iproc_set(ARM64_INS_LDAXRB, new Aarch64::IP_ldaxrb);
-    iproc_set(ARM64_INS_LDAXRH, new Aarch64::IP_ldaxrh);
-    iproc_set(ARM64_INS_LDP,    new Aarch64::IP_ldp);
-    iproc_set(ARM64_INS_LDPSW,  new Aarch64::IP_ldpsw);
-    iproc_set(ARM64_INS_LDR,    new Aarch64::IP_ldr);
-    iproc_set(ARM64_INS_LDRB,   new Aarch64::IP_ldrb);
-    iproc_set(ARM64_INS_LDRH,   new Aarch64::IP_ldrh);
-    iproc_set(ARM64_INS_LDRSB,  new Aarch64::IP_ldrsb);
-    iproc_set(ARM64_INS_LDRSH,  new Aarch64::IP_ldrsh);
-    iproc_set(ARM64_INS_LDRSW,  new Aarch64::IP_ldrsw);
-    iproc_set(ARM64_INS_LDUR,   new Aarch64::IP_ldur);
-    iproc_set(ARM64_INS_LDURB,  new Aarch64::IP_ldurb);
-    iproc_set(ARM64_INS_LDURH,  new Aarch64::IP_ldurh);
-    iproc_set(ARM64_INS_LDURSB, new Aarch64::IP_ldursb);
-    iproc_set(ARM64_INS_LDURSH, new Aarch64::IP_ldursh);
-    iproc_set(ARM64_INS_LDURSW, new Aarch64::IP_ldursw);
-    iproc_set(ARM64_INS_LDXR,   new Aarch64::IP_ldxr);
-    iproc_set(ARM64_INS_LDXRB,  new Aarch64::IP_ldxrb);
-    iproc_set(ARM64_INS_LDXRH,  new Aarch64::IP_ldxrh);
-    iproc_set(ARM64_INS_LSL,    new Aarch64::IP_lsl);
-    iproc_set(ARM64_INS_LSR,    new Aarch64::IP_lsr);
-    iproc_set(ARM64_INS_MADD,   new Aarch64::IP_madd);
-    iproc_set(ARM64_INS_MOV,    new Aarch64::IP_mov);
-    iproc_set(ARM64_INS_MOVI,   new Aarch64::IP_movi);
-    iproc_set(ARM64_INS_MOVK,   new Aarch64::IP_movk);
-    iproc_set(ARM64_INS_MOVN,   new Aarch64::IP_movn);
-    iproc_set(ARM64_INS_MOVZ,   new Aarch64::IP_movz);
-    iproc_set(ARM64_INS_MSUB,   new Aarch64::IP_msub);
-    iproc_set(ARM64_INS_MUL,    new Aarch64::IP_mul);
-    iproc_set(ARM64_INS_MVN,    new Aarch64::IP_mvn);
-    iproc_set(ARM64_INS_NEG,    new Aarch64::IP_neg);
-    iproc_set(ARM64_INS_NEGS,   new Aarch64::IP_negs);
-    iproc_set(ARM64_INS_NGC,    new Aarch64::IP_ngc);
-    iproc_set(ARM64_INS_NGCS,   new Aarch64::IP_ngcs);
-    iproc_set(ARM64_INS_NOP,    new Aarch64::IP_nop);
-    iproc_set(ARM64_INS_NOT,    new Aarch64::IP_not);
-    iproc_set(ARM64_INS_ORN,    new Aarch64::IP_orn);
-    iproc_set(ARM64_INS_ORR,    new Aarch64::IP_orr);
-    iproc_set(ARM64_INS_RBIT,   new Aarch64::IP_rbit);
-    iproc_set(ARM64_INS_RET,    new Aarch64::IP_ret);
-    iproc_set(ARM64_INS_REV,    new Aarch64::IP_rev);
-    iproc_set(ARM64_INS_REV16,  new Aarch64::IP_rev16);
-    iproc_set(ARM64_INS_ROR,    new Aarch64::IP_ror);
-    //iproc_set(ARM64_INS_RORV,   new Aarch64::IP_rorv); -- see AMD64_INS_ROR
-    iproc_set(ARM64_INS_SBC,    new Aarch64::IP_sbc);
-    iproc_set(ARM64_INS_SBFIZ,  new Aarch64::IP_sbfiz);
-    iproc_set(ARM64_INS_SBFM,   new Aarch64::IP_sbfm);
-    iproc_set(ARM64_INS_SBFX,   new Aarch64::IP_sbfx);
-    iproc_set(ARM64_INS_SDIV,   new Aarch64::IP_sdiv);
-    iproc_set(ARM64_INS_SMADDL, new Aarch64::IP_smaddl);
-    iproc_set(ARM64_INS_SMULH,  new Aarch64::IP_smulh);
-    iproc_set(ARM64_INS_SMULL,  new Aarch64::IP_smull);
-    iproc_set(ARM64_INS_STLR,   new Aarch64::IP_stlr);
-    iproc_set(ARM64_INS_STLRB,  new Aarch64::IP_stlrb);
-    iproc_set(ARM64_INS_STLRH,  new Aarch64::IP_stlrh);
+    iprocSet(ARM64_INS_ADD,    new Aarch64::IP_add);
+    iprocSet(ARM64_INS_ADDP,   new Aarch64::IP_addp);
+    //iprocSet(ARM64_INS_ADDS,   new Aarch64::IP_adds); -- see ARM64_INS_ADD
+    iprocSet(ARM64_INS_ADR,    new Aarch64::IP_adr);
+    iprocSet(ARM64_INS_ADRP,   new Aarch64::IP_adrp);
+    iprocSet(ARM64_INS_AND,    new Aarch64::IP_and);
+    iprocSet(ARM64_INS_ASR,    new Aarch64::IP_asr);
+    //iprocSet(ARM64_INS_ASRV,   new Aarch64::IP_asrv); -- see ARM64_INS_ASR
+    iprocSet(ARM64_INS_B,      new Aarch64::IP_b);
+    iprocSet(ARM64_INS_BFM,    new Aarch64::IP_bfm);
+    iprocSet(ARM64_INS_BFXIL,  new Aarch64::IP_bfxil);
+    iprocSet(ARM64_INS_BIC,    new Aarch64::IP_bic);
+    iprocSet(ARM64_INS_BL,     new Aarch64::IP_bl);
+    iprocSet(ARM64_INS_BLR,    new Aarch64::IP_blr);
+    iprocSet(ARM64_INS_BR,     new Aarch64::IP_br);
+    iprocSet(ARM64_INS_BRK,    new Aarch64::IP_brk);
+    iprocSet(ARM64_INS_CBNZ,   new Aarch64::IP_cbnz);
+    iprocSet(ARM64_INS_CBZ,    new Aarch64::IP_cbz);
+    iprocSet(ARM64_INS_CCMN,   new Aarch64::IP_ccmn);
+    iprocSet(ARM64_INS_CCMP,   new Aarch64::IP_ccmp);
+    iprocSet(ARM64_INS_CINC,   new Aarch64::IP_cinc);
+    iprocSet(ARM64_INS_CINV,   new Aarch64::IP_cinv);
+    iprocSet(ARM64_INS_CLS,    new Aarch64::IP_cls);
+    iprocSet(ARM64_INS_CLZ,    new Aarch64::IP_clz);
+    iprocSet(ARM64_INS_CMEQ,   new Aarch64::IP_cmeq);
+    iprocSet(ARM64_INS_CMGE,   new Aarch64::IP_cmge);
+    iprocSet(ARM64_INS_CMGT,   new Aarch64::IP_cmgt);
+    iprocSet(ARM64_INS_CMHI,   new Aarch64::IP_cmhi);
+    iprocSet(ARM64_INS_CMHS,   new Aarch64::IP_cmhs);
+    iprocSet(ARM64_INS_CMLE,   new Aarch64::IP_cmle);
+    iprocSet(ARM64_INS_CMLT,   new Aarch64::IP_cmlt);
+    iprocSet(ARM64_INS_CMN,    new Aarch64::IP_cmn);
+    iprocSet(ARM64_INS_CMP,    new Aarch64::IP_cmp);
+    iprocSet(ARM64_INS_CNEG,   new Aarch64::IP_cneg);
+    iprocSet(ARM64_INS_CSEL,   new Aarch64::IP_csel);
+    iprocSet(ARM64_INS_CSET,   new Aarch64::IP_cset);
+    iprocSet(ARM64_INS_CSETM,  new Aarch64::IP_csetm);
+    iprocSet(ARM64_INS_CSINC,  new Aarch64::IP_csinc);
+    iprocSet(ARM64_INS_CSINV,  new Aarch64::IP_csinv);
+    iprocSet(ARM64_INS_CSNEG,  new Aarch64::IP_csneg);
+    iprocSet(ARM64_INS_DMB,    new Aarch64::IP_dmb);
+    iprocSet(ARM64_INS_DUP,    new Aarch64::IP_dup);
+    iprocSet(ARM64_INS_EON,    new Aarch64::IP_eon);
+    iprocSet(ARM64_INS_EOR,    new Aarch64::IP_eor);
+    iprocSet(ARM64_INS_EXTR,   new Aarch64::IP_extr);
+    iprocSet(ARM64_INS_HINT,   new Aarch64::IP_hint);
+    iprocSet(ARM64_INS_INS,    new Aarch64::IP_ins);
+    iprocSet(ARM64_INS_LDAR,   new Aarch64::IP_ldar);
+    iprocSet(ARM64_INS_LDARB,  new Aarch64::IP_ldarb);
+    iprocSet(ARM64_INS_LDARH,  new Aarch64::IP_ldarh);
+    iprocSet(ARM64_INS_LDAXR,  new Aarch64::IP_ldaxr);
+    iprocSet(ARM64_INS_LDAXRB, new Aarch64::IP_ldaxrb);
+    iprocSet(ARM64_INS_LDAXRH, new Aarch64::IP_ldaxrh);
+    iprocSet(ARM64_INS_LDP,    new Aarch64::IP_ldp);
+    iprocSet(ARM64_INS_LDPSW,  new Aarch64::IP_ldpsw);
+    iprocSet(ARM64_INS_LDR,    new Aarch64::IP_ldr);
+    iprocSet(ARM64_INS_LDRB,   new Aarch64::IP_ldrb);
+    iprocSet(ARM64_INS_LDRH,   new Aarch64::IP_ldrh);
+    iprocSet(ARM64_INS_LDRSB,  new Aarch64::IP_ldrsb);
+    iprocSet(ARM64_INS_LDRSH,  new Aarch64::IP_ldrsh);
+    iprocSet(ARM64_INS_LDRSW,  new Aarch64::IP_ldrsw);
+    iprocSet(ARM64_INS_LDUR,   new Aarch64::IP_ldur);
+    iprocSet(ARM64_INS_LDURB,  new Aarch64::IP_ldurb);
+    iprocSet(ARM64_INS_LDURH,  new Aarch64::IP_ldurh);
+    iprocSet(ARM64_INS_LDURSB, new Aarch64::IP_ldursb);
+    iprocSet(ARM64_INS_LDURSH, new Aarch64::IP_ldursh);
+    iprocSet(ARM64_INS_LDURSW, new Aarch64::IP_ldursw);
+    iprocSet(ARM64_INS_LDXR,   new Aarch64::IP_ldxr);
+    iprocSet(ARM64_INS_LDXRB,  new Aarch64::IP_ldxrb);
+    iprocSet(ARM64_INS_LDXRH,  new Aarch64::IP_ldxrh);
+    iprocSet(ARM64_INS_LSL,    new Aarch64::IP_lsl);
+    iprocSet(ARM64_INS_LSR,    new Aarch64::IP_lsr);
+    iprocSet(ARM64_INS_MADD,   new Aarch64::IP_madd);
+    iprocSet(ARM64_INS_MOV,    new Aarch64::IP_mov);
+    iprocSet(ARM64_INS_MOVI,   new Aarch64::IP_movi);
+    iprocSet(ARM64_INS_MOVK,   new Aarch64::IP_movk);
+    iprocSet(ARM64_INS_MOVN,   new Aarch64::IP_movn);
+    iprocSet(ARM64_INS_MOVZ,   new Aarch64::IP_movz);
+    iprocSet(ARM64_INS_MSUB,   new Aarch64::IP_msub);
+    iprocSet(ARM64_INS_MUL,    new Aarch64::IP_mul);
+    iprocSet(ARM64_INS_MVN,    new Aarch64::IP_mvn);
+    iprocSet(ARM64_INS_NEG,    new Aarch64::IP_neg);
+    iprocSet(ARM64_INS_NEGS,   new Aarch64::IP_negs);
+    iprocSet(ARM64_INS_NGC,    new Aarch64::IP_ngc);
+    iprocSet(ARM64_INS_NGCS,   new Aarch64::IP_ngcs);
+    iprocSet(ARM64_INS_NOP,    new Aarch64::IP_nop);
+    iprocSet(ARM64_INS_NOT,    new Aarch64::IP_not);
+    iprocSet(ARM64_INS_ORN,    new Aarch64::IP_orn);
+    iprocSet(ARM64_INS_ORR,    new Aarch64::IP_orr);
+    iprocSet(ARM64_INS_RBIT,   new Aarch64::IP_rbit);
+    iprocSet(ARM64_INS_RET,    new Aarch64::IP_ret);
+    iprocSet(ARM64_INS_REV,    new Aarch64::IP_rev);
+    iprocSet(ARM64_INS_REV16,  new Aarch64::IP_rev16);
+    iprocSet(ARM64_INS_ROR,    new Aarch64::IP_ror);
+    //iprocSet(ARM64_INS_RORV,   new Aarch64::IP_rorv); -- see AMD64_INS_ROR
+    iprocSet(ARM64_INS_SBC,    new Aarch64::IP_sbc);
+    iprocSet(ARM64_INS_SBFIZ,  new Aarch64::IP_sbfiz);
+    iprocSet(ARM64_INS_SBFM,   new Aarch64::IP_sbfm);
+    iprocSet(ARM64_INS_SBFX,   new Aarch64::IP_sbfx);
+    iprocSet(ARM64_INS_SDIV,   new Aarch64::IP_sdiv);
+    iprocSet(ARM64_INS_SMADDL, new Aarch64::IP_smaddl);
+    iprocSet(ARM64_INS_SMULH,  new Aarch64::IP_smulh);
+    iprocSet(ARM64_INS_SMULL,  new Aarch64::IP_smull);
+    iprocSet(ARM64_INS_STLR,   new Aarch64::IP_stlr);
+    iprocSet(ARM64_INS_STLRB,  new Aarch64::IP_stlrb);
+    iprocSet(ARM64_INS_STLRH,  new Aarch64::IP_stlrh);
 #if 0 // [Robb Matzke 2020-09-03]: not present in capstone
-    iproc_set(ARM64_INS_STLUR,  new Aarch64::IP_stlur);
-    iproc_set(ARM64_INS_STLURB, new Aarch64::IP_stlurb);
-    iproc_set(ARM64_INS_STLURH, new Aarch64::IP_stlurh);
+    iprocSet(ARM64_INS_STLUR,  new Aarch64::IP_stlur);
+    iprocSet(ARM64_INS_STLURB, new Aarch64::IP_stlurb);
+    iprocSet(ARM64_INS_STLURH, new Aarch64::IP_stlurh);
 #endif
-    iproc_set(ARM64_INS_STLXR,  new Aarch64::IP_stlxr);
-    iproc_set(ARM64_INS_STLXRB, new Aarch64::IP_stlxrb);
-    iproc_set(ARM64_INS_STLXRH, new Aarch64::IP_stlxrh);
-    iproc_set(ARM64_INS_STP,    new Aarch64::IP_stp);
-    iproc_set(ARM64_INS_STR,    new Aarch64::IP_str);
-    iproc_set(ARM64_INS_STRB,   new Aarch64::IP_strb);
-    iproc_set(ARM64_INS_STRH,   new Aarch64::IP_strh);
-    iproc_set(ARM64_INS_STUR,   new Aarch64::IP_stur);
-    iproc_set(ARM64_INS_STURB,  new Aarch64::IP_sturb);
-    iproc_set(ARM64_INS_STURH,  new Aarch64::IP_sturh);
-    iproc_set(ARM64_INS_STXR,   new Aarch64::IP_stxr);
-    iproc_set(ARM64_INS_STXRB,  new Aarch64::IP_stxrb);
-    iproc_set(ARM64_INS_STXRH,  new Aarch64::IP_stxrh);
-    iproc_set(ARM64_INS_SUB,    new Aarch64::IP_sub);
-    //iproc_set(ARM64_INS_SUBS,   new Aarch64::IP_subs); -- see ARM64_INS_SUB
-    iproc_set(ARM64_INS_SXTB,   new Aarch64::IP_sxtb);
-    iproc_set(ARM64_INS_SXTH,   new Aarch64::IP_sxth);
-    iproc_set(ARM64_INS_SXTW,   new Aarch64::IP_sxtw);
-    iproc_set(ARM64_INS_TBNZ,   new Aarch64::IP_tbnz);
-    iproc_set(ARM64_INS_TBZ,    new Aarch64::IP_tbz);
-    iproc_set(ARM64_INS_TST,    new Aarch64::IP_tst);
-    iproc_set(ARM64_INS_UBFIZ,  new Aarch64::IP_ubfiz);
-    iproc_set(ARM64_INS_UBFM,   new Aarch64::IP_ubfm);
-    iproc_set(ARM64_INS_UBFX,   new Aarch64::IP_ubfx);
-    iproc_set(ARM64_INS_UDIV,   new Aarch64::IP_udiv);
-    iproc_set(ARM64_INS_UMADDL, new Aarch64::IP_umaddl);
-    iproc_set(ARM64_INS_UMOV,   new Aarch64::IP_umov);
-    iproc_set(ARM64_INS_UMSUBL, new Aarch64::IP_umsubl);
-    iproc_set(ARM64_INS_UMULH,  new Aarch64::IP_umulh);
-    iproc_set(ARM64_INS_UMULL,  new Aarch64::IP_umull);
-    iproc_set(ARM64_INS_UXTB,   new Aarch64::IP_uxtb);
-    iproc_set(ARM64_INS_UXTH,   new Aarch64::IP_uxth);
-    iproc_set(ARM64_INS_XTN,    new Aarch64::IP_xtn);
-    iproc_set(ARM64_INS_XTN2,   new Aarch64::IP_xtn2);
-    iproc_set(ARM64_INS_YIELD,  new Aarch64::IP_yield);
+    iprocSet(ARM64_INS_STLXR,  new Aarch64::IP_stlxr);
+    iprocSet(ARM64_INS_STLXRB, new Aarch64::IP_stlxrb);
+    iprocSet(ARM64_INS_STLXRH, new Aarch64::IP_stlxrh);
+    iprocSet(ARM64_INS_STP,    new Aarch64::IP_stp);
+    iprocSet(ARM64_INS_STR,    new Aarch64::IP_str);
+    iprocSet(ARM64_INS_STRB,   new Aarch64::IP_strb);
+    iprocSet(ARM64_INS_STRH,   new Aarch64::IP_strh);
+    iprocSet(ARM64_INS_STUR,   new Aarch64::IP_stur);
+    iprocSet(ARM64_INS_STURB,  new Aarch64::IP_sturb);
+    iprocSet(ARM64_INS_STURH,  new Aarch64::IP_sturh);
+    iprocSet(ARM64_INS_STXR,   new Aarch64::IP_stxr);
+    iprocSet(ARM64_INS_STXRB,  new Aarch64::IP_stxrb);
+    iprocSet(ARM64_INS_STXRH,  new Aarch64::IP_stxrh);
+    iprocSet(ARM64_INS_SUB,    new Aarch64::IP_sub);
+    //iprocSet(ARM64_INS_SUBS,   new Aarch64::IP_subs); -- see ARM64_INS_SUB
+    iprocSet(ARM64_INS_SXTB,   new Aarch64::IP_sxtb);
+    iprocSet(ARM64_INS_SXTH,   new Aarch64::IP_sxth);
+    iprocSet(ARM64_INS_SXTW,   new Aarch64::IP_sxtw);
+    iprocSet(ARM64_INS_TBNZ,   new Aarch64::IP_tbnz);
+    iprocSet(ARM64_INS_TBZ,    new Aarch64::IP_tbz);
+    iprocSet(ARM64_INS_TST,    new Aarch64::IP_tst);
+    iprocSet(ARM64_INS_UBFIZ,  new Aarch64::IP_ubfiz);
+    iprocSet(ARM64_INS_UBFM,   new Aarch64::IP_ubfm);
+    iprocSet(ARM64_INS_UBFX,   new Aarch64::IP_ubfx);
+    iprocSet(ARM64_INS_UDIV,   new Aarch64::IP_udiv);
+    iprocSet(ARM64_INS_UMADDL, new Aarch64::IP_umaddl);
+    iprocSet(ARM64_INS_UMOV,   new Aarch64::IP_umov);
+    iprocSet(ARM64_INS_UMSUBL, new Aarch64::IP_umsubl);
+    iprocSet(ARM64_INS_UMULH,  new Aarch64::IP_umulh);
+    iprocSet(ARM64_INS_UMULL,  new Aarch64::IP_umull);
+    iprocSet(ARM64_INS_UXTB,   new Aarch64::IP_uxtb);
+    iprocSet(ARM64_INS_UXTH,   new Aarch64::IP_uxth);
+    iprocSet(ARM64_INS_XTN,    new Aarch64::IP_xtn);
+    iprocSet(ARM64_INS_XTN2,   new Aarch64::IP_xtn2);
+    iprocSet(ARM64_INS_YIELD,  new Aarch64::IP_yield);
 }
 
 void
@@ -1994,7 +1994,7 @@ DispatcherAarch64::set_register_dictionary(const RegisterDictionary *regdict) {
 }
 
 int
-DispatcherAarch64::iproc_key(SgAsmInstruction *insn_) const {
+DispatcherAarch64::iprocKey(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmAarch64Instruction(insn_);
     ASSERT_not_null(insn);
     return insn->get_kind();
@@ -2044,15 +2044,15 @@ DispatcherAarch64::advSimdExpandImm(SgAsmType *type, const SValuePtr &imm) {
 DispatcherAarch64::NZCV
 DispatcherAarch64::computeNZCV(const SValuePtr &sum, const SValuePtr &carries) {
     ASSERT_not_null(sum);
-    ASSERT_require(sum->get_width() > 1);
+    ASSERT_require(sum->nBits() > 1);
     ASSERT_not_null(carries);
-    ASSERT_require(carries->get_width() == sum->get_width());
+    ASSERT_require(carries->nBits() == sum->nBits());
 
-    SValuePtr isNeg = operators()->extract(sum, sum->get_width()-1, sum->get_width());
+    SValuePtr isNeg = operators()->extract(sum, sum->nBits()-1, sum->nBits());
     SValuePtr isZero = operators()->equalToZero(sum);
-    SValuePtr isCarry = operators()->extract(carries, carries->get_width()-1, carries->get_width());
-    SValuePtr isOverflow = operators()->xor_(operators()->extract(carries, carries->get_width()-1, carries->get_width()),
-                                             operators()->extract(carries, carries->get_width()-2, carries->get_width()-1));
+    SValuePtr isCarry = operators()->extract(carries, carries->nBits()-1, carries->nBits());
+    SValuePtr isOverflow = operators()->xor_(operators()->extract(carries, carries->nBits()-1, carries->nBits()),
+                                             operators()->extract(carries, carries->nBits()-2, carries->nBits()-1));
 
     return NZCV(isNeg, isZero, isCarry, isOverflow);
 }
@@ -2098,10 +2098,10 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
         case Aarch64InstructionCondition::ARM64_CC_LS: {    // unsigned lower or same: less than or equal
             // WARNING: The ARM definition, which reads "c clear and z set" is not the inverse of the description for HI which
             // reads "c set and z clear", although it should be since HI and LS are inverses. The inverse of HI would be
-            // "c clear or z set".
+            // "c clear or z set".  I found other documentation that indeed says "c clear or z set", so I'm going with that.
             SValuePtr c = operators()->readRegister(REG_CPSR_C);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
-            return operators()->and_(operators()->invert(c), z);
+            return operators()->or_(operators()->invert(c), z);
         }
         case Aarch64InstructionCondition::ARM64_CC_GE: {    // greater than or equal: greater than or equal (n == v)
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
@@ -2114,7 +2114,8 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
             return operators()->xor_(n, v);
         }
         case Aarch64InstructionCondition::ARM64_CC_GT: {    // signed greater than: greater than
-            // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below.
+            // WARNING: ARM documentation sometimes says "z clear, n and v the same", but see LE below. I found other user documentation that
+            // says "Z = 0 & N = V", so I'm going with that.
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);
@@ -2122,9 +2123,10 @@ DispatcherAarch64::conditionHolds(Aarch64InstructionCondition cond) {
             return operators()->and_(operators()->invert(z), nEqV);
         }
         case Aarch64InstructionCondition::ARM64_CC_LE: {    // signed less than or equal: <, ==, or unorderd
-            // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description
-            // that reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
-            // inverse of "z clear and n == v" is "z set or n != v".
+            // WARNING: ARM documentation reads "z set, n and v differ", which is not the inverse of the LE description that
+            // reads "z clear, n and v the same" regardless of whether one treats the comma as "and" or "or". The correct
+            // inverse of "z clear and n == v" is "z set or n != v". I found other user documentation that says "Z=1 or N=!V"
+            // (I'm parsing "N=!V" as "N != V".
             SValuePtr n = operators()->readRegister(REG_CPSR_N);
             SValuePtr v = operators()->readRegister(REG_CPSR_V);
             SValuePtr z = operators()->readRegister(REG_CPSR_Z);

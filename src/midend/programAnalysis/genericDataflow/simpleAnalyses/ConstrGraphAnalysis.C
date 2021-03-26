@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "sage3basic.h"
 #include <list>
 #include <sstream>
@@ -711,3 +714,5 @@ void printConstrGraphAnalysisStates(ConstrGraphAnalysis* cga, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

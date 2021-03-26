@@ -136,12 +136,12 @@ public:
         // Virtual constructor: undefined_()
         BaseSemantics::SValuePtr v1 = protoval->undefined_(8);
         check_sval_type(v1, "SValue::undefined_()");
-        require(v1->get_width()==8, "SValue::undefined_() width");
+        require(v1->nBits()==8, "SValue::undefined_() width");
 
         // Virtual constructor: unspecified_()
         BaseSemantics::SValuePtr v1b = protoval->unspecified_(8);
         check_sval_type(v1b, "SValue::unspecified_()");
-        require(v1b->get_width()==8, "SValue::unspecified() width");
+        require(v1b->nBits()==8, "SValue::unspecified() width");
 
         // Virtual constructor: number_().  Note that we can't check that the number is actually concrete and has a value
         // because BaseSemantics defines only the API for is_number() and get_number() and not the semantics of those
@@ -149,34 +149,34 @@ public:
         // treats everything as abstract.
         BaseSemantics::SValuePtr v2 = protoval->number_(32, 123);
         check_sval_type(v2, "SValue::number_()");
-        require(v2->get_width()==32, "SValue::number_() width");
+        require(v2->nBits()==32, "SValue::number_() width");
 
         // Virtual constructor: boolean_()
         BaseSemantics::SValuePtr v3 = protoval->boolean_(true);
         check_sval_type(v3, "SValue::boolean_()");
-        require(v3->get_width()==1, "SValue::boolean_() width");
+        require(v3->nBits()==1, "SValue::boolean_() width");
 
         // Virtual constructor: copy()
         BaseSemantics::SValuePtr v4 = v3->copy();
         check_sval_type(v4, "SValue::copy()");
         require(v4!=v3, "SValue::copy() should have returned a new object");
-        require(v4->get_width()==1, "SValue::copy() width");
-        require(v4->is_number() == v3->is_number(), "copies should be identical");
-        if (v4->is_number())
-            require(v4->get_number() == v3->get_number(), "concrete copies should be identical");
+        require(v4->nBits()==1, "SValue::copy() width");
+        require(v4->isConcrete() == v3->isConcrete(), "copies should be identical");
+        if (v4->isConcrete())
+            require(v4->toUnsigned().get() == v3->toUnsigned().get(), "concrete copies should be identical");
         std::ostringstream v3str, v4str;
         v3str <<*v3;
         v4str <<*v4;
         require(v3str.str() == v4str.str(), "copies should be identical");
 
         // may_equal
-        require(v3->may_equal(v3), "a value may_equal itself");
-        require(v3->may_equal(v4), "a value may_equal a copy of itself");
-        require(v4->may_equal(v3), "a value may_equal a copy of itself");
+        require(v3->mayEqual(v3), "a value may_equal itself");
+        require(v3->mayEqual(v4), "a value may_equal a copy of itself");
+        require(v4->mayEqual(v3), "a value may_equal a copy of itself");
 
-        // must_equal.  Note: must_equal(v3, v4) need not be true when v4 is a copy of v3, although most subclasses do this.
-        require(v3->must_equal(v3), "a value must_equal itself");
-        require(v3->must_equal(v4) == v4->must_equal(v3), "must_equal should be symmetric");
+        // mustEqual.  Note: must_equal(v3, v4) need not be true when v4 is a copy of v3, although most subclasses do this.
+        require(v3->mustEqual(v3), "a value must_equal itself");
+        require(v3->mustEqual(v4) == v4->mustEqual(v3), "must_equal should be symmetric");
         
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ public:
         // Virtual constructors
         BaseSemantics::RegisterStatePtr rs3 = rs1->create(protoval, regdict);
         check_type<RegisterStatePtr>(rs3, "create()");
-        require(rs3->get_register_dictionary()==regdict, "RegisterState::create() register dictionary");
+        require(rs3->registerDictionary()==regdict, "RegisterState::create() register dictionary");
         require(rs3 != rs1, "RegisterState::create() must return a new object");
         BaseSemantics::SValuePtr rs3v1 = rs3->protoval();
         check_sval_type(rs3v1, "RegisterState::protoval() after create()");
@@ -201,7 +201,7 @@ public:
         BaseSemantics::RegisterStatePtr rs4 = rs1->clone();
         check_type<RegisterStatePtr>(rs4, "clone()");
         require(rs4 != rs1, "RegisterState::clone() must return a new object");
-        require(rs4->get_register_dictionary()==rs1->get_register_dictionary(),
+        require(rs4->registerDictionary()==rs1->registerDictionary(),
                 "RegisterState::clone() must use the register dictionary from the source state");
         BaseSemantics::SValuePtr rs4v1 = rs4->protoval();
         check_sval_type(rs4v1, "RegisterState::protoval() after clone()");
@@ -322,122 +322,122 @@ public:
                     break;
             }
             check_sval_type(v32a, "RiscOperators value constructor");
-            require(v32a->get_width()==32, "RiscOperators value constructor width");
+            require(v32a->nBits()==32, "RiscOperators value constructor width");
             check_sval_type(v32b, "RiscOperators value constructor");
-            require(v32b->get_width()==32, "RiscOperators value constructor width");
+            require(v32b->nBits()==32, "RiscOperators value constructor width");
             check_sval_type(v8, "RiscOperators value constructor");
-            require(v8->get_width()==8, "RiscOperators value constructor width");
+            require(v8->nBits()==8, "RiscOperators value constructor width");
             check_sval_type(v1, "RiscOperators value constructor");
-            require(v1->get_width()==1, "RiscOperators value constructor width");
+            require(v1->nBits()==1, "RiscOperators value constructor width");
 
             // x86-specific operators
             BaseSemantics::SValuePtr ops_v4 = ops->filterCallTarget(v32a);
             check_sval_type(ops_v4, "RiscOperators::filterCallTarget");
-            require(ops_v4->get_width()==32, "RiscOperators::filterCallTarget width");
+            require(ops_v4->nBits()==32, "RiscOperators::filterCallTarget width");
 
             BaseSemantics::SValuePtr ops_v5 = ops->filterReturnTarget(v32a);
             check_sval_type(ops_v5, "RiscOperators::filterReturnTarget");
-            require(ops_v5->get_width()==32, "RiscOperators::filterReturnTarget width");
+            require(ops_v5->nBits()==32, "RiscOperators::filterReturnTarget width");
 
             BaseSemantics::SValuePtr ops_v6 = ops->filterIndirectJumpTarget(v32a);
             check_sval_type(ops_v6, "RiscOperators::filterIndirectJumpTarget");
-            require(ops_v6->get_width()==32, "RiscOperators::filterIndirectJumpTarget width");
+            require(ops_v6->nBits()==32, "RiscOperators::filterIndirectJumpTarget width");
 
             BaseSemantics::SValuePtr ops_v7 = ops->rdtsc();
             check_sval_type(ops_v7, "RiscOperators::rdtsc");
-            require(ops_v7->get_width()==64, "RiscOperators::rdtsc width");
+            require(ops_v7->nBits()==64, "RiscOperators::rdtsc width");
 
             BaseSemantics::SValuePtr ops_v8 = ops->and_(v32a, v32b);
             check_sval_type(ops_v8, "RiscOperators::and_");
-            require(ops_v8->get_width()==32, "RiscOperators::and_ width");
+            require(ops_v8->nBits()==32, "RiscOperators::and_ width");
 
             BaseSemantics::SValuePtr ops_v9 = ops->or_(v32a, v32b);
             check_sval_type(ops_v9, "RiscOperators::or_");
-            require(ops_v9->get_width()==32, "RiscOperators::or_ width");
+            require(ops_v9->nBits()==32, "RiscOperators::or_ width");
 
             BaseSemantics::SValuePtr ops_v10 = ops->xor_(v32a, v32b);
             check_sval_type(ops_v10, "RiscOperators::xor_");
-            require(ops_v10->get_width()==32, "RiscOperators::xor_ width");
+            require(ops_v10->nBits()==32, "RiscOperators::xor_ width");
 
             BaseSemantics::SValuePtr ops_v11 = ops->invert(v32a);
             check_sval_type(ops_v11, "RiscOperators::invert");
-            require(ops_v11->get_width()==32, "RiscOperators::invert width");
+            require(ops_v11->nBits()==32, "RiscOperators::invert width");
 
             BaseSemantics::SValuePtr ops_v12 = ops->extract(v32a, 5, 8);
             check_sval_type(ops_v12, "RiscOperators::extract");
-            require(ops_v12->get_width()==3, "RiscOperators::extract width");
+            require(ops_v12->nBits()==3, "RiscOperators::extract width");
 
             BaseSemantics::SValuePtr ops_v13 = ops->concat(v32a, v32b);
             check_sval_type(ops_v13, "RiscOperators::concat");
-            require(ops_v13->get_width()==64, "RiscOperators::concat width");
+            require(ops_v13->nBits()==64, "RiscOperators::concat width");
 
             BaseSemantics::SValuePtr ops_v14 = ops->leastSignificantSetBit(v32a);
             check_sval_type(ops_v14, "RiscOperators::leastSignificantSetBit");
-            require(ops_v14->get_width()==32, "RiscOperators::leastSignificantSetBit width");
+            require(ops_v14->nBits()==32, "RiscOperators::leastSignificantSetBit width");
 
             BaseSemantics::SValuePtr ops_v15 = ops->mostSignificantSetBit(v32a);
             check_sval_type(ops_v15, "RiscOperators::mostSignificantSetBit");
-            require(ops_v15->get_width()==32, "RiscOperators::mostSignificantSetBit width");
+            require(ops_v15->nBits()==32, "RiscOperators::mostSignificantSetBit width");
 
             BaseSemantics::SValuePtr ops_v16 = ops->rotateLeft(v32a, v8);
             check_sval_type(ops_v16, "RiscOperators::rotateLeft");
-            require(ops_v16->get_width()==32, "RiscOperators::rotateLeft width");
+            require(ops_v16->nBits()==32, "RiscOperators::rotateLeft width");
 
             BaseSemantics::SValuePtr ops_v17 = ops->rotateRight(v32a, v8);
             check_sval_type(ops_v17, "RiscOperators::rotateRight");
-            require(ops_v17->get_width()==32, "RiscOperators::rotateRight width");
+            require(ops_v17->nBits()==32, "RiscOperators::rotateRight width");
 
             BaseSemantics::SValuePtr ops_v18 = ops->shiftLeft(v32a, v8);
             check_sval_type(ops_v18, "RiscOperators::shiftLeft");
-            require(ops_v18->get_width()==32, "RiscOperators::shiftLeft width");
+            require(ops_v18->nBits()==32, "RiscOperators::shiftLeft width");
 
             BaseSemantics::SValuePtr ops_v19 = ops->shiftRight(v32a, v8);
             check_sval_type(ops_v19, "RiscOperators::shiftRight");
-            require(ops_v19->get_width()==32, "RiscOperators::shiftRight width");
+            require(ops_v19->nBits()==32, "RiscOperators::shiftRight width");
 
             BaseSemantics::SValuePtr ops_v20 = ops->shiftRightArithmetic(v32a, v8);
             check_sval_type(ops_v20, "RiscOperators::shiftRightArithmetic");
-            require(ops_v20->get_width()==32, "RiscOperators::shiftRightArithmetic width");
+            require(ops_v20->nBits()==32, "RiscOperators::shiftRightArithmetic width");
 
             BaseSemantics::SValuePtr ops_v21 = ops->equalToZero(v32a);
             check_sval_type(ops_v21, "RiscOperators::equalToZero");
-            require(ops_v21->get_width()==1, "RiscOperators::equalToZero width");
+            require(ops_v21->nBits()==1, "RiscOperators::equalToZero width");
 
             BaseSemantics::SValuePtr ops_v22 = ops->ite(v1, v32a, v32b);
             check_sval_type(ops_v22, "RiscOperators::ite");
-            require(ops_v22->get_width()==32, "RiscOperators::ite width");
+            require(ops_v22->nBits()==32, "RiscOperators::ite width");
 
             BaseSemantics::SValuePtr ops_v23 = ops->unsignedExtend(v8, 32);
             check_sval_type(ops_v23, "RiscOperators::unsignedExtend");
-            require(ops_v23->get_width()==32, "RiscOperators::unsignedExtend width");
+            require(ops_v23->nBits()==32, "RiscOperators::unsignedExtend width");
 
             BaseSemantics::SValuePtr ops_v24 = ops->unsignedExtend(v32a, 8);
             check_sval_type(ops_v24, "RiscOperators::unsignedExtend truncate");
-            require(ops_v24->get_width()==8, "RiscOperators::unsignedExtend truncate width");
+            require(ops_v24->nBits()==8, "RiscOperators::unsignedExtend truncate width");
 
             BaseSemantics::SValuePtr ops_v25 = ops->signExtend(v8, 32);
             check_sval_type(ops_v25, "RiscOperators::signExtend");
-            require(ops_v25->get_width()==32, "RiscOperators::signExtend width");
+            require(ops_v25->nBits()==32, "RiscOperators::signExtend width");
 
             BaseSemantics::SValuePtr ops_v26 = ops->add(v32a, v32b);
             check_sval_type(ops_v26, "RiscOperators::add");
-            require(ops_v26->get_width()==32, "RiscOperators::add width");
+            require(ops_v26->nBits()==32, "RiscOperators::add width");
 
             BaseSemantics::SValuePtr carry_out;
             BaseSemantics::SValuePtr ops_v27 = ops->addWithCarries(v32a, v32b, v1, carry_out);
             check_sval_type(ops_v27, "RiscOperators::addWithCarries");
-            require(ops_v27->get_width()==32, "RiscOperators::addWithCarries width");
+            require(ops_v27->nBits()==32, "RiscOperators::addWithCarries width");
             check_sval_type(carry_out, "RiscOperators::addWithCarries carry_out");
-            require(carry_out->get_width()==32, "RiscOperators::addWithCarries carry_out width");
+            require(carry_out->nBits()==32, "RiscOperators::addWithCarries carry_out width");
 
             BaseSemantics::SValuePtr ops_v28 = ops->negate(v32a);
             check_sval_type(ops_v28, "RiscOperators::negate");
-            require(ops_v28->get_width()==32, "RiscOperators::negate width");
+            require(ops_v28->nBits()==32, "RiscOperators::negate width");
 
             try {
                 BaseSemantics::SValuePtr ops_v29 = ops->signedDivide(v32a, v8);
                 check_sval_type(ops_v29, "RiscOperators::signedDivide");
-                require(ops_v29->get_width()==32, "RiscOperators::signedDivide width");
+                require(ops_v29->nBits()==32, "RiscOperators::signedDivide width");
             } catch (const BaseSemantics::Exception&) {
                 // possible division by zero
             }
@@ -445,19 +445,19 @@ public:
             try {
                 BaseSemantics::SValuePtr ops_v30 = ops->signedModulo(v32a, v8);
                 check_sval_type(ops_v30, "RiscOperators::signedModulo");
-                require(ops_v30->get_width()==8, "RiscOperators::signedModulo width");
+                require(ops_v30->nBits()==8, "RiscOperators::signedModulo width");
             } catch (const BaseSemantics::Exception&) {
                 // possible division by zero
             }
 
             BaseSemantics::SValuePtr ops_v31 = ops->signedMultiply(v32a, v8);
             check_sval_type(ops_v31, "RiscOperators::signedMultiply");
-            require(ops_v31->get_width()==40, "RiscOperators::signedMultiply width");
+            require(ops_v31->nBits()==40, "RiscOperators::signedMultiply width");
 
             try {
                 BaseSemantics::SValuePtr ops_v32 = ops->unsignedDivide(v32a, v8);
                 check_sval_type(ops_v32, "RiscOperators::unsignedDivide");
-                require(ops_v32->get_width()==32, "RiscOperators::unsignedDivide width");
+                require(ops_v32->nBits()==32, "RiscOperators::unsignedDivide width");
             } catch (const BaseSemantics::Exception&) {
                 // possible division by zero
             }
@@ -465,18 +465,18 @@ public:
             try {
                 BaseSemantics::SValuePtr ops_v33 = ops->unsignedModulo(v32a, v8);
                 check_sval_type(ops_v33, "RiscOperators::unsignedModulo");
-                require(ops_v33->get_width()==8, "RiscOperators::unsignedModulo width");
+                require(ops_v33->nBits()==8, "RiscOperators::unsignedModulo width");
             } catch (const BaseSemantics::Exception&) {
                 // possible division by zero
             }
 
             BaseSemantics::SValuePtr ops_v34 = ops->unsignedMultiply(v32a, v8);
             check_sval_type(ops_v34, "RiscOperators::unsignedMultiply");
-            require(ops_v34->get_width()==40, "RiscOperators::unsignedMultiply width");
+            require(ops_v34->nBits()==40, "RiscOperators::unsignedMultiply width");
 
             BaseSemantics::SValuePtr ops_v35 = ops->readRegister(reg32);
             check_sval_type(ops_v35, "RiscOperators::readRegister");
-            require(ops_v35->get_width()==32, "RiscOperators::readRegister width");
+            require(ops_v35->nBits()==32, "RiscOperators::readRegister width");
 
             // We can't really check many semantics for readMemory because each MemoryState might behave differently.  For
             // example, we can't check that reading the same address twice in a row returns the same value both times because
@@ -485,12 +485,12 @@ public:
             BaseSemantics::SValuePtr dflt8 = ops->number_(8, 0);
             BaseSemantics::SValuePtr ops_v36 = ops->readMemory(RegisterDescriptor(), v32a, dflt8, v1);
             check_sval_type(ops_v36, "RiscOperators::readMemory byte");
-            require(ops_v36->get_width()==8, "RiscOperators::readMemory byte width");
+            require(ops_v36->nBits()==8, "RiscOperators::readMemory byte width");
 
             BaseSemantics::SValuePtr dflt32 = ops->number_(32, 0);
             BaseSemantics::SValuePtr ops_v37 = ops->readMemory(RegisterDescriptor(), v32a, dflt32, v1);
             check_sval_type(ops_v37, "RiscOperators::readMemory word");
-            require(ops_v37->get_width()==32, "RiscOperators::readMemory word width");
+            require(ops_v37->nBits()==32, "RiscOperators::readMemory word width");
 
             // Nothing to check for write memory other than that we can actually call it.  The problem is that writeMemory only
             // modifies a state and doesn't return anything we can test.  The specifics of how it modifies a memory state is

@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
@@ -1030,10 +1032,16 @@ void numericExprAnn::print(ostream & out)
 //  Pointer test
 // ------------------------------------------------------------
 
+static int myFetchLine ( const parserID* lhs )
+{
+   assert(lhs != NULL);
+   return lhs->line();
+}
+
 pointerExprAnn::pointerExprAnn(Broadway::Operator op,
                                const parserID * lhs,
                                const parserID * rhs)
-  : exprAnn(op, lhs->line()),
+  : exprAnn(op, myFetchLine(lhs)),
     _lhs_name(),
     _lhs(0),
     _rhs_name(),
@@ -1215,3 +1223,4 @@ void idNodeAnn::output_expr(output_context & ct, Node * parent, int prec, Assoc 
 }
 
 #endif /* __IDNODE_ANN */
+#endif

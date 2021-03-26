@@ -184,10 +184,10 @@ namespace
     if (namedElements)
     {
       std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             explst = mkExprListExp(exprs);
+      SgExprListExp&             choicelst = mkExprListExp(exprs);
 
-      sgnode = &mkAdaNamedInitializer(explst, init);
-      ROSE_ASSERT(explst.get_parent());
+      sgnode = &mkAdaNamedInitializer(choicelst, init);
+      ROSE_ASSERT(choicelst.get_parent());
     }
 
     ROSE_ASSERT(sgnode);
@@ -235,15 +235,22 @@ namespace
     ROSE_ASSERT(assoc.Association_Kind == A_Record_Component_Association);
     logKind("A_Record_Component_Association");
 
-    SgExpression&              sgnode = getExprID(assoc.Component_Expression, ctx);
+    SgExpression&              init = getExprID(assoc.Component_Expression, ctx);
+    SgExpression*              sgnode = &init;
+    ElemIdRange                range = idRange(assoc.Record_Component_Choices);
 
-    attachSourceLocation(sgnode, el, ctx);
-    elems.push_back(&sgnode);
+    if (!range.empty())
+    {
+      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+      SgExprListExp&             choicelst = mkExprListExp(exprs);
+
+      sgnode = &mkAdaNamedInitializer(choicelst, init);
+      ROSE_ASSERT(choicelst.get_parent());
+    }
+
+    attachSourceLocation(SG_DEREF(sgnode), el, ctx);
+    elems.push_back(sgnode);
   }
-
-
-
-  typedef SgExpression* (*mk_wrapper_fun)();
 
   // wrapper uses homogeneous return types instead of covariant ones
   template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
@@ -259,15 +266,11 @@ namespace
     return mkexp(nullptr);
   }
 
-  template <class R, R* (*mkexp) (SgExpression*)>
-  SgExpression* mk_rem_wrapper()
-  {
-    return mkexp(nullptr);
-  }
 
   SgExpression&
   getOperator(Expression_Struct& expr, AstContext ctx)
   {
+    typedef SgExpression* (*mk_wrapper_fun)();
     typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > operator_maker_map_t;
 
     static const operator_maker_map_t maker_map =
@@ -324,12 +327,6 @@ namespace
   {
     ROSE_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
-#if 0
-    // seems to be obsolete...
-    Element_Struct* typedcl = retrieveAsOpt<Element_Struct>(elemMap(), expr.Corresponding_Expression_Type_Definition);
-
-    ROSE_ASSERT (!typedcl);
-#endif
     SgExpression* res = NULL;
 
     if (SgInitializedName* enumitem = findFirst(asisVars(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
@@ -451,6 +448,22 @@ namespace
     res = sb::buildTypeExpression(ty);
     ROSE_ASSERT(res);
   }
+
+
+  SgExprListExp&
+  getRecordAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
+  {
+    ROSE_ASSERT(expr.Expression_Kind == A_Record_Aggregate);
+
+    logKind("A_Record_Aggregate");
+    ElemIdRange                range  = idRange(expr.Record_Component_Associations);
+    std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
+    SgExprListExp&             sgnode = mkExprListExp(components);
+
+    attachSourceLocation(sgnode, elem, ctx);
+    return sgnode;
+  }
+
 } // anonymous
 
 
@@ -767,6 +780,16 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case An_Explicit_Dereference:                   // 4.1
+      {
+        logKind("An_Explicit_Dereference");
+
+        SgExpression& exp = getExprID(expr.Prefix, ctx);
+        res = sb::buildPointerDerefExp(&exp);
+
+        break;
+      }
+
     case An_Indexed_Component:                      // 4.1.1
       {
         logKind("An_Indexed_Component");
@@ -850,12 +873,8 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
     case A_Record_Aggregate:                        // 4.3
       {
-        logKind("A_Record_Aggregate");
-        ElemIdRange                range  = idRange(expr.Record_Component_Associations);
-        std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
-        SgExprListExp&             explst = mkExprListExp(components);
+        SgExprListExp& explst = getRecordAggregate(elem, expr, ctx);
 
-        attachSourceLocation(explst, elem, ctx);
         res = sb::buildAggregateInitializer(&explst);
         ROSE_ASSERT(explst.get_parent());
         break;
@@ -925,31 +944,73 @@ getExpr(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_Qualified_Expression:                    // 4.7
     case A_Type_Conversion:                         // 4.6
       {
-        logKind("A_Type_Conversion");
+        const bool isConv = expr.Expression_Kind == A_Type_Conversion;
+
+        logKind(isConv ? "A_Type_Conversion" : "A_Qualified_Expression");
 
         SgExpression& exp = getExprID(expr.Converted_Or_Qualified_Expression, ctx);
         SgType&       ty  = getDeclTypeID(expr.Converted_Or_Qualified_Subtype_Mark, ctx);
 
-        res = sb::buildCastExp(&exp, &ty);
+        res = isConv ? &mkCastExp(exp, ty)
+                     : &mkQualifiedExp(exp, ty);
+
         /* unused fields: (Expression_Struct)
              Expression_ID         Predicate;
         */
         break;
       }
 
-    case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
+    case An_Allocation_From_Subtype:                // 4.8
+      {
+        logKind("An_Allocation_From_Subtype");
 
-    case An_Explicit_Dereference:                   // 4.1
+        SgType& ty = getDefinitionTypeID(expr.Allocator_Subtype_Indication, ctx);
+
+        res = &mkNewExp(ty);
+
+        /* unused fields
+            Expression_ID         Subpool_Name;
+         */
+        break;
+      }
+
+    case An_Allocation_From_Qualified_Expression:   // 4.8
+      {
+        logKind("An_Allocation_From_Qualified_Expression");
+
+        Element_Struct&    allocElem = retrieveAs<Element_Struct>(elemMap(), expr.Allocator_Qualified_Expression);
+        ROSE_ASSERT(allocElem.Element_Kind == An_Expression);
+
+        Expression_Struct& allocExpr = allocElem.The_Union.Expression;
+        ROSE_ASSERT(allocExpr.Expression_Kind == A_Qualified_Expression);
+        logKind("A_Qualified_Expression");
+
+        SgType&            ty = getDeclTypeID(allocExpr.Converted_Or_Qualified_Subtype_Mark, ctx);
+
+        Element_Struct&    initElem = retrieveAs<Element_Struct>(elemMap(), allocExpr.Converted_Or_Qualified_Expression);
+        ROSE_ASSERT(initElem.Element_Kind == An_Expression);
+        Expression_Struct& initExpr = initElem.The_Union.Expression;
+
+        SgExprListExp&     recinit = getRecordAggregate(initElem, initExpr, ctx);
+
+        res = &mkNewExp(ty, &recinit);
+
+        /* unused fields
+          Expression_ID         Subpool_Name
+        */
+        break;
+      }
+
+
+    case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
 
     case An_Extension_Aggregate:                    // 4.3
 
     case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
 
-    case A_Qualified_Expression:                    // 4.7
-    case An_Allocation_From_Subtype:                // 4.8
-    case An_Allocation_From_Qualified_Expression:   // 4.8
 
     case A_Case_Expression:                         // Ada 2012
     case An_If_Expression:                          // Ada 2012

@@ -10,6 +10,70 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+size_t
+SValue::nBits() const {
+    return get_width();
+}
+
+bool
+SValue::isConcrete() const {
+    return is_number();
+}
+
+Sawyer::Optional<uint64_t>
+SValue::toUnsigned() const {
+    if (isConcrete() && nBits() <= 64) {
+        return get_number();
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+
+Sawyer::Optional<int64_t>
+SValue::toSigned() const {
+    if (auto val = toUnsigned()) {
+        uint64_t uval = BitOps::signExtend(*val, nBits());
+        int64_t ival = static_cast<int64_t>(uval);
+
+        // The above static_cast is implementation defined when uval >= 2^63, but the cast from signed to unsigned doesn't have
+        // implementation defined behavior. This allows us to check that the above static cast did what we want.
+        ASSERT_require2(static_cast<uint64_t>(ival) == uval, "this compiler's unsigned-to-signed static_cast is strange");
+        return ival;
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+
+bool
+SValue::mustEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+    return must_equal(other, solver);
+}
+
+bool
+SValue::mayEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+    return may_equal(other, solver);
+}
+
+bool
+SValue::isTrue() const {
+    return toUnsigned().orElse(0) != 0;
+}
+
+bool
+SValue::isFalse() const {
+    return toUnsigned().orElse(1) == 0;
+}
+
+std::string
+SValue::comment() const {
+    return get_comment();
+}
+
+void
+SValue::comment(const std::string &s) const {
+    set_comment(s);
+}
+
 std::ostream&
 operator<<(std::ostream &o, const SValue &x) {
     x.print(o);

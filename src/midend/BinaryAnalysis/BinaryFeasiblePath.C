@@ -9,6 +9,11 @@
 #include <BinaryYicesSolver.h>
 #include <Combinatorics.h>
 #include <CommandLine.h>
+#include <DisassemblerAarch32.h>
+#include <DisassemblerAarch64.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
@@ -267,7 +272,7 @@ private:
 
     /** Description a variable stored in a register. */
     FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-        const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
+        const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
@@ -448,8 +453,8 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr dflt = dflt_;
-        const size_t nBytes = dflt->get_width() / 8;
-        if (cond->is_number() && !cond->get_number())
+        const size_t nBytes = dflt->nBits() / 8;
+        if (cond->isFalse())
             return dflt_;
 
         // Offset the address by the value of the segment register.
@@ -458,7 +463,7 @@ public:
             adjustedVa = addr_;
         } else {
             BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-            adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+            adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
         }
 
         // Check for null pointer dereferences
@@ -476,15 +481,15 @@ public:
         
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
-        if (adjustedVa->is_number() && nBytes < sizeof(buf) &&
-            nBytes == partitioner_->memoryMap()->at(adjustedVa->get_number()).limit(nBytes).read(buf).size()) {
+        if (adjustedVa->toUnsigned() && nBytes < sizeof(buf) &&
+            nBytes == partitioner_->memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes).read(buf).size()) {
             switch (partitioner_->memoryMap()->byteOrder()) {
                 case ByteOrder::ORDER_UNSPECIFIED:
                 case ByteOrder::ORDER_LSB: {
                     uint64_t value = 0;
                     for (size_t i=0; i<nBytes; ++i)
                         value |= (uint64_t)buf[i] << (8*i);
-                    dflt = number_(dflt->get_width(), value);
+                    dflt = number_(dflt->nBits(), value);
                     break;
                 }
 
@@ -492,7 +497,7 @@ public:
                     uint64_t value = 0;
                     for (size_t i=0; i<nBytes; ++i)
                         value = (value << 8) | (uint64_t)buf[i];
-                    dflt = number_(dflt->get_width(), value);
+                    dflt = number_(dflt->nBits(), value);
                     break;
                 }
             }
@@ -511,7 +516,7 @@ public:
 
         // Save a description for its addresses
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), i)));
+            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
                                                           detailForVariable(adjustedVa, "read", i, nBytes));
@@ -538,7 +543,7 @@ public:
     // never seen it before.
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
-        if (cond->is_number() && !cond->get_number())
+        if (cond->isFalse())
             return;
         Super::writeMemory(segreg, addr_, value, cond);
 
@@ -548,7 +553,7 @@ public:
             adjustedVa = addr_;
         } else {
             BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
-            adjustedVa = add(addr_, signExtend(segregValue, addr_->get_width()));
+            adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
         }
 
         // Check for null pointer dereferences
@@ -570,9 +575,9 @@ public:
             State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(adjustedVa, "write"));
 
         // Save a description for its addresses
-        size_t nBytes = value->get_width() / 8;
+        size_t nBytes = value->nBits() / 8;
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->get_width(), i)));
+            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
                                                           detailForVariable(adjustedVa, "read", i, nBytes));
@@ -643,6 +648,7 @@ FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::Const
 
 FeasiblePath::Statistics&
 FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
+    nPathsExplored += other.nPathsExplored;
     maxVertexVisitHits += other.maxVertexVisitHits;
     maxPathLengthHits += other.maxPathLengthHits;
     maxCallDepthHits += other.maxCallDepthHits;
@@ -904,13 +910,28 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  See also, end of this function. FIXME[Robb Matzke 2015-12-01]: We need to support
         // returning multiple values. We should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
+        Disassembler *dis = partitioner.instructionProvider().disassembler();
+        ASSERT_not_null(dis);
         RegisterDescriptor r;
-        if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
-            REG_RETURN_ = r;
-        } else if ((r = registers_->find("d0"))) {
-            REG_RETURN_ = r;                            // m68k also typically has other return registers
-        } else if ((r = registers_->find("r3"))) {
-            REG_RETURN_ = r;                            // PowerPC also returns via r4
+        if (dynamic_cast<DisassemblerX86*>(dis)) {
+            if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax")))
+                REG_RETURN_ = r;
+        } else if (dynamic_cast<DisassemblerM68k*>(dis)) {
+            if ((r = registers_->find("d0")))
+                REG_RETURN_ = r;                        // m68k also typically has other return registers
+        } else if (dynamic_cast<DisassemblerPowerpc*>(dis)) {
+            if ((r = registers_->find("r3")))
+                REG_RETURN_ = r;                        // PowerPC also returns via r4
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (dynamic_cast<DisassemblerAarch32*>(dis)) {
+            if ((r = registers_->find("r0")))
+                REG_RETURN_ = r;
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        } else if (dynamic_cast<DisassemblerAarch64*>(dis)) {
+            if ((r = registers_->find("r0")))
+                REG_RETURN_ = r;
+#endif
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -976,7 +997,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->find("df"))
+    if (const RegisterDescriptor REG_DF = cpu->registerDictionary()->find("df"))
         ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();
@@ -996,7 +1017,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
     BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
     BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
-    BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
+    BaseSemantics::SValuePtr va = ops->number_(ip->nBits(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
 
@@ -1092,18 +1113,26 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             ASSERT_forbid(SP.isEmpty());
             BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
             BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                                    ops->undefined_(stackPointer->get_width()),
+                                                                    ops->undefined_(stackPointer->nBits()),
                                                                     ops->boolean_(true));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
             // Pop some things from the stack.
             int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
                          summary.stackDelta :
-                         returnTarget->get_width() / 8;
-            stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+                         returnTarget->nBits() / 8;
+            stackPointer = ops->add(stackPointer, ops->number_(stackPointer->nBits(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 #ifdef ROSE_ENABLE_ASM_AARCH64
         } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
+            // Return address is in the link register, lr
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch32>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
@@ -1214,24 +1243,24 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
                                  <<" because settings().nonAddressIsFeasible is false\n";
         return SymbolicExpr::Ptr();                     // trivially unfeasible
-    } else if (ip->is_number()) {
+    } else if (auto ipval = ip->toUnsigned()) {
         if (!hasVirtualAddress(pathEdge->target())) {
             // If the IP register is pointing to an instruction but the path vertex is indeterminate (or undiscovered or
             // nonexisting) then consider this path to be not-feasible. If the CFG is accurate then there's probably
             // a sibling edge that points to the correct vertex.
             SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
-                                     <<StringUtility::addrToString(ip->get_number()) <<" and edge target has no address\n";
+                                     <<StringUtility::addrToString(*ipval) <<" and edge target has no address\n";
             return SymbolicExpr::Ptr();                 // trivially unfeasible
-        } else if (ip->get_number() != virtualAddress(pathEdge->target())) {
+        } else if (*ipval != virtualAddress(pathEdge->target())) {
             // Executing the path forces us to go a different direction than where the path indicates we should go. We
             // don't need an SMT solver to tell us that when the values are just integers.
             SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
-                                     <<StringUtility::addrToString(ip->get_number()) <<" and edge target is "
+                                     <<StringUtility::addrToString(*ipval) <<" and edge target is "
                                      <<StringUtility::addrToString(virtualAddress(pathEdge->target())) <<"\n";
             return SymbolicExpr::Ptr();                 // trivially unfeasible
         }
     } else if (hasVirtualAddress(pathEdge->target())) {
-        SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), virtualAddress(pathEdge->target()));
+        SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->nBits(), virtualAddress(pathEdge->target()));
         SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                             SymbolicSemantics::SValue::promote(ip)->get_expression());
         constraint->comment("cfg edge " + partitioner().edgeName(pathEdge));
@@ -1438,6 +1467,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
     ssize_t callDepth = path.callDepth();
     ASSERT_require(callDepth >= 0);
     if ((size_t)callDepth >= settings_.maxCallDepth) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxCallDepthHits;
         return false;
     }
@@ -1454,6 +1484,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
         if ((size_t)callDepth >= settings_.maxRecursionDepth) {
+            SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
             ++stats_.maxRecursionDepthHits;
             return false;
         }
@@ -1694,8 +1725,10 @@ FeasiblePath::pathLength(const P2::CfgPath &path, int position) {
 
 void
 FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
-    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress()) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.reachedBlockVas.insertMaybe(*addr, 0);
+    }
 }
 
 void
@@ -1942,6 +1975,7 @@ FeasiblePath::adjustEffectiveK(P2::CfgPath &path, double k) {
     if (nVertexVisits > settings_.maxVertexVisit) {
         SAWYER_MESG(mlog[TRACE]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                  <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxVertexVisitHits;
         return 0.0;                                   // limit reached
     } else if (nVertexVisits > 1 && !rose_isnan(settings_.kCycleCoefficient)) {
@@ -1961,6 +1995,7 @@ FeasiblePath::adjustEffectiveK(P2::CfgPath &path, double k) {
                                  <<" path length is " <<StringUtility::plural(nSteps, "steps")
                                  <<", effective limit is " <<k
                                  <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.maxPathLengthHits;
         return 0.0;
     }
@@ -2007,8 +2042,8 @@ FeasiblePath::summarizeOrInline(P2::CfgPath &path, const Semantics &sem) {
                 sem.ops->currentState(BaseSemantics::StatePtr()); // set to null for safety
 
                 // If the IP is concrete, then we found the target of the indirect call and can inline it.
-                if (ip && ip->is_number() && ip->get_width() <= 64) {
-                    rose_addr_t targetVa = ip->get_number();
+                if (ip && ip->toUnsigned()) {
+                    rose_addr_t targetVa = ip->toUnsigned().get();
                     P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner().findPlaceholder(targetVa);
                     if (partitioner().cfg().isValidVertex(targetVertex))
                         P2::inlineOneCallee(paths_, backVertex, partitioner().cfg(),
@@ -2068,6 +2103,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         makeSubstitutions(subst, sem.ops); // so symbolic expression parsers use the latest state when expanding register and memory references.
 
         while (!path.isEmpty()) {
+            {
+                SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
+                ++stats_.nPathsExplored;
+            }
             size_t pathNInsns = pathLength(path);
             progress.value(pathNInsns);
             dfsDebugCurrentPath(debug, path, solver, effectiveMaxPathLength);

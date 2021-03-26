@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef _VARIABLESTATETRANSFER_H
 #define _VARIABLESTATETRANSFER_H
 
@@ -200,4 +203,5 @@ public:
   }
 };
 
+#endif
 #endif

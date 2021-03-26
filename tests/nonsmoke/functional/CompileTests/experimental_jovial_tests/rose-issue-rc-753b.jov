@@ -1,0 +1,8 @@
+START
+DEF PROC main;
+BEGIN
+%%
+""
+STOP;
+END
+TERM

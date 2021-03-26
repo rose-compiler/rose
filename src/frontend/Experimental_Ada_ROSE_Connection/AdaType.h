@@ -61,6 +61,10 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx);
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx);
 
+/// looks up the record declaration associated with \ref defid
+SgClassDeclaration&
+getParentRecordDeclID(Element_ID defid, AstContext ctx);
+
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
 TypeData

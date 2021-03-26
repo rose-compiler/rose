@@ -1,4 +1,5 @@
-
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 
@@ -80,3 +81,5 @@ Node * actionChanger::at_threeAddr(threeAddrNode * the_3addr, Order ord)
 
   return the_3addr;
 }
+
+#endif

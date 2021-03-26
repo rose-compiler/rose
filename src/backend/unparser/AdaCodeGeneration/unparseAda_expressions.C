@@ -210,6 +210,12 @@ namespace
       expr(rhs);
     }
 
+    void handle(SgPointerDerefExp& n)
+    {
+      SgExpression* target = n.get_operand();
+      expr(target);
+      prn(".all");
+    }
 
     void handle(SgRangeExp& n)
     {
@@ -243,10 +249,15 @@ namespace
 
     void handle(SgCastExp& n)
     {
+      const bool typequal = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+
+      // only type qualifications have expression lists as arguments
+      //~ ROSE_ASSERT(typequal ^ (!isSgExprListExp(n.get_operand())));
+
       type(n.get_type());
-      prn("(");
+      prn(typequal ? "'" : "(");
       expr(n.get_operand());
-      prn(")");
+      if (!typequal) prn(")");
     }
 
     void handle(SgTypeExpression& n)
@@ -296,7 +307,7 @@ namespace
 
     void handle(SgDesignatedInitializer& n)
     {
-      exprlst(SG_DEREF(n.get_designatorList()));
+      exprlst(SG_DEREF(n.get_designatorList()), "| ");
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -304,6 +315,13 @@ namespace
     void handle(SgAssignInitializer& n)
     {
       expr(n.get_operand());
+    }
+
+    void handle(SgConstructorInitializer& n)
+    {
+      //~ prn("(");
+      exprlst(SG_DEREF(n.get_args()));
+      //~ prn(")");
     }
 
     void handle(SgNullExpression& n)
@@ -330,8 +348,18 @@ namespace
       prn(tskdcl.get_name());
     }
 
+    void handle(SgNewExp& n)
+    {
+      SgConstructorInitializer* init = n.get_constructor_args();
+
+      prn("new");
+      type(n.get_specified_type());
+
+      if (init) { prn("'"); expr(init); }
+    }
+
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-    void exprlst(SgExprListExp& exp);
+    void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -411,7 +439,7 @@ namespace
     if (!isprefix) prn(operator_sym(n));
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
@@ -421,7 +449,7 @@ namespace
 
     for (size_t i = 1; i < lst.size(); ++i)
     {
-      prn(", ");
+      prn(sep);
       expr(lst[i]);
     }
   }

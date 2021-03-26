@@ -44,7 +44,6 @@ set(midend_binary_sources
   Concolic/TestCase.C
   Concolic/TestSuite.C
   Concolic/Utility.C
-  DwarfLineMapper.C
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/BaseSemanticsDispatcher.C
   instructionSemantics/BaseSemanticsException.C
@@ -130,7 +129,6 @@ set(midend_binary_headers
     BinaryVariables.h
     BinaryYicesSolver.h
     BinaryZ3Solver.h
-    DwarfLineMapper.h
     ether.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemanticsDispatcher.h

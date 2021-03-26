@@ -5,10 +5,10 @@
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-bool countUnknown = false;
-bool countErrors = false;
+static bool countUnknown = false;
+static bool countErrors = false;
 
-static std::string
+/*static*/ std::string
 trim(const std::string &s, const std::string &suffix1, const std::string &suffix2 = "") {
     if (!suffix1.empty() && boost::ends_with(s, suffix1) && s.size() > suffix1.size())
         return s.substr(0, s.size() - suffix1.size());
@@ -19,9 +19,12 @@ trim(const std::string &s, const std::string &suffix1, const std::string &suffix
 
 static std::string
 baseMnemonic(SgAsmInstruction *insn_) {
+    ASSERT_not_null(insn_);
+    std::string s = insn_->get_mnemonic();
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
     auto insn = isSgAsmAarch32Instruction(insn_);
     ASSERT_not_null(insn);
-    std::string s = insn->get_mnemonic();
     switch (insn->get_condition()) {
         case ARM_CC_INVALID:
             return s;
@@ -56,6 +59,9 @@ baseMnemonic(SgAsmInstruction *insn_) {
 	case ARM_CC_AL:
             return s;
     }
+#else
+    return s;
+#endif
 }
 
 int

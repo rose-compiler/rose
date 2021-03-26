@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef LOGICAL_COND_H
 #define LOGICAL_COND_H
 
@@ -36,4 +39,5 @@ class LogicalCond
         virtual ~LogicalCond() {}
 };
 
+#endif
 #endif

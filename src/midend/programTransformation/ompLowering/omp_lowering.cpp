@@ -1169,7 +1169,8 @@ namespace OmpSupport
     {
       cerr<<"error! transOmpLoop_others(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
       ROSE_ASSERT (false);
-    }  
+      abort();
+    }
     ROSE_ASSERT(is_canonical == true);
 
     Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
@@ -3188,8 +3189,11 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
      map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
      device_clauses = getClause(target_directive_stmt, V_SgOmpDeviceClause);
   }
-  else 
+  else
+  {
     ROSE_ASSERT (false);
+    abort();
+  }
 
   if ( map_clauses.size() == 0) return all_syms; // stop if no map clauses at all
 
@@ -3213,13 +3217,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
 
   // store all variables showing up in any of the device clauses
-  SgExpression* device_expression ;
+  SgExpression* device_expression = NULL;
   if (target_data_stmt)
     device_expression = getClauseExpression (target_data_stmt, VariantVector(V_SgOmpDeviceClause)); 
   else if (target_directive_stmt)
     device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
 
- 
   extractMapClauses (map_clauses, array_dimensions, dist_data_policies, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
   std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
   std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc

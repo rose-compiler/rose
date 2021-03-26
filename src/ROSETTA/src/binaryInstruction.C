@@ -229,6 +229,33 @@ void Grammar::setUpBinaryInstructions() {
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Whether this instruction writes back to an operand at the end.
+         *
+         * @{ */
+        bool get_writesBack() const;
+        void set_writesBack(bool);
+        /** @} */
+#else
+        AsmAarch32Instruction.setDataPrototype("bool", "writesBack", "= false",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Whether this instruction writes to the instruction pointer register.
+         *
+         *  On ARM architectures, the instruction pointer register is named "PC", for "program counter". ROSE always calls this
+         *  register the instruction pointer register.
+         *
+         * @{ */
+        bool get_writesToIp() const;
+        void set_writesToIp(bool);
+        /** @} */
+#else
+        AsmAarch32Instruction.setDataPrototype("bool", "writesToIp", "= false",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
         DECLARE_OTHERS(AsmAarch32Instruction);
 #if defined(SgAsmAarch32Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -239,6 +266,9 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
+            s & BOOST_SERIALIZATION_NVP(p_condition);
+            s & BOOST_SERIALIZATION_NVP(p_updatesFlags);
+            s & BOOST_SERIALIZATION_NVP(p_writesBack);
         }
 #endif
 
@@ -255,7 +285,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *return_va) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
 
 #endif // SgAsmAarch32Instruction_OTHERS
 #ifdef DOCUMENTATION
@@ -348,7 +378,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *return_va) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
 
 #endif // SgAsmAarch64Instruction_OTHERS
 #ifdef DOCUMENTATION
@@ -535,7 +565,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target/*out*/) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
@@ -683,7 +713,7 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmMipsInstruction_OTHERS
 #ifdef DOCUMENTATION
@@ -744,7 +774,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
@@ -791,7 +821,7 @@ void Grammar::setUpBinaryInstructions() {
                                         rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
         virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
@@ -1052,9 +1082,12 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Obtains the virtual address for a branching instruction.
          *
-         *  Returns true if this instruction is a branching instruction and the target address is known; otherwise, returns
-         *  false and @p target is not modified. */
-        virtual bool getBranchTarget(rose_addr_t *target/*out*/);
+         *  Returns the branch target address if this instruction is a branching instruction and the target is known; otherwise
+         *  returns nothing. */
+        virtual Sawyer::Optional<rose_addr_t> branchTarget();
+
+        // FIXME[Robb Matzke 2021-03-02]: deprecated
+        bool getBranchTarget(rose_addr_t *target /*out*/) ROSE_DEPRECATED("use branchTarget instead");
 
         /** Determines whether a single instruction has an effect.
          *
@@ -1529,17 +1562,20 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmBinaryAddPreupdate);
-    IS_SERIALIZABLE(AsmBinaryAddPreupdate);
+    DECLARE_LEAF_CLASS(AsmBinaryPreupdate);
+    IS_SERIALIZABLE(AsmBinaryPreupdate);
 
 #ifdef DOCUMENTATION
-    /** Expression that performs a pre-increment operation. */
-    class SgAsmBinaryAddPreupdate: public SgAsmBinaryExpression {
+    /** Expression that represents an update to a storage location.
+     *
+     *  The left-hand-side must be a register or memory location, and the right-hand-side is an expression that will be
+     *  computed and stored at that location. Pre-updates happen before an instruction is evaluated. */
+    class SgAsmBinaryPreupdate: public SgAsmBinaryExpression {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmBinaryAddPreupdate);
-#if defined(SgAsmBinaryAddPreupdate_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmBinaryPreupdate);
+#if defined(SgAsmBinaryPreupdate_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -1549,7 +1585,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
-#endif // SgAsmBinaryAddPreupdate_OTHERS
+#endif // SgAsmBinaryPreupdate_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1557,17 +1593,20 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmBinarySubtractPreupdate);
-    IS_SERIALIZABLE(AsmBinarySubtractPreupdate);
+    DECLARE_LEAF_CLASS(AsmBinaryPostupdate);
+    IS_SERIALIZABLE(AsmBinaryPostupdate);
 
 #ifdef DOCUMENTATION
-    /** Expression that performs a pre-decrement operation. */
-    class SgAsmBinarySubtractPreupdate: public SgAsmBinaryExpression {
+    /** Expression that represents an update to a storage location.
+     *
+     *  The left-hand-side must be a register or memory location, and the right-hand-side is an expression that will be
+     *  computed and stored at that location. Post-updates happen after an instruction is evaluated. */
+    class SgAsmBinaryPostupdate: public SgAsmBinaryExpression {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmBinarySubtractPreupdate);
-#if defined(SgAsmBinarySubtractPreupdate_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmBinaryPostupdate);
+#if defined(SgAsmBinaryPostupdate_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -1577,63 +1616,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
         }
 #endif
-#endif // SgAsmBinarySubtractPreupdate_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmBinaryAddPostupdate);
-    IS_SERIALIZABLE(AsmBinaryAddPostupdate);
-
-#ifdef DOCUMENTATION
-    /** Expression that performs a post-increment operation. */
-    class SgAsmBinaryAddPostupdate: public SgAsmBinaryExpression {
-    public:
-#endif
-
-        DECLARE_OTHERS(AsmBinaryAddPostupdate);
-#if defined(SgAsmBinaryAddPostupdate_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
-        }
-#endif
-#endif // SgAsmBinaryAddPostupdate_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmBinarySubtractPostupdate);
-    IS_SERIALIZABLE(AsmBinarySubtractPostupdate);
-
-#ifdef DOCUMENTATION
-    /** Expression that performs a post-decrement operation. */
-    class SgAsmBinarySubtractPostupdate: public SgAsmBinaryExpression {
-    public:
-#endif
-
-        DECLARE_OTHERS(AsmBinarySubtractPostupdate);
-#if defined(SgAsmBinarySubtractPostupdate_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
-        }
-#endif
-#endif // SgAsmBinarySubtractPostupdate_OTHERS
+#endif // SgAsmBinaryPostupdate_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1813,8 +1796,8 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmBinaryExpression,
                           AsmBinaryAdd               | AsmBinarySubtract      | AsmBinaryMultiply           |
-                          AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
-                          AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate |
+                          AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryPreupdate          |
+                          AsmBinaryPostupdate        |
                           AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
                           AsmBinaryRor               | AsmBinaryMsl           | AsmBinaryConcat,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);

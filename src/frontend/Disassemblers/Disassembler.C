@@ -87,6 +87,9 @@ Disassembler::initclassHelper()
 #ifdef ROSE_ENABLE_ASM_AARCH64
     registerSubclass(new DisassemblerAarch64());
 #endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    registerSubclass(new DisassemblerAarch32());
+#endif
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_MSB));
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_LSB));
     registerSubclass(new DisassemblerPowerpc(powerpc_64, ByteOrder::ORDER_MSB));

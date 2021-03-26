@@ -201,6 +201,7 @@ DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgLocatedNode* locat
    {
      printf ("Not implemented! \n");
      ROSE_ASSERT(false);
+     abort();
    }
 #else
 MacroExpansion*

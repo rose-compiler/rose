@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.26";
+const std::string versionString="1.12.27";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -164,6 +164,7 @@ int main( int argc, char * argv[] ) {
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
+
     IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     optionallyRunInternalChecks(ctOpt,argc,argv);
     optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
@@ -176,6 +177,16 @@ int main( int argc, char * argv[] ) {
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
 
+    if(ctOpt.info.printVariableIdMapping) {
+      cout<<"VariableIdMapping:"<<endl;
+      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      //AbstractValue::setVariableIdMapping(vim);
+
+      vim->computeVariableSymbolMapping(sageProject,0);
+      vim->toStream(cout);
+      exit(0);
+    }
+    
     optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
@@ -189,6 +200,9 @@ int main( int argc, char * argv[] ) {
     ProgramInfo originalProgramInfo(sageProject);
     originalProgramInfo.compute();
     
+    if(ctOpt.programStatsFileName.size()>0) {
+      originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
+    }
     if(ctOpt.programStatsOnly) {
       originalProgramInfo.printDetailed();
       exit(0);

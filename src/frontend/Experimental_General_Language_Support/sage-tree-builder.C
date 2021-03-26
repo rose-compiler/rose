@@ -86,11 +86,23 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    SageInterface::setSourcePosition(node);
 }
 
+void SageTreeBuilder::Enter(SgScopeStatement* &scope)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
+
+   // Maybe this is where
+   //   static SgGlobal* initialize_global_scope(SgSourceFile* file)
+   // from jovial_support.C (for example) could go.
+   //
+   scope = isSgGlobal(SageBuilder::topScopeStack());
+   ROSE_ASSERT(scope);
+}
+
 void SageTreeBuilder::Leave(SgScopeStatement* scope)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement* &) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement*) \n";
 
-   scope = SageBuilder::getGlobalScopeFromScopeStack();
+   scope = isSgGlobal(SageBuilder::topScopeStack());
    ROSE_ASSERT(scope);
 
 // Clear any dangling forward references
@@ -103,23 +115,34 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          ROSE_ASSERT(prev_var_sym);
 
          SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
-         SgBinaryOp* bin_op_parent = isSgBinaryOp(prev_var_ref->get_parent());
-         ROSE_ASSERT(bin_op_parent);
-         ROSE_ASSERT(bin_op_parent->get_rhs_operand() == prev_var_ref);
+         SgNode* prev_parent = prev_var_ref->get_parent();
 
-         SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
-         SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
-         func_call->set_parent(bin_op_parent);
-         bin_op_parent->set_rhs_operand(func_call);
+      // There may be more options but only two known so far
+         if (isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
+           SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+           SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
+           func_call->set_parent(prev_parent);
 
-      // The dangling variable reference has been fixed
-         it = forward_var_refs_.erase(it);
+           if (SgExprStatement* expr_stmt = isSgExprStatement(prev_parent)) {
+             expr_stmt->set_expression(func_call);
+           }
+           else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
+             bin_op->set_rhs_operand(func_call);
+           }
 
-      // Delete the previous variable reference, symbol and initialized name
-         delete prev_init_name;
-         delete prev_var_sym;
-         delete prev_var_ref;
+        // The dangling variable reference has been fixed
+           it = forward_var_refs_.erase(it);
 
+        // Delete the previous variable reference, symbol and initialized name
+           delete prev_init_name;
+           delete prev_var_sym;
+           delete prev_var_ref;
+         }
+       else {
+         // Unexpected previous parent node
+         std::cout << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
+         it++;
+       }
        }
        else {
          std::cout << "{" << it->first << ": " << it->second << "}\n";
@@ -345,11 +368,9 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
        if (symbol == nullptr) {
-#ifdef PRINT_WARNINGS
-         std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
+         std::cerr << "SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
                    << param.name << "\n";
          ROSE_ASSERT(symbol);
-#endif
        }
 
     // Create a new initialized name for the parameter list
@@ -625,28 +646,31 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
+   SgAssignOp* assign_op = nullptr;
    SgEnumVal* old_val = isSgEnumVal(rhs);
 
-   if (old_val && old_val->get_value() == -1) {
-      // I don't think this is true anymore as the SgEnumVal is found by symbol lookup
-      // Need to test for assignment to a status
-      ROSE_ASSERT(false);
+   // For Jovial, the symbol table may have multiple enumerators with the same name. Check and
+   // replace a Jovial status constant with the correct value based on the type of the variable.
+   if (old_val) {
+      SgEnumType* enum_type = nullptr;
+      SgJovialTableType* table_type = isSgJovialTableType(vars[0]->get_type());
 
-      SgEnumType* enum_type = isSgEnumType(vars[0]->get_type());
+      if (table_type) {
+         SgEnumType* base_type = isSgEnumType(table_type->get_base_type());
+         if (base_type) {
+            enum_type = base_type;
+         }
+      } else {
+         enum_type = isSgEnumType(vars[0]->get_type());
+      }
+
       ROSE_ASSERT(enum_type);
-      SgEnumVal* enum_val = ReplaceEnumVal(enum_type, old_val->get_name());
-
-      rhs = enum_val;
-      delete old_val;
+      rhs = getEnumVal(enum_type, old_val);
    }
-
-   SgAssignOp* assign_op = nullptr;
-   SgExpression* new_rhs = rhs;
 
 // Jovial may have more than one variable in an assignment statement
    for (int i = vars.size()-1; i >= 0; i--) {
-      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], new_rhs);
-      new_rhs = assign_op;
+      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], rhs);
    }
    ROSE_ASSERT(assign_op);
 
@@ -1029,8 +1053,10 @@ Leave(SgImplicitStatement* implicit_stmt)
    SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
 }
 
+// For Jovial, the symbol table may have multiple enumerators with the same name. This
+// function returns the correct value based on the type of the variable.
 SgEnumVal* SageTreeBuilder::
-ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
+getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
 {
    SgEnumDeclaration* enum_decl = isSgEnumDeclaration(enum_type->get_declaration());
    ROSE_ASSERT(enum_decl);
@@ -1038,20 +1064,39 @@ ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
    SgInitializedNamePtrList &enum_list = enum_decl->get_enumerators();
    SgInitializedName* init_name = nullptr;
 
+   SgName name = old_val->get_name();
+#if 1
+   std::string status_name;
+   std::cout << "--> will look for " << name << " in STATUS " << enum_decl->get_name() << std::endl;
+   std::cout << "--> list size is " << enum_list.size() << std::endl;
+#endif
    BOOST_FOREACH(SgInitializedName* status_constant, enum_list) {
+#if 1
+     status_name = status_constant->get_name();
+#endif
       if (status_constant->get_name() == name) {
          init_name = status_constant;
+         break;
       }
+     std::cout << "--> looking for " << name << " found " << status_name << std::endl;
    }
-
+   std::cout << "--> looking for " << name << " did find " << status_name << std::endl;
+#if 0
    ROSE_ASSERT(init_name);
-   SgEnumFieldSymbol* enum_symbol = isSgEnumFieldSymbol(init_name->get_symbol_from_symbol_table());
-   ROSE_ASSERT(enum_symbol);
+#else
+   if (!init_name) {
+     std::cout << "--> getEnumVal: did not find " << name << " returning old value\n";
+     return old_val;
+   }
+#endif
 
-   SgEnumVal* enum_val = SageBuilder::buildEnumVal(enum_symbol);
-   ROSE_ASSERT(enum_val);
+   SgAssignInitializer* assign_init = isSgAssignInitializer(init_name->get_initptr());
+   ROSE_ASSERT(assign_init);
 
-   return enum_val;
+   SgEnumVal* new_val = isSgEnumVal(assign_init->get_operand());
+   ROSE_ASSERT(new_val);
+
+   return new_val;
 }
 
 // Jovial specific nodes
@@ -1082,7 +1127,7 @@ Leave(SgJovialDefineDeclaration* define_decl)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, bool is_compool)
+Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
@@ -1092,15 +1137,42 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
 
 // The first nondefining declaration must be set
    directive->set_firstNondefiningDeclaration(directive);
+}
 
-   if (is_compool)
-     {
-        // Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
-        // because API can't see Sage nodes until C++17, so set it correctly as it is known here.
-        directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+void SageTreeBuilder::
+Enter(SgJovialDirectiveStatement* &directive, const std::string &compool_name, std::vector<std::string> &import_names)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
-        importModule(directive_string);
+   std::string directive_string = "'" + compool_name + "'";
+   if (import_names.size() == 0) {
+     directive_string = "(" + directive_string + ")";
+   } else {
+     bool first = true;
+     BOOST_FOREACH(std::string &name, import_names) {
+       if (first) {
+         directive_string += " " + name;
+         first = false;
+       }
+       else {
+         directive_string += ", " + name;
+       }
      }
+   }
+
+   directive = new SgJovialDirectiveStatement(directive_string, SgJovialDirectiveStatement::e_unknown);
+   ROSE_ASSERT(directive);
+   SageInterface::setSourcePosition(directive);
+
+// The first nondefining declaration must be set
+   directive->set_firstNondefiningDeclaration(directive);
+
+// Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
+// because API can't see Sage nodes until C++17, so set it correctly as it is known here.
+   directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+
+   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
+   compool_builder.loadModule(compool_name, import_names, isSgGlobal(SageBuilder::topScopeStack()));
 }
 
 void SageTreeBuilder::
@@ -1113,36 +1185,7 @@ Leave(SgJovialDirectiveStatement* directive)
    switch (directive->get_directive_type())
      {
        case SgJovialDirectiveStatement::e_compool: {
-       // Save and then pop the scope of the compool module loaded by the compool directive
-          SgScopeStatement* compool_scope = SageBuilder::topScopeStack();
           SageBuilder::popScopeStack();
-
-       // Insert aliases for all symbols in the compool scope into the current scope
-          SgSymbolTable* symbol_table = compool_scope->get_symbol_table();
-          SgScopeStatement* current_scope = SageBuilder::topScopeStack();
-          BOOST_FOREACH(SgNode* node, symbol_table->get_symbols()) {
-            SgSymbol* symbol = isSgSymbol(node);
-            ROSE_ASSERT(symbol);
-            SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-            ROSE_ASSERT(alias_symbol);
-            current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-         // Also insert aliases for any namespace symbols
-            if (SgNamespaceSymbol* namespace_symbol = isSgNamespaceSymbol(node)) {
-              SgNamespaceDeclarationStatement* namespace_decl = nullptr;
-              SgNamespaceDefinitionStatement* namespace_defn = nullptr;
-              SgSymbolTable* namespace_symbol_table = nullptr;
-              namespace_decl = isSgNamespaceDeclarationStatement(namespace_symbol->get_declaration());
-              namespace_defn = isSgNamespaceDefinitionStatement(namespace_decl->get_definition());
-              namespace_symbol_table = namespace_defn->get_symbol_table();
-              BOOST_FOREACH(SgNode* node, namespace_symbol_table->get_symbols()) {
-                SgSymbol* symbol = isSgSymbol(node);
-                ROSE_ASSERT(symbol);
-                SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-                ROSE_ASSERT(alias_symbol);
-                current_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-              }
-            }
-          }
           break;
        }
        case SgJovialDirectiveStatement::e_unknown:
@@ -1530,10 +1573,21 @@ void SageTreeBuilder::
 Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
 
-   type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
-   // This should be done in SageBuilder.
+   type_def = SageBuilder::buildTypedefDeclaration_nfi(name, type, scope, nullptr);
+
+   // These things should be setup properly in SageBuilder?
+   SgTypedefSymbol* symbol = SageInterface::lookupTypedefSymbolInParentScopes(name, scope);
+   ROSE_ASSERT(symbol);
+   SgTypedefType* typedef_type = type_def->get_type();
+   ROSE_ASSERT(typedef_type);
+
    type_def->set_base_type(type);
+   type_def->set_parent_scope(symbol);
+   typedef_type->set_parent_scope(symbol);
+   ROSE_ASSERT(type_def->get_parent_scope());
+   ROSE_ASSERT(typedef_type->get_parent_scope());
 
 // Fix forward type references
    reset_forward_type_ref(name, type_def->get_type());
@@ -1545,32 +1599,6 @@ void SageTreeBuilder::
 Leave(SgTypedefDeclaration* type_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
-}
-
-// template <typename T>
-void SageTreeBuilder::
-importModule(const std::string &module_name)
-{
-   mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
-
-   // NOTE: The following comments need to be updated.
-
-   // Compool declarations must be loaded into global scope. A compool directive may only follow a
-   // START so we should expect to be in global scope here. The compool directive should be appended
-   // to the AST after the directives are loaded allowing the unparser to ignore declarations preceding
-   // compool directives. Only declarations from the current compool directive are loaded, specifically,
-   // not compool directives within the current directive. Finally the namespace for the compool being
-   // loaded should not be created (allowing declarations to be placed in global scope). This all means
-   // that a flag (or other means) must be used to signal that a compool is being parsed as a compool
-   // directive.
-
-   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
-
-   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
-
-   compool_builder.setLoadingModuleState(true);
-   compool_builder.getModule(module_name);
-   compool_builder.setLoadingModuleState(false);
 }
 
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to

@@ -111,6 +111,7 @@ public:
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
 
+   void Enter(SgScopeStatement* &);
    void Leave(SgScopeStatement*);
 
    void Enter(SgBasicBlock* &);
@@ -192,7 +193,7 @@ public:
 #endif
    void Leave(SgImplicitStatement*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+   SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
 // Expressions
 //
@@ -207,7 +208,8 @@ public:
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);

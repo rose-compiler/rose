@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef BDWY_ADAPTOR_STATISTICS_H
 #define BDWY_ADAPTOR_STATISTICS_H
 
@@ -100,4 +103,5 @@ private:
   string reason_str(ReasonKind);
 };
 
+#endif
 #endif

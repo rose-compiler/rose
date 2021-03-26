@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_POINTERRULE_H
 #define BDWY_POINTERRULE_H
@@ -97,3 +99,4 @@ private:
 };
 
 #endif /* BDWY_POINTERRULE_H */
+#endif

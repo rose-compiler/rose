@@ -340,9 +340,7 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       curprint("(");
 
       int i = 0;
-// Replace following with C++11
-      foreach(SgInitializedName* arg, formal_params)
-//    for (SgInitializedName* arg : formal_params)
+      for (SgInitializedName* arg : formal_params)
         {
            if (arg->get_storageModifier().isMutable() && foundOutParam == false)
               {

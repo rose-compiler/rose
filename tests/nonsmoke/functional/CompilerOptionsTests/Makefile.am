@@ -7,6 +7,7 @@ SUBDIRS = \
    testOutputFileOption \
    testHeaderFileOutput testFileNamesAndExtensions testGnuOptions \
    testWave \
+   testNostdincOption \
    preinclude_tests tokenStream_tests testIncludeOptions
 
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually

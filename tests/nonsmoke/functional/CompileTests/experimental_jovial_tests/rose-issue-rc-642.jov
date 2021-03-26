@@ -1,0 +1,16 @@
+START
+
+DEF PROC PROC2;
+   !REDUCIBLE;
+   BEGIN
+     ITEM ii U;
+     ii = 13;
+   END
+
+DEF PROC PROC3 U;
+   !REDUCIBLE;
+   BEGIN
+     PROC3 = 13;
+   END
+
+TERM

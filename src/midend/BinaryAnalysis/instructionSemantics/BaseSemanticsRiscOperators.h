@@ -563,11 +563,20 @@ public:
     //                                  Interrupt and system calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** Invoked for instructions that cause an interrupt.  The major and minor numbers are architecture specific.  For
-     *  instance, an x86 INT instruction uses major number zero and the minor number is the interrupt number (e.g., 0x80 for
-     *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
-     *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
-    virtual void interrupt(int /*majr*/, int /*minr*/) {}
+    /** Invoked for instructions that cause an interrupt.
+     *
+     *  The major and minor numbers are architecture specific.  For instance, an x86 INT instruction uses major number zero and
+     *  the minor number is the interrupt number (e.g., 0x80 for Linux system calls), while an x86 SYSENTER instruction uses
+     *  major number one. The minr operand for INT3 is -3 to distinguish it from the one-argument "INT 3" instruction which has
+     *  slightly different semantics. */
+    virtual void interrupt(int majr, int minr) {}
+
+    /** Invoked for instructions that cause an interrupt.
+     *
+     *  This overload is for cases when the major and minor numbers are not integers, and/or when the interrupt is
+     *  conditionally executed. The default implementation just calls the concrete overload, throwing an exception if that's
+     *  not possible. */
+    virtual void interrupt(const SValuePtr &majr, const SValuePtr &minr, const SValuePtr &enabled);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -43,9 +43,9 @@ BaseSemantics::SValuePtr
 MemoryState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
     ASSERT_not_null(process_);
-    std::vector<uint8_t> buffer((dflt->get_width() + 7) / 8);
+    std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);
     ASSERT_require(buffer.size() <= 8);
-    rose_addr_t va = SValue::promote(address)->get_number();
+    rose_addr_t va = SValue::promote(address)->toUnsigned().get();
     size_t nRead = process_->readMemory(va, buffer.size(), &buffer[0]);
     if (nRead != buffer.size())
         throw Exception("short read from process at " + StringUtility::addrToString(va));

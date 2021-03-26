@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "c_breeze.h"
 
@@ -1673,4 +1675,4 @@ bb_count.clear();
 
 Phases PalPhase("pal", new palPhase());
 
-
+#endif

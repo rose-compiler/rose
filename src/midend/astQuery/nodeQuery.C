@@ -114,6 +114,7 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
         ROSE_ASSERT (false);
+        abort();
       }
   } /* End switch-case */
   return std::ptr_fun(__x);
@@ -161,6 +162,7 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
         ROSE_ASSERT (false);
+        abort();
       }
   }
   return std::ptr_fun(__x);

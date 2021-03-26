@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef INT_ARITH_LOGICAL
 #define INT_ARITH_LOGICAL
 
@@ -484,4 +487,5 @@ void runIntArithLogicalPlacer(bool printStates);
 // returns the set of IntArithLogical expressions known to be true at the given DataflowNode
 const IntArithLogical& getIntArithLogical(const DataflowNode& n);
 
+#endif
 #endif

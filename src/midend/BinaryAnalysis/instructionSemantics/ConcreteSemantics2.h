@@ -95,7 +95,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }
@@ -401,17 +401,17 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_number(size_t nbits, uint64_t value) {
+    SValuePtr svalueNumber(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
 
-    SValuePtr svalue_number(const Sawyer::Container::BitVector&);
+    SValuePtr svalueNumber(const Sawyer::Container::BitVector&);
 
-    SValuePtr svalue_boolean(bool b) {
+    SValuePtr svalueBoolean(bool b) {
         return SValue::promote(boolean_(b));
     }
 
-    SValuePtr svalue_zero(size_t nbits) {
+    SValuePtr svalueZero(size_t nbits) {
         return SValue::promote(number_(nbits, 0));
     }
     

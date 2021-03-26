@@ -1770,6 +1770,14 @@ Grammar::setUpStatements ()
   // template argument lists inside of template declarations.  Related to concept of is_non_real setting.
      ClassDeclaration.setDataPrototype("bool","isRepresentingTemplateParameterInTemplateDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // PP (2/22/2021): To support declarations of Ada private types (aka forward declarations).
+  //                 In Ada, programmers can specify the base record as part of the public portion of
+  //                 a private type.
+  //                 e.g., type Manager is new Employee with private;
+     ClassDeclaration.setDataPrototype("SgBaseClass*","adaParentType","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (11/18/2013): Adding Java specific support
      ClassDeclaration.setDataPrototype("bool","java_annonomous","= false",
@@ -3340,6 +3348,8 @@ Grammar::setUpStatements ()
      UseStatement.setDataPrototype ( "SgName", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UseStatement.setDataPrototype ( "bool", "only_option", "= false",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UseStatement.setDataPrototype ( "std::string", "module_nature", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // UseStatement.setDataPrototype ( "SgExprListExp*", "rename_list", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

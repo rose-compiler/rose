@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_DIAGNOSTIC_CHAIN_H
 #define BDWY_DIAGNOSTIC_CHAIN_H
@@ -88,4 +90,5 @@ private:
   void find_shortest(Segment *cur, Segments path, Segments &shortest);
 };
 
+#endif
 #endif

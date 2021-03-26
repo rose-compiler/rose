@@ -223,8 +223,9 @@ namespace VirtualBinCFG {
                 if (!insn) return;
                 if (insn->get_kind() != Rose::BinaryAnalysis::x86_call) return;
                 //cerr << "Found call xxx at " << hex << insn->get_address() << endl;
-                uint64_t tgtAddr;
-                if (!insn->getBranchTarget(&tgtAddr)) return;
+                uint64_t tgtAddr = 0;
+                if (!insn->branchTarget().assignTo(tgtAddr))
+                    return;
                 //cerr << "Found call at " << hex << insn->get_address() << " with known target " << hex << tgtAddr << endl;
                 SgAsmInstruction* tgt = info->getInstructionAtAddress(tgtAddr);
                 if (!tgt) return;

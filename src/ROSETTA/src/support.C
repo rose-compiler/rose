@@ -90,13 +90,6 @@ Grammar::setUpSupport ()
           BaseClassModifier       | StructureModifier      | TypeModifier       |
           DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
-     NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
-     NEW_TERMINAL_MACRO (AdaIndexConstraint, "AdaIndexConstraint", "AdaIndexConstraintTag");
-
-     NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
-          AdaRangeConstraint | AdaIndexConstraint,
-          "AdaTypeConstraint", "AdaTypeConstraintTag", false);
-
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
 #if 0
@@ -270,7 +263,7 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory                | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
-          TemplateParameterList | AdaTypeConstraint         | /* RenamePair                | InterfaceBody       |*/
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge                |
           GraphNodeList         | GraphEdgeList             | TypeTable                |
           NameGroup             | DimensionObject           | FormatItem               |
@@ -407,10 +400,6 @@ Grammar::setUpSupport ()
 
   // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
      StructureModifier.setFunctionPrototype       ( "HEADER_STRUCTURE_MODIFIER"       , "../Grammar/Support.code");
-
-     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-     AdaIndexConstraint.setFunctionPrototype      ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
@@ -2573,21 +2562,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BaseClassModifier.setDataPrototype("SgAccessModifier", "accessModifier", "",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-/*
-     AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
-     AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
-     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
-     AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
-*/
-     AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // File_Info.setDataPrototype("char*","filename","= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -2997,10 +2971,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // Place declarations of friend output operators after the BaseClassModifier
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");
-     AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-     AdaIndexConstraint.setFunctionSource      ( "SOURCE_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
-
      File_Info.setFunctionSource       ( "SOURCE_FILE_INFORMATION", "../Grammar/Support.code");
 
      Directory.setFunctionSource       ( "SOURCE_APPLICATION_DIRECTORY", "../Grammar/Support.code");

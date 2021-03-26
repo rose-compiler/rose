@@ -39,7 +39,8 @@ namespace CodeThorn {
     std::string toString();
     static void initDiagnostics();
     FunctionCallInfo determineFunctionCallInfo(SgFunctionCallExp* fc);
-
+    static bool isFunctionPointerCall(SgFunctionCallExp* fc);
+    
     /** access the class hierarchy for analyzing member function calls.
      *  @{
      */

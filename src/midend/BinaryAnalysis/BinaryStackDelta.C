@@ -441,8 +441,10 @@ Analysis::print(std::ostream &out) const {
 // class method
 int64_t
 Analysis::toInt(const BaseSemantics::SValuePtr &v) {
-    if (v && v->is_number() && v->get_width() <= 64)
-        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    if (v) {
+        if (auto vval = v->toSigned())
+            return *vval;
+    }
     return SgAsmInstruction::INVALID_STACK_DELTA;
 }
 

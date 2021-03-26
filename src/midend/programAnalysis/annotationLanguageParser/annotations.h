@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_ANNOTATIONS_H
 #define BDWY_ANNOTATIONS_H
@@ -367,3 +369,4 @@ private:
 };
 
 #endif /* BDWY_ANNOTATIONS_H */
+#endif

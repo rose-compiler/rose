@@ -95,8 +95,10 @@ class AstRestructure
   void unlock(SgNode* astNode);  // used by abstract parser
 
  private:
+#if 0 // [Robb Matzke 2021-03-17]: unused
   SgProject* sageProject;
   SgNode* targetNode;
+#endif
   std::string sourceFragment;
   std::string includeHeaders; // will become obsolete with new rewrite system
 
