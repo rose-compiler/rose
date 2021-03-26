@@ -10290,6 +10290,15 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgStatement *body)
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   if (body) body->set_parent(result);
+
+#if 0
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("SageBuilder::buildDefaultOptionStmt() body = %p \n",body);
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+#endif
+
   return result;
 }
 
@@ -10299,6 +10308,24 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt_nfi( SgStatement *body
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   if (body) body->set_parent(result);
+
+#if 0
+  static int count = 0;
+
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("SageBuilder::buildDefaultOptionStmt_nfi() body = %p \n",body);
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+
+  if (count >= 1)
+     {
+       printf ("Exiting as a test! \n");
+       ROSE_ASSERT(false);
+     }
+  count++;
+#endif
+
   return result;
 }
 
