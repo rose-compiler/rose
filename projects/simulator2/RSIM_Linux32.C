@@ -396,7 +396,7 @@ RSIM_Linux32::syscall_waitpid_body(RSIM_Thread *t, int callno)
         uint32_t status_le;
         ByteOrder::host_to_le(sys_status, &status_le);
         size_t nwritten = t->get_process()->mem_write(&status_le, status_va, 4);
-        ROSE_ASSERT(4==nwritten);
+        ASSERT_always_require(4==nwritten);
     }
     t->syscall_return(result);
 }
@@ -423,7 +423,7 @@ RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
         uint32_t t_le;
         ByteOrder::host_to_le(result, &t_le);
         size_t nwritten = t->get_process()->mem_write(&t_le, t->syscall_arg(0), 4);
-        ROSE_ASSERT(4==nwritten);
+        ASSERT_always_require(4==nwritten);
     }
     t->syscall_return(result);
 }
@@ -455,7 +455,7 @@ RSIM_Linux32::syscall_utime_body(RSIM_Thread *t, int callno)
     // Check to see if times is NULL
     uint8_t byte;
     size_t nread = t->get_process()->mem_read(&byte, t->syscall_arg(1), 1);
-    ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+    ASSERT_always_require(1==nread); /*or we've read past the end of the mapped memory*/
 
     int result;
     if( byte) {
@@ -466,7 +466,7 @@ RSIM_Linux32::syscall_utime_body(RSIM_Thread *t, int callno)
 
         kernel_utimebuf ubuf;
         size_t nread = t->get_process()->mem_read(&ubuf, t->syscall_arg(1), sizeof(kernel_utimebuf));
-        ROSE_ASSERT(nread == sizeof(kernel_utimebuf));
+        ASSERT_always_require(nread == sizeof(kernel_utimebuf));
 
         utimbuf ubuf64;
         ubuf64.actime  = ubuf.actime;
@@ -584,7 +584,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
                 result = -errno;
             } else {
                 size_t nwritten = t->get_process()->mem_write(&to, t->syscall_arg(2), sizeof to);
-                ROSE_ASSERT(nwritten==sizeof to);
+                ASSERT_always_require(nwritten==sizeof to);
             }
 
             t->syscall_return(result);
@@ -607,7 +607,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
             uint32_t pgrp_le;
             ByteOrder::host_to_le(pgrp, &pgrp_le);
             size_t nwritten = t->get_process()->mem_write(&pgrp_le, t->syscall_arg(2), 4);
-            ROSE_ASSERT(4==nwritten);
+            ASSERT_always_require(4==nwritten);
             t->syscall_return(pgrp);
             break;
         }
@@ -615,7 +615,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
         case TIOCSPGRP: { /* 0x5410, tcsetpgrp*/
             uint32_t pgid_le;
             size_t nread = t->get_process()->mem_read(&pgid_le, t->syscall_arg(2), 4);
-            ROSE_ASSERT(4==nread);
+            ASSERT_always_require(4==nread);
             pid_t pgid = ByteOrder::le_to_host(pgid_le);
             int result = tcsetpgrp(hostFd, pgid);
             if (-1==result)
@@ -708,7 +708,7 @@ RSIM_Linux32::syscall_setrlimit_body(RSIM_Thread *t, int callno)
     uint32_t rlimit_va = t->syscall_arg(1);
     uint32_t rlimit_guest[2];
     size_t nread = t->get_process()->mem_read(rlimit_guest, rlimit_va, sizeof rlimit_guest);
-    ROSE_ASSERT(nread==sizeof rlimit_guest);
+    ASSERT_always_require(nread==sizeof rlimit_guest);
     struct rlimit rlimit_native;
     rlimit_native.rlim_cur = rlimit_guest[0];
     rlimit_native.rlim_max = rlimit_guest[1];
@@ -1704,7 +1704,7 @@ RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
     } else {
         if (status_va != 0) {
             size_t nwritten = t->get_process()->mem_write(&status, status_va, 4);
-            ROSE_ASSERT(nwritten == 4);
+            ASSERT_always_require(nwritten == 4);
         }
         if (rusage_va != 0) {
             struct rusage_32 {
@@ -1747,7 +1747,7 @@ RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
             out.nvcsw = rusage.ru_nvcsw;
             out.nivcsw = rusage.ru_nivcsw;
             size_t nwritten = t->get_process()->mem_write(&out, rusage_va, sizeof out);
-            ROSE_ASSERT(nwritten == sizeof out);
+            ASSERT_always_require(nwritten == sizeof out);
         }
     }
     t->syscall_return(result);
@@ -1943,7 +1943,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
 
-    ROSE_ASSERT(version!=0);
+    ASSERT_always_require(version!=0);
 
     union semun_32 {
         uint32_t val;
@@ -2280,7 +2280,7 @@ sys_msgrcv(RSIM_Thread *t, uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uin
     if (4!=sizeof(long)) {
         ROSE_ASSERT(8==sizeof(long));
         uint64_t type = *(uint64_t*)buf;
-        ROSE_ASSERT(0 == (type >> 32));
+        ASSERT_always_require(0 == (type >> 32));
         memmove(buf+4, buf+8, msgsz);
     }
 
@@ -2316,7 +2316,7 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
 
         case 2:    /* IPC_STAT */
         case 11: { /* MSG_STAT */
-            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
+            ASSERT_always_require(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
             static msqid_ds host_ds;
             int result = msgctl(msqid, cmd, &host_ds);
             if (-1==result) {
@@ -2463,7 +2463,7 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
     switch (cmd) {
         case 13:  /* SHM_STAT */
         case 2: { /* IPC_STAT */
-            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
+            ASSERT_always_require(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
             static shmid_ds host_ds;
             int result = shmctl(shmid, cmd, &host_ds);
             if (-1==result) {
@@ -2678,7 +2678,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         /* Map simulator's shared memory into the specimen */
         shmid_ds ds;
         int status = shmctl(shmid, IPC_STAT, &ds); // does not block
-        ROSE_ASSERT(status>=0);
+        ASSERT_always_require(status>=0);
         ROSE_ASSERT(ds.shm_segsz>0);
         unsigned perms = MemoryMap::READABLE | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::WRITABLE);
 
@@ -2925,7 +2925,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // CLONE_CHILD_SETTID: Store child thread ID at location ctid in child memory.
         if (isChild && 0 != (flags & CLONE_CHILD_SETTID) && child_tls_va) {
             size_t nwritten = p->mem_write(&childTid32, child_tls_va, 4);
-            ROSE_ASSERT(4==nwritten);
+            ASSERT_always_require(4==nwritten);
         }
 
         // CLONE_CHILD_CLEARTID: Erase child thread ID at location ctid in child memory when the child exits, and do a wakeup
@@ -2938,7 +2938,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // there was a flag CLONE_SETTID that did this.)
         if ((isParent || isChild) && 0 != (flags & CLONE_PARENT_SETTID) && parent_tid_va) {
             size_t nwritten = p->mem_write(&childTid32, parent_tid_va, 4);
-            ROSE_ASSERT(4==nwritten);
+            ASSERT_always_require(4==nwritten);
         }
 
         // Return register values in child
@@ -3096,7 +3096,7 @@ RSIM_Linux32::syscall_llseek_body(RSIM_Thread *t, int callno)
     } else {
         t->syscall_return(0);
         size_t nwritten = t->get_process()->mem_write(&result, result_va, sizeof result);
-        ROSE_ASSERT(nwritten==sizeof result);
+        ASSERT_always_require(nwritten==sizeof result);
     }
 }
 
@@ -4455,7 +4455,7 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
     //Check to see if times is NULL
     uint8_t byte;
     size_t nread = t->get_process()->mem_read(&byte, t->syscall_arg(1), 1);
-    ROSE_ASSERT(1==nread); /*or we've read past the end of the mapped memory*/
+    ASSERT_always_require(1==nread); /*or we've read past the end of the mapped memory*/
 
     int result;
     if( byte ) {
@@ -4472,7 +4472,7 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
         timeval64[1].tv_sec  = ubuf[1].tv_sec;
         timeval64[1].tv_usec = ubuf[1].tv_usec;
 
-        ROSE_ASSERT(nread == size_timeval_sample);
+        ASSERT_always_require(nread == size_timeval_sample);
 
         result = utimes(filename.c_str(), timeval64);
 

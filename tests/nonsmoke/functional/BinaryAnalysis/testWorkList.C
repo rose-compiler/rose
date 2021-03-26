@@ -15,17 +15,17 @@ test1()
     WList list;
     typename WList::value_type item;
 
-    ROSE_ASSERT(list.empty());
-    ROSE_ASSERT(0==list.size());
+    ASSERT_always_require(list.empty());
+    ASSERT_always_require(0==list.size());
 
     list.push(1);
-    ROSE_ASSERT(!list.empty());
-    ROSE_ASSERT(1==list.size());
+    ASSERT_always_require(!list.empty());
+    ASSERT_always_require(1==list.size());
 
     item = list.pop();
-    ROSE_ASSERT(list.empty());
-    ROSE_ASSERT(0==list.size());
-    ROSE_ASSERT(1==item);
+    ASSERT_always_require(list.empty());
+    ASSERT_always_require(0==list.size());
+    ASSERT_always_require(1==item);
 }
 
 // Test that we can push and pop multiple unique items in the correct order
@@ -38,14 +38,14 @@ test2()
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item(i);
         list.push(item);
-        ROSE_ASSERT(i+1==list.size());
+        ASSERT_always_require(i+1==list.size());
     }
 
     for (size_t i=10; i>0; --i) {
         typename WList::value_type item = list.pop();
         typename WList::value_type expected(i-1);
-        ROSE_ASSERT(item==expected);
-        ROSE_ASSERT(list.size()==i-1);
+        ASSERT_always_require(item==expected);
+        ASSERT_always_require(list.size()==i-1);
     }
 }
 
@@ -59,14 +59,14 @@ test3()
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item(i);
         list.unshift(item);
-        ROSE_ASSERT(i+1==list.size());
+        ASSERT_always_require(i+1==list.size());
     }
 
     for (size_t i=10; i>0; --i) {
         typename WList::value_type item = list.shift();
         typename WList::value_type expected(i-1);
-        ROSE_ASSERT(item==expected);
-        ROSE_ASSERT(list.size()==i-1);
+        ASSERT_always_require(item==expected);
+        ASSERT_always_require(list.size()==i-1);
     }
 }
 
@@ -80,14 +80,14 @@ test4()
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item(i);
         list.push(item);
-        ROSE_ASSERT(i+1==list.size());
+        ASSERT_always_require(i+1==list.size());
     }
 
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item = list.shift();
         typename WList::value_type expected(i);
-        ROSE_ASSERT(item==expected);
-        ROSE_ASSERT(list.size()==9-i);
+        ASSERT_always_require(item==expected);
+        ASSERT_always_require(list.size()==9-i);
     }
 }
 
@@ -101,13 +101,13 @@ test5()
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item(111);
         list.push(item, true);
-        ROSE_ASSERT(1==list.size());
+        ASSERT_always_require(1==list.size());
     }
 
     typename WList::value_type item = list.pop();
     typename WList::value_type expected(111);
-    ROSE_ASSERT(item==expected);
-    ROSE_ASSERT(list.empty());
+    ASSERT_always_require(item==expected);
+    ASSERT_always_require(list.empty());
 }
 
 // Test that size works with duplicate items allowed
@@ -120,14 +120,14 @@ test6()
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item(111);
         list.push(item, false);
-        ROSE_ASSERT(i+1==list.size());
+        ASSERT_always_require(i+1==list.size());
     }
 
     for (size_t i=0; i<nitems; ++i) {
         typename WList::value_type item = list.shift();
         typename WList::value_type expected(111);
-        ROSE_ASSERT(item==expected);
-        ROSE_ASSERT(list.size()==9-i);
+        ASSERT_always_require(item==expected);
+        ASSERT_always_require(list.size()==9-i);
     }
 }
 
