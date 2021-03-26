@@ -204,6 +204,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-789.jov                  \
  rose-issue-rc-793.jov                  \
  rose-issue-rc-797.jov                  \
+ rose-issue-rc-802.jov                  \
  rose-issue-rc-813.jov                  \
  charlie.jov
 
@@ -307,6 +308,7 @@ COMPOOL_TESTCODES = \
  rc687b.cpl                             \
  rc715b.cpl                             \
  rc754.cpl                              \
+ rc802.cpl                              \
  beta.cpl                               \
  parttype.cpl
 
