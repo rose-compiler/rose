@@ -63,6 +63,7 @@ void DepRel::Reset( DepDirType t, int min, int max)
     break;
   default:
     assert(false);
+    abort();
   }
   entryType = t | (size << 3);
 }
@@ -89,6 +90,7 @@ DepDirType  DepRel :: GetDirType() const
   case DEPDIR_NE:  return DEPDIR_ALL;
   default:
       assert(false);
+      abort();
   }
   return DEPDIR_NONE;
 }
@@ -108,6 +110,7 @@ int DepRel :: GetMinAlign() const
     return align;
   default:
     assert(false);
+    abort();
   }
 }
 
@@ -127,6 +130,7 @@ int DepRel :: GetMaxAlign() const
     return align + size - 1;
   default:
     assert(false);
+    abort();
   }
 }
 
@@ -250,6 +254,7 @@ bool DepRel::IntersectUpdate (DepRel& e1, const DepRel &e2)
     break;
   default:
     assert(false);
+    abort();
   }
   return t1 != e1.GetDirType() || a1 != e1.GetMinAlign() || b1 != e1.GetMaxAlign();
 }
@@ -324,6 +329,7 @@ DepRel Reverse( const DepRel &e)
     return e;
   default:
     assert(false);
+    abort();
   }
 }
 
@@ -347,6 +353,7 @@ DepRel operator - (const DepRel &e)
     return DepRel(DEPDIR_EQ, lo, hi);
   default:
     assert(false);
+    abort();
   }
 }
 

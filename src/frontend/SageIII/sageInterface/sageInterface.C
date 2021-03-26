@@ -7912,6 +7912,7 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
         }
 
      ROSE_ASSERT(false); // unreachable code
+     abort();
    }
 
 #define DEBUG_TEMPLATE_ARG_LIST_EQUIVALENCE 0
@@ -12787,8 +12788,10 @@ void SageInterface::setLoopStride(SgNode* loop, SgExpression* stride)
       exprstmt->set_expression(plusassignop);
     }
 
+#if 0 // [Robb Matzke 2021-03-17]
     // DQ (1/3/2007): I think this is a meaningless statement.
     testList.empty();
+#endif
     // case 3: i=i + X or i =X +i  i
     // TODO; what if users use i*=,etc ??
     //      send out a warning: not canonical FOR/DO loop
@@ -13268,7 +13271,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
         gen = new OrOpGenerator(isSgOrOp(*ai)); break;
       case V_SgConditionalExp:
         gen = new ConditionalExpGenerator(isSgConditionalExp(*ai)); break;
-      default: assert (!"Should not happen");
+      default: assert (!"Should not happen"); abort();
     }
     replaceExpressionWithStatement(*ai, gen);
     delete gen;
@@ -21186,9 +21189,11 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           func->set_scope(targetBlock);
           // This is needed to move functions in Ada package body into C++ namespace
           // We may have compiler generated first nondefining declaration. We need to move its scope also
-          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration()); 
-          if (func!=nondef_decl)
+          SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration());
+          if (func != nondef_decl)
           {
+            assert(nondef_decl != NULL);
+            assert(nondef_decl->get_file_info() != NULL);
             if (nondef_decl->get_file_info()->isCompilerGenerated())
               nondef_decl->set_scope(targetBlock);
           }
@@ -21229,13 +21234,20 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
             SgInitializedName * init_name = (*ii);
 
+            // Rasmussen (3/16/2021): Use the base type in case type is modified (i.e., const)
+            SgType* var_type = init_name->get_type();
+            if (SgModifierType* mod_type = isSgModifierType(var_type))
+            {
+              var_type = mod_type->get_base_type();
+            }
+
             // Rasmussen (6/29/2020) and (10/19/2020): Variable declarations related to anonymous types are not
             // moved. This is fixed below. Note that SgJovialTableType derives from SgClassType, it may
             // be that class types are not moved correctly either.
             //
-            if (isSgEnumType(init_name->get_type()))
+            if (isSgEnumType(var_type))
             {
-              SgEnumType* enum_type = isSgEnumType(init_name->get_type());
+              SgEnumType* enum_type = isSgEnumType(var_type);
               SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
               SgEnumDeclaration* def_decl = isSgEnumDeclaration(decl->get_definingDeclaration());
               SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(decl->get_firstNondefiningDeclaration());
@@ -21255,9 +21267,9 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
                 }
               }
             }
-            else if (isSgJovialTableType(init_name->get_type()))
+            else if (isSgJovialTableType(var_type))
             {
-              SgJovialTableType* table_type = isSgJovialTableType(init_name->get_type());
+              SgJovialTableType* table_type = isSgJovialTableType(var_type);
               SgDeclarationStatement* decl = table_type->get_declaration();
               if (decl->get_scope() == sourceBlock)
               {
@@ -23415,6 +23427,7 @@ bool SageInterface::getForLoopInformations(
     case V_SgNotEqualOp:
     default:
       assert(false);
+      abort();
   }
 
   SgExpression * increment = for_loop->get_increment();
@@ -24869,7 +24882,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   //if (!node) return;
 
   out<<prefix;
-  out<< (hasRemaining?"├──": "└──");
+  out<< (hasRemaining?"|---": "|___");
   if (!node)
   {
     out<<" NULL "<<endl;
@@ -24890,6 +24903,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     out<<" "<< f->get_qualified_name();
 
   if (SgClassDeclaration* f = isSgClassDeclaration(node) )
+    out<<" "<< f->get_qualified_name();
+
+  if (SgTypedefDeclaration* f = isSgTypedefDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
   if (SgInitializedName * v = isSgInitializedName(node) )
@@ -24928,7 +24944,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     if (i+1<children.size())
       n_hasRemaining=true;
 
-    string suffix= hasRemaining? "│   " : "    ";
+    string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
     serialize (children[i], n_prefix, n_hasRemaining, out);
   }
@@ -24946,6 +24962,7 @@ void printAST2TextFile (SgNode* node, std::string filename)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
   ROSE_ASSERT(false);
+  abort();
   printAST2TextFile (node, filename.c_str());
 }
 

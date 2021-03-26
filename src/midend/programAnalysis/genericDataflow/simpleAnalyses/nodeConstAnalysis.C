@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "nodeConstAnalysis.h"
 #include <algorithm>
 
@@ -416,3 +419,5 @@ void printNodeConstAnalysisStates(nodeConstAnalysis* nca, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

@@ -18,8 +18,11 @@
 
 #include "sage_support.h"
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
 
 #include <boost/algorithm/string.hpp>
+
+namespace si = SageInterface;
 
 Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -247,7 +250,7 @@ namespace
   SgVariableDeclaration* variableDeclaration(SgInitializedName* ini)
   {
     ASSERT_not_null(ini);
-    SgVariableDeclaration* var = isSgVariableDeclaration(ini->get_definition());
+    SgVariableDeclaration* var = isSgVariableDeclaration(ini->get_declptr());
 
     ASSERT_not_null(var);
     return var;
@@ -385,6 +388,9 @@ namespace
     useClauseSyntax(SgDeclarationStatement*);
 
     void startPrivateIfNeeded(SgDeclarationStatement* n);
+
+    void modifiers(SgDeclarationStatement& n);
+    bool hasModifiers(SgDeclarationStatement& n);
 
     //
     // handlers
@@ -643,6 +649,8 @@ namespace
       prn(" ");
       prn(n.get_name());
       prn(" is");
+
+      modifiers(n);
       prn(declwords.second);
       prn(" ");
       type(n.get_base_type());
@@ -1003,19 +1011,27 @@ namespace
       return scopeQual(SG_DEREF(remote));
     }
 
-    void parentRecord(SgClassDefinition& def)
+    void parentRecord(SgBaseClass& parentType)
     {
-      SgBaseClassPtrList& parents = def.get_inheritances();
-
-      if (parents.size() == 0) return;
-
-      SgBaseClass&        parent = SG_DEREF(parents.at(0));
-      SgClassDeclaration& decl   = SG_DEREF(parent.get_base_class());
+      SgClassDeclaration& decl   = SG_DEREF(parentType.get_base_class());
 
       prn(" new ");
       prn(scopeQual(decl.get_scope()));
       prn(decl.get_name());
       prn(" with");
+    }
+
+    void parentRecord_opt(SgBaseClass* baserec)
+    {
+      if (baserec) parentRecord(*baserec);
+    }
+
+    void parentRecord_opt(SgClassDefinition& def)
+    {
+      SgBaseClassPtrList& parents = def.get_inheritances();
+
+      if (parents.size() == 1)
+        parentRecord(SG_DEREF(parents.at(0)));
     }
 
     void handle(SgClassDeclaration& n)
@@ -1028,16 +1044,10 @@ namespace
         const bool explicitNullrec = (  def->get_members().empty()
                                      && def->get_inheritances().empty()
                                      );
-        SgDeclarationModifier& mod = n.get_declarationModifier();
 
         prn(" is");
-
-        if (!explicitNullrec) parentRecord(*def);
-
-        if (mod.isAdaAbstract()) prn(" abstract");
-        if (mod.isAdaLimited())  prn(" limited");
-        if (mod.isAdaTagged())   prn(" tagged");
-
+        if (!explicitNullrec) parentRecord_opt(*def);
+        modifiers(n);
         if (explicitNullrec) prn(" null");
         prn(" record");
 
@@ -1050,7 +1060,21 @@ namespace
       }
       else
       {
-        prn(" is private");
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs = requiresPrivate || hasModifiers(n);
+
+        std::cerr << "private type: " << requiresPrivate << std::endl;
+
+        if (requiresIs)
+        {
+          prn(" is");
+
+          modifiers(n);
+          parentRecord_opt(n.get_adaParentType());
+
+          if (requiresPrivate)
+            prn(" private");
+        }
       }
 
       prn(STMT_SEP);
@@ -1120,6 +1144,13 @@ namespace
       stmt(n.get_body());
     }
 
+
+    void handle(SgFunctionParameterList& n)
+    {
+      // handled by the SgFunctionDeclaration and friends
+    }
+
+
     void handle(SgFunctionDeclaration& n)
     {
       SgFunctionType& ty      = SG_DEREF(n.get_type());
@@ -1181,6 +1212,7 @@ namespace
     // if not handled here, have the language independent parser handle it..
     unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
   }
+
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
@@ -1344,6 +1376,22 @@ namespace
   void AdaStatementUnparser::list(SageNodeList& lst)
   {
     list(lst.begin(), lst.end());
+  }
+
+  void AdaStatementUnparser::modifiers(SgDeclarationStatement& n)
+  {
+    SgDeclarationModifier& mod = n.get_declarationModifier();
+
+    if (mod.isAdaAbstract()) prn(" abstract");
+    if (mod.isAdaTagged())   prn(" tagged");
+    if (mod.isAdaLimited())  prn(" limited");
+  }
+
+  bool AdaStatementUnparser::hasModifiers(SgDeclarationStatement& n)
+  {
+    SgDeclarationModifier& mod = n.get_declarationModifier();
+
+    return mod.isAdaAbstract() || mod.isAdaTagged() || mod.isAdaLimited();
   }
 
   struct TypedeclSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >

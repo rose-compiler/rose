@@ -59,6 +59,12 @@ struct CaseValueRange {
    void reset() {numValues=0; hasSuffix=false; hasSuffixExpr=false; values[0]=NULL; values[1]=NULL;}
 };
 
+struct moduleNature {
+  moduleNature() {reset(); }
+  string nature;
+  void reset() {nature="";} 
+};
+
 } // namespace Rose
 
 // Class to record Fortran attributes in a type declaration statement or in a derived type statement

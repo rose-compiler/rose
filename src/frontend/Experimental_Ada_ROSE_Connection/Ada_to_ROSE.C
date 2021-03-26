@@ -13,6 +13,9 @@
 #include "AdaStatement.h"
 #include "AdaType.h"
 
+#include "sageInterfaceAda.h"
+
+
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
@@ -51,14 +54,19 @@ namespace
 
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgInitializedName*> adaExcpsMap;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>& asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<AdaIdentifier, SgType*>&       adaTypes()  { return adaTypesMap;  }
+map_t<int, SgInitializedName*>&           asisVars()  { return asisVarsMap;  }
+map_t<int, SgInitializedName*>&           asisExcps() { return asisExcpsMap; }
+map_t<int, SgDeclarationStatement*>&      asisDecls() { return asisDeclsMap; }
+map_t<int, SgDeclarationStatement*>&      asisTypes() { return asisTypesMap; }
+map_t<AdaIdentifier, SgType*>&            adaTypes()  { return adaTypesMap;  }
+map_t<AdaIdentifier, SgInitializedName*>& adaExcps()  { return adaExcpsMap;  }
+
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
@@ -131,6 +139,20 @@ AstContext AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
+void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
+{
+  ROSE_ASSERT(n && orig);
+
+  n->set_physical_filename(orig->get_physical_filename());
+  n->set_filenameString(orig->get_filenameString());
+  n->set_line(orig->get_line());
+  n->set_col(orig->get_line());
+
+  n->setOutputInCodeGeneration();
+  n->unsetCompilerGenerated();
+  n->unsetTransformation();
+}
+
 template <class SageNode>
 void setFileInfo( SageNode& n,
                   void (SageNode::*setter)(Sg_File_Info*),
@@ -201,6 +223,7 @@ namespace
     asisDecls().clear();
     asisTypes().clear();
     adaTypes().clear();
+    adaExcps().clear();
   }
 
   //
@@ -670,12 +693,12 @@ namespace
       else if (parentID > 0)
       {
         // parentID == 1.. is 1 used for the package standard??
-        logError() << "unknown unit dependency: "
-                   << pos->first.name << ' '
-                   << (pos->first.isbody ? "[body]" : "[spec]")
-                   << "#" << pos->second.unit->ID
-                   << " -> #" << parentID
-                   << std::endl;
+        logWarn() << "unknown unit dependency: "
+                  << pos->first.name << ' '
+                  << (pos->first.isbody ? "[body]" : "[spec]")
+                  << "#" << pos->second.unit->ID
+                  << " -> #" << parentID
+                  << std::endl;
       }
 
       addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
@@ -711,6 +734,69 @@ namespace
     return res;
   }
 
+  struct InheritFileInfo : AstSimpleProcessing
+  {
+    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr || !n->isTransformation()) return;
+
+      SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
+      ROSE_ASSERT(parentNode && !parentNode->isTransformation());
+
+      updFileInfo(n->get_file_info(),        parentNode->get_file_info());
+      updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
+      updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
+
+      ROSE_ASSERT(!n->isTransformation());
+    }
+  };
+
+  /// Implements a quick check that the AST is properly constructed.
+  ///   While some issues, such as parent pointers will be fixed at the
+  ///   post processing stage, it may be good to point inconsistencies
+  ///   out anyway.
+  void inheritFileInfo(SgSourceFile* file)
+  {
+    InheritFileInfo fixer;
+
+    fixer.traverse(file, preorder);
+  }
+
+  template <class TypedSageNode>
+  void checkType(TypedSageNode* n)
+  {
+    if (!n) return;
+
+    si::ada::FlatArrayType res = si::ada::flattenArrayType(n->get_type());
+
+    if (!res.first) return;
+
+    logInfo() << "Found ArrayType: " << n->unparseToString() << std::flush;
+
+    for (SgExpression* exp : res.second)
+      logInfo() << ", " << SG_DEREF(exp).unparseToString();
+
+    logInfo() << std::endl;
+  }
+
+  void checkExpr(SgAdaAttributeExp* n)
+  {
+    if (!n) return;
+
+    SgRangeExp* rangeExpr = si::ada::range(n);
+    const bool  rangeAttr = boost::to_upper_copy(n->get_attribute().getString()) == "RANGE";
+
+    std::string out = "<null>";
+
+    if (rangeExpr) out = rangeExpr->unparseToString();
+
+    logInfo() << "Found Attribute: " << n->unparseToString() << " " << rangeAttr
+              << " = " << out
+              << std::endl;
+  }
+
 
   struct AstSanityCheck : AstSimpleProcessing
   {
@@ -725,6 +811,8 @@ namespace
       const bool hasStartInfo = (n->get_startOfConstruct() != nullptr);
       const bool hasEndInfo   = (n->get_endOfConstruct() != nullptr);
       const bool hasNoTransf  = (!n->isTransformation());
+      const bool hasNoCompgen = (!n->isCompilerGenerated());
+      const bool printOutput  = (!hasFileInfo || !hasStartInfo || !hasEndInfo || !hasNoTransf || !hasNoCompgen);
 
       if (!hasParent)
         logWarn() << typeid(*n).name() << ": get_parent is NULL" << std::endl;
@@ -741,13 +829,20 @@ namespace
       if (!hasNoTransf)
         logWarn() << typeid(*n).name() << ": isTransformation is set" << std::endl;
 
-      if (hasParent && (!hasFileInfo || !hasStartInfo || !hasEndInfo || !hasNoTransf))
+      if (!hasNoCompgen)
+        logWarn() << typeid(*n).name() << ": isCompilerGenerated is set" << std::endl;
+
+      if (hasParent && printOutput)
         logWarn() << "        parent is " << typeid(*n->get_parent()).name()
                   << std::endl;
 
-      if (!hasParent || !hasFileInfo || !hasStartInfo || !hasEndInfo || !hasNoTransf)
+      if (!hasParent || printOutput)
         logWarn() << "        unparsed: " << n->unparseToString()
                   << std::endl;
+
+      //~ checkType(isSgExpression(n));
+      //~ checkType(isSgInitializedName(n));
+      //~ checkExpr(isSgAdaAttributeExp(n));
     }
   };
 
@@ -789,6 +884,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   generateDOT(&astScope, astDotFile);
 
   logInfo() << "Checking AST post-production" << std::endl;
+  inheritFileInfo(file);
   astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);

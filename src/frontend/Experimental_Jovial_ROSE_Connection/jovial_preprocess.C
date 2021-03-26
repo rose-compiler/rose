@@ -35,7 +35,7 @@ static int preprocess(std::istream & in_stream, std::ostream & out_stream)
 {
    enum State {
       D, E1, F, I, N, E2, WS, name_start, name, close_paren,
-      define_quote1, define_quote2, end_comment_quote
+      define_quote1, define_quote2, end_comment_quote1, end_comment_quote2
    };
    State start = D;
    int c, state = start;
@@ -46,7 +46,8 @@ static int preprocess(std::istream & in_stream, std::ostream & out_stream)
       switch (state) {
         case D:
            if (c == 'd' || c == 'D') state = E1;
-           else if (c == '"') state = end_comment_quote; // beginning of a comment
+           else if (c == '"') state = end_comment_quote1; // beginning of a '"' comment
+           else if (c == '%') state = end_comment_quote2; // beginning of a '%' comment
            break;
         case E1:
            if (c == 'e' || c == 'E') state = F;
@@ -125,8 +126,13 @@ static int preprocess(std::istream & in_stream, std::ostream & out_stream)
               c = '?'; // change '"' to '?' to make lexer happy
            }
            break;
-        case end_comment_quote:
+        case end_comment_quote1:
            if (c == '"') {
+              state = start; // found end of the comment
+           }
+           break;
+        case end_comment_quote2:
+           if (c == '%') {
               state = start; // found end of the comment
            }
            break;

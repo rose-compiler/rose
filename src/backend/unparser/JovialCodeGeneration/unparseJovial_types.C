@@ -265,6 +265,21 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
           unparseDimInfo(dim_info, info);
         }
 
+  // OptStructureSpecifier
+     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel)
+        {
+          curprint("PARALLEL ");
+        }
+     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight)
+        {
+          curprint("T ");
+          if (table_type->get_bits_per_entry() > 0) {
+            std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
+            curprint(value);
+            curprint(" ");
+          }
+        }
+
   // The base type will need to be unparsed (not just the base type name) if
   // it is a primitive type (e.g., U 32, where get_name() won't exist) or if
   // it is anonymous (where again, there won't be a proper name)

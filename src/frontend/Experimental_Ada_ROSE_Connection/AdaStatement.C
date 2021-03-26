@@ -517,36 +517,6 @@ namespace
       AstContext               ctx;
   };
 
-  /// creates a sequence of type declarations in ROSE from a
-  ///   a single Asis declarations with multiple names.
-  struct DeclarePrivateType
-  {
-      DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
-      : ty(tyrep), ctx(astctx), privateElems(privateItems)
-      {}
-
-      void operator()(const NameData& nameelem)
-      {
-        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
-
-        const std::string&      name  = nameelem.fullName;
-        Element_ID              id    = nameelem.id();
-        SgScopeStatement&       scope = ctx.scope();
-        SgDeclarationStatement& dcl   = mkTypeDecl(name, ty, scope);
-
-        attachSourceLocation(dcl, nameelem.elem(), ctx);
-        scope.append_statement(&dcl);
-        privatize(dcl, privateElems);
-        recordNode(asisTypes(), id, dcl);
-        ROSE_ASSERT(dcl.get_parent() == &scope);
-      }
-
-    private:
-      SgType&           ty;
-      AstContext        ctx;
-      bool              privateElems;
-  };
-
 
   SgClassDeclaration&
   createRecordDecl( const std::string& name,
@@ -559,10 +529,45 @@ namespace
       return mkRecordDecl(*recdcl, def, scope);
 
     // if nondefdcl is set, it must be a SgClassDeclaration
+    if (nondefdcl)
+      logError() << name << " " << typeid(*nondefdcl).name() << std::endl;
+
     ROSE_ASSERT(!nondefdcl);
     return mkRecordDecl(name, def, scope);
   }
 
+  void
+  setModifiers(SgDeclarationStatement& dcl, bool abstract, bool limited, bool tagged)
+  {
+    SgDeclarationModifier& mod = dcl.get_declarationModifier();
+
+    if (abstract) mod.setAdaAbstract();
+    if (limited)  mod.setAdaLimited();
+    if (tagged)   mod.setAdaTagged();
+
+    //~ logError() << typeid(dcl).name() << " " << abstract << limited << tagged
+               //~ << std::endl;
+  }
+
+  void
+  setModifiers(SgDeclarationStatement& dcl, const TypeData& info)
+  {
+    setModifiers(dcl, info.hasAbstract, info.hasLimited, info.hasTagged);
+  }
+
+  template <class AsisStruct>
+  void
+  setModifiers(SgDeclarationStatement& dcl, const AsisStruct& info)
+  {
+    setModifiers(dcl, info.Has_Abstract, info.Has_Limited, info.Has_Tagged);
+  }
+
+  template <class AsisStruct>
+  void
+  setModifiersUntagged(SgDeclarationStatement& dcl, const AsisStruct& info)
+  {
+    setModifiers(dcl, info.Has_Abstract, info.Has_Limited, false);
+  }
 
   /// creates a ROSE declaration depending on the provided type/definition
   struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
@@ -574,7 +579,17 @@ namespace
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-      void handle(SgType& n) { res = &mkTypeDecl(dclname, n, dclscope); }
+      void handle(SgType& n)
+      {
+        res = &mkTypeDecl(dclname, n, dclscope);
+
+        if (incomplDecl)
+        {
+          res->set_firstNondefiningDeclaration(incomplDecl);
+          res->set_definingDeclaration(res);
+          incomplDecl->set_definingDeclaration(res);
+        }
+      }
 
       void handle(SgEnumDeclaration& n)
       {
@@ -585,13 +600,9 @@ namespace
 
       void handle(SgClassDefinition& n)
       {
-        SgClassDeclaration&    rec = createRecordDecl(dclname, n, dclscope, incomplDecl);
-        SgDeclarationModifier& mod = rec.get_declarationModifier();
+        SgClassDeclaration& rec = createRecordDecl(dclname, n, dclscope, incomplDecl);
 
-        if (foundation.hasAbstract) mod.setAdaAbstract();
-        if (foundation.hasLimited)  mod.setAdaLimited();
-        if (foundation.hasTagged)   mod.setAdaTagged();
-
+        setModifiers(rec, foundation);
         res = &rec;
       }
 
@@ -607,44 +618,6 @@ namespace
       SgDeclarationStatement* incomplDecl;
   };
 
-
-#if 0
-  /// creates a sequence of type declarations in ROSE from a
-  ///   a single Asis declarations with multiple names.
-  /// \note the created type depends on data provided in the TypeData object.
-  struct DeclareType
-  {
-      DeclareType(TypeData what, Element_Struct& el, AstContext astctx, bool privateItems)
-      : foundation(what), elem(el), ctx(astctx), privateElems(privateItems)
-      {}
-
-      void operator()(const NameData& nameelem)
-      {
-        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
-
-        SgScopeStatement&       scope = ctx.scope();
-        Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        const std::string&      name = nameelem.fullName;
-        SgDeclarationStatement* dcl  = sg::dispatch(MakeDeclaration(name, scope, foundation, nondef), foundation.n);
-        ROSE_ASSERT(dcl);
-
-        attachSourceLocation(*dcl, elem, ctx);
-        privatize(*dcl, privateElems);
-        scope.append_statement(dcl);
-
-        // \todo double check that recorded types are consistent with ROSE representation
-        recordNode(asisTypes(), id, *dcl, nondef != nullptr);
-        ROSE_ASSERT(dcl->get_parent() == &scope);
-      }
-
-    private:
-      TypeData          foundation;
-      Element_Struct&   elem;
-      AstContext        ctx;
-      bool              privateElems;
-  };
-#endif
 
 /*
   needed?
@@ -2025,13 +1998,73 @@ namespace
     return std::make_pair(declname.id(), typeDefn.The_Union.The_Type_Definition.Type_Kind);
   }
 
+  void
+  setParentRecordConstraintIfAvail(SgClassDeclaration& sgnode, Definition_Struct& def, AstContext ctx)
+  {
+    if (def.Definition_Kind != A_Private_Extension_Definition)
+      return;
+
+    logKind("A_Private_Extension_Definition");
+
+    Private_Extension_Definition_Struct& ext = def.The_Union.The_Private_Extension_Definition;
+    SgClassDeclaration&                  parent = getParentRecordDeclID(ext.Ancestor_Subtype_Indication, ctx);
+    SgBaseClass&                         pardcl = mkRecordParent(parent);
+
+    sg::linkParentChild(sgnode, pardcl, &SgClassDeclaration::set_adaParentType);
+  }
+
+  void
+  setTypeModifiers(SgDeclarationStatement& dcl, Definition_Struct& def, AstContext ctx)
+  {
+    switch (def.Definition_Kind)
+    {
+      case A_Private_Type_Definition:
+        {
+          logKind("A_Private_Type_Definition");
+
+          setModifiersUntagged(dcl, def.The_Union.The_Private_Type_Definition);
+          break;
+        }
+
+      case A_Private_Extension_Definition:
+        {
+          logKind("A_Private_Extension_Definition");
+
+          setModifiersUntagged(dcl, def.The_Union.The_Private_Extension_Definition);
+          break;
+        }
+
+      case A_Tagged_Private_Type_Definition:
+        {
+          logKind("A_Tagged_Private_Type_Definition");
+
+          setModifiers(dcl, def.The_Union.The_Tagged_Private_Type_Definition);
+          break;
+        }
+
+      default:
+        logWarn() << "Unknown type declaration view: " << def.Definition_Kind
+                  << std::endl;
+        ROSE_ASSERT(!FAIL_ON_ERROR);
+    }
+  }
+
   SgDeclarationStatement&
-  createOpaqueDecl(NameData adaname, SgScopeStatement& scope, Type_Kinds tyKind, AstContext)
+  createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
   {
     SgDeclarationStatement* res = nullptr;
+    SgScopeStatement&       scope = ctx.scope();
+    Element_Struct*         typeview = nullptr;
+
+    if (!isInvalidId(decl.Type_Declaration_View))
+    {
+      typeview = &retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+      ROSE_ASSERT(typeview->Element_Kind == A_Definition);
+    }
 
     switch (tyKind)
     {
+      case A_Derived_Type_Definition:
       case A_Signed_Integer_Type_Definition:
       case A_Modular_Type_Definition:
       case A_Floating_Point_Definition:
@@ -2043,9 +2076,15 @@ namespace
         }
 
       case A_Record_Type_Definition:
+      case A_Derived_Record_Extension_Definition:
       case A_Tagged_Record_Type_Definition:
         {
-          res = &mkRecordDecl(adaname.ident, scope);
+          SgClassDeclaration& sgnode = mkRecordDecl(adaname.ident, scope);
+
+          if (typeview)
+            setParentRecordConstraintIfAvail(sgnode, typeview->The_Union.Definition, ctx);
+
+          res = &sgnode;
           break;
         }
 
@@ -2073,7 +2112,16 @@ namespace
         res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
     }
 
-    return SG_DEREF(res);
+    // \todo put declaration tags on
+    SgDeclarationStatement& resdcl = SG_DEREF(res);
+
+    if (typeview)
+      setTypeModifiers(resdcl, typeview->The_Union.Definition, ctx);
+    else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
+      setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
+
+
+    return resdcl;
   }
 
   /// chooses between making an additional non-defining declaration
@@ -2087,6 +2135,38 @@ namespace
   {
     return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
+
+
+  // handles incomplete (but completed) and private types
+  void handleOpaqueTypes( Element_Struct& elem,
+                          Declaration_Struct& decl,
+                          bool isPrivate,
+                          AstContext ctx
+                        )
+  {
+    typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
+
+    logTrace() << "\n  abstract: " << decl.Has_Abstract
+               << "\n  limited: " << decl.Has_Limited
+               << "\n  private: " << decl.Has_Private
+               << std::endl;
+
+    //~ DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Completion, ctx);
+    DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
+    NameData                adaname = singleName(decl, ctx);
+    ROSE_ASSERT(adaname.fullName == adaname.ident);
+
+    Element_ID              id     = adaname.id();
+    SgScopeStatement&       scope  = ctx.scope();
+    SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, decl, defdata.second, ctx);
+
+    attachSourceLocation(sgnode, elem, ctx);
+    scope.append_statement(&sgnode);
+    privatize(sgnode, isPrivate);
+    recordNode(asisTypes(), id, sgnode);
+    recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
+    ROSE_ASSERT(sgnode.get_parent() == &scope);
   }
 } // anonymous
 
@@ -2110,14 +2190,16 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   {
     case A_Record_Representation_Clause:           // 13.5.1
       {
+        using SageRecordClause = SgAdaRecordRepresentationClause;
+
         logKind("A_Record_Representation_Clause");
 
-        SgType&                 tyrep = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
-        SgClassType&            rec = SG_DEREF(isSgClassType(&tyrep));
-        SgExpression&           modclause = getExprID(repclause.Mod_Clause_Expression, ctx);
-        SgAdaRecordRepresentationClause& sgnode = mkAdaRecordRepresentationClause(rec, modclause);
-        SgBasicBlock&           components = SG_DEREF(sgnode.get_components());
-        ElemIdRange             range  = idRange(repclause.Component_Clauses);
+        SgType&           tyrep      = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
+        SgClassType&      rec        = SG_DEREF(isSgClassType(&tyrep));
+        SgExpression&     modclause  = getExprID_opt(repclause.Mod_Clause_Expression, ctx);
+        SageRecordClause& sgnode     = mkAdaRecordRepresentationClause(rec, modclause);
+        SgBasicBlock&     components = SG_DEREF(sgnode.get_components());
+        ElemIdRange       range      = idRange(repclause.Component_Clauses);
 
         // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, elem, ctx);
@@ -2552,94 +2634,65 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       }
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
+    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
       {
-        logKind("An_Incomplete_Type_Declaration");
+        logKind( decl.Declaration_Kind == An_Incomplete_Type_Declaration
+                        ? "An_Incomplete_Type_Declaration"
+                        : "A_Tagged_Incomplete_Type_Declaration"
+               );
 
-        NameData                adaname = singleName(decl, ctx);
-        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        if (decl.Corresponding_Type_Declaration)
+        {
+          handleOpaqueTypes(elem, decl, isPrivate, ctx);
+        }
+        else
+        {
+          // no definition is available, ... (e.g., in System)
+          NameData                adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgScopeStatement&       scope  = ctx.scope();
+          SgType&                 opaque = mkOpaqueType();
+          SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
 
-        logTrace() << "Incomplete Type: " << adaname.fullName
-                   << "\n  private: " << decl.Has_Private
-                   << "\n  limited: " << decl.Has_Limited
-                   << "\n  private: " << decl.Has_Private
-                   << std::endl;
-
-        SgScopeStatement&       scope  = ctx.scope();
-        SgType&                 opaque = mkOpaqueType();
-        SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
-
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        recordNode(asisTypes(), adaname.id(), sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          recordNode(asisTypes(), adaname.id(), sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+        }
 
         /*
            unhandled fields:
+             bool                           Has_Abstract;
+             bool                           Has_Limited;
+             bool                           Has_Private;
              Definition_ID                  Discriminant_Part
-             Definition_ID                  Type_Declaration_View
-             Declaration_ID                 Corresponding_Type_Declaration
              Declaration_ID                 Corresponding_Type_Completion
-             Declaration_ID                 Corresponding_Type_Partial_View (* notes)
+             Declaration_ID                 Corresponding_Type_Partial_View
         */
         break;
       }
 
+    case A_Private_Extension_Declaration:
     case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       {
-        logKind("A_Private_Type_Declaration");
+        logKind( decl.Declaration_Kind == A_Private_Type_Declaration
+                        ? "A_Private_Type_Declaration"
+                        : "A_Private_Extension_Declaration"
+               );
 
-        typedef NameCreator::result_container name_container;
+        handleOpaqueTypes(elem, decl, isPrivate, ctx);
 
-        logTrace() << "Private Type "
-                   << "\n  abstract: " << decl.Has_Abstract
-                   << "\n  limited: " << decl.Has_Limited
-                   << "\n  private: " << decl.Has_Private
-                   << std::endl;
-
-        if (NEW_PARTIAL_TYPE_HANDLING)
-        {
-          typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
-
-          DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
-          NameData                adaname = singleName(decl, ctx);
-          ROSE_ASSERT(adaname.fullName == adaname.ident);
-          Element_ID              id     = adaname.id();
-          SgScopeStatement&       scope  = ctx.scope();
-          SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, scope, defdata.second, ctx);
-
-          attachSourceLocation(sgnode, elem, ctx);
-          scope.append_statement(&sgnode);
-          privatize(sgnode, isPrivate);
-          recordNode(asisTypes(), id, sgnode);
-          recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
-          ROSE_ASSERT(sgnode.get_parent() == &scope);
-        }
-        else /* use old code */
-        {
-          // \todo this may only declare one name
-          //       (use singleName -- e.g., An_Incomplete_Type_Declaration)
-          ElemIdRange     range  = idRange(decl.Names);
-          ROSE_ASSERT(range.size() == 1);
-          name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
-          SgType&         opaque = mkOpaqueType();
-
-          ROSE_ASSERT(ctx.scope().get_parent());
-          std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
-        }
-
-        /*
-          bool                           Has_Abstract;
-          bool                           Has_Limited;
-          bool                           Has_Private;
-          Definition_ID                  Discriminant_Part;
-          Definition_ID                  Type_Declaration_View;
-          Declaration_ID                 Corresponding_Type_Declaration;
-          Declaration_ID                 Corresponding_Type_Completion;
-          Declaration_ID                 Corresponding_Type_Partial_View;
-          Declaration_ID                 Corresponding_First_Subtype;
-          Declaration_ID                 Corresponding_Last_Constraint;
-          Declaration_ID                 Corresponding_Last_Subtype;
+        /* unused fields:
+              bool                           Has_Abstract;
+              bool                           Has_Limited;
+              bool                           Has_Private;
+              Definition_ID                  Discriminant_Part;
+              Declaration_ID                 Corresponding_Type_Completion;
+              Declaration_ID                 Corresponding_Type_Partial_View;
+              Declaration_ID                 Corresponding_First_Subtype;
+              Declaration_ID                 Corresponding_Last_Constraint;
+              Declaration_ID                 Corresponding_Last_Subtype;
         */
         break;
       }
@@ -2790,8 +2843,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Parameter_Specification:                // 6.1(15)  -> Trait_Kinds
       {
         // handled in getParm
-        // break;
         ROSE_ASSERT(false);
+        break;
       }
 
     case A_Task_Type_Declaration:                  // 9.1(2)
@@ -3098,13 +3151,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
+      {
+        // handled in EnumElementCreator
+        ROSE_ASSERT(false);
+        break;
+      }
+
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
-    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
-    case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
-    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
@@ -3143,7 +3200,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
-  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope_npc(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)

@@ -68,7 +68,7 @@ void ReadAnnotCollection<TargetInfo,sep1,sep2,e>:: read( istream& in)
      cerr << "error reading annotation: ";
      target.write(cerr);
      cerr << endl << m.msg << endl;
-     throw(m);
+     throw;
   }
 
 }

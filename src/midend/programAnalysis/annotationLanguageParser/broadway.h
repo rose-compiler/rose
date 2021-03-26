@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_H
 #define BDWY_H
@@ -119,3 +121,4 @@ public:
 #endif
 
 #endif /* BDWY_H */
+#endif

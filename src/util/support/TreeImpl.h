@@ -65,6 +65,7 @@ class TreeNodeImpl
            break;
        default:
            assert(false);
+           abort();
        }
      }
   virtual void write(std::ostream& out) const {
@@ -93,6 +94,7 @@ class TreeTraverse
           return n->FirstChild();
        default:
           assert(false);
+          abort();
       }
     }
   static T* LastNode( T *n, TraversalOpt opt=PreOrder)
@@ -105,6 +107,7 @@ class TreeTraverse
       case ChildrenOnly: return n->LastChild();
       default:
          assert(false);
+         abort();
       }
    }
   static T* PrevNode( T *n, TraversalOpt opt=PreOrder)
@@ -131,6 +134,7 @@ class TreeTraverse
           return n->PrevSibling();
       default:
           assert(false);
+          abort();
      }
    }
   static T* NextNode( T *n, TraversalOpt opt=PreOrder)
@@ -157,6 +161,7 @@ class TreeTraverse
           return n->NextSibling();
      default:
           assert(false);
+          abort();
      }
    }
 };

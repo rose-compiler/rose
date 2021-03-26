@@ -142,14 +142,69 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
         case SgJovialDirectiveStatement::e_compool:
            {
-              curprint_indented("!COMPOOL ('", info);
+              curprint_indented("!COMPOOL ", info);
               curprint(content);
-              curprint("');\n");
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_skip:
+           {
+              curprint_indented("!SKIP", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_begin:
+           {
+              curprint_indented("!BEGIN", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_end:
+           {
+              curprint_indented("!END;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_linkage:
+           {
+              curprint_indented("!LINKAGE", info);
+              if (!content.empty()) {
+                 curprint(" ");
+                 curprint(content);
+              }
+              curprint(";\n");
               break;
            }
         case SgJovialDirectiveStatement::e_reducible:
            {
               curprint_indented("!REDUCIBLE;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_nolist:
+           {
+              curprint_indented("!NOLIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_list:
+           {
+              curprint_indented("!LIST;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_eject:
+           {
+              curprint_indented("!EJECT;\n", info);
+              break;
+           }
+        case SgJovialDirectiveStatement::e_initialize:
+           {
+              curprint_indented("!INITIALIZE;\n", info);
               break;
            }
         case SgJovialDirectiveStatement::e_order:
@@ -354,11 +409,14 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* block = isSgBasicBlock(stmt);
      ASSERT_not_null(block);
+     ASSERT_not_null(block->get_parent());
+
+     SgSwitchStatement* switch_stmt = isSgSwitchStatement(block->get_parent());
 
      int block_size = block->get_statements().size();
 
-  // allow one declaration to be unparsed without BEGIN and END
-     if (block_size > 1)
+  // allow one declaration to be unparsed without BEGIN and END (except for switch stmts)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("BEGIN\n", info);
         }
@@ -370,7 +428,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      info.dec_nestingLevel();
 
-     if (block_size > 1)
+     if (block_size > 1 || switch_stmt)
         {
            curprint_indented("END\n", info);
         }
@@ -979,7 +1037,9 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
                     }
                  else if (isSgEmptyDeclaration(item_decl))
                     {
-                       // do nothing for a null declaration (may want to unparse ";\n")
+                       // must unparse ';' because "BEGIN ; END" appears in code
+                       curprint_indented(";\n", info);
+
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
@@ -1011,6 +1071,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ASSERT_not_null(type);
 
+     SgModifierType* modifier_type = isSgModifierType(type);
+
      info.set_inVarDecl();
 
   // pretty printing
@@ -1022,7 +1084,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      // Type could be an SgModifierType, for tables and blocks, save trouble and unwrap here
-        if (SgModifierType* modifier_type = isSgModifierType(type))
+        if (modifier_type)
            {
               type = modifier_type->get_base_type();
               ASSERT_not_null(type);
@@ -1047,9 +1109,11 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint("REF ");
         }
-     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+     if (modifier_type)
         {
-           curprint("CONSTANT ");
+           if (modifier_type->get_typeModifier().get_constVolatileModifier().isConst()) {
+             curprint("CONSTANT ");
+           }
         }
 
      switch (type->variantT())
@@ -1086,22 +1150,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            unparseType(type, info);
         }
 
-  // OptStructureSpecifier
-     if (table_type)
-        {
-           if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
-              curprint("PARALLEL ");
-           }
-           else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
-              curprint("T ");
-              if (table_type->get_bits_per_entry() > 0) {
-                 std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
-                 curprint(value);
-                 curprint(" ");
-              }
-           }
-        }
-
   // OptPackingSpecifier
      if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
      else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
@@ -1125,7 +1173,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // WordsPerEntry (for anonymous table declarations)
-     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
+     SgJovialTableStatement* table_decl = nullptr;
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
         // typedefs (e.g., TYPE utype U) also have a base_type (in this case U)

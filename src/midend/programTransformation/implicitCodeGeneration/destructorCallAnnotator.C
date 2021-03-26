@@ -587,6 +587,7 @@ SgExpression *buildDestructorExpr(SgNode *n)
      else
         {
           ROSE_ASSERT(false);
+          abort();
         }
 
      SgExprListExp *dtorParams = new SgExprListExp(SgNULL_FILE);

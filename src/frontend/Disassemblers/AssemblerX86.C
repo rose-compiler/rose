@@ -103,26 +103,14 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmBinaryAddPreupdate: {
-            fprintf(f, "AddPreupdate {");
+        case V_SgAsmBinaryPreupdate: {
+            fprintf(f, "Preupdate {");
             printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmBinarySubtractPreupdate: {
-            fprintf(f, "SubtractPreupdate {");
-            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmBinaryAddPostupdate: {
-            fprintf(f, "AddPostupdate {");
-            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmBinarySubtractPostupdate: {
-            fprintf(f, "SubtractPostupdate {");
+        case V_SgAsmBinaryPostupdate: {
+            fprintf(f, "Postupdate {");
             printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;

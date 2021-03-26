@@ -810,10 +810,10 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 //  has not yet been inserted. So it has no declaration associated with a symbol
 //  cout<<friend_proto->unparseToString()<<endl; 
 
-  if (enable_debug)
+  if (enable_debug) {
     ROSE_ASSERT(friend_proto != NULL);
     printf ("Exiting insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
-
+  }
 
   return friend_proto;
 }

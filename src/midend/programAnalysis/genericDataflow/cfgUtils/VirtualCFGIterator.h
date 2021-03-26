@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef VIRTUAL_CFG_ITERATOR
 #define VIRTUAL_CFG_ITERATOR
 
@@ -157,4 +160,5 @@ class back_dataflow: /*public virtual BaseCFG::back_dataflow,*/ public virtual d
         void operator ++ (int);
 };
 }
+#endif
 #endif
