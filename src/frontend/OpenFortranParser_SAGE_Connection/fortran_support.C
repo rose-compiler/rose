@@ -4382,8 +4382,8 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case ComponentAttrSpec_contiguous:
-               printf ("Error: ComponentAttrSpec_contiguous used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
+            // Pei-Hung(03/26/2021) set storage modifier to contiguous attribute
+               variableDeclaration->get_declarationModifier().get_storageModifier().setContiguous();    
                break;
 
           default:

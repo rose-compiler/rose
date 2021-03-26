@@ -1954,6 +1954,8 @@ void c_action_label(Token_t * lbl)
             {
                 if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
                 printf("found a ComponentAttrSpec_contiguous spec \n");
+                DeclAttributes.setIsContiguous(true);
+                DeclAttributes.setContiguousAttr(ComponentAttrSpec_contiguous);
                 break;
             }
 
