@@ -189,6 +189,8 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   variant_record.ads                                
 
 ROSE_FAILING_ADA_TESTS :=                           \
+  all_modes.ads                                     \
+  complex.adb                                       \ 
   delay_until.adb                                   \
   iterate_range.adb                                 \
   mpiuse.ads                                        \
@@ -205,10 +207,8 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_FAILING_ADA_TESTS)                         
 
 ASIS_FAILING_TESTS :=                               \
-  all_modes.ads                                     \
   entry_index_specification.adb                     \
-  mpi.ads                                           \
-  complex.adb                                       
+  mpi.ads                                           
 
 #defining all Ada test files                         
 ADA_TESTS :=                                        \
