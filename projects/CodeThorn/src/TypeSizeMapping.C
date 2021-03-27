@@ -129,13 +129,25 @@ namespace CodeThorn {
       CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
+      if(elementTypeSize>10000) {
+	cout<<"DEBUG: ARRAY: ELEMENT TYPE SIZE:"<<elementTypeSize<<endl;
+	return -1;
+      }
       CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
-      unsigned int totalSize=numberOfElements*elementTypeSize;
-      if(elementTypeSize>0) {
-        _typeToSizeMapping[sgType]=totalSize; // cache result
+      if(numberOfElements>10000) {
+	cout<<"DEBUG: ARRAY: NUM ELEMENTS:"<<elementTypeSize<<endl;
+	return -1;
+      }
+      unsigned int totalSize=-1;
+      if(elementTypeSize!=-1 && numberOfElements!=-1) {
+	totalSize=numberOfElements*elementTypeSize;
+	if(elementTypeSize>0) {
+	  _typeToSizeMapping[sgType]=totalSize; // cache result
+	}
       }
       return totalSize;
     }
+      /*
     case V_SgClassType: {
       CodeThorn::logger[TRACE]<<"CLASSTYPE: "<<sgType->unparseToString()<<endl;
       CodeThorn::TypeSize sum=0;
@@ -148,11 +160,18 @@ namespace CodeThorn {
       }
       return sum;
     }
+      */
+    default: {
+      unsigned int totalSize=-1;
+      totalSize=getBuiltInTypeSize(determineBuiltInTypeId(sgType));
+      if(totalSize>10000) {
+	cout<<"DEBUG: TYPESIZE: DEFAULT (BUILT-IN): typesize="<<totalSize<<endl;
+	return -1;
+      }
 
-    default:
-      return getBuiltInTypeSize(determineBuiltInTypeId(sgType));
       //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
+    }
     }
     return 0;
   }
@@ -261,124 +280,5 @@ namespace CodeThorn {
     return false;
   }
 
-  void TypeSizeMapping::computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim) {
-#if 1
-    ROSE_ASSERT(root);
-    ROSE_ASSERT(vim);
-    RoseAst ast(root);
-    int numUnknownVarType=0;
-    int numNonValidVarId=0;
-    int numZeroTypeSize=0;
-    int numUndefinedTypeSize=0;
-    for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-#if 1
-      SgNode* node=*i;
-      ROSE_ASSERT(node);
-      if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-        CodeThorn::logger[TRACE]<<"class def: "<<classDef->unparseToString()<<endl;
-        std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
-        int offset=0;
-        for(auto dataMember : dataMembers) {
-          CodeThorn::logger[TRACE]<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
-#if 1
-          if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
-            SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-            if(VariableIdMapping::isAnonymousBitfield(initName)) {
-              // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
-              continue;
-            }
-            CodeThorn::logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
-            VariableId varId=vim->variableId(dataMember);
-            vim->setIsMemberVariable(varId,true);
-            if(varId.isValid()) {
-              SgType* varType=vim->getType(varId);
-              varType=varType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
-              if(varType) {
-                // determine if size of type is already known
-                int typeSize=vim->getTypeSize(varType);
-                if(isUndefinedTypeSize(typeSize)) {
-                  if(isClassOrStructDeclaration(varDecl)) {
-                    computeOffsets(varDecl,vim);
-                    typeSize=vim->getTypeSize(varType);
-                  }
-                  // different varids can be mapped to the same offset
-                  // every varid is inserted exactly once.
-                  if(_typeToSizeMapping.find(varType)!=_typeToSizeMapping.end()) {
-                    // if the same varId is found, ensure that the offset
-                    // is the same again (e.g. the same headerfile is
-                    // included in 2 different files, both provided on the
-                    // command line
-                    if(_typeToSizeMapping[varType]!=(CodeThorn::TypeSize)offset) {
-                      continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
-                      // do nothing for now
-                      //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
-                      
-                      //variableIdMapping->toStream(cerr);
-                      //cerr<<"Internal error: TypeSizeMapping::initializeOffsets: varid already exists."<<endl;
-                      //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
-                      //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
-                      //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
-                      //cerr<<"Declaration: "<<node->unparseToString()<<endl;
-                      //exit(1);
-                    }
-                  } else {
-                    // typesize is unknown, invalidate offset computation
-                    offset=-1;
-                    break;
-                  }
-                  // for unions the offset is not increased (it is the same for all members)
-                  if(!isUnionDeclaration(node)) {
-                    offset+=typeSize;
-                  }
-                } else {
-                  // type size is already known
-                  vim->setOffset(varId,offset);
-                  if(!isUnionDeclaration(node)) {
-                    offset+=typeSize;
-                  }
-                }
-              } else {
-                // could not determine var type
-                // ...
-                //cout<<"DEBUG: unknown var type."<<endl;
-                numUnknownVarType++;
-              }
-            } else {
-              // non valid var id
-              CodeThorn::logger[WARN]<<"TypeSizeMapping (offset computation): invalid varid at "
-                                     <<SgNodeHelper::sourceFilenameLineColumnToString(varDecl)<<endl;
-              numNonValidVarId++;
-            }
-          } else {
-            // var decl is 0
-          }
-#endif
-        } // end of loop on all data members of a type
-        // skip subtree of class definition (would revisit nodes).
-        i.skipChildrenOnForward();
-      }
-#endif
-    }  // iterate on all declarations
-#if 1
-    CodeThorn::logger[INFO]<<"Number of unknown var types: "<<numUnknownVarType<<endl;
-    CodeThorn::logger[INFO]<<"Number of non-valid varids: "<<numNonValidVarId<<endl;
-    CodeThorn::logger[INFO]<<"Number of types with 0 size: "<<numZeroTypeSize<<endl;
-    //CodeThorn::logger[INFO]<<"Typesize map size: "<<_typeToSizeMapping.size()<<endl;
-#endif
-#endif
-  }
-
-#if 0
-  int TypeSizeMapping::getOffset(CodeThorn::VariableId varId) {
-    ROSE_ASSERT(varId.isValid());
-    auto varIdOffsetPairIter=varIdTypeSizeMap.find(varId);
-    if(varIdOffsetPairIter!=varIdTypeSizeMap.end()) {
-      return (*varIdOffsetPairIter).second;
-    } else {
-      return 0;
-    }
-    return 0;
-  }
-#endif
 
 } // end of namespace CodeThorn

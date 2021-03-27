@@ -54,7 +54,6 @@ namespace CodeThorn {
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
 
-    void computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim);
     std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
     //int getOffset(CodeThorn::VariableId varId);
     // returns true if the variable is a member of a struct/class/union.

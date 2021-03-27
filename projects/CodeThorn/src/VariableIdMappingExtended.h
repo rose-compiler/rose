@@ -21,7 +21,10 @@ namespace CodeThorn {
      * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
-    void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount = 3); // override;
+    void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
+    void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
+    void computeVariableSymbolMapping3(SgProject* project, int maxWarningsCount);
+    void registerAllVariableSymbols(SgProject* project, int maxWarningsCount);
 
     // deprecated
     void computeTypeSizes();
@@ -48,7 +51,7 @@ namespace CodeThorn {
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 
-    // maintaining class members for each type (required for operations such as copy struct)
+    // maintain class members for each type (required for operations such as copy struct)
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
@@ -57,6 +60,18 @@ namespace CodeThorn {
     void recordWarning(std::string);
     std::list<std::string> _warnings;
 
+    // list of all global variable declarations
+    // list of local variable declarations
+    // declarations with initializer and complete or incomplete type: isDeclWithInitializer(getInitializer),isDeclWithoutInitializer,isDeclWithCompleteType
+    // list of all types (from all declarations)
+    // list of all declarations varid:(global|local|member,+class_member_list(varid),array-dim-vector<expr|num>+elementtype,varid->type,class|union|array|built-in
+    // noinit|complete-type-init|incomplete-type-init)
+    // determineTypeSize(type)
+    // determineInitializerSize(initializer-expr)
+
+    std::list<SgVariableDeclaration*> _globalVarDecls;
+    std::list<SgFunctionDefinition*> _functionDefinitions;
+    std::list<SgFunctionDeclaration*> _functionDeclarations;
   };
 }
 
