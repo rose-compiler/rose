@@ -2386,6 +2386,7 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/sageInterfaceAda_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
