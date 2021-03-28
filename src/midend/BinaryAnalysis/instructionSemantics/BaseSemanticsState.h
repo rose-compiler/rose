@@ -112,7 +112,7 @@ public:
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr protoval() const { return protoval_; }
+    SValuePtr protoval() const;
 
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();

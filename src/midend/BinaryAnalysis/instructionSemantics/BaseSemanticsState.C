@@ -42,6 +42,11 @@ State::State(const State &other)
 
 State::~State() {}
 
+SValuePtr
+State::protoval() const {
+    return protoval_;
+}
+
 void
 State::clear() {
     registers_->clear();
