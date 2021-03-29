@@ -5704,12 +5704,12 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   else if (ATmatch(term, "NE(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_not_equal;
 
   // Logical operators
-  else if (ATmatch(term, "AND(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
-  else if (ATmatch(term,  "OR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
-  else if (ATmatch(term, "XOR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
-  else if (ATmatch(term, "EQV(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
+  else if (ATmatch(term, "AND(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
+  else if (ATmatch(term,  "OR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
+  else if (ATmatch(term, "XOR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
+  else if (ATmatch(term, "EQV(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
 
-  else if (ATmatch(term, "Mod(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_mod;
+  else if (ATmatch(term, "Mod(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_mod;
 
   else return ATfalse;
 
