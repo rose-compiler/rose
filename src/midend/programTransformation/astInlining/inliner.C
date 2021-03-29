@@ -366,7 +366,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           } else if (arrowexp) {
             thisptr = arrowexp->get_lhs_operand();
           } else {
-            assert (false);
+            ROSE_ABORT ();
           }
         }
 

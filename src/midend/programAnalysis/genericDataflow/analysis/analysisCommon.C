@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "analysisCommon.h"
 
 using namespace cfgUtils;
@@ -29,3 +32,5 @@ SgIncidenceDirectedGraph* getCallGraph()
 {
         return callGraph;
 }
+
+#endif

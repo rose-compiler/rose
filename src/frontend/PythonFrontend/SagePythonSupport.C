@@ -93,8 +93,7 @@ sage_appendStatements(PyObject *self, PyObject *args)
               break;
             default: {
               cout << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
-              ROSE_ASSERT(false);
-              break;
+              ROSE_ABORT();
             }
         }
         SageInterface::appendStatement(sg_child, sg_target);
@@ -202,8 +201,7 @@ buildReference(char* id, SgScopeStatement* scope) {
         default: {
             cout << "error: unable to convert python name: " << id
                  << ". Corresponding symbol had type: " << sg_sym->class_name() << endl;
-            ROSE_ASSERT(false);
-            break;
+            ROSE_ABORT();
         }
     }
     return NULL;

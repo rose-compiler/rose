@@ -1,6 +1,6 @@
 #include "DataFlowAnalysis.h"
 #include "DGBaseGraphImpl.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 template<class Node, class Data>
 DataFlowAnalysis<Node, Data>::DataFlowAnalysis()

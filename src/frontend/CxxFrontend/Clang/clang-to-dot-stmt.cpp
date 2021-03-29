@@ -506,7 +506,7 @@ std::string ClangToDotTranslator::Traverse(clang::Stmt * stmt)
             break;
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
  // ROSE_ASSERT(result != NULL);
@@ -4801,12 +4801,12 @@ bool ClangToDotTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, 
         else if (sym != NULL) {
             std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
             std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
     }
     else {
          std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
     }
 
     return VisitExpr(decl_ref_expr, node) && res;
@@ -4862,12 +4862,12 @@ bool ClangToDotTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, 
         else if (sym != NULL) {
             std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
             std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
     }
     else {
          std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
     }
 #endif
 
@@ -4976,7 +4976,7 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
         else if (D->isArrayRangeDesignator()) {
             ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
         }
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
 
         ROSE_ASSERT(expr != NULL);
 
@@ -5038,7 +5038,7 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
         else if (D->isArrayRangeDesignator()) {
             ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
         }
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
 
         ROSE_ASSERT(expr != NULL);
 
@@ -5082,7 +5082,7 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
             node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(designated_init_expr->getArrayRangeStart(*it))));
             node_desc.successors.push_back(std::pair<std::string, std::string>(oss_.str(), Traverse(designated_init_expr->getArrayRangeEnd(*it))));
         }
-        else assert(false);
+        else ROSE_ABORT();
         }
 #else
   // DQ (11/28/2020): There is no clang::DesignatedInitExpr::designators_iterator in Clang 10, 
@@ -5119,7 +5119,7 @@ bool ClangToDotTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * d
                        }
                       else 
                        {
-                         assert(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -6200,7 +6200,7 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
             name = "__PRETTY_FUNCTION__";
             break;
         case clang::PredefinedExpr::PrettyFunctionNoVirtual:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
             break;
     }
 
@@ -6272,7 +6272,7 @@ bool ClangToDotTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefine
             name = "__PRETTY_FUNCTION__";
             break;
         case clang::PredefinedExpr::PrettyFunctionNoVirtual:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
             break;
     }
 

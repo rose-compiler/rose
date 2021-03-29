@@ -668,6 +668,7 @@ context-free syntax
       OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
 
   CompileTimeNumericFormula   -> ScaleSpecifier          {cons("ScaleSpecifier")}
+  EQ                          -> ScaleSpecifier          {reject}
   CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
   EQ                          -> FractionSpecifier       {reject}
 %% What to do here
@@ -1551,10 +1552,10 @@ context-free syntax
   Level1Expr                      -> MultOperand
   Level1Expr '**' MultOperand     -> MultOperand        {cons("Power")}
 
-  MultOperand                     -> AddOperand
-  AddOperand  '*'   MultOperand   -> AddOperand         {cons("Mult")}
-  AddOperand  '/'   MultOperand   -> AddOperand         {cons("Div")}
-  AddOperand  'MOD' MultOperand   -> AddOperand         {cons("Mod")}
+  MultOperand                          -> AddOperand
+  AddOperand  '*'         MultOperand  -> AddOperand    {cons("Mult")}
+  AddOperand  '/'         MultOperand  -> AddOperand    {cons("Div")}
+  AddOperand  MODOperator MultOperand  -> AddOperand    {cons("Mod")}
 
   AddOperand                      -> Level2Expr
               '+' AddOperand      -> Level2Expr         {cons("UnaryPlus"),  prefer}
@@ -1733,6 +1734,7 @@ context-free syntax
 
   Dereference                 -> TableDereference      {prefer}
 
+  '@' Name Subscript          -> Dereference           {cons("TableDereference")}
   '@' PointerItemName         -> Dereference           {cons("Dereference")}
   '@' '(' Formula ')'         -> Dereference           {cons("Dereference")}
   '@' '(' PointerLiteral ')'  -> Dereference           {cons("Dereference"), reject}  %% This prevents NULL from being dereferenced
@@ -1945,7 +1947,7 @@ context-free syntax
 %%%%%%%%%%
 
   BitTypeConversion           -> BitConversion
-  RepConversion               -> BitConversion
+  RepConversion               -> BitConversion        {reject} %% fixes ambiguity, RepFunctionVariable and BitPrimaryConversion
 
   '(*'
     BitTypeDescription
@@ -2050,7 +2052,7 @@ context-free syntax
 
   '*'                        -> MultiplyDivideOrMod     {cons("MultiplyOp")}
   '/'                        -> MultiplyDivideOrMod     {cons("DivideOp")}
-  'MOD'                      -> MultiplyDivideOrMod     {cons("ModOp")}
+  MODOperator                -> MultiplyDivideOrMod     {cons("ModOp")}
 
   '*'                        -> MultiplyOrDivide        {cons("MultiplyOp")}
   '/'                        -> MultiplyOrDivide        {cons("DivideOp")}

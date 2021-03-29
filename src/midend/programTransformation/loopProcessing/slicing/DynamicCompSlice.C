@@ -1,7 +1,7 @@
 #include <DynamicCompSlice.h>
 #include <CompSliceImpl.h>
 #include <LoopTreeTransform.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 #include <assert.h>
 #include <stdio.h>
 

@@ -1391,7 +1391,7 @@ Grammar::buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool
                default:
                   {
                     printf ("ERROR: PART 1: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -1553,7 +1553,7 @@ Grammar::buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool
                     default:
                        {
                          printf ("ERROR: PART 2: default reached in generation of code for ATerm support: typeKind = %d \n",typeKind);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -1711,7 +1711,7 @@ Grammar::buildAtermSupportFunctions(AstNodeClass & node, StringUtility::FileWith
 
 #if 0
      printf ("Exiting as a test in Grammar::buildAtermSupportFunctions() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 

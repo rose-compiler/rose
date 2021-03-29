@@ -275,7 +275,7 @@ std::pointer_to_unary_function<SgNode*, NumberQuerySynthesizedAttributeType> Num
     case UnknownListElementType:
       {
         printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
     case NumberOfArgsInConstructor:
       {
@@ -291,7 +291,7 @@ std::pointer_to_unary_function<SgNode*, NumberQuerySynthesizedAttributeType> Num
     default:
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
   } /* End switch-case */
   return std::ptr_fun(__x);
@@ -305,7 +305,7 @@ std::pointer_to_binary_function<SgNode*, std::string, NumberQuerySynthesizedAttr
     case UnknownListElementTypeTwoParameters:
       {
         printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
     case NumberOfArgsInParanthesisOperator:
       {
@@ -317,7 +317,7 @@ std::pointer_to_binary_function<SgNode*, std::string, NumberQuerySynthesizedAttr
     default:
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
   }
   return std::ptr_fun(__x);

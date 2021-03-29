@@ -176,8 +176,7 @@ struct testFunctionals2: public std::binary_function<SgNode*,SgNode*, std::list<
     y=x;
   } 
   std::list<SgNode*>  operator()(SgNode* node,SgNode* test) const{
-    std::list<SgNode*>* x;
-    return *x;
+      return std::list<SgNode*>();
   }
 };
 

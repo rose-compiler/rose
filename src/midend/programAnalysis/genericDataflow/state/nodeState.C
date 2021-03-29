@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 // we don't want functionState.h to be included until nodeState.h is finished
 #define NO_FUNCTION_STATE_H
 #include "nodeState.h"
@@ -1113,3 +1116,5 @@ string NodeState::str(Analysis* analysis, string indent) const
         
         return oss.str();
 }
+
+#endif

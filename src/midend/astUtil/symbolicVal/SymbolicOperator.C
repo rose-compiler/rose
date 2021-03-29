@@ -4,7 +4,7 @@
 #include "SymbolicMultiply.h"
 #include "SymbolicSelect.h"
 #include "CommandOptions.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #define COMPARE_MAX  10
 static int comparetime = 0;
@@ -61,7 +61,7 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       int val2;
       int vu1, vd1;
       if (!v2.isConstInt(val2))
-         assert(false);
+         ROSE_ABORT();
       if (v1 == 1 || val2 == 1)
          r =  v1;
       else if (val2 == -1 && v1.isConstInt(vu1, vd1))
@@ -73,16 +73,13 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       return r;
      }
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 
 // DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
 // DQ (12/11/2016): It appears that printf() is not declared here on some versions of Linux (even RH).
    std::cerr << "Exiting at a previously undefined function return location. " << std::endl;
-   assert(false);
-
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
-   return r;
+   ROSE_ABORT();
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
@@ -140,7 +137,7 @@ SymbolicVal Max( const SymbolicVal &v1, const SymbolicVal &v2,
            case REL_GE:
                return v1;
            default:
-              assert(0);
+              ROSE_ABORT();
            }
         }
 
@@ -166,7 +163,7 @@ SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
            case REL_GE:
                return v2;
            default:
-              assert(0);
+              ROSE_ABORT();
            }
          }
 
@@ -450,8 +447,9 @@ class SelectCompare  : public CompareOperator
               }
               else if (t1 == SYMOP_MAX && t2 == SYMOP_MIN)
                   result = Reverse( SelectCompare(v2, e2, GetFunc())(v1) );
-              else
-                  assert(false);
+              else {
+                  ROSE_ABORT();
+              }
            }
 
  public:
@@ -493,7 +491,7 @@ class ValCompare  : public CompareOperator
                                   : Reverse(SelectCompare(v2,v,GetFunc())(v1));
                    break;
              default:
-                   assert(false);
+                   ROSE_ABORT();
             }
           }
 
@@ -545,7 +543,7 @@ CompareRel Reverse( CompareRel rel)
    case REL_GE:
         return REL_LE;
    default:
-      assert(0);
+      ROSE_ABORT();
   }
 }
 

@@ -149,8 +149,7 @@ public:
 
     virtual SgExpression* fold_foreign_impl(Foreign* foreign)
     {
-        ROSE_ASSERT(0);
-        return NULL;
+        ROSE_ABORT();
     }
 
         virtual SgFile* fold_php_script(PHP_script* in)
@@ -386,7 +385,7 @@ public:
         }
         else
         {
-            ROSE_ASSERT(0);
+            ROSE_ABORT();
         }
         ROSE_ASSERT(e);
         return e;
@@ -414,7 +413,7 @@ public:
         {
             // TODO where is this function - there is no buildDivideOp!?
             //e = buildDivideOp(left, right);
-            ROSE_ASSERT(0);
+            ROSE_ABORT();
         }
         else if (op->getString() == "<")
         {
@@ -439,7 +438,7 @@ public:
         else
         {
             // TODO "===" needs to be implemented
-            ROSE_ASSERT(0);
+            ROSE_ABORT();
         }
         ROSE_ASSERT(e);
         return e;
@@ -526,7 +525,7 @@ public:
         }
         else
         {
-            ROSE_ASSERT(0);
+            ROSE_ABORT();
         }
         ROSE_ASSERT(e);
         return e;
@@ -547,7 +546,7 @@ public:
         }
         else
         {
-            ROSE_ASSERT(0);
+            ROSE_ABORT();
         }
         ROSE_ASSERT(e);
         return e;

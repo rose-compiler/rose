@@ -167,8 +167,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
           default:
              {
                printf("FortranCodeGeneration_locatedNode::unparseExpression: Error: No handler for %s (variant: %d)\n",expr->sage_class_name(), expr->variantT());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
    }
@@ -554,7 +553,7 @@ outputLogicalOperator(SgExpression* expr)
        else
         {
           printf ("Error: this function only needs to handle binary operators. ");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return outputLogicalOperator;
@@ -819,37 +818,32 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
           case SgCastExp::e_unknown:
              {
                printf ("SgCastExp::e_unknown found \n");
-               ROSE_ASSERT(false);
-               break; 
+               ROSE_ABORT();
              }
 
           case SgCastExp::e_default:
              {
                printf ("SgCastExp::e_default found \n");
-               ROSE_ASSERT(false);
-               break; 
+               ROSE_ABORT();
              }
 
           case SgCastExp::e_dynamic_cast:
              {
             // dynamic_cast <P *> (expr)
                printf ("SgCastExp::e_dynamic_cast found (Now defined in Fortran) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
           case SgCastExp::e_static_cast:
              {
             // static_cast <P *> (expr)
                printf ("SgCastExp::e_static_cast found (Now defined in Fortran) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
           case SgCastExp::e_reinterpret_cast:
              {
             // reinterpret_cast <P *> (expr)
                printf ("SgCastExp::e_reinterpret_cast found (Now defined in Fortran) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case SgCastExp::e_C_style_cast:
@@ -873,16 +867,14 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
           case SgCastExp::e_safe_cast:
              {
                printf ("SgCastExp::e_safe_cast found (Not defined in Fortran) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
      // DQ (3/28/2017): Adding this here to eliminate warning from Clang.
         case SgCastExp::e_last_cast:
              {
                printf ("SgCastExp::e_last_cast is an error (end of enum list) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
      // DQ (3/28/2017): Adding this here to eliminate warning from Clang.
@@ -890,8 +882,7 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
              {
             // DQ (3/28/2017): There should be no other cases, but make the default an error (just in case).
                printf ("SgCastExp::e_last_cast is an error (end of enum list) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 
@@ -907,7 +898,7 @@ void
 FortranCodeGeneration_locatedNode::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
 #if 0
   // FIXME:eraxxon
@@ -943,7 +934,7 @@ void
 FortranCodeGeneration_locatedNode::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
 #if 0
   // FIXME:eraxxon
@@ -1473,7 +1464,7 @@ void
 FortranCodeGeneration_locatedNode::unparseMFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
 #if 0
   // Sage node has no Fortran correspondence (unless semantics are twisted)
@@ -1537,7 +1528,7 @@ void
 FortranCodeGeneration_locatedNode::unparseClassRef(SgExpression* expr, SgUnparse_Info& info) 
    {
      printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
 #if 0
   // Sage node has no Fortran correspondence (unless semantics are twisted)
@@ -1637,7 +1628,7 @@ void
 FortranCodeGeneration_locatedNode::unparseWCharVal(SgExpression* expr, SgUnparse_Info& info) 
    {
      printf ("Case not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
 #if 0
   // Sage node has no Fortran correspondence

@@ -800,7 +800,7 @@ AstPerformance::generateReportToFile( SgProject* project ) const
      if ( datafile.good() == false )
         {
           printf ("File failed to open \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // datafile << "This is a test!" << std::endl;

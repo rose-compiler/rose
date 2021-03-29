@@ -105,11 +105,9 @@ SgAsmFloatValueExpression* buildValueX86Float80(double);
 // Operators
 SgAsmBinaryAdd* buildAddExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinarySubtract* buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinaryAddPreupdate* buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinarySubtractPreupdate* buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinaryAddPostupdate* buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinarySubtractPostupdate* buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryMultiply* buildMultiplyExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
+SgAsmBinaryPreupdate* buildPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
+SgAsmBinaryPostupdate* buildPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryMsl* buildMslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryLsl* buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryLsr* buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);

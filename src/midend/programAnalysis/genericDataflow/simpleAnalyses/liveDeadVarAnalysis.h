@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef LIVE_DEAD_VAR_ANALYSIS_H
 #define LIVE_DEAD_VAR_ANALYSIS_H
 
@@ -172,7 +175,7 @@ class LiveDeadVarsAnalysis : public IntraBWDataflow
                                                                NodeState& state, const std::vector<Lattice*>& dfInfo)
   { return boost::shared_ptr<IntraDFTransferVisitor>(new LiveDeadVarsTransfer(func, n, state, dfInfo, fseu)); }
 
-  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo) { assert(0); return false; }
+  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo) { ROSE_ABORT(); }
 };
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
@@ -401,4 +404,5 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
 // prints the Lattices set by the given LiveDeadVarsAnalysis 
 void printLiveDeadVarsAnalysisStates(LiveDeadVarsAnalysis* da, std::string indent="");
 
+#endif
 #endif

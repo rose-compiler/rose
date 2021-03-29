@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef UNIFICATION_ANN_H
 #define UNIFICATION_ANN_H
 
@@ -37,4 +40,5 @@ public:
   static UnificationBasedPtr *analyze_all(Linker &, Annotations *ann);
 };
 
+#endif
 #endif

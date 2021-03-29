@@ -2,7 +2,7 @@
 #include <CompSliceLocality.h>
 #include <CompSliceRegistry.h>
 #include <ReuseAnalysis.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 //not precise since inter-statement spatial reuses not considered
 float CompSliceLocalityAnal::

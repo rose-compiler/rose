@@ -179,7 +179,7 @@ inline void rewriteConditionals(SgNode *n)
             else
              {
                printf ("Error: booleanOp->get_parent() = %p is unknown \n",booleanOp->get_parent());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -325,7 +325,7 @@ SgStatement *moveConditionToBody(SgStatement *cond, SgBasicBlock *body)
 
           default:
                 {
-                  ROSE_ASSERT(false);
+                  ROSE_ABORT();
                 }
         }
 
@@ -549,7 +549,7 @@ void initialTransformation(SgNode *n)
 
                     default:
                           {
-                            ROSE_ASSERT(false);
+                            ROSE_ABORT();
                           }
                   }
 
@@ -877,7 +877,7 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                        cout << "Warning: libharu support is not enabled" << endl;
 #endif
                        cerr << "Error: reduceIfStmtsWithSCchild: basicBlockChild has unknown type " << basicBlockChild->class_name() << basicBlockChild << endl;
-                       ROSE_ASSERT(false);
+                       ROSE_ABORT();
                      }
              }
 
@@ -978,7 +978,7 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                     else
                      {
                        printf ("What is this condCopyParentNode = %p \n",condCopyParentNode);
-                       ROSE_ASSERT(false);
+                       ROSE_ABORT();
                      }
                 }
                        
@@ -1035,7 +1035,7 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                     else
                      {
                        printf ("What is this condParent = %p \n",condParent);
-                       ROSE_ASSERT(false);
+                       ROSE_ABORT();
                      }
                 }
 

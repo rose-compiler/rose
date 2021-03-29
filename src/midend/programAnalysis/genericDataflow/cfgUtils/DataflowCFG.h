@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef DATAFLOW_CFG_H
 #define DATAFLOW_CFG_H
 
@@ -74,4 +77,5 @@ inline DataflowNode makeDataflowCfg(SgNode* start, bool (*f) (CFGNode) ) {
 bool isDataflowInteresting(CFGNode cn);
 }
 
+#endif
 #endif

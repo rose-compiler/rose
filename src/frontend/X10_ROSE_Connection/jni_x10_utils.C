@@ -29,7 +29,7 @@ jmethodID get_method(JNIEnv *env, jclass cls, const char * mthName, const char *
     jmethodID method_id = env->GetMethodID(cls, mthName, mthSig);
     if ( method_id == NULL ) {
         printf ("Error: jmethodID not found %s %s\n", mthName, mthSig);
-        assert(false);
+        ROSE_ABORT();
     }
     return method_id;
 }
@@ -39,7 +39,7 @@ jclass get_class(JNIEnv *env, jobject jobj) {
     jclass cls = env->GetObjectClass(jobj);
     if (cls == NULL) {
         printf ("Error: jclass cls == NULL! \n");
-        assert(false);
+        ROSE_ABORT();
     }
     return cls;
 }

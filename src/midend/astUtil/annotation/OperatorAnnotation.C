@@ -1,6 +1,6 @@
 
 #include "OperatorAnnotation.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;

@@ -740,7 +740,7 @@ AstTests::runAllTests(SgProject* sageProject)
 
                                         printf("    Warning: found a SgClassType which is NOT associated with the first nondefining class declaration\n");
                                         printf("    Warning: SgClassType = %p name = %s associated with SgClassDeclaration =%p\n", cls_type, cls_type->get_name().getString().c_str(), cls_decl);
-                                        ROSE_ASSERT (false);
+                                        ROSE_ABORT ();
                                        }
                                  }
                             }
@@ -977,7 +977,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
           if ( fileInfo == NULL )
              {
                printf ("node->get_file_info() == NULL: node is %s \n",node->sage_class_name());
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
             else
              {
@@ -1168,7 +1168,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -1254,7 +1254,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #if 0
@@ -1768,7 +1768,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
 #if 0
                            // Force this to fail since the function call above we set nameResetFromMangledForm to true.
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                          ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
@@ -2300,7 +2300,7 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                     printf ("Number of duplicate statements = %d \n",numberOfDuplicates);
 #if 0
                     printf ("Exiting as a test ... \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     int counter = 0;
                     for (list<SgStatement *>::iterator j = duplicateStatements.begin(); j != duplicateStatements.end(); j++)
@@ -2414,7 +2414,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -2504,7 +2504,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
        // location in some exmaples from C applications that have been a focus lately.
        // I might want to fix this up later after the dust settles.  These appear to be unusual cases.
 
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #else
 
        // DQ (4/26/2012): debugging... (test2012_67.C)
@@ -3286,7 +3286,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                                 else
                                  {
                                    printf ("Error: declaration found in symbol not handled (declarationNode = %s) \n",declarationNode->class_name().c_str());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -3326,8 +3326,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                     case V_SgDefaultSymbol:
                        {
                          printf ("The SgDefaultSymbol should not be present in the AST \n");
-                         ROSE_ASSERT(false);
-                         break;
+                         ROSE_ABORT();
                        }
 
                     case V_SgEnumFieldSymbol:
@@ -3500,7 +3499,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                     default:
                        {
                          printf ("Error: default reached in switch (AstFixes.C) symbol = %s \n",symbol->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -3534,7 +3533,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                            else
                             {
                               printf ("Error: symbol declaration's scope not set! symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -3567,7 +3566,7 @@ TestAstSymbolTables::visit ( SgNode* node )
        {
          printf ("Error: namespace definitions: global definition =%p alias symbol count %zd is smaller than local definition=%p symbol count %zd\n",
             global_def, countG, local_def, countL);
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
        }
      }
 #endif
@@ -4140,7 +4139,7 @@ TestExpressionTypes::visit ( SgNode* node )
                      default:
                        {
                          printf ("Error: default reached in switch: definingDeclaration not tested = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -4549,7 +4548,7 @@ TestMangledNames::visit ( SgNode* node )
      if (node->class_name() == "SgNode")
         {
           printf ("ERROR: This node = %p has been previously deleted \n",node);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 
@@ -4688,7 +4687,7 @@ TestMangledNames::visit ( SgNode* node )
                if (decl->class_name() == "SgNode")
                   {
                     printf ("ERROR: decl = %p was previously deleted \n",decl);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
             // DQ (5/25/2013): This is failing for the astInterface tests: deepDelete.C
                if (decl->get_scope() == NULL)
@@ -5003,7 +5002,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     if (fileInfo->get_file_id() >= fileInfo->get_max_file_id())
                        {
                          printf ("Found a Sg_File_Info with file_id out of range: file_id = %d max_file_id = %d \n",fileInfo->get_file_id(),fileInfo->get_max_file_id());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #endif
@@ -5119,7 +5118,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                   {
                       if (! isSgGraph(support->get_parent()) ) {
                           std::cerr << "Graph component " << support->class_name() << " requires SgGraph as parent" << std::endl;
-                          ROSE_ASSERT(false);
+                          ROSE_ABORT();
                       }
                       break;
                   }
@@ -5192,7 +5191,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
      {
           printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
-                  ROSE_ASSERT(false);
+                  ROSE_ABORT();
      }
 
      SgNode *parent = node->get_parent();
@@ -6593,7 +6592,7 @@ TestForParentsMatchingASTStructure::test( SgProject* project )
                std::cerr <<"Detected AST parent/child relationship problems after AST post processing:\n" <<ss.str();
              }
 #if 0
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -6625,7 +6624,7 @@ TestForSourcePosition::testFileInfo( Sg_File_Info* fileInfo )
                ROSE_ASSERT(node != NULL);
 
                printf ("Error: detected a source position with empty filename: node = %p = %s \n",node,node->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
 #if 0
@@ -6644,7 +6643,7 @@ TestForSourcePosition::testFileInfo( Sg_File_Info* fileInfo )
                ROSE_ASSERT(node != NULL);
 
                printf ("Error: detected a source position with inconsistant physical file id: node = %p = %s \n",node,node->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
    }
@@ -6728,7 +6727,7 @@ TestForMultipleWaysToSpecifyRestrictKeyword::visit ( SgNode* node )
                        {
                          printf ("Error: restrict is not consistantly set in the two SgTypeModifier IR nodes memberFunctionType->isRestrict() = %s typeModifierFromDeclarationModifier.isRestrict() = %s \n",
                               memberFunctionType->isRestrictFunc() ? "true" : "false",typeModifierFromDeclarationModifier.isRestrict() ? "true" : "false");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
                  else

@@ -107,7 +107,7 @@ void fixupAstDeclarationScope( SgNode* node )
                        }
 #if 0
                     printf ("Make this an error for now! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 

@@ -158,7 +158,7 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
     else
     {
         //Unhandled condition?!
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     normalizableFunctionCalls.push_back(functionCallInfo);
