@@ -269,7 +269,7 @@ void MaxSourceExtents::computeMaxSourceExtents(SgSourceFile* sourceFile, SgNode*
 #endif
 #if 0
      printf ("Exiting as a test in MaxSourceExtents::computeMaxSourceExtents() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 

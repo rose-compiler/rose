@@ -1,5 +1,6 @@
 #include "SymbolicExpr.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
+#include <ROSE_ABORT.h>
 //store condition for a variable
 // coeff*variable + result Relation 0
 // e.g.   5*i+1 <=0
@@ -90,7 +91,7 @@ class UnwrapCond : public SymbolicVisitor
            }
            break;
      default:
-           assert(false);
+           ROSE_ABORT();
      }
    }
  public:

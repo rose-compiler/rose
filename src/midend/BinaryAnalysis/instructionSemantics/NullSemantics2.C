@@ -29,8 +29,8 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -38,8 +38,8 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -47,22 +47,22 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
     return undefined_(end_bit-begin_bit);
 }
@@ -72,21 +72,21 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    return undefined_(a->get_width() + b->get_width());
+    return undefined_(a->nBits() + b->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -94,7 +94,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValue::promote(sa_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -102,7 +102,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -110,7 +110,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -118,7 +118,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -126,7 +126,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -142,16 +142,16 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_, const BaseSemantics::SV
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(1==sel->get_width());
-    ASSERT_require(a->get_width()==b->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(1==sel->nBits());
+    ASSERT_require(a->nBits()==b->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
-    if (new_width==a->get_width())
+    if (new_width==a->nBits())
         return a;
     return undefined_(new_width);
 }
@@ -161,8 +161,8 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -172,16 +172,16 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
-    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
-    carry_out = undefined_(a->get_width());
-    return undefined_(a->get_width());
+    ASSERT_require(a->nBits()==b->nBits() && c->nBits()==1);
+    carry_out = undefined_(a->nBits());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -189,7 +189,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -197,7 +197,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    return undefined_(b->get_width());
+    return undefined_(b->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -205,7 +205,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     return undefined_(retwidth);
 }
 
@@ -214,7 +214,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -222,7 +222,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    return undefined_(b->get_width());
+    return undefined_(b->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -230,7 +230,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     return undefined_(retwidth);
 }
 

@@ -6,6 +6,7 @@
 #include <DisassemblerAarch32.h>
 #include <BinaryUnparserAarch32.h>
 #include <DispatcherAarch32.h>
+#include <DispatcherAarch32.h>
 
 using namespace Rose::Diagnostics;
 
@@ -48,6 +49,7 @@ DisassemblerAarch32::init() {
     byteOrder(ByteOrder::ORDER_LSB);
     registerDictionary(RegisterDictionary::dictionary_aarch32());
     callingConventions(CallingConvention::dictionaryAarch32());
+    p_proto_dispatcher = InstructionSemantics2::DispatcherAarch32::instance();
 
     if (modes_.isSet(Mode::MCLASS))
         name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
@@ -78,6 +80,25 @@ DisassemblerAarch32::unparser() const {
     return Unparser::Aarch32::instance();
 }
 
+uint32_t
+DisassemblerAarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
+    ASSERT_require(nBytes <= 4);
+    uint32_t retval = 0;
+    switch (byteOrder()) {
+        case ByteOrder::ORDER_LSB:
+            for (size_t i = 0; i < nBytes; ++i)
+                retval |= uint32_t(bytes[i]) << (8*i);
+            break;
+        case ByteOrder::ORDER_MSB:
+            for (size_t i = 0; i < nBytes; ++i)
+                retval |= uint32_t(bytes[nBytes - (i+1)]) << (8*i);
+            break;
+        default:
+            ASSERT_not_reachable("invalid byte order");
+    }
+    return retval;
+}
+
 SgAsmInstruction*
 DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
     // Resources that must be explicitly reclaimed before returning.
@@ -97,9 +118,10 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
         throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
     ASSERT_require(sizeof bytes >= instructionAlignment_);
-    size_t nRead = map->at(va).limit(instructionAlignment_).require(MemoryMap::EXECUTABLE).read(bytes).size();
+    const size_t nRead = map->at(va).limit(instructionAlignment_).require(MemoryMap::EXECUTABLE).read(bytes).size();
     if (0 == nRead)
         throw Exception("short read", va);
+    uint32_t word = bytesToWord(nRead, bytes);
 
     // Disassemble the instruction with capstone
     r.nInsns = cs_disasm(capstone_, bytes, nRead, va, 1, &r.csi);
@@ -110,16 +132,30 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     ASSERT_require(r.csi->address == va);
     ASSERT_require(r.csi->detail);
 
+    //--------------------------------------------------------------------------------
+    // Initial work-arounds for Capstone bugs
+    //--------------------------------------------------------------------------------
+    if (((arm_insn)r.csi->id == ARM_INS_RFEDA || (arm_insn)r.csi->id == ARM_INS_RFEDB ||
+         (arm_insn)r.csi->id == ARM_INS_RFEIA || (arm_insn)r.csi->id == ARM_INS_RFEIB) &&
+        BitOps::bits(word, 0, 15) != 0x0a00 /*A1*/ && BitOps::bits(word, 0, 15) != 0xc000 /*T1,T2*/) {
+        // Capstone mis-decodes random data as this instruction. E.g., the word 0xf8364650 gets decoded as "rfeda #3!", which
+        // doesn't even make any sense. Similarly, 0xf9b4f001 is "rfeib #2!".
+        return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
+                                                                          SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
+    }
+
+    //--------------------------------------------------------------------------------
     // Convert disassembled Capstone instruction to ROSE AST
+    //--------------------------------------------------------------------------------
     const cs_arm &detail = r.csi->detail->arm;
-#if 1 // DEBGUGGING: show the disassembly string from capstone itself
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
     std::cerr <<"ROBB: capstone disassembly:" <<" " <<StringUtility::addrToString(va) <<":";
     for (size_t i = 0; i < r.csi->size; ++i)
         std::cerr <<" " <<StringUtility::toHex2(bytes[i], 8, false, false).substr(2);
     std::cerr <<" " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
 #endif
 
-    SgAsmInstruction *retval = nullptr;
+    SgAsmAarch32Instruction *retval = nullptr;
     try {
         auto operands = new SgAsmOperandList;
         for (uint8_t i = 0; i < detail.op_count; ++i) {
@@ -129,16 +165,27 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
             operands->get_operands().push_back(operand);
             operand->set_parent(operands);
         }
-        wrapPrePostIncrement(operands, detail);
-        auto insn = new SgAsmAarch32Instruction(va, r.csi->mnemonic, (Aarch32InstructionKind)r.csi->id, detail.cc);
+        auto insn = new SgAsmAarch32Instruction(va, fixMnemonic(r.csi->mnemonic, detail.cc), (Aarch32InstructionKind)r.csi->id, detail.cc);
         insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
         insn->set_updatesFlags(detail.update_flags);
         insn->set_operandList(operands);
         operands->set_parent(insn);
-        retval = insn;
+        wrapPrePostIncrement(insn, *r.csi, word);
+
+        // What registers are written. Note: POP has a bug which is handled below. This bug probably occurs for any instruction that
+        // writes to more than one register where the registers are specified in a single argument.
+        for (uint8_t i = 0; i < r.csi->detail->regs_write_count; ++i) {
+            if (ARM_REG_PC == r.csi->detail->regs_write[i]) {
+                insn->set_writesToIp(true);
+                break;
+            }
+        }
+        retval = isSgAsmAarch32Instruction(insn);
     } catch (const Exception &e) {
-        retval = makeUnknownInstruction(Exception(e.what(), va, SgUnsignedCharList(bytes+0, bytes+nRead), 0));
+        auto insn = makeUnknownInstruction(Exception(e.what(), va, SgUnsignedCharList(bytes+0, bytes+nRead), 0));
+        retval = isSgAsmAarch32Instruction(insn);
     }
+    ASSERT_not_null(retval);
 
     // Note successors if necessary
     if (successors) {
@@ -146,7 +193,89 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
         *successors |= retval->getSuccessors(complete /*out*/);
     }
 
+    //--------------------------------------------------------------------------------
+    // Additional Capstone bug workarounds not already handled.
+    //--------------------------------------------------------------------------------
+    if ((arm_insn)r.csi->id == ARM_INS_ADC) {
+        // This instruction updates status flags, but Capstone says it doesn't.
+        retval->set_updatesFlags((bytes[2] & 0x10) != 0);
+    } else if ((arm_insn)r.csi->id == ARM_INS_SBC) {
+        // This instruction updates status flags, but Capstone says it doesn't.
+        retval->set_updatesFlags((bytes[2] & 0x10) != 0);
+    } else if ((arm_insn)r.csi->id == ARM_INS_B ||
+               (arm_insn)r.csi->id == ARM_INS_CBZ ||
+               (arm_insn)r.csi->id == ARM_INS_CBNZ) {
+        // These instruction writes to the instruction pointer register, but Capstone says they don't.
+        retval->set_writesToIp(true);
+    } else if ((arm_insn)r.csi->id == ARM_INS_POP) {
+        // The r.csi->detail->regs_write[] array is wrong for this instruction.
+        const RegisterDescriptor REG_PC(aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32);
+        for (size_t i = 0; i < retval->nOperands(); ++i) {
+            if (auto rre = isSgAsmDirectRegisterExpression(retval->operand(i))) {
+                if (rre->get_descriptor() == REG_PC) {
+                    retval->set_writesToIp(true);
+                    break;
+                }
+            }
+        }
+    } else if ((arm_insn)r.csi->id == ARM_INS_ADD && retval->nOperands() == 4) {
+        // This instruction is only supposed to have three arguments. The imm12 part of the encoding is broken into two parts:
+        // the low-order 8 bits are rotate right by twice the high-order 4 bits. Obviously, if the low-order 8 bits are zero
+        // then it doesn't matter what the high-order 4 bits are--the result is always zero. Therefore capstone returns a
+        // 4-argument version where the usual third argument (the rotate right result) is replaced by zero and a new fourth
+        // argument is added, which is the shift amount (twice the imm12<11,8> field). Capstone also creates the four-argument
+        // version in other cases when the result is not zero.
+        ASSERT_require(isSgAsmIntegerValueExpression(retval->operand(2)));
+        ASSERT_require(isSgAsmIntegerValueExpression(retval->operand(3)));
+        SgAsmExpression *rotateAmount = retval->operand(2);
+        SgAsmExpression *baseAmount = retval->operand(3);
+        retval->get_operandList()->get_operands()[2] = nullptr; rotateAmount->set_parent(nullptr);
+        retval->get_operandList()->get_operands()[3] = nullptr; baseAmount->set_parent(nullptr);
+
+        SgAsmExpression *shifted = SageBuilderAsm::buildRorExpression(baseAmount, rotateAmount);
+        retval->get_operandList()->get_operands()[2] = shifted; shifted->set_parent(retval->get_operandList());
+        retval->get_operandList()->get_operands().resize(3);
+    }
+
+    commentIpRelative(retval);
+    ASSERT_not_null(retval);
     return retval;
+}
+
+void
+DisassemblerAarch32::commentIpRelative(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+
+    struct Visitor: AstSimpleProcessing {
+        SgAsmInstruction *insn;
+        const RegisterDescriptor REG_PC = RegisterDescriptor(aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32);
+
+        Visitor(SgAsmInstruction *insn)
+            : insn(insn) {}
+
+        void visit(SgNode *node) ROSE_OVERRIDE {
+            if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
+                SgAsmDirectRegisterExpression *reg = NULL;
+                SgAsmIntegerValueExpression *ival = NULL;
+                if ((reg = isSgAsmDirectRegisterExpression(add->get_lhs()))) {
+                    ival = isSgAsmIntegerValueExpression(add->get_rhs());
+                } else if ((reg = isSgAsmDirectRegisterExpression(add->get_rhs()))) {
+                    ival = isSgAsmIntegerValueExpression(add->get_lhs());
+                }
+
+                if (reg && ival && reg->get_descriptor() == REG_PC) {
+                    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+                    rose_addr_t offset = ival->get_absoluteValue();
+                    rose_addr_t va = (fallThroughVa + offset + 4) & BitOps::lowMask<rose_addr_t>(32);
+                    std::string vaStr = "absolute=" + StringUtility::addrToString(va, 32);
+                    std::string comment = add->get_comment();
+                    comment = comment.empty() ? vaStr : vaStr + "," + comment;
+                    add->set_comment(comment);
+                }
+            }
+        }
+    } v(insn);
+    v.traverse(insn, preorder);
 }
 
 SgAsmInstruction*
@@ -156,13 +285,75 @@ DisassemblerAarch32::makeUnknownInstruction(const Exception &e) {
     insn->set_operandList(operands);
     operands->set_parent(insn);
     insn->set_raw_bytes(e.bytes);
+    insn->set_condition(Aarch32InstructionCondition::ARM_CC_AL);
     return insn;
+}
+
+std::string
+DisassemblerAarch32::fixMnemonic(const std::string &orig, arm_cc cc) {
+    std::string suffix;
+    switch (cc) {
+        case ARM_CC_INVALID:
+            return orig;
+        case ARM_CC_EQ:
+            suffix = "eq";
+            break;
+        case ARM_CC_NE:
+            suffix = "ne";
+            break;
+        case ARM_CC_HS:
+            suffix = "hs";
+            break;
+        case ARM_CC_LO:
+            suffix = "lo";
+            break;
+        case ARM_CC_MI:
+            suffix = "mi";
+            break;
+        case ARM_CC_PL:
+            suffix = "pl";
+            break;
+        case ARM_CC_VS:
+            suffix = "vs";
+            break;
+        case ARM_CC_VC:
+            suffix = "vc";
+            break;
+        case ARM_CC_HI:
+            suffix = "hi";
+            break;
+        case ARM_CC_LS:
+            suffix = "ls";
+            break;
+        case ARM_CC_GE:
+            suffix = "ge";
+            break;
+        case ARM_CC_LT:
+            suffix = "lt";
+            break;
+        case ARM_CC_GT:
+            suffix = "gt";
+            break;
+        case ARM_CC_LE:
+            suffix = "le";
+            break;
+        case ARM_CC_AL:
+            suffix = "al";
+            break;
+    }
+
+    if (boost::ends_with(orig, suffix) && orig.size() > suffix.size() && suffix.size() > 0) {
+        return orig.substr(0, orig.size()-2) + "." + suffix;
+    } else {
+        return orig;
+    }
 }
 
 SgAsmExpression*
 DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
     SgAsmExpression *retval = nullptr;
     SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
+    bool shiftedOrRotated = false;
 
     switch (op.type) {
         case ARM_OP_INVALID:
@@ -177,9 +368,13 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
             break;
         }
 
-        case ARM_OP_IMM:
-            retval = new SgAsmIntegerValueExpression(op.imm, u32);
+        case ARM_OP_IMM: {
+            uint64_t val = (uint64_t)op.imm;
+            if (op.subtracted)
+                val = (~val) + 1;
+            retval = new SgAsmIntegerValueExpression(val, u32);
             break;
+        }
 
         case ARM_OP_MEM: {
             RegisterDescriptor reg = makeRegister(op.mem.base);
@@ -189,13 +384,15 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
 
             if (op.mem.index != ARM_REG_INVALID) {
                 RegisterDescriptor indexReg = makeRegister(op.mem.index);
-                auto index = new SgAsmDirectRegisterExpression(indexReg);
+                SgAsmExpression *index = new SgAsmDirectRegisterExpression(indexReg);
                 index->set_type(registerType(indexReg));
+                index = shiftOrRotate(index, op);
+                shiftedOrRotated = true;
+
                 if (op.mem.disp != 0) {
-                    auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u32);
-                    if (op.mem.lshift != 0) {
-                        ASSERT_not_implemented("[Robb Matzke 2021-01-04]");
-                    }
+                    ASSERT_not_implemented("[Robb Matzke 2021-01-04]");
+                } else if (op.subtracted) {
+                    addr = SageBuilderAsm::buildSubtractExpression(addr, index, u32);
                 } else {
                     addr = SageBuilderAsm::buildAddExpression(addr, index, u32);
                 }
@@ -203,8 +400,13 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
                 auto disp = new SgAsmIntegerValueExpression(op.mem.disp, u32);
                 addr = SageBuilderAsm::buildAddExpression(addr, disp, u32);
             }
+
+            if (!shiftedOrRotated) {
+                addr = shiftOrRotate(addr, op);
+                shiftedOrRotated = true;
+            }
             auto mre = new SgAsmMemoryReferenceExpression;
-            mre->set_address(addr);
+            mre->set_address(addr); addr->set_parent(mre);
             mre->set_type(typeForMemoryRead(insn));
             retval = mre;
             break;
@@ -247,86 +449,89 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
     }
 
     // Adjust for shift and rotate
-    if (op.shift.type != ARM_SFT_INVALID && op.shift.value != 0) {
-        switch (op.shift.type) {
-            case ARM_SFT_INVALID:
-                ASSERT_not_reachable("filtered out above");
-            case ARM_SFT_ASR: {                         // shift with immediate const
-                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
-                retval = SageBuilderAsm::buildAsrExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_LSL: {                         // shift with immediate const
-                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
-                retval = SageBuilderAsm::buildLslExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_LSR: {                         // shift with immediate const
-                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
-                retval = SageBuilderAsm::buildLsrExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_ROR: {                         // shift with immediate const
-                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
-                retval = SageBuilderAsm::buildRorExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_RRX: {                         // rotate right with extend
-                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
-                auto carry = new SgAsmDirectRegisterExpression(carryReg);
-                carry->set_type(registerType(carryReg));
-                retval = SageBuilderAsm::buildConcatExpression(carry, retval);
-                auto value = new SgAsmIntegerValueExpression(op.shift.value, u32);
-                retval = SageBuilderAsm::buildRorExpression(retval, value, retval->get_type());
-                break;
-            }
-            case ARM_SFT_ASR_REG: {                     // shift with register
-                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
-                auto value = new SgAsmDirectRegisterExpression(reg);
-                value->set_type(registerType(reg));
-                retval = SageBuilderAsm::buildAsrExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_LSL_REG: {                     // shift with register
-                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
-                auto value = new SgAsmDirectRegisterExpression(reg);
-                value->set_type(registerType(reg));
-                retval = SageBuilderAsm::buildLslExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_LSR_REG: {                     // shift with register
-                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
-                auto value = new SgAsmDirectRegisterExpression(reg);
-                value->set_type(registerType(reg));
-                retval = SageBuilderAsm::buildLsrExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_ROR_REG: {                     // shift with register
-                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
-                auto value = new SgAsmDirectRegisterExpression(reg);
-                value->set_type(registerType(reg));
-                retval = SageBuilderAsm::buildRorExpression(retval, value, u32);
-                break;
-            }
-            case ARM_SFT_RRX_REG: {                     // shift with register
-                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
-                auto carry = new SgAsmDirectRegisterExpression(carryReg);
-                carry->set_type(registerType(carryReg));
-                retval = SageBuilderAsm::buildConcatExpression(carry, retval);
-
-                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
-                auto value = new SgAsmDirectRegisterExpression(reg);
-                value->set_type(registerType(reg));
-
-                retval = SageBuilderAsm::buildRorExpression(retval, value, retval->get_type());
-                break;
-            }
-        }
-    }
+    if (!shiftedOrRotated)
+        retval = shiftOrRotate(retval, op);
 
     ASSERT_not_null(retval);
     ASSERT_not_null(retval->get_type());
     return retval;
+}
+
+SgAsmExpression*
+DisassemblerAarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &op) {
+    ASSERT_not_null(baseExpr);
+    if (op.shift.type != ARM_SFT_INVALID && op.shift.value != 0) {
+        SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
+        switch (op.shift.type) {
+            case ARM_SFT_INVALID:
+                return baseExpr;
+
+            case ARM_SFT_ASR: {                         // shift with immediate const
+                SgAsmExpression *amount = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                return SageBuilderAsm::buildAsrExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_LSL: {                         // shift with immediate const
+                SgAsmExpression *amount = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                return SageBuilderAsm::buildLslExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_LSR: {                         // shift with immediate const
+                SgAsmExpression *amount = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                return SageBuilderAsm::buildLsrExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_ROR: {                         // shift with immediate const
+                SgAsmExpression *amount = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                return SageBuilderAsm::buildRorExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_RRX: {                         // rotate right with extend
+                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                SgAsmExpression *carry = new SgAsmDirectRegisterExpression(carryReg);
+                carry->set_type(registerType(carryReg));
+                SgAsmExpression *wide = SageBuilderAsm::buildConcatExpression(carry, baseExpr);
+                SgAsmExpression *amount = new SgAsmIntegerValueExpression(op.shift.value, u32);
+                return SageBuilderAsm::buildRorExpression(wide, amount, wide->get_type());
+            }
+            case ARM_SFT_ASR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                SgAsmExpression *amount = new SgAsmDirectRegisterExpression(reg);
+                amount->set_type(registerType(reg));
+                return SageBuilderAsm::buildAsrExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_LSL_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                SgAsmExpression *amount = new SgAsmDirectRegisterExpression(reg);
+                amount->set_type(registerType(reg));
+                return SageBuilderAsm::buildLslExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_LSR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                SgAsmExpression *amount = new SgAsmDirectRegisterExpression(reg);
+                amount->set_type(registerType(reg));
+                return SageBuilderAsm::buildLsrExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_ROR_REG: {                     // shift with register
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                SgAsmExpression *amount = new SgAsmDirectRegisterExpression(reg);
+                amount->set_type(registerType(reg));
+                return SageBuilderAsm::buildRorExpression(baseExpr, amount, u32);
+            }
+            case ARM_SFT_RRX_REG: {                     // shift with register
+                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                SgAsmExpression *carry = new SgAsmDirectRegisterExpression(carryReg);
+                carry->set_type(registerType(carryReg));
+                SgAsmExpression *wide = SageBuilderAsm::buildConcatExpression(carry, baseExpr);
+
+                RegisterDescriptor reg = makeRegister(static_cast<arm_reg>(op.shift.value));
+                SgAsmExpression *amount = new SgAsmDirectRegisterExpression(reg);
+                amount->set_type(registerType(reg));
+
+                return SageBuilderAsm::buildRorExpression(wide, amount, wide->get_type());
+            }
+            default:
+                ASSERT_not_reachable("invalid shift type: " + boost::lexical_cast<std::string>(op.shift.type));
+        }
+    } else {
+        return baseExpr;
+    }
 }
 
 SgAsmType*
@@ -1134,7 +1339,254 @@ DisassemblerAarch32::subRegister(RegisterDescriptor reg, int idx) {
 }
 
 void
-DisassemblerAarch32::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm &insn) {
+DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const cs_insn &csInsn, const uint32_t word) {
+    ASSERT_not_null(insn);
+    SgAsmOperandList *operands = insn->get_operandList();
+    ASSERT_not_null(operands);
+    size_t nOperands = operands->get_operands().size();
+    ASSERT_not_null(csInsn.detail);
+    const cs_arm &arm = csInsn.detail->arm;
+
+    if ((arm_insn)csInsn.id == ARM_INS_LDRBT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_LDRSBT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_LDRT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_LDRHT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_LDRSHT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_STRT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_STRBT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if ((arm_insn)csInsn.id == ARM_INS_STRHT && nOperands == 3) {
+        // Apparent capstone bug: arm.writeback is false but should be true.
+    } else if (!arm.writeback) {
+        return;
+    }
+
+    const arm_insn id = (arm_insn)csInsn.id;
+    switch (id) {
+        case ARM_INS_LDM:
+        case ARM_INS_LDMDA:
+        case ARM_INS_LDMDB:
+        case ARM_INS_LDMIB:
+        case ARM_INS_STM:
+        case ARM_INS_STMDA:
+        case ARM_INS_STMDB:
+        case ARM_INS_STMIB: {
+            // First argument is the register that will be updated. The remaining variable number of arguments are the
+            // registers read/written to memory. The first register is decremented according to how many other registers are
+            // specified.
+            ASSERT_require(arm.op_count > 1);
+
+            // Does the first argument register also appear again in the rest of the arguments?
+            bool readWriteSame = false;
+            const RegisterDescriptor firstReg = isSgAsmDirectRegisterExpression(operands->get_operands()[0])->get_descriptor();
+            for (size_t i = 1; i < operands->get_operands().size(); ++i) {
+                if (firstReg == isSgAsmDirectRegisterExpression(operands->get_operands()[i])->get_descriptor()) {
+                    readWriteSame = true;
+                    break;
+                }
+            }
+
+            // Unlink the register (eventual lhs of the postupdate) from the AST.
+            ASSERT_require(nOperands == arm.op_count);
+            auto lhs = isSgAsmDirectRegisterExpression(operands->get_operands()[0]); // the register
+            ASSERT_not_null(lhs);
+            operands->get_operands()[0] = nullptr;  // illegal, but just temporary
+            lhs->set_parent(nullptr);
+
+            // Calculate the expression to be assigned to the first argument register.
+            SgAsmExpression *newValue = nullptr;
+            if (readWriteSame &&
+                (id == ARM_INS_LDM ||
+                 id == ARM_INS_LDMDA ||
+                 id == ARM_INS_LDMDB ||
+                 id == ARM_INS_LDMIB)) {
+                // If the same register is being loaded from memory and updated, then its final value is unknown.
+                const RegisterDescriptor unknown = registerDictionary()->findOrThrow("unknown");
+                newValue = new SgAsmDirectRegisterExpression(unknown);
+                newValue->set_type(SageBuilderAsm::buildTypeU32());
+            } else if (id == ARM_INS_LDMDA ||
+                       id == ARM_INS_LDMDB ||
+                       id == ARM_INS_STMDA ||
+                       id == ARM_INS_STMDB) {
+                // The new value will be the register's old value minus the number of bytes transferred to/from memory.
+                auto oldValue = new SgAsmDirectRegisterExpression(lhs->get_descriptor());
+                oldValue->set_type(lhs->get_type());
+                auto inc = new  SgAsmIntegerValueExpression(-4 * (arm.op_count-1), oldValue->get_type());
+                newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
+            } else if (id == ARM_INS_LDM ||
+                       id == ARM_INS_LDMIB ||
+                       id == ARM_INS_STM ||
+                       id == ARM_INS_STMIB) {
+                // The new value will be the register's old value plus the number of bytes transferred to/from memory.
+                auto oldValue = new SgAsmDirectRegisterExpression(lhs->get_descriptor());
+                oldValue->set_type(lhs->get_type());
+                auto inc = new SgAsmIntegerValueExpression(4 * (arm.op_count-1), oldValue->get_type());
+                newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
+            } else {
+                ASSERT_not_reachable("instruction not handled: id = " + boost::lexical_cast<std::string>(id));
+            }
+
+            // Create the post-update expression and link it into the AST. The update is always a post-update regardless of
+            // whether the mnemonic says "before" or "after".
+            SgAsmExpression *postUpdate = SageBuilderAsm::buildPostupdateExpression(lhs, newValue);
+            operands->get_operands()[0] = postUpdate;
+            postUpdate->set_parent(operands);
+
+            return;
+        }
+
+        case ARM_INS_RFEIA:
+        case ARM_INS_RFEIB: {
+            // Last argument (a register) is incremented by 8.
+            ASSERT_require(operands->get_operands().size() >= 1);
+            ASSERT_require(isSgAsmDirectRegisterExpression(operands->get_operands().back()));
+            auto last = isSgAsmDirectRegisterExpression(operands->get_operands().back());
+
+            // Unlink from AST
+            operands->get_operands().back() = nullptr; last->set_parent(nullptr); // invalid, but temporary
+
+            // Create the new expression
+            auto sumLhs = new SgAsmDirectRegisterExpression(last->get_descriptor());
+            sumLhs->set_type(last->get_type());
+            SgAsmIntegerValueExpression *sumRhs = SageBuilderAsm::buildValueU32(8);
+            SgAsmBinaryAdd *sum = SageBuilderAsm::buildAddExpression(sumLhs, sumRhs);
+            SgAsmExpression *postUpdate = SageBuilderAsm::buildPostupdateExpression(last, sum);
+
+            // Link new expression into AST
+            operands->get_operands().back() = postUpdate; postUpdate->set_parent(operands);
+            return;
+        }
+
+        case ARM_INS_RFEDA:
+        case ARM_INS_RFEDB: {
+            // Last argument (a register) is decremented by 8.
+            ASSERT_require(operands->get_operands().size() >= 1);
+            ASSERT_require(isSgAsmDirectRegisterExpression(operands->get_operands().back()));
+            auto last = isSgAsmDirectRegisterExpression(operands->get_operands().back());
+
+            // Unlink from AST
+            operands->get_operands().back() = nullptr; last->set_parent(nullptr); // invalid, but temporary
+
+            // Create the new expression
+            auto sumLhs = new SgAsmDirectRegisterExpression(last->get_descriptor());
+            sumLhs->set_type(last->get_type());
+            SgAsmIntegerValueExpression *sumRhs = SageBuilderAsm::buildValueU32(-8);
+            SgAsmBinaryAdd *sum = SageBuilderAsm::buildAddExpression(sumLhs, sumRhs);
+            SgAsmExpression *postUpdate = SageBuilderAsm::buildPostupdateExpression(last, sum);
+
+            // Link new expression into AST
+            operands->get_operands().back() = postUpdate; postUpdate->set_parent(operands);
+            return;
+        }
+
+        case ARM_INS_FLDMDBX:
+        case ARM_INS_FLDMIAX: {
+            // Adjust first argument by the imm8 value, which must be decoded from the instruction.
+            ASSERT_require(operands->get_operands().size() >= 1);
+            auto rre = isSgAsmDirectRegisterExpression(operands->get_operands()[0]);
+            ASSERT_not_null(rre);
+            operands->get_operands()[0] = nullptr; rre->set_parent(nullptr);
+
+            uint32_t imm32 = BitOps::bits(word, 0, 7) << 2;
+            SgAsmExpression *reg = new SgAsmDirectRegisterExpression(rre->get_descriptor());
+            reg->set_type(rre->get_type());
+            SgAsmExpression *offset = SageBuilderAsm::buildValueU32(imm32);
+            SgAsmExpression *update = nullptr;
+            if (ARM_INS_FLDMDBX == id) {
+                SgAsmExpression *sum = SageBuilderAsm::buildSubtractExpression(reg, offset);
+                update = SageBuilderAsm::buildPreupdateExpression(rre, sum);
+            } else {
+                SgAsmExpression *sum = SageBuilderAsm::buildAddExpression(reg, offset);
+                update = SageBuilderAsm::buildPostupdateExpression(rre, sum);
+            }
+
+            operands->get_operands()[0] = update; update->set_parent(operands);
+            return;
+        }
+
+        case ARM_INS_POP:
+            // The update for these commands is handled in the main body of the instruction's semantics instead
+            // of a pre- or post-update operation.
+            return;
+
+        default:
+            // If the penultimate argument is a memory access whose address is a register and the final argument is not a
+            // memory access, then this is a post-increment operation. The memory address and last argument are summed in a
+            // post-update expression to create a new address expression, and the last argument is discarded.
+            if (nOperands >= 2) {
+                auto mre = isSgAsmMemoryReferenceExpression(operands->get_operands()[nOperands-2]);
+                auto addr = mre ? isSgAsmDirectRegisterExpression(mre->get_address()) : nullptr;
+                auto last = operands->get_operands()[nOperands-1];
+                if (addr && !isSgAsmMemoryReferenceExpression(last)) {
+                    // Unlink things from the AST
+                    mre->set_address(nullptr); addr->set_parent(nullptr);
+                    operands->get_operands().resize(nOperands - 1); last->set_parent(nullptr);
+
+                    // Create the rhs of the post-update, i.e., the memory address plus the former last argument
+                    auto oldValue = new SgAsmDirectRegisterExpression(addr->get_descriptor());
+                    oldValue->set_type(addr->get_type());
+                    SgAsmBinaryAdd *newValue = SageBuilderAsm::buildAddExpression(oldValue, last);
+
+                    // Create the post-update expression and link it into the AST.
+                    auto newAddrExpr = SageBuilderAsm::buildPostupdateExpression(addr, newValue);
+                    mre->set_address(newAddrExpr);
+                    newAddrExpr->set_parent(mre);
+                    return;
+                }
+            }
+
+            // We didn't find the previous pattern. Therefore, look for an argument which is a memory reference whose address
+            // is a register plus (or minus) some expression. This is a pre-update situation, so replace the addition (or
+            // subtraction) with a pre-update operation.  In other words, if the argument looks like this:
+            //
+            //     ..... [ REG + INC ] .....
+            //
+            // then replace it with this:
+            //
+            //     ..... [ REG after REG = REG + INC ] .....
+            for (size_t i = 0; i < nOperands; ++i) {
+                auto mre = isSgAsmMemoryReferenceExpression(operands->get_operands()[i]);
+                SgAsmBinaryExpression *addr = mre ?
+                                              (isSgAsmBinaryAdd(mre->get_address()) ?
+                                               isSgAsmBinaryExpression(isSgAsmBinaryAdd(mre->get_address())) :
+                                               isSgAsmBinaryExpression(isSgAsmBinarySubtract(mre->get_address()))) :
+                                              nullptr;
+                SgAsmDirectRegisterExpression *addrLhs = addr ? isSgAsmDirectRegisterExpression(addr->get_lhs()) : nullptr;
+
+                if (addr && addrLhs) {
+                    // unlink things from the AST
+                    mre->set_address(nullptr);  addr->set_parent(nullptr);
+
+                    // create a second REG node to act as the lhs of the pre-update
+                    auto lhs = new SgAsmDirectRegisterExpression(addrLhs->get_descriptor());
+                    lhs->set_type(addrLhs->get_type());
+
+                    // Create the pre-update and link it into the AST as the memory reference address.
+                    auto preUpdate = SageBuilderAsm::buildPreupdateExpression(lhs, addr);
+                    mre->set_address(preUpdate); preUpdate->set_parent(mre);
+                    return;
+                }
+            }
+
+            // If the memory reference expression has an address that's simply a register, then we do nothing. This is because
+            // an instruction such as "stc2l p0, c15, [r8, #-0]!" (0xfd68f000) has been simplified already to remove the "-0"
+            // term.
+            for (size_t i = 0; i < nOperands; ++i) {
+                auto mre = isSgAsmMemoryReferenceExpression(operands->get_operands()[i]);
+                auto reg = mre ? isSgAsmDirectRegisterExpression(mre->get_address()) : nullptr;
+                if (reg)
+                    return;
+            }
+
+            break;
+    }
+    ASSERT_not_reachable("no pre/post update replacement performed");
 }
 
 } // namespace

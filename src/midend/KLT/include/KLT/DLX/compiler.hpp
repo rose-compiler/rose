@@ -150,7 +150,7 @@ KLT::Descriptor::data_t * Compiler<language_tpl, generator_tpl>::convertData(dat
   for (it_section = data_section.second.begin(); it_section != data_section.second.end(); it_section++) {
          if (isSgPointerType(base_type)) base_type = ((SgPointerType *)base_type)->get_base_type();
     else if (isSgArrayType  (base_type)) base_type = ((SgArrayType   *)base_type)->get_base_type();
-    else assert(false);
+    else ROSE_ABORT();
     assert(base_type != NULL);
   }
   KLT::Descriptor::data_t * data = new KLT::Descriptor::data_t(data_sym, base_type);
@@ -202,7 +202,7 @@ void Compiler<language_tpl, generator_tpl>::extractLoopsAndKernels(
     else if (loop_construct != NULL) {
       loop_directive_map.insert(std::pair<directive_t *, SgForStatement *>(directive, language_tpl::getLoopStatement(loop_construct)));
     }
-    else assert(false);
+    else ROSE_ABORT();
   }
 }
 
@@ -259,7 +259,7 @@ LoopTree::node_t * Compiler<language_tpl, generator_tpl>::applyTiling(LoopTree::
         loop->body = applyTiling(((LoopTree::loop_t *)node)->body, tiling_info, loop, tile_cnt);
         return loop;
       }
-      assert(false);
+      ROSE_ABORT();
     }
     case LoopTree::e_stmt:
     {
@@ -271,9 +271,9 @@ LoopTree::node_t * Compiler<language_tpl, generator_tpl>::applyTiling(LoopTree::
     case LoopTree::e_ignored:
     case LoopTree::e_unknown:
     default:
-      assert(false);
+      ROSE_ABORT();
   }
-  assert(false);
+  ROSE_ABORT();
 }
 
 template <class language_tpl, class generator_tpl>

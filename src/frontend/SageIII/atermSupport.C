@@ -202,7 +202,7 @@ AtermSupport::getAtermFileInfo(ATerm term, string annotationName )
        else
         {
           printf ("AtermSupport::getAtermFileInfo(): ATmatch failed! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return new Sg_File_Info(filename, line, col);
@@ -539,7 +539,7 @@ ATerm AtermSupport::getAtermAnnotation(ATerm term, char* annotation_name )
 #endif
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -551,19 +551,19 @@ ATerm AtermSupport::getAtermAnnotation(ATerm term, char* annotation_name )
                     printf ("unique_integer = %d \n",unique_integer);
 
                     printf ("integer aterm annotations not implemented yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
                  else
                   {
                     printf ("Unknown annotation: annotation_name = %s \n",annotation_name);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
        else
         {
           printf ("Error: annotation required: annotation_name = %s (needed to define key for updateDeclarationMap()) \n",annotation_name);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -673,18 +673,18 @@ AtermSupport::getAtermIntegerAttribute(ATerm term, const std::string & annotatio
 
                printf ("DIAGNOSTIC: aterm_type_name = %s \n",aterm_type_name(term).c_str());
 
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
        else
         {
           printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
      printf ("In AtermSupport::getAtermIntegerAttribute(): not yet implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnValue;
@@ -746,18 +746,18 @@ AtermSupport::getAtermNodeAttribute(ATerm term, const std::string & annotationNa
             else
              {
                printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
        else
         {
           printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
      printf ("In AtermSupport::getAtermNodeAttribute(): not yet implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnNode;
@@ -818,23 +818,23 @@ AtermSupport::getAtermTypeNodeAttribute (ATerm term, const std::string & annotat
                  else
                   {
                     printf ("Could not find nested type! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #if 0
                printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
        else
         {
           printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
      printf ("In AtermSupport::getAtermTypeNodeAttribute(): not yet implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnNode;
@@ -876,18 +876,18 @@ AtermSupport::getAtermScopeNodeAttribute (ATerm term, const std::string & annota
             else
              {
                printf ("Error: The nested aterm associated with the annotation must be available on the aterm: annotationName = %s \n",annotationName.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
        else
         {
           printf ("Error: The annotation not found on the aterm: annotationName = %s \n",annotationName.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
      printf ("In AtermSupport::getAtermScopeNodeAttribute(): not yet implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnNode;

@@ -223,7 +223,7 @@ SageInterface::get_value( SgAsmValueExpression* asmValueExpression )
 
           default:
                printf ("Error: unsupported structure field assigned value type = %s \n",asmValueExpression->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
         }
 
      return value;
@@ -447,7 +447,7 @@ SageInterface::matchAST ( SgNode* node, vector<SgNode*> & listOfNodes, Equivalen
                                    index = 0;
 #if 0
                                    printf ("Exiting to debug exact match \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }

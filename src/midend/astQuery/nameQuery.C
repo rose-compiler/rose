@@ -1049,7 +1049,7 @@ std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQu
           case UnknownListElementType:
              {
                printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
     case VariableNames:
       {
@@ -1130,7 +1130,7 @@ std::pointer_to_unary_function<SgNode*, Rose_STL_Container<std::string> > NameQu
           default:
              {
                printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
         } /* End switch-case */
          return std::ptr_fun(__x);
@@ -1144,7 +1144,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
           case UnknownListElementTypeTwoParameters:
              {
                printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
           case VariableNamesWithTypeName:
              {
@@ -1155,7 +1155,7 @@ std::pointer_to_binary_function<SgNode*, std::string, Rose_STL_Container<std::st
           default:
              {
                printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
         }
          return std::ptr_fun(__x);

@@ -33,6 +33,12 @@ public:
      *
      * @{ */
     RegisterDescriptor REG_PC, REG_SP, REG_LR;
+    RegisterDescriptor REG_PSTATE_N, REG_PSTATE_Z, REG_PSTATE_C, REG_PSTATE_V, REG_PSTATE_T; // parts of CPSR
+    RegisterDescriptor REG_PSTATE_E, REG_PSTATE_Q, REG_PSTATE_GE;
+    RegisterDescriptor REG_PSTATE_NZCV;                 // the CPSR N, Z, C, and V bits
+    RegisterDescriptor REG_SPSR, REG_CPSR;
+    RegisterDescriptor REG_DTRTX;                       // debug registers
+    RegisterDescriptor REG_UNKNOWN;                     // special ROSE register
     /** @} */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -58,7 +64,7 @@ private:
 protected:
     // prototypical constructor
     DispatcherAarch32()
-        :BaseSemantics::Dispatcher(64, RegisterDictionary::dictionary_aarch32()) {}
+        :BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_aarch32()) {}
 
     DispatcherAarch32(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
         : BaseSemantics::Dispatcher(ops, 32, regs ? regs : RegisterDictionary::dictionary_aarch32()) {
@@ -108,23 +114,74 @@ protected:
     void initializeMemory();
 
 protected:
-    int iproc_key(SgAsmInstruction*) const override;
+    int iprocKey(SgAsmInstruction*) const override;
     RegisterDescriptor instructionPointerRegister() const override;
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
     void set_register_dictionary(const RegisterDictionary*) override;
 
 public:
+    BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits=0, size_t addr_nbits=0) override;
+    void write(SgAsmExpression*, const BaseSemantics::SValuePtr&, size_t addr_nbits=0) override;
+
     // Instruction condition
     BaseSemantics::SValuePtr conditionHolds(Aarch32InstructionCondition);
+
+    // True if the expression is the program counter register
+    bool isIpRegister(SgAsmExpression*);
+
+    // Read the instruction pointer (PC) register, which is handled in a special way.
+    BaseSemantics::SValuePtr readIpRegister(SgAsmInstruction*);
+
+    // Is the processor in T32 mode? This is based just on the instruction being executed.
+    BaseSemantics::SValuePtr isT32Mode();
+
+    // Is the processor in A32 mode? This is based just on the instruction being executed.
+    BaseSemantics::SValuePtr isA32Mode();
+
+    // Set T32 mode on or off.
+    void setThumbMode(SgAsmAarch32Instruction*);        // on if instructions is 2 bytes; off otherwise
+    void setThumbMode(const BaseSemantics::SValuePtr &state);
+    void setThumbMode(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &state);
+
+    // Conditionally write a value to a register
+    void maybeWriteRegister(const BaseSemantics::SValuePtr &enabled, RegisterDescriptor, const BaseSemantics::SValuePtr &value);
+
+    // Conditionally write a value to memory
+    void maybeWriteMemory(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &value);
+
+    // Conditionally write the the destination described the by ROSE expression, which must also be readable.
+    void maybeWrite(const BaseSemantics::SValuePtr &enabled, SgAsmExpression *destination, const BaseSemantics::SValuePtr &value);
+
+    // Returns the most significant bit.
+    BaseSemantics::SValuePtr signBit(const BaseSemantics::SValuePtr&);
+
+    // Return the register that's being directly read or written.
+    RegisterDescriptor accessedRegister(SgAsmExpression*);
+
+    // Returns true if the specified value is a constant true, false in all other cases
+    bool mustBeSet(const BaseSemantics::SValuePtr&);
 
     //----------------------------------------------------------------------------------------------------------------
     // The following functions are more or less from ARM documentation and named similarly. They are generally not
     // further documented here or by ARM.
     //----------------------------------------------------------------------------------------------------------------
+    using TwoValues = std::tuple<BaseSemantics::SValuePtr, BaseSemantics::SValuePtr>;
 
     enum class SrType { LSL, LSR, ASR, ROR, RRX };      // SRType
-    using TwoValues = std::tuple<BaseSemantics::SValuePtr, BaseSemantics::SValuePtr>;
+    enum class BranchType {                             // BranchType
+        DIRCALL,                                        // direct branch with link
+        DIR,                                            // undocumented but used by B instruction (maybe the same as DIRCALL?)
+        INDCALL,                                        // indirect branch with link
+        ERET,                                           // exception return (indirect)
+        DBGEXIT,                                        // exit from debug state
+        RET,                                            // indirect branch with function return hint
+        INDIR,                                          // indicrect branch
+        EXCEPTION,                                      // exception entry
+        RESET,                                          // reset
+        UNKNOWN                                         // other
+    };
 
     BaseSemantics::SValuePtr part(const BaseSemantics::SValuePtr&, size_t maxBit, size_t minBit); // X<m,n>
     BaseSemantics::SValuePtr part(const BaseSemantics::SValuePtr&, size_t bitNumber); // X<n>
@@ -141,6 +198,33 @@ public:
     BaseSemantics::SValuePtr lsr(const BaseSemantics::SValuePtr&, size_t shift); // LSR
     BaseSemantics::SValuePtr lsl(const BaseSemantics::SValuePtr&, size_t shift); // LSL
     BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t); // SignExtend
+    void aluExceptionReturn(const BaseSemantics::SValuePtr &enabled,
+                            const BaseSemantics::SValuePtr &address); // ALUExceptionReturn
+    void aluWritePc(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address); // ALUWritePC
+    void bxWritePc(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address, BranchType); // BXWritePC
+    void branchWritePc(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address,
+                       BranchType branchType); // BranchWritePC
+    void branchTo(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &alignedAddress,
+                  BranchType);                          // BranchTo
+    BaseSemantics::SValuePtr align(const BaseSemantics::SValuePtr&, unsigned); // Align
+    BaseSemantics::SValuePtr pc();                      // PC. Returns address of current instruction plus eight (not sure why).
+    BaseSemantics::SValuePtr pcStoreValue();            // PCStoreValue (which doesn't store anything at all)
+    void loadWritePc(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address); // LoadWritePC
+    TwoValues addWithCarry(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                           const BaseSemantics::SValuePtr&); // AddWithCarry
+    BaseSemantics::SValuePtr spsr();                    // SPSR
+    void aarch32ExceptionReturn(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &address,
+                                const BaseSemantics::SValuePtr &spsr); // AArch32.ExceptionReturn
+    void dbgdtrEl0(const BaseSemantics::SValuePtr &enabled, const BaseSemantics::SValuePtr &value); // DBGDTR_EL0
+    BaseSemantics::SValuePtr dbgdtrEl0();               // DBGDTR_EL0
+    BaseSemantics::SValuePtr bigEndian();               // BigEndian
+    BaseSemantics::SValuePtr signedSat(const BaseSemantics::SValuePtr&, size_t); // SignedSat
+    TwoValues signedSatQ(const BaseSemantics::SValuePtr&, size_t); // SignedSatQ
+    BaseSemantics::SValuePtr unsignedSat(const BaseSemantics::SValuePtr&, size_t); // UnsignedSat
+    TwoValues unsignedSatQ(const BaseSemantics::SValuePtr&, size_t); // UnsignedSatQ
+    BaseSemantics::SValuePtr abs(const BaseSemantics::SValuePtr&); // Abs
+    BaseSemantics::SValuePtr countLeadingZeroBits(const BaseSemantics::SValuePtr&); // CountLeadingZeroBits
+    void aarch32CallHypervisor(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&); // AArch32.CallHypervisor
 };
 
 } // namespace

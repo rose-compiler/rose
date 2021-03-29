@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef CFG_REWRITE_H
 #define CFG_REWRITE_H
 
@@ -200,4 +203,5 @@ void prependToScopeStmt(SgNode *target, SgNode *newNode, void* data);
 void appendToScopeStmt(SgNode *target, SgNode *newNode, void* data);
 
 }
+#endif
 #endif

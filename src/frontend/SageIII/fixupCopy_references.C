@@ -740,7 +740,7 @@ SgBaseClass::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
        nrBaseClass->get_base_class_nonreal()->fixupCopy_references(nrBaseClass_copy->get_base_class_nonreal(),help);
      } else {
-       ROSE_ASSERT(false);
+       ROSE_ABORT();
      }
    }
 

@@ -1342,7 +1342,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
         default: {
             cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
     }
 }

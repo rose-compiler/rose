@@ -186,7 +186,7 @@ void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFuncti
   SgSourceFile * target_file = it_target_file->second;
   assert(target_file != NULL);
 
-  assert(false);
+  ROSE_ABORT();
 }
 
 /** @} */

@@ -197,12 +197,12 @@ int clang_to_dot_main(int argc, char ** argv)
           {
          // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
             printf ("Objective C langauge support is not available in ROSE \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
         default:
           {
             printf ("Default reached in switch(language) support \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
     }
 
@@ -282,7 +282,7 @@ int clang_to_dot_main(int argc, char ** argv)
             ROSE_ASSERT(!"Objective-C is not supported by ROSE Compiler.");
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_, );
         default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     clang::TargetOptions target_options;
@@ -337,7 +337,7 @@ int clang_to_dot_main(int argc, char ** argv)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
     return 0;
@@ -422,7 +422,7 @@ void ClangToDotTranslator::HandleTranslationUnit(clang::ASTContext & ast_context
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
     Traverse(ast_context.getTranslationUnitDecl());
@@ -515,92 +515,92 @@ void ClangToDotPreprocessorRecord::InclusionDirective(clang::SourceLocation Hash
 
 void ClangToDotPreprocessorRecord::EndOfMainFile() {
     std::cerr << "EndOfMainFile" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Ident(clang::SourceLocation Loc, const std::string & str) {
     std::cerr << "Ident" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::PragmaComment(clang::SourceLocation Loc, const clang::IdentifierInfo * Kind, const std::string & Str) {
     std::cerr << "PragmaComment" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str) {
     std::cerr << "PragmaMessage" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace) {
     std::cerr << "PragmaDiagnosticPush" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace) {
     std::cerr << "PragmaDiagnosticPop" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
     std::cerr << "PragmaDiagnostic" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range) {
     std::cerr << "MacroExpands" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
     std::cerr << "" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
     std::cerr << "MacroUndefined" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Defined(const clang::Token & MacroNameTok) {
     std::cerr << "Defined" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::SourceRangeSkipped(clang::SourceRange Range) {
     std::cerr << "SourceRangeSkipped" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::If(clang::SourceRange Range) {
     std::cerr << "If" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Elif(clang::SourceRange Range) {
     std::cerr << "Elif" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Ifdef(const clang::Token & MacroNameTok) {
     std::cerr << "Ifdef" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Ifndef(const clang::Token & MacroNameTok) {
     std::cerr << "Ifndef" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Else() {
     std::cerr << "Else" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 void ClangToDotPreprocessorRecord::Endif() {
     std::cerr << "Endif" << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 }
 
 std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToDotPreprocessorRecord::top() {

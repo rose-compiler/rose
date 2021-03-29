@@ -101,8 +101,7 @@ SgAsmElfRelocEntry::reloc_name() const
 #ifndef _MSC_VER
         return stringifySgAsmElfRelocEntryRelocType(get_type());
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 }
 

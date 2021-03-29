@@ -1447,7 +1447,7 @@ cout.flush();
         else if (global_scope) {
              global_scope -> append_declaration(package_declaration);
                 }
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
 #endif
     }
     else {
@@ -3007,7 +3007,7 @@ SgClassDefinition *getCurrentTypeDefinition() {
     }
     else {
         printf ("Error in getCurrentTypeDefinition(): SgTypeDefinition not found \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     ROSE_ASSERT(class_definition != NULL);

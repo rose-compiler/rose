@@ -119,7 +119,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
             {
                cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
                     <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
                break;
             }
         }
@@ -819,7 +819,7 @@ Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& inf
         {
           cerr << "Unparse_Jovial::unparseProcessControlStmt: unknown statement enum "
                <<  kind << endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -1173,7 +1173,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // WordsPerEntry (for anonymous table declarations)
-     SgJovialTableStatement* table_decl = NULL; // C++11 nullptr
+     SgJovialTableStatement* table_decl = nullptr;
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
         // typedefs (e.g., TYPE utype U) also have a base_type (in this case U)

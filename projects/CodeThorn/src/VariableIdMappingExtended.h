@@ -3,8 +3,11 @@
 
 #include "VariableIdMapping.h"
 #include "TypeSizeMapping.h"
+#include <unordered_map>
+#include <list>
 
 namespace CodeThorn {
+
   class VariableIdMappingExtended : public VariableIdMapping {
   public:
     
@@ -18,15 +21,41 @@ namespace CodeThorn {
      * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
+    void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount = 3); // override;
+
+    // deprecated
     void computeTypeSizes();
+
     // direct lookup
-    unsigned int getTypeSize(enum CodeThorn::BuiltInType);
-    unsigned int getTypeSize(SgType* type);
-    unsigned int getTypeSize(VariableId varId);
+    CodeThorn::TypeSize getTypeSize(SgType* type);
+    CodeThorn::TypeSize getTypeSize(VariableId varId);
+    void setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize);
+    void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
+    CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
+
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
+    virtual void toStream(std::ostream& os) override;
+    CodeThorn::TypeSize numClassMembers(SgType*); // from classMembers map
+
   private:
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
+    void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
+    SgType* strippedType(SgType* type);
+
     CodeThorn::TypeSizeMapping typeSizeMapping;
+    std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
+
+    // maintaining class members for each type (required for operations such as copy struct)
+    std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
+    bool isRegisteredClassMemberVar(SgType*,VariableId);
+    void registerClassMemberVar(SgType*,VariableId);
+    std::map<SgType*,std::vector<VariableId> > classMembers;
+
+    void recordWarning(std::string);
+    std::list<std::string> _warnings;
+
   };
 }
 

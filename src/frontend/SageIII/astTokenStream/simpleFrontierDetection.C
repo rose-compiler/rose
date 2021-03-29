@@ -39,7 +39,7 @@ SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute()
 #if 1
   // DQ (11/13/2018): I want to use the other constructor that will always at least set the SgSourceFile pointer.
      printf ("Exitng as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // isPartOfTypedefDeclaration   = false;
@@ -242,7 +242,7 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -455,7 +455,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -517,7 +517,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0

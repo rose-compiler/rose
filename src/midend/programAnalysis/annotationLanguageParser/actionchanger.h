@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_ACTIONCHANGER_H
 #define BDWY_ACTIONCHANGER_H
@@ -31,3 +33,4 @@ public:
 };
 
 #endif /* BDWY_ACTIONCHANGER_H */
+#endif

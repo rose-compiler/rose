@@ -57,7 +57,7 @@ AbstractValue::~AbstractValue() {
   case UNDEFINED:
     // nothing to do
     break;
-  case PTR_SET:
+  case AV_SET:
     deallocateExtension();
     break;
     // intentionally no default case to get compiler warning if one is missing
@@ -91,7 +91,7 @@ void AbstractValue::copy(const AbstractValue& other) {
     break;
   case FLOAT: floatValue=other.floatValue;
     break;
-  case PTR_SET: extension=other.abstractValueSetCopy();
+  case AV_SET: extension=other.abstractValueSetCopy();
     break;
   }
 }
@@ -125,7 +125,7 @@ CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
 
 CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_variableIdMapping);
-  return AbstractValue::_variableIdMapping->getTypeSize(btype);
+  return AbstractValue::_variableIdMapping->getBuiltInTypeSize(btype);
 }
 
 void AbstractValue::setValue(long int val) {
@@ -268,7 +268,7 @@ AbstractValue::createAddressOfFunction(CodeThorn::Label lab) {
 AbstractValue AbstractValue::convertPtrToPtrSet(AbstractValue val) {
   ROSE_ASSERT(val.isPtr());
   AbstractValue newVal;
-  newVal.allocateExtension(PTR_SET);
+  newVal.allocateExtension(AV_SET);
   ROSE_ASSERT(newVal.isPtrSet());
   newVal.addSetElement(val);
   return newVal;
@@ -284,7 +284,7 @@ std::string AbstractValue::valueTypeToString() const {
   case FUN_PTR: return "funptr";
   case REF: return "ref";
   case BOT: return "bot";
-  case PTR_SET: return "ptrset";
+  case AV_SET: return "ptrset";
   default:
     return "unknown";
   }
@@ -301,7 +301,9 @@ bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
-bool AbstractValue::isPtrSet() const {return (valueType==AbstractValue::PTR_SET);}
+// deprecated
+bool AbstractValue::isPtrSet() const {return (isAVSet());}
+bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
@@ -325,12 +327,17 @@ long AbstractValue::hash() const {
 }
 
 bool AbstractValue::ptrSetContainsNullPtr() const {
-  ROSE_ASSERT(valueType==PTR_SET);
+  ROSE_ASSERT(valueType==AV_SET);
   return getAbstractValueSet()->find(createNullPtr())!=getAbstractValueSet()->end();
 }
 
+// deprecated
 size_t AbstractValue::getPtrSetSize() const {
-  ROSE_ASSERT(valueType==PTR_SET);
+  return getAVSetSize();
+}
+
+size_t AbstractValue::getAVSetSize() const {
+  ROSE_ASSERT(valueType==AV_SET);
   return getAbstractValueSet()->size();
 }
 
@@ -348,7 +355,7 @@ AbstractValue AbstractValue::operatorNot() {
   case AbstractValue::TOP: tmp=Top();break;
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::UNDEFINED: tmp=*this;break;
-  case AbstractValue::PTR_SET:
+  case AbstractValue::AV_SET:
     if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()>1) {
     tmp=Top();
   } else if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()==1) {
@@ -356,7 +363,7 @@ AbstractValue AbstractValue::operatorNot() {
   } else if(!AbstractValue::ptrSetContainsNullPtr()) {
     tmp.intValue=0;
   } else {
-    SAWYER_MESG(logger[ERROR])<<"Error: unhandled case in AbstractValue::operatorNot() (PTR_SET)."<<endl;
+    SAWYER_MESG(logger[ERROR])<<"Error: unhandled case in AbstractValue::operatorNot() (AV_SET)."<<endl;
     exit(1);
   }
   default:
@@ -676,7 +683,7 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     ss<<getIntValue();
     return ss.str();
   }
-  case PTR_SET: {
+  case AV_SET: {
     // print set of abstract values
     AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
     stringstream ss;
@@ -765,7 +772,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
         <<variableId.toUniqueString(vim)
@@ -779,7 +786,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //      return variableId.toString(vim);
       //    }
   }
-  case PTR_SET: {
+  case AV_SET: {
     // print set of abstract values
     AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
     stringstream ss;
@@ -824,7 +831,7 @@ string AbstractValue::toString() const {
   case FUN_PTR: {
     return "fptr:"+label.toString();
   }
-  case PTR_SET: {
+  case AV_SET: {
     // print set of abstract values
     AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
     stringstream ss;
@@ -970,7 +977,7 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
   case AbstractValue::REF:
     return topOrError("Error: AbstractValue operator unary minus on reference value.");
     //  default case intentionally not present to force all values to be handled explicitly
-  case AbstractValue::PTR_SET:
+  case AbstractValue::AV_SET:
     return topOrError("Error: AbstractValue operator unary minus on ptrset value.");
   }
   return tmp;
@@ -1118,7 +1125,7 @@ AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
 }
 
 AbstractValueSet* AbstractValue::getAbstractValueSet() const {
-  ROSE_ASSERT(valueType==PTR_SET);
+  ROSE_ASSERT(valueType==AV_SET);
   return static_cast<AbstractValueSet*>(extension);
 }
 
@@ -1144,7 +1151,7 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
       // should be unreachable because of 2nd if-condition above
       // TODO: enforce non-reachable here
       return true;
-    case PTR_SET: {
+    case AV_SET: {
       AbstractValueSet* set1=val1.getAbstractValueSet();
       AbstractValueSet* set2=val2.getAbstractValueSet();
       // (val1 approximatedBy val2) iff (val1 subsetOf val2) iff (val2 includes val1)
@@ -1220,7 +1227,7 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
         return createTop();
       }
     }
-    case PTR_SET: {
+    case AV_SET: {
       // set union
       AbstractValueSet* set1=val1.getAbstractValueSet();
       AbstractValueSet* set2=val2.getAbstractValueSet();
@@ -1265,13 +1272,13 @@ AbstractValue AbstractValue::createAbstractValuePtrSet(AbstractValueSet* set) {
 
 void AbstractValue::setAbstractValueSetPtr(AbstractValueSet* avPtr) {
   //cout<<"DEBUG: setAbstractValueSetPtr:"<<avPtr<<endl;
-  valueType=PTR_SET;
+  valueType=AV_SET;
   extension=avPtr;
   //cout<<"DEBUG: toString:"<<this->toString()<<endl;
 }
 
 void AbstractValue::addSetElement(AbstractValue av) {
-  ROSE_ASSERT(valueType==PTR_SET);
+  ROSE_ASSERT(valueType==AV_SET);
   AbstractValueSet* avs=getAbstractValueSet();
   ROSE_ASSERT(avs);
   avs->insert(av);
@@ -1283,7 +1290,7 @@ bool AbstractValue::isReferenceVariableAddress() {
     return true;
   }
   if(isPtr()||isRef()) {
-    return getVariableIdMapping()->hasReferenceType(getVariableId());
+    return getVariableIdMapping()->isOfReferenceType(getVariableId());
   }
   return false;
 }
@@ -1291,7 +1298,7 @@ bool AbstractValue::isReferenceVariableAddress() {
 void AbstractValue::allocateExtension(ValueType valueTypeParam) {
   valueType=valueTypeParam;
   switch(valueType) {
-  case PTR_SET:
+  case AV_SET:
     extension=new AbstractValueSet();
     //cout<<"DEBUG: ALLOC:"<<extension<<endl;
     break;
@@ -1302,7 +1309,7 @@ void AbstractValue::allocateExtension(ValueType valueTypeParam) {
 }
 
 void AbstractValue::deallocateExtension() {
-  ROSE_ASSERT(valueType==PTR_SET);
+  ROSE_ASSERT(valueType==AV_SET);
   AbstractValueSet* avs=getAbstractValueSet();
   //cout<<"DELETE: "<<this<<":"<<avs<<":"<<this->toString()<<endl;
   if(avs)

@@ -71,13 +71,13 @@ public:
 
     BaseSemantics::SValuePtr argument(size_t n) const {
         size_t bytesPerWord = wordSize_ / 8;
-        rose_addr_t sp = ops_->readRegister(regSp_)->get_number();
+        rose_addr_t sp = ops_->readRegister(regSp_)->toUnsigned().get();
         BaseSemantics::SValuePtr addr = ops_->number_(wordSize_,  sp + (n+1)*bytesPerWord);
         return ops_->readMemory(regSs_, addr, ops_->undefined_(wordSize_), ops_->boolean_(true));
     }
 
     void push(uint64_t value) {
-        rose_addr_t sp = ops_->readRegister(regSp_)->get_number() - wordSize_/8;
+        rose_addr_t sp = ops_->readRegister(regSp_)->toUnsigned().get() - wordSize_/8;
         ops_->writeRegister(regSp_, ops_->number_(wordSize_, sp));
         writeMemory(sp, value);
     }
@@ -113,7 +113,7 @@ public:
     rose_addr_t run(const P2::Partitioner &partitioner, const Settings &settings,
                     const std::set<rose_addr_t> &breakpoints = std::set<rose_addr_t>()) {
         for (size_t nInsns=0; nInsns<settings.insnLimit; ++nInsns) {
-            rose_addr_t ip = ops_->readRegister(regIp_)->get_number();
+            rose_addr_t ip = ops_->readRegister(regIp_)->toUnsigned().get();
             if (ip == returnMarker_ || (nInsns>0 && breakpoints.find(ip)!=breakpoints.end()))
                 return ip;
             SgAsmInstruction *insn = partitioner.instructionProvider()[ip];
@@ -205,8 +205,8 @@ arguments(const VirtualMachine &vm, size_t nArgs) {
     for (size_t i=0; i<nArgs; ++i) {
         BaseSemantics::SValuePtr arg = vm.argument(i);
         ss <<(i?", ":"") <<"arg_" <<i <<" = " <<*arg;
-        if (vm.map()->at(arg->get_number()).exists()) {
-            if (uint64_t deref = vm.readMemory(arg->get_number()))
+        if (vm.map()->at(arg->toUnsigned().get()).exists()) {
+            if (uint64_t deref = vm.readMemory(arg->toUnsigned().get()))
                 ss <<" [deref=" <<StringUtility::toHex2(deref, vm.wordSize()) <<"]";
         }
     }
@@ -261,8 +261,8 @@ processExistingCalls(const P2::Partitioner &partitioner, const Settings &setting
                 breakpoints.erase(settings.decoderVa);
                 if (settings.showCall)
                     std::cout <<"(" <<partitioner.edgeName(edge) <<")" <<arguments(vm, settings.showCall) <<"\n";
-                stringId = "string-" + StringUtility::numberToString(vm.argument(0)->get_number());
-                resultVa = vm.argument(2)->get_number();
+                stringId = "string-" + StringUtility::numberToString(vm.argument(0)->toUnsigned().get());
+                resultVa = vm.argument(2)->toUnsigned().get();
             } else {
                 // When leaving the decoder, print the decoded string
                 std::string str = vm.readString(resultVa);

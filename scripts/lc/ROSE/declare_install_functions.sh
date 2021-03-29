@@ -37,6 +37,7 @@
 #   setup_boost
 #   setup_boost_rose
 #   setup_boost_tce
+#   _setup_compiler_common
 #   setup_gcc_compiler
 #   setup_gcc_compiler_base
 #   setup_gcc_compiler_with_ada
@@ -510,6 +511,15 @@ do_preconfigure () {
 }
 
 #================================================
+# FOR all C++ compilers
+#================================================
+# Sets:
+#   ROSE_COMPILER_CXX_STD_FLAG
+_setup_compiler_common () {
+  export ROSE_COMPILER_CXX_STD_FLAG="-std=c++11"
+}
+
+#================================================
 # FOR INTEL 18.0.1 MPI (Used by ARES 2019-03-14):
 #================================================
 # Uses:
@@ -594,10 +604,12 @@ setup_intel_19_0_4_compiler () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSIONED
 #   ROSE_INSTALL_PATH
 _setup_intel_compiler_common () {
+  _setup_compiler_common
   export ROSE_COMPILER="intel"
   export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_MPI_KIND}/${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
@@ -648,11 +660,13 @@ _setup_intel_compiler_common () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
 #   ROSE_INSTALL_PATH
 setup_intel_18_0_2_compiler_non_mpi () {
+  _setup_compiler_common
   export ROSE_COMPILER="intel"
   export ROSE_COMPILER_VERSION="18.0.2"
   export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
@@ -700,16 +714,15 @@ setup_intel_18_0_2_compiler_non_mpi () {
 #   ROSE_BACKEND_COMPILER_HOME
 #   ROSE_BACKEND_CXX
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
 setup_gcc_compiler_base () {
+  _setup_compiler_common
   export ROSE_COMPILER="gcc"
 #  export ROSE_COMPILER_VERSION="6.1.0"
   export ROSE_COMPILER_VERSION="4.9.3"
-  export ROSE_COMPILER_CXX_STD="c++11"
-  export ROSE_COMPILER_CXX_STD_FLAG="-std=${ROSE_COMPILER_CXX_STD}"
-#  export ROSE_COMPILER_CXX_STD_FLAG=""
   export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
   export ROSE_COMPILER_VERSIONED_STD="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}-${ROSE_COMPILER_CXX_STD}"
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
@@ -882,6 +895,7 @@ setup_boost () {
 #   CXX
 #   ROSE_BOOST_VERSION
 #   ROSE_BUILD_BASE
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_BASE
 #   RUN_AND_LOG
@@ -920,6 +934,16 @@ build_boost_rose () {
 #==============================
 # FOR INTEL MPI (Used by ARES):
 #==============================
+# Uses:
+#   LD_LIBRARY_PATH
+#   ROSE_BACKEND_COMPILER_HOME
+#   ROSE_BOOST_HOME
+#   ROSE_BUILD_PATH
+#   ROSE_COMPILER_CXX_STD_FLAG
+#   ROSE_INSTALL_PATH
+#   ROSE_REPO_PATH
+#   RUN_AND_LOG
+#   SRUN_DO
 do_intel_configure () {
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
   run_or_not cd ${ROSE_BUILD_PATH}
@@ -946,7 +970,8 @@ do_intel_configure () {
   --enable-edg_version=5.0 \
   --with-alternate_backend_Cxx_compiler=${ROSE_BACKEND_COMPILER_HOME}/bin/mpicxx \
   --with-alternate_backend_C_compiler=${ROSE_BACKEND_COMPILER_HOME}/bin/mpicc \
-  --with-alternate_backend_fortran_compiler=${ROSE_BACKEND_COMPILER_HOME}/bin/mpif77
+  --with-alternate_backend_fortran_compiler=${ROSE_BACKEND_COMPILER_HOME}/bin/mpif77 \
+  CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall"
 
   # NOTE --disable-binary-analysis above is because (configure output):
   # Checking blacklisted configurations
@@ -965,6 +990,16 @@ do_intel_configure () {
 #===============================================
 # FOR GCC 4.9.3 or 6.1.0 non-MPI (used by Kull):
 #===============================================
+# Uses:
+#   ROSE_BOOST_HOME
+#   ROSE_BUILD_PATH
+#   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD_FLAG
+#   ROSE_COMPILER_VERSION
+#   ROSE_INSTALL_PATH
+#   ROSE_REPO_PATH
+#   RUN_AND_LOG
+#   SRUN_DO
 _do_gcc_configure_common () {
   # Optional parameters are added to the end of the configure parameters.
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
@@ -998,14 +1033,13 @@ do_gcc_configure () {
 
 do_gcc_configure_with_ada () {
   _do_gcc_configure_common \
---enable-experimental_ada_frontend \
---disable-binary-analysis \
---without-swi-prolog \
---without-cuda \
---disable-fortran \
---without-java \
---without-python \
-CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall"
+  --enable-experimental_ada_frontend \
+  --disable-binary-analysis \
+  --without-swi-prolog \
+  --without-cuda \
+  --disable-fortran \
+  --without-java \
+  --without-python 
 }
 
 do_gcc_configure_with_binary_analysis () {

@@ -20,6 +20,7 @@ exports
     PointerTypeDesc            %% 2.1.1.7
     StrucSpecT                 %% 2.1.2.2
     DefString                  %% 2.4
+    MODOperator                %% 5.1
     ANDOperator                %% 5.1
     OROperator                 %% 5.1
     EQVOperator                %% 5.1
@@ -73,6 +74,7 @@ exports
 
 %% 5.1
 %%
+  'MOD'                      -> MODOperator
   'AND'                      -> ANDOperator
   'OR'                       ->  OROperator
   'EQV'                      -> EQVOperator
@@ -205,8 +207,6 @@ exports
   'LIKE'                    -> ReservedWord
   'LOC'                     -> ReservedWord
 
-  'MOD'                     -> ReservedWord
-
   'NENT'                    -> ReservedWord
   'NEW*'                    -> ReservedWord
   'NEXT'                    -> ReservedWord
@@ -265,6 +265,8 @@ exports
 
 %% 8.4 COMMENTS
 %%
+  [\%][\%]                  -> LAYOUT
+  [\"][\"]                  -> LAYOUT
   [\%] ~[\%]+ [\%]          -> LAYOUT
   [\"] ~[\"]+ [\"]          -> LAYOUT
 
@@ -295,6 +297,7 @@ exports
     IfKeyword         -/- [A-Za-z0-9]
     ReservedWord      -/- [A-Za-z0-9]
 
+    MODOperator       -/- [A-Za-z0-9]
     ANDOperator       -/- [A-Za-z0-9]
     OROperator        -/- [A-Za-z0-9]
     EQVOperator       -/- [A-Za-z0-9]

@@ -90,7 +90,7 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
 
 #if 0
      printf("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -512,7 +512,7 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
           default:
              {
                mfprintf(mlog [ WARN ] ) ("Default reached in NameQualificationTraversal::associatedDeclaration() scope = %s \n",scope->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -714,7 +714,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           default:
              {
                mfprintf(mlog [ WARN ] ) ("Default reached in NameQualificationTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -826,7 +826,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -919,7 +919,7 @@ NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatemen
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("This case is not handled yet! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -1007,8 +1007,8 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
                ASSERT_not_null(alias);
 
             // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
-               ROSE_ASSERT(false);
-
+               ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]
                SgSymbol* baseSymbol = alias->get_alias();
                ASSERT_not_null(baseSymbol);
 #if 1
@@ -1016,6 +1016,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
 #endif
                typeElaborationRequired = requiresTypeElaboration(baseSymbol);
                break;
+#endif
              }
 
           default:
@@ -1055,14 +1056,14 @@ NameQualificationTraversal::processNameQualificationArrayType(SgArrayType* array
              {
 #if 0
                mfprintf(mlog [ WARN ] ) ("ERROR: Case of SgArrayType with a SgVarRefExp index (exiting as a test) \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("ERROR: Case of SgArrayType not supported yet! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1088,7 +1089,7 @@ NameQualificationTraversal::processNameQualificationForPossibleArrayType(SgType*
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("In processNameQualificationForPossibleArrayType(): Case of SgArrayType not supported yet! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1162,7 +1163,7 @@ NameQualificationTraversal::functionReport(SgFunctionDeclaration* functionDeclar
                     functionDeclaration->unsetTransformation();
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -1585,12 +1586,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     default:
                        {
                          printf ("Switch default reached: trial_lookup_symbol = %p = %s \n",trial_lookup_symbol,trial_lookup_symbol->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #if 0
               printf ("Not yet implemented! \n");
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
 #endif
 
 #if DEBUG_NONALIAS_SYMBOL_SUPPORT
@@ -1718,7 +1719,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            {
 #if 0
                              printf ("enclosing_variableDeclaration == NULL \n");
-                             ROSE_ASSERT(false);
+                             ROSE_ABORT();
 #else
                              printf (" --- not associated with a SgVariableDeclaration: so keep going \n");
                              SgNonrealDecl* nonrealDecl = isSgNonrealDecl(declaration);
@@ -1735,7 +1736,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                   printf ("enclosing_variableDeclaration == NULL && nonrealDecl != NULL \n");
-                                  ROSE_ASSERT(false);
+                                  ROSE_ABORT();
 #endif
                                 }
 #endif
@@ -1829,7 +1830,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     ASSERT_not_null(symbol);
 
                  // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #if 1
                     mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::nameQualificationDepth(): Detected a SgAliasSymbol: alias = %p baseSymbol = %p = %s \n",aliasSymbol,symbol,symbol->class_name().c_str());
 #endif
@@ -1927,7 +1928,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("I think we have to force an extra level of name qualification (not implemented) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                               
@@ -2003,7 +2004,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                              mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -2092,7 +2093,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          break;
                        }
@@ -2129,7 +2130,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 1
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -2177,7 +2178,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
@@ -2405,12 +2406,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    printf("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #if 0
@@ -2474,7 +2475,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 1
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -2531,7 +2532,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               mfprintf(mlog [ WARN ] ) ("$$$$$$$$$$$$$$$$$$ DONE: Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #endif
@@ -2553,7 +2554,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          symbol = NULL;
 
@@ -2592,7 +2593,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // DQ (11/18/2017): Commented out the trap to force an exit here!
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -2604,7 +2605,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                       // If this is a SgNamespaceDefinition, then we need to reset it to the uniquly represented namespace definition.
@@ -2634,7 +2635,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! (current scope is a SgNamespaceDefinitionStatement) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -2711,7 +2712,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if 0
                                 // DQ (6/3/2017): Commented out to explore behavior.
                                    mfprintf(mlog [ WARN ] ) ("There is reason to think this template instantiation should have some name qualification \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -2741,7 +2742,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if 0
                                 // DQ (6/3/2017): Commented out to explore behavior.
                                    mfprintf(mlog [ WARN ] ) ("There is a declaration hidding the template associated with this template instantiation (should have some name qualification) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("symbol                                   = %p = %s \n",symbol,symbol->class_name().c_str());
@@ -2802,7 +2803,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if 0
                                      // DQ (5/19/2017): This is the root cause of the problem with test2017_39.C.
                                         mfprintf(mlog [ WARN ] ) ("This is the current error \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
 #endif
@@ -2820,7 +2821,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                 // if (temp_scope == hiddingSymbolScope)
                                    if (hiddingSymbolScope != currentScope && temp_scope == hiddingSymbolScope)
@@ -2876,7 +2877,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // bool isSameKindOfFunction = (declarationHidingCurrentDeclaration->variant() == declarationFromSymbol->variant());
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #if 1
                                 // DQ (6/3/2017): Comment out the resetting of the symbol to NULL (as a test).
@@ -2896,11 +2897,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("ERROR: declaration from symbolHiddingTemplateInstantiationSymbol = %p hides SgTemplateInstantiationFunctionDecl \n",symbolHiddingTemplateInstantiationSymbol);
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -2924,7 +2925,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #if 0
@@ -2938,7 +2939,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          break;
                        }
@@ -3012,7 +3013,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("I think we have to force an extra level of name qualification (not implemented) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #endif
                             }
@@ -3096,7 +3097,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
 #if 0
                               mfprintf(mlog [ WARN ] ) ("How many of these enum symbols are there that match the same name? (not implemented) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -3124,7 +3125,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -3233,7 +3234,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               mfprintf(mlog [ WARN ] ) ("******** Found a variable template instantiation that is a part of a SgTemplateInstantiationDirectiveStatement \n");
 #if 1
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -3325,7 +3326,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if 0
                                 // DQ (8/13/2013): I think this case should not come up if everything else works.  Since there are no templated variables I'm not sure what to do here.
                                    mfprintf(mlog [ WARN ] ) ("Error: In NameQualificationTraversal::nameQualificationDepth(): variableSymbol == NULL: I think we should not have to support this case! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #endif
                                 // DQ (6/5/2011): This assert fails for test2005_107.C (this is OK, the referenced symbol is not visible from the current scope).
@@ -3363,7 +3364,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                       // Handle cases are we work through specific example codes.
                       // mfprintf(mlog [ WARN ] ) ("default reached symbol = %s \n",symbol->class_name().c_str());
                          mfprintf(mlog [ WARN ] ) ("default reached declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -3400,7 +3401,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                mfprintf(mlog [ WARN ] ) ("$$$$$$$$$$$$$$$$$$ DONE: Processing a SgTemplateInstantiationTypedefDeclaration $$$$$$$$$$$$$$$$$$$$$ \n");
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -3409,7 +3410,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
           if (isSgTemplateInstantiationMemberFunctionDecl(declaration) != NULL)
              {
                mfprintf(mlog [ WARN ] ) ("Exiting as a test: in nameQualificationDepth() \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 
@@ -3436,10 +3437,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                if (aliasSymbol != NULL)
                   {
                  // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
-                    ROSE_ASSERT(false);
-
+                    ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]
                     ASSERT_not_null(aliasSymbol->get_alias());
                     mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::nameQualificationDepth(): Detected a SgAliasSymbol: alias = %p baseSymbol = %p = %s \n",aliasSymbol,aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
+#endif
                   }
 #endif
 
@@ -3532,7 +3534,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                      // int* pointer = NULL;
                                      // *pointer = 42;
                                      // mfprintf(mlog [ WARN ] ) ("*pointer = %d \n",*pointer);
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                      // ROSE_ABORT();
                                      // mfprintf(mlog [ WARN ] ) ("Calling abort! \n");
                                      // abort();
@@ -3595,7 +3597,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                        {
                       // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
                          mfprintf(mlog [ WARN ] ) ("ERROR: The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("Resetting the symbol to that stored in the SgAliasSymbol \n");
@@ -3747,11 +3749,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("I think this is associated with a template, need to stop here! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -3766,7 +3768,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (class) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -3779,7 +3781,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               ASSERT_not_null(namespaceSymbol);
 #if 0
                               mfprintf(mlog [ WARN ] ) ("This is the case of a namespace (sorry, not implemented) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("namespaceSymbol = %p \n",namespaceSymbol);
@@ -3836,14 +3838,14 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (namespace) \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
 
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (namespace alias) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                               break;
                             }
@@ -3891,13 +3893,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (class) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
 #if 0
                               mfprintf(mlog [ WARN ] ) ("This is the case of a variable (sorry, not implemented) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                               break;
                             }
@@ -3999,7 +4001,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
 #if 0
@@ -4007,7 +4009,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    printf("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                 // DQ (6/20/2011): But we don't check for if there was another declaration that might be a problem (overloaded functions don't count!)...
                                 // This function is visible from where it is referenced. 
@@ -4134,7 +4136,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
 
@@ -4179,7 +4181,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (function) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #if 0
@@ -4197,7 +4199,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               if (isSgTemplateInstantiationFunctionDecl(declaration) != NULL)
                                  {
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
 #endif
                               break;
@@ -4285,7 +4287,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -4319,7 +4321,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #else
@@ -4407,7 +4409,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -4426,7 +4428,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                             {
                            // Handle cases are we work through specific example codes.
                               mfprintf(mlog [ WARN ] ) ("default reached symbol = %s \n",symbol->class_name().c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -4435,7 +4437,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                if (isSgTemplateInstantiationFunctionDecl(declaration) != NULL)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -4593,7 +4595,7 @@ NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -4607,7 +4609,7 @@ NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -4914,7 +4916,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else if (iname != NULL)
@@ -4958,7 +4960,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #if 0
   // DQ (7/22/2017): Added for testing only.
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
    }
@@ -5122,7 +5124,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
           while (aliasSymbol != NULL) 
              {
             // DQ (7/12/2014): The newer design of the symbol table handling means that we will never see a SgAliasSymbol at this level.
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #if 1
             // DQ (7/12/2014): debugging use of SgAliasSymbol.
                mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::nameQualificationDepth(): resolving alias symbol in loop: alias = %p baseSymbol = %p = %s \n",aliasSymbol,aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
@@ -5486,7 +5488,7 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
      if (isInitializedName == true)
        {
          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
        }
   // DQ (4/22/2019): Test setting this to false for test2019_397.C.
   // isInitializedName = false;
@@ -5533,7 +5535,7 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
                     i->second = typeNameString;
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #else
                     mfprintf(mlog [ WARN ] ) ("In addToNameMap(): Allow this for replacement now! \n");
 #endif
@@ -5627,7 +5629,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // Return from function if this is associated wqith an unNamed declaration (since it could not be name qualified).
@@ -5738,7 +5740,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -5799,7 +5801,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // DQ (5/14/2019): We can sometimes need this class specifier to be output (e.g. test2019_430.C) (testing).
@@ -5845,7 +5847,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                unparseInfoPointer->set_SkipClassSpecifier();
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -5901,7 +5903,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     outputOneExample = false;
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #endif
@@ -5945,7 +5947,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                        {
                          nodeReferenceToType->get_file_info()->display("Error: type names should not be this long...: debug");
                        }
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #if 0
             // DQ (2/18/2013): I think that the output if such long strings in a problem for the Jenkins tests, 
@@ -5978,7 +5980,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -5989,7 +5991,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -6010,7 +6012,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exitng as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -6093,7 +6095,7 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 0
             // DQ (2/9/2017): Debugging if this should be failing on GNU 4.9.3 with EDG 4.12 on tests/CompileTests/RoseExample_tests/testRoseHeaders_01.C
             // This also might be caused by the new support for template arguments which prevents private/protected types from being used where a public alias is available.
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -6183,7 +6185,7 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
 #if 1
                mfprintf(mlog [ WARN ] ) ("Error: function names should not be this long... memberFunctionNameString = \n%s \n",memberFunctionNameString.c_str());
 #endif
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
@@ -6303,7 +6305,7 @@ NameQualificationTraversal::traverseTemplatedClass(SgBaseClass* baseClass, SgNod
 #if 0
             // DQ (2/9/2017): Debugging if this should be failing on GNU 4.9.3 with EDG 4.12 on tests/CompileTests/RoseExample_tests/testRoseHeaders_01.C
             // This also might be caused by the new support for template arguments which prevents private/protected types from being used where a public alias is available.
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -6603,7 +6605,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
           if (debugging == true)
              {
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
           SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
@@ -6670,7 +6672,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
 #if 0
@@ -6683,7 +6685,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                if (debugging == true)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -6771,7 +6773,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! (before recursive call) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                       // DQ (9/14/2015): Added debugging code.
                       // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
@@ -6795,7 +6797,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! (after recursive call) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -6808,7 +6810,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                          declaration = getDeclarationAssociatedWithType(baseType);
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -6897,7 +6899,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                     if (initializedName->get_name() == "var_2")
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #if 1
@@ -6916,7 +6918,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                     if (debugging == true)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                  // DQ (8/4/2012): However, this quasi-pathological case does not apply to template instantiations 
@@ -7061,7 +7063,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                     if (skipTraverseType == true)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 
@@ -7081,13 +7083,13 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                        {
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -7110,7 +7112,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                          ASSERT_not_null(inheritedAttribute.get_usingPointerToMemberType());
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
@@ -7141,7 +7143,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                     if (tmp_arrayType != NULL)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #if 0
@@ -7170,13 +7172,13 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                        {
 #if 1
                          mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #endif
@@ -7193,7 +7195,7 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
                if (tmp_arrayType != NULL)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -7417,7 +7419,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (isSgNonrealBaseClass(baseClass)) {
                  // FIXME nothing to do?
                } else if (isSgExpBaseClass(baseClass)) {
-                  ROSE_ASSERT(false); // TODO traverse the expression ???
+                  ROSE_ABORT(); // TODO traverse the expression ???
                   } 
                  else 
                   {
@@ -7475,7 +7477,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -7526,7 +7528,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -7593,7 +7595,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting after evaluation of derived each base class: are they visible: \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
                i++;
@@ -7601,7 +7603,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting after evaluation of derived classes: are they visible: \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -7639,7 +7641,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                  // DQ (7/22/2017): Uncomment as a test!
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -7658,7 +7660,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               mfprintf(mlog [ WARN ] ) ("NOTE: Could not identify scope for class declaration: parent = %p = %s \n",parent,parent->class_name().c_str());
 #if 1
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -7767,7 +7769,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -8099,7 +8101,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -8213,7 +8215,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -8272,7 +8274,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     setNameQualificationOnBaseType(pointerMemberType,declaration,amountOfNameQualificationRequiredForType);
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -8283,7 +8285,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -8294,7 +8296,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -8336,7 +8338,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (declarationStatement == NULL)
              {
                mfprintf(mlog [ WARN ] ) ("What is this: initializedNameParent = %p = %s \n",initializedNameParent,initializedNameParent->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
           ASSERT_not_null(declarationStatement);
           SgScopeStatement* currentScope = declarationStatement->get_scope();
@@ -8533,7 +8535,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (debugging == true)
              {
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
        // DQ (8/8/2020): This was moved to before the refactored code.
@@ -8604,7 +8606,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
 #if 0
@@ -8617,7 +8619,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (debugging == true)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -8707,7 +8709,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! (before recursive call) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                       // DQ (9/14/2015): Added debugging code.
                       // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
@@ -8729,7 +8731,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! (after recursive call) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -8742,7 +8744,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          declaration = getDeclarationAssociatedWithType(baseType);
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -8833,7 +8835,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (initializedName->get_name() == "var_2")
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #if 1
@@ -8852,7 +8854,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (debugging == true)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 
@@ -9000,7 +9002,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (skipTraverseType == true)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 
@@ -9020,13 +9022,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        {
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -9049,7 +9051,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ASSERT_not_null(inheritedAttribute.get_usingPointerToMemberType());
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
@@ -9081,7 +9083,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (tmp_arrayType != NULL)
                        {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #if 0
@@ -9110,13 +9112,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        {
 #if 1
                          mfprintf(mlog [ WARN ] ) ("Detected initializedName->get_name().str() == \"N\": Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -9138,7 +9140,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (tmp_arrayType != NULL)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -9304,7 +9306,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -9332,7 +9334,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (templateInstantiationDirectiveStatement != NULL)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
               }
 #endif
@@ -9566,7 +9568,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                      // fields for the SgInitializedName instead of the fields for the SgInitializedName's type. 
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                      else
@@ -9587,7 +9589,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  }
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -9687,7 +9689,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (debugging == true)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
             // **************************************************
@@ -9702,7 +9704,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (debugging == true)
                   {
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 
@@ -9763,7 +9765,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -9771,7 +9773,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (debugging == true)
              {
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
         }
@@ -10067,13 +10069,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                                              mfprintf(mlog [ WARN ] ) ("ERROR: Why is the name qualification length non-zero: exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
 #endif
 #if 0
                                         mfprintf(mlog [ WARN ] ) ("Need to process the template arguments: exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                      else
@@ -10103,7 +10105,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    mfprintf(mlog [ WARN ] ) ("   --- templateFunction->get_templateName() = %s \n",templateFunction->get_templateName().str());
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #endif
@@ -10200,7 +10202,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test at the end of SgFunctionDeclaration name qualification support \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -10348,7 +10350,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                  // DQ (8/3/2019): Trying to understand why we generate two levels of name qualification before the using directive.
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     setNameQualificationReturnType(memberFunctionDeclaration,declaration,amountOfNameQualificationRequiredForReturnType);
                   }
@@ -10402,7 +10404,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (isSgTemplateInstantiationMemberFunctionDecl(memberFunctionDeclaration) != NULL)
                       {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! currentScope != memberFunctionDeclaration->get_scope() \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                   }
@@ -10434,7 +10436,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (isSgTemplateInstantiationMemberFunctionDecl(memberFunctionDeclaration) != NULL)
                       {
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! currentScope == memberFunctionDeclaration->get_scope() \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
 #endif
@@ -10500,7 +10502,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       else
                        {
                          mfprintf(mlog [ WARN ] ) ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -10523,7 +10525,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exitng as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -10598,12 +10600,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             else
              {
                mfprintf(mlog [ WARN ] ) ("WARNING: SgTemplateInstantiationDirectiveStatement -- currentScope is not available through parent of SgDeclarationStatement, not clear why! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("In case of name qualification for SgTemplateInstantiationDirectiveStatement \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -10680,7 +10682,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
             // Debugging code.
                mfprintf(mlog [ WARN ] ) ("Case SgTypedefDeclaration: detected a SgPointerMemberType base type \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -10707,7 +10709,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
                  // Debugging code.
                     mfprintf(mlog [ WARN ] ) ("Case SgTypedefDeclaration: detected a SgPointerMemberType base type: pointerMemberClassDeclaration != NULL \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -10805,7 +10807,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -10918,7 +10920,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
             // We want to debug this case later!
                mfprintf(mlog [ WARN ] ) ("Exiting in unimplemented case of SgInitializedName in SgUsingDeclarationStatement \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -10988,7 +10990,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
        // We want to debug this case later!
           mfprintf(mlog [ WARN ] ) ("Exiting in unimplemented case of name qualification for the SgNamespaceDeclarationStatement in a SgNamespaceAliasDeclarationStatement \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -11101,7 +11103,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
@@ -11243,7 +11245,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -11420,12 +11422,12 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -11480,7 +11482,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if DEBUG_MEMBER_FUNCTION_REF
@@ -11553,7 +11555,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               mfprintf(mlog [ WARN ] ) ("Error: explictlySpecifiedCurrentScope == NULL \n");
 
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                     ASSERT_not_null(currentStatement);
@@ -11588,7 +11590,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
@@ -11677,7 +11679,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -11701,7 +11703,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
 #if 1
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -11795,7 +11797,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("DONE: Calling setNameQualification() on constructorInitializer: Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 #if 0
                printf ("999999999999999999999999999999999999999999999999999 \n");
@@ -11808,7 +11810,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
 #if 0
                     printf("DONE: Calling setNameQualification() on constructorInitializer: Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #endif
@@ -11859,7 +11861,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("DONE: Calling traverseType() on constructorInitializer: Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -11870,7 +11872,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -11905,7 +11907,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -11971,7 +11973,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("DONE: Calling setNameQualification() on aggregateInitializer: Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
             // After processing the name qualification for the class declaration, we need to also process the 
@@ -11987,7 +11989,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                traverseType(aggregateInitializer->get_type(),aggregateInitializer,currentScope,currentStatement);
 #if 0
                mfprintf(mlog [ WARN ] ) ("DONE: Calling traverseType() on aggregateInitializer: Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -12292,13 +12294,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -12362,7 +12364,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                 // inDesignatedInitializer = true;
 #if 0
                                    printf ("Found case of SgVarRefExp in SgDesignatedInitializer (no name qualification is required (allowed)) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                 // This is not a SgInitializedName being declared by a variable declaration. Setting 
                                 // this to NULL will force the TRUE case below to be taken, which after the check
@@ -12373,7 +12375,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Test 1: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     if (variableDeclaration == NULL)
                        {
@@ -12415,7 +12417,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Test 1.2: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -12603,7 +12605,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                       }
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -12638,7 +12640,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               amountOfNameQualificationRequired++;
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -12745,13 +12747,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Test 1.25: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Test 1.3: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  // End of new test...
                   }
@@ -12835,7 +12837,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            } else {
                           // mfprintf(mlog [ WARN ] )("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
                              printf("ERROR: Unexpected parent for SgInitializedName: parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
-                             ROSE_ASSERT(false);
+                             ROSE_ABORT();
                            }
                          }
                        }
@@ -12853,13 +12855,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Test 1.5: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Test 1.7: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
             // DQ (2/16/2019): End of false branch for: if (isDataMemberReference == false)
              }
@@ -12867,7 +12869,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
 #if 0
                mfprintf(mlog [ WARN ] ) ("Test 2: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 #if 0
             // DQ (7/24/3030): This variable declaration hides an outer declaration using the same variable name.
@@ -12888,7 +12890,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               inDesignatedInitializer = true;
 
                               printf ("Found case of SgVarRefExp in SgDesignatedInitializer (no name qualification is required (allowed)) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 #endif
@@ -12948,13 +12950,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 #endif
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Test 3: Processing varRefExp = %p: Exiting as a test! \n",varRefExp);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -12972,7 +12974,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 1
@@ -13041,7 +13043,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                enumVal->get_file_info()->display("Found case of enumVal with no associated statement");
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -13175,7 +13177,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
                int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
@@ -13201,7 +13203,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test: case of SgEnumVal \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -13243,7 +13245,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     qualifiedType = castExp->get_type();
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -13260,7 +13262,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   {
                  // Anything else should not make it this far...
                     mfprintf(mlog [ WARN ] ) ("Error: default reached in switch... n = %p = %s \n",n,n->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -13364,7 +13366,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -13379,7 +13381,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (baseType != NULL)
                        {
                          mfprintf(mlog [ WARN ] ) ("Not prepared for this case! (SgPointerMemberType base type of SgPointerMemberType) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 
                     associatedTypeDeclaration = associatedDeclaration(pointerMemberType->get_base_type());
@@ -13419,7 +13421,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 #endif
                   }
@@ -13473,7 +13475,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    traverseType(qualifiedType,referenceToType,currentScope,currentStatement);
 #if 0
                                    mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else 
@@ -13508,7 +13510,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -13523,7 +13525,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
             // DQ (7/23/2011): I don't think this code is required or executed (testing this!)
                mfprintf(mlog [ WARN ] ) ("I don't think this is executed since original expression tree's are traversed as part of the AST \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
             // Note that we have to pass the local copy of the referencedNameSet so that the same set will be used for all recursive calls (see test2011_89.C).
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13603,7 +13605,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          mfprintf(mlog [ WARN ] ) ("NOTE: Could not identify scope for enum declaration: parent = %p = %s \n",parent,parent->class_name().c_str());
 #if 1
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -13670,7 +13672,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               if (amountOfNameQualificationRequired > 0)
                                  {
                                    mfprintf(mlog [ WARN ] ) ("Need setNameQualification() for SgEnumDeclaration \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
 #endif
                             }
@@ -13720,7 +13722,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     if (amountOfNameQualificationRequired > 0)
                        {
                          mfprintf(mlog [ WARN ] ) ("Need setNameQualification() for SgEnumDeclaration \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                   }
@@ -13758,7 +13760,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test (case of SgEnumDeclaration) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -13917,7 +13919,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -13982,7 +13984,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13995,7 +13997,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (isSgBaseClass(n) != NULL)
              {
                mfprintf(mlog [ WARN ] ) ("NameQualificationTraversal::evaluateInheritedAttribute(): Identified SgBaseClass in traversal \n");
-               ROSE_ASSERT(false); 
+               ROSE_ABORT();
              }
 #endif
         }
@@ -14133,7 +14135,7 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -14176,12 +14178,12 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
              {
             // DQ (4/21/2019): We will have to handle every kind of IR node that will require a computed string for it's type (a few, but not too many).
                mfprintf(mlog [ WARN ] ) ("Error: We need to find the type and the kind of IR node from which it is to be generated as a string: referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
 #if 1
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -14228,7 +14230,7 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 #endif 
 #if 0
                     printf ("Found a SgNamespaceAliasDeclarationStatement: Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  // ROSE_ASSERT(namespaceAliasDeclarationMap.find(declaration) != namespaceAliasDeclarationMap.end());
                     if (namespaceAliasDeclarationMap.find(declaration) != namespaceAliasDeclarationMap.end())
@@ -14241,7 +14243,7 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
 #endif
 #if 0
                          printf ("Found a SgNamespaceAliasDeclarationStatement: Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -14260,7 +14262,7 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
           if (sourceFile->getFileName() == "rose_test_107_lib.cpp")
              {
                printf ("Exiting as a test after name qualification of rose_test_107_lib.cpp \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -14447,7 +14449,7 @@ void NameQualificationTraversal::setNameQualificationOnClassOf ( SgPointerMember
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // if (qualifiedNameMapForTypes.find(pointerMemberType) == qualifiedNameMapForTypes.end())
@@ -14489,14 +14491,14 @@ void NameQualificationTraversal::setNameQualificationOnClassOf ( SgPointerMember
 #if 0
             // mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForTypes already exists and is different... \n");
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -14544,7 +14546,7 @@ void NameQualificationTraversal::setNameQualificationOnBaseType ( SgPointerMembe
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      if (qualifiedNameMapForTypes.find(pointerMemberType) == qualifiedNameMapForTypes.end())
@@ -14580,14 +14582,14 @@ void NameQualificationTraversal::setNameQualificationOnBaseType ( SgPointerMembe
                i->second = qualifier;
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForTypes already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -14666,7 +14668,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Case of SgVarRefExp to un-named class not finished yet! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -14739,7 +14741,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
                isAnUnamedConstructs = true;
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: This is an un-named class/struct and so we can't generate name qualification for it's data members. \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -14818,7 +14820,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 #endif
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -14877,7 +14879,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Leaving setNameQualification(SgVarRefExp*) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -15081,7 +15083,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
                i->second = qualifier;
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -15144,7 +15146,7 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
                i->second = qualifier;
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #else
                mfprintf(mlog [ WARN ] ) (" --- Name qualificaiton was previously and error: we may need to set it to something different: qualifier = %s \n",qualifier.c_str());
 #endif
@@ -15210,7 +15212,7 @@ NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseud
                i->second = qualifier;
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #else
                mfprintf(mlog [ WARN ] ) (" --- Name qualificaiton was previously and error: we may need to set it to something different: qualifier = %s \n",qualifier.c_str());
 #endif
@@ -15219,7 +15221,7 @@ NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseud
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Leaving NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseudoDestructorRefExp,,,): Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -15286,13 +15288,13 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
 
 #if 1
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
        // DQ (2/12/2012): commented this code out.
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -15360,7 +15362,7 @@ NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDecla
 
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -15423,7 +15425,7 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
 #if 1
             // DQ (6/17/2013): Commented out this assertion.
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #else
             // DQ (6/17/2013): I think this is OK, but I'm not certain (see test2012_57.C).
                mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForNames already exists and is different... (reset) \n");
@@ -15431,7 +15433,7 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -15494,7 +15496,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -15571,7 +15573,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #if 1
             // DQ (3/31/2012): Commented out this assertion.
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #else
             // DQ (3/31/2012): I think this is OK, but I'm not certain (see test2012_57.C).
                mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForNames already exists and is different... (reset) \n");
@@ -15609,7 +15611,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 #if 1
                  // DQ (9/7/2014): Make this an error.
                     mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForTemplateHeaders already exists and is different... \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #else
                  // DQ (9/7/2014): Let's not alow this.
                     mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForTemplateHeaders already exists and is different... (reset) \n");
@@ -15618,7 +15620,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -15685,7 +15687,7 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
                mfprintf(mlog [ WARN ] ) ("Commented out reset of name qualification: replacing previousQualifier = %s with new qualifier = %s \n",i->second.c_str(),qualifier.c_str());
 #if 0
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -15749,12 +15751,12 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
                i->second = qualifier;
 #if 1
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -15797,7 +15799,7 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
        else
         {
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -15884,7 +15886,7 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
        else
         {
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -15982,7 +15984,7 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
           outputTypeEvaluation          = false;
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -16066,7 +16068,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
           outputTypeEvaluation          = false;
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -16126,7 +16128,7 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
 
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test in the support for name qualifiction in the preinitialization list \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -16192,7 +16194,7 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -16260,7 +16262,7 @@ NameQualificationTraversal::setNameQualificationOnBaseType(SgTypedefDeclaration*
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForTypes already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -16332,7 +16334,7 @@ NameQualificationTraversal::setNameQualificationOnPointerMemberClass(SgTypedefDe
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForTypes already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -16507,7 +16509,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
 #endif
 #if 0
           mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -16708,7 +16710,7 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
                SgTemplateInstantiationDecl * tpl_inst_decl = isSgTemplateInstantiationDecl(typeDeclaration);
                ASSERT_not_null(tpl_inst_decl);
                mfprintf(mlog [ WARN ] ) ("  - tpl_inst_decl = %s\n", tpl_inst_decl->get_name().str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -16780,7 +16782,7 @@ NameQualificationTraversal::setNameQualificationForPointerToMember(SgExpression*
 
             // DQ (4/16/2019): Since expressions are not shared, we should be able to inforce this.
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
 #if 0
             // mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
@@ -16795,7 +16797,7 @@ NameQualificationTraversal::setNameQualificationForPointerToMember(SgExpression*
                SgTemplateInstantiationDecl * tpl_inst_decl = isSgTemplateInstantiationDecl(typeDeclaration);
                ASSERT_not_null(tpl_inst_decl);
                mfprintf(mlog [ WARN ] ) ("  - tpl_inst_decl = %s\n", tpl_inst_decl->get_name().str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -16858,7 +16860,7 @@ NameQualificationTraversal::setNameQualification(SgNonrealRefExp* exp, SgDeclara
 
 #if 1
                mfprintf(mlog [ WARN ] ) ("WARNING: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
                SgName testNameInMap = exp->get_qualified_name_prefix();
@@ -17005,12 +17007,12 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
 
 #if 1
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -17074,12 +17076,12 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
 
 #if 1
                mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -17323,12 +17325,12 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                                    breakOutOfLoop = true;
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -17402,7 +17404,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #endif
 #if 0
                               mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -17437,7 +17439,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                          skip_over_scope = true;
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -17566,7 +17568,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
      if (inputNameQualificationLength > 0)
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -17643,7 +17645,7 @@ NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(SgScopeSta
                   }
 #if 0
                mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -17663,7 +17665,7 @@ NameQualificationTraversal::setTemplateHeaderNameQualificationSupport(SgScopeSta
 #endif
 #if 0
      mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return accumulated_template_header_name;
@@ -17821,7 +17823,7 @@ NameQualificationTraversal::buildTemplateHeaderString ( SgTemplateParameterPtrLi
                     template_name += "class ";
 #if 0
                     mfprintf(mlog [ WARN ] ) ("buildTemplateHeaderString(): case SgTemplateParameter::template_parameter: Sorry, not implemented (ignored) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -17829,8 +17831,7 @@ NameQualificationTraversal::buildTemplateHeaderString ( SgTemplateParameterPtrLi
                default:
                   {
                     mfprintf(mlog [ WARN ] ) ("Error: buildTemplateHeaderString(): default reached \n");
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
              }
 
@@ -18087,7 +18088,7 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                          ambiguityDetected = true;
 #if 0
                          mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -18113,7 +18114,7 @@ SgScopeStatement::hasAmbiguity(SgName & name, SgSymbol* symbol)
                     ambiguityDetected = true;
 #if 0
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else

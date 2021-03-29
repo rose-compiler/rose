@@ -570,7 +570,7 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     }
 
     // Direction flag (DF) is always set
-    const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df");
+    const RegisterDescriptor REG_DF = cpu->registerDictionary()->findOrThrow("df");
     ASSERT_forbid(REG_DF.isEmpty());
     ops->writeRegister(REG_DF, ops->boolean_(true));
 }
@@ -614,7 +614,7 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->operators());
     RegisterDescriptor IP = cpu->instructionPointerRegister();
     BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
-    BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
+    BaseSemantics::SValuePtr va = ops->number_(ip->nBits(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
 
@@ -660,14 +660,14 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVer
     RegisterDescriptor SP = cpu->stackPointerRegister();
     BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
     BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                            ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
+                                                            ops->undefined_(stackPointer->nBits()), ops->boolean_(true));
     ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
     // Pop some things from the stack.
     int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
                  summary.stackDelta :
-                 returnTarget->get_width() / 8;
-    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+                 returnTarget->nBits() / 8;
+    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->nBits(), sd));
     ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 }
 
@@ -857,7 +857,7 @@ public:
     }
     SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
         BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-        const RegisterDescriptor regp = regState->get_register_dictionary()->find(token.lexeme());
+        const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
         if (!regp)
             return SymbolicExpr::Ptr();
         if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
@@ -895,9 +895,9 @@ public:
         addr->set_expression(operands[0]);
         BaseSemantics::MemoryStatePtr memState = ops_->currentState()->memoryState();
         BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
-        if (token.exprType().nBits() != 0 && memValue->get_width() != token.exprType().nBits()) {
+        if (token.exprType().nBits() != 0 && memValue->nBits() != token.exprType().nBits()) {
             throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
-                                    ", actual=" + StringUtility::numberToString(memValue->get_width()) + ")");
+                                    ", actual=" + StringUtility::numberToString(memValue->nBits()) + ")");
         }
         if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
             throw token.syntaxError("memory operator width must be scalar");
@@ -973,16 +973,16 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
         RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
         BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
-        if (ip->is_number()) {
+        if (ip->isConcrete()) {
             ASSERT_require(hasVirtualAddress(pathEdge->target()));
-            if (ip->get_number() != virtualAddress(pathEdge->target())) {
+            if (!ip->toUnsigned().isEqual(virtualAddress(pathEdge->target()))) {
                 // Executing the path forces us to go a different direction than where the path indicates we should go. We
                 // don't need an SMT solver to tell us that when the values are just integers.
                 info <<"  not feasible according to ROSE semantics\n";
                 return SmtSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->nBits(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);
@@ -1329,17 +1329,17 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // that this path isn't feasible.
         RegisterDescriptor IP = cpu->instructionPointerRegister();
         BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
-        if (!abandonPrefix && ip->is_number() &&
+        if (!abandonPrefix && ip->isConcrete() &&
             pathsEdge->target()->value().type() != P2::V_INDETERMINATE && // has no address
-            ip->get_number() != pathsEdge->target()->value().address()) {
+            !ip->toUnsigned().isEqual(pathsEdge->target()->value().address())) {
             abandonPrefix = true;
             SAWYER_MESG(debug) <<"  path is infeasible according to ROSE\n";
         }
 
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
-        if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), pathsEdge->target()->value().address());
+        if (!abandonPrefix && !ip->isConcrete() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->nBits(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);

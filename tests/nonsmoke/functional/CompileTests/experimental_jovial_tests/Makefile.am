@@ -193,7 +193,19 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-692.jov                  \
  rose-issue-rc-693.jov                  \
  rose-issue-rc-715.jov                  \
+ rose-issue-rc-753a.jov                 \
+ rose-issue-rc-753b.jov                 \
  rose-issue-rc-754.jov                  \
+ rose-issue-rc-755.jov                  \
+ rose-issue-rc-763.jov                  \
+ rose-issue-rc-765.jov                  \
+ rose-issue-rc-786.cpl                  \
+ rose-issue-rc-787.jov                  \
+ rose-issue-rc-789.jov                  \
+ rose-issue-rc-793.jov                  \
+ rose-issue-rc-797.jov                  \
+ rose-issue-rc-802.jov                  \
+ rose-issue-rc-813.jov                  \
  charlie.jov
 
 JOVIAL_PARSER_TESTCODES = \
@@ -217,6 +229,7 @@ COMPOOL_TESTCODES = \
  alpha.cpl                              \
  define_dollar.cpl                      \
  multi.cpl                              \
+ rectype.cpl                            \
  simple_compool.cpl                     \
  status_type.cpl                        \
  table_inheritance.cpl                  \
@@ -285,6 +298,7 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-742.cpl                  \
  rose-issue-rc-745.cpl                  \
  rose-issue-rc-746.cpl                  \
+ rose-issue-rc-766.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \
@@ -294,7 +308,9 @@ COMPOOL_TESTCODES = \
  rc687b.cpl                             \
  rc715b.cpl                             \
  rc754.cpl                              \
- beta.cpl
+ rc802.cpl                              \
+ beta.cpl                               \
+ parttype.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \

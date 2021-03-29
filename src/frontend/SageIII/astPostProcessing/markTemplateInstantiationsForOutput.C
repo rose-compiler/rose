@@ -209,7 +209,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
           if (listOfListsOfDeclarations.size() > 2)
              {
                printf ("Exiting as a test: listOfListsOfDeclarations.size() > 2 prelinkIterationCounter = %u \n",prelinkIterationCounter);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
        // DQ (3/31/2013): This is some sort of set operation (union into accumulatedList) and removing the insersection 
@@ -257,7 +257,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 #endif
 #if 0
           printf ("Exiting after first prelink iteration \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
           prelinkIterationCounter++;
 
@@ -1124,7 +1124,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
 
 #if 0
           printf ("Exiting after output of required declarations \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
    }
 
@@ -1269,7 +1269,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                          if (staticCounter > 1)
                             {
                               printf ("Exiting as a test ... \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                          staticCounter++;
@@ -1387,7 +1387,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                        }
 #if 0
                     printf ("Exiting after evaluation at SgVariableDeclaration \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -1462,7 +1462,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                                                   printf ("Found a SgAggregateInitializer for a templaed class at: \n");
                                                   if (constructor != NULL)
                                                        constructor->get_file_info()->display("SgAggregateInitializer for a templaed class: debug");
-                                                  ROSE_ASSERT(false);
+                                                  ROSE_ABORT();
 #endif
                                                   break;
                                                 }
@@ -1477,7 +1477,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                                                   printf ("Found a SgAssignInitializer for a templaed class at: \n");
                                                   if (constructor != NULL)
                                                        constructor->get_file_info()->display("SgAssignInitializer for a templaed class: debug");
-                                                  ROSE_ASSERT(false);
+                                                  ROSE_ABORT();
 #endif
                                                   break;
                                                 }

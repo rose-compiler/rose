@@ -22,6 +22,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   constant_declaration.ads             \
   constants.ads                        \
   delay_relative.adb                   \
+  derived_record.ads                   \
   empty_package.ads                    \
   enum_colors.ads                      \
   exit_statement.adb                   \
@@ -60,6 +61,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   simpleada.ads                        \
   simple_hello_world.adb               \
   simple_hello_world_with_use.adb      \
+  standard_subtypes.ads                \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
@@ -71,7 +73,6 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
-  derived_record.ads                   \
   enumeration.adb                      \
   exception_declaration.ads            \
   function_renaming.adb                \
@@ -79,7 +80,6 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   myarray.adb                          \
   nullrecord.ads                       \
   package_pragma.ads                   \
-  package_with_body.adb                \
   parent.ads                           \
   parent-child.ads                     \
   pragmas.adb                          \
@@ -90,7 +90,6 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   raise_statement.adb                  \
   simple_array_expressions.adb         \
   some_modes.ads                       \
-  standard_subtypes.ads                \
   subtypes.ads                         \
   tagged_definition.ads                \
   type_conversion.adb                  \
@@ -125,6 +124,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   nested_package.ads                   \
   opaque.ads                           \
   package_renaming_declaration.ads     \
+  package_with_body.adb                \
   pkgrename.ads                        \
   procedure_renaming.adb               \
   real_typedecl.ads                    \
@@ -178,7 +178,9 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   object_renaming_declaration.adb                   \
   entry_body_declaration.adb                        \
   function_body_stub.adb                            \
+  generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.ads          \
+  generic_procedure_renaming_declaration.ads        \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
@@ -187,6 +189,8 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   variant_record.ads                                
 
 ROSE_FAILING_ADA_TESTS :=                           \
+  all_modes.ads                                     \
+  complex.adb                                       \ 
   delay_until.adb                                   \
   iterate_range.adb                                 \
   mpiuse.ads                                        \
@@ -203,10 +207,8 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_FAILING_ADA_TESTS)                         
 
 ASIS_FAILING_TESTS :=                               \
-  all_modes.ads                                     \
   entry_index_specification.adb                     \
-  mpi.ads                                           \
-  complex.adb                                       
+  mpi.ads                                           
 
 #defining all Ada test files                         
 ADA_TESTS :=                                        \

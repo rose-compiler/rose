@@ -462,7 +462,7 @@ namespace
         prn(STMT_SEP);
         break;
       default:
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
     }
 

@@ -92,17 +92,17 @@ Sage<SgEnumDeclaration>::object_desc_t::object_desc_t(
 
 template <>
 Sage<SgEnumDeclaration>::build_result_t Driver<Sage>::build<SgEnumDeclaration>(const Sage<SgEnumDeclaration>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 Sage<SgEnumDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgEnumDeclaration>(const Sage<SgEnumDeclaration>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgEnumDeclaration>(Sage<SgEnumDeclaration>::symbol_t symbol, size_t target_file_id) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 /** @} */

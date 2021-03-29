@@ -174,6 +174,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
 public:
+    /** Property: value width.
+     *
+     *  Returns the width of the value in bits. One generally doesn't change the width after a value is created.
+     *
+     * This function should not be overridden by subclasses. Instead, it calls @ref get_width to do its work. */
+    size_t nBits() const /*final*/;
+
     /** Determines whether a value is a data-flow bottom.
      *
      *  Returns true if this value represents a bottom value for data-flow analysis.  Any RiscOperation performed on an operand
@@ -181,37 +188,68 @@ public:
      *  would normally return zero. */
     virtual bool isBottom() const = 0;
 
-    /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), boolean_()
-     *  virtual constructors, or by other means. */
-    virtual bool is_number() const = 0;
+    /** Determines if the value is a concrete number.
+     *
+     *  Concrete numbers can be created with the @ref number_ and @ref boolean_ methods, virtual constructors, or other
+     *  means. Some semantic domains have only concrete numbers.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls the virtual @ref is_number method to do its
+     *  work. */
+    bool isConcrete() const /*final*/;
 
-    /** Return the concrete number for this value.  Only values for which is_number() returns true are able to return a
-     *  concrete value by this method. */
-    virtual uint64_t get_number() const = 0;
+    /** Converts a concrete value to a native unsigned integer.
+     *
+     *  If this is a concrete value (see @ref isConcrete) and an unsigned integer interpretation of the bits fits in a 64-bit
+     *  unsigned integer (@c uint64_t) then that interpretation is returned, otherwise nothing is returned.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls @ref get_number to do its work. */
+    Sawyer::Optional<uint64_t> toUnsigned() const /*final*/;
 
-    /** Accessor for value width.
+    /** Converts a concrete value to a native signed integer.
+     *
+     *  If this is a concrete value (see @ref isConcrete) and a signed integer interpretation of the bits fits in a 64-bit
+     *  signed integer (@c int64_t) then that interpretation is returned, otherwise nothing is returned.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls @ref get_number to do its work. */
+    Sawyer::Optional<int64_t> toSigned() const /*final*/;
+
+    /** Tests two values for equality.
+     *
+     *  Returns true if this value and the @p other value must be equal, and false if they might not be equal.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls @ref must_equal to do its work. */
+    bool mustEqual(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const /*final*/;
+
+    /** Tests two values for possible equality.
+     *
+     *  Returns true if this value and the @p other value might be equal, and false if they cannot be equal.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls @ref may_equal to do its work. */
+    bool mayEqual(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const /*final*/;
+
+    /** Returns true if concrete non-zero.
+     *
+     *  This is not virtual since it can be implemented in terms of other functions. */
+    bool isTrue() const /*final*/;
+
+    /** Returns true if concrete zero.
+     *
+     *  This is not virtual since it can be implemented in terms of other functions. */
+    bool isFalse() const /*final*/;
+
+    /** Property: Comment.
+     *
+     *  Some subclasses support associating a string comment with a value.  If the class does not support comments, then
+     *  this property will always have an empty value regardless of what's assigned. Since comments do not affect computation,
+     *  their value is allowed to be changed even for const objects.
+     *
+     *  This function should not be overridden by subclasses. Instead, it calls @ref get_comment and @ref set_comment to do its
+     *  work.
+     *
      * @{ */
-    virtual size_t get_width() const { return width; }
-    virtual void set_width(size_t nbits) { width = nbits; }
+    std::string comment() const /*final*/;
+    void comment(const std::string&) const /*final*/;   // const is intentional (see documentation)
     /** @} */
-
-    /** Returns true if two values could be equal. The SMT solver is optional for many subclasses. */
-    virtual bool may_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
-
-    /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
-    virtual bool must_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
-
-    /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
-     *  get_number. */
-    bool isTrue() const {
-        return is_number() && get_number()!=0;
-    }
-
-    /** Returns true if concrete zero.  This is not virtual since it can be implemented in terms of @ref is_number and @ref
-     *  get_number. */
-    bool isFalse() const {
-        return is_number() && get_number()==0;
-    }
 
     /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
      *  space or line termination.  See also, with_format().
@@ -249,6 +287,31 @@ public:
     virtual std::string get_comment() const { return ""; }
     virtual void set_comment(const std::string&) const {} // const is intended; cf. doxygen comment
     /** @} */
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // This is the virtual interface that uses names that are not consistent with most of the rest of binary analysis.  Calling
+    // these directly is deprecated and we may make them protected at some time. [Robb Matzke 2021-03-18].
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public: // for backward compatibility for now, but assume protected
+    /** Virtual API. See @ref isConcrete. */
+    virtual bool is_number() const = 0;
+
+    /** Virtual API. See @ref toUnsigned and @ref toSigned. */
+    virtual uint64_t get_number() const = 0;
+
+    /** Virtual API. See @ref nBits.
+     *
+     *  @{ */
+    virtual size_t get_width() const { return width; }
+    virtual void set_width(size_t nbits) { width = nbits; }
+    /** @} */
+
+    /** Virtual API. See @ref mustEqual. */
+    virtual bool must_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
+
+    /** Virtual API. See @ref mayEqual. */
+    virtual bool may_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
 };
 
 std::ostream& operator<<(std::ostream&, const SValue&);

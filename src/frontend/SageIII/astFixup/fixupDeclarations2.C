@@ -225,7 +225,7 @@ FixupTemplateDeclarations::visit ( SgNode* node )
 
                          functionParameterList->get_startOfConstruct()->display("Error: start of function declaration not in same file as end of declaration (debug startOfConstruct)");
                          functionParameterList->get_endOfConstruct()->display("Error: start of function declaration not in same file as end of declaration (debug endOfConstruct)");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 

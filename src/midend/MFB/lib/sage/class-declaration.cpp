@@ -166,7 +166,7 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
   if (class_parent != NULL) {
     assert(desc.file_id == 0);
 
-    assert(false); // NIY
+    ROSE_ABORT(); // NIY
   }
   else {
     assert(desc.file_id != 0);
@@ -206,7 +206,7 @@ void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDecl
     insert_scope = scope;
   }
   else {
-    assert(false); // TODO
+    ROSE_ABORT(); // TODO
   }
 
   SgClassDeclaration * class_decl = SageBuilder::buildNondefiningClassDeclaration_nfi(symbol->get_name(), orig_decl->get_class_type(), scope, false, NULL);

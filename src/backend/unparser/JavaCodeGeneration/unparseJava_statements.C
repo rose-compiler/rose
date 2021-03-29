@@ -266,8 +266,7 @@ cout.flush();
           default:
              {
                printf("Unparse_Java::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 

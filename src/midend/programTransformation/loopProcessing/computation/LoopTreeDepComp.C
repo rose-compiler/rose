@@ -7,7 +7,7 @@
 #include <DomainInfo.h>
 #include <LoopTreeTransform.h>
 #include <GraphIO.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 void LoopTreeDepGraphCreate::AddNode(LoopTreeDepGraphNode* result)
     {
@@ -129,7 +129,7 @@ void LoopTreeDepComp :: DumpNode( LoopTreeNode *s) const
 
 void LoopTreeDepGraphCreate :: UpdateSplitStmt2( const SplitStmtInfo2 &info)
 {
-  assert(false);
+  ROSE_ABORT();
 }
 
 void LoopTreeDepGraphCreate :: UpdateSplitStmt( const SplitStmtInfo &info)
@@ -232,7 +232,7 @@ class BuildLoopDepGraphEdges : public AstTreeDepGraphBuildImpl
 {
   virtual GraphAccessInterface::Node*
   CreateNodeImpl(AstNodePtr start, const DomainCond& c)
-  { assert(false); return 0; }
+  { ROSE_ABORT(); }
   virtual void
           CreateEdgeImpl(GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, DepInfo info)
         { LoopTreeDepGraphNode *n1 = static_cast<LoopTreeDepGraphNode*>(gn1),

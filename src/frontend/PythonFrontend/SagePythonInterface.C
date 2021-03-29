@@ -158,7 +158,7 @@ sage_buildAugAssign(PyObject *self, PyObject *args)
         cout << "Unrecognized operator in augmented assignment: ";
         PyObject_Print(op, stdout, Py_PRINT_RAW);
         cout << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
     return PyEncapsulate(sg_bin_op);
 }
@@ -194,7 +194,7 @@ sage_buildBinOp(PyObject *self, PyObject *args)
         cout << "Unrecognized binary operator: ";
         PyObject_Print(op, stdout, Py_PRINT_RAW);
         cout << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     return PyEncapsulate(sg_bin_op);
@@ -224,7 +224,7 @@ sage_buildBoolOp(PyObject *self, PyObject *args)
         cout << "Unrecognized operator in BoolOp: ";
         PyObject_Print(py_operator, stdout, Py_PRINT_RAW);
         cout << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     Py_ssize_t operandc = PyList_Size(py_operands);
@@ -387,7 +387,7 @@ sage_buildCompare(PyObject *self, PyObject *args)
             cout << "Unrecognized comparison operator: ";
             PyObject_Print(py_operator, stdout, Py_PRINT_RAW);
             cout << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         sg_compare->append_operation(sg_operator, sg_operand);
@@ -1092,7 +1092,7 @@ sage_buildUnaryOp(PyObject *self, PyObject *args)
         cout << "Unrecognized unary operator: ";
         PyObject_Print(op, stdout, Py_PRINT_RAW);
         cout << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     return PyEncapsulate(sg_unary_op);

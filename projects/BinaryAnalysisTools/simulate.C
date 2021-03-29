@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     // Execute
     map->dump(::mlog[INFO]);
     while (1) {
-        va = ops->readRegister(disassembler->instructionPointerRegister())->get_number();
+        va = ops->readRegister(disassembler->instructionPointerRegister())->toUnsigned().get();
         SgAsmInstruction *insn = partitioner.instructionProvider()[va];
         SAWYER_MESG(::mlog[TRACE]) <<unparseInstructionWithAddress(insn, NULL, regdict) <<"\n";
         try {

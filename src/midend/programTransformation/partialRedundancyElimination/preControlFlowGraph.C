@@ -169,7 +169,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                           // something on the true branch of
                                           // the test
                                              printf ("kind != CFGConfig::COND_FALSE in SgDoWhileStmt \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
                                            }
                                         break;
 
@@ -226,7 +226,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                 // which are leagal code in C and C++).
                                    case V_SgExprStatement:
                                         printf ("Found a SgExprStatement, likely the test in a SgForStatment or such \n");
-                                        ROSE_ASSERT (false);
+                                        ROSE_ABORT ();
                                         ROSE_ASSERT(isSgForStatement(expr_parent->get_parent()) != NULL);
                                         ROSE_ASSERT(isSgForStatement(expr_parent->get_parent())->get_test() == expr_parent);
                                         if (kind == CFGConfig::COND_TRUE)
@@ -249,8 +249,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                    default:
                                         cerr << "Unknown variant " << expr_parent->sage_class_name() << endl;
                                         expr_parent->get_file_info()->display("Location in input code");
-                                        ROSE_ASSERT (false);
-                                        break;
+                                        ROSE_ABORT ();
                                  }
 
                               if (insert_point.first)

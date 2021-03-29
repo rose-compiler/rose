@@ -107,7 +107,6 @@ int main(int argc, char** argv)
      logctrl.insert(mlog);
      //~ logctrl.control("none, error, warn, fatal");
 
-
      if (settings.logWarn)  warninglevels += ", warn";
      if (settings.logTrace) warninglevels += ", trace";
      if (settings.logInfo)  warninglevels += ", info";
@@ -116,15 +115,17 @@ int main(int argc, char** argv)
 
      mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
 
-  // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
-     const char *gnat_home   = std::getenv("GNAT_HOME");
+     const char* gnat_home = std::getenv("GNAT_HOME");
 
-     if (!gnat_home) gnat_home = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
+     if (!gnat_home)
+     {
+       mlog[Sawyer::Message::FATAL] << "Environment variable GNAT_HOME is not set.\n"
+                                    << "  Aborting ROSE.."
+                                    << std::endl;
 
-     //~ std::cerr << "Settings: processPredefinedUnits = " << settings.processPredefinedUnits
-               //~ << ", processImplementationUnits = " << settings.processImplementationUnits
-               //~ << ", asisDebug = " << settings.asisDebug
-               //~ << std::endl;
+       return 1;
+     }
+
      mprintf ("BEGIN.\n");
 
      Nodes_Struct head_nodes;

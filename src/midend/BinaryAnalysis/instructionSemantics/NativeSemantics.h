@@ -354,14 +354,14 @@ class Dispatcher: public BaseSemantics::Dispatcher {
 protected:
     Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval)
         : process_(process) {
-        set_register_dictionary(process_->registerDictionary());
+        registerDictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
         operators(RiscOperators::instance(protoval, process_));
     }
 
     Dispatcher(const BaseSemantics::RiscOperatorsPtr &ops)
         : process_(RiscOperators::promote(ops)->process()) {
-        set_register_dictionary(process_->registerDictionary());
+        registerDictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
         operators(ops);
     }
@@ -429,14 +429,14 @@ public:
     /** Disabled in this class.
      *
      * @{ */
-    virtual void iproc_replace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
-        notApplicable("iproc_replace");
+    virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+        notApplicable("iprocReplace");
     }
-    virtual void iproc_set(int key, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
-        notApplicable("iproc_set");
+    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+        notApplicable("iprocSet");
     }
-    virtual int iproc_key(SgAsmInstruction*) const ROSE_OVERRIDE {
-        notApplicable("iproc_key");
+    virtual int iprocKey(SgAsmInstruction*) const ROSE_OVERRIDE {
+        notApplicable("iprocKey");
     }
     /** @} */
 

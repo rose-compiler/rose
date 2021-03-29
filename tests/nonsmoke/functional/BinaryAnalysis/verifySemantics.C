@@ -119,9 +119,9 @@ public:
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            return svalue_number(subordinate_->readRegister(reg));
+            return svalueNumber(subordinate_->readRegister(reg));
         } catch (const std::runtime_error &e) {
-            RegisterNames rname(currentState()->registerState()->get_register_dictionary());
+            RegisterNames rname(currentState()->registerState()->registerDictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
                                            currentInstruction());
         }
@@ -136,21 +136,21 @@ public:
         using namespace Sawyer::Container;
 
         uint8_t buf[16];
-        if (dflt->get_width() > 8*sizeof(buf))
-            throw BaseSemantics::Exception("readMemory width not handled: " + StringUtility::plural(dflt->get_width(), "bits"),
+        if (dflt->nBits() > 8*sizeof(buf))
+            throw BaseSemantics::Exception("readMemory width not handled: " + StringUtility::plural(dflt->nBits(), "bits"),
                                            currentInstruction());
         
-        ASSERT_require(dflt->get_width() % 8 == 0);
-        size_t nBytes = dflt->get_width() / 8;
-        size_t nRead = subordinate_->readMemory(addr->get_number(), nBytes, buf);
+        ASSERT_require(dflt->nBits() % 8 == 0);
+        size_t nBytes = dflt->nBits() / 8;
+        size_t nRead = subordinate_->readMemory(addr->toUnsigned().get(), nBytes, buf);
         if (nRead < nBytes)
             throw BaseSemantics::Exception("error reading subordinate memory", currentInstruction());
 
         ASSERT_require(currentState()->memoryState()->get_byteOrder() != ByteOrder::ORDER_MSB);
-        BitVector bits(dflt->get_width());
+        BitVector bits(dflt->nBits());
         for (size_t i=0; i<nRead; ++i)
             bits.fromInteger(BitVector::BitRange::baseSize(8*i, 8), buf[i]);
-        return svalue_number(bits);
+        return svalueNumber(bits);
     }
 
 public:
@@ -159,7 +159,7 @@ public:
         bool areSame = true;
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         RegisterState::RegPairs cells = regs->get_stored_registers();
-        RegisterNames rname(currentState()->registerState()->get_register_dictionary());
+        RegisterNames rname(currentState()->registerState()->registerDictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
             Sawyer::Container::BitVector nativeValue;
             try {

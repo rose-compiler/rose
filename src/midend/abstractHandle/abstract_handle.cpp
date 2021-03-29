@@ -10,7 +10,8 @@
 #include <vector>
 #include <map>
 #include <cstring>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ABORT.h>
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -167,7 +168,7 @@ namespace AbstractHandle{
            else
            {
              cerr<<"Error: NULL p_handle when trying to create a numbering handle."<<endl;
-             assert (false);
+             ROSE_ABORT ();
            }
            break;
          }
@@ -177,12 +178,10 @@ namespace AbstractHandle{
          break;
        case e_position://TODO, factor the code into a member function, called by multiple constructors then
          cerr<<"error:please use the default constructor for position specifier"<<endl;
-         assert(false);
-         break;
+         ROSE_ABORT();
        default:
          cerr<<"error:unrecognized specifier type:"<<stype<<endl;
-         assert(false);
-         break;
+         ROSE_ABORT();
      }
      m_node = node;
      handle_map[node] = this;
@@ -273,8 +272,7 @@ namespace AbstractHandle{
           break;
         default:
           cerr<<"Unrecognized specifier type:"<<stype<<endl;
-          assert(false);
-          break;
+          ROSE_ABORT();
       }//end switch
       result+=">";
       return result;
@@ -379,13 +377,13 @@ namespace AbstractHandle{
       {
         cerr<<"error, expecting a number in fromString(specifier&,string) but get "
            <<value_str<<endl;
-        assert(false);
+        ROSE_ABORT();
       }
     } else
     {
       //TODO labels
       cerr<<"error, unhandled specifier type in fromString(specifier&,string) "<<endl;
-      assert(false);
+      ROSE_ABORT();
     }
     result.set_type(stype);
     result.set_value(svalue);

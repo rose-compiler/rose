@@ -17,8 +17,8 @@ roseDwarfReader_SOURCES = roseDwarfReader.C
 roseDwarfReader_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Untested, but was missing from makefile (detected by policy checks) [Robb P. Matzke 2015-09-16]
-dwarfDumpMinimal_SOURCES = dwarfDumpMinimal.C
-dwarfDumpMinimal_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+#dwarfDumpMinimal_SOURCES = dwarfDumpMinimal.C
+#dwarfDumpMinimal_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 print:
 	echo "includes = $(AM_CPPFLAGS)"

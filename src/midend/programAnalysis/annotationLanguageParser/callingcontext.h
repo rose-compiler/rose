@@ -1,4 +1,5 @@
-
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_CALLINGCONTEXT_H
 #define BDWY_CALLINGCONTEXT_H
@@ -94,4 +95,4 @@ public:
 };
 
 #endif /* BDWY_CALLINGCONTEXT_H */
-
+#endif

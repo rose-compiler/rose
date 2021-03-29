@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "adaptor_statistics.h"
 
@@ -427,3 +429,4 @@ string Adaptor_Statistics::reason_str(ReasonKind r) {
   return s;
 }
 
+#endif

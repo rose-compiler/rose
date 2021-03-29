@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include <math.h>
 #include "intArithLogical.h"
 #include <list>
@@ -286,7 +289,7 @@ string IntArithLogical::exprLeaf::genStr(string indent) const
                 else if(cmp.isOp(SpearOp::NotEqual)) ss << " != ";
                 else if(cmp.isOp(SpearOp::SgnLTE)) ss << " <= ";
                 else if(cmp.isOp(SpearOp::SgnGT)) ss << " > ";
-                else ROSE_ASSERT(0);
+                else ROSE_ABORT();
                 
                 ss << b << "*" << y.str() << " + " << c << "]";
         }
@@ -318,7 +321,7 @@ bool IntArithLogical::exprLeaf::notUpd()
                 cmp.setOp(SpearOp::SgnLTE);
         }
         else
-                ROSE_ASSERT(0);
+                ROSE_ABORT();
         varsExprInitialized = false;
 
         return true;
@@ -765,7 +768,7 @@ bool IntArithLogical::logicNode::normalize()
                                 // Disjunctions get emptied out because all the children are = false
                                 return setToFalse() || modified;
                         else
-                                ROSE_ASSERT(0);
+                                ROSE_ABORT();
                 }
                 
                 ROSE_ASSERT((level == exprKnown && children.size()>0) || 
@@ -1100,9 +1103,9 @@ bool IntArithLogical::logicNode::notUpd()
                         children = newChildren;
                 }
                 else if(logOp.isOp(SpearOp::NotOp))
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
                 else
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
                 
                 // normalize the newly-negated expression
                 normalize();
@@ -1275,7 +1278,7 @@ bool IntArithLogical::logicNode::andUpd(logicNode& that)
                 /*else if(logOp.isOp(SpearOp::NotOp))
                         ROSE_ASSERT(0);*/
                 else
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
         }
         /*else if(logOp.isOp(SpearOp::AndOp))
         {*/
@@ -1295,7 +1298,7 @@ bool IntArithLogical::logicNode::andUpd(logicNode& that)
                         level = exprKnown;
                 }
                 else
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
         /*}
         else if(logOp.isOp(SpearOp::OrOp))
         {
@@ -1338,7 +1341,7 @@ bool IntArithLogical::logicNode::orUpd(logicNode& that)
                 if(logOp.isOp(SpearOp::AndOp))
                 {
                         // we currently don't use this
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
                 }
                 else if(logOp.isOp(SpearOp::OrOp))
                 {
@@ -1365,9 +1368,9 @@ bool IntArithLogical::logicNode::orUpd(logicNode& that)
                         normalize();
                 }
                 else if(logOp.isOp(SpearOp::NotOp))
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
                 else
-                        ROSE_ASSERT(0);
+                        ROSE_ABORT();
         }
         // the cases where that doesn't change this
         else if(level == isTrue || that.level == isFalse)
@@ -1384,7 +1387,7 @@ bool IntArithLogical::logicNode::orUpd(logicNode& that)
                 level = exprKnown;
         }
         else
-                ROSE_ASSERT(0);
+                ROSE_ABORT();
                 
         ROSE_ASSERT((level == exprKnown && children.size()>0) || 
          ((level == isTrue || level == isFalse) && children.size() == 0));
@@ -1576,7 +1579,7 @@ bool IntArithLogical::logicNode::removeVar(varID var)
                         }
                         return modified;
                 } else
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
         }
         else
                 // There are no sub-expressions, so there's nothing to remove
@@ -1801,7 +1804,7 @@ bool IntArithLogical::logicNode::operator<=(exprLeafOrNode& that_arg)
                 // since we got here without finding counter-examples to the assertion this <= that, it must be true
                 return true;
         } else 
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 }
 
 /*******************
@@ -2391,7 +2394,7 @@ void IntArithLogicalPlacer::setTrueFalseBranches(SgExpression* expr,
         else if(cfgUtils::computeTermsOfIfCondition_EQ(expr, x, negX, y, negY, c))
                 relOp = IntArithLogical::eq;
         else
-                ROSE_ASSERT(0);
+                ROSE_ABORT();
         
         IntArithLogical ialExpr(relOp, negX?-1:1, x, negY?-1:1, y, c);
         *trueFact = new IntArithLogicalFact(ialExpr);
@@ -2503,3 +2506,5 @@ const IntArithLogical& getIntArithLogical(const DataflowNode& n)
         else
                 return defaultIAL;
 }
+
+#endif

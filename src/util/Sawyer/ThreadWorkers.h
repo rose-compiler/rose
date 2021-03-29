@@ -135,6 +135,31 @@ public:
         dependencies_.clear();
     }
 
+    /** Wait for work to complete.
+     *
+     *  Waits for up to the specified amount of time for work to complete. Returns true if no work has been started, or all
+     *  work has completed within the time period. Returns false if a timeout occurred while waiting for work to complete. */
+    template<class Rep, class Period>
+    bool tryWaitFor(const boost::chrono::duration<Rep, Period> &relTime) {
+        const boost::chrono::steady_clock::time_point endAt = boost::chrono::steady_clock::now() + relTime;
+        boost::unique_lock<boost::mutex> lock(mutex_);
+        if (!hasStarted_ || hasWaited_)
+            return true;
+        lock.unlock();
+
+        for (size_t i = 0; i < nWorkers_; ++i) {
+            if (!workers_[i].try_join_until(endAt))
+                return false;
+        }
+
+        lock.lock();
+        hasWaited_ = true;
+        if (dependencies_.nEdges() != 0)
+            throw Exception::ContainsCycle("task dependency graph contains cycle(s)");
+        dependencies_.clear();
+        return true;
+    }
+
     /** Synchronously processes tasks.
      *
      *  This is simply a wrapper around @ref start and @ref wait.  It performs work synchronously, returning only after all
@@ -279,9 +304,9 @@ private:
  *  the task being processed, and a reference to a copy of the task (vertex value) in the dependency graph.  The ID number is
  *  the vertex ID number in the @p dependencies graph.
  *
- *  If a @p monitor is provided, it will be called once every @p period milliseconds the the following arguments: the @p
- *  dependencies graph, @p nWorkers, and the set of @p dependencies vertex IDs (<code>std::set<size_t></code>) that are
- *  currently running.
+ *  If a @p monitor is provided, it will be called once every @p period milliseconds with the following arguments: the @p
+ *  dependencies graph, @p number of work items that have been completed, and the set of @p dependencies vertex IDs
+ *  (<code>std::set<size_t></code>) that are currently running.
  *
  *  The call does not return until all work has been completed.
  *
@@ -299,17 +324,8 @@ workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor fun
                Monitor monitor, boost::chrono::milliseconds period) {
     ThreadWorkers<DependencyGraph, Functor> workers;
     workers.start(dependencies, nWorkers, functor);
-    while (!workers.isFinished()) {
-        monitor(dependencies, nWorkers, workers.runningTasks());
-#if BOOST_VERSION >= 105000
-        boost::this_thread::sleep_for(period);
-#else
-        // For ROSE's sake, don't make this a compile-time error just yet. [Robb Matzke 2018-04-24]
-        ASSERT_not_reachable("this old version of boost is not supported");
-#endif
-    }
-    monitor(dependencies, nWorkers, std::set<size_t>());
-    workers.wait();
+    while (!workers.tryWaitFor(period))
+        monitor(dependencies, workers.nFinished(), workers.runningTasks());
 }
 /** @} */
 

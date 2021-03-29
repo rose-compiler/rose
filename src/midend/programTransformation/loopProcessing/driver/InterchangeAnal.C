@@ -1,7 +1,7 @@
 
 #include <CompSliceLocality.h>
 #include <InterchangeAnal.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #define MAXDEPTH 20
 

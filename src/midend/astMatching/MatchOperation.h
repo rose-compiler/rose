@@ -59,7 +59,9 @@ class MatchStatus {
   void commitSingleMatchResult();
  private:
   SingleMatchResult current_smr;
+#if 0 // [Robb Matzke 2021-03-17]: unused
   bool _keepMarkedLocations;
+#endif
 };  
 
 class MatchOperation {
@@ -179,7 +181,11 @@ typedef std::list<MatchOperationList*> MatchOperationListList;
 
 class MatchOpBinaryOp : public MatchOperation {
  public:
- MatchOpBinaryOp(int op,MatchOperation* l,MatchOperation* r):_op(op),_left(l),_right(r) {}
+ MatchOpBinaryOp(int op,MatchOperation* l,MatchOperation* r):_op(op)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+                                                             ,_left(l),_right(r)
+#endif
+        {}
   std::string toString() { return "binop()";}
   bool performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& vb) {
     switch(_op) {
@@ -192,8 +198,10 @@ class MatchOpBinaryOp : public MatchOperation {
   }
   private:
   int _op;
+#if 0 // [Robb Matzke 2021-03-17]: unused
   MatchOperation* _left;
   MatchOperation* _right;
+#endif
 };
 
 class MatchOpUnaryOp : public MatchOperation {

@@ -210,7 +210,7 @@ insert (
 #endif
 #if 0
      printf ("After display ... exiting ... \n");
-     ROSE_ASSERT (false);
+     ROSE_ABORT ();
 #endif
 
      stringAndNodeCollection.addString(target,transformation);
@@ -241,7 +241,7 @@ insert (
 
           default:
                printf ("Error, default reached in MidLevelRewrite<MidLevelInterfaceNodeCollection>::insert() \n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
         }
 
 #if 0
