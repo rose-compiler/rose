@@ -5704,12 +5704,12 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   else if (ATmatch(term, "NE(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_not_equal;
 
   // Logical operators
-  else if (ATmatch(term, "AND(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
-  else if (ATmatch(term,  "OR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
-  else if (ATmatch(term, "XOR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
-  else if (ATmatch(term, "EQV(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
+  else if (ATmatch(term, "AND(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
+  else if (ATmatch(term,  "OR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
+  else if (ATmatch(term, "XOR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
+  else if (ATmatch(term, "EQV(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
 
-  else if (ATmatch(term, "Mod(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_mod;
+  else if (ATmatch(term, "Mod(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_mod;
 
   else return ATfalse;
 
@@ -7405,15 +7405,40 @@ ATbool ATermToSageJovialTraversal::traverse_NentFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_argument;
+   std::string var_name;
+   std::string function_name;
+   SgExpression* param  = nullptr;
 
    func_call = nullptr;
 
    if (ATmatch(term, "NentFunction(<term>)", &t_argument)) {
-      cerr << "WARNING UNIMPLEMENTED: NentFunction \n";
-      printf("... traverse_NentFunction: %s\n", ATwriteToString(term));
-      ROSE_ABORT();
+     if (traverse_Name(t_argument, var_name)) {
+       // MATCHED StatusTypeName
+     } else return ATfalse;
    }
    else return ATfalse;
+
+// Build the parameter list and then the variable reference or type expression
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+
+// The variable may be a table name or table type name
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+   if (symbol) {
+     if (SgVariableSymbol* var_sym = isSgVariableSymbol(symbol)) {
+       param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+     }
+     else if (SgJovialTableType* type = isSgJovialTableType(symbol->get_type())) {
+       if (type) {
+         param = SageBuilder::buildTypeExpression(type);
+       }
+     }
+   }
+   ROSE_ASSERT(param);
+   params->append_expression(param);
+
+   SgType* return_type = SageBuilder::buildIntType();
+   func_call = SageBuilder::buildFunctionCallExp(SgName("NENT"), return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
 
    return ATtrue;
 }
