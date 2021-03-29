@@ -207,6 +207,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-802.jov                  \
  rose-issue-rc-813.jov                  \
  rose-issue-rc-818.jov                  \
+ rose-issue-rc-823.jov                  \
  charlie.jov
 
 JOVIAL_PARSER_TESTCODES = \
