@@ -2191,7 +2191,7 @@ context-free syntax
 
   '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
 
-      Name                      -> CompoolDeclaredName
+      Name                      -> CompoolDeclaredName      {cons("Name")}
   '(' Name ')'                  -> CompoolDeclaredName      {cons("Name")}
 
   CharacterLiteral              -> CompoolFileName
