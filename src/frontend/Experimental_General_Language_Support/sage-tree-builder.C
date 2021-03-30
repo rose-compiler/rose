@@ -127,7 +127,15 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
              expr_stmt->set_expression(func_call);
            }
            else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
-             bin_op->set_rhs_operand(func_call);
+             // Is this left or right operand
+             SgVarRefExp* var_ref = isSgVarRefExp(bin_op->get_rhs_operand());
+             if (var_ref == prev_var_ref) {
+               bin_op->set_rhs_operand(func_call);
+             }
+             else if ((var_ref = isSgVarRefExp(bin_op->get_lhs_operand()))) {
+               bin_op->set_lhs_operand(func_call);
+             }
+             ROSE_ASSERT(var_ref == prev_var_ref);
            }
 
         // The dangling variable reference has been fixed
