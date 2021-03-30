@@ -1608,6 +1608,12 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+//! Build a dangling #include "x.h" header,  insertHeader() is needed to actually insert it
+ROSE_DLL_API PreprocessingInfo* buildHeader(const std::string& header_filename, 
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
+               bool isSystemHeader =false);
+
+
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
