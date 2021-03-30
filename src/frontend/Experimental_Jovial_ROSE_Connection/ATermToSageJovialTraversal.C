@@ -6516,24 +6516,44 @@ ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgEx
    printf("... traverse_RepFunctionVariable: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_rep, t_name;
+   ATerm t_rep, t_name, t_subscript;
    char* name;
+   std::vector<SgExpression*> subscript;
    SgExpression* var_ref = nullptr;
+   bool has_subscript = false;
 
    func_call = nullptr;
 
-   if (ATmatch(term, "RepFunctionVariable(<term>,<term>)", &t_rep, &t_name)) {
-      if (ATmatch(t_rep, "RepConversion()")) {
-         // MATCHED "REP" grammar keyword
-      } else return ATfalse;
-
-      if (ATmatch(t_name, "<str>", &name)) {
-         // MATCHED NamedVariable
-         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         setSourcePosition(var_ref, t_name);
-      } else return ATfalse;
+   if (ATmatch(term, "RepFunctionVariable(<term>,<term>,<term>)", &t_rep, &t_name, &t_subscript)) {
+     // MATCHED RepFunctionVariable with subscripts
+     has_subscript = true;
+   }
+   else if (ATmatch(term, "RepFunctionVariable(<term>,<term>)", &t_rep, &t_name)) {
+     // MATCHED RepFunctionVariable without subscripts
    }
    else return ATfalse;
+
+   if (ATmatch(t_rep, "RepConversion()")) {
+     // MATCHED "REP" grammar keyword
+   } else return ATfalse;
+
+   if (ATmatch(t_name, "<str>", &name)) {
+     // MATCHED NamedVariable
+     var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+     setSourcePosition(var_ref, t_name);
+   } else return ATfalse;
+
+   if (has_subscript) {
+     if (traverse_Subscript(t_subscript, subscript)) {
+       SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+       setSourcePosition(array_subscripts, t_subscript);
+       for (int i=0; i< subscript.size(); i++) {
+         array_subscripts->get_expressions().push_back(subscript[i]);
+       }
+       var_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+       setSourcePosition(var_ref, term); // source position too broad because of 'REP'
+     } else return ATfalse;
+   }
    ROSE_ASSERT(var_ref);
 
    // build the parameter list
