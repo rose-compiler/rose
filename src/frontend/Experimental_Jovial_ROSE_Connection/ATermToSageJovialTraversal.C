@@ -7966,7 +7966,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 #endif
 
    ATerm t_dir_list, t_compool_name, t_decl_name;
-   char* declared_name;
+   std::string declared_name;
    std::string compool_name;
    std::vector<std::string> declared_name_list;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
@@ -7993,9 +7993,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
          while (! ATisEmpty(tail)) {
             ATerm head = ATgetFirst(tail);
             tail = ATgetNext(tail);
-            if (ATmatch(head, "<str>", &declared_name)) {
-              // CompoolDeclaredName is a list of names to be used by the current module
-              declared_name_list.push_back(std::string(declared_name));
+            if (traverse_Name(head, declared_name)) {
+               // CompoolDeclaredName is a list of names to be used by the current module
+               declared_name_list.push_back(std::string(declared_name));
             } else return ATfalse;
          }
       } else return ATfalse;
@@ -8004,13 +8004,16 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 
 // Remove single quotes
 // Return to C++11 usage when possible
-// if (compool_name.back()  == '\'') compool_name.pop_back();
-// if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+#if 1
+   if (compool_name.back()  == '\'') compool_name.pop_back();
+   if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+#else
    unsigned int len = compool_name.length();
    ROSE_ASSERT(len > 2);
    if (compool_name[0]  == '\'' && compool_name[len-1]) {
       compool_name = compool_name.substr(1,len-2);
    }
+#endif
 
    sage_tree_builder.Enter(directive_stmt, compool_name, declared_name_list);
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_compool);
