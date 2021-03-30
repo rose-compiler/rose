@@ -88,6 +88,10 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
     ROSE_ASSERT(file_scope);
     for (SgNode* node : namespace_symbols->get_symbols()) {
       SgSymbol* symbol = isSgSymbol(node);
+
+      if (SgAliasSymbol* alias = isSgAliasSymbol(symbol)) {
+        symbol = alias->get_base();
+      }
       ROSE_ASSERT(symbol);
 
       SgName symbol_name = symbol->get_name();
