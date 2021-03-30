@@ -1700,9 +1700,14 @@ injectAliasSymbol(const std::string &name)
       if (!isSgFunctionParameterScope(decl_scope)) {
         SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
         ROSE_ASSERT(alias_sym);
-        SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
-        ROSE_ASSERT(global_scope);
-        global_scope->insert_symbol(SgName(name), alias_sym);
+
+        // Inject the alias symbol in the namespace if there is one, otherwise put it in global scope
+        SgScopeStatement* scope = isSgNamespaceDefinitionStatement(decl_scope);
+        if (!scope) {
+          scope = SageInterface::getGlobalScope(table_decl);
+        }
+        ROSE_ASSERT(scope);
+        scope->insert_symbol(SgName(name), alias_sym);
       }
    }
 }
