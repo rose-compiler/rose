@@ -2308,10 +2308,10 @@ This is no perfect solution until we handle preprocessing information as structu
         if (stmt_last_pragma_dict.count(stmt))
           last = stmt_last_pragma_dict[stmt];
         // Liao, 3/31/2021
-        // It is possible there are several comments attached after a statement.
+        // It is possible there are several comments attached after a same statement.
         // In this case, we should not just insert each generated pragma right after the statement.
-        // We should insert a pragma after the previously inserted pragma.
-        // Otherwise , we will end up with reserved order of pragmas, causing later pragma pair matching problem.
+        // We should insert each pragma after the previously inserted pragma to preserve the original order.
+        // Otherwise , we will end up with reversed order of pragmas, causing later pragma pair matching problem.
         
          // insertStatementAfter(stmt, p_decl, false);
          insertStatementAfter(last, p_decl, false);
