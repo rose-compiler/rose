@@ -3,7 +3,7 @@
 #include <CommandOptions.h>
 #include <ReuseAnalysis.h>
 #include <LoopInfoInterface.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #include <GraphIO.h>
 

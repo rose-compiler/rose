@@ -192,7 +192,7 @@ MatchOpCheckNodeSet::performOperation(MatchStatus&  status, RoseAst::iterator& i
       std::cout << "(" << _nodenameset << "," << "null" <<")";
     return false;
   }
-  assert(0);
+  ROSE_ABORT();
 }
 
 

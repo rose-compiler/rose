@@ -121,7 +121,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -164,7 +164,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                printf ("\n\n");
 #endif
                cout << "Please make sure that the root folder for header files unparsing does not exist or is empty:" << unparseRootPath << endl;
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -262,7 +262,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -534,7 +534,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      initializeFilesToUnparse();
@@ -546,7 +546,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -575,7 +575,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                collectAdditionalFilesToUnparse();
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -595,7 +595,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                collectAdditionalListOfHeaderFilesToCopy();
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -696,7 +696,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // DQ (4/5/2020): Exit as part of debugging.
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -741,7 +741,7 @@ IncludedFilesUnparser::printDiagnosticOutput()
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }    
    }
@@ -789,7 +789,7 @@ void IncludedFilesUnparser::prepareForNewIteration()
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
    }
@@ -822,7 +822,7 @@ void IncludedFilesUnparser::collectNotUnparsedFilesThatRequireUnparsingToAvoidFi
         }
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -922,7 +922,7 @@ void IncludedFilesUnparser::collectIncludeCompilerPaths()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1064,7 +1064,7 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
 
 #if 1
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1282,7 +1282,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                            // includeFile->set_source_file(sourceFile);
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -1314,7 +1314,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
             // ASSERT_not_null(sourceFile);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
                if (sourceFile != NULL)
@@ -1370,14 +1370,14 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                i++;
              }
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // DQ (11/16/2019): We only want to unparse header files if they were modified, and if they were 
@@ -1522,13 +1522,13 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -1558,7 +1558,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
 #if 0
           printf ("Exiting after test! processed second phase of collecting comments and CPP directives for header files) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 #endif
 
@@ -1601,7 +1601,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
 #if 0
      printf ("Exiting after test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1662,7 +1662,7 @@ void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile,
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1808,7 +1808,7 @@ IncludedFilesUnparser::collectAdditionalListOfHeaderFilesToCopy()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1833,7 +1833,7 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -1879,7 +1879,7 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1944,7 +1944,7 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -2028,7 +2028,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
        }
 
@@ -2045,7 +2045,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -2081,7 +2081,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                   }
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -2127,7 +2127,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -2312,7 +2312,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                          printf ("ERROR: normalizedFileName = %s \n",normalizedFileName.c_str());
 
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 
                  // DQ (10/17/2019): We are getting a few too many files detected as containing transformations, so debugging this.
@@ -2328,7 +2328,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                             }
 
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 
                   }
@@ -2365,7 +2365,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
              {
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }

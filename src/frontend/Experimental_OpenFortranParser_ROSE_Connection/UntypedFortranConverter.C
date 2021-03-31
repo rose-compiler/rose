@@ -68,7 +68,7 @@ UntypedFortranConverter::setFortranNumericLabel(SgStatement* stmt, int label_val
    else
       {
          cerr << "Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!" << endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
       }
 
    SgLabelRefExp* ref_exp = SageBuilder::buildLabelRefExp(symbol);
@@ -89,7 +89,7 @@ UntypedFortranConverter::setFortranNumericLabel(SgStatement* stmt, int label_val
          default:
             {
                fprintf(stderr, "SageInterface::setFortranNumericLabel: unimplemented for label_type %d \n", label_type);
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
         }
 }
@@ -529,7 +529,7 @@ UntypedFortranConverter::convertUntypedNameListDeclaration (SgUntypedNameListDec
         case SgToken::FORTRAN_DIMENSION:
           {
              cerr << "UntypedFortranConverter::convertUntypedNameListDeclaration: DIMENSION statement unimplemented" << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
              break;
           }
 
@@ -542,15 +542,14 @@ UntypedFortranConverter::convertUntypedNameListDeclaration (SgUntypedNameListDec
         case General_Language_Translation::e_cuda_texture:
           {
              cerr << "UntypedFortranConverter::convertUntypedNameListDeclaration: CUDA attributes statement unimplemented" << endl;
-             ROSE_ASSERT(0);
-             break;
+             ROSE_ABORT();
           }
 
        default:
           {
              cerr << "UntypedFortranConverter::convertUntypedNameListDeclaration: failed to find known statement enum, is "
                   << ut_decl->get_statement_enum() << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
    }
@@ -593,7 +592,7 @@ UntypedFortranConverter::convertUntypedExpressionStatement (SgUntypedExpressionS
         default:
           {
              fprintf(stderr, "UntypedFortranConverter::convertUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
       }
       
@@ -690,7 +689,7 @@ UntypedFortranConverter::convertUntypedOtherStatement (SgUntypedOtherStatement* 
           {
              cerr << "UntypedFortranConverter::convertUntypedOtherStatement: failed to find known statement enum, is "
                   << ut_stmt->get_statement_enum() << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
    }
@@ -763,7 +762,7 @@ UntypedFortranConverter::convertUntypedImageControlStatement (SgUntypedImageCont
           {
              cerr << "UntypedFortranConverter::convertUntypedImageControlStatement: failed to find known statement enum, is "
                   << ut_stmt->get_statement_enum() << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
         }
 
@@ -799,7 +798,7 @@ UntypedFortranConverter::convertUntypedImageControlStatement (SgUntypedImageCont
                            lock_stmt->set_acquired_lock(sg_expr);
                            break;
                         }
-                     default: ROSE_ASSERT(0);
+                     default: ROSE_ABORT();
                      }
 
                 }
@@ -809,7 +808,7 @@ UntypedFortranConverter::convertUntypedImageControlStatement (SgUntypedImageCont
           {
              cerr << "UntypedFortranConverter::convertUntypedImageControlStatement: failed to find known statement enum, is "
                   << ut_stmt->get_statement_enum() << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
 
@@ -851,7 +850,7 @@ UntypedFortranConverter::convertUntypedImageControlStatement (SgUntypedImageCont
           {
              cerr << "UntypedFortranConverter::convertUntypedImageControlStatement: failed to find known statement enum, is "
                   << ut_stmt->get_statement_enum() << endl;
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
 

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ROSE_ABORT.h>
 #include "jni_utils.h"
 
 char jni_to_c_char(jchar arg) {
@@ -30,7 +31,7 @@ jmethodID get_method(JNIEnv *env, jclass cls, const char * mthName, const char *
     if ( method_id == NULL ) {
         printf ("Error: jmethodID not found %s %s\n", mthName, mthSig);
         fflush(stdout);
-        assert(false);
+        ROSE_ABORT();
     }
     return method_id;
 }
@@ -40,7 +41,7 @@ jclass get_class(JNIEnv *env, jobject jobj) {
     if (cls == NULL) {
         printf ("Error: jclass cls == NULL! \n");
         fflush(stdout);
-        assert(false);
+        ROSE_ABORT();
     }
     return cls;
 }

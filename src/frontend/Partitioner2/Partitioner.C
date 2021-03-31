@@ -1717,9 +1717,8 @@ Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressInte
         if (placeholder != cfg_.vertices().end()) {
             if (BasicBlock::Ptr bblock = placeholder->value().bblock()) {
                 retval.insertMultiple(basicBlockInstructionExtent(bblock));
-                retval.insertMultiple(basicBlockDataExtent(bblock));
             } else {
-                retval.insert(AddressInterval(bblockVa));// all we know is the placeholder address
+                retval.insert(AddressInterval(bblockVa)); // all we know is the placeholder address
             }
         }
     }

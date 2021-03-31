@@ -191,7 +191,7 @@ Sage<SgVariableDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgVaria
     result = Sage<SgNamespaceDeclarationStatement>::getDefinition(namespace_symbol, file);
   else if (class_symbol != NULL)
     result = ((SgClassDeclaration *)class_symbol->get_declaration()->get_definingDeclaration())->get_definition();
-  else assert(false); 
+  else ROSE_ABORT();
 
   assert(result != NULL);
 
@@ -205,7 +205,7 @@ void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariab
   SgSourceFile * target_file = it_target_file->second;
   assert(target_file != NULL);
 
-  assert(false);
+  ROSE_ABORT();
 }
 
 }

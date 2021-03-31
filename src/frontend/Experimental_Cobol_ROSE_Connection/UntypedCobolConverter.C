@@ -127,7 +127,7 @@ setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_
    else
       {
          std::cerr << "Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!" << std::endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
       }
 
    SgLabelRefExp* ref_exp = SageBuilder::buildLabelRefExp(symbol);
@@ -148,7 +148,7 @@ setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_
          default:
             {
                fprintf(stderr, "SageInterface::setFortranNumericLabel: unimplemented for label_type %d \n", label_type);
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
         }
 }
@@ -214,7 +214,7 @@ UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunc
          default:
             {
                std::cerr << "ERROR: UntypedConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
        }
    }
@@ -342,7 +342,7 @@ UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntyp
             {
                std::cerr << "ERROR: UntypedConverter::setDeclarationModifiers: unimplemented modifier "
                          << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
        }
    }
@@ -410,7 +410,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
         default:
            {
               fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type, enum is %d \n", ut_type->get_type_enum_id());
-              ROSE_ASSERT(0);
+              ROSE_ABORT();
            }
       }
 
@@ -969,7 +969,7 @@ UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclarat
        default:
           {
              fprintf(stderr, "UntypedConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is %d\n", ut_decl->get_statement_enum());
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
    }
@@ -1040,7 +1040,7 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
         default:
           {
              fprintf(stderr, "UntypedConverter::convertSgUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
       }
       
@@ -1084,7 +1084,7 @@ UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_st
        default:
           {
              fprintf(stderr, "UntypedConverter::convertSgUntypedOtherStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
-             ROSE_ASSERT(0);
+             ROSE_ABORT();
           }
        }
    }
@@ -1198,7 +1198,7 @@ UntypedConverter::convertSgUntypedValueExpression (SgUntypedValueExpression* ut_
             }
          default:
             {
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
        }
 
@@ -1222,7 +1222,7 @@ UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_
             }
          default:
             {
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
        }
     return op;
@@ -1313,9 +1313,11 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_EQV:\n");
 #endif
                op = new SgEqualityOp(lhs, rhs, NULL);
-               ROSE_ASSERT(0);  // check on logical operands
+               ROSE_ABORT();  // check on logical operands
+#if 0 // [Robb Matzke 2021-03-24]: unreached
                setSourcePositionIncluding(op, lhs, rhs);
                break;
+#endif
             }
          case SgToken::FORTRAN_INTRINSIC_NEQV:
             {
@@ -1323,9 +1325,11 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_NEQV:\n");
 #endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
-               ROSE_ASSERT(0);  // check on logical operands
+               ROSE_ABORT();  // check on logical operands
+#if 0 // [Robb Matzke 2021-03-24]: unreached
                setSourcePositionIncluding(op, lhs, rhs);
                break;
+#endif
             }
          case SgToken::FORTRAN_INTRINSIC_EQ:
             {
@@ -1383,7 +1387,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
             }
          default:
             {
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               ROSE_ABORT();  // NOT IMPLEMENTED
             }
        }
     return op;

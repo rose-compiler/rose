@@ -68,7 +68,7 @@ UnparseLanguageIndependentConstructs::unparsed_as_kind(unparsed_as_enum_type x)
           default:
              {
                printf ("Error: default reached in switch: x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -230,7 +230,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #if 1
        // DQ (6/23/2020): These are no longer introduced, so they should be an error.
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -480,7 +480,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -542,7 +542,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
 #if 0
                     printf ("In statementFromFile(): Exiting as a test in the Fortran support for source file identification \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -550,7 +550,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                     statementfilename = stmt->get_file_info()->get_physical_filename();
 #if 0
                     printf ("In statementFromFile(): Exiting as a test in the NON-Fortran support for source file identification \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -607,7 +607,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -847,7 +847,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1415,7 +1415,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
                                  }
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -1485,7 +1485,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
 #if 0
        // This fails for test_05.cpp in the codeSegregation tool.
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1797,7 +1797,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                printf ("In unparseStatementFromTokenStream(): stmt = %p = %s unparseStatus_previousStatement = %s unparseLeadingTokenStream = %s \n",
@@ -2316,7 +2316,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -2359,7 +2359,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // Test this function here to be true.
@@ -3148,7 +3148,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                                         info.unset_unparsedPartiallyUsingTokenStream();
 #if 0
                                         printf ("ERROR: can't use this node for partial token stream unparsing \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -3254,7 +3254,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                             }
 #if 0
                          printf ("This is a canidate for a partial unparse using the token stream \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -3274,7 +3274,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                               info.unset_unparsedPartiallyUsingTokenStream();
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -3284,7 +3284,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -3549,7 +3549,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     if (count > 3)
                        {
                          printf ("Exiting as a test! count = %d \n",count);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #endif
@@ -4017,7 +4017,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if (savedScope != scopeAfterUnparseStatement)
         {
           printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -4172,7 +4172,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           if (count > 3)
              {
                printf ("Exiting as a test! count = %d \n",count);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -4476,7 +4476,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                case UNARY_EXPRESSION:
                   {
                     printf ("This should never be called: case UNARY_EXPRESSION\n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 
                     unparseUnaryExpr (expr, info);
                     break;
@@ -4486,7 +4486,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                case BINARY_EXPRESSION:
                   {
                     printf ("This should never be called: case BINARY_EXPRESSION\n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 
                     unparseBinaryExpr(expr, info);
                     break;
@@ -4594,7 +4594,7 @@ void
 UnparseLanguageIndependentConstructs::unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info)
    {
      printf ("Error: base class implementation of unparseLanguageSpecificStatement called \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #endif
 #if 0
@@ -4602,7 +4602,7 @@ void
 UnparseLanguageIndependentConstructs::unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("Error: base class implementation of unparseLanguageSpecificExpression called \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #endif
 
@@ -4726,7 +4726,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 #if 1
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
           return;
         }
@@ -4914,7 +4914,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -5092,7 +5092,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (12/10/2014): Moved to the locate in the false block of if (sourceFile->get_unparse_tokens() == true).
@@ -5734,7 +5734,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      SgUnaryOp* unary_op = isSgUnaryOp(expr);
@@ -5943,7 +5943,7 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
                          suppressOutputOfImplicitArrowExp = false;
 #if 0
                          printf ("found NON-compiler generated this expression: exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -6397,7 +6397,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 #if 0
                     printf ("Special handling for overloaded prefix operators \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 #if DEBUG_BINARY_OPERATORS
                     curprint ( "\n /* unparseBinaryExpr(): Test 15  before unparseExpression() binary_op->get_rhs_operand() = " + binary_op->get_rhs_operand()->class_name() + "*/ \n");
@@ -6456,7 +6456,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 #if 0
                printf ("NOTE: suppressOutputOfImplicitArrowExp == false: exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -6708,7 +6708,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -7041,7 +7041,7 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                default:
                   {
                     printf ("Default reached in switch statement valueExp = %p = %s \n",valueExp,valueExp->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 
              }
@@ -7062,7 +7062,7 @@ UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgU
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7610,7 +7610,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8130,7 +8130,7 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 1
@@ -8448,8 +8448,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpDefaultClause() meets unacceptable default option value:"<<dv<<endl;
-      ROSE_ASSERT (false);
-      break;
+      ROSE_ABORT ();
   }
   curprint(string(")"));
 }
@@ -8480,8 +8479,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause*
       }
    default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpProcBindClause() meets unacceptable default option value:"<<dv<<endl;
-      ROSE_ASSERT (false);
-      break;
+      ROSE_ABORT ();
   }
   curprint(string(")"));
 }
@@ -8517,8 +8515,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* c
       }
   default:
       cerr<<"Error: "<< __FUNCTION__ <<" meets unacceptable default option value:"<<dv<<endl;
-      ROSE_ASSERT (false);
-      break;
+      ROSE_ABORT ();
   }
 }
 
@@ -8560,8 +8557,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause*
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpScheduleClause() meets unacceptable kind option value:"<<skind<<endl;
-      ROSE_ASSERT (false);
-      break;
+      ROSE_ABORT ();
   }
 
   // chunk_size expression
@@ -8675,7 +8671,7 @@ static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator
     default:
       {
         cerr<<"Error: unhandled operator type reductionOperatorToString():"<< ro <<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
   }
   return result;
@@ -8706,7 +8702,7 @@ static std::string dependenceTypeToString(SgOmpClause::omp_dependence_type_enum 
     default:
       {
         cerr<<"Error: unhandled operator type"<<__func__<< "():"<< ro <<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
   }
   return result;
@@ -8741,7 +8737,7 @@ static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
    default:
       {
         cerr<<"Error: unhandled operator type MapOperatorToString():"<< ro <<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
   }
   return result;
@@ -8770,7 +8766,7 @@ static std::string distPolicyToString(SgOmpClause::omp_map_dist_data_enum ro)
     default:
       {
         cerr<<"Error: unhandled dist data policy type mapDistPolicyToString():"<< ro <<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
   }
   return result;
@@ -8865,8 +8861,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
       break;
     default:
       cerr<<"Error: unhandled clause type in UnparseLanguageIndependentConstructs::unparseOmpVariablesClause ():"<< clause->class_name()<<endl;
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
   }
 
   // prepare array dimension info for map variables
@@ -8963,7 +8958,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     else
     {
       cerr<<"Unhandled type of variable in a varlist:"<< (*p)->class_name()<<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
     }
 
     // output the optional dimension info for map() variable
@@ -9030,7 +9025,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" simdlen("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 
   // unparse the expression
@@ -9040,7 +9035,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   else
   {
     cerr<<"Error: missing expression within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 
   curprint(string(")"));
@@ -9148,8 +9143,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
    default:
       {
         cerr<<"Unhandled OpenMP clause type in UnparseLanguageIndependentConstructs::unparseOmpClause():"<<clause->class_name()<<endl;
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
   }
 }
@@ -9160,7 +9154,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpPrefix(SgUnparse_Info& info
 {
   cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpPrefix() should not be called directly!"<<endl;
   cerr<<"Individual languages should have implemented their own OpenMP prefixes."<<endl;
-  ROSE_ASSERT (false);
+  ROSE_ABORT ();
 }
 // simple directives: atomic, section, taskwait, barrier
 void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement * stmt,  SgUnparse_Info& info)
@@ -9401,8 +9395,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
     default:
       {
         cerr<<"error: unacceptable OpenMP directive type within unparseOmpDirectivePrefixAndName(): "<<stmt->class_name()<<endl;
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
   } // end switch
 }
@@ -9413,7 +9406,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
 void UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses      (SgStatement* stmt,     SgUnparse_Info& info)
 {
   cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpBeginDirectiveClauses() should not be called directly"<<endl;
-  ROSE_ASSERT (false);
+  ROSE_ABORT ();
 }
 
 // Output the corresponding end directive text for an OpenMP AST nodes for directive
@@ -9629,7 +9622,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                  // This is an overloaded operator and has the precedence of the operator that is being overloaded.
 
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
                // return 16;
@@ -9716,7 +9709,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                                  }
 #if 0
                               printf ("ERROR: case V_SgCastExp: functionCallExp = %p associated function was not a SgBinaryOp: function = %p = %s \n",functionCallExp,function,function->class_name().c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -9730,7 +9723,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                       else
                        {
                          printf ("ERROR: case V_SgCastExp: If this is not a SgCastExp (or overloaded cast operator) then what is it: expr = %p = %s = %s \n",expr,expr->class_name().c_str(),SageInterface::get_name(expr).c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
                  else
@@ -9856,7 +9849,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                  // This is an overloaded operator and has the precedence of the operator that is being overloaded.
 
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 #endif
@@ -9945,7 +9938,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 #if 1
             // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
                printf ("Error: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -10192,7 +10185,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
 #if 0
             // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
                printf ("Error: getAssociativity(): Undefined expression variant = %d = %s (returning e_assoc_none) \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -10362,7 +10355,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                   }
 #if 0
                printf ("In requiresParentheses(): Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else

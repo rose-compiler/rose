@@ -1,5 +1,6 @@
 #include <rose_config.h>
 #include <rosePublicConfig.h>
+#include <ROSE_ABORT.h>
 
 #include "StringUtility.h"
 #include <string.h>
@@ -371,7 +372,7 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
                            }
 #if 0
                         printf ("Need to handle options taking more than one parameter (e.g. --edg_parameter:): inputPrefix = %s \n",inputPrefix.c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
 #endif
                       }
 #endif

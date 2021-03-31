@@ -61,7 +61,7 @@ void PTracer::loadProcess(const std::vector<std::string>  & args)
                 // does the actual exec
                 execProcess(args);
                 //exec never returns
-                assert(false);
+                ROSE_ABORT();
 
         default: //parent
 
@@ -332,7 +332,7 @@ void PTracer::execProcess(const vector<string> & args)
     execv(argv[0], argv);
     perror("execv");
     //execv never returns
-    assert(false);
+    ROSE_ABORT();
 }
 
 

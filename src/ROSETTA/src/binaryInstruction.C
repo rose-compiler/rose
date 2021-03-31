@@ -16385,7 +16385,7 @@ void Grammar::setUpBinaryInstructions() {
         }
         void set_sb(const SgAsmGenericFormat::fileDetails&) {
             printf("set_sb() not implemented!\n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
     private:

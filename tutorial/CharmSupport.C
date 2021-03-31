@@ -296,8 +296,7 @@ fixupReferencesToGlobalVariables ( Rose_STL_Container<SgVarRefExp*> & variableRe
                               case V_SgExprListExp:
                                  {
                                    printf ("Sorry not implemented, case of global variable in function argument list ... \n");
-                                   assert(false);
-                                   break;
+                                   ROSE_ABORT();
                                  }
                               case V_SgInitializer:
                               case V_SgRefExp:
@@ -305,7 +304,7 @@ fixupReferencesToGlobalVariables ( Rose_STL_Container<SgVarRefExp*> & variableRe
                               default:
                                  {
                                    printf ("Error: default reached in switch  parentExpression = %p = %s \n",parentExpression,parentExpression->class_name().c_str());
-                                   assert(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }

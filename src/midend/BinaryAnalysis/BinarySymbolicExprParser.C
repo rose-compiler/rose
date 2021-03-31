@@ -10,7 +10,7 @@
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
-#include "RoseAsserts.h" /* JFR: Added 25Feb2021 */
+#include <ROSE_ASSERT.h>
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>

@@ -37,7 +37,7 @@ SgGlobal::buildStatementNumbering()
 
 #if 0
      printf ("Exiting in SgSourceFile::buildStatementNumbering() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -68,7 +68,7 @@ fixupUsingNamespaceDeclarations()
 
 #if 0
      printf ("Exiting in SgSourceFile::fixupUsingNamespaceDeclarations() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 

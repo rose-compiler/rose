@@ -200,15 +200,14 @@ MacroExpansion*
 DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgLocatedNode* locatedNode, std::string & name, int & startingToken, int & endingToken )
    {
      printf ("Not implemented! \n");
-     ROSE_ASSERT(false);
-     abort();
+     ROSE_ABORT();
    }
 #else
 MacroExpansion*
 DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* currentStatement, std::string & name, int & startingToken, int & endingToken )
    {
      printf ("Not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #endif
 
@@ -452,6 +451,6 @@ detectMacroOrIncludeFileExpansions ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }

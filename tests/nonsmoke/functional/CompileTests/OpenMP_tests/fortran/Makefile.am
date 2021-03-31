@@ -25,7 +25,11 @@ F77_TESTCODES_TO_PASS = \
     section1.f \
     shared-array.f \
     shared.f \
-    single.f 
+    single.f \
+    task_largenumber.f \
+    task_largenumber2.f \
+    task_scalar.f \
+    task_simplest.f
 
 # DQ (3/30/2021): This is a failing test for the newest work.
 #    task_largenumber.f 
@@ -40,7 +44,9 @@ F90_TESTCODES_TO_PASS = \
   paralleldo.f90 \
   paralleldo-1.f90 \
   critical.f90 \
-  continuation.f90
+  continuation.f90 \
+  collapse.f90 \
+  single-copyprivate.f90 
 
 # DQ (3/30/2021): This is a failing test for the newest work.
 #  collapse.f90 

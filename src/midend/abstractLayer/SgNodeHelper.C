@@ -877,8 +877,7 @@ SgExpression* SgNodeHelper::getCalleeOfCall(/*const*/ SgFunctionCallExp* call) {
     return calleeExpression;
   }
   else {
-    ROSE_ASSERT(false);
-    return 0;
+    ROSE_ABORT();
   }
 }
 

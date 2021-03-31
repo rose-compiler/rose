@@ -205,8 +205,7 @@ void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t *
 }
 
 SgExpression * call_interface_t::getTileIdx(const Descriptor::tile_t & tile) const {
-  assert(false);
-  return NULL;
+  ROSE_ABORT();
 }
 
 void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t *> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {

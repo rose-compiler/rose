@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #include <DepRel.h>
 #include <DepInfoSet.h>

@@ -83,7 +83,7 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
     ctor(sex, disk);
 #else
     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 }
 
@@ -94,7 +94,7 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
     ctor(sex, disk);
 #else
     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 }
 
@@ -485,7 +485,7 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
 #ifndef _MSC_VER
     std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
 #else
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
         std::string retval = "";
 #endif
         if ('('!=retval[0])

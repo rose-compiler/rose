@@ -202,7 +202,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnValue;
@@ -246,14 +246,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
 #if 1
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
 
 #if 1
      printf ("Exiting as a test in function scope! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -339,7 +339,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::isDefinedThroughPrivateBaseClass ( 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnValue;
@@ -503,7 +503,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
           if (isSgBaseClass(causalNode) == NULL)
              {
                printf ("ERROR: This is not a SgBaseClass: causalNode = %p = %s \n",causalNode,causalNode->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 
@@ -712,7 +712,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               declarationAccessLevel = SgAccessModifier::e_private;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -837,7 +837,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -1123,8 +1123,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
                          default:
                               printf ("Error: default reached in switch symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-                              ROSE_ASSERT(false);
-                              break;
+                              ROSE_ABORT();
                        }
                   }
 
@@ -1200,7 +1199,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #if 0
                       // We would like to find out how this is happening a second time.
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                       else
@@ -1219,7 +1218,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -1311,13 +1310,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                  else
                   {
                     printf ("Error: both declaration and initializedName in SgUsingDeclarationStatement are NULL \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
 #if 0
           printf ("Exiting at the base of FixupAstSymbolTablesToSupportAliasedSymbols::visit() \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1345,7 +1344,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
                  // DQ (5/20/2010): Added assertion to trap this case.
                     printf ("Exiting because referencedScope could not be identified.\n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -1379,7 +1378,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
 #if 0
           printf ("Exiting at the base of FixupAstSymbolTablesToSupportAliasedSymbols::visit() \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1438,7 +1437,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
                  referencedScope = isSgDeclarationScope(nrdecl->get_parent());
                } else {
-                 ROSE_ASSERT(false);
+                 ROSE_ABORT();
                }
 
                if (referencedScope != NULL) 
@@ -1479,7 +1478,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
 #if 0
                     printf ("Error: friend functions not processed yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }

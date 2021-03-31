@@ -9,7 +9,7 @@ extern void annerror(const char*);
 
 // DQ (9/12/2011): Added assert to support use in testing suggested by static analysis.
 #include "assert.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 extern int annlineno;
 extern int line_number_offset;

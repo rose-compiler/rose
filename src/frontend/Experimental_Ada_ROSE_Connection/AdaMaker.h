@@ -384,7 +384,7 @@ namespace Ada_ROSE_Translation
                              SgScopeStatement& scope,
                              SgType& retty,
                              std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                             );
+                           );
 
 
   /// creates an Ada entry declaration

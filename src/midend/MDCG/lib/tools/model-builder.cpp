@@ -54,7 +54,7 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
 
       case Model::e_model_field:
       case Model::e_model_method:
-        assert(false);
+        ROSE_ABORT();
     }
     
     switch (kind) {
@@ -67,7 +67,7 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
 
       case Model::e_model_field:
       case Model::e_model_method:
-        assert(false);
+        ROSE_ABORT();
     }
   }
   else if (class_defn != NULL) {
@@ -103,7 +103,7 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
       case Model::e_model_namespace:
       case Model::e_model_variable:
       case Model::e_model_function:
-        assert(false);
+        ROSE_ABORT();
     }
 
     switch (kind) {
@@ -116,7 +116,7 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
       case Model::e_model_namespace:
       case Model::e_model_variable:
       case Model::e_model_function:
-        assert(false);
+        ROSE_ABORT();
     }
   }
   else if (global_scope != NULL) {
@@ -124,7 +124,7 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
   }
   else {
     /// \todo error printing
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -234,7 +234,7 @@ void ModelBuilder::add(Model::model_t & model, SgVariableSymbol * variable_symbo
   }
   else {
     /// \todo error printing
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -388,7 +388,7 @@ void ModelBuilder::add(Model::model_t & model, SgType * sg_type) {
       }
       assert(element->node->base_type != NULL);
     }
-    else assert(false);
+    else ROSE_ABORT();
   }
   else if (array_type != NULL) {
     element->node->kind = Model::node_t<Model::e_model_type>::e_array_type;
@@ -434,7 +434,7 @@ const Model::model_t & ModelBuilder::get(const size_t model_id) const {
 }
 
 void ModelBuilder::print(std::ostream & out, size_t model) const {
-  assert(false); /// \todo
+  ROSE_ABORT(); /// \todo
 }
 
 }

@@ -3,6 +3,7 @@
 #define SYMBOLIC_PLUS_H
 
 #include "SymbolicExpr.h"
+#include <ROSE_ABORT.h>
 
 class SymbolicPlus : public SymbolicExpr
 {
@@ -34,7 +35,7 @@ class PlusApplicator : public OPApplicator
          else if (vd2 == 1) { r1 = vu1 + vu2 * vd1; r2 = vd1; }
          else {
               std::cerr << "Cannot not yet handle this case: vd1=" << vd1 << "; vd2= " << vd2 << "; vu1=" << vu1 << "; vu2 = " << vu2 << "\n";
-             assert(0);
+             ROSE_ABORT();
          }
          return true;
        }
