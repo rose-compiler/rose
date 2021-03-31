@@ -608,7 +608,7 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 CodeThorn::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
+  setNumberOfElements(varId,unknownSizeValue());
   return varId;
 }
 
@@ -672,7 +672,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     //VariableId newVarId=variableId(sym);
 
     // set size to 1 (to compute bytes, multiply by size of type)
-    setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
+    setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
     ROSE_ASSERT(mappingVarIdToInfo[mappingSymToVarId.at(sym)].sym == sym);
