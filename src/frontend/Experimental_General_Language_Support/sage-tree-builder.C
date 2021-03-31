@@ -1705,6 +1705,14 @@ injectAliasSymbol(const std::string &name)
       SgScopeStatement* decl_scope = table_decl->get_scope();
       ROSE_ASSERT(decl_scope);
 
+      // Tables may be embedded in other tables or blocks, find outermost table/block declaration
+      while (isSgClassDefinition(decl_scope)) {
+        table_decl = isSgJovialTableStatement(decl_scope->get_parent());
+        ROSE_ASSERT(table_decl);
+        decl_scope = table_decl->get_scope();
+        ROSE_ASSERT(decl_scope);
+      }
+
       if (!isSgFunctionParameterScope(decl_scope)) {
         SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
         ROSE_ASSERT(alias_sym);

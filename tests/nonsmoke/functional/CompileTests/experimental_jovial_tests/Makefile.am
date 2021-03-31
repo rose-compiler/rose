@@ -212,6 +212,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-821.jov                  \
  rose-issue-rc-822.jov                  \
  rose-issue-rc-823.jov                  \
+ rose-issue-rc-825.jov                  \
  charlie.jov
 
 JOVIAL_PARSER_TESTCODES = \
@@ -317,6 +318,7 @@ COMPOOL_TESTCODES = \
  rc802.cpl                              \
  rc820.cpl                              \
  rc821.cpl                              \
+ rc825.cpl                              \
  beta.cpl                               \
  parttype.cpl
 

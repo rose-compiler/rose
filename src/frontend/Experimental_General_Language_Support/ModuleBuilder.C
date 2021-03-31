@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "ModuleBuilder.h"
 
+#define PRINT_SYMBOLS 0
+
 namespace Rose {
 
 using namespace Rose::Diagnostics;
@@ -105,7 +107,7 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
           // Only import names from the list
           std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
           if (it != import_names.end()) {
-#if 0
+#if PRINT_SYMBOLS
             std::cout << "    : inserting symbol " << symbol->get_name()
                       << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
@@ -115,7 +117,7 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
         }
       }
       else {
-#if 0
+#if PRINT_SYMBOLS
         std::cout << "    : exists -> symbol " << symbol->get_name()
                   << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
@@ -134,7 +136,7 @@ void ModuleBuilder::insertSymbol(SgSymbol* symbol, SgGlobal* file_scope)
     SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
     ROSE_ASSERT(alias_symbol);
     file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-#if 0
+#if PRINT_SYMBOLS
     std::cout << "    :  inserted symbol " << symbol->get_name() << std::endl;
 #endif
   }
