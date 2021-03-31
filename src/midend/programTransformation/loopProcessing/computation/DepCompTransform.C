@@ -10,7 +10,7 @@
 #include <union_find.h>
 #include <GraphScope.h>
 #include <GraphIO.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 bool DebugRefFuse()
 {
@@ -488,7 +488,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
                    && !readlhs && (lhs == initcut->GetInfo().orig);
     AstNodeType inittype;
     if (ai.IsExpression(initInfo.orig, &inittype)==AST_NULL)
-      assert(false);
+      ROSE_ABORT();
     bool has_write = false;
 
     AstNodePtr arr;
@@ -498,7 +498,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
 
     AstInterface::AstNodeList initIndex;
     if (!LoopTransformInterface::IsArrayAccess(initInfo.orig, &arr, &initIndex) || !ai.IsVarRef(arr,0,&arrname))
-       assert(false);
+       ROSE_ABORT();
 
     SelectArray cursel(elemtype, arrname, initIndex.size());
     cursel.select(initInfo.stmt, unit.root, initIndex);
@@ -511,7 +511,7 @@ ComputeCopyConfig( const DepCompAstRefAnal& stmtorder,
             has_write = true;
         AstInterface::AstNodeList curIndex;
         if (!LoopTransformInterface::IsArrayAccess(curinfo.orig, 0, &curIndex))
-           assert(false);
+           ROSE_ABORT();
         if (cursel.select(curinfo.stmt, unit.root, curIndex))
           is_init = false;
    }
@@ -603,7 +603,7 @@ void DepCompCopyArrayToBuffer::ApplyXform(
           AstNodePtr curref = curinfo.orig;
           AstInterface::AstNodeList index;
           if (!LoopTransformInterface::IsArrayAccess(curref, 0,&index))
-              assert(false);
+              ROSE_ABORT();
           AstNodePtr currepl = curconfig.get_arr().buf_codegen(fa, index);
           LoopTreeReplaceAst()(curinfo.stmt, curref, currepl);
       }

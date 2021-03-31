@@ -12,17 +12,13 @@
 // note: the comments are right aligned to support code-blocks doxygen 1.3.X :)
 
 #include <stdexcept>
-
-#if __cplusplus >= 201103L
 #include <type_traits>
-#endif
 
 #if !defined(NDEBUG)
 #include <typeinfo>
 #include <iostream>
 #include <sstream>
 #endif /* NDEBUG */
-
 
 #define WITH_BINARY_NODES 0
 #define WITH_UNTYPED_NODES 0
@@ -37,6 +33,8 @@
 #define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 #define SG_ERROR_IF(COND, MSG)      (sg::report_error_if(COND, MSG, __FILE__, __LINE__))
 
+
+/// This namespace contains template functions that operate on the ROSE AST
 namespace sg
 {
   //
@@ -177,8 +175,6 @@ namespace sg
   template <class RoseVisitor>
   struct VisitDispatcher : ROSE_VisitorPatternDefaultBase
   {
-
-#if __cplusplus >= 201103L
     // rvalue ctor
     VisitDispatcher(RoseVisitor&& rosevisitor, std::false_type)
     : rv(std::move(rosevisitor))
@@ -188,12 +184,6 @@ namespace sg
     VisitDispatcher(const RoseVisitor& rosevisitor, std::true_type)
     : rv(rosevisitor)
     {}
-#else
-    explicit
-    VisitDispatcher(const RoseVisitor& rosevisitor)
-    : rv(rosevisitor)
-    {}
-#endif
 
     GEN_VISIT(SgAccessModifier)
     GEN_VISIT(SgActualArgumentExpression)
@@ -1095,9 +1085,6 @@ namespace sg
 
 #undef GEN_VISIT
 
-
-
-#if __cplusplus >= 201103L
   template <class RoseVisitor>
   inline
   typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
@@ -1115,20 +1102,6 @@ namespace sg
     n->accept(vis);
     return std::move(vis).rv;
   }
-#else
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  _dispatch(const RoseVisitor& rv, SgNode* n)
-  {
-    ROSE_ASSERT(n);
-
-    VisitDispatcher<RoseVisitor> vis(rv);
-
-    n->accept(vis);
-    return vis.rv;
-  }
-#endif
 
 
 /// \brief    uncovers the type of SgNode and passes it to an
@@ -1199,7 +1172,6 @@ namespace sg
 /// \endcode
 #endif
 
-#if __cplusplus >= 201103L
   template <class RoseVisitor>
   inline
   typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
@@ -1217,24 +1189,6 @@ namespace sg
     //~ return std::move(rv);
     return _dispatch(std::forward<RoseVisitor>(rv), const_cast<SgNode*>(n));
   }
-#else
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  dispatch(const RoseVisitor& rv, SgNode* n)
-  {
-    return _dispatch(rv, n);
-  }
-
-/// \overload
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  dispatch(const RoseVisitor& rv, const SgNode* n)
-  {
-    return _dispatch(rv, const_cast<SgNode*>(n));
-  }
-#endif /* c++11 */
 
 /**
  * struct DefaultHandler
@@ -1349,31 +1303,28 @@ namespace sg
   template <class SageNode>
   struct TypeRecoveryHandler
   {
-    typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
+      typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
 
-    TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
-    : res(NULL), loc(f), loc_ln(ln)
-    {}
+      TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
+      : res(NULL), loc(f), loc_ln(ln)
+      {}
 
-#if __cplusplus >= 201103L
-    TypeRecoveryHandler(TypeRecoveryHandler&&) = default;
+      TypeRecoveryHandler(TypeRecoveryHandler&&)            = default;
+      TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = default;
 
-    TypeRecoveryHandler()                                      = delete;
-    TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
-    TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
-    TypeRecoveryHandler& operator=(TypeRecoveryHandler&&)      = delete;
+      operator SageNode* ()&& { return res; }
 
-    operator SageNode* ()&& { return res; }
-#else
-    operator SageNode* ()   { return res; }
-#endif /* C++ */
+      void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
+      void handle(SageNode& n)   { res = &n; }
 
-    void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
-    void handle(SageNode& n)   { res = &n; }
+    private:
+      SageNode*   res;
+      const char* loc;
+      size_t      loc_ln;
 
-    SageNode*   res;
-    const char* loc;
-    size_t      loc_ln;
+      TypeRecoveryHandler()                                      = delete;
+      TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
+      TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
   };
 
 
@@ -1550,17 +1501,10 @@ namespace sg
   template <class GVisitor>
   struct DispatchHelper
   {
-#if __cplusplus >= 201103L
     explicit
     DispatchHelper(GVisitor gv, SgNode* p)
     : gvisitor(std::move(gv)), parent(p), cnt(0)
     {}
-#else
-    explicit
-    DispatchHelper(GVisitor gv, SgNode* p)
-    : gvisitor(gv), parent(p), cnt(0)
-    {}
-#endif /* C++11 */
 
     void operator()(SgNode* n)
     {
@@ -1574,18 +1518,10 @@ namespace sg
       }
 #endif
 
-#if __cplusplus >= 201103L
       if (n != NULL) gvisitor = sg::dispatch(std::move(gvisitor), n);
-#else
-      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
-#endif /* C++11 */
     }
 
-#if __cplusplus >= 201103L
     operator GVisitor()&& { return std::move(gvisitor); }
-#else
-    operator GVisitor() { return gvisitor; }
-#endif /* C++11 */
 
     GVisitor gvisitor;
     SgNode*  parent;
@@ -1598,13 +1534,8 @@ namespace sg
   DispatchHelper<GVisitor>
   dispatchHelper(GVisitor gv, SgNode* parent = NULL)
   {
-#if __cplusplus >= 201103L
     return DispatchHelper<GVisitor>(std::move(gv), parent);
-#else
-    return DispatchHelper<GVisitor>(gv, parent);
-#endif /* C++11 */
   }
-
 
   template <class GVisitor>
   static inline
@@ -1612,11 +1543,7 @@ namespace sg
   {
     std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
 
-#if __cplusplus >= 201103L
     return std::for_each(successors.begin(), successors.end(), dispatchHelper(std::move(gv), &n));
-#else
-    return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
-#endif /* C++11 */
   }
 
   template <class GVisitor>

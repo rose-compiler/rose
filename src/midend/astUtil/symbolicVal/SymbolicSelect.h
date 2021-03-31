@@ -4,6 +4,7 @@
 #include "SymbolicExpr.h"
 #include "const.h"
 #include <iostream>
+#include <ROSE_ABORT.h>
 
 class SymbolicSelect : public SymbolicExpr
 {
@@ -33,7 +34,7 @@ class SymbolicSelect : public SymbolicExpr
 
 
    AstNodePtr CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
-   {  assert(false);  return AST_NULL; }
+   {  ROSE_ABORT();  }
    AstNodePtr CodeGen(  AstInterface &fa ) const;
 };
 

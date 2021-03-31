@@ -4,7 +4,7 @@
 #include <LoopTransformInterface.h>
 #include <assert.h>
 #include <CommandOptions.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 size_t BreakupStatement::breaksize = 0;
 

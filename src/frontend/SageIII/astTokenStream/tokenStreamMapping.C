@@ -536,7 +536,7 @@ TokenMappingTraversal::consistancyCheck()
                tokenStreamSequenceVector[i]->node->get_file_info()->display("error: can't find node in tokenStreamSequenceMap: debug");
 
                printf ("Error: TokenStreamSequenceToNodeMapping* element in tokenStreamSequenceVector not found in tokenStreamSequenceMap \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -612,7 +612,7 @@ Graph_TokenMappingTraversal::getTokenIdString (int i)
                  else
                   {
                     printf ("Error: not clear what this token is: i = %d \n",i);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -1165,7 +1165,7 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1281,7 +1281,7 @@ TokenMappingTraversal::trimTrailingWhiteSpaceFromRight(TokenStreamSequenceToNode
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1354,7 +1354,7 @@ TokenMappingTraversal::discoverElseSyntax(TokenStreamSequenceToNodeMapping* if_s
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1426,7 +1426,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -1542,7 +1542,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -1667,7 +1667,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               while_condition_mappingInfo->token_subsequence_end   = better_end_of_condition_token_subsequence;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -1996,7 +1996,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    mappingInfo_to_add = mappingInfo;
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -2047,7 +2047,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                      else
@@ -2069,7 +2069,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
 #endif
@@ -2090,7 +2090,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (isSgBasicBlock(n) != NULL)
                             {
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                       // Remove the entries that we have detected to be nested inside of other sibling IR node subsequences.
@@ -2170,7 +2170,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (tokenToNodeVector.size() > 1)
                             {
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                       // DQ (12/11/2015): Check the child node's source position information against the token sequence mapping.
@@ -2563,7 +2563,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -2744,7 +2744,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
                             {
                               printf ("Exiting as a test! (detected for loop increment expression) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                       // DQ (3/22/2021): Added assertion.
@@ -2830,7 +2830,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               fixupDarkTokenSubsequencesForTrailingWhitespace  = false;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -2938,7 +2938,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if (isSgBasicBlock(n) != NULL)
                                       {
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                       }
 #endif
                                  }
@@ -2974,7 +2974,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                            {
 #if 0
                                              printf ("WARNING: (in leading whitespace computation): Need logic to look at the outer scope! \n");
-                                          // ROSE_ASSERT(false);
+                                          // ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3067,7 +3067,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                        mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
 #if 0
                                                        printf ("Exiting as a test! \n");
-                                                       ROSE_ASSERT(false);
+                                                       ROSE_ABORT();
 #endif
                                                      }
                                                 }
@@ -3158,7 +3158,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3257,7 +3257,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                 }
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3329,13 +3329,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                        mappingInfo->trailing_whitespace_end = update_value;
 #if 0
                                                        printf ("Exiting as a test! \n");
-                                                       ROSE_ASSERT(false);
+                                                       ROSE_ABORT();
 #endif
                                                      }
                                                 }
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3360,7 +3360,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -3435,7 +3435,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       }
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #error "DEAD CODE!"
@@ -3477,7 +3477,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
 #if 0
@@ -3491,7 +3491,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
 #endif
@@ -3521,7 +3521,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              trimTrailingWhiteSpaceFromRight(mappingInfo,original_end_of_token_subsequence);
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3541,7 +3541,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -3560,7 +3560,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -3609,7 +3609,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
 
@@ -3629,7 +3629,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                   trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                                   printf ("Exiting as a test! \n");
-                                                  ROSE_ASSERT(false);
+                                                  ROSE_ABORT();
 #endif
                                                 }
                                            }
@@ -3649,7 +3649,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if 1
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
 #endif
@@ -3671,7 +3671,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              trimTrailingWhiteSpaceFromRight(mappingInfo,original_end_of_token_subsequence);
 #if 0
                                              printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
 #error "DEAD CODE!"
@@ -3685,7 +3685,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                           // trimTrailingWhiteSpaceFromRight(mappingInfo,original_end_of_token_subsequence);
 #if 0
                                              printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3711,7 +3711,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              trimTrailingWhiteSpaceFromRight(mappingInfo,original_end_of_token_subsequence);
 
                                              printf ("Exiting as a test! (never called because mappingInfo->node can not be both a SgBasicBlock AND a SgCaseOptionStmt or SgDefaultOptionStmt IR node!) \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
                                            }
                                       }
 #endif
@@ -3735,7 +3735,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                // trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 #if 0
                                                   printf ("Exiting as a test! \n");
-                                                  ROSE_ASSERT(false);
+                                                  ROSE_ABORT();
 #endif
                                                 }
                                            }
@@ -3776,7 +3776,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                            }
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -3843,7 +3843,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         ROSE_ASSERT(mappingInfo->trailing_whitespace_start <= mappingInfo->trailing_whitespace_end);
 #if 0
                                         printf ("Exiting as a test! \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
 #endif
                                       }
                                  }
@@ -3877,7 +3877,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              skipUpdate = true;
 #if 0
                                              printf ("Exiting as a test! \n");
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
 #endif
                                            }
                                       }
@@ -3955,7 +3955,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
                             {
                               printf ("Exiting as a test! (detected for loop increment expression) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                        }
@@ -4083,7 +4083,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
 #if 0
                               printf ("This left (leading) edge might not be computed correctly (not the same as the partent's left (leading) edge) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -4252,7 +4252,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
 #if 0
                               printf ("This right (trailing) edge might not be computed correctly (not the same as the partent's right (trailing) edge) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
 // #if 1
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
@@ -4397,7 +4397,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -4585,7 +4585,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          tokenStreamSequenceMap[starting_node] = element;
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                          size_t sizeAfterNewTokenStreamSequenceToNodeMapping = tokenStreamSequenceVector.size();
 
@@ -4623,14 +4623,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(element->nodeVector.size() == 2 + (k - starting_NodeSequenceWithoutTokenMapping));
 
                               printf ("This location is never reached! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                          printf ("******************** End of loop body for childrenWithoutTokenMappings (i = %zu) ******************** \n",i);
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
@@ -4640,7 +4640,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  // Now with the token subsequences known, we need to unify any redundant subsequences.
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
@@ -4657,13 +4657,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if 0
                     printf ("In evaluateSynthesizedAttribute(): need to handle collections of statements n = %p = %s \n",n,(n != NULL) ? n->class_name().c_str() : "null");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
 #if 0
                     if (tokenToNodeVector.size() > 2)
                        {
                          printf ("In evaluateSynthesizedAttribute(): need to handle collections of statements n = %p = %s \n",n,(n != NULL) ? n->class_name().c_str() : "null");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                   }
@@ -4671,12 +4671,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                if (tokenToNodeVector.size() == 1)
                   {
                     printf ("In evaluateSynthesizedAttribute(): need to handle single statements n = %p = %s \n",n,(n != NULL) ? n->class_name().c_str() : "null");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 #if 0
                printf ("In evaluateSynthesizedAttribute(): need to handle statements n = %p = %s \n",n,(n != NULL) ? n->class_name().c_str() : "null");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
             // DQ (12/31/2014): Handle the "else" syntax within the SgIfStmt.
@@ -4778,7 +4778,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       }
 #if 0
                                    printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -4873,7 +4873,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      if (isSgWhileStmt(n) != NULL)
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 #if 0
@@ -4884,7 +4884,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
           if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
              {
                printf ("Exiting as a test! (found function prototype) \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -4896,7 +4896,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
              {
             // evaluateForLoopIncrementExpression = true;
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -5021,7 +5021,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
           tokenStreamSequenceMap[n] = element;
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if 0
@@ -5038,7 +5038,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -5061,7 +5061,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                     if (locatedNode == parent_is_forStatement->get_test())
                        {
                          printf ("Found a node where the end position is not properly represented in EDG \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #endif
@@ -5104,7 +5104,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          end_pos->display("get_physical_line() == 0 : debug");
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #endif
@@ -5164,7 +5164,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                    computed_start_line,computed_start_column,computed_end_line,computed_end_column);
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                            else
@@ -5182,7 +5182,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          ending_column   = computed_end_column;
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
@@ -5229,7 +5229,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          printf ("WARNING: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false): n = %p = %s \n",n,n->class_name().c_str());
 #endif
                       // printf ("ERROR: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false) \n");
-                      // ROSE_ASSERT(false);
+                      // ROSE_ABORT();
                        }
 #if 1
                  // DQ (1/4/2014): commented out to test with using token based unparsing.
@@ -5416,7 +5416,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          if (isNullForInitStatement == true)
                             {
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
                       // Fixup any mistakes in the processing, usually cased by bad source position information from EDG.
@@ -5454,7 +5454,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -5555,7 +5555,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -5621,7 +5621,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 
@@ -5802,7 +5802,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                       }
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -5833,7 +5833,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #if 0
@@ -5982,7 +5982,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                       }
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                             }
@@ -6085,7 +6085,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
           if (n == parent_is_forStatement->get_test())
              {
                printf ("Found a node where the end position is not properly represented in EDG \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 #endif
@@ -6849,7 +6849,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (12/6/2014): I think we need the frontier mechanism, and then the partial use of token 
@@ -6981,7 +6981,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
                redundantTokenEndings.insert(tokenSubsequence->token_subsequence_end);
 #if 0
                printf ("Mark this as a frontier that is redundantly mapped to a token sequence: statement = %p = %s \n",statement,statement->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 #if 0
             // ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
@@ -6990,7 +6990,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
                   {
                  // Mark this as a frontier that is redundantly mapped to a token sequence.
                     printf ("Mark this as a frontier that is redundantly mapped to a token sequence \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 
                  // tokenSubsequence->redundant_token_subsequence = true;
                   }
@@ -7119,7 +7119,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #if 0
      printf ("Identify the frontier IR nodes that redundantly map to a single token sequence \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7190,7 +7190,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (1/20/2021): Building a single instance that we can refer to via a pointer, so that we can use 
@@ -7432,7 +7432,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -7503,7 +7503,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 #endif
 #if 0
      printf ("Completed the AST token stream mapping (before transformations) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if DEBUG_TOKEN_STREAM_MAPPING
@@ -7544,7 +7544,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
           tokenSequenceToNodeMapping->display("");
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif

@@ -232,7 +232,7 @@ class DivAnalysis : public IntraFWDataflow
         //std::map<varID, Lattice*>& genConstVarLattices() const;
                 
   bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo)
-  { assert(0); return false; }
+  { ROSE_ABORT(); }
   boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
                                                             NodeState& state, const std::vector<Lattice*>& dfInfo)
   { return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo)); }

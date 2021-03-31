@@ -37,7 +37,7 @@ namespace VirtualCFG {
       cout<<"index = " << index <<" while max index is:"<< node->cfgIndexForEnd() <<endl;
       printf ("Error: node = %p = %s \n",node,node->class_name().c_str());
       SageInterface::dumpInfo(node);
-      assert (false);
+      ROSE_ABORT ();
     }
 #endif
   }
@@ -550,9 +550,7 @@ EdgeConditionKind CFGEdge::condition() const
                                                                                             }
 
   // DQ (11/29/2009): It should be an error to reach this point in the function.
-     ROSE_ASSERT(false);
-  // DQ (11/29/2009): Avoid MSVC warning.
-     return eckFalse;
+     ROSE_ABORT();
    }
 
 

@@ -76,7 +76,7 @@ void addIncludeDirectives( SgNode* node )
 #endif
 #if 0
      printf ("Exiting as a test before addIncludeDirectives traversal \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -96,7 +96,7 @@ void addIncludeDirectives( SgNode* node )
 
 #if 0
      printf ("Exiting as a test before addIncludeDirectives traversal \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -120,7 +120,7 @@ void addIncludeDirectives( SgNode* node )
 #endif
 #if 0
      printf ("Exiting as a test before addIncludeDirectives traversal \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 
@@ -147,7 +147,7 @@ void addIncludeDirectives( SgNode* node )
                addIncludeDireclrationsTraversal.traverse(node,inheritedAttribute);
 #if 0
                printf ("Exiting as a test: Finished with file: %s \n",include_file->get_filename().str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -159,14 +159,14 @@ void addIncludeDirectives( SgNode* node )
 
 #if 0
           printf ("END OF LOOP: Exiting as a test after addIncludeDirectives traversal \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
           k++;
         }
 
 #if 0
      printf ("Exiting as a test after addIncludeDirectives traversal \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -273,7 +273,7 @@ AddIncludeDirectivesTraversal::evaluateInheritedAttribute ( SgNode* node, AddInc
 #endif
 #if 0
                     printf ("Exiting as a test: Setting insertIncludeDirective = true \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -287,7 +287,7 @@ AddIncludeDirectivesTraversal::evaluateInheritedAttribute ( SgNode* node, AddInc
                  // return_attribute.foundStatementFromIncludeFile = true;
 #if 0
                     printf ("Exiting as a test: Found statement from target include file \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -358,7 +358,7 @@ AddIncludeDirectivesTraversal::evaluateInheritedAttribute ( SgNode* node, AddInc
                SageInterface::insertStatement(statement,includeDirectiveStatement,insertBefore,autoMovePreprocessingInfo);
 #if 0
                printf ("Exiting as a test: Insert the include directive at this statement \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                includeDirectiveHasBeenInserted = true;
              }

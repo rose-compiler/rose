@@ -5,7 +5,7 @@
 #include <DepInfo.h>
 #include <TransDepGraph.h>
 #include <DepGraph.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 template <class Node>
 LoopAlignInfo TransLoopFusible<Node>::

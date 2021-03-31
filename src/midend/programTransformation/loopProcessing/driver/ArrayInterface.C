@@ -203,7 +203,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
       dimval = desc.get_dimension();
     }
     if (!dimval.get_val().isConstInt(dim))
-        assert(false);
+        ROSE_ABORT();
     if (dimp != 0)
       *dimp = dim;
     dimmap[array] = dim;
@@ -254,7 +254,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* ar
   if (dimp != 0 || len != 0) 
   {
     if (!is_array_exp( fa, array, dimp, len, reshape))
-      assert(false);
+      ROSE_ABORT();
     if (dimp != 0 && dim1 != 0 && *dimp > dim1)
        *dimp = dim1;
   }
@@ -290,7 +290,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
     if (dimp != 0 || len != 0)
     {
       if (!is_array_exp( fa, arrayExp, dimp, len))
-        assert(false);
+        ROSE_ABORT();
       if (dimp != 0 && dim1 != 0 && *dimp > dim1)
         *dimp = dim1;
     }
@@ -315,7 +315,7 @@ impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, const AstNode
 
   int dim;
   if (!is_array_exp( fa, array, &dim))
-    assert(false);
+    ROSE_ABORT();
   AstNodePtr result = block;
   for (ArrayOptDescriptor::InitVarIterator p = desc.init_var_begin();
        p != desc.init_var_end(); ++p) {
@@ -361,7 +361,7 @@ impl_reshape_array( CPPAstInterface& fa,
      std::cerr << "Error: cannot extract value from reshape spec: \n";
      reshape.write(std::cerr);
      std::cerr << std::endl;
-     assert(false);
+     ROSE_ABORT();
   }
   return r;
 }
@@ -389,7 +389,7 @@ impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
   elem.replace_var( "dimension", ivarAst.size());
   AstNodePtr r;
   if (! elem.get_val(fa, ivarAst, r))
-     assert(false);
+     ROSE_ABORT();
   return r;
 }
 
@@ -403,7 +403,7 @@ impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
   if (get_array_opt(fa, array, desc)) 
   {
     if (!desc.get_length(dim, rval))
-      assert(false);
+      ROSE_ABORT();
     
   }
   else 
@@ -412,7 +412,7 @@ impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
     if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc1))
       return AST_NULL;
     if (! desc1.get_length(dim, rval))
-      assert(false);
+      ROSE_ABORT();
   }
   ReplaceVal(rval, SymbolicVar("this",AST_NULL), SymbolicAstWrap(array));
   if (plus != 0)
@@ -477,7 +477,7 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   SymbolicFunctionDeclarationGroup len;
   if (!is_array_exp( fa, array, 0, &len))
-    assert(false);
+    ROSE_ABORT();
 
   std::vector<SymbolicVal> pars;
   pars.push_back( SymbolicConst(dim));

@@ -297,7 +297,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -331,7 +331,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -467,7 +467,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                default:
                   {
                     printf ("Default reached in unparseStatementFromTokenStream(): e_token_sequence_position_start = %d \n",e_token_sequence_position_start);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -616,7 +616,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     default:
                        {
                          printf ("Default reached in unparseStatementFromTokenStream(): e_token_sequence_position_end = %d \n",e_token_sequence_position_end);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -765,7 +765,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                if (isSgGlobal(stmt_1) == NULL || isSgGlobal(stmt_2) == NULL)
                   {
                     printf ("ERROR: unparseStatementFromTokenStream(): skipped output of token range: start = %d end = %d tokenVectorSize = %d \n",start,end,tokenVectorSize);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -1137,7 +1137,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 #endif
 #if 0
           printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -1148,7 +1148,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (8/9/2013): refactored to support additional refactoring to seperate out code to unparse SgInitializedName.
@@ -1441,7 +1441,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           curprint(" __attribute__((noreturn))");
 #if 0
           printf ("Detected initializedName->isGnuAttributeNoReturn() == true: (not implemented) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1529,7 +1529,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1570,7 +1570,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -2109,8 +2109,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 
@@ -2560,7 +2559,7 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
        // DQ (6/5/2011): This case is demonstrated by test2005_114.C.
 #if 0
           printf ("I think that this case might not be used...(or we need a test case for it) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
           SgName nameQualifier = usingDeclaration->get_qualified_name_prefix();
 
@@ -2738,7 +2737,7 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                default:
                   {
                     printf ("Default reached in unparseUsingDeclarationStatement(): case is not implemented for %s \n",declarationStatement->sage_class_name());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -2860,7 +2859,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
                unparseVarDeclStmt (variableDeclaration,info);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2871,7 +2870,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
             // DQ (8/31/2005): This should be an error now!  Template instantiations never generate
             // a SgMemberFunctionDeclaration and always generate a SgTemplateInstantiationMemberFunctionDecl
                printf ("Error: SgMemberFunctionDeclaration case found in unparseTemplateInstantiationDirectiveStmt ... (exiting) \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #if 0
                SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declarationStatement);
                ASSERT_not_null(memberFunctionDeclaration);
@@ -2897,7 +2896,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
                unparseTemplateVariableDeclStmt(variableDeclaration,info);
 #if 0
                printf ("Unparsing of SgTemplateVariableDeclaration in unparseTemplateInstantiationDirectiveStmt not implemented \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2905,7 +2904,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, 
           default:
              {
                printf ("Error: default reached in switch (declarationStatement = %s) \n",declarationStatement->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -5050,7 +5049,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          printf ("Error: default reached in evaluation of function declaration structural location parentOfFunctionDeclaration = %s \n",parentOfFunctionDeclaration->class_name().c_str());
                          printf ("     declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
                          declarationStatement->get_startOfConstruct()->display("default reached: debug");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -5100,7 +5099,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 1
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -5114,7 +5113,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (stmt, function_body, e_token_subsequence_start, e_token_subsequence_start, info);
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -5912,7 +5911,7 @@ Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_
 
          // DQ (9/22/2004): I think this is an error!
          printf ("Error: Should be an error to not have a function body in the AST \n");
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
        }
 
 #if 0
@@ -6079,7 +6078,7 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (9/22/2004): I think this is an error!
           printf ("Error: Should be an error to not have a function body in the AST \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
@@ -6142,7 +6141,7 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
 #error "DEAD CODE!"
 
      printf ("unparseGeneratedTemplateArgumentsList(): This function is not yet called \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
   // have an associated node to reference as a way to lookup the strored name qualification.  In this 
@@ -6908,7 +6907,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                printf ("WARNING: We cannot use the SgTemplateInstantiationMemberFunctionDecl stored name, e.g. get_name() function, since it will fail to have name qualification for template arguments \n");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -7618,7 +7617,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf (" --- vardecl_stmt->get_baseTypeDefiningDeclaration() = %p = %s \n",associatedDefiningDeclaration,associatedDefiningDeclaration->class_name().c_str());
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -7652,7 +7651,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  else
                   {
                     printf ("Error: C11 _Alignas operand is not a type or constant \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
           curprint(")");
@@ -8091,7 +8090,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -9129,8 +9128,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     default:
                        {
                          printf ("Error: default reached in unparseClassDeclStmt() \n");
-                         ROSE_ASSERT(false);
-                         break;
+                         ROSE_ABORT();
                        }
                   }
               }
@@ -9151,7 +9149,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                nm = templateInstantiation->get_name();
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -9232,7 +9230,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                unparseTemplateName(templateInstantiation,info);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -9674,7 +9672,7 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint (code);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -9780,7 +9778,7 @@ Unparse_ExprStmt::unparseTypeAttributes ( SgDeclarationStatement* declaration )
           curprint(" __attribute__((packed))");
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -9868,7 +9866,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
        // DQ (2/14/2019): Test if this branch is ever taken.
           printf ("Exiting as a test (need to know if this branch is ever taken) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 
        // This is a declaration of an enum appearing within another declaration (e.g. function declaration as a return type).
           SgClassDefinition *cdefn = NULL;
@@ -10123,7 +10121,7 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-          assert(false);
+          ROSE_ABORT();
         }
 
      if (newinfo.inVarDecl())
@@ -10363,7 +10361,7 @@ Unparse_ExprStmt::unparsePragmaAttribute(SgScopeStatement* scope_stmt)
           curprint("\n#pragma " + text_string + "\n");
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -10440,7 +10438,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint("\n#pragma " + text_string + "\n");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -10686,7 +10684,7 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
                  else
                   {
                     printf("Error: no non-tranformation left in case option block (unparse the SgBasicBlock from the AST directly) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #if 0
                if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -11422,7 +11420,7 @@ Unparse_ExprStmt::unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -11707,7 +11705,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_reference_node_for_qualification(declaration);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -11758,12 +11756,12 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (typedef_stmt->get_file_info()->get_filenameString() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2019_520b.C")
                   {
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -12096,7 +12094,7 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
 #endif
 #if 0
           printf ("Exiting in unparseTemplateDeclStmt() \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -12178,12 +12176,12 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
             // printf ("Do we need this extra \";\"? \n");
             // curprint ( templateString + ";";
                printf ("Error: SgTemplateDeclaration::e_template_none found (not sure what to do here) \n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
                break;
 
           default:
                printf ("Error: default reached \n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
         }
    }
 
@@ -12457,7 +12455,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -12629,8 +12627,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                          default:
                             {
                               printf ("Error: default reached in unparseClassDeclStmt() \n");
-                              ROSE_ASSERT(false);
-                              break;
+                              ROSE_ABORT();
                             }
                        }
 
@@ -12690,12 +12687,12 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                   {
                     if (templateVariableDeclaration != NULL) 
                        {
-                         ROSE_ASSERT(false); // TODO
+                         ROSE_ABORT(); // TODO
                        }
                       else 
                        {
                          printf("Error: unexpected node variant: %s\n", stmt->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -12973,7 +12970,7 @@ void Unparse_ExprStmt::unparseOmpForStatement (SgStatement* stmt,     SgUnparse_
   else
   {
     cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -12997,7 +12994,7 @@ void Unparse_ExprStmt::unparseOmpForSimdStatement (SgStatement* stmt,     SgUnpa
   else
   {
     cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -13052,7 +13049,7 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
 
 #if 0
       printf ("Exiting as a test! (unparseStaticAssertionDeclaration not implemented) \n");
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
 #endif
    }
 
@@ -13071,7 +13068,7 @@ Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnp
 
 #if 0
       printf ("Exiting as a test! (unparseMicrosoftAttributeDeclaration not implemented) \n");
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
 #endif
    }
 

@@ -251,7 +251,7 @@ AssemblerX86::InsnDefn::to_str() const
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
         printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #else
     ROSE_ASSERT(opcode <= 0xffffffffffLLU);
 #endif
@@ -416,8 +416,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
     SgAsmValueExpression                *ve  = isSgAsmValueExpression(expr);
     switch (od) {
         case od_none:
-            assert(false);
-            abort();
+            ROSE_ABORT();
 
         case od_0:
             return ve && SageInterface::getAsmConstant(ve)==0;

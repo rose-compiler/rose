@@ -194,7 +194,7 @@ BooleanSafeKeeper CreateSlice::evaluateSynthesizedAttribute(SgNode * node, Boole
                                                         LowLevelRewrite::remove(isSgStatement(node));
 #else
  #pragma message ("WARNING: No implementation for Windows yet.")
- ROSE_ASSERT(false);
+ ROSE_ABORT();
 
 #endif
                                 }

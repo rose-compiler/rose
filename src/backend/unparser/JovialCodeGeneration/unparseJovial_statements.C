@@ -119,7 +119,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
             {
                cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
                     <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
                break;
             }
         }
@@ -819,7 +819,7 @@ Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& inf
         {
           cerr << "Unparse_Jovial::unparseProcessControlStmt: unknown statement enum "
                <<  kind << endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 

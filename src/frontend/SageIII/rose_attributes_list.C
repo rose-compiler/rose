@@ -909,8 +909,7 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
           default:
              returnString = "ERROR DEFAULT REACHED";
              printf ("Default reached in PreprocessingInfo::directiveTypeName() exiting ... (directive = %d) \n",directive);
-             ROSE_ASSERT(false);
-             break;
+             ROSE_ABORT();
         }
 
      return returnString;
@@ -1093,7 +1092,7 @@ std::string PreprocessingInfo::get_filename_from_include_directive()
                tester=">";
 #if 0
                printf ("Exitng as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -1113,7 +1112,7 @@ std::string PreprocessingInfo::get_filename_from_include_directive()
        else
         {
           printf ("Error: In PreprocessingInfo::get_filename_from_include_directive(): getTypeOfDirective != CpreprocessorIncludeDeclaration \n"); 
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return s;
@@ -1219,7 +1218,7 @@ PreprocessingInfo::getMacroName()
         {
        // DQ (12/30/2013): I think I want this to be an error for now.
           printf ("ERROR: In PreprocessingInfo::getMacroName(): (this->getTypeOfDirective() != PreprocessingInfo::CpreprocessorDefineDeclaration): returning error -- %s \n",macroName.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return macroName;
@@ -1735,7 +1734,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
      ROSE_ASSERT (filename.empty() == false);
 
      printf ("This is an old version of the function to collect CPP directives and comments \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      ROSE_ASSERT(rawTokenStream != NULL);
 
@@ -1964,7 +1963,7 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 #error "DEAD CODE"
 
      printf ("This is an old version of the function to collect CPP directives and comments \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      ROSE_ASSERT (filename.empty() == false);
 
@@ -2017,7 +2016,7 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
        else
         {
           cerr << "Unable to open fixed format Fortran file";
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 #endif
@@ -2307,7 +2306,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             // Check the test input: tests/nonsmoke/functional/CompileTests/C_tests/test2009_01.c
 #if 0             
                printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
 #else
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -2454,7 +2453,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          default:
                             {
                               printf ("Error: default in switch over languageType = %d \n",languageType);
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 #if 0
@@ -2609,7 +2608,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 #endif
 #if 0
                          printf ("Exiting as part of debugging ... \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -2792,7 +2791,7 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -3015,7 +3014,7 @@ ROSEAttributesListContainer::dumpContents(void)
         }
 #else
      printf ("ROSEAttributesListContainer::dumpContents() not implemented for new map datastructure \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      fclose(outFile);

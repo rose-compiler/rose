@@ -91,7 +91,7 @@ print_error(Dwarf_Debug dbg, string msg, int dwarf_code, Dwarf_Error err)
    {
   // Simple error message function
      printf ("Error: %s \n",msg.c_str());
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 void
@@ -1246,7 +1246,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
      // esb_append(esbp, get_FORM_name(dbg, theform));
 
        printf ("Error: If we should never get here then make this an error! \n");
-       ROSE_ASSERT(false);
+       ROSE_ABORT();
 
      // *esbp += get_FORM_name(dbg, theform);
         break;
@@ -2243,7 +2243,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
                printf("Break at %d\n",cu_count);
 
                printf ("I think this should be an error for now! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
                break;
              }
@@ -2391,7 +2391,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
                        {
                       // I think we can make this an error.
                          printf ("Error: No source file information found: (dwarf_srcfiles() != DW_DLV_OK) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 
                          srcfiles = NULL;
                          cnt = 0;
@@ -2681,7 +2681,7 @@ test_dwarf(string file_name)
          printf ("In test_dwarf(): Test 0.5 \n");
 
         (void) fprintf(stderr, "dwarfdump: libelf.a out of date.\n");
-        assert(false);
+        ROSE_ABORT();
     }
 
      printf ("In test_dwarf(): Test 1 \n");
@@ -2689,7 +2689,7 @@ test_dwarf(string file_name)
     f = open(file_name.c_str(), O_RDONLY);
     if (f == -1) {
         fprintf(stderr, "ERROR:  can't open %s \n",file_name.c_str());
-        assert(false);
+        ROSE_ABORT();
     }
 
      printf ("In test_dwarf(): Test 2 \n");
@@ -2737,13 +2737,13 @@ test_dwarf(string file_name)
           if (dres == DW_DLV_NO_ENTRY)
              {
                printf("No DWARF information present in %s\n", file_name.c_str());
-               assert(false);
+               ROSE_ABORT();
              }
 
           if (dres != DW_DLV_OK)
              {
                printf ("Dwarf error: dwarf_elf_init \n");
-               assert(false);
+               ROSE_ABORT();
              }
 
           cmd = elf_next(elf);

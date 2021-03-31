@@ -264,7 +264,7 @@ HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
           default:
              {
                printf ("Default reached in HiddenListTraversal::associatedDeclaration() scope = %s \n",scope->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -357,7 +357,7 @@ HiddenListTraversal::associatedDeclaration(SgType* type)
           default:
              {
                printf ("Default reached in HiddenListTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -437,7 +437,7 @@ HiddenListTraversal::nameQualificationDepthOfParent(SgDeclarationStatement* decl
           printf ("parentDeclaration == NULL: parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
 #if 0
           printf ("This case is not handled yet! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -485,7 +485,7 @@ HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
           default:
              {
                printf ("Default reached in HiddenListTraversal::requiresTypeElaboration(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }           
         }
 
@@ -659,7 +659,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    printf ("Forcing an extra level of name qualification forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
 #if 0
                                    printf ("I think we have to force an extra level of name qualification (not implemented) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                               
@@ -1030,7 +1030,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                        {
                       // Handle cases are we work through specific example codes.
                          printf ("default reached symbol = %s \n",symbol->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -1212,7 +1212,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    printf ("symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #if 0
                                    printf ("I think this is associated with a template, need to stop here! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -1224,7 +1224,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (class) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -1237,7 +1237,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                               ROSE_ASSERT(namespaceSymbol != NULL);
 #if 0
                               printf ("This is the case of a namespace (sorry, not implemented) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                               SgNamespaceDeclarationStatement* associatedNamespaceDeclaration = namespaceSymbol->get_declaration();
 
@@ -1258,7 +1258,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (namespace) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -1292,13 +1292,13 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (class) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
 #if 0
                               printf ("This is the case of a variable (sorry, not implemented) \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                               break;
                             }
@@ -1365,7 +1365,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
 
 #if 0
                                    printf ("Exiting for unimplemented case (function) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #if 0
@@ -1412,7 +1412,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -1446,7 +1446,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #else
@@ -1480,7 +1480,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
 #if 0
                                    printf ("Exiting for unimplemented case (typedef) \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 
@@ -1491,7 +1491,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                             {
                            // Handle cases are we work through specific example codes.
                               printf ("default reached symbol = %s \n",symbol->class_name().c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -1599,12 +1599,12 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
 #endif
 #if 0
                          printf ("Found a SgTemplateArgument using a type that DOES have a declaration: now inspect the declaration \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
                     printf ("Found a SgTemplateArgument using a type that could have a declaration: now inspect the template arguments \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -1626,7 +1626,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
 
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -1700,12 +1700,12 @@ HiddenListTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* cu
 #endif
 #if 0
                                    printf ("Found a SgTemplateArgument using a type that DOES have a declaration: now inspect the declaration \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #if 0
                               printf ("Found a SgTemplateArgument using a type that could have a declaration: now inspect the template arguments \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -1715,7 +1715,7 @@ HiddenListTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* cu
 #endif
 #if 0
                printf ("Found a SgTemplateInstantiationDecl: need inspect the template arguments \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -1965,12 +1965,12 @@ HiddenListTraversal::addToNameMap ( SgNode* nodeReferenceToType, string typeName
 
 #if 1
                     printf ("Error: name in qualifiedNameMapForNames already exists and is different... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                  }
 #if 0
                printf ("Error: name in qualifiedNameMapForNames already exists... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -2027,7 +2027,7 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
           if (typeNameString.length() > 2000)
              {
                printf ("Error: type names should not be this long... typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 
@@ -2058,12 +2058,12 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
 
 #if 1
                          printf ("Error: name in qualifiedNameMapForNames already exists and is different... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
                     printf ("Error: name in qualifiedNameMapForNames already exists... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -2075,7 +2075,7 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
           printf ("Skipping precompuation of string for name qualified type = %p = %s \n",type,type->class_name().c_str());
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2130,7 +2130,7 @@ HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp,
           if (functionNameString.length() > 2000)
              {
                printf ("Error: function names should not be this long... functionNameString.length() = %" PRIuPTR " \n",functionNameString.length());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
 
@@ -2142,7 +2142,7 @@ HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp,
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -2247,7 +2247,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
      if (templateClassDefinition != NULL)
         {
           printf ("Name qualification of SgTemplateClassDefinition = %p not implemented \n",templateClassDefinition);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      SgClassDefinition* classDefinition = isSgClassDefinition(n);
@@ -2289,7 +2289,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
              }
 #if 0
           printf ("Exiting after evaluation of derived classes: are they visible: \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2682,7 +2682,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                  else
                   {
                     printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available through parent SgDeclarationStatement, not clear why! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 
                printf ("WARNING: SgMemberFunctionDeclaration -- currentScope is not available, not clear why! \n");
@@ -2787,7 +2787,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
 #if 0
             // We want to debug this case later!
                printf ("Exiting in unimplemented case of SgInitializedName in SgUsingDeclarationStatement \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -2843,7 +2843,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -2894,7 +2894,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                printf ("Must handle templated SgMemberFunctionRefExp! \n");
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
         }
@@ -2909,7 +2909,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
           if (templateInstantiationMemberFunctionDeclaration != NULL)
              {
                printf ("Need to process the template arguments for the SgTemplateInstantiationMemberFunctionDecl \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
           SgStatement* currentStatement = TransformationSupport::getStatement(constructorInitializer);
@@ -3005,7 +3005,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                          printf ("SgVarRefExp case (no associated variableDeclaration): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 
                          printf ("Exiting as a test! \n");
-                      // ROSE_ASSERT(false);
+                      // ROSE_ABORT();
 
 #if 0
                          int amountOfNameQualificationRequired = nameQualificationDepth(targetScope,currentScope,currentStatement);
@@ -3091,7 +3091,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                   {
                  // Anything else should not make it this far...
                     printf ("Error: default reached in switch... n = %p = %s \n",n,n->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -3359,12 +3359,12 @@ HiddenListTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDecl
 
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3418,12 +3418,12 @@ HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFu
                i->second = qualifier;
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3473,12 +3473,12 @@ HiddenListTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp
                i->second = qualifier;
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3519,7 +3519,7 @@ HiddenListTraversal::setNameQualification(SgConstructorInitializer* constructorI
        else
         {
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // DQ (6/4/2011): Added test...
@@ -3570,12 +3570,12 @@ HiddenListTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration*
 
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3614,7 +3614,7 @@ HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDecla
         {
 #if 1
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3672,12 +3672,12 @@ HiddenListTraversal::setNameQualification ( SgFunctionDeclaration* functionDecla
 
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3733,12 +3733,12 @@ HiddenListTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* fun
 
 #if 1
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3776,7 +3776,7 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
        else
         {
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -3813,7 +3813,7 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
        else
         {
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -3849,7 +3849,7 @@ HiddenListTraversal::setNameQualification ( SgUsingDirectiveStatement* usingDire
        else
         {
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -3909,7 +3909,7 @@ HiddenListTraversal::setNameQualification(SgInitializedName* initializedName,SgD
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForTypes already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3950,7 +3950,7 @@ HiddenListTraversal::setNameQualification(SgVariableDeclaration* variableDeclara
         {
 #if 1
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3988,7 +3988,7 @@ HiddenListTraversal::setNameQualification(SgTypedefDeclaration* typedefDeclarati
        else
         {
           printf ("Error: name in qualifiedNameMapForTypes already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 
@@ -4109,7 +4109,7 @@ HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatem
 
 #if 1
                printf ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
 
                SgName testNameInMap = exp->get_qualified_name_prefix();
@@ -4117,7 +4117,7 @@ HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatem
              }
 #if 0
           printf ("Error: name in qualifiedNameMapForTypes already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -4159,7 +4159,7 @@ HiddenListTraversal::setNameQualification(SgClassDeclaration* classDeclaration, 
         {
 #if 1
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }

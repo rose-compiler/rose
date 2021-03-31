@@ -510,8 +510,7 @@ NodeFact* DFStateAtReturns::copy() const{
                 newState->latsRetVal.push_back((*l)->copy());
         return newState;*/
         // We don't need a copy method
-        ROSE_ASSERT(0);
-        return NULL;
+        ROSE_ABORT();
 }
 
 // Applies the MergeAllReturnStates analysis on the given function, incorporating the results into

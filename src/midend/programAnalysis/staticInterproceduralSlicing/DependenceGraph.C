@@ -160,7 +160,7 @@ DependenceNode *DependenceGraph::getNode(DependenceNode * node)
 DependenceNode *DependenceGraph::getNode(SgNode * node)
 {
 
-        if (node==NULL) ROSE_ASSERT(false);
+        if (node==NULL) ROSE_ABORT();
         return getNode(DependenceNode::SGNODE,node);
                 DependenceNode * retVal;
 //              cout << "\tgetNode for "<<node->unparseToString()<<"\t";

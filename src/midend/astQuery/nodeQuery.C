@@ -32,7 +32,7 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
     case UnknownListElementType:
       {
         printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
     case TypedefDeclarations:
       {
@@ -113,8 +113,7 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
     default:
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-        ROSE_ASSERT (false);
-        abort();
+        ROSE_ABORT ();
       }
   } /* End switch-case */
   return std::ptr_fun(__x);
@@ -131,7 +130,7 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
     case UnknownListElementTypeTwoParameters:
       {
         printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
     case FunctionDeclarationFromDefinition:
       {
@@ -161,8 +160,7 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
     default:
       {
         printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-        ROSE_ASSERT (false);
-        abort();
+        ROSE_ABORT ();
       }
   }
   return std::ptr_fun(__x);

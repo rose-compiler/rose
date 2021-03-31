@@ -11,7 +11,7 @@
 
 // DQ (12/10/2016): Added assert.h to support fix for warning we want to make an error.
 #include <assert.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 

@@ -120,7 +120,7 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
           default:
              {
                printf ("Error: default reached in resetVariableDefinitionSupport() originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -212,8 +212,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                     default:
                        {
                          printf ("default reached in SgInitializedName::fixupCopy_scopes() parent = %p = %s \n",parent,parent->class_name().c_str());
-                         ROSE_ASSERT(false);
-                         break;
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -674,7 +673,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                          copyOfDefiningDeclarationNode->set_parent(this->get_definingDeclaration()->get_parent());
 #if 0
                          printf ("Exiting before recursive call to copy as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
 #if 1
                       // DQ (2/26/2009): This was valid code that was temporarily commented out (turning it back on).
@@ -853,7 +852,7 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                  // copyDeclarationStatement->set_definingDeclaration(NULL);
 
                     printf ("Error: source files don't match for copyDeclarationStatement = %p and copyDeclarationStatement->get_definingDeclaration() = %p \n",copyDeclarationStatement,copyDeclarationStatement->get_definingDeclaration());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -1445,7 +1444,7 @@ SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
 #if 0
      printf ("Warning: SgClassDeclaration::fixupCopy_scopes(): Need to check the types for equivalence \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1536,7 +1535,7 @@ SgBaseClass::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
        nrBaseClass->get_base_class_nonreal()->fixupCopy_scopes(nrBaseClass_copy->get_base_class_nonreal(),help);
      } else {
-       ROSE_ASSERT(false);
+       ROSE_ABORT();
      }
    }
 
@@ -1984,7 +1983,7 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
         {
        // There is a variable declaration in the conditional, it needs to be added to the symbol table.
           printf ("There is a variable declaration in the conditional, it needs to be added to the symbol table \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 

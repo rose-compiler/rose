@@ -50,7 +50,7 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
     vector<separator> tokenBraceMapForThisScope;
 
     printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 
     //std::cout << "SubSeparator AST size: " << astScopeMapForThisScope.size() << std::endl;

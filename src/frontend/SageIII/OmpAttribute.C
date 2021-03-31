@@ -275,7 +275,7 @@ namespace OmpSupport
     else
     {
       cerr<<"OmpAttribute::addClause(): Unrecognized clause type:"<<OmpSupport::toString(clause_type)<<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
   }
 
@@ -359,7 +359,7 @@ namespace OmpSupport
     if (targetConstruct == e_reduction)
     {
       cerr<<"Fatal: cannot add variables into e_reduction, You have to specify e_reduction_operatorX instead!"<<endl;
-      assert(false);
+      ROSE_ABORT();
     } 
     if (isReductionOperator(targetConstruct))
     {
@@ -389,7 +389,7 @@ namespace OmpSupport
     {
       // TODO: add other types of variable reference expressions 
       cerr<<"OmpAttribute::addVariable() : unhandled expression type:"<<varExp->class_name() <<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 
     if (symbol == NULL)          
@@ -419,7 +419,7 @@ namespace OmpSupport
     if (targetConstruct == e_reduction)
     {
       cerr<<"Fatal: cannot add variables into e_reduction, You have to specify e_reduction_operatorX instead!"<<endl;
-      assert(false);
+      ROSE_ABORT();
     } 
     if (isReductionOperator(targetConstruct))
     {
@@ -522,7 +522,7 @@ namespace OmpSupport
         break;
       default:
         cerr<<"OmpAttribute::setDefaultValue() Illegal default scoping value:"<<valuex<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
   }
 
@@ -538,7 +538,7 @@ namespace OmpSupport
         break;
       default:
         cerr<<__FUNCTION__<<" Illegal atomicity value:"<<valuex<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
   }
 
@@ -554,7 +554,7 @@ namespace OmpSupport
         break;
       default:
         cerr<<"OmpAttribute::setProcBindValue() Illegal default scoping value:"<<valuex<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
   }
 
@@ -670,8 +670,7 @@ namespace OmpSupport
         break;
       default:
         cerr<<"OmpAttribute::setScheduleKind() Illegal schedule kind:"<<kindx<<endl;
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
     }
   }
 
@@ -844,7 +843,7 @@ namespace OmpSupport
       default: 
       {
         cerr<<"OmpSupport::toString(): unrecognized enumerate value:"<<omp_type<<endl;
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
     }
     // Not true for Fortran!!
@@ -960,8 +959,7 @@ namespace OmpSupport
         break;
       default:
         {
-          ROSE_ASSERT (false);
-          break;
+          ROSE_ABORT ();
         }
     } // end switch
     return begin_enum;
@@ -1043,8 +1041,7 @@ namespace OmpSupport
       default:
         {
           cerr<<"In getEndOmpConstructEnum(): illegal begin enum is found:"<< toString(begin_enum)<<endl;
-          ROSE_ASSERT (false);
-          break;
+          ROSE_ABORT ();
         }
     } // end switch
     return rt;
@@ -1269,7 +1266,7 @@ namespace OmpSupport
     else
     {        
       cerr<<"OmpAttribute::hasClause(): Unrecognized clause type as a parameter:"<<omp_type<<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
     return result;
   }

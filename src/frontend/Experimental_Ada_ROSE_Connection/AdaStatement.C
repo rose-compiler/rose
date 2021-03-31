@@ -117,7 +117,7 @@ namespace
     {
       logError() << "Unable to find scope/declaration for " << expr.Name_Image
                  << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 
     SgScopeStatement*       res = sg::dispatch(ScopeQuery(), dcl);
@@ -390,8 +390,7 @@ namespace
 
       case Not_A_Mode: /* break; */
       default:
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
     }
 
     return res;
@@ -880,7 +879,7 @@ namespace
             }
 
           default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
       }
 
@@ -944,7 +943,7 @@ namespace
             }
 
           default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
       }
 
@@ -1104,7 +1103,7 @@ namespace
           }
 
         default:
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
     }
 
@@ -1178,7 +1177,7 @@ namespace
           break;
 
         default:
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
       return SG_DEREF( stmt );
     }
@@ -2335,53 +2334,43 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
     case A_Type_Definition:                // 3.2.1(4)    -> Type_Kinds
       // handled in getTypeFoundation
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Subtype_Indication:             // 3.2.2(3)
       // handled in getDefinitionType
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Constraint:                     // 3.2.2(5)    -> Constraint_Kinds
       // handled in getRangeConstraint
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Component_Definition:           // 3.6(7)      -> Trait_Kinds
       // handled in getDefinitionType
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Discrete_Range:                 // 3.6.1(3)    -> Discrete_Range_Kinds
       // handled in getDefinitionExpr
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Record_Definition:              // 3.8(3)
       // handled in getRecordBodyID
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Null_Record_Definition:         // 3.8(3)
       // handled in getRecordBodyID
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case An_Others_Choice:                 // 3.8.1(5): 4.3.1(5): 4.3.3(5): 11.2(5)
       // handled in case creation (and getDefinitionExpr (obsolete?))
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case An_Access_Definition:             // 3.10(6/2)   -> Access_Definition_Kinds, A2005 start
       // handled in getAccessType
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Task_Definition:                // 9.1(4)
       // handled in getTaskSpec
-      ROSE_ASSERT(false);
-      break;
+      ROSE_ABORT();
 
     case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
     case An_Unknown_Discriminant_Part:     // 3.7(3)
@@ -2843,8 +2832,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Parameter_Specification:                // 6.1(15)  -> Trait_Kinds
       {
         // handled in getParm
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
 
     case A_Task_Type_Declaration:                  // 9.1(2)
@@ -3147,15 +3135,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
         // handled in handleExceptionHandler
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
 
     case An_Enumeration_Literal_Specification:     // 3.5.1(3)
       {
         // handled in EnumElementCreator
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
 
     case Not_A_Declaration: /* break; */           // An unexpected element

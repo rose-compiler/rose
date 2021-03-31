@@ -9,6 +9,7 @@
 #include <map>
 #include <sstream>
 #include "rosedll.h"
+#include <ROSE_ABORT.h>
 
 class BitVectorReprImpl {
   unsigned* impl;
@@ -246,12 +247,12 @@ class BitVectorReprGenerator
       typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
       if (p == base.end()) {
            std::cerr << "Error: cannot find variable " << name << "\n";
-           assert(false);
+           ROSE_ABORT();
       }
       for ( ;  p != base.end() && base.get_data(p) != d; ++p); 
       if (p == base.end()) {
            std::cerr << "Error: cannot find data " << " for variable " << name << "\n";
-           assert(false);
+           ROSE_ABORT();
       }
       repr.add_member( base.get_index(p));
     }

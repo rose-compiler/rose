@@ -351,7 +351,7 @@ class CopyArraySpec : public OptSpec
     switch (optLevel) {
     case OPT_CACHE_LEVEL: return false;
     case OPT_REG_LEVEL: return true;
-    default: assert(0); abort();
+    default: ROSE_ABORT();
     }
   }
   std::string get_opt_prefix(OptLevel optLevel)
@@ -359,7 +359,7 @@ class CopyArraySpec : public OptSpec
     switch (optLevel) {
     case OPT_CACHE_LEVEL: return "copy"+cur_id;
     case OPT_REG_LEVEL: return "scalar"+cur_id;
-    default: assert(0); abort();
+    default: ROSE_ABORT();
     }
   }
   virtual std::string to_string(OptLevel level);

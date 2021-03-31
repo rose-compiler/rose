@@ -413,7 +413,7 @@ class FindCopiesVisitor: public AstSimpleProcessing {
               else
                {
                  printf ("Error: what is this copy_vr->get_parent() = %s \n",copy_vr->get_parent()->class_name().c_str());
-                 ROSE_ASSERT(false);
+                 ROSE_ABORT();
                }
           }
 

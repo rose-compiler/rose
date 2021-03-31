@@ -117,7 +117,7 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
 #if 0
   // DQ (8/17/2018): Need to stop here and debug this function tomorrow.
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0

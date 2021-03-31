@@ -254,30 +254,26 @@ namespace
       case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
 
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Expression:             // Asis.Expressions
         {
           // handled by getExpr
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Exception_Handler:      // Asis.Statements
         {
           // handled by handleExceptionHandler
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Definition:              // Asis.Definitions
@@ -762,39 +758,6 @@ namespace
     InheritFileInfo fixer;
 
     fixer.traverse(file, preorder);
-  }
-
-  template <class TypedSageNode>
-  void checkType(TypedSageNode* n)
-  {
-    if (!n) return;
-
-    si::ada::FlatArrayType res = si::ada::flattenArrayType(n->get_type());
-
-    if (!res.first) return;
-
-    logInfo() << "Found ArrayType: " << n->unparseToString() << std::flush;
-
-    for (SgExpression* exp : res.second)
-      logInfo() << ", " << SG_DEREF(exp).unparseToString();
-
-    logInfo() << std::endl;
-  }
-
-  void checkExpr(SgAdaAttributeExp* n)
-  {
-    if (!n) return;
-
-    SgRangeExp* rangeExpr = si::ada::range(n);
-    const bool  rangeAttr = boost::to_upper_copy(n->get_attribute().getString()) == "RANGE";
-
-    std::string out = "<null>";
-
-    if (rangeExpr) out = rangeExpr->unparseToString();
-
-    logInfo() << "Found Attribute: " << n->unparseToString() << " " << rangeAttr
-              << " = " << out
-              << std::endl;
   }
 
 

@@ -1,6 +1,6 @@
 #include "SymbolicVal.h"
 #include "SymbolicExpr.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class ValFindBase : public SymbolicVisitor
 {
