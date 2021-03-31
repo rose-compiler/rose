@@ -667,10 +667,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
       }
     }
     
-    VariableId newVarId;
-    newVarId.setIdCode(newIdCode);
-    //VariableId newVarId=variableId(sym);
-
+    VariableId newVarId=variableId(sym);
     // set size to 1 (to compute bytes, multiply by size of type)
     setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
