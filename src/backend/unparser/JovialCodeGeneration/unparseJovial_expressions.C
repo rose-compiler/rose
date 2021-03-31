@@ -4,9 +4,6 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
-
 #ifdef _MSC_VER
 #include "Cxx_Grammar.h"
 #endif
@@ -374,13 +371,13 @@ Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
      SgExprListExp* overlay_expr;
 
      int n = overlay->get_expressions().size();
-     foreach(SgExpression* expr, overlay->get_expressions())
+     for (SgExpression* expr : overlay->get_expressions())
        {
           SgExprListExp* overlay_string_list = isSgExprListExp(expr);
           ASSERT_not_null(overlay_string_list);
 
           int ns = overlay_string_list->get_expressions().size();
-          foreach(SgExpression* overlay_string, overlay_string_list->get_expressions())
+          for (SgExpression* overlay_string : overlay_string_list->get_expressions())
              {
                if ( (overlay_expr = isSgExprListExp(overlay_string)) != NULL)
                   {
@@ -583,7 +580,7 @@ Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
       bool first = true;
       curprint("(");
 
-      BOOST_FOREACH(SgExpression* expr, dim_info->get_expressions())
+      for (SgExpression* expr : dim_info->get_expressions())
          {
             if (first) first = false;
             else       curprint(",");
