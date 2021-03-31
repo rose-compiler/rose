@@ -17331,6 +17331,24 @@ PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::s
      return SageInterface::attachComment(target,content, position, dtype);
    }
 
+//! Build a dangling #include "x.h" header,  insertHeader() is needed to actually insert it
+PreprocessingInfo* SageBuilder::buildHeader(const std::string& header_filename,
+               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,
+                              bool isSystemHeader/* =false*/)
+{
+  std::string content;
+  if (isSystemHeader)
+    content = "#include <" + header_filename + "> \n";
+  else
+    content = "#include \"" + header_filename + "\" \n";
+  PreprocessingInfo* result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+      content, "Transformation generated",0, 0, 0, position);
+  ROSE_ASSERT(result);
+
+  result->get_file_info()->setTransformation();
+  return result; 
+}
+
 //! #define xxx yyy
 PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target,const std::string & content,PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
   {
