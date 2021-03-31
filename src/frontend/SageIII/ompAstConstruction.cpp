@@ -2219,6 +2219,10 @@ This is no perfect solution until we handle preprocessing information as structu
     ROSE_ASSERT (sageFilePtr != NULL);
     // step 1: Each OmpAttribute will have a dedicated SgPragmaDeclaration for it
     list <OmpAttribute *>::iterator iter; 
+
+    // we record the last pragma inserted after a statement, if any
+    std::map<SgStatement*, SgPragmaDeclaration*> stmt_last_pragma_dict; 
+
     for (iter = omp_comment_list.begin(); iter != omp_comment_list.end(); iter ++)
     {
       OmpAttribute * att = *iter;
@@ -2300,7 +2304,19 @@ This is no perfect solution until we handle preprocessing information as structu
       }
       else if (position == PreprocessingInfo::after)
       {
-        insertStatementAfter(stmt, p_decl, false);
+        SgStatement* last= stmt; 
+        if (stmt_last_pragma_dict.count(stmt))
+          last = stmt_last_pragma_dict[stmt];
+        // Liao, 3/31/2021
+        // It is possible there are several comments attached after a statement.
+        // In this case, we should not just insert each generated pragma right after the statement.
+        // We should insert a pragma after the previously inserted pragma.
+        // Otherwise , we will end up with reserved order of pragmas, causing later pragma pair matching problem.
+        
+         // insertStatementAfter(stmt, p_decl, false);
+         insertStatementAfter(last, p_decl, false);
+         
+        stmt_last_pragma_dict[stmt] = p_decl;
       }
       else
       {
