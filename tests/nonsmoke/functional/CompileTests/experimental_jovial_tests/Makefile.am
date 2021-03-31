@@ -212,6 +212,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-821.jov                  \
  rose-issue-rc-822.jov                  \
  rose-issue-rc-823.jov                  \
+ rose-issue-rc-824.jov                  \
  rose-issue-rc-825.jov                  \
  rose-issue-rc-826.jov                  \
  charlie.jov
