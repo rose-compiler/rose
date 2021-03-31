@@ -49,7 +49,7 @@ namespace CodeThorn {
     CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
 
     // returns the element type size of an array
-    CodeThorn::TypeSize determineNumberOfElements(SgArrayType* sgType);
+    static CodeThorn::TypeSize determineNumberOfElements(SgArrayType* sgType);
 
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);

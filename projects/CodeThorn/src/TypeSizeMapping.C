@@ -196,6 +196,9 @@ namespace CodeThorn {
       result = unknownSizeValue();
     } else { 
       if(AbstractValue::getVariableIdMapping()==nullptr) {
+	while(SgCastExp* castExp=isSgCastExp(indexExp)) {
+	  indexExp=castExp->get_operand_i();
+	}
         //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
         SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
         SgIntVal * valExpInt = isSgIntVal(indexExp);

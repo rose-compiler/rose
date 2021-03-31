@@ -42,6 +42,10 @@ namespace CodeThorn {
     void typeSizeOverviewtoStream(std::ostream& os);
     CodeThorn::TypeSize numClassMembers(SgType*); // from classMembers map
 
+    CodeThorn::TypeSize determineTypeSize(SgType*);
+    CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
+    CodeThorn::TypeSize determineNumberOfArrayElements(SgArrayType* sgType);
+    
   private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
