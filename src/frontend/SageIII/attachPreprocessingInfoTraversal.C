@@ -233,7 +233,7 @@ AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocat
 
 #if 0
      printf ("In handleBracedScopes: previousLocatedNode = %p = %s \n",previousLocatedNode,previousLocatedNode->class_name().c_str());
-     printf (" ------------------------------bracedScope = %p = %s \n",bracedScope,bracedScope->class_name().c_str());
+     printf (" ----------------------------- bracedScope = %p = %s \n",bracedScope,bracedScope->class_name().c_str());
 #endif
 
      SgStatement* previousStatement = isSgStatement(previousLocatedNode);
@@ -324,9 +324,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
 #define DEBUG_IterateOverList 0
 
-#if DEBUG_IterateOverList
+#if DEBUG_IterateOverList || 0
   // DQ (8/22/2018): Added debugging information.
      printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
+     printf (" --- locatedNode = %p = %s lineNumber = %d location = %s \n",
+          locatedNode,locatedNode->class_name().c_str(),lineNumber,PreprocessingInfo::relativePositionName(location).c_str());
 #endif
 #if DEBUG_IterateOverList
      currentListOfAttributes->display("Top of iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()");
@@ -398,6 +400,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
        // DQ (8/6/2012): Added support for endOfConstruct().
+          printf ("locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
           cout << "Visiting SgStatement node (starting: " << line << ":" << col << ") (ending " << ending_line << ":" << ending_col << ") -> ";
           cout << getVariantName(locatedNode->variantT()) << endl;
           cout << "-----> Filename: " << locatedNode->get_file_info()->get_filename() << endl;
@@ -471,13 +474,17 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
    //  end do
    //
      bool isFortranBlockAndBeforePoisition = false; // should we skip a Fortran basic block when the position is before?
-     if (SageInterface::is_Fortran_language() )
+     if (SageInterface::is_Fortran_language() == true)
         {
           if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
              {
                isFortranBlockAndBeforePoisition = true; 
              }
         }
+
+#if DEBUG_IterateOverList
+     printf ("isFortranBlockAndBeforePoisition = %s \n",isFortranBlockAndBeforePoisition ? "true" : "false");
+#endif
 
   // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index,
   // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
@@ -1016,7 +1023,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
 
 #if 1
-            // DQ (1/18/2021): This is useless code, except that it conversts the list<stream_element*> type to 
+            // DQ (1/18/2021): This is useless code, except that it converts the list<stream_element*> type to 
             // a vector<stream_element*> type.  Obviously we should change the handling in the lexing step to 
             // generate a vector<stream_element*> type directly so that we can avoid this silly translations.
             // The reason we need it is because the processing of the mapping of the toke stream to the AST 
@@ -1149,14 +1156,14 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                   {
                  // DQ (02/20/2021): Using the performance tracking within ROSE.
                     TimingPerformance timer ("AST calling buildTokenStreamMapping():");
-#if 0
+#if 1
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
                     printf ("In buildCommentAndCppDirectiveList(): Calling buildTokenStreamMapping() \n");
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
 #endif
                  // DQ (2/20/2021): This is a pretty expensive operation, about the same cost of the frontend (without the call to this function).
                     buildTokenStreamMapping(sourceFile,tokenVector);
-#if 0
+#if 1
                     printf ("DONE: Calling buildTokenStreamMapping() \n");
 #endif
                   }
@@ -1248,9 +1255,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
         }
        else
         {
+#if 0
        // DQ (1/16/2021): Added debugging code.
           printf ("sourceFile->get_Fortran_only() = %s \n",sourceFile->get_Fortran_only() ? "true" : "false");
           printf ("filePreprocInfo = %p \n",filePreprocInfo);
+#endif
         }
      // }
 
@@ -2752,12 +2761,26 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     tmp_locatedNode->get_file_info()->display("tmp_locatedNode before switch");
                     printf ("target_source_file_id = %d \n",target_source_file_id);
                     printf ("currentFileNameId = %d \n",currentFileNameId);
+
+                 // Debugging information...
+                       {
+                      // int line        = locatedNode->get_startOfConstruct()->get_line();
+                         int line        = locatedNode->get_startOfConstruct()->get_physical_line(source_file_id);
+                         int col         = locatedNode->get_startOfConstruct()->get_col();
+                      // int ending_line = locatedNode->get_endOfConstruct()->get_line();
+                         int ending_line = locatedNode->get_endOfConstruct()->get_physical_line(source_file_id);
+                         int ending_col  = locatedNode->get_endOfConstruct()->get_col();
+
+                      // DQ (8/6/2012): Added support for endOfConstruct().
+                         printf ("locatedNode = %p = %s (starting: (%d,%d) ending: (%d,%d) \n",locatedNode,locatedNode->class_name().c_str(),line,col,ending_line,ending_col);
+                       }
                   }
                  else
                   {
                     printf (" --- tmp_locatedNode == NULL \n");
                   }
-               printf ("Processing switch \n");
+
+               printf ("AAAAAAAAAAAAAAA Processing switch AAAAAAAAAAAAAAAAAA \n");
 #endif
                switch (n->variantT())
                   {
@@ -3195,7 +3218,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                               if (previousStatement != NULL)
                                  {
 #if 0
-                                   printf ("case SgBasicBlock: Found a case where the previousStatement was not a SgStatement: previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+                                   printf ("case SgBasicBlock: Found a case where the previousStatement was not a SgStatement: previousStatement = %p = %s \n",
+                                        previousStatement,previousStatement->class_name().c_str());
                                    printf ("case SgBasicBlock:  --------------------------------------------------------------------- basicBlock = %p \n",basicBlock);
 #endif
                                 // If the previous statement was the current basicBlock, then there were no statements 
@@ -3210,7 +3234,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                       {
                                      // Use the basicBlock and mark the comments to be inside.
 #if 0
-                                        printf ("case SgBasicBlock: Use the previousStatement and mark the comments to be after: previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+                                        printf ("case SgBasicBlock: Use the previousStatement and mark the comments to be after: previousStatement = %p = %s \n",
+                                             previousStatement,previousStatement->class_name().c_str());
 #endif
                                         bool reset_start_index = false;
                                         iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
@@ -3799,6 +3824,45 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          break;
                        }
 
+                 // The following cases are required because the fortran blocks can be nest in syntax, so a comment 
+                 // after the block should be after the closing syntax for the consruct containing the block.
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgIfStmt:
+                       {
+                      // I might need an example of this.
+                         if (SageInterface::is_Fortran_language() == true)
+                            {
+#if 0
+                              printf ("Handle the case of fortran specific SgIfStmt (which contains a SgBasicBlock) \n");
+#endif
+                              previousLocatedNode = locatedNode;
+                            }
+                       }
+
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgDoWhileStmt:
+                       {
+                      // I might need an example of this.
+                         if (SageInterface::is_Fortran_language() == true)
+                            {
+#if 0
+                              printf ("Handle the case of fortran specific SgDoWhileStmt (which contains a SgBasicBlock) \n");
+#endif
+                              previousLocatedNode = locatedNode;
+                            }
+                       }
+
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgFortranDo:
+                       {
+                      // test2021_01.f90 through test2021_04.f90 are examples of this issue, but it fails in the OpenMP tests for Fortran.
+                      // Note: Craign things that the case of a loop ending on a label might be an issue.
+#if 0
+                         printf ("Handle the case of SgFortranDo (which contains a SgBasicBlock) \n");
+#endif
+                         previousLocatedNode = locatedNode;
+                       }
+
                     default:
                        {
                       // DQ (11/11/2012): Added assertion.
@@ -3813,7 +3877,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          n->get_file_info()->display("Skipping any possability of attaching a comment/directive: debug");
 #endif
 #if 0
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+                      // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
                       // DQ (6/17/2020): Set the previousLocatedNode
                          if (locatedNode != NULL)
                             {

@@ -10138,7 +10138,7 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
      SgStatement* surroundingStatement = targetStmt;
      int surroundingStatement_fileId   = Sg_File_Info::BAD_FILE_ID; // No file id can have this value.
 
-#if REMOVE_STATEMENT_DEBUG || 1
+#if REMOVE_STATEMENT_DEBUG || 0
      printf ("TOP of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
 #endif
 
@@ -13562,7 +13562,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In SageInterface::appendStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
 #endif
 
   // DQ (6/19/2012): Exit as a test...
@@ -13695,7 +13695,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      bool statementAlreadyExistsInScope = scope->statementExistsInScope(stmt);
      if (skipAddingStatement == false && statementAlreadyExistsInScope == true)
         {
-#if 1
+#if 0
           printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
                stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif

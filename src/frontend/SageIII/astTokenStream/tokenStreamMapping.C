@@ -7152,11 +7152,12 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 
 #define DEBUG_TOKEN_STREAM_MAPPING 0
 
-#if DEBUG_TOKEN_STREAM_MAPPING
+#if DEBUG_TOKEN_STREAM_MAPPING || 1
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("In buildTokenStreamMapping() \n");
-     printf (" --- sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+     printf (" --- sourceFile->getFileName()     = %s \n",sourceFile->getFileName().c_str());
+     printf (" --- sourceFile->get_globalScope() = %p (size = %zu) \n",sourceFile->get_globalScope(),sourceFile->get_globalScope()->get_declarations().size());
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif

@@ -657,7 +657,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
        // and attaches the toke stream to the SgSourceFile IR node.
        // *** Next we have to attached the data base ***
-          buildTokenStreamMapping(file);
+
+       // DQ (3/28/2021): Since this is dead code, comment this out so that grep over all files will show it is not called.
+       // buildTokenStreamMapping(file);
 
 #error "DEAD CODE!"
 
@@ -4082,7 +4084,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      ASSERT_not_null(project);
 
-#if 0
+#if 1
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("TOP of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
@@ -4298,7 +4300,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 #endif
         }
 
-#if 0
+#if 1
      printf ("include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
 #endif
 #if 1
@@ -4423,9 +4425,12 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Leaving buildSourceFileForHeaderFile(): return include_sourceFile = %p \n",include_sourceFile);
 #endif
 
-#if 0
+#if 1
      printf ("BOTTOM of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
      printf (" --- include_sourceFile = %p = %s \n",include_sourceFile,include_sourceFile->getFileName().c_str());
+     printf (" --- include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
+     ROSE_ASSERT(include_sourceFile->get_globalScope() != NULL);
+     printf (" --- include_sourceFile->get_globalScope()->get_declarations().size() = %zu \n",include_sourceFile->get_globalScope()->get_declarations().size());
 #endif
 
      return include_sourceFile;
