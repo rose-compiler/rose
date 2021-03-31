@@ -326,6 +326,23 @@ else()
   set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()
 
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4.8)
+       set(ROSE_USING_GCC_VERSION_LATER_4_8 1 CACHE INTERNAL "")
+    endif()
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0)
+       set(ROSE_USING_GCC_VERSION_LATER_6_0 1 CACHE INTERNAL "")
+    endif()
+endif()
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.1)
+       set(ROSE_USING_GCC_VERSION_LATER_6_1 1 CACHE INTERNAL "")
+    endif()
+endif()
+# message("GNU 6.1 CHECK:" ${ROSE_USING_GCC_VERSION_LATER_6_1})
 
 ########################################################################################################################
 # Analyzable languages supported by ROSE
@@ -1208,6 +1225,7 @@ if(enable-c)
       OUTPUT_VARIABLE CXX_includeString)
     string(STRIP "${CXX_includeString}" CXX_includeString)
 
+    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}")
     execute_process(
       COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc c gnu
       OUTPUT_VARIABLE C_backend_includes)
@@ -1228,7 +1246,7 @@ if(enable-c)
       string(STRIP "${CXX_include_dir}" CXX_include_dir)
       set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
     endforeach()
-    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}, \"/usr/include\"")
+    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"/usr/include\"")
 
     # In the Autools build system, ROSE stores compiler specific headers in two distinct locations:
     #    In the build tree, the directory is named $ROSE_BUILD/include-staging
