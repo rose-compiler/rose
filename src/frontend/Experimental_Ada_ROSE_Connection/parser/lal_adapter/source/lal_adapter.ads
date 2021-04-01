@@ -19,8 +19,7 @@ package Lal_Adapter is
    -- with fewer packages:
    Trace_On : Boolean renames Indented_Text.Trace_On;
 
-   type Outputs_Record is record -- Initialized
-      Output_Dir : Ada.Strings.Unbounded.Unbounded_String; -- Initialized
+   type Output_Accesses_Record is record -- Initialized
       A_Nodes    : Standard.A_Nodes.Access_Class; -- Initialized
       Graph      : Dot.Graphs.Access_Class; -- Initialized
       Text       : Indented_Text.Access_Class; -- Initialized
@@ -90,7 +89,7 @@ private
    -- Add <Name> => <Value> to the label, and print it if trace is on:
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     String);
 
@@ -99,7 +98,7 @@ private
    -- ONLY acts if Value = True:
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     Boolean);
 
@@ -107,14 +106,14 @@ private
    -- Add <Value> to the label, and print it if trace is on:
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Value     : in     String);
 
    -- Unit_ID or Element_ID:
    -- Add an edge node to the the dot graph:
    -- Use for both Unit_ID and Element_ID:
    procedure Add_Dot_Edge
-     (Outputs   : in out Outputs_Record;
+     (Outputs   : in     Output_Accesses_Record;
       From      : in     IC.int;
       From_Kind : in     ID_Kind;
       To        : in     IC.int;

@@ -20,6 +20,7 @@ package body Lal_Adapter.Tool is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
       package Logging is new Generic_Logging (Module_Name); use Logging;
+      Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
       package AD renames Ada.Directories;
 
@@ -36,7 +37,6 @@ package body Lal_Adapter.Tool is
 
    begin -- Process
       Lal_Adapter.Trace_On := Debug;
-      Log ("BEGIN");
       Log ("Project_File_Name    => """ & Project_File_Name & """");
       Log ("Input_File_Name      => """ & Input_File_Name & """");
       Log ("Output_Dir_Name      => """ & Output_Dir_Name & """");
@@ -52,7 +52,6 @@ package body Lal_Adapter.Tool is
       --    Process_Predefined_Units;
       --  Unit_Options.Process_If_Origin_Is (Lal.An_Implementation_Unit) :=
       --    Process_Implementation_Units;
-      This.Outputs.Output_Dir := ASU.To_Unbounded_String (Full_Output_Dir_Name);
       This.Outputs.Text := new Indented_Text.Class;
       This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
                                                Is_Strict  => False);
@@ -63,10 +62,8 @@ package body Lal_Adapter.Tool is
                                Project_File_Name => Project_File_Name,
                                Outputs           => This.Outputs);
       This.Outputs.Graph.Write_File
-        (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
+        (Full_Output_Dir_Name & '/' & Simple_File_Name);
       This.Outputs.A_Nodes.Print_Stats;
-      
-      Log ("END");
    exception
       when X : External_Error | Internal_Error | Usage_Error =>
          raise;
@@ -89,11 +86,11 @@ package body Lal_Adapter.Tool is
    begin
       return This.Outputs.A_Nodes.Get_Nodes;
    exception
-      when X : External_Error | Internal_Error =>
+      when X : External_Error | Internal_Error | Usage_Error =>
          raise;
       when X: others =>
          Logging.Log_Exception (X);
-         Logging.Log ("Raising Internal_Error");
+         Logging.Log ("No handler for this exception.  Raising Internal_Error");
          raise Internal_Error;
    end Get_Nodes;
 

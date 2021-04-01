@@ -6,7 +6,7 @@ with Libadalang.Common;
 --  with Ada.Directories;
 --  with Ada.Characters.Handling;
 --
---  with Lal_Adapter.Element;
+with Lal_Adapter.Node;
 --  with Dot;
 --
 package body Lal_Adapter.Unit is
@@ -633,62 +633,52 @@ package body Lal_Adapter.Unit is
 --     end Process_Unit;
 --
 
-   function Process_Node
-     (Node : in LAL.Ada_Node'Class)
-            return LALCO.Visit_Status
-   is
-      Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Node";
-      package Logging is new Generic_Logging (Module_Name); use Logging;
-      Auto : Logging.Auto_Logger; -- Logs BEGIN and END
-
-      Start_Line_Image : constant string :=
-        Slocs.Line_Number'Image (Node.Sloc_Range.Start_Line);
-      Kind_Image : constant String := LALCO.Ada_Node_Kind_Type'Image (Node.Kind);
-      Debug_Text : constant String := Node.Debug_Text;
-      use type LALCO.Ada_Node_Kind_Type; -- For "="
-   begin -- Process_Node
-      Log ("Line" & Start_Line_Image & ": " & Kind_Image  & ": " & Debug_Text);
-      if Node.Kind = LALCO.Ada_Compilation_Unit then
-         declare
-            The_Compilation_Unit : constant LAL.Compilation_Unit :=
-              LAL.As_Compilation_Unit(Node);
-            Dependencies : constant LAL.Compilation_Unit_Array :=
-              LAL.P_Unit_Dependencies (The_Compilation_Unit);
-         begin
-            Log ("Compilation Unit: " & Text.Image (The_Compilation_Unit.Full_Sloc_Image));
-            Log ("Compilation Unit Dependencies:");
-            for Dependency of Dependencies Loop
-               Log (Text.Image (Dependency.Full_Sloc_Image));
-            end loop;
-            end;
-      end if;
-      -- Continue traversal:
-      return LALCO.Into;
-   end Process_Node;
-
-
    procedure Process_Wanted_Compilation_Unit
-     (This : in out Class;
-      Unit : in LAL.Compilation_Unit)
+     (This             : in out Class;
+      The_Compilation_Unit : in LAL.Compilation_Unit)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Wanted_Compilation_Unit";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+      function Process_Node
+        (Node : in LAL.Ada_Node'Class)
+      return LALCO.Visit_Status
+      is
+         Node_Processor : Lal_Adapter.Node.Class; -- Initialized
+      begin -- Process_Node
+         Node_Processor.Process
+           (Node    => Node,
+            Outputs => This.Outputs);
+         -- Continue traversal:
+         return LALCO.Into;
+      end Process_Node;
+
       Traverse_Visit_Status : LALCO.Visit_Status := LALCO.Stop;
-   begin
-      Log (Text.Image (Unit.Full_Sloc_Image));
+      Dependencies : constant LAL.Compilation_Unit_Array :=
+        LAL.P_Unit_Dependencies (The_Compilation_Unit);
+      File_Name_First_Line_Col : constant String :=
+        Text.Image (The_Compilation_Unit.Full_Sloc_Image);
+      Kind_File_Name_Line_Col_Range : constant String :=
+        The_Compilation_Unit.Image;
+
+   begin -- Process_Wanted_Compilation_Unit
+      Log (File_Name_First_Line_Col);
+      Log ("Dependencies:");
+      for Dependency of Dependencies Loop
+         Log (Text.Image (Dependency.Full_Sloc_Image));
+      end loop;
       -- Calls Process_Node, which may raise one of our exceptions:
-      Traverse_Visit_Status := Unit.Traverse (Process_Node'Access);
+      Traverse_Visit_Status := The_Compilation_Unit.Traverse (Process_Node'Access);
       Log ("Traverse_Visit_Status => " & Traverse_Visit_Status'Img);
    exception
-      when X : External_Error | Internal_Error | Usage_Error =>
+      when X : others =>
+         -- Just log the unit name and reraise for more logging higher up:
+         Log ("EXCEPTION " & Aex.Exception_Name (X) & " when processing " &
+                Kind_File_Name_Line_Col_Range);
+         Log ("Reraising.");
          raise;
-      when X: others =>
-         Log_Exception (X);
-         Log ("No handler for this exception.  Raising Internal_Error");
-         raise Internal_Error;
    end Process_Wanted_Compilation_Unit;
 
    ------------
@@ -698,57 +688,38 @@ package body Lal_Adapter.Unit is
      (This    : in out Class;
       Unit    : in     Lal.Compilation_Unit;
       --  Options : in     Options_Record;
-      Outputs : in     Outputs_Record)
+      Outputs : in     Output_Accesses_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
-      --  function To_Description (This : in Lal.Unit_Origins)
-      --                           return Wide_String is
-      --  begin
-      --     case This is
-      --        when Lal.Not_An_Origin =>
-      --           return "(unit origin is nil or nonexistent)";
-      --        when Lal.A_Predefined_Unit =>
-      --           return "(Ada predefined language environment unit)";
-      --        when Lal.An_Implementation_Unit =>
-      --           return "(Implementation specific library unit)";
-      --        when Lal.An_Application_Unit =>
-      --           return "(Application unit)";
-      --     end case;
-      --  end To_Description;
-      --
-      --  Unit_Full_Name : constant String            :=
-      --    To_String (Acu.Unit_Full_Name (Unit));
-      --  Unit_Origin    : constant Lal.Unit_Origins := Acu.Unit_Origin (Unit);
-      --
-   begin
+      function Is_Standard (Unit : in Lal.Compilation_Unit) return boolean
+      is
+         Full_Sloc_Image : constant string := Text.Image (Unit.Full_Sloc_Image);
+      begin
+         -- This is how I found out there is a space on the end:
+         --  Log ("Full_Sloc_Image => """ & Full_Sloc_Image & """");
+         return Full_Sloc_Image = "__standard:1:1: ";
+      end Is_Standard;
+
+   begin -- Process
       -- Save Outputs for use by Add_To_Dot_Label:
       This.Outputs := Outputs;
 
-      --  if Options.Process_If_Origin_Is (Unit_Origin) and then
-      --     -- Processing package Standard causes a constraint error:
-      --     -- +===========================ASIS BUG DETECTED==============================+
-      --     -- | ASIS 2.0.R for GNAT Community 2019 (20190517) CONSTRAINT_ERROR a4g-a_sinput.adb:210 index check failed|
-      --     -- | when processing Asis.Declarations.Is_Name_Repeated                       |
-      --     -- ...
-      --     -- So skip it for now:
-      --     Unit_Full_Name /= "Standard" then
-            --  Process_Unit (This, Unit);
-            This.Process_Wanted_Compilation_Unit (Unit);
-   --     else
-   --        Log ("Skipped " & Unit_Full_Name &
-   --               " (" & To_String (To_Description(Unit_Origin) & ")"));
-   --     end if;
-   --  exception
-   --     when X : others =>
-   --        -- Just log the unit name and reraise for more logging higher up:
-   --        Log ("EXCEPTION " & Aex.Exception_Name (X) & " when processing " &
-   --               Unit_Full_Name);
-   --        Log ("Reraising.");
-   --        raise;
+      if not Is_Standard (Unit) then
+         This.Process_Wanted_Compilation_Unit (Unit);
+      else
+         Log ("Skipped package Standard");
+      end if;
+   exception
+      when X : External_Error | Internal_Error | Usage_Error =>
+         raise;
+      when X: others =>
+         Log_Exception (X);
+         Log ("No handler for this exception.  Raising Internal_Error");
+         raise Internal_Error;
    end Process;
 
 end Lal_Adapter.Unit;

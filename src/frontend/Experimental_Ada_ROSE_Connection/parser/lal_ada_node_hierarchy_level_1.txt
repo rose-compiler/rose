@@ -1,0 +1,86 @@
+From:
+/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2020/include/libadalang/libadalang-analysis.ads
+
+"*" below means the node only has absent/present at level 2.
+"0" below means no level 2.
+"1." below means no level 2.
+"2." below means level 2 and no level 3.
+"2:1." below means 1 level 2 and no level 3.
+"2:2." below means 2 level 2 and no level 3.
+"+++" below means it is big
+
+
+Ada_Node
+	Abort_Node 2:2.
+	Abstract_Node 2:2.
+	Ada_List +++29
+	Aliased_Node 2:2.
+	All_Node 2:2.
+	Array_Indices 2:2.
+	Aspect_Assoc 1.
+	Aspect_Clause 2:4.
+	Aspect_Spec 1.
+	Base_Assoc 2:1.
+	Base_Formal_Param_Holder +++10
+	Base_Record_Def 2:2.
+	Basic_Assoc +++5
+	Basic_Decl +++74
+	Case_Stmt_Alternative 1.
+	Compilation_Unit 1.
+	Component_Clause 1.
+	Component_Def 1.
+	Constraint 2:5.
+	Constant_Node 2:2.
+	Contract_Cases 1.
+	Declarative_Part 2:2.
+	Elsif_Expr_Part 1.
+	Elsif_Stmt_Part 1.
+	Expr +++60
+	Handled_Stmts 1.
+	Interface_Kind 2:4.
+	Iter_Type 2:2.
+	Library_Item 1.
+	Limited_Node 2:2.
+	Loop_Spec 2:2.
+	Mode 24.
+	Not_Null 2:2.
+	Null_Component_Decl 1.
+	Others_Designator 1.
+	Overriding_Node 2:3.
+	Params 1.
+	Pragma_Node 1.
+	Prim_Type_Accessor 1.
+	Private_Node 2:2.
+	Protected_Node 2:2.
+	Protected_Def 1.
+	Quantifier 2:2.
+	Range_Spec 1.
+	Renaming_Clause 2:1.
+	Reverse_Node 2:1.
+	Select_When_Part 1.
+	Stmt +++31
+	Subp_Kind 2:2.
+	Subunit 1.
+	Synchronized_Node 2:2.
+	Tagged_Node 2:2.
+	Task_Def 1.
+	Type_Def +++17
+	Type_Expr +++4
+	Unconstrained_Array_Index 1.
+	Until_Node 2:2.
+	Use_Clause 2:2.
+	Variant 1.
+	Variant_Part 1.
+	With_Clause 1.
+	With_Private 2:2.
+
+Node types with "+++":
+	Ada_List +++29
+	Base_Formal_Param_Holder +++10
+	Basic_Assoc +++5
+	Basic_Decl +++74
+	Expr +++60
+	Stmt +++31
+	Type_Def +++17
+	Type_Expr +++4
+

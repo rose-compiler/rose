@@ -5,13 +5,13 @@ with a_nodes_h;
 
 package Lal_Adapter.Tool is
 
-   type Class is tagged limited private;
+   type Class is tagged limited private; -- Initialized
 
    Use_Current_Dir : constant String := "";
 
    -- Runs in the current directory.
-   -- Uses project file "default.gpr" in containing directory of File_Name.
-   -- Creates .dot file in Output_Dir.  If Output_Dir = "", uses current directory.
+   -- Creates .dot file in Output_Dir_Name.  If Output_Dir_Name = "", uses
+   -- current directory.
    --
    -- LEAKS. Only intended to be called once per program execution:
    procedure Process
@@ -37,7 +37,7 @@ private
    type Class is tagged limited -- Initialized
       record
          My_Context : Lal_Adapter.Context.Class; -- Initialized
-         Outputs    : Outputs_Record; -- Initializeditialized
+         Outputs    : Output_Accesses_Record; -- Initialized
       end record;
 
 end Lal_Adapter.Tool;
