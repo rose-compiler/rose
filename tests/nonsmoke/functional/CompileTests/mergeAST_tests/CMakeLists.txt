@@ -21,7 +21,7 @@ set(TESTCODES
   mergeTest_86.C mergeTest_87.C mergeTest_88.C mergeTest_91.C mergeTest_92.C
   mergeTest_94.C mergeTest_95.C mergeTest_96.C mergeTest_97.C mergeTest_100.C
   mergeTest_101.C mergeTest_102.C mergeTest_103.C mergeTest_104.C mergeTest_105.C
-  mergeTest_106.C mergeTest_107.C mergeTest_110.C mergeTest_111.C mergeTest_112.C
+  mergeTest_106.C mergeTest_107.C mergeTest_110.C mergeTest_112.C
   mergeTest_114.C mergeTest_115.C mergeTest_116.C mergeTest_118.C mergeTest_119.C
   mergeTest_120.C mergeTest_128.C mergeTest_129.C mergeTest_130.C
   mergeTest_131.C mergeTest_133.C mergeTest_134.C mergeTest_90.C
@@ -41,8 +41,8 @@ set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict -rose:ast:merge)
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME MERGEASTTEST_${file_to_test}
     COMMAND roseTestMerge ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
-  set_tests_properties(${file_to_test} PROPERTIES LABELS MERGEASTTEST)
+  set_tests_properties(MERGEASTTEST_${file_to_test} PROPERTIES LABELS MERGEASTTEST)
 endforeach()

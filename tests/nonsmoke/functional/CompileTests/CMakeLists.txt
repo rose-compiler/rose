@@ -17,19 +17,19 @@ function(compile_test input_file label)
   # optional argument to omit include directories
   if(ARGV2)
     add_test(
-      NAME ${test_name}
+      NAME ${label}_${test_name}
       COMMAND ${translator}
         ${ROSE_FLAGS} -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
     )
   else()
     add_test(
-      NAME ${test_name}
+      NAME ${label}_${test_name}
       COMMAND ${translator}
         ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR} -c
         ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
     )
   endif()
-  set_tests_properties(${test_name} PROPERTIES LABELS ${label})
+  set_tests_properties(${label}_${test_name} PROPERTIES LABELS ${label})
 endfunction()
 
 # determine what subdirectories to enter based on our configuration settings.
