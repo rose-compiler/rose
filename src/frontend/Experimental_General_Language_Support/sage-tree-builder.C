@@ -1717,9 +1717,15 @@ injectAliasSymbol(const std::string &name)
         SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
         ROSE_ASSERT(alias_sym);
 
-        // Inject the alias symbol in the namespace if there is one, otherwise put it in global scope
-        SgScopeStatement* scope = isSgNamespaceDefinitionStatement(decl_scope);
-        if (!scope) {
+        // Inject the alias symbol in the namespace or basic block (if there is one).
+        // Otherwise put the alias in global scope. I believe if it's a basic block that
+        // it will placed in a function scope, which is probably the correct thing to do so
+        // that table items declared inside a function don't end up in global scope.
+        SgScopeStatement* scope = nullptr;
+        if (isSgNamespaceDefinitionStatement(decl_scope) || isSgBasicBlock(decl_scope)) {
+          scope = decl_scope;
+        }
+        else {
           scope = SageInterface::getGlobalScope(table_decl);
         }
         ROSE_ASSERT(scope);
