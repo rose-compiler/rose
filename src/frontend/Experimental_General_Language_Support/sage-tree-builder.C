@@ -1751,6 +1751,42 @@ SgType* buildIntType()
    return SageBuilder::buildIntType();
 }
 
+SgType* buildFloatType()
+{
+   return SageBuilder::buildFloatType();
+}
+
+SgType* buildCharType()
+{
+   return SageBuilder::buildCharType();
+}
+
+SgType* buildDoubleType()
+{
+   return SageBuilder::buildDoubleType();
+}
+
+SgType* buildComplexType(SgType* base_type)
+{
+   return SageBuilder::buildComplexType(base_type);
+}
+
+SgType* buildStringType(SgExpression* stringLengthExpression)
+{
+   return SageBuilder::buildStringType(stringLengthExpression);
+}
+
+SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list)
+{
+   SgExprListExp* dim_info = SageBuilder::buildExprListExp_nfi();
+
+   BOOST_FOREACH(SgExpression* expr, explicit_shape_list) {
+      dim_info->get_expressions().push_back(expr);
+   }
+
+   return SageBuilder::buildArrayType(base_type, dim_info);
+}
+
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -1840,6 +1876,22 @@ SgExpression* buildStringVal_nfi(std::string value)
    return SageBuilder::buildStringVal_nfi(value);
 }
 
+SgExpression* buildFloatVal_nfi(const std::string &str)
+{
+   return SageBuilder::buildFloatVal_nfi(str);
+}
+
+SgExpression* buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str)
+{
+   SgValueExp* real = isSgValueExp(real_value);
+   SgValueExp* imaginary = isSgValueExp(imaginary_value);
+
+   //   ROSE_ASSERT(real);
+   //   ROSE_ASSERT(imaginary);
+
+   return SageBuilder::buildComplexVal_nfi(real, imaginary, str);
+}
+
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
@@ -1851,6 +1903,25 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
 {
    return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+}
+
+SgExpression* buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildPntrArrRefExp_nfi(lhs, rhs);
+}
+
+SgExpression* buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type)
+{
+   return SageBuilder::buildAggregateInitializer_nfi(initializers, type);
+}
+
+SgExpression* buildAsteriskShapeExp_nfi()
+{
+   SgAsteriskShapeExp* shape = new SgAsteriskShapeExp();
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   return shape;
 }
 
 SgExpression* buildNullExpression_nfi()
