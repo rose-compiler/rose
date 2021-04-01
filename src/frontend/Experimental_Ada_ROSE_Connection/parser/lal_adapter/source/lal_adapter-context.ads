@@ -2,6 +2,7 @@ private with Libadalang.Analysis;
 
 with A_Nodes;
 with Dot;
+private with Lal_Adapter.Node;
 
 --  with Lal_Adapter.Unit;
 
@@ -14,7 +15,7 @@ package Lal_Adapter.Context is
       Input_File_Name   : in     String;
       Project_File_Name : in     String;
       --  Unit_Options   : in     Unit.Options_Record;
-      Outputs        : in     Outputs_Record);
+      Outputs        : in     Output_Accesses_Record);
 
 private
    package LAL renames Libadalang.Analysis;
@@ -28,6 +29,7 @@ private
          Lal_Context          : LAL.Analysis_Context := LAL.No_Analysis_Context;
          Top_Unit             : LAL.Analysis_Unit    := LAL.No_Analysis_Unit;
          Top_Compilation_Unit : LAL.Compilation_Unit := LAL.No_Compilation_Unit;
+         Nodes                : Lal_Adapter.Node.Class; -- Initialized
       end record;
 
 end Lal_Adapter.Context;

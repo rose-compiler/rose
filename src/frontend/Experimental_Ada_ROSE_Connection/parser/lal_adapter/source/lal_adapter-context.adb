@@ -46,7 +46,7 @@ package body Lal_Adapter.Context is
 
    procedure Process_Top_Unit
      (This    : in out Class;
-      Outputs : in     Outputs_Record)
+      Outputs : in     Output_Accesses_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Top_Unit";
@@ -65,7 +65,7 @@ package body Lal_Adapter.Context is
 
    procedure Process_Dependencies
      (This    : in out Class;
-      Outputs : in     Outputs_Record)
+      Outputs : in     Output_Accesses_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Dependencies";
@@ -124,7 +124,7 @@ package body Lal_Adapter.Context is
       Input_File_Name   : in     String;
       Project_File_Name : in     String;
       --  Unit_Options   : in     Unit.Options_Record;
-      Outputs           : in     Outputs_Record)
+      Outputs           : in     Output_Accesses_Record)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";

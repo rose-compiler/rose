@@ -83,7 +83,7 @@ package body Lal_Adapter is
    ------------
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     String) is
    begin
@@ -96,7 +96,7 @@ package body Lal_Adapter is
    ------------
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     Boolean) is
    begin
@@ -115,7 +115,7 @@ package body Lal_Adapter is
    ------------
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in out Outputs_Record;
+      Outputs   : in     Output_Accesses_Record;
       Value     : in     String) is
    begin
       Dot_Label.Add_3_Col_Cell(Value);
@@ -126,7 +126,7 @@ package body Lal_Adapter is
    -- EXPORTED:
    ------------
    procedure Add_Dot_Edge
-     (Outputs   : in out Outputs_Record;
+     (Outputs   : in     Output_Accesses_Record;
       From      : in     IC.int;
       From_Kind : in     ID_Kind;
       To        : in     IC.int;

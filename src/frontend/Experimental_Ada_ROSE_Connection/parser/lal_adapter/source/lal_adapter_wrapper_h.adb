@@ -25,27 +25,23 @@ package body lal_adapter_wrapper_h is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".lal_adapter_wrapper";
       package Logging is new Generic_Logging (Module_Name); use Logging;
+      Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
-      Project_File_Name_String_Access : access String :=
-        new String'(Interfaces.C.To_Ada
-                    (Interfaces.C.Strings.Value (project_file_name)));
-      Input_File_Name_String_Access : access String :=
-        new String'(Interfaces.C.To_Ada
-                    (Interfaces.C.Strings.Value (input_file_name)));
-      Output_Dir_Name_String_Access : access String :=
-        new String'(Interfaces.C.To_Ada
-                    (Interfaces.C.Strings.Value (output_dir_name)));
+      function To_String (This : in Interfaces.C.Strings.chars_ptr)
+         return String is
+      begin
+         return Interfaces.C.To_Ada (Interfaces.C.Strings.Value (This));
+      end To_String;
 
       Tool              : Lal_Adapter.Tool.Class; -- Initialized
       Result            : a_nodes_h.Nodes_Struct := anhs.Default_Nodes_Struct;
       -- For = functions:
       use a_nodes_h;
    begin
-      Log ("BEGIN");
       Tool.Process
-        (Project_File_Name            => Project_File_Name_String_Access.all,
-         Input_File_Name              => Input_File_Name_String_Access.all,
-         Output_Dir_Name              => Output_Dir_Name_String_Access.all,
+        (Project_File_Name            => To_String (project_file_name),
+         Input_File_Name              => To_String (input_file_name),
+         Output_Dir_Name              => To_String (output_dir_name),
          Process_Predefined_Units     => Boolean (process_predefined_units),
          Process_Implementation_Units => Boolean (process_implementation_units),
          Debug                        => Boolean (debug));
@@ -70,7 +66,6 @@ package body lal_adapter_wrapper_h is
             Log ("Returning " & Count'Image  & " + 1 Elements.");
          end;
       end if;
-      Log ("END");
       return Result;
    exception
       when X: others =>
