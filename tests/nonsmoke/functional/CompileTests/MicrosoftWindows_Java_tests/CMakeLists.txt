@@ -31,7 +31,7 @@ function(java_test input_file)
 
   # these tests should fail if javac just prints out its usage info.
   set_tests_properties(${test_name}
-    PROPERTIES FAIL_REGULAR_EXPRESSION "Usage: javac")
+    PROPERTIES FAIL_REGULAR_EXPRESSION "Usage: javac" LABELS MSJAVATEST)
 endfunction()
 
 
@@ -48,11 +48,12 @@ foreach(file_to_test
     NAME ${file_to_test}_step1
     COMMAND testTranslator ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test}_step1 PROPERTIES LABELS MSJAVATEST)
   add_test(
     NAME ${file_to_test}_step2
     COMMAND testTranslator -rose:java:source 1.4 -rose:java:target 1.4
             ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
   set_tests_properties(${file_to_test}_step2
-    PROPERTIES DEPENDS ${file_to_test}_step1)
+    PROPERTIES DEPENDS ${file_to_test}_step1 LABELS MSJAVATEST)
 endforeach()

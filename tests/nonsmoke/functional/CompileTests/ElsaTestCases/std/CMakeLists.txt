@@ -8,4 +8,5 @@ foreach(file_to_test ${TESTCODES})
     COMMAND testTranslator
       ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR} -c
       ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test} PROPERTIES LABELS ELSATEST)
 endforeach()

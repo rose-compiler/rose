@@ -184,6 +184,7 @@ foreach(testcode ${TESTCODES_REQUIRED_TO_PASS})
     NAME copyAST_${basename}
     COMMAND copyExample ${ROSE_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${testcode})
+  set_tests_properties(copyAST_${basename} PROPERTIES LABELS COPYASTTEST)
 endforeach()
 
 # Use tests from the Cxx_tests directory
@@ -194,5 +195,6 @@ foreach(testcode ${EXTRA_TESTCODES_REQUIRED_TO_PASS})
     COMMAND copyExample ${ROSE_FLAGS}
             -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${testcode})
+  set_tests_properties(copyAST_${basename} PROPERTIES LABELS COPYASTTEST)
 endforeach()
 

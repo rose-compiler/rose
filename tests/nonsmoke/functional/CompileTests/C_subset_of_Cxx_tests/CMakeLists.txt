@@ -107,7 +107,7 @@ endif()
 
 set(ROSE_FLAGS -rose:C --edg:no_warnings -w)
 
-function(compile_test_in_binary_dir input_file)
+function(compile_test_in_binary_dir input_file label)
   get_filename_component(test_name ${input_file} NAME_WE)
 
   configure_file(
@@ -121,10 +121,11 @@ function(compile_test_in_binary_dir input_file)
       ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests
       -c ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.c)
+    set_tests_properties(${test_name} PROPERTIES LABELS ${label})
 endfunction()
 
 foreach(file_to_test ${files_to_test})
-  compile_test_in_binary_dir(${file_to_test})
+  compile_test_in_binary_dir(${file_to_test} CSUBSETOFCXXTEST)
 endforeach()
 
 # This requires a special rule

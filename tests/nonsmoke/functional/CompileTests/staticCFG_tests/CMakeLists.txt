@@ -25,6 +25,7 @@ foreach(file_to_test ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS})
       -DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${file_to_test})
+  set_tests_properties(testStaticCFG_Cxx_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
   add_test(
     NAME testInterproceduralCFG_Cxx_${file_to_test}
@@ -34,7 +35,7 @@ foreach(file_to_test ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS})
       -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${file_to_test})
 
   set_tests_properties(testInterproceduralCFG_Cxx_${file_to_test}
-    PROPERTIES DEPENDS testStaticCFG_Cxx_${file_to_test} )
+    PROPERTIES DEPENDS testStaticCFG_Cxx_${file_to_test} LABELS STATICCFGTEST)
  
 
 endforeach()
@@ -87,6 +88,7 @@ foreach(input_file ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS})
     COMMAND testStaticCFG ${ROSE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+  set_tests_properties(testStaticCFG_C_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
   add_test(
     NAME testInterproceduralCFG_C_${file_to_test}
@@ -95,7 +97,7 @@ foreach(input_file ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS})
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
 
   set_tests_properties(testStaticCFG_C_${file_to_test}
-    PROPERTIES DEPENDS testInterproceduralCFG_C_${file_to_test} )
+    PROPERTIES DEPENDS testInterproceduralCFG_C_${file_to_test} LABELS STATICCFGTEST)
  
 
 endforeach()
@@ -119,6 +121,7 @@ foreach(input_file ${C99_TESTCODES_REQUIRED_TO_PASS})
     COMMAND testStaticCFG ${ROSE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../C99_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+  set_tests_properties(testStaticCFG_C99_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
   add_test(
     NAME testInterproceduralCFG_C99_${file_to_test}
@@ -127,7 +130,7 @@ foreach(input_file ${C99_TESTCODES_REQUIRED_TO_PASS})
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
 
   set_tests_properties(testInterproceduralCFG_C99_${file_to_test}
-    PROPERTIES DEPENDS testStaticCFG_C99_${file_to_test} )
+    PROPERTIES DEPENDS testStaticCFG_C99_${file_to_test} LABELS STATICCFGTEST)
 
 endforeach()
 
@@ -170,6 +173,7 @@ if(enable-fortran)
       NAME testStaticCFG_f90_${file_to_test}
       COMMAND testStaticCFG ${ROSE_FLAGS} -rose:f90
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testStaticCFG_f90_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
     add_test(
       NAME testInterproceduralCFG_f90_${file_to_test}
@@ -177,7 +181,7 @@ if(enable-fortran)
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
 
     set_tests_properties(testInterproceduralCFG_f90_${file_to_test}
-      PROPERTIES DEPENDS testStaticCFG_f90_${file_to_test} )
+      PROPERTIES DEPENDS testStaticCFG_f90_${file_to_test} LABELS STATICCFGTEST )
 
 
   endforeach()
@@ -203,6 +207,7 @@ if(enable-fortran)
       NAME testStaticCFG_f77_${file_to_test}
       COMMAND testStaticCFG ${ROSE_FLAGS} -rose:f77
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testStaticCFG_f77_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
     add_test(
       NAME testInterproceduralCFG_f77_${file_to_test}
@@ -211,7 +216,7 @@ if(enable-fortran)
 
 
     set_tests_properties(testStaticCFG_f77_${file_to_test}
-      PROPERTIES DEPENDS testInterproceduralCFG_f77_${file_to_test} )
+      PROPERTIES DEPENDS testInterproceduralCFG_f77_${file_to_test} LABELS STATICCFGTEST)
 
 
   endforeach()
@@ -229,6 +234,7 @@ if(enable-fortran)
       COMMAND testStaticCFG ${ROSE_FLAGS} -rose:skip_syntax_check
         -rose:skipfinalCompileStep -rose:f2003
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testStaticCFG_f03_${file_to_test} PROPERTIES LABELS STATICCFGTEST)
 
     add_test(
       NAME testInterproceduralCFG_f03_${file_to_test}
@@ -237,7 +243,7 @@ if(enable-fortran)
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
 
     set_tests_properties(testStaticCFG_f03_${file_to_test}
-        PROPERTIES DEPENDS testInterproceduralCFG_f03_${file_to_test} )
+        PROPERTIES DEPENDS testInterproceduralCFG_f03_${file_to_test} LABELS STATICCFGTEST )
 
 
   endforeach()

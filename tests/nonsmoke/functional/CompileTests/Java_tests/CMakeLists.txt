@@ -70,6 +70,7 @@ function(java_test input_file)
     COMMAND ${translator}
       ${ROSE_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
   )
+  set_tests_properties(${test_name} PROPERTIES LABELS JAVATEST)
 endfunction()
 
 
@@ -92,11 +93,12 @@ foreach(file_to_test
     NAME ${file_to_test}_step1
     COMMAND testTranslator ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test}_step1 PROPERTIES LABELS JAVATEST)
   add_test(
     NAME ${file_to_test}_step2
     COMMAND testTranslator -rose:java:source 1.4 -rose:java:target 1.4
             ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
   set_tests_properties(${file_to_test}_step2
-    PROPERTIES DEPENDS ${file_to_test}_step1)
+    PROPERTIES DEPENDS ${file_to_test}_step1 LABELS JAVATEST)
 endforeach()

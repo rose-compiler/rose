@@ -15,5 +15,5 @@ set(TESTCODES
 set(ROSE_FLAGS --edg:no_warnings -w)
 
 foreach(file_to_test ${TESTCODES})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} ELSATEST)
 endforeach()

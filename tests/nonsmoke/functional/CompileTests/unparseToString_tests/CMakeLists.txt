@@ -21,5 +21,6 @@ foreach(file_to_test ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS})
             -c ${TESTCODE_DIR}/${file_to_test})
 
   set_tests_properties(ua_${file_to_test}
-    PROPERTIES DEPENDS ut_${file_to_test} )
+    PROPERTIES DEPENDS ut_${file_to_test} 
+    LABELS UNPARSETOSTRING)
 endforeach()

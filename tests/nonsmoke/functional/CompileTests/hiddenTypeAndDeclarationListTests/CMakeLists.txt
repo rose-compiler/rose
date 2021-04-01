@@ -24,6 +24,7 @@ foreach(file_to_test ${TESTCODES})
     NAME ${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test} PROPERTIES LABELS HIDDENTYPETEST)
 endforeach()
 
 add_test(
@@ -32,3 +33,4 @@ add_test(
     -DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
     -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/test2005_56.C
     -o ${CMAKE_CURRENT_BINARY_DIR}/test2005_56.o)
+  set_tests_properties(test2005_56.C PROPERTIES LABELS HIDDENTYPETEST)

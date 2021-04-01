@@ -23,6 +23,7 @@ foreach(file_to_test ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS})
     COMMAND testVirtualCFG ${ROSE_FLAGS}
     -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
     -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${file_to_test})
+  set_tests_properties(testVirtualCFG_CXX_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
 endforeach()
 
 set(EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS
@@ -70,6 +71,7 @@ foreach(input_file ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS})
     COMMAND testVirtualCFG ${ROSE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+  set_tests_properties(testVirtualCFG_C_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
 endforeach()
 
 set(C99_FILES
@@ -86,6 +88,7 @@ foreach(file_to_test ${C99_FILES})
     COMMAND testVirtualCFG ${ROSE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../C99_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+  set_tests_properties(testVirtualCFG_C99_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
 endforeach()
 
 if(enable-java)
@@ -134,6 +137,7 @@ if(enable-java)
       NAME testVirtualCFG_Java_${file_to_test}
       COMMAND testVirtualCFG ${ROSE_FLAGS}
         -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+    set_tests_properties(testVirtualCFG_Java_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
   endforeach()
 endif()
 
@@ -175,6 +179,7 @@ if(enable-fortran)
       NAME testVirtualCFG_F90_${file_to_test}
       COMMAND testVirtualCFG ${ROSE_FLAGS} -rose:f90
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testVirtualCFG_F90_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
   endforeach()
 
   set(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS
@@ -197,6 +202,7 @@ if(enable-fortran)
       NAME testVirtualCFG_F77_${file_to_test}
       COMMAND testVirtualCFG ${ROSE_FLAGS} -rose:f77
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testVirtualCFG_F77_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
   endforeach()
 
   set(F03_TESTCODES_REQUIRED_TO_PASS
@@ -211,6 +217,7 @@ if(enable-fortran)
       COMMAND testVirtualCFG ${ROSE_FLAGS} -rose:skip_syntax_check
         -rose:skipfinalCompileStep -rose:f2003
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+    set_tests_properties(testVirtualCFG_F03_${file_to_test} PROPERTIES LABELS VIRTUALCFGTEST)
   endforeach()
 
 endif()

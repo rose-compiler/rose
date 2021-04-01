@@ -461,7 +461,7 @@ set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0
     -I${CMAKE_SOURCE_DIR}/tests/nonsmoke/functional/CompileTests/A++Code)
 
 foreach(testcode ${TESTCODES})
-  compile_test(${testcode} TRUE)
+  compile_test(${testcode} CXXTEST TRUE)
 endforeach()
 
 # This requires a special makefile rule
@@ -472,6 +472,7 @@ add_test(
           -c ${CMAKE_CURRENT_SOURCE_DIR}/test2005_56.C
           -o test2005_56.o
 )
+set_tests_properties(test2005_56 PROPERTIES LABELS CXXTEST)
 
 # DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in
 # how it unparses C++ style comments and should maybe not be unparsing
@@ -483,6 +484,7 @@ add_test(
           -c ${CMAKE_CURRENT_SOURCE_DIR}/test2013_257.C
           -o test2013_257_unparse_headers.o
 )
+set_tests_properties(unparse_includes_option PROPERTIES LABELS CXXTEST)
 
 # DQ (9/16/2013): Test linking the resulting translated file. Phil Miller
 # reported an error and the issue is that va_start() and va_end() must be
@@ -494,6 +496,7 @@ add_test(
           ${CMAKE_CURRENT_SOURCE_DIR}/test2013_260.C
           -o test2013_260_unparse_headers
 )
+set_tests_properties(unparse_includes_option_with_link PROPERTIES LABELS CXXTEST)
 
 # DQ (9/17/2013): Added autoconf style link test.
 add_test(
@@ -502,6 +505,7 @@ add_test(
 	        -I${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conftest.C
           -o conftest_configure_test_part_1
 )
+set_tests_properties(common_configure_test_with_link_part_1 PROPERTIES LABELS CXXTEST)
 
 # DQ (9/22/2013): Added autoconf style link test.
 add_test(
@@ -510,6 +514,7 @@ add_test(
 	        -I${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conftest_2.C
           -o conftest_configure_test_part_2
 )
+set_tests_properties(common_configure_test_with_link_part_2 PROPERTIES LABELS CXXTEST)
 
 # DQ (5/28/2015): This is a failing test (expected to fail).
 # add_test(

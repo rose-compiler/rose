@@ -31,5 +31,5 @@ else()
 endif()
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} AXXTEST)
 endforeach()

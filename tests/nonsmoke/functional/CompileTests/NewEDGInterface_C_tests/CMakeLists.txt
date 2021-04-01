@@ -60,12 +60,14 @@ foreach(testcode ${TESTCODES})
     COMMAND newEDGInterfaceTranslator ${ROSE_FLAGS}
       -I{CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test} PROPERTIES LABELS NEWEDGTEST)
 
   add_test(
     NAME testFrontEnd_${file_to_test}
     COMMAND testFrontEnd ${ROSE_FLAGS}
       -I{CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(testFrontEnd_${file_to_test} PROPERTIES LABELS NEWEDGTEST)
 endforeach()
 
 configure_file(
@@ -78,3 +80,4 @@ add_test(
   COMMAND newEDGInterfaceTranslator ${ROSE_FLAGS}
     -DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
     -c ${CMAKE_CURRENT_SOURCE_DIR}/test2005_56.c)
+  set_tests_properties(test2005_56.c PROPERTIES LABELS NEWEDGTEST)

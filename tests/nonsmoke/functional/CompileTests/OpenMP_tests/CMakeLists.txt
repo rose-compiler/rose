@@ -55,6 +55,7 @@ foreach(file_to_test ${TESTCODES})
     NAME ${file_to_test}
     COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test} PROPERTIES LABELS OMPTEST)
 endforeach()
 
 foreach(file_to_test ${OMP_ACC_TESTCODES})
@@ -63,6 +64,7 @@ foreach(file_to_test ${OMP_ACC_TESTCODES})
     COMMAND parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep
                      --edg:no_warnings -w -rose:verbose 0 --edg:restrict
                      -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(${file_to_test} PROPERTIES LABELS OMPACCTEST)
 endforeach()
 
 
@@ -74,9 +76,11 @@ add_test(
   COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
           -c ${CMAKE_CURRENT_SOURCE_DIR}/atoms-2.c
           ${CMAKE_CURRENT_SOURCE_DIR}/bonds-2.c)
+  set_tests_properties(bonds-2 PROPERTIES LABELS OMPTEST)
 
 add_test(
   NAME macroIds
   COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
           -rose:collectAllCommentsAndDirectives
           ${CMAKE_CURRENT_SOURCE_DIR}/macroIds.c)
+  set_tests_properties(microIds PROPERTIES LABELS OMPTEST)
