@@ -6292,6 +6292,8 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    char* name;
    std::vector<SgExpression*> subscript;
    SgVarRefExp* var_ref = nullptr;
+   SgFunctionSymbol* fun_symbol = nullptr;
+   SgExprListExp* array_subscripts = nullptr;
 
    table_array_ref = nullptr;
 
@@ -6301,20 +6303,34 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    }
    else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_name, &t_subscript)) {
       if (ATmatch(t_name, "<str>", &name)) {
-         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         ROSE_ASSERT(var_ref);
-         setSourcePosition(var_ref, t_name);
+         // The right-hand side of a dereference (SgAtOp) may be a function call
+         SgScopeStatement* scope = SageBuilder::topScopeStack();
+         fun_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,scope);
+         if (!fun_symbol) {
+           var_ref = SageBuilder::buildVarRefExp(name, scope);
+           ROSE_ASSERT(var_ref);
+           setSourcePosition(var_ref, t_name);
+         }
       }
    } else return ATfalse;
 
    if (traverse_Subscript(t_subscript, subscript)) {
-      SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+      array_subscripts = SageBuilder::buildExprListExp_nfi();
       setSourcePosition(array_subscripts, t_subscript);
       for (int i=0; i< subscript.size(); i++) {
          array_subscripts->get_expressions().push_back(subscript[i]);
       }
-      table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
    } else return ATfalse;
+
+   if (var_ref && array_subscripts) {
+     table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+   }
+   else if (fun_symbol && array_subscripts) {
+     table_array_ref = SageBuilder::buildFunctionCallExp(fun_symbol, array_subscripts);
+   }
+   else {
+     table_array_ref = var_ref;
+   }
 
    ROSE_ASSERT(table_array_ref);
    setSourcePosition(table_array_ref, term);
