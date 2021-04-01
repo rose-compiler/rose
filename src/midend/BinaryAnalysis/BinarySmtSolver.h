@@ -15,14 +15,12 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/unordered_map.hpp>
 #include <inttypes.h>
-#include <Sawyer/SharedObject.h>
-#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
 /** Reference-counting pointer for SMT solvers. */
-typedef Sawyer::SharedPointer<class SmtSolver> SmtSolverPtr;
+using SmtSolverPtr = std::shared_ptr<class SmtSolver>;
 
 class CompareLeavesByName {
 public:
@@ -33,10 +31,10 @@ public:
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
  *  are allocated with @c instance static methods or @c create virtual constructors and should not be explicitly deleted. */
-class SmtSolver: public Sawyer::SharedObject, private boost::noncopyable {
+class SmtSolver: private boost::noncopyable {
 public:
     /** Reference counting pointer for SMT solvers. */
-    typedef Sawyer::SharedPointer<SmtSolver> Ptr;
+    using Ptr = SmtSolverPtr;
 
     /** Solver availability map. */
     typedef std::map<std::string, bool> Availability;
