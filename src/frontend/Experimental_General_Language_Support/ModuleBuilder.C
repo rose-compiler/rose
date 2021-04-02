@@ -146,6 +146,9 @@ void ModuleBuilder::loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, Sg
 {
   ROSE_ASSERT(symbol);
 
+  if (file_scope->symbol_exists(symbol->get_name())) {
+    return;
+  }
   insertSymbol(symbol, file_scope);
 
   // Additional symbols may need to be loaded based on symbol type
@@ -214,18 +217,21 @@ void ModuleBuilder::loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, Sg
 {
   if (SgNamedType* named_type = isSgNamedType(type)) {
     SgName type_name = named_type->get_name();
-    if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
-      insertSymbol(class_symbol, file_scope);
-      loadSymbol(class_symbol, symbol_table, file_scope);
-    }
-    else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
-      insertSymbol(enum_symbol, file_scope);
-      loadSymbol(enum_symbol, symbol_table, file_scope);
-    }
-    else if (SgTypedefSymbol* typedef_symbol = symbol_table->find_typedef(type_name)) {
-      insertSymbol(typedef_symbol, file_scope);
-      if (SgTypedefDeclaration* typedef_decl = typedef_symbol->get_declaration()) {
-        loadTypeSymbol(typedef_decl->get_base_type(), symbol_table, file_scope);
+    // Ensure the symbol already exists, otherwise could lead to an infinite recursion
+    if (file_scope->symbol_exists(type_name) == false) {
+      if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
+        insertSymbol(class_symbol, file_scope);
+        loadSymbol(class_symbol, symbol_table, file_scope);
+      }
+      else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
+        insertSymbol(enum_symbol, file_scope);
+        loadSymbol(enum_symbol, symbol_table, file_scope);
+      }
+      else if (SgTypedefSymbol* typedef_symbol = symbol_table->find_typedef(type_name)) {
+        insertSymbol(typedef_symbol, file_scope);
+        if (SgTypedefDeclaration* typedef_decl = typedef_symbol->get_declaration()) {
+          loadTypeSymbol(typedef_decl->get_base_type(), symbol_table, file_scope);
+        }
       }
     }
   }
