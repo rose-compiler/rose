@@ -2,11 +2,10 @@ set(ROSE_FLAGS -rose:verbose 0)
 
 function(LANL_POP_test file_to_compile)
   add_test(
-    NAME LANLPOP_${file_to_compile}
+    NAME ${file_to_compile}
     COMMAND testAnalysis ${ROSE_FLAGS}
             -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_compile})
-  set_tests_properties(LANLPOP_${test_name} PROPERTIES LABELS LANLPOP)
 endfunction()
 
 set(files_to_compile
