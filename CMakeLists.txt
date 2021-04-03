@@ -414,6 +414,7 @@ if(enable-fortran)
   # check if gfortran was found
   if(CMAKE_COMPILER_IS_GNUG77)
     set(USE_GFORTRAN_IN_ROSE 1)
+    add_compile_definitions(BACKEND_FORTRAN_IS_GNU_COMPILER)
     # query gfortran version
     execute_process(
       COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
