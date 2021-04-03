@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "ModuleBuilder.h"
 
+#define PRINT_SYMBOLS 0
+
 namespace Rose {
 
 using namespace Rose::Diagnostics;
@@ -88,6 +90,10 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
     ROSE_ASSERT(file_scope);
     for (SgNode* node : namespace_symbols->get_symbols()) {
       SgSymbol* symbol = isSgSymbol(node);
+
+      if (SgAliasSymbol* alias = isSgAliasSymbol(symbol)) {
+        symbol = alias->get_base();
+      }
       ROSE_ASSERT(symbol);
 
       SgName symbol_name = symbol->get_name();
@@ -101,7 +107,7 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
           // Only import names from the list
           std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
           if (it != import_names.end()) {
-#if 0
+#if PRINT_SYMBOLS
             std::cout << "    : inserting symbol " << symbol->get_name()
                       << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
@@ -111,7 +117,7 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
         }
       }
       else {
-#if 0
+#if PRINT_SYMBOLS
         std::cout << "    : exists -> symbol " << symbol->get_name()
                   << " from namespace " << namespace_symbol->get_name() << std::endl;
 #endif
@@ -130,7 +136,7 @@ void ModuleBuilder::insertSymbol(SgSymbol* symbol, SgGlobal* file_scope)
     SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
     ROSE_ASSERT(alias_symbol);
     file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-#if 0
+#if PRINT_SYMBOLS
     std::cout << "    :  inserted symbol " << symbol->get_name() << std::endl;
 #endif
   }
@@ -140,6 +146,9 @@ void ModuleBuilder::loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, Sg
 {
   ROSE_ASSERT(symbol);
 
+  if (file_scope->symbol_exists(symbol->get_name())) {
+    return;
+  }
   insertSymbol(symbol, file_scope);
 
   // Additional symbols may need to be loaded based on symbol type
@@ -208,18 +217,21 @@ void ModuleBuilder::loadTypeSymbol(SgType* type, SgSymbolTable* symbol_table, Sg
 {
   if (SgNamedType* named_type = isSgNamedType(type)) {
     SgName type_name = named_type->get_name();
-    if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
-      insertSymbol(class_symbol, file_scope);
-      loadSymbol(class_symbol, symbol_table, file_scope);
-    }
-    else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
-      insertSymbol(enum_symbol, file_scope);
-      loadSymbol(enum_symbol, symbol_table, file_scope);
-    }
-    else if (SgTypedefSymbol* typedef_symbol = symbol_table->find_typedef(type_name)) {
-      insertSymbol(typedef_symbol, file_scope);
-      if (SgTypedefDeclaration* typedef_decl = typedef_symbol->get_declaration()) {
-        loadTypeSymbol(typedef_decl->get_base_type(), symbol_table, file_scope);
+    // Ensure the symbol already exists, otherwise could lead to an infinite recursion
+    if (file_scope->symbol_exists(type_name) == false) {
+      if (SgClassSymbol* class_symbol = symbol_table->find_class(type_name)) {
+        insertSymbol(class_symbol, file_scope);
+        loadSymbol(class_symbol, symbol_table, file_scope);
+      }
+      else if (SgEnumSymbol* enum_symbol = symbol_table->find_enum(type_name)) {
+        insertSymbol(enum_symbol, file_scope);
+        loadSymbol(enum_symbol, symbol_table, file_scope);
+      }
+      else if (SgTypedefSymbol* typedef_symbol = symbol_table->find_typedef(type_name)) {
+        insertSymbol(typedef_symbol, file_scope);
+        if (SgTypedefDeclaration* typedef_decl = typedef_symbol->get_declaration()) {
+          loadTypeSymbol(typedef_decl->get_base_type(), symbol_table, file_scope);
+        }
       }
     }
   }

@@ -5704,12 +5704,12 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   else if (ATmatch(term, "NE(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_not_equal;
 
   // Logical operators
-  else if (ATmatch(term, "AND(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
-  else if (ATmatch(term,  "OR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
-  else if (ATmatch(term, "XOR(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
-  else if (ATmatch(term, "EQV(<term>,<term>,<term>)",  &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
+  else if (ATmatch(term, "AND(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_and;
+  else if (ATmatch(term,  "OR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_or;
+  else if (ATmatch(term, "XOR(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_xor;
+  else if (ATmatch(term, "EQV(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_equiv;
 
-  else if (ATmatch(term, "Mod(<term>,<term>)", &t_lhs, &t_rhs)) op = LT::e_operator_mod;
+  else if (ATmatch(term, "Mod(<term>,<term>,<term>)", &t_lhs, &t_oper, &t_rhs)) op = LT::e_operator_mod;
 
   else return ATfalse;
 
@@ -6292,6 +6292,8 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    char* name;
    std::vector<SgExpression*> subscript;
    SgVarRefExp* var_ref = nullptr;
+   SgFunctionSymbol* fun_symbol = nullptr;
+   SgExprListExp* array_subscripts = nullptr;
 
    table_array_ref = nullptr;
 
@@ -6301,20 +6303,34 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    }
    else if (ATmatch(term, "TableDereference(<term>,<term>)", &t_name, &t_subscript)) {
       if (ATmatch(t_name, "<str>", &name)) {
-         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         ROSE_ASSERT(var_ref);
-         setSourcePosition(var_ref, t_name);
+         // The right-hand side of a dereference (SgAtOp) may be a function call
+         SgScopeStatement* scope = SageBuilder::topScopeStack();
+         fun_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,scope);
+         if (!fun_symbol) {
+           var_ref = SageBuilder::buildVarRefExp(name, scope);
+           ROSE_ASSERT(var_ref);
+           setSourcePosition(var_ref, t_name);
+         }
       }
    } else return ATfalse;
 
    if (traverse_Subscript(t_subscript, subscript)) {
-      SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+      array_subscripts = SageBuilder::buildExprListExp_nfi();
       setSourcePosition(array_subscripts, t_subscript);
       for (int i=0; i< subscript.size(); i++) {
          array_subscripts->get_expressions().push_back(subscript[i]);
       }
-      table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
    } else return ATfalse;
+
+   if (var_ref && array_subscripts) {
+     table_array_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+   }
+   else if (fun_symbol && array_subscripts) {
+     table_array_ref = SageBuilder::buildFunctionCallExp(fun_symbol, array_subscripts);
+   }
+   else {
+     table_array_ref = var_ref;
+   }
 
    ROSE_ASSERT(table_array_ref);
    setSourcePosition(table_array_ref, term);
@@ -6516,24 +6532,44 @@ ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgEx
    printf("... traverse_RepFunctionVariable: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_rep, t_name;
+   ATerm t_rep, t_name, t_subscript;
    char* name;
+   std::vector<SgExpression*> subscript;
    SgExpression* var_ref = nullptr;
+   bool has_subscript = false;
 
    func_call = nullptr;
 
-   if (ATmatch(term, "RepFunctionVariable(<term>,<term>)", &t_rep, &t_name)) {
-      if (ATmatch(t_rep, "RepConversion()")) {
-         // MATCHED "REP" grammar keyword
-      } else return ATfalse;
-
-      if (ATmatch(t_name, "<str>", &name)) {
-         // MATCHED NamedVariable
-         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         setSourcePosition(var_ref, t_name);
-      } else return ATfalse;
+   if (ATmatch(term, "RepFunctionVariable(<term>,<term>,<term>)", &t_rep, &t_name, &t_subscript)) {
+     // MATCHED RepFunctionVariable with subscripts
+     has_subscript = true;
+   }
+   else if (ATmatch(term, "RepFunctionVariable(<term>,<term>)", &t_rep, &t_name)) {
+     // MATCHED RepFunctionVariable without subscripts
    }
    else return ATfalse;
+
+   if (ATmatch(t_rep, "RepConversion()")) {
+     // MATCHED "REP" grammar keyword
+   } else return ATfalse;
+
+   if (ATmatch(t_name, "<str>", &name)) {
+     // MATCHED NamedVariable
+     var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+     setSourcePosition(var_ref, t_name);
+   } else return ATfalse;
+
+   if (has_subscript) {
+     if (traverse_Subscript(t_subscript, subscript)) {
+       SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
+       setSourcePosition(array_subscripts, t_subscript);
+       for (int i=0; i< subscript.size(); i++) {
+         array_subscripts->get_expressions().push_back(subscript[i]);
+       }
+       var_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
+       setSourcePosition(var_ref, term); // source position too broad because of 'REP'
+     } else return ATfalse;
+   }
    ROSE_ASSERT(var_ref);
 
    // build the parameter list
@@ -7405,15 +7441,40 @@ ATbool ATermToSageJovialTraversal::traverse_NentFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_argument;
+   std::string var_name;
+   std::string function_name;
+   SgExpression* param  = nullptr;
 
    func_call = nullptr;
 
    if (ATmatch(term, "NentFunction(<term>)", &t_argument)) {
-      cerr << "WARNING UNIMPLEMENTED: NentFunction \n";
-      printf("... traverse_NentFunction: %s\n", ATwriteToString(term));
-      ROSE_ABORT();
+     if (traverse_Name(t_argument, var_name)) {
+       // MATCHED StatusTypeName
+     } else return ATfalse;
    }
    else return ATfalse;
+
+// Build the parameter list and then the variable reference or type expression
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+
+// The variable may be a table name or table type name
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
+   if (symbol) {
+     if (SgVariableSymbol* var_sym = isSgVariableSymbol(symbol)) {
+       param  = SageBuilder::buildVarRefExp(var_name, SageBuilder::topScopeStack());
+     }
+     else if (SgJovialTableType* type = isSgJovialTableType(symbol->get_type())) {
+       if (type) {
+         param = SageBuilder::buildTypeExpression(type);
+       }
+     }
+   }
+   ROSE_ASSERT(param);
+   params->append_expression(param);
+
+   SgType* return_type = SageBuilder::buildIntType();
+   func_call = SageBuilder::buildFunctionCallExp(SgName("NENT"), return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
 
    return ATtrue;
 }
@@ -7921,7 +7982,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 #endif
 
    ATerm t_dir_list, t_compool_name, t_decl_name;
-   char* declared_name;
+   std::string declared_name;
    std::string compool_name;
    std::vector<std::string> declared_name_list;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
@@ -7948,9 +8009,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
          while (! ATisEmpty(tail)) {
             ATerm head = ATgetFirst(tail);
             tail = ATgetNext(tail);
-            if (ATmatch(head, "<str>", &declared_name)) {
-              // CompoolDeclaredName is a list of names to be used by the current module
-              declared_name_list.push_back(std::string(declared_name));
+            if (traverse_Name(head, declared_name)) {
+               // CompoolDeclaredName is a list of names to be used by the current module
+               declared_name_list.push_back(std::string(declared_name));
             } else return ATfalse;
          }
       } else return ATfalse;
@@ -7959,13 +8020,16 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 
 // Remove single quotes
 // Return to C++11 usage when possible
-// if (compool_name.back()  == '\'') compool_name.pop_back();
-// if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+#if 1
+   if (compool_name.back()  == '\'') compool_name.pop_back();
+   if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+#else
    unsigned int len = compool_name.length();
    ROSE_ASSERT(len > 2);
    if (compool_name[0]  == '\'' && compool_name[len-1]) {
       compool_name = compool_name.substr(1,len-2);
    }
+#endif
 
    sage_tree_builder.Enter(directive_stmt, compool_name, declared_name_list);
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_compool);

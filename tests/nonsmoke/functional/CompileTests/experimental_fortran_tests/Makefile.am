@@ -6,9 +6,12 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
-FORTRAN_TESTCODES = \
-  tiny.f90          \
-  expressions.f90
+FORTRAN_TESTCODES =       \
+  binary_expressions.f90  \
+  case_1.f90              \
+  dowhile.f90             \
+  tiny.f90
+
 
 TEST_FORTRAN_Objects = ${FORTRAN_TESTCODES:.f90=.o}
 TEST_FORTRAN_Sources = ${FORTRAN_TESTCODES:.f90=.f90.passed}

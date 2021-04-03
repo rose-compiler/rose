@@ -127,7 +127,15 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
              expr_stmt->set_expression(func_call);
            }
            else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
-             bin_op->set_rhs_operand(func_call);
+             // Is this left or right operand
+             SgVarRefExp* var_ref = isSgVarRefExp(bin_op->get_rhs_operand());
+             if (var_ref == prev_var_ref) {
+               bin_op->set_rhs_operand(func_call);
+             }
+             else if ((var_ref = isSgVarRefExp(bin_op->get_lhs_operand()))) {
+               bin_op->set_lhs_operand(func_call);
+             }
+             ROSE_ASSERT(var_ref == prev_var_ref);
            }
 
         // The dangling variable reference has been fixed
@@ -1697,12 +1705,31 @@ injectAliasSymbol(const std::string &name)
       SgScopeStatement* decl_scope = table_decl->get_scope();
       ROSE_ASSERT(decl_scope);
 
+      // Tables may be embedded in other tables or blocks, find outermost table/block declaration
+      while (isSgClassDefinition(decl_scope)) {
+        table_decl = isSgJovialTableStatement(decl_scope->get_parent());
+        ROSE_ASSERT(table_decl);
+        decl_scope = table_decl->get_scope();
+        ROSE_ASSERT(decl_scope);
+      }
+
       if (!isSgFunctionParameterScope(decl_scope)) {
         SgAliasSymbol* alias_sym = new SgAliasSymbol(var_sym);
         ROSE_ASSERT(alias_sym);
-        SgGlobal* global_scope = SageInterface::getGlobalScope(table_decl);
-        ROSE_ASSERT(global_scope);
-        global_scope->insert_symbol(SgName(name), alias_sym);
+
+        // Inject the alias symbol in the namespace or basic block (if there is one).
+        // Otherwise put the alias in global scope. I believe if it's a basic block that
+        // it will placed in a function scope, which is probably the correct thing to do so
+        // that table items declared inside a function don't end up in global scope.
+        SgScopeStatement* scope = nullptr;
+        if (isSgNamespaceDefinitionStatement(decl_scope) || isSgBasicBlock(decl_scope)) {
+          scope = decl_scope;
+        }
+        else {
+          scope = SageInterface::getGlobalScope(table_decl);
+        }
+        ROSE_ASSERT(scope);
+        scope->insert_symbol(SgName(name), alias_sym);
       }
    }
 }
@@ -1722,6 +1749,42 @@ SgType* buildBoolType()
 SgType* buildIntType()
 {
    return SageBuilder::buildIntType();
+}
+
+SgType* buildFloatType()
+{
+   return SageBuilder::buildFloatType();
+}
+
+SgType* buildCharType()
+{
+   return SageBuilder::buildCharType();
+}
+
+SgType* buildDoubleType()
+{
+   return SageBuilder::buildDoubleType();
+}
+
+SgType* buildComplexType(SgType* base_type)
+{
+   return SageBuilder::buildComplexType(base_type);
+}
+
+SgType* buildStringType(SgExpression* stringLengthExpression)
+{
+   return SageBuilder::buildStringType(stringLengthExpression);
+}
+
+SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list)
+{
+   SgExprListExp* dim_info = SageBuilder::buildExprListExp_nfi();
+
+   BOOST_FOREACH(SgExpression* expr, explicit_shape_list) {
+      dim_info->get_expressions().push_back(expr);
+   }
+
+   return SageBuilder::buildArrayType(base_type, dim_info);
 }
 
 // Operators
@@ -1813,6 +1876,22 @@ SgExpression* buildStringVal_nfi(std::string value)
    return SageBuilder::buildStringVal_nfi(value);
 }
 
+SgExpression* buildFloatVal_nfi(const std::string &str)
+{
+   return SageBuilder::buildFloatVal_nfi(str);
+}
+
+SgExpression* buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str)
+{
+   SgValueExp* real = isSgValueExp(real_value);
+   SgValueExp* imaginary = isSgValueExp(imaginary_value);
+
+   //   ROSE_ASSERT(real);
+   //   ROSE_ASSERT(imaginary);
+
+   return SageBuilder::buildComplexVal_nfi(real, imaginary, str);
+}
+
 SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, scope);
@@ -1824,6 +1903,25 @@ SgExpression* buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope)
 SgExpression* buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
 {
    return SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
+}
+
+SgExpression* buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs)
+{
+   return SageBuilder::buildPntrArrRefExp_nfi(lhs, rhs);
+}
+
+SgExpression* buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type)
+{
+   return SageBuilder::buildAggregateInitializer_nfi(initializers, type);
+}
+
+SgExpression* buildAsteriskShapeExp_nfi()
+{
+   SgAsteriskShapeExp* shape = new SgAsteriskShapeExp();
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   return shape;
 }
 
 SgExpression* buildNullExpression_nfi()

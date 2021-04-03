@@ -91,6 +91,7 @@ namespace CodeThorn {
     bool hasEqualMemRegionApproximation(const PState& other) const;
   private:
     VariableIdSet _approximationVarIdSet;
+    void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);
     void rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue);
     static bool combineConsistencyCheck;
   };
