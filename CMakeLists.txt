@@ -615,7 +615,8 @@ if(enable-microsoft-extensions)
 endif()
 
 if(enable-fortran)
-  set(enable-ofp-version "0.8.3" CACHE STRING "version number for OFP")
+  set(enable-ofp-version "20200819-JDK8" CACHE STRING "version number for OFP")
+  set($ENV{CLASSPATH} ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar::${CMAKE_SOURCE_DIR}/rc/3rdPartyLibraries/fortran-parser/OpenFortranParser-${enable-ofp-version}.jar)
 endif()
 
 option(enable-ppl "Support for Parma Polyhedral Library" OFF)

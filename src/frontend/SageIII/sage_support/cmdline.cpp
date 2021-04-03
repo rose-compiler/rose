@@ -1887,23 +1887,13 @@ GetRoseClasspath ()
   // CER (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
-  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 5)
-  {
-      classpath +=
-          findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
-              "lib/antlr-3.5.2-complete.jar");
-      classpath += ":";
-  }
-  else
-  {
-      classpath +=
-          findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar",
-              "lib/antlr-3.2.jar"
-          );
-      classpath += ":";
-  }
+
+  // Pei-Hung (4/3/2022): Only one antlr jar file, antlr-3.5.2-complete.jar, is kept in ROSE. 
+  classpath +=
+      findRoseSupportPathFromSource(
+          "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
+          "lib/antlr-3.5.2-complete.jar");
+  classpath += ":";
 
   // Open Fortran Parser (OFP) support (this is the jar file)
   // CER (10/4/2011): Switched to using date-based version for OFP jar file.
