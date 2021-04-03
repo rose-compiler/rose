@@ -1765,7 +1765,9 @@ context-free syntax
           Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
 
   RepConversion
-    '(' NamedVariable ')'     -> RepFunctionVariable   {cons("RepFunctionVariable")}
+    '(' NamedVariable ')'           -> RepFunctionVariable   {cons("RepFunctionVariable")}
+  RepConversion
+    '(' NamedVariable Subscript ')' -> RepFunctionVariable   {cons("RepFunctionVariable")}
 
   BlockName                   -> BlockReference
   BlockDereference            -> BlockReference
@@ -2189,7 +2191,7 @@ context-free syntax
 
   '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
 
-      Name                      -> CompoolDeclaredName
+      Name                      -> CompoolDeclaredName      {cons("Name")}
   '(' Name ')'                  -> CompoolDeclaredName      {cons("Name")}
 
   CharacterLiteral              -> CompoolFileName
