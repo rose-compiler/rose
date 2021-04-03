@@ -32,7 +32,7 @@
 # Platform-independent settings
 ########################################################################################################################
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.15)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Enable ccache if not already enabled by symlink masquerading and if no other compiler launchers are already defined
