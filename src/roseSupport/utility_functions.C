@@ -691,7 +691,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 #if 0
   // DQ (9/8/2017): Debugging ROSE_ASSERT.
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      if (project->get_binary_only() == true)
@@ -773,7 +773,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
              {
             // DQ (9/6/2005): I think that this is no longer needed
                printf ("I don't think we need to call instantiateTemplates() any more! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
             // The instantiation of templates can cause new projects (sets of source files) 
             // to be generated, but since the object files are already processed this is 
@@ -888,7 +888,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
                printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -1012,7 +1012,7 @@ copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
         }
 #else
      printf ("Error: Inside of copy_backend(), the copy backend has been disabled in favor of a token based mechanism for unparsing. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (5/19/2005): I had to make up a return value since one was not previously specified
@@ -1661,9 +1661,8 @@ Rose::getNextStatement ( SgStatement *currentStatement )
           case V_SgStatement:
           case V_SgFunctionParameterList:
              {
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
             // not specified
-               break;
              }
 
        // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
@@ -1731,7 +1730,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                          cerr<<currentStatement->get_file_info()->displayString()<<endl;
                          cerr<<"Its scope is "<<scope->class_name()<<endl;
                          cerr<<scope->get_file_info()->displayString()<<endl;
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
                        }
 
                  // now i == currentStatement

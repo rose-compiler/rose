@@ -13,7 +13,7 @@
 #include <CommandOptions.h>
 #include <fstream>
 
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 #ifdef BD_OMEGA
 #include <PlatoOmegaInterface.h>

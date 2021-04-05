@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ABORT.h>
+#include <ROSE_ASSERT.h>
 
 #include <DepRel.h>
 
@@ -62,7 +63,7 @@ void DepRel::Reset( DepDirType t, int min, int max)
     }
     break;
   default:
-    assert(false);
+    ROSE_ABORT();
   }
   entryType = t | (size << 3);
 }
@@ -88,7 +89,7 @@ DepDirType  DepRel :: GetDirType() const
   case DEPDIR_ALL:
   case DEPDIR_NE:  return DEPDIR_ALL;
   default:
-      assert(false);
+      ROSE_ABORT();
   }
   return DEPDIR_NONE;
 }
@@ -107,7 +108,7 @@ int DepRel :: GetMinAlign() const
   case DEPDIR_GE:
     return align;
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -126,7 +127,7 @@ int DepRel :: GetMaxAlign() const
   case DEPDIR_LE:
     return align + size - 1;
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -249,7 +250,7 @@ bool DepRel::IntersectUpdate (DepRel& e1, const DepRel &e2)
       e1.Reset(t, min, max);
     break;
   default:
-    assert(false);
+    ROSE_ABORT();
   }
   return t1 != e1.GetDirType() || a1 != e1.GetMinAlign() || b1 != e1.GetMaxAlign();
 }
@@ -323,7 +324,7 @@ DepRel Reverse( const DepRel &e)
   case DEPDIR_ALL:
     return e;
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -346,7 +347,7 @@ DepRel operator - (const DepRel &e)
   case DEPDIR_NE:
     return DepRel(DEPDIR_EQ, lo, hi);
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 }
 

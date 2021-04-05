@@ -367,6 +367,10 @@ list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
   return globalList;
 }
 
+bool SgNodeHelper::isGlobalVariableDeclaration(SgVariableDeclaration* varDecl) {
+  ROSE_ASSERT(varDecl);
+  return isSgGlobal(varDecl->get_parent())!=0;
+}
 
 /*!
   * \author Markus Schordan
@@ -873,8 +877,7 @@ SgExpression* SgNodeHelper::getCalleeOfCall(/*const*/ SgFunctionCallExp* call) {
     return calleeExpression;
   }
   else {
-    ROSE_ASSERT(false);
-    return 0;
+    ROSE_ABORT();
   }
 }
 

@@ -2386,6 +2386,7 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/sageInterfaceAda_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
@@ -2440,6 +2441,7 @@ tests/nonsmoke/functional/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testNostdincOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testAnsiOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
@@ -2543,6 +2545,7 @@ tools/BinaryAnalysis/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/featureVector/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

@@ -5,7 +5,7 @@
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
 #include "CPPAstInterface.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 #include <string.h>
 
 using namespace std;
@@ -143,7 +143,7 @@ AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
          AstNodePtr obj = first_arg().CodeGen(fa);
          AstNodeType objtype;
          if ( fa.IsExpression(obj, &objtype) == AST_NULL)
-           assert(false);
+           ROSE_ABORT();
          string objtypename;
          fa.GetTypeInfo(objtype, 0, &objtypename);
 
@@ -416,7 +416,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
             cerr << "Error: expecting integer const instead of ";
             u.last_arg().Dump();
             cerr << endl;
-            assert(false);
+            ROSE_ABORT();
         }
     }
    else if (buf == "repeat") {
@@ -515,7 +515,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
         int lb = 0, ub = 0;
         if (!cur.get_extension(lb, ub) || ub-lb >= (int)parList.size() - j) {
            cerr << "lb = " << lb << "; ub = " << ub << "; parList.size = " << parList.size() << "; j = " << j << endl;
-           assert(false);
+           ROSE_ABORT();
         }
         ReplaceExtendibleParam op(basename, extname, lb, ub, j, parList);
         r = op.visit( r);
@@ -525,7 +525,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
   }
   if ( (size_t)j < parList.size()) {
     cerr << "Error: given more than needed arguments *********" << j << "<" << parList.size() << endl;
-    assert(false);
+    ROSE_ABORT();
   }
   return true;
 }

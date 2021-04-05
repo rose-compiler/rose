@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "genUID.h"
 
 genUID::genUID()
@@ -27,3 +30,5 @@ unsigned long genUID::getUID()
         return ++curUID;
         // Destruction of myLock releases lock on uidAccessM
 }
+
+#endif

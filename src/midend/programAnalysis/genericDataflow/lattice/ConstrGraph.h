@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef CONSTR_GRAPH_H
 #define CONSTR_GRAPH_H
 
@@ -902,4 +905,4 @@ public:
 
 
 #endif
-
+#endif

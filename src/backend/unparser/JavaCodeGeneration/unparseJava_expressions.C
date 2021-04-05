@@ -148,8 +148,7 @@ void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpar
 
                 default:
                      cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
-                     ROSE_ASSERT(false);
-                     break;
+                     ROSE_ABORT();
             }
         }
     }
@@ -256,7 +255,7 @@ Unparse_Java::unparseTemplateParameter(SgTemplateParameter* templateParameter, S
    {
      ASSERT_not_null(templateParameter);
      printf ("unparseTemplateParameter(): Sorry, not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -1337,7 +1336,7 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
         case V_SgJavaUnsignedRshiftAssignOp: curprint(" >>>= "); break;
         default: {
              cout << "error: unhandled compound assign op: " << op->class_name() << endl;
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
         }
     }
     unparseExpression(op->get_rhs_operand(), info);
@@ -1373,7 +1372,7 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgCommaOpExp:           curprint(", ");    break; // charles4 10/14/2011
         default: {
              cout << "error: cannot unparse binary op: " << op->class_name() << endl;
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
         }
     }
     unparseExpression(op->get_rhs_operand(), info);

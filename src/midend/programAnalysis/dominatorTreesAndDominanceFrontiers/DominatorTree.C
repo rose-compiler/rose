@@ -88,7 +88,7 @@ bool DominatorTree::_processNode(int i) {
     next_nodes = curr->getSuccessors();
     break;
   default:
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
   set<SimpleDirectedGraphNode *>::iterator node_iter = next_nodes.begin();
   int newDom;

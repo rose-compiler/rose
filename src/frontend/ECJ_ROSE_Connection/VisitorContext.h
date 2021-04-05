@@ -10,6 +10,7 @@
 
 #include <string>
 #include <assert.h>
+#include <ROSE_ABORT.h>
 
 class VisitorContext {
 private:
@@ -83,8 +84,7 @@ public:
 
         virtual unsigned int getNbChildren() {
                 // Not yet implemented
-                assert(false);
-                return 0;
+                ROSE_ABORT();
         }
 };
 

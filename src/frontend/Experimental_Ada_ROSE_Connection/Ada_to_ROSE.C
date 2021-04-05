@@ -13,6 +13,9 @@
 #include "AdaStatement.h"
 #include "AdaType.h"
 
+#include "sageInterfaceAda.h"
+
+
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
@@ -251,30 +254,26 @@ namespace
       case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
 
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Expression:             // Asis.Expressions
         {
           // handled by getExpr
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Exception_Handler:      // Asis.Statements
         {
           // handled by handleExceptionHandler
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Definition:              // Asis.Definitions
@@ -690,12 +689,12 @@ namespace
       else if (parentID > 0)
       {
         // parentID == 1.. is 1 used for the package standard??
-        logError() << "unknown unit dependency: "
-                   << pos->first.name << ' '
-                   << (pos->first.isbody ? "[body]" : "[spec]")
-                   << "#" << pos->second.unit->ID
-                   << " -> #" << parentID
-                   << std::endl;
+        logWarn() << "unknown unit dependency: "
+                  << pos->first.name << ' '
+                  << (pos->first.isbody ? "[body]" : "[spec]")
+                  << "#" << pos->second.unit->ID
+                  << " -> #" << parentID
+                  << std::endl;
       }
 
       addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
@@ -762,7 +761,6 @@ namespace
   }
 
 
-
   struct AstSanityCheck : AstSimpleProcessing
   {
     void visit(SgNode* sageNode) ROSE_OVERRIDE
@@ -804,6 +802,10 @@ namespace
       if (!hasParent || printOutput)
         logWarn() << "        unparsed: " << n->unparseToString()
                   << std::endl;
+
+      //~ checkType(isSgExpression(n));
+      //~ checkType(isSgInitializedName(n));
+      //~ checkExpr(isSgAdaAttributeExp(n));
     }
   };
 

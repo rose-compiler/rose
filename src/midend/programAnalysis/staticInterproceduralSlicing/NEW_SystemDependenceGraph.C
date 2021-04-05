@@ -616,7 +616,7 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
       if (ii->getActualInCount(i)<calledFunction->getFormalCount())
       {
         cerr <<"expecting "<<calledFunction->getFormalCount()<<"arguments at minimum, "<<ii->getActualInCount(i)<<" received"<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
       else if (!calledFunction->getEllipse() && ii->getActualInCount(i)>calledFunction->getFormalCount())
       {

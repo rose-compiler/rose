@@ -73,9 +73,7 @@ FILE* CompilerOutputParser::getCompilerOutput(const vector<string>& argv, bool i
 #else
     // tps: does not work right now. Have not hit this assert yet.
     printf("Error: no MSVS implementation available popenReadFromVector() (not implemented) \n");
-    assert(false);
-
-    return NULL;
+    ROSE_ABORT();
 #endif
 }
 

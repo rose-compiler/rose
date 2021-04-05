@@ -54,7 +54,7 @@ void ArrayShapeDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cu
     }
     else {
       std::cerr << "Error: non-recognized annotation: " << annot << std::endl;
-      assert(false);
+      ROSE_ABORT();
     }
   }
 
@@ -66,7 +66,7 @@ void ArrayElemDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur
   }
   else{
       std::cerr << "Error: non-recognized annotation: " << annot << std::endl;
-      assert(false);
+      ROSE_ABORT();
     }
 
 }
@@ -137,7 +137,7 @@ void ArrayDefineDescriptor::push_back( const ReadSymbolicFunctionDeclaration& cu
   if (annot == "reshape")  {
     if ( cur.first.second.size() > 1) {
       cur.Dump();
-      assert(false);
+      ROSE_ABORT();
     }
     reshape.push_back( SymbolicFunctionDeclaration( cur.first.second, cur.second) );
   }
@@ -300,7 +300,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
   }
   if (arrayp != 0) {
     if (!desc.first.get_val().isAstWrap(*arrayp))
-       assert( false);
+       ROSE_ABORT( );
   }
   if (descp != 0) {
     *descp = desc.second;
@@ -338,7 +338,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstIn
        SymbolicValDescriptor cur = *p;
        AstNodePtr curarg;
        if (!cur.get_val().isAstWrap(curarg))
-           assert(false);
+           ROSE_ABORT();
        alias->push_back(curarg.get_ptr());
     }
   }
@@ -415,7 +415,7 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
             *dimAst = cur;
       if (dim != 0) {
           if (!fa.IsConstInt(cur, dim))
-              assert(false);
+              ROSE_ABORT();
       }
       if (DebugArrayAnnot()) {
         std::cerr << "Recognized access-array-length operator: ";
@@ -542,5 +542,4 @@ template class OperatorAnnotCollection<ArrayConstructDescriptor>;
 template class TypeAnnotCollection<ArrayDefineDescriptor>;
 template class TypeAnnotCollection<ArrayOptDescriptor>;
 #include <AnnotDescriptors.C>
-template class CollectPair<TypeDescriptor, ArrayDescriptor, 0>;
-
+template struct CollectPair<TypeDescriptor, ArrayDescriptor, 0>;

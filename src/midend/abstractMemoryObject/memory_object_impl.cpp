@@ -50,7 +50,7 @@ namespace AbstractMemoryObject {
   IndexSet::~IndexSet()
   {
     cerr<<"Error. Calling the base destructor of IndexSet is not allowed. "<<endl;
-    assert (false);
+    ROSE_ABORT ();
   }
 
   std::map <size_t, ConstIndexSet * >  ConstIndexSet::constIndexMap;
@@ -59,29 +59,25 @@ namespace AbstractMemoryObject {
   bool IndexSet::operator==(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base operator=() of IndexSet is not allowed. "<<endl;
-    assert (false);
-    return false;
+    ROSE_ABORT ();
   }
 
   bool IndexSet::mayEqual(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base mayEqual() of IndexSet is not allowed. "<<endl;
-    assert (false);
-    return false;
+    ROSE_ABORT ();
   }
 
   bool IndexSet::mustEqual(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base mustEqual() of IndexSet is not allowed. "<<endl;
-    assert (false);
-    return false;
+    ROSE_ABORT ();
   }
 
   bool IndexSet::operator!=(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base operator!=() of IndexSet is not allowed. "<<endl;
-    assert (false);
-    return false;
+    ROSE_ABORT ();
   }
 
   bool ConstIndexSet::operator!= (const IndexSet & other) const
@@ -107,7 +103,7 @@ namespace AbstractMemoryObject {
       catch (bad_cast & bc)
       {
         cerr<<"Error: unreachable branch reached ."<<endl;
-        assert (false);
+        ROSE_ABORT ();
       }
 
     }
@@ -132,7 +128,7 @@ namespace AbstractMemoryObject {
       catch (bad_cast & bc)
       {
         cerr<<"Error: unreachable branch reached ."<<endl;
-        assert (false);
+        ROSE_ABORT ();
       }
 
     }
@@ -157,7 +153,7 @@ namespace AbstractMemoryObject {
       catch (bad_cast & bc)
       {
         cerr<<"Error: unreachable branch reached ."<<endl;
-        assert (false);
+        ROSE_ABORT ();
       }
 
     }
@@ -193,7 +189,7 @@ namespace AbstractMemoryObject {
       default:
       {
         cerr<<"Error in ConstIndexSet::ConstIndexSet(), unexpected integer valued SgValueExp type: " << v_exp->class_name()<<endl;
-        assert(false);
+        ROSE_ABORT();
       }
     }
     return get_inst (v);
@@ -580,10 +576,8 @@ namespace AbstractMemoryObject {
 
   ObjSet* PointerExprObj::getElements() // in case it is a pointer to array
   {
-    ObjSet* rt = NULL;
     //TODO
-    assert (false);
-    return rt;
+    ROSE_ABORT ();
   }
 
   bool  PointerExprObj::equalPoints (Pointer & that)
@@ -976,8 +970,7 @@ namespace AbstractMemoryObject {
   std::string IndexSet::toString()
   {
     cerr<<"Error. Direct call to base class (IndexSet)'s toString() is not allowed."<<endl;
-    assert (false);
-    return "";
+    ROSE_ABORT ();
   }
 
   std::string NamedObj::toString()
@@ -1095,12 +1088,8 @@ namespace AbstractMemoryObject {
 
   ObjSet* PointerNamedObj::getElements() // in case it is a pointer to array
   {
-    ObjSet* rt = NULL;
     //TODO
-    assert (false);
-
-    return rt;
-    
+    ROSE_ABORT ();
   }
 
   bool  PointerNamedObj::equalPoints (Pointer & that)
@@ -1683,7 +1672,7 @@ namespace AbstractMemoryObject {
   void dump_aliased_objset_map ()
   {
     cout<<"Not yet implemented."<<endl;
-    assert (false);
+    ROSE_ABORT ();
 
   }
   // creator for different objects
@@ -1987,7 +1976,7 @@ namespace AbstractMemoryObject {
     if (var_exp)
     {
       cerr<<"Error. Trying to create an expression object when anchor_exp is a SgVarRefExp, which should be associated with a named object. "<<endl;
-      assert (false);
+      ROSE_ABORT ();
     }  
 
     if (expr_objset_map[anchor_exp] == NULL)

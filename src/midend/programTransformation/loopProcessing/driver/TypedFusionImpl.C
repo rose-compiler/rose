@@ -5,7 +5,7 @@
 #include <TypedFusion.h>
 #include <GraphScope.h>
 #include <FusionAnal.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 //#define DEBUG 1
 

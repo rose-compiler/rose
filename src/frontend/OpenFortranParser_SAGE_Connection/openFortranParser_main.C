@@ -129,11 +129,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      int status = 0;
 
      printf ("ERROR: This function is defined in openFortranParser_main.C of the src/frontend/OpenFortranParser_SAGE_Connection directory (the experimental fortran frontend has not been enabled) \n");
-     ROSE_ASSERT(false);
-
-  // Put the call the the new SDF Open Fortran Parser here.
-
-     return status;
+     ROSE_ABORT();
    }
 #else
 int

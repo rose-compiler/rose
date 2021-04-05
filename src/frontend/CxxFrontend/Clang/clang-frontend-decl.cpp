@@ -378,7 +378,7 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
 
         default:
             std::cerr << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     ROSE_ASSERT(ret_status == false || result != NULL);

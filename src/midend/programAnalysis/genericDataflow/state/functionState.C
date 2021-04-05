@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "functionState.h"
 #include "cfgUtils.h"
 
@@ -176,3 +179,5 @@ void CollectFunctions::visit(const CGFunction* cgFunc)
         FunctionState::allFuncs.insert(fs);
         //return 0;
 }
+
+#endif

@@ -73,7 +73,7 @@ class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
 #ifndef CXX_IS_ROSE_CODE_GENERATION
               if( isSgConditionalExp(astNode) == NULL &&
                   isSgExprListExp(astNode) == NULL )
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
 #endif
             }
 #ifndef CXX_IS_ROSE_CODE_GENERATION

@@ -5,6 +5,7 @@
 #include <MultiGraphCreate.h>
 #include <GraphAccess.h>
 #include <assert.h>
+#include <ROSE_ABORT.h>
 
 typedef MultiGraphElemTemplate<void*> BaseGraphNode;
 typedef MultiGraphElemTemplate<void*> BaseGraphEdge;
@@ -98,7 +99,7 @@ class BaseGraphCreateWrap : public BaseGraphCreate
    case GraphAccess::EdgeOut: return GraphImpl::EdgeOut;
    case GraphAccess::EdgeIn: return GraphImpl::EdgeIn;
    default:
-     assert(false);
+       ROSE_ABORT();
    }
   }
 

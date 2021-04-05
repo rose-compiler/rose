@@ -1241,7 +1241,7 @@ static bool isCopyConstructor(SgMemberFunctionDeclaration *memberFunctionDeclara
         if ( classDeclaration->get_type()->get_name() != nrdecl->get_type()->get_name() )
           return false;
       } else {
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
 
       if ((*p)->get_initializer() != 0) // default parameter
@@ -1352,7 +1352,7 @@ static bool isOperatorEquals(SgMemberFunctionDeclaration *memberFunctionDeclarat
   } else if (nrdecl != NULL) {
     return isCopyAssignmentTypeEquivalent(nrdecl->get_type(), memberFnType->get_arguments().front());
   } else {
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 
   return false;
@@ -2301,12 +2301,13 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
 
        // DQ (8/28/2012): Make this an error at runtime.
           printf ("ERROR: Not using the new API for template declaration\n");
-          ROSE_ASSERT(false);
-
+          ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreachable
           SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;// new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
           tempFunc->set_definingDeclaration(tempFunc);
           tempFunc->set_templateName(func_name);
           func = tempFunc;
+#endif
         }
      else
         {
@@ -3521,7 +3522,7 @@ void DefaultFunctionGenerator::visit (SgNode * astNode)
   
                 if (!assignInitParent->replace_expression(assignInit, newCtorInit))
                    {
-                     ROSE_ASSERT(false);
+                     ROSE_ABORT();
                    }
   
                 // delete assignInit; // this will work for postorder I think

@@ -1311,7 +1311,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
          returnResult = false;
 #if 0
          printf ("Exiting as a test! \n");
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
 #endif
        }
 
@@ -1447,7 +1447,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
          returnResult = false;
 #if 0
          printf ("Exiting as a test! \n");
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
 #endif
        }
 
@@ -1497,7 +1497,7 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -1510,7 +1510,7 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -1712,7 +1712,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2037,7 +2037,7 @@ void
 Grammar::buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile )
    {
      printf ("This should not be called! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      string fileName  = "../Grammar/grammarMainClassSourceCodeMacros.macro";
 
@@ -2559,7 +2559,7 @@ Grammar::buildAtermBuildFunctionsSourceFile( AstNodeClass & node, StringUtility:
 
 #if 0
      printf ("Exiting at TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildAtermConstructor (node);
@@ -3797,7 +3797,7 @@ Grammar::buildCode ()
 
 #if 0
      printf ("Exiting as a test in ROSETTA generation of ATerm support! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 #endif // BUILD_ATERM_SUPPORT
 
@@ -4984,10 +4984,7 @@ AstNodeClass* lookupTerminal(const vector<AstNodeClass*>& tl, const std::string&
     }
   }
   cerr << "Reached end of AstNodeClass list in search for '" << name << "'" << endl;
-  ROSE_ASSERT (false);
-
-// DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
-  return NULL;
+  ROSE_ABORT ();
 }
 
 bool Grammar::nameHasPrefix(string name, string prefix) {

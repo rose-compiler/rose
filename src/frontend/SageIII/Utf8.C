@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 #include "Utf8.h"
 
 // Define static member variables
