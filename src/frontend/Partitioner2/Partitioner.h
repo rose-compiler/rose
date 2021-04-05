@@ -43,6 +43,7 @@
 // Derived classes needed for serialization
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
+#include <DispatcherAarch32.h>
 #include <DispatcherAarch64.h>
 #include <DispatcherM68k.h>
 #include <DispatcherPowerpc.h>
@@ -399,6 +400,9 @@ private:
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
 #ifdef ROSE_ENABLE_ASM_AARCH64
         s.template register_type<InstructionSemantics2::DispatcherAarch64>();
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        s.template register_type<InstructionSemantics2::DispatcherAarch32>();
 #endif
         s.template register_type<InstructionSemantics2::DispatcherX86>();
         s.template register_type<InstructionSemantics2::DispatcherM68k>();
@@ -1374,9 +1378,10 @@ public:
      *  @li Error is indicated by a cached null expression. Errors are usually due to a reachable basic block that contains an
      *      instruction for which semantics are not known.
      *
-     *  @li Constant offset, for which the @c is_number predicate applied to the return value is true.
+     *  @li Constant offset, for which the @c toInteger predicate applied to the return value is true. I.e., the delta is a
+     *      concrete value fits in a 64-bit signed integer.
      *
-     *  @li Top, indicated by a non-null return value for which @c is_number is false.  This results when two or more paths
+     *  @li Top, indicated by a non-null return value for which @c toInteger is false.  This results when two or more paths
      *      through the control flow graph result in different constant offsets. It can also occur when the algebraic
      *      simplifications that are built into ROSE fail to simplify a constant expression.
      *

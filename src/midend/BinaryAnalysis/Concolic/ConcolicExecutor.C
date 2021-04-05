@@ -279,9 +279,8 @@ void
 RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet.
     systemCalls().back().arguments.resize(1);
-    if (status->is_number()) {
-        int exitValue = status->get_number();
-        mlog[INFO] <<"specimen exiting with " <<exitValue <<"\n";
+    if (auto exitValue = status->toSigned()) {
+        mlog[INFO] <<"specimen exiting with " <<*exitValue <<"\n";
         throw Exit(SValue::promote(status));
     } else {
         mlog[INFO] <<"specimen exiting with unknown value\n";
@@ -315,9 +314,9 @@ RiscOperators::systemCall() {
     mlog[DEBUG] <<"encountered " <<sc;
 
     // A few system calls are handled directly.
-    if (sc.functionNumber->is_number()) {
+    if (auto fn = sc.functionNumber->toUnsigned()) {
         if (32 == partitioner_.instructionProvider().wordSize()) {
-            switch (sc.functionNumber->get_number()) {
+            switch (*fn) {
                 case 1:                                 // exit
                 case 252:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -326,7 +325,7 @@ RiscOperators::systemCall() {
             }
         } else {
             ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
-            switch (sc.functionNumber->get_number()) {
+            switch (*fn) {
                 case 60:                                // exit
                 case 231:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -342,7 +341,7 @@ IS::BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Read the register's value symbolically, and if we don't have a value then read it concretely and use the concrete value
     // to update the symbolic state.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
     SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::readRegister(reg, dflt);
@@ -351,7 +350,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SVa
 IS::BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Return the register's symbolic value if it exists, else the concrete value.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
     SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::peekRegister(reg, dflt);
@@ -362,11 +361,10 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dfltUnused, const IS::BaseSemantics::SValuePtr &cond) {
     // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
     // update the symbolic state. However, we can only read it concretely if the address is a constant.
-    if (addr->is_number()) {
-        rose_addr_t va = addr->get_number();
-        size_t nBytes = dfltUnused->get_width() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(va, nBytes, ByteOrder::ORDER_LSB));
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    if (auto va = addr->toUnsigned()) {
+        size_t nBytes = dfltUnused->nBits() / 8;
+        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(*va, nBytes, ByteOrder::ORDER_LSB));
+        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
     } else {
@@ -379,11 +377,10 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
     // symbolic.
-    if (addr->is_number()) {
-        rose_addr_t va = addr->get_number();
-        size_t nBytes = dfltUnused->get_width() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(va, nBytes, ByteOrder::ORDER_LSB));
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    if (auto va = addr->toUnsigned()) {
+        size_t nBytes = dfltUnused->nBits() / 8;
+        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(*va, nBytes, ByteOrder::ORDER_LSB));
+        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::peekMemory(segreg, addr, dflt);
     } else {
@@ -425,7 +422,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
     size_t argc = process_->readMemory(argcVa, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
 
     SValuePtr symbolicArgc = SValue::promote(undefined_(SP.nBits()));
-    symbolicArgc->set_comment("argc");
+    symbolicArgc->comment("argc");
     writeMemory(RegisterDescriptor(), number_(SP.nBits(), argcVa), symbolicArgc, boolean_(true));
     inputVariables_.insertProgramArgumentCount(symbolicArgc->get_expression());
 
@@ -454,7 +451,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
         if (settings_.markingArgvAsInput) {
             for (size_t j = 0; j <= s.size(); ++j) {
                 SValuePtr symbolicChar = SValue::promote(undefined_(8));
-                symbolicChar->set_comment((boost::format("argv_%d_%d") % i % j).str());
+                symbolicChar->comment((boost::format("argv_%d_%d") % i % j).str());
                 SValuePtr charVa = SValue::promote(number_(SP.nBits(), strVa + j));
                 writeMemory(RegisterDescriptor(), charVa, symbolicChar, boolean_(true));
                 inputVariables_.insertProgramArgument(i, j, symbolicChar->get_expression());
@@ -486,7 +483,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
             if (settings_.markingEnvpAsInput) {
                 for (size_t i = 0; i <= s.size(); ++i) {
                     SValuePtr symbolicChar = SValue::promote(undefined_(8));
-                    symbolicChar->set_comment((boost::format("envp_%d_%d") % nEnvVars % i).str());
+                    symbolicChar->comment((boost::format("envp_%d_%d") % nEnvVars % i).str());
                     SValuePtr charVa = SValue::promote(number_(SP.nBits(), strVa + i));
                     writeMemory(RegisterDescriptor(), charVa, symbolicChar, boolean_(true));
                     inputVariables_.insertEnvironmentVariable(nEnvVars, i, symbolicChar->get_expression());
@@ -882,8 +879,8 @@ ConcolicExecutor::saveSystemCall(const Database::Ptr &db, const TestCase::Ptr &t
     auto systemCall = SystemCall::instance();
     systemCall->testCase(testCase);
     ASSERT_not_null(sc.functionNumber);
-    ASSERT_require2(sc.functionNumber->is_number(), "non-concrete system calls not implemented yet");
-    systemCall->functionId(sc.functionNumber->get_number());
+    ASSERT_require2(sc.functionNumber->isConcrete(), "non-concrete system calls not implemented yet");
+    systemCall->functionId(sc.functionNumber->toUnsigned().get());
     systemCall->callSite(sc.callSite);
 
     // We don't have a concrete return value yet because we're treating the return value as a program input.

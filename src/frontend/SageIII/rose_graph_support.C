@@ -267,7 +267,7 @@ SgGraph::addNode( SgGraphNode* node )
        else
         {
           printf ("This node already exists in this graph \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
      return node;
    }
@@ -330,7 +330,7 @@ SgGraph::addEdge( SgGraphEdge* edge )
        else
         {
           printf ("This node already exists in this graph \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return edge;
@@ -425,7 +425,7 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
        else
         {
           printf ("This edge already exists in this graph \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
      return edge;
    }
@@ -597,7 +597,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 #if 0
 //#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
          printf ("std::hash_map::resize() function not available in MSVC. \n");
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
 #else
      // CH (4/9/2010): boost::unordered_map uses 'rehash' instead of 'resize'  
 #if 1    
@@ -692,7 +692,7 @@ SgGraph::generateSpanningTree()
 
 
 #ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
      // tps , commented this out because it is baded on the old graph structure
      // Dan needs to look at this later
 #if 0

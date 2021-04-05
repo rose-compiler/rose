@@ -214,7 +214,8 @@ public:
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);

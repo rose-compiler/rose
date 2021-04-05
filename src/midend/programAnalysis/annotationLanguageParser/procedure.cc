@@ -1,7 +1,9 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include <cassert>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -1139,3 +1141,4 @@ void procedureAnn::print(ostream & o) const
   o << "}" << endl;
 }
 
+#endif

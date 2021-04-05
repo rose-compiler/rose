@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef LATTICE_FULL_H
 #define LATTICE_FULL_H
 
@@ -436,4 +439,5 @@ class InfiniteVariablesProductLattice : public virtual VariablesProductLattice, 
         }
 };
 
+#endif
 #endif

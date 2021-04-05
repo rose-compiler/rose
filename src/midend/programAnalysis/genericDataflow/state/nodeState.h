@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef NODE_STATE_H
 #define NODE_STATE_H
 
@@ -355,4 +358,5 @@ class NodeState
         std::string str(Analysis* analysis, std::string indent="") const;
 };
 
+#endif
 #endif

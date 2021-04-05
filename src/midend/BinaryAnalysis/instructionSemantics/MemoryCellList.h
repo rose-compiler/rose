@@ -216,9 +216,9 @@ public:
         CellList retval;
         MemoryCellPtr tempCell = protocell->create(addr, valOps->undefined_(nBits));
         for (/*void*/; cursor!=cells.end(); ++cursor) {
-            if (tempCell->may_alias(*cursor, addrOps)) {
+            if (tempCell->mayAlias(*cursor, addrOps)) {
                 retval.push_back(*cursor);
-                if (tempCell->must_alias(*cursor, addrOps))
+                if (tempCell->mustAlias(*cursor, addrOps))
                     break;
             }
         }

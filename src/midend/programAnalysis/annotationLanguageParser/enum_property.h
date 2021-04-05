@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_ENUM_PROPERTY_H
 #define BDWY_ENUM_PROPERTY_H
@@ -872,3 +874,4 @@ private:
 };
 
 #endif /* BDWY_ENUM_PROPERTY_H */
+#endif

@@ -574,15 +574,15 @@ L444  0x00000000: 22 fc 5f 48               ?? ldaxrh   w2, u16 [x1]            
 L445  
 L446  # ldp q3, q1, [x2], #-0x10
 L447  0x43 0x84 0xff 0xac
-L447  0x00000000: 43 84 ff ac               ?? ldp      q3, q1, u256 [x2 then x2 += 0xfffffffffffffff0<18446744073709551600,-16>] ; load pair of registers
+L447  0x00000000: 43 84 ff ac               ?? ldp      q3, q1, u256 [x2 (then x2 = x2 + 0xfffffffffffffff0<18446744073709551600,-16>)] ; load pair of registers
 L448  
 L449  # ldp s12, s11, [x3, #0x78]!
 L450  0x6c 0x2c 0xcf 0x2d
-L450  0x00000000: 6c 2c cf 2d               ?? ldp      s12, s11, u64 [x3 += 0x0000000000000078<120>] ; load pair of registers
+L450  0x00000000: 6c 2c cf 2d               ?? ldp      s12, s11, u64 [x3 (after x3 = x3 + 0x0000000000000078<120>)] ; load pair of registers
 L451  
 L452  # ldpsw x3, x1, [x2], #0x3c
 L453  0x43 0x84 0xc7 0x68
-L453  0x00000000: 43 84 c7 68               ?? ldpsw    x3, x1, u64 [x2 then x2 += 0x000000000000003c<60>] ; load pair of registers with signed word
+L453  0x00000000: 43 84 c7 68               ?? ldpsw    x3, x1, u64 [x2 (then x2 = x2 + 0x000000000000003c<60>)] ; load pair of registers with signed word
 L454  
 L455  # ldr x17, [x16, #3632]
 L456  0x11 0x1a 0x47 0xf9
@@ -590,7 +590,7 @@ L456  0x00000000: 11 1a 47 f9               ?? ldr      x17, u64 [x16 + 0x000000
 L457  
 L458  # ldrb w2, [x1, #-1]!
 L459  0x22 0xfc 0x5f 0x38
-L459  0x00000000: 22 fc 5f 38               ?? ldrb     w2, u8 [x1 += 0xffffffffffffffff<18446744073709551615,-1>] ; load register byte
+L459  0x00000000: 22 fc 5f 38               ?? ldrb     w2, u8 [x1 (after x1 = x1 + 0xffffffffffffffff<18446744073709551615,-1>)] ; load register byte
 L460  
 L461  # ldrb w3, [x2, w1, uxtw]
 L462  0x43 0x48 0x61 0x38
@@ -614,7 +614,7 @@ L474  0x00000000: 43 f8 a1 38               ?? ldrsb    x3, u8 [x2 + x1]        
 L475  
 L476  # ldrsh w3, [x2], #0xffffffffffffffff
 L477  0x43 0xf4 0xdf 0x78
-L477  0x00000000: 43 f4 df 78               ?? ldrsh    w3, u16 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; load signed halfword
+L477  0x00000000: 43 f4 df 78               ?? ldrsh    w3, u16 [x2 (then x2 = x2 + 0xffffffffffffffff<18446744073709551615,-1>)] ; load signed halfword
 L478  
 L479  # ldrsh w3, [x2, x1, lsl #1]
 L480  0x43 0x78 0xe1 0x78
@@ -622,7 +622,7 @@ L480  0x00000000: 43 78 e1 78               ?? ldrsh    w3, u16 [x2 + x1 << 1]  
 L481  
 L482  # ldrsw x3, [x2], #0xffffffffffffffff
 L483  0x43 0xf4 0x9f 0xb8
-L483  0x00000000: 43 f4 9f b8               ?? ldrsw    x3, u32 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; load register signed word
+L483  0x00000000: 43 f4 9f b8               ?? ldrsw    x3, u32 [x2 (then x2 = x2 + 0xffffffffffffffff<18446744073709551615,-1>)] ; load register signed word
 L484  
 L485  # ldrsw x1, #0xfffffffffffffffc
 L486  # Note that the second argument should be 32-bit memory reference, not
@@ -852,7 +852,7 @@ L654  0x00000000: 22 fc 9f 48               ?? stlrh    w2, u16 [x1]            
 L655  
 L656  # stp q3, q1, [x2, #-0x10]!
 L657  0x43 0x84 0xbf 0xad
-L657  0x00000000: 43 84 bf ad               ?? stp      q3, q1, u256 [x2 += 0xfffffffffffffff0<18446744073709551600,-16>] ; store pair of registers
+L657  0x00000000: 43 84 bf ad               ?? stp      q3, q1, u256 [x2 (after x2 = x2 + 0xfffffffffffffff0<18446744073709551600,-16>)] ; store pair of registers
 L658  
 L659  # stp x3, x1, [x2, #-8]
 L660  0x43 0x84 0x3f 0xa9
@@ -860,7 +860,7 @@ L660  0x00000000: 43 84 3f a9               ?? stp      x3, x1, u128 [x2 + 0xfff
 L661  
 L662  # strb w3, [x2], #0xffffffffffffffff
 L663  0x43 0xf4 0x1f 0x38
-L663  0x00000000: 43 f4 1f 38               ?? strb     w3, u8 [x2 then x2 += 0xffffffffffffffff<18446744073709551615,-1>] ; store register byte
+L663  0x00000000: 43 f4 1f 38               ?? strb     w3, u8 [x2 (then x2 = x2 + 0xffffffffffffffff<18446744073709551615,-1>)] ; store register byte
 L664  
 L665  #strb w3, [x2, x1, lsl #0]
 L666  0x43 0x78 0x21 0x38

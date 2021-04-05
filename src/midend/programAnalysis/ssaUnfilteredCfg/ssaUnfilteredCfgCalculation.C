@@ -395,7 +395,7 @@ void SSA_UnfilteredCfg::updateIncomingPropagatedDefs(const CFGNode& cfgNode)
                     {
                         printf("ERROR: At node %s, two different definitions reach for variable %s\n",
                                 cfgNode.toStringForDebugging().c_str(), varnameToString(var).c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
             }

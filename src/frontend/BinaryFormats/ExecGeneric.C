@@ -111,7 +111,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 #ifdef _MSC_VER
 #pragma message ("WARNING: Commented out use of functions from sys/wait.h")
                 printf ("ERROR: Commented out use of functions from sys/wait.h \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #else
         if (pipe(child_stdout) == -1)
             throw FormatError("unrecognized file format for \"" + StringUtility::cEscape(name) + "\"");

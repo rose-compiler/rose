@@ -39,7 +39,7 @@ void AstPostProcessing (SgNode* node)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
@@ -110,8 +110,7 @@ void AstPostProcessing (SgNode* node)
                ROSE_ASSERT(directory != NULL);
 
                printf ("SgDirectory support not implemented in AstPostProcessing \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case V_SgFile:
@@ -137,9 +136,7 @@ void AstPostProcessing (SgNode* node)
                ROSE_ASSERT(file != NULL);
 
                printf ("Error: AstPostProcessing of SgBinaryFile is not defined \n");
-               ROSE_ASSERT(false);
-
-               break;
+               ROSE_ABORT();
              }
 #endif
 
@@ -327,7 +324,7 @@ void postProcessingSupport (SgNode* node)
 #if 0
        // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if DEBUG_TYPEDEF_CYCLES
@@ -354,7 +351,7 @@ void postProcessingSupport (SgNode* node)
 #if 0
        // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
 #if DEBUG_TYPEDEF_CYCLES
@@ -433,7 +430,7 @@ void postProcessingSupport (SgNode* node)
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
 
        // **********************************************************************

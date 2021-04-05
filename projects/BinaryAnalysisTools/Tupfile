@@ -28,8 +28,11 @@ run $(tool_compile_linkexe) --install -o rose-xml2json xml2json.C
 #run $(tool_compile_linkexe) --install -o rose-perf-execution-wrapper rose-perf-execution-wrapper.c
 run $(public_script) rose-missing-semantics
 
-ifneq (@(WITH_DLIB),no)
-    run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
+# Doesn't work with static linking due to problems with postgresql library
+ifeq (@(LINKAGE),shared)
+    ifneq (@(WITH_DLIB),no)
+	run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
+    endif
 endif
 
 # Experimental

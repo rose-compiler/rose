@@ -473,7 +473,7 @@ class Annotator : public AstSimpleProcessing
                               cout << "labelList = " << labelList << endl;
                               cout << "gotoList = " << gotoList << endl;
                               cout << "labelList is not a subset of gotoList!" << endl;
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 
@@ -544,7 +544,7 @@ SgMemberFunctionRefExp *buildDtorRefExpr(SgClassDeclaration *decl)
 #else
           cout << "Warning: libharu support is not enabled" << endl;
 #endif
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
      SgMemberFunctionRefExp *ref = new SgMemberFunctionRefExp(SgNULL_FILE, dtor, false, dtor->get_declaration()->get_type(), false);
      return ref;
@@ -586,7 +586,7 @@ SgExpression *buildDestructorExpr(SgNode *n)
         }
      else
         {
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      SgExprListExp *dtorParams = new SgExprListExp(SgNULL_FILE);

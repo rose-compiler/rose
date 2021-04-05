@@ -1466,7 +1466,7 @@ void CodeThorn::CollectTypeInfo::collectTypes()
     // effect analysis to determine the list of variables
     // can modify. Currenty we ignore function pointers as
     // the goal of this analysis is supposed to be simple.
-    if(vidm.hasPointerType(*it))
+    if(vidm.isOfPointerType(*it))
     {
       SgType* baseType = vidm.getType(*it)->findBaseType();
       // perhaps its worthwile to keep them in
@@ -1477,11 +1477,11 @@ void CodeThorn::CollectTypeInfo::collectTypes()
         pointerTypeSet.insert(*it);
       }
     }
-    else if(vidm.hasArrayType(*it))
+    else if(vidm.isOfArrayType(*it))
     {
       arrayTypeSet.insert(*it);
     }
-    else if(vidm.hasReferenceType(*it))
+    else if(vidm.isOfReferenceType(*it))
     {
       referenceTypeSet.insert(*it);
     }

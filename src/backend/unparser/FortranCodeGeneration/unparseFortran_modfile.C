@@ -108,7 +108,7 @@ generateModFile(SgFile *sfile)
           if (!Module_OutputFile) {
              cout << "Error detected in opening file " << lowerCaseOutputFilename.c_str()
                   << "for output" << endl;
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
              }
 
        // Output header at the top of the generate *.rmod file.
@@ -156,7 +156,7 @@ generateModFile(SgFile *sfile)
      printf ("Leaving generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
 
      printf ("exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0

@@ -193,6 +193,28 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-692.jov                  \
  rose-issue-rc-693.jov                  \
  rose-issue-rc-715.jov                  \
+ rose-issue-rc-753a.jov                 \
+ rose-issue-rc-753b.jov                 \
+ rose-issue-rc-754.jov                  \
+ rose-issue-rc-755.jov                  \
+ rose-issue-rc-763.jov                  \
+ rose-issue-rc-765.jov                  \
+ rose-issue-rc-786.cpl                  \
+ rose-issue-rc-787.jov                  \
+ rose-issue-rc-789.jov                  \
+ rose-issue-rc-793.jov                  \
+ rose-issue-rc-797.jov                  \
+ rose-issue-rc-802.jov                  \
+ rose-issue-rc-813.jov                  \
+ rose-issue-rc-818.jov                  \
+ rose-issue-rc-819.jov                  \
+ rose-issue-rc-820.jov                  \
+ rose-issue-rc-821.jov                  \
+ rose-issue-rc-822.jov                  \
+ rose-issue-rc-823.jov                  \
+ rose-issue-rc-824.jov                  \
+ rose-issue-rc-825.jov                  \
+ rose-issue-rc-826.jov                  \
  charlie.jov
 
 JOVIAL_PARSER_TESTCODES = \
@@ -216,6 +238,7 @@ COMPOOL_TESTCODES = \
  alpha.cpl                              \
  define_dollar.cpl                      \
  multi.cpl                              \
+ rectype.cpl                            \
  simple_compool.cpl                     \
  status_type.cpl                        \
  table_inheritance.cpl                  \
@@ -229,6 +252,7 @@ COMPOOL_TESTCODES = \
  rc616b.cpl                             \
  rc687a.cpl                             \
  rc715a.cpl                             \
+ rc833.cpl                              \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -275,9 +299,17 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-531.cpl                  \
  rose-issue-rc-587.cpl                  \
  rose-issue-rc-600.cpl                  \
+ rose-issue-rc-642.cpl                  \
  rose-issue-rc-645.cpl                  \
+ rose-issue-rc-676.cpl                  \
  rose-issue-rc-677.cpl                  \
  rose-issue-rc-737.cpl                  \
+ rose-issue-rc-741.cpl                  \
+ rose-issue-rc-742.cpl                  \
+ rose-issue-rc-745.cpl                  \
+ rose-issue-rc-746.cpl                  \
+ rose-issue-rc-766.cpl                  \
+ rose-issue-rc-833.cpl                  \
  rc161a.pre.cpl                         \
  rc410.cpl                              \
  rc410.pre.cpl                          \
@@ -286,7 +318,13 @@ COMPOOL_TESTCODES = \
  rc616a.cpl                             \
  rc687b.cpl                             \
  rc715b.cpl                             \
- beta.cpl
+ rc754.cpl                              \
+ rc802.cpl                              \
+ rc820.cpl                              \
+ rc821.cpl                              \
+ rc825.cpl                              \
+ beta.cpl                               \
+ parttype.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \

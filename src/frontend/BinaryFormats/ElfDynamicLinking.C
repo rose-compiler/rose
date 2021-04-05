@@ -58,8 +58,7 @@ SgAsmElfDynamicEntry::to_string(EntryType t)
 #ifndef _MSC_VER
     return stringifySgAsmElfDynamicEntryEntryType(t);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 
 }

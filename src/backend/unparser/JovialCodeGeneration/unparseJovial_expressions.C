@@ -4,9 +4,6 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
-
 #ifdef _MSC_VER
 #include "Cxx_Grammar.h"
 #endif
@@ -76,8 +73,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
           default:
              std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
-             ROSE_ASSERT(false);
-             break;
+             ROSE_ABORT();
        }
    }
 
@@ -210,8 +206,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
            break;
         default:
            std::cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << std::endl;
-           ROSE_ASSERT(false);
-           break;
+           ROSE_ABORT();
         }
 
      if (size) {
@@ -340,9 +335,7 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
       curprint("(");
 
       int i = 0;
-// Replace following with C++11
-      foreach(SgInitializedName* arg, formal_params)
-//    for (SgInitializedName* arg : formal_params)
+      for (SgInitializedName* arg : formal_params)
         {
            if (arg->get_storageModifier().isMutable() && foundOutParam == false)
               {
@@ -378,13 +371,13 @@ Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
      SgExprListExp* overlay_expr;
 
      int n = overlay->get_expressions().size();
-     foreach(SgExpression* expr, overlay->get_expressions())
+     for (SgExpression* expr : overlay->get_expressions())
        {
           SgExprListExp* overlay_string_list = isSgExprListExp(expr);
           ASSERT_not_null(overlay_string_list);
 
           int ns = overlay_string_list->get_expressions().size();
-          foreach(SgExpression* overlay_string, overlay_string_list->get_expressions())
+          for (SgExpression* overlay_string : overlay_string_list->get_expressions())
              {
                if ( (overlay_expr = isSgExprListExp(overlay_string)) != NULL)
                   {
@@ -465,8 +458,7 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
            break;
         default:
            std::cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << "\n";
-           ROSE_ASSERT(false);
-           break;
+           ROSE_ABORT();
         }
    }
 
@@ -500,8 +492,7 @@ Unparse_Jovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
            }
         default:
            std::cout << "error: unparseTypeExpr() is unimplemented for " << type->class_name() << "\n";
-           ROSE_ASSERT(false);
-           break;
+           ROSE_ABORT();
         }
 
      curprint(name);
@@ -589,7 +580,7 @@ Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
       bool first = true;
       curprint("(");
 
-      BOOST_FOREACH(SgExpression* expr, dim_info->get_expressions())
+      for (SgExpression* expr : dim_info->get_expressions())
          {
             if (first) first = false;
             else       curprint(",");

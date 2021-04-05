@@ -52,7 +52,8 @@ LinuxExitStatus::run() {
         // Run as many test cases concretely as possible.
         while (TestCaseId testCaseId = pendingConcreteResult()) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            std::auto_ptr<ConcreteExecutorResult> concreteResult(concreteExecutor->execute(testCase));
+            std::unique_ptr<ConcreteExecutorResult> concreteResult(concreteExecutor->execute(testCase));
+            ASSERT_not_null(concreteResult);
             insertConcreteResults(testCase, *concreteResult);
         }
 

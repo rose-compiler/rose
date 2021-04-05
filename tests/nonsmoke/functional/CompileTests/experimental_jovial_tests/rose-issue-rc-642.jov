@@ -1,26 +1,16 @@
 START
 
-COMPOOL DIR;
-
-!INITIALIZE;
-
-!NOLIST;
-!LIST;
-!EJECT;
-
-REF PROC PROC1;
-   !LINKAGE 4; %4 can be replaced by several numbers%
-   BEGIN
-   END
-
-!SKIP A; %A can be replaced by any letter%
-!BEGIN A;
-DEF ITEM ITEM1 U;
-!END;
-
-REF PROC PROC2;
+DEF PROC PROC2;
    !REDUCIBLE;
    BEGIN
+     ITEM ii U;
+     ii = 13;
+   END
+
+DEF PROC PROC3 U;
+   !REDUCIBLE;
+   BEGIN
+     PROC3 = 13;
    END
 
 TERM

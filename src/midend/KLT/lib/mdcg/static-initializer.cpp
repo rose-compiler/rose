@@ -147,7 +147,7 @@ SgExpression * DataContainer::createFieldInitializer(
       return createDataNDims(driver, decl_name.str(), file_id, input.data);
     }
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -175,7 +175,7 @@ SgExpression * TileDesc::createFieldInitializer(
         return SageBuilder::buildIntVal(0);
     }
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -206,7 +206,7 @@ SgExpression * LoopDesc::createFieldInitializer(
              );
     }
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -237,7 +237,7 @@ SgExpression * TopLoopContainer::createFieldInitializer(
              );
     }
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -268,7 +268,7 @@ SgExpression * LoopContainer::createFieldInitializer(
              );
     }
     default:
-     assert(false);
+     ROSE_ABORT();
   }
 }
 

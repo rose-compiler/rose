@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 // DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
 // NOTE: This fails if we only include sage3basic.h.
@@ -467,7 +469,7 @@ SgVarRefExp* varRefFromInitName(SgInitializedName* initName)
 SgAssignInitializer* splitExpression_GB(SgExpression* from, SgVarRefExp* &replacement, string newName, bool byReference) {
         if (!SageInterface::isCopyConstructible(from->get_type())) {
                 std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
-                ROSE_ASSERT (false);
+                ROSE_ABORT ();
         }
         assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
         SgStatement* stmt = getStatementOfExpression(from);
@@ -1128,3 +1130,5 @@ void appendToScopeStmt(SgNode *target, SgNode *newNode, void* data)
 }
 
 }
+
+#endif

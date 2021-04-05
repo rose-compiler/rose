@@ -13,8 +13,8 @@ inline DepDirection EdgeDir2DepDir( GraphAccess::EdgeDirection dir)
   case GraphAccess::EdgeOut : return DEP_SRC;
   case GraphAccess::EdgeIn : return DEP_SINK;
   case GraphAccess::BiEdge: return DEP_SRC_SINK;
-  default: assert(false);
-  } 
+  default: ROSE_ABORT();
+  }
 }
 
 template <class Graph, class DepInfoUpdate>

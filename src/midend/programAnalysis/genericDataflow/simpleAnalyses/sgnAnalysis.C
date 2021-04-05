@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "sgnAnalysis.h"
 
 int sgnAnalysisDebugLevel=0;
@@ -745,3 +748,5 @@ void printSgnAnalysisStates(SgnAnalysis* sa, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

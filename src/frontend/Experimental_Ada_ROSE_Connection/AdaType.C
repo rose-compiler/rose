@@ -276,7 +276,7 @@ namespace
     if (res == nullptr)
     {
       logError() << "getParentRecordDecl: " << typeid(*basenode).name() << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 
     return SG_DEREF(res);

@@ -60,7 +60,9 @@ package body Asis_Tool_2.Tool is
                                   Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
            (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
-         This.Outputs.A_Nodes.Print_Stats;
+         if Asis_Tool_2.Log_On then
+           This.Outputs.A_Nodes.Print_Stats;
+         end if;
          Asis.Implementation.Finalize;
       end Init_And_Process_Context;
 
@@ -88,6 +90,7 @@ package body Asis_Tool_2.Tool is
          3 => Relocate_build_tree'Unchecked_Access);
    begin
       Asis_Tool_2.Trace_On := Debug;
+      Asis_Tool_2.Log_On := Debug;
       Log ("BEGIN");
       Log ("File_Name  => """ & File_Name & """");
       Log ("Output_Dir => """ & Output_Dir & """");

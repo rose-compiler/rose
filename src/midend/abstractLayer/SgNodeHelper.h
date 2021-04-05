@@ -381,6 +381,12 @@ namespace SgNodeHelper {
   */
   std::list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
+  /*! 
+    Determines if a variable is declared in global name space
+   */
+  bool isGlobalVariableDeclarationSymbol(SgSymbol* varDecl);
+  bool isGlobalVariableDeclaration(SgVariableDeclaration* varDecl);
+
   /*!
     checks whether the expression 'node' represents an assignment to an array's element
     considers all assignment operators and arrays of any size

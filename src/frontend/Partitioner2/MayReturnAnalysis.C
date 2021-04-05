@@ -67,11 +67,11 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
     bool successorIsIndeterminate=false, calleeMayReturn=false, calleeIsIndeterminate=false;
     std::vector<ControlFlowGraph::ConstVertexIterator> callReturnSuccessors;
     BOOST_FOREACH (const BasicBlock::Successor &edge, successors) {
-        if (!edge.expr()->is_number()) {
+        if (!edge.expr()->isConcrete()) {
             successorIsIndeterminate = true;            // sucessor vertex is (or would be) the indeterminate vertex
             continue;
         }
-        rose_addr_t successorVa = edge.expr()->get_number();
+        rose_addr_t successorVa = edge.expr()->toUnsigned().get();
         if (successorVa == bb->address())
             continue;                                   // a self edge is not significant to the analysis result
         ControlFlowGraph::ConstVertexIterator successorVertex = findPlaceholder(successorVa);

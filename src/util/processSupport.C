@@ -133,9 +133,7 @@ FILE* popenReadFromVector(const vector<string>& argv) {
 #else
         // tps: does not work right now. Have not hit this assert yet.
   printf ("Error: no MSVS implementation available popenReadFromVector() (not implemented) \n");
-  assert(false);
-
-  return NULL;
+  ROSE_ABORT();
 #endif
 }
 
@@ -150,37 +148,12 @@ int pcloseFromVector(FILE* f)
   /* pid_t err = */ wait(&status);
 #else
      printf ("Error: no MSVS implementation available pcloseFromVector()(not implemented) \n");
-     assert(false);
+     ROSE_ABORT();
 #endif
 
      fclose(f);
      return status;
    }
-
-rose_exception::rose_exception( const char *what )
-    : what_( what )
-{}
-
-const char *rose_exception::what() const throw()
-   {
-     return what_;
-   }
-
-void ROSE_ABORT( const char *message )
-{
-    throw rose_exception( message );
-}
-
-#if 0
-// DQ (11/3/2011): EDG 4.3 does not require anything special and even 
-// reports the use of __attribute__ in a function definition to be an error.
-#ifdef USE_ROSE
-void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
-   {
-      throw rose_exception( "abort" );
-   }
- #endif // USE_ROSE
-#endif
 
 namespace Rose {
 

@@ -37,7 +37,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         if (attrs.size() != 0)
         {
             cout << "Error: Found VarRef with children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         //We want to assign this node its unique name, as well as adding it to the uses.
@@ -56,7 +56,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         if (attrs.size() != 0)
         {
             cout << "Error: Found ThisExp with children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         return VariableReferenceSet(thisExp);
@@ -68,7 +68,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         if (attrs.size() != 2)
         {
             cout << "Error: Found dot or arrow operator without exactly 2 children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         SgNode* lhsVar = attrs[0].getCurrentVar();

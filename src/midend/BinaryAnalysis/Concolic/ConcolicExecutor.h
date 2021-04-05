@@ -237,7 +237,7 @@ protected:
     RiscOperators(const Settings &settings, const Partitioner2::Partitioner &partitioner, const Debugger::Ptr &process,
                   InputVariables &inputVariables, const InstructionSemantics2::BaseSemantics::StatePtr &state,
                   const SmtSolverPtr &solver)
-        : Super(state, solver), REG_PATH(state->registerState()->get_register_dictionary()->findOrThrow("path")),
+        : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
           settings_(settings), partitioner_(partitioner), process_(process), inputVariables_(inputVariables) {
         name("Concolic-symbolic");
         (void) SValue::promote(state->protoval());

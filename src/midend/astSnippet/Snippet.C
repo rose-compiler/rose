@@ -851,7 +851,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
                else
                 {
                   printf ("Error: insertMechanism should be either INSERT_BODY or INSERT_STMTS \n");
-                  ROSE_ASSERT(false);
+                  ROSE_ABORT();
                 }
            }
     }

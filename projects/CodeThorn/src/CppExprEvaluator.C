@@ -168,7 +168,7 @@ CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* n
         ROSE_ASSERT(variableIdMapping);
         //variableIdMapping->toStream(cout);
         lhsVarId = variableIdMapping->variableId(lhsVar);
-        if(variableIdMapping->hasReferenceType(lhsVarId)) {
+        if(variableIdMapping->isOfReferenceType(lhsVarId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
           //  ==> Set all variables from which the address was taken (this includes variables from which
@@ -258,7 +258,7 @@ CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* n
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-        if(variableIdMapping->hasReferenceType(varId)) {
+        if(variableIdMapping->isOfReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
           //  ==> Set all variables from which the address was taken (this includes variables from which

@@ -6,8 +6,8 @@
 #include "AnalysisInterface.h"
 #include <assert.h>
 #include "CommandOptions.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
-
+#include <ROSE_ABORT.h>
+#include <ROSE_ASSERT.h>
 
 bool DebugLocalInfoCollect ()
 {
@@ -38,7 +38,7 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc)
 {
   AstInterface::AstNodeList args;
   if (!fa.IsFunctionCall(fc, 0, &args))
-      assert(false);
+      ROSE_ABORT();
 
   for (AstInterface::AstNodeList::const_iterator p1 = args.begin();
        p1 != args.end(); ++p1) {
@@ -54,7 +54,7 @@ AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 {
   AstInterface::AstNodeList args;
   if (!fa.IsFunctionCall(fc, 0, &args))
-      assert(false);
+      ROSE_ABORT();
   for (AstInterface::AstNodeList::const_iterator p2 = args.begin();
        p2 != args.end(); ++p2) {
     AstNodePtr c = *p2;
@@ -363,7 +363,7 @@ std::string Ast2StringMap :: get_string( const AstNodePtr& s) const
      for (p = astmap.begin(); p != astmap.end(); ++p) {
           std::cerr << " : " << AstInterface::AstToString((*p).first) << ":" << (*p).second << std::endl;
      }
-     assert(false);
+     ROSE_ABORT();
   }
   return (*p).second;
 }
@@ -446,7 +446,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
      collect.reset();
      AstInterface::AstNodeList args;
      if (!fa.IsFunctionCall( fc, 0, &args))
-         assert(false);
+         ROSE_ABORT();
      for (AstInterface::AstNodeList::const_iterator p = args.begin();
            p != args.end(); ++p) {
          collect( std::pair<AstNodePtr,int>(*p, 0));
@@ -460,7 +460,7 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
 {
   AstNodeType t1, t2;
   if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)
-    assert(false);
+    ROSE_ABORT();
   if (!hasresult) {
     if (DebugAliasAnal()) {
        std::cerr << "no alias analysis performed \n";
@@ -514,7 +514,7 @@ analyze( AstInterface& fa, const AstNodePtr& funcdef)
   AstInterface::AstNodeList params;
   if (!fa.IsFunctionDefinition(funcdef, 0, &params, 0, &body)) {
      std::cerr << "Error: alias analysis requires function definition as input instead of " << AstInterface::AstToString(funcdef) << std::endl;
-     assert(false);
+     ROSE_ABORT();
   }
 
   ModifyAliasMap collect(fa, aliasmap);

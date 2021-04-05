@@ -601,7 +601,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                                 else
                                  {
                                    printf ("ERROR: can't reach this case! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -730,7 +730,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -761,7 +761,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -801,7 +801,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -980,7 +980,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
        else
@@ -1071,7 +1071,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // fdTraversal.traverse(sourceFile,inheritedAttribute);
@@ -1089,7 +1089,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      map<SgStatement*,FrontierNode*> token_unparse_frontier_map;
@@ -1153,7 +1153,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
                   {
                  // Mark this as a frontier that is redundantly mapped to a token sequence.
                     printf ("Mark this as a frontier that is redundantly mapped to a token sequence \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 
                  // tokenSubsequence->redundant_token_subsequence = true;
                   }
@@ -1169,7 +1169,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
             // DQ (11/29/2013): Not certain this should be an error or a warning.
                printf ("WARNING: There is no token sequence mapping for this statement = %p = %s \n",statement,statement->class_name().c_str());
 #if 0
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 #endif
@@ -1304,7 +1304,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1327,7 +1327,7 @@ FrontierDetectionForTokenStreamMappingAttribute::
 FrontierDetectionForTokenStreamMappingAttribute(const FrontierDetectionForTokenStreamMappingAttribute & X)
    {
      printf ("In FrontierDetectionForTokenStreamMappingAttribute copy constructor! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 string
@@ -1375,7 +1375,7 @@ FrontierDetectionForTokenStreamMappingAttribute::copy() const
 
 #if 0
      printf ("Error: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      return new FrontierDetectionForTokenStreamMappingAttribute(*this);
 #else

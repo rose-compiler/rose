@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "variables.h"
 #include "virtualCFG.h"
 #include "VirtualCFGIterator.h"
@@ -413,3 +416,5 @@ void back_dataflow::operator ++ (int)
 }
 
 }
+
+#endif

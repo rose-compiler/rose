@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
@@ -507,8 +510,7 @@ NodeFact* DFStateAtReturns::copy() const{
                 newState->latsRetVal.push_back((*l)->copy());
         return newState;*/
         // We don't need a copy method
-        ROSE_ASSERT(0);
-        return NULL;
+        ROSE_ABORT();
 }
 
 // Applies the MergeAllReturnStates analysis on the given function, incorporating the results into
@@ -967,3 +969,5 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 }
         }
 }
+
+#endif

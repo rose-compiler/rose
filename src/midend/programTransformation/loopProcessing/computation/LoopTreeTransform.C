@@ -211,7 +211,7 @@ operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
             n1->Link( n, LoopTreeNode::AsNextSibling); 
         break;
         }
-     default: assert(0);
+     default: ROSE_ABORT();
      }
      ob.Notify();
    return n1;
@@ -250,7 +250,7 @@ LoopTreeNode* CreateSplitRestr( LoopTreeNode *l1, LoopTreeNode *l2, DepRel r)
        return new LoopTreeRestrLoopRange(l1, 0, ivar+min, ivar+max);
   }
   else
-       assert(false);
+       ROSE_ABORT();
   return 0;
 }
 
@@ -480,7 +480,7 @@ bool SelectArray:: insert_selinfo
           else mod = false;
           break;
        }
-       else if (startdiff != 0) assert(false); /* QY: cannot handle this yet*/
+       else if (startdiff != 0) ROSE_ABORT(); /* QY: cannot handle this yet*/
        else {
          CompareRel rel = CompareVal(cursel.incr, selincr, &context);
          if (cursel.incr == 1 || (rel & REL_LE)) {
@@ -681,7 +681,7 @@ void SelectArray:: set_bufname(AstInterface& fa)
     else {
        int bufsizeval;
        if (!copysize.isConstInt(bufsizeval))
-            assert(false);
+            ROSE_ABORT();
        bufname = fa.NewVar(buftype, arrname + "_buf", true);
        for (int i = 1; i < bufsizeval; ++i) {
           std::stringstream out;
@@ -757,13 +757,13 @@ buf_offset( AstInterface& fa, std::vector<SymbolicVal>& arrindex) const
          SymbolicVal offset1 = offset / curdim.incr;
          SymbolicVal offset2;
          if (HasFraction(offset1, &offset2)) {
-   if (offset2 >= curdim.size) { assert(0); }
+   if (offset2 >= curdim.size) { ROSE_ABORT(); }
             bufoffset = bufoffset + offset2 * bufsize[j];
             if (offset2 != 0)
                offset = offset - offset2 * (*selp).incr;
          } 
          else {
-   if (offset1 >= curdim.size) { assert(0); }
+   if (offset1 >= curdim.size) { ROSE_ABORT(); }
             bufoffset = bufoffset + offset1 * bufsize[j];
             break;
          }
@@ -786,7 +786,7 @@ buf_codegen( AstInterface& fa, AstInterface::AstNodeList& arrindex) const
    SymbolicVal offset = buf_offset(fa, indexval);
    if (scalar_repl()) {
       int offsetval = -1;
-      if (!offset.isConstInt(offsetval)) assert(0);
+      if (!offset.isConstInt(offsetval)) ROSE_ABORT();
       return buf_codegen(fa, offsetval);
    }
    else
@@ -915,7 +915,7 @@ public:
        scalarcopy_codegen(selp1, cursel.get_arrDim(), copynum, curincr, res); 
     }
     else {
-      if (sel.scalar_repl()) assert(false);
+      if (sel.scalar_repl()) ROSE_ABORT();
       std::string ivarname = fa.NewVar(fa.GetType("int"));
       SymbolicVar ivar(ivarname, fa.GetRoot()); 
       loopcopy_codegen(selp1, cursel.get_arrDim(), ivar, cursize,curincr,res);

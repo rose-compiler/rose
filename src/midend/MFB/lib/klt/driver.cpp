@@ -127,7 +127,7 @@ KLT<node_t>::build_result_t KLT<node_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
     case ::KLT::LoopTree::e_ignored:
     case ::KLT::LoopTree::e_unknown:
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 
   return result;

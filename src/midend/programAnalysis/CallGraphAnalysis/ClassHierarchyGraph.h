@@ -27,7 +27,9 @@ private:
     /** Map from class to all (strict) subclasses. */
     MangledNameToClassDefsMap subclasses;
 
+#if 0 // [Robb Matzke 2021-03-17]: unused
     SgIncidenceDirectedGraph* classGraph;
+#endif
 
 public:
     explicit

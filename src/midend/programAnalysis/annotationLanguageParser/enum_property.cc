@@ -1,10 +1,12 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #ifdef __FOO
 #include "diagnostic.h"
 #endif
 
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -4376,3 +4378,4 @@ bool enumPropertyAnn::compare_now_value(Location *where,
 } // compare_now_value
 
 #endif /* __FOO */
+#endif

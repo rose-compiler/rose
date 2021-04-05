@@ -8,6 +8,7 @@
 #include "MDCG/Model/type.hpp"
 
 #include <cassert>
+#include <ROSE_ABORT.h>
 
 namespace MDCG {
 
@@ -115,7 +116,7 @@ scope_t<e_model_class> * copy<e_model_class>(scope_t<e_model_class> * orig, std:
   else if (dynamic_cast<class_t>(orig->parent.a_class) != NULL)
     res->parent.a_class = copy(orig->parent.a_class, copies_map);
   else
-    assert(false);
+    ROSE_ABORT();
 
   std::vector<class_t>::const_iterator it_class;
   for (it_class = orig->class_children.begin(); it_class != orig->class_children.end(); it_class++)
@@ -201,7 +202,7 @@ scope_t<e_model_type> * copy<e_model_type>(scope_t<e_model_type> * orig, std::ma
   else if (dynamic_cast<class_t>(orig->parent.a_class) != NULL)
     res->parent.a_class = copy(orig->parent.a_class, copies_map);
   else
-    assert(false);
+    ROSE_ABORT();
 
   return res;
 }

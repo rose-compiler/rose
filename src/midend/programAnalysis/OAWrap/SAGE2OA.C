@@ -408,8 +408,7 @@ IRStmtIterator* SageIRInterface::TrueBody(StmtHandle h)
        else
         {
           printf ("Note: return not handled by author for else case, assumed error! \n");
-          ROSE_ASSERT(false);
-          return NULL;
+          ROSE_ABORT();
         }
    }
 
@@ -431,8 +430,7 @@ IRStmtIterator* SageIRInterface::ElseBody(StmtHandle h)
        else
         {
           printf ("Note: return not handled by author for else case, assumed error! \n");
-          ROSE_ASSERT(false);
-          return NULL;
+          ROSE_ABORT();
         }
    }
 
@@ -559,8 +557,7 @@ ExprHandle SageIRInterface::GetUMultiCondition(StmtHandle h, int targetIndex)
 {
   // FIXME: It isn't yet decided whether or not this function is needed in
   // the IR interface.
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 ExprHandle SageIRInterface::GetSMultiCondition(StmtHandle h, int bodyIndex)
@@ -573,7 +570,6 @@ ExprHandle SageIRInterface::GetSMultiCondition(StmtHandle h, int bodyIndex)
 ExprHandle SageIRInterface::GetMultiExpr(StmtHandle h)
 {
   // Whirl does not appear to have a structured switch statement. And what about Sage??
-  assert (0);
-  return (ExprHandle) 0;
+  ROSE_ABORT ();
 }
 };

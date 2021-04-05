@@ -145,8 +145,7 @@ SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
 #ifndef _MSC_VER
     return stringifySgAsmElfSegmentTableEntrySegmentType(kind);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 }
 

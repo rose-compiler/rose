@@ -15,9 +15,7 @@ using namespace Rose::Diagnostics;
 std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)
    {
      printf("Error: operator<< not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return os;
+     ROSE_ABORT();
    }
    
 std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iord_type & x)

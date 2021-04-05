@@ -235,7 +235,7 @@ namespace OmpSupport
       if (ival == NULL)
       {
         cerr<<"Error. Expecting SgIntVal of Collapse(exp), seeing "<<exp->class_name() << " instead."<<endl;
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       }
       loop_count = ival->get_value();
     } 
@@ -621,7 +621,7 @@ namespace OmpSupport
     else if (rtl_type == e_gomp)
       SageInterface::insertHeader("libgomp_g.h",PreprocessingInfo::after,false,globalscope);
     else
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
 #endif      
   }
 
@@ -956,7 +956,7 @@ namespace OmpSupport
     } else
     {
       cerr<<"Error: illegal or unhandled schedule kind:"<< s_kind<<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
     return result;
   }
@@ -1168,8 +1168,8 @@ namespace OmpSupport
     else
     {
       cerr<<"error! transOmpLoop_others(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
-      ROSE_ASSERT (false);
-    }  
+      ROSE_ABORT ();
+    }
     ROSE_ASSERT(is_canonical == true);
 
     Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
@@ -1435,7 +1435,7 @@ namespace OmpSupport
     else
     {
       cerr<<"error! transOmpLoop(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
-      ROSE_ASSERT (false); 
+      ROSE_ABORT ();
     }
 
     SgInitializedName * orig_index = NULL;
@@ -1658,7 +1658,7 @@ Algorithm:
     else
     {
       cerr<<"error! transOmpLoop(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
     }
 
     SgInitializedName * orig_index = NULL;
@@ -1737,7 +1737,7 @@ Algorithm:
     else
     {
       cerr<<"error. transOmpTargetLoop(): decremental case is not yet handled !"<<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
     }
     SgIfStmt * if_stmt = buildIfStmt(cond_stmt, true_body, NULL);
     appendStatement(if_stmt, bb1);
@@ -1833,7 +1833,7 @@ void transOmpTargetLoop_RoundRobin(SgNode* node)
   else
   {
     cerr<<"error! transOmpLoop(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   }
 
   SgInitializedName * orig_index = NULL;
@@ -2180,7 +2180,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   }
   else 
   {
-   ROSE_ASSERT (false);
+   ROSE_ABORT ();
   }
 #endif
 
@@ -2429,7 +2429,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::replaceStatement(target, s1 , true);
 #else
-   ROSE_ASSERT (false); //This portion of code should never be used anymore. Kept for reference only.
+   ROSE_ABORT (); //This portion of code should never be used anymore. Kept for reference only.
 //    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
 //    SageInterface::insertStatementBefore(func_call, s1); 
 #endif
@@ -2783,7 +2783,7 @@ void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
     else 
     {
       cerr<<"Error. transOmpMapVariables() from omp_lowering.cpp: found unacceptable map operator type:"<< map_operator <<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
     }
   }  // end for
 }
@@ -3188,8 +3188,10 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
      map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
      device_clauses = getClause(target_directive_stmt, V_SgOmpDeviceClause);
   }
-  else 
-    ROSE_ASSERT (false);
+  else
+  {
+    ROSE_ABORT ();
+  }
 
   if ( map_clauses.size() == 0) return all_syms; // stop if no map clauses at all
 
@@ -3213,13 +3215,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
 
   // store all variables showing up in any of the device clauses
-  SgExpression* device_expression ;
+  SgExpression* device_expression = NULL;
   if (target_data_stmt)
     device_expression = getClauseExpression (target_data_stmt, VariantVector(V_SgOmpDeviceClause)); 
   else if (target_directive_stmt)
     device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
 
- 
   extractMapClauses (map_clauses, array_dimensions, dist_data_policies, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
   std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
   std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
@@ -3673,7 +3674,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     if (SageInterface::is_Fortran_language() )
     {
       cerr<<"Error. transOmpTargetParallel() does not support Fortran yet. "<<endl; 
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
       func_def = getEnclosingFunctionDefinition(target);
       ROSE_ASSERT (func_def != NULL);
     }
@@ -3803,7 +3804,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
        if (per_block_declarations.size()>1)
        {
         cerr<<"Error. multiple reduction variables are not yet handled."<<endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
          // threadsPerBlock.x*sizeof(REAL)  //TODO: how to handle multiple shared data blocks, each for a reduction variable??   
        }
        shared_data = buildMultiplyOp (buildVarRefExp(threads_per_block_decl), buildSizeOfOp (base_type) );
@@ -4258,7 +4259,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
           else
           {
             printf("Error. transOmpTask(): unhandled Fortran type  (%s) for pass-by-value.\n",s_type->class_name().c_str());
-            ROSE_ASSERT (false);
+            ROSE_ABORT ();
           }
         }
         else  
@@ -4658,7 +4659,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
        case SgOmpClause::e_omp_reduction_last:
        default:
          cerr<<"Illegal or unhandled reduction operator kind: "<< r_operator <<endl;
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
      }
 
      return result; 
@@ -4779,7 +4780,7 @@ static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgSt
   {
     cerr<<"Illegal SgOmpxx for lastprivate variable: \nOmpStatement is:"<< ompStmt->class_name()<<endl;
     cerr<<"lastprivate variable is:"<<orig_var->get_name().getString()<<endl;
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   }
   end_stmt_list.push_back(save_stmt);
 
@@ -5431,7 +5432,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 #else
      //     SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildIntType(), NULL, scope);
      cerr<<"Fortran with Omni runtime is not yet implemented!"<<endl;
-     ROSE_ASSERT (false);
+     ROSE_ABORT ();
 #endif
 
      if_stmt = buildIfStmt(buildEqualityOp(func_exp,buildIntVal(1)), body, NULL); 
@@ -5540,7 +5541,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
         case V_SgOmpReductionClause:
         default:
           cerr<<"Unacceptable clause type in OmpSupport::buildOmpVariableClause(): "<<vt<<endl;
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
       }
     }
     else
@@ -5616,7 +5617,7 @@ int patchUpPrivateVariables(SgStatement* omp_loop)
   else if (do_node)
     omp_loop = do_node;
   else
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
 
   SgScopeStatement* directive_scope = omp_loop->get_scope();
   ROSE_ASSERT(directive_scope != NULL);
@@ -5628,7 +5629,7 @@ int patchUpPrivateVariables(SgStatement* omp_loop)
   else if (do_node)
     loops = NodeQuery::querySubTree(do_node->get_body(), V_SgFortranDo);
   else
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   // For all loops within the OpenMP loop
   Rose_STL_Container<SgNode*>::iterator loopIter = loops.begin();
   for (; loopIter!= loops.end(); loopIter++)
@@ -5683,7 +5684,7 @@ int patchUpPrivateVariables(SgStatement* omp_loop)
       else if (do_node)
         omp_loop = do_node;
       else
-        ROSE_ASSERT (false);
+        ROSE_ABORT ();
       result +=  patchUpPrivateVariables (omp_loop);
     }// end for omp for statments
    return result;
@@ -5788,7 +5789,7 @@ int patchUpPrivateVariables(SgStatement* omp_loop)
         cerr<<"SgInitializedName name = "<<init_var->get_name().getString()<<endl;
         dumpInfo(init_var);
         init_var->get_file_info()->display("tttt");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif        
       }
     }

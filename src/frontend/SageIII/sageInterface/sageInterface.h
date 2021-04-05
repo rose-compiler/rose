@@ -1505,7 +1505,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
           if (counter >= 100000)
              {
                printf ("Exiting: In getEnclosingNode(): loop limit exceeded: counter = %d \n",counter);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
           parent = parent->get_parent();
@@ -1651,7 +1651,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
                  }
 
                printf ("Exiting after error! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
            // ROSE_ASSERT(seen.insert(node).second);
 

@@ -293,7 +293,7 @@ bool isPointerToNonConstType(SgType* type)
            {
             cout<<"Unhandled case in isArrayReference():"<<arrayRef->class_name()<<" "
             arrayRef->unparseToString()<<endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
            }
 #endif 
         }
@@ -353,7 +353,7 @@ bool isPointerToNonConstType(SgType* type)
     if (isSgArrayType(current_type))
     {
       cerr<<"Error in getArrayElementType(): returning an array type for input type:"<<t->class_name()<<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
     }
     return current_type;  
   }
@@ -1319,7 +1319,7 @@ getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression)
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -2014,6 +2014,7 @@ if (!sgClassType) { \
         }
         
         ROSE_ASSERT(0 && "NYI, don't know what type to accept for this API");
+        abort();
         ENSURE_CLASS_TYPE(type, false);
     }
 

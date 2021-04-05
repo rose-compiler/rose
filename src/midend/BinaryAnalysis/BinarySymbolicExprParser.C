@@ -10,7 +10,7 @@
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
-#include "RoseAsserts.h" /* JFR: Added 25Feb2021 */
+#include <ROSE_ASSERT.h>
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -893,7 +893,7 @@ SymbolicExpr::Ptr
 SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-    const RegisterDescriptor regp = regState->get_register_dictionary()->find(token.lexeme());
+    const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
     if (!regp)
         return SymbolicExpr::Ptr();
     if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {

@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 
@@ -44,3 +46,5 @@ void callingContext::set_current_def_and_use(pointerValue & ptr)
        ++p)
     (*p)->set_current_def_use(loc);
 }
+
+#endif

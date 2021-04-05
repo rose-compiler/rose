@@ -124,7 +124,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
           if (typedefDeclaration->get_name() == "BitSet")
              {
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 #endif
        // If this is not private, then we are looking at what would be possbile template arguments used in a possible name qualification.
@@ -227,7 +227,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
                  else
                   {
                     printf ("Not a default modifierType wrapper (need to handle this case) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 #else
@@ -543,7 +543,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               returnValue = true;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                               SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declarationStatement->get_definingDeclaration());
                               if (definingClassDeclaration != NULL)
@@ -630,7 +630,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                          if (typedefDeclarationScope == targetScope)
                             {
                               printf ("In contains_private_type(SgTemplateArgument*): This is a typedef type from the same scope as the target declaration \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
 #endif
 #if DEBUG_PRIVATE_TYPE || 0
@@ -978,7 +978,7 @@ FixupTemplateArguments::visit ( SgNode* node )
 #endif
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -1025,6 +1025,6 @@ void fixupTemplateArguments( SgNode* node )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }

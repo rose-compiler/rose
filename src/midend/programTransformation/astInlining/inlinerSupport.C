@@ -413,7 +413,7 @@ class FindCopiesVisitor: public AstSimpleProcessing {
               else
                {
                  printf ("Error: what is this copy_vr->get_parent() = %s \n",copy_vr->get_parent()->class_name().c_str());
-                 ROSE_ASSERT(false);
+                 ROSE_ABORT();
                }
           }
 
@@ -671,7 +671,9 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
   SgInitializedName* initname;
   SgExpression* initexpr;
   bool needSimpleContext;
+#if 0 // [Robb Matzke 2021-03-17]: unused
   bool& changes;
+#endif
 
   public:
   SubexpressionExpansionVisitor(SgInitializedName* initname,
@@ -679,7 +681,11 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
                                 bool needSimpleContext,
                                 bool& changes):
     initname(initname), initexpr(initexpr), 
-    needSimpleContext(needSimpleContext), changes(changes) {}
+    needSimpleContext(needSimpleContext)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+    , changes(changes)
+#endif
+        {}
 
   virtual void visit(SgNode* n) {
     if (isSgVarRefExp(n)) {
