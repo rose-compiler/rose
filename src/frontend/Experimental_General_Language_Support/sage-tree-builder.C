@@ -962,6 +962,32 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
 }
 
 void SageTreeBuilder::
+Enter(SgPrintStatement* &print_stmt, SgExpression* format, std::list<SgExpression*> &expr_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgPrintStmt* &, ...) \n";
+
+   ROSE_ASSERT(format);
+
+   print_stmt = new SgPrintStatement();
+   ROSE_ASSERT(print_stmt);
+   SageInterface::setSourcePosition(print_stmt);
+
+   print_stmt->set_format(format);
+
+   SgExprListExp* io_stmt_list = SageBuilderCpp17::buildExprListExp_nfi(expr_list);
+   print_stmt->set_io_stmt_list(io_stmt_list);
+}
+
+void SageTreeBuilder::
+Leave(SgPrintStatement* print_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgPrintStmt*, ...) \n";
+   ROSE_ASSERT(print_stmt);
+
+   SageInterface::appendStatement(print_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgWhileStmt* &while_stmt, SgExpression* condition)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgWhileStmt* &, ...) \n";
@@ -1613,6 +1639,41 @@ Leave(SgTypedefDeclaration* type_def)
    mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
 }
 
+// Fortran specific nodes
+
+void SageTreeBuilder::
+Enter(SgCommonBlock* &common_block, std::list<SgCommonBlockObject*> &common_block_object_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCommonBlock* &, ...) \n";
+
+   common_block = SageBuilder::buildCommonBlock();
+   SageInterface::setSourcePosition(common_block);
+
+   SgCommonBlockObjectPtrList & list = common_block->get_block_list();
+
+   BOOST_FOREACH(SgCommonBlockObject* common_block_object, common_block_object_list) {
+      list.push_back(common_block_object);
+   }
+}
+
+void SageTreeBuilder::
+Leave(SgCommonBlock* common_block)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgCommonBlock*) \n";
+
+   SageInterface::appendStatement(common_block, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+importModule(const std::string &module_name)
+{
+   mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
+   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
+
+   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
+   compool_builder.loadModule(module_name, isSgGlobal(SageBuilder::topScopeStack()));
+}
+
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to
 // be an explicit declaration at some point (unlike Fortran). This builder function manages
 // name and symbol information so that the variable reference can be cleaned/fixed up when
@@ -1769,6 +1830,21 @@ SgType* buildDoubleType()
 SgType* buildComplexType(SgType* base_type)
 {
    return SageBuilder::buildComplexType(base_type);
+}
+
+SgType* buildBoolType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildBoolType(kind_expr);
+}
+
+SgType* buildIntType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildIntType(kind_expr);
+}
+
+SgType* buildFloatType(SgExpression* kind_expr)
+{
+   return SageBuilder::buildFloatType(kind_expr);
 }
 
 SgType* buildStringType(SgExpression* stringLengthExpression)
@@ -1939,6 +2015,13 @@ SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
    return expr_list;
 }
 
+SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* expr_list)
+{
+   SgCommonBlockObject* common_block_object = SageBuilder::buildCommonBlockObject(name, expr_list);
+   SageInterface::setSourcePosition(common_block_object);
+   return common_block_object;
+}
+
 SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgScopeStatement* scope)
 {
    SgFunctionRefExp* func_ref = nullptr;
@@ -1997,7 +2080,6 @@ buildIntrinsicFunctionCallExp_nfi(const std::string &name, SgExprListExp* params
 
   return func_call;
 }
-
 
 } // namespace SageBuilderCpp17
 

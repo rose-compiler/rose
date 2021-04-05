@@ -11,6 +11,8 @@
 class SgBasicBlock;
 class SgCaseOptionStmt;
 class SgCastExp;
+class SgCommonBlock;
+class SgCommonBlockObject;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -31,6 +33,7 @@ class SgInitializedName;
 class SgLocatedNode;
 class SgNamespaceDeclarationStatement;
 class SgPntrArrRefExp;
+class SgPrintStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgReplicationOp;
@@ -182,6 +185,9 @@ public:
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
 
+   void Enter(SgPrintStatement* &, SgExpression*, std::list<SgExpression*> &);
+   void Leave(SgPrintStatement*);
+
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
@@ -225,6 +231,11 @@ public:
 
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
+
+// Fortran specific nodes
+//
+   void Enter(SgCommonBlock* &, std::list<SgCommonBlockObject*> &);
+   void Leave(SgCommonBlock* common_block);
 
 private:
 
@@ -277,6 +288,9 @@ namespace SageBuilderCpp17 {
    SgType* buildCharType();
    SgType* buildDoubleType();
    SgType* buildComplexType(SgType* base_type = nullptr);
+   SgType* buildBoolType(SgExpression* kind_expr);
+   SgType* buildIntType(SgExpression* kind_expr);
+   SgType* buildFloatType(SgExpression* kind_expr);
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 
@@ -310,6 +324,8 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
+// Other
+   SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
 // This is new and should be added to SageBuilder?
    SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
                                                         SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
