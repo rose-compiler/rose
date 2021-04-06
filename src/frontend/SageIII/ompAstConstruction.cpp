@@ -1248,6 +1248,25 @@ namespace OmpSupport
     }
 #endif
     SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
+
+#if 0
+ // DQ (4/6/2021): Debugging OpenMP pragma support. 
+ // the last statement after the for loop is outlined 
+ // is a return statement, so I'm not clear why there 
+ // is an error in getNextStatement().
+    printf ("Output the scope of the pragma: \n");
+    SgScopeStatement* scope = pragmadecl->get_scope();
+    bool containsOnlyDeclarations = scope->containsOnlyDeclarations(); 
+    if (containsOnlyDeclarations == false)
+       {
+         SgStatementPtrList & statementList = scope->getStatementList ();
+         for (size_t i = 0; i < statementList.size(); i++)
+            {
+              printf ("statementList[%zu] = %p = %s \n",i,statementList[i],statementList[i]->class_name().c_str());
+            }
+       }
+#endif
+
     result = getNextStatement(pragmadecl);
     // Not all pragma decl has a structured body. We check those which do have one
     // TODO: more types to be checked
