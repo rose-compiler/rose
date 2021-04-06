@@ -15975,7 +15975,7 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
           global_scope->prepend_statement(emptyDeclaration);
         }
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -15993,7 +15993,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
  // DQ (8/12/2020): This is a compiler warning.
  // bool successful = false;
 
-#if 1
+#if 0
      printf ("In SageInterface::insertHeader(): filename = %s \n",filename.c_str());
      printf (" --- position = %s \n",PreprocessingInfo::relativePositionName(position).c_str());
 #endif
@@ -16293,7 +16293,7 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   else // No comments at all, first and last header mean the same, just attach to the located node
     stmt->addToAttachedPreprocessingInfo(newheader, position);
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -16315,12 +16315,15 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   else
     content = "#include \"" + filename + "\" \n";
 
+#if 0
+// DQ (4/6/2021): This is a compiler warning, this variable is set but not used since some unreachable code is now commented out below.
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
      position = PreprocessingInfo::after;
   else
      position = PreprocessingInfo::before;
+#endif
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
@@ -16372,7 +16375,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
