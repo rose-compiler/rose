@@ -1190,6 +1190,10 @@ IncludedFilesUnparser::initializeFilesToUnparse()
      printf (" --- file->get_header_file_unparsing_optimization() = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
 #endif
 
+#if 0
+     printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): TOP: file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
+#endif
+
      if (file->get_header_file_unparsing_optimization() == true)
         {
           file->set_header_file_unparsing_optimization_header_file(true);
@@ -1422,6 +1426,19 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
                     sourceFile->set_header_file_unparsing_optimization_header_file(true);
 
+#if 0
+                    printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): source file: file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
+                    printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): header file: sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
+#endif
+                 // DQ (4/1/2021): We need to set the unparse_tokens flag so that the token mapping will be generated for the header files.
+                    if (file->get_unparse_tokens() == true)
+                      {
+                        sourceFile->set_unparse_tokens(true);
+#if 0
+                        printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): after reset: sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
+#endif
+                      }
+
                 // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
                     ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
 
@@ -1446,16 +1463,16 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                       // DQ (10/18/2020): This is enforced within secondaryPassOverSourceFile() and attachPreprocessingInfo(), so move the enforcement to be as early as possible.
                          ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                          printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-#if 1
+#if 0
                          printf ("Test 1: sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
 #endif
                       // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
                          sourceFile->secondaryPassOverSourceFile();
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                          printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
                        }
@@ -1505,16 +1522,16 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                        }
                  // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                     printf ("########## In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-#if 1
+#if 0
                     printf ("Test 2: sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
 #endif
                  // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
                     sourceFile->secondaryPassOverSourceFile();
 
-#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 1
+#if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                     printf ("########## DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
 
@@ -1612,7 +1629,7 @@ IncludedFilesUnparser::collectAdditionalFilesToUnparse()
   // Recursively add to filesToUnparse set any file that includes using quotes (or an absolute path) at least one of the files that is already in filesToUnparse set.
      set<string> workingSet = filesToUnparse;
 
-#if 1
+#if 0
      printf ("In collectAdditionalFilesToUnparse(): workingSet = filesToUnparse: workingSet.size() = %zu \n",workingSet.size());
 #endif
 
@@ -1630,7 +1647,7 @@ IncludedFilesUnparser::collectAdditionalFilesToUnparse()
           workingSet = newFilesToUnparse;
         }
 
-#if 1
+#if 0
      printf ("Leaving collectAdditionalFilesToUnparse(): workingSet = filesToUnparse: workingSet.size() = %zu \n",workingSet.size());
      printf (" --- In newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
 #endif
@@ -1638,7 +1655,7 @@ IncludedFilesUnparser::collectAdditionalFilesToUnparse()
 
 void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
    {
-#if 1
+#if 0
      printf ("In collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
 #endif
 
@@ -1656,7 +1673,7 @@ void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile,
              }
         }
 
-#if 1
+#if 0
      printf ("Leaving collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
 #endif
 

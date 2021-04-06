@@ -3728,7 +3728,8 @@ SgFile::secondaryPassOverSourceFile()
                  // DQ (10/18/2020): This is enforced within attachPreprocessingInfo(), so move the enforcement to be as early as possible.
                     ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 #if DEBUG_SECONDARY_PASS
-                    printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+                    printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s filename = %s \n",
+                         sourceFile,sourceFile->class_name().c_str(),sourceFile->getFileName().c_str());
 #endif
                     attachPreprocessingInfo(sourceFile);
 #if DEBUG_SECONDARY_PASS
@@ -3780,7 +3781,7 @@ SgFile::secondaryPassOverSourceFile()
                printf ("In SgFile::secondaryPassOverSourceFile(): Building token stream mapping map! \n");
 #endif
 
-            // DQ (1/18/2021): This is now moved to the buildCommentAndCppDirectiveList() function (closer to where the vector of tokes is generated).
+            // DQ (1/18/2021): This is now moved to the buildCommentAndCppDirectiveList() function (closer to where the vector of tokens is generated).
             // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
             // and attaches the toke stream to the SgSourceFile IR node.
             // *** Next we have to attached the data base ***

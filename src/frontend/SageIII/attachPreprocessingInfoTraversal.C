@@ -911,9 +911,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
 #define DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST 0
 
-#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST || 0
   // DQ (1/4/2021): adding debugging support.
      printf ("Inside of AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
+     printf (" --- sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
      printf (" --- new_filename = %s \n",new_filename.c_str());
 #endif
 
@@ -1156,19 +1157,27 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                   {
                  // DQ (02/20/2021): Using the performance tracking within ROSE.
                     TimingPerformance timer ("AST calling buildTokenStreamMapping():");
-#if 1
+#if 0
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
                     printf ("In buildCommentAndCppDirectiveList(): Calling buildTokenStreamMapping() \n");
                     printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
 #endif
                  // DQ (2/20/2021): This is a pretty expensive operation, about the same cost of the frontend (without the call to this function).
                     buildTokenStreamMapping(sourceFile,tokenVector);
-#if 1
+#if 0
                     printf ("DONE: Calling buildTokenStreamMapping() \n");
 #endif
                   }
 #if 0
                printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
+
+#if 0
+               if (sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
+                  {
+                    printf ("Found specific file: tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h \n");
+                    ROSE_ASSERT(false);
+                  }
 #endif
 
 #if 0

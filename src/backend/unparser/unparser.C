@@ -4080,7 +4080,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      ASSERT_not_null(project);
 
-#if 1
+#if 0
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("TOP of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
@@ -4259,7 +4259,6 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
        // DQ (2/25/2021): Set the unparse_tokens flag in the SgSourceFile that is associated with the header file.
           include_sourceFile->set_unparse_tokens(project->get_unparse_tokens());
 #if 0
-
           printf (" --- project->get_unparse_tokens()            = %s \n",project->get_unparse_tokens() ? "true" : "false");
           printf (" --- include_sourceFile->get_unparse_tokens() = %s \n",include_sourceFile->get_unparse_tokens() ? "true" : "false");
 #endif
@@ -4296,7 +4295,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 #endif
         }
 
-#if 1
+#if 0
      printf ("include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
 #endif
 #if 1
@@ -4421,7 +4420,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Leaving buildSourceFileForHeaderFile(): return include_sourceFile = %p \n",include_sourceFile);
 #endif
 
-#if 1
+#if 0
      printf ("BOTTOM of buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
      printf (" --- include_sourceFile = %p = %s \n",include_sourceFile,include_sourceFile->getFileName().c_str());
      printf (" --- include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
@@ -4438,11 +4437,11 @@ void outputFirstAndLastIncludeFileInfo()
    {
      int counter = 0;
 
-#if 1
+#if 0
      printf ("In outputFirstAndLastIncludeFileInfo(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
-#define DEBUG_FIRST_LAST_DATA 1
+#define DEBUG_FIRST_LAST_DATA 0
 
 #if DEBUG_FIRST_LAST_DATA
      printf ("Output collected information about first and last statements for each include file \n");

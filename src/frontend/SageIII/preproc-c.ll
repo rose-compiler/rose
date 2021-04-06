@@ -1621,6 +1621,14 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName, std::string
 #endif
 
 #if 0
+     if (preprocessorInfoList->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
+        {
+          printf ("Found specific file: tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
      printf ("Exiting in getPreprocessorDirectives() \n");
      ROSE_ASSERT(false);
 #endif

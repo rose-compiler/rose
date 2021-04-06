@@ -31,12 +31,6 @@ F77_TESTCODES_TO_PASS = \
     task_scalar.f \
     task_simplest.f
 
-# DQ (3/30/2021): This is a failing test for the newest work.
-#    task_largenumber.f 
-#    task_largenumber2.f 
-#    task_scalar.f 
-#    task_simplest.f
-
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
 
@@ -47,10 +41,6 @@ F90_TESTCODES_TO_PASS = \
   continuation.f90 \
   collapse.f90 \
   single-copyprivate.f90 
-
-# DQ (3/30/2021): This is a failing test for the newest work.
-#  collapse.f90 
-#  single-copyprivate.f90 
 
 
 #if !OS_VENDOR_DEBIAN

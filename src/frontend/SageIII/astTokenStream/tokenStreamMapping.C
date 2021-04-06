@@ -6585,7 +6585,7 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
      string dot_header = StringUtility::stripPathFromFileName(sourceFile->getFileName());
   // filename += ".c";
 
-#if 1
+#if 0
      if ( SgProject::get_verbose() >= 1 )
         {
           printf ("In outputSourceCodeFromTokenStream_globalScope(): filename = %s \n",filename.c_str());
@@ -6797,6 +6797,9 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(sourceFile);
      printf ("In buildTokenStreamFrontier(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
+
+  // DQ (4/1/2021): Added assertion to debug tests in UnparseHeadersUsingTokenStream_tests.
+     ROSE_ASSERT(Rose::tokenSubsequenceMapOfMapsBySourceFile.find(sourceFile) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end());
 
 #if DEBUG_TOKEN_FRONTIER
      printf ("In buildTokenStreamFrontier(): sourceFile filename                          = %s \n",sourceFile->getFileName().c_str());
@@ -7152,7 +7155,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 
 #define DEBUG_TOKEN_STREAM_MAPPING 0
 
-#if DEBUG_TOKEN_STREAM_MAPPING || 1
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("In buildTokenStreamMapping() \n");
@@ -7334,7 +7337,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
      printf ("In buildTokenStreamMapping(): sourceFile->get_unparse_using_leading_and_trailing_token_mappings() = %s \n",sourceFile->get_unparse_using_leading_and_trailing_token_mappings() ? "true" : "false");
 #endif
 
-#if 0
+#if 1
   // DQ (12/1/2013): Make the output of this graph conditional upon the verbose level.
   // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
   // if ( SgProject::get_verbose() > 0 )

@@ -17248,7 +17248,7 @@ SgSourceFile::get_tokenSubsequenceMap()
      if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(this) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
         {
 #if 0
-          printf ("Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",
+          printf ("In SgSourceFile::get_tokenSubsequenceMap(): Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",
                Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
 #endif
           result = Rose::tokenSubsequenceMapOfMapsBySourceFile[this];
@@ -17259,7 +17259,7 @@ SgSourceFile::get_tokenSubsequenceMap()
        else
         {
 #if 0
-          printf ("NOTE: SgSourceFile = %p not found in Rose::tokenSubsequenceMapOfMapsBySourceFile (might be because it is not saved in the AST write) \n",this);
+          printf ("In SgSourceFile::get_tokenSubsequenceMap(): NOTE: SgSourceFile = %p not found in Rose::tokenSubsequenceMapOfMapsBySourceFile (might be because it is not saved in the AST write) \n",this);
 #endif
        // DQ (2/19/2021): Disable this as an error since the AST read (after the AST write) will not have this data structure.
        // We are not trying to currently support the token-based unparsing after an AST write and AST read.
