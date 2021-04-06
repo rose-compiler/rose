@@ -1733,6 +1733,9 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                          cerr<<currentStatement->get_file_info()->displayString()<<endl;
                          cerr<<"Its scope is "<<scope->class_name()<<endl;
                          cerr<<scope->get_file_info()->displayString()<<endl;
+#if 0
+                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");                 
+#endif
                          ROSE_ABORT ();
                        }
 
