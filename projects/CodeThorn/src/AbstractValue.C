@@ -1338,22 +1338,6 @@ std::string AbstractValueSet::toString(VariableIdMapping* vim) const {
   return ss.str();
 }
 
-AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorAdd(a,b);
-}
-AbstractValue CodeThorn::operator-(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorSub(a,b);
-}
-AbstractValue CodeThorn::operator*(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMul(a,b);
-}
-AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorDiv(a,b);
-}
-AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMod(a,b);
-}
-
 AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {
   for(AbstractValueSet::iterator i=s2.begin();i!=s2.end();++i) {
     s1.insert(*i);

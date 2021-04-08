@@ -1909,7 +1909,7 @@ void CodeThorn::CTAnalysis::initializeCommandLineArgumentsInState(PState& initia
 	  SAWYER_MESG(logger[TRACE])<<"INIT: Copying: @argc="<<argc<<" char: "<<_commandLineOptions[argc][j]<<endl;
 	  AbstractValue argvElemAddressWithIndexOffset;
 	  AbstractValue AbstractIndex=AbstractValue(j);
-	  argvElemAddressWithIndexOffset=argvElemAddress+AbstractIndex;
+	  argvElemAddressWithIndexOffset=AbstractValue::operatorAdd(argvElemAddress,AbstractIndex);
 	  initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(_commandLineOptions[argc][j]));
 	}
 	argc++;

@@ -1015,10 +1015,10 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
-      newVarVal=oldVarVal+const1; // overloaded binary + operator
+      newVarVal=AbstractValue::operatorAdd(oldVarVal,const1); // overloaded binary + operator
       break;
     case V_SgMinusMinusOp:
-      newVarVal=oldVarVal-const1; // overloaded binary - operator
+      newVarVal=AbstractValue::operatorSub(oldVarVal,const1); // overloaded binary - operator
       break;
     default:
       logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
