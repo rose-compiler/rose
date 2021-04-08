@@ -29,8 +29,10 @@ class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
+class SgNamedType;
 class SgNamespaceDeclarationStatement;
 class SgPntrArrRefExp;
+class SgPointerType;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgReplicationOp;
@@ -44,24 +46,10 @@ class SgVariableDeclaration;
 class SgVarRefExp;
 class SgWhileStmt;
 
-// Jovial specific classes
-class SgJovialCompoolStatement;
-class SgJovialDefineDeclaration;
-class SgJovialDirectiveStatement;
-class SgJovialForThenStatement;
-class SgJovialOverlayDeclaration;
-class SgJovialTableStatement;
-
 enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
 
 namespace Rose {
 namespace builder {
-
-// Need std=c++11
-//
-#ifndef nullptr
-#define nullptr NULL
-#endif
 
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
@@ -205,6 +193,7 @@ public:
 
 // Jovial specific nodes
 //
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
@@ -225,6 +214,7 @@ public:
 
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
+#endif
 
 private:
 

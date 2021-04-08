@@ -1114,6 +1114,8 @@ getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
 // Jovial specific nodes
 //
 
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+
 void SageTreeBuilder::
 Enter(SgJovialDefineDeclaration* &define_decl, const std::string &define_string)
 {
@@ -1393,6 +1395,7 @@ Leave(SgJovialTableStatement* table_type_stmt)
 
    SageBuilder::popScopeStack();  // class definition
 }
+#endif // ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 
 void SageTreeBuilder::
 Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, SgExpression* init_expr)
