@@ -174,8 +174,9 @@ if(enable-fortran)
   # --------check Fortran compiler -----------------------
   # CMakeDetermineFortranCompiler does not recognize gfortran first
   # we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority
+  # Pei-Hung (04/08/21) allowed gfortran* for homebrew gfortran with suffix name
   include(roseCMakeDetermineFortranCompiler)
-  if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran$")
+  if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran.*$")
     if(VERBOSE)
       message("find gfortran compiler ${CMAKE_Fortran_COMPILER}")
     endif()

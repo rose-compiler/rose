@@ -592,12 +592,16 @@ bool roseInstallPrefix(std::string& result) {
     // When building with CMake, detect build directory by searching
     // for the presence of a CMakeCache.txt file.  If this cannot
     // be found, then assume we are running from within an install tree.
+    // Pei-Hung (04/08/21) use prefix to find CMakeCache.txt and return ROSE_AUTOMAKE_PREFIX if installation is used
     #ifdef USE_CMAKE
-    std::string pathToCache = libdir;
-    pathToCache += "/../CMakeCache.txt";
+    std::string pathToCache = prefix;
+    pathToCache += "/CMakeCache.txt";
+    if ( SgProject::get_verbose() > 1 )
+          printf ("Inside of roseInstallPrefix libdir = %s pathToCache = %s \n",libdir, pathToCache.c_str());
     if (boost::filesystem::exists(pathToCache)) {
       return false;
     } else {
+      result = ROSE_AUTOMAKE_PREFIX;
       return true;
     }
     #endif

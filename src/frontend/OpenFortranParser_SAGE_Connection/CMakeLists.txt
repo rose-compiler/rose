@@ -21,6 +21,11 @@ if(enable-fortran)
   add_dependencies(fortran_ofp_parser_c_jni_FortranParserActionJNI
     rosetta_generated)
 
+  # Pei-Hung (04/08/21) Apple Clang needs to use dynamic_lookup for Fortran OFP libraray
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    target_link_libraries(fortran_ofp_parser_c_jni_FortranParserActionJNI "-Wl,-undefined -Wl,dynamic_lookup")
+  endif()
+
   set_target_properties(fortran_ofp_parser_c_jni_FortranParserActionJNI PROPERTIES VERSION 1.0.0 SOVERSION 1)
   install(TARGETS fortran_ofp_parser_c_jni_FortranParserActionJNI DESTINATION ${ROSE_LIB_DIR_NAME})
 
