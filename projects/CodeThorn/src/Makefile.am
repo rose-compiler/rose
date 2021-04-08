@@ -826,7 +826,7 @@ check-ltl-rers-loop-aware-sync:
 
 #run CEGPRA tests
 check-ltl-cegpra:
-	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 # not used
 check-arrays:
