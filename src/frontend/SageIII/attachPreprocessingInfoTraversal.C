@@ -2690,7 +2690,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                if (currentListOfAttributes == NULL)
                   {
                  // This case is used to handle the case of the currentFileNameId being negative (not a real file).
-#if 1
+#if 0
                     printf ("Not supporting gathering of CPP directives and comments for this file currentFileNameId = %d \n",currentFileNameId);
 #endif
                     return returnSynthesizeAttribute;

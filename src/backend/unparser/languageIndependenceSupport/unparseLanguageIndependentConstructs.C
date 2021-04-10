@@ -825,14 +825,19 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
      if (declarationStatement != NULL && statementInFile == false && stmt->get_file_info()->isFrontendSpecific() == false)
         {
-          curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (statementInFile == false) */ \n");
+          curprint ( string("\n/* Leaving of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (statementInFile == false) */ \n");
         }
        else
         {
           if (statementInFile == true)
              {
-               curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (statementInFile == true) */ \n");
+               curprint ( string("\n/* Leaving of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (statementInFile == true) */ \n");
              }
+            else
+             {
+               curprint ( string("\n/* Leaving of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (statementInFile == false) */ \n");
+             }
+          curprint ("\n/* ******************************************************************* */ \n\n");
         }
 #endif
 
@@ -1947,8 +1952,18 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                          printf ("Detected stmt->get_containsTransformationToSurroundingWhitespace() == true: set unparseLeadingTokenStream = false \n");
                          curprint ("\n/* Detected stmt->get_containsTransformationToSurroundingWhitespace() == true: set unparseLeadingTokenStream = false */ \n");
+#else
+#if DEBUG_USING_CURPRINT
+                         curprint ("\n/* Detected stmt->get_containsTransformationToSurroundingWhitespace() == true: set unparseLeadingTokenStream = false */ \n");
+#endif
 #endif
                          unparseLeadingTokenStream = false;
+                       }
+                      else
+                       {
+#if DEBUG_USING_CURPRINT
+                         curprint ("\n/* Detected stmt->get_containsTransformationToSurroundingWhitespace() == false */ \n");
+#endif
                        }
 #endif
 
@@ -2040,9 +2055,13 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                               curprint(s1);
                               curprint(s2);
 #endif
+#if 0
+                              printf ("tokenSubsequence->leading_whitespace_start = %d \n",tokenSubsequence->leading_whitespace_start);
+                              printf ("tokenSubsequence->leading_whitespace_end   = %d \n",tokenSubsequence->leading_whitespace_end);
+#endif
                               for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
                                  {
-#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING || 0
                                    printf ("Output leading whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING

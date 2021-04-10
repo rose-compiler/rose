@@ -492,7 +492,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     if (end == tokenVectorSize)
                        {
                       // DQ (12/27/2018): This case is special to the last token in the file that is unparsed with its own call to unparseStatementFromTokenStream().
-#if 1
+#if 0
                          printf ("NOTE: ALLOW out of range value: make sure there is no access: start = %d end = %d tokenVectorSize = %d (reset end to start) \n",start,end,tokenVectorSize);
 #endif
                        }

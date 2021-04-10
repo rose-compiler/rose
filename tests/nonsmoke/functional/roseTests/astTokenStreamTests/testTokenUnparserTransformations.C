@@ -26,7 +26,7 @@ const string TransformVisitor::renameEnding = "_renamed";
 
 void TransformVisitor::visit(SgNode* node)
    {
-#if 1
+#if 0
      printf ("In TransformVisitor::visit(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -40,7 +40,7 @@ void TransformVisitor::visit(SgNode* node)
              {
                string originalName = ((*nameListIterator) -> get_name()).getString();
 
-#if 1
+#if 0
                printf ("variable: originalName = %s \n",originalName.c_str());
 #endif
 
@@ -75,7 +75,7 @@ void TransformVisitor::visit(SgNode* node)
           for (SgInitializedNamePtrList::const_iterator nameListIterator = enumerators.begin(); nameListIterator != enumerators.end(); nameListIterator++)
              {
                string originalName = ((*nameListIterator) -> get_name()).getString();
-#if 1
+#if 0
                printf ("enumerator: originalName = %s \n",originalName.c_str());
 #endif
             // Rename any variable, whose name ends with matchEnding.
@@ -109,7 +109,7 @@ void TransformVisitor::visit(SgNode* node)
 
           string matchEnding = "_make_prototype";
           size_t matchEndingSize = matchEnding.size();
-#if 1
+#if 0
           printf ("functionDeclaration: originalName = %s \n",originalName.c_str());
 #endif
        // Rename any variable, whose name ends with matchEnding.
@@ -144,9 +144,9 @@ void TransformVisitor::visit(SgNode* node)
           SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
           ROSE_ASSERT(variableSymbol != NULL);
           string originalName = variableSymbol->get_name().str();
-
+#if 0
           printf ("varRefExp: originalName = %s \n",originalName.c_str());
-
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -169,14 +169,14 @@ int main(int argc, char* argv[])
      transformation.traverse(project, preorder);
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
   // generateDOT ( *project );
      generateDOT_withIncludes ( *project );
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);

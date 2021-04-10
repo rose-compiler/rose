@@ -1061,6 +1061,7 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
 #define DEBUG_TRIM_FROM_LEFT 0
 
 #if DEBUG_TRIM_FROM_LEFT
+     printf ("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL \n");
      printf ("In trimLeadingWhiteSpaceFromLeft(): before loop: mappingInfo->node = %p = %s = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str(),SageInterface::get_name(mappingInfo->node).c_str());
      printf ("In trimLeadingWhiteSpaceFromLeft(): before loop: leading_whitespace_start            = %d \n",leading_whitespace_start);
      printf ("In trimLeadingWhiteSpaceFromLeft(): before loop: leading_whitespace_end              = %d \n",leading_whitespace_end);
@@ -1102,6 +1103,8 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
         {
        // while (leading_whitespace_start > original_start_of_token_subsequence && tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE)
 #if DEBUG_TRIM_FROM_LEFT
+          printf ("leading_whitespace_start            = %d \n",leading_whitespace_start);
+          printf ("original_start_of_token_subsequence = %d \n",original_start_of_token_subsequence);
           printf ("leading_whitespace_start > original_start_of_token_subsequence                            = %s \n",leading_whitespace_start > original_start_of_token_subsequence ? "true" : "false");
           printf ("tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE         = %s \n",
                tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ? "true" : "false");
@@ -1119,15 +1122,23 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
                ROSE_ASSERT(leading_whitespace_start > original_start_of_token_subsequence);
 
                leading_whitespace_start--;
+
+#if DEBUG_TRIM_FROM_LEFT
+               printf ("bottom of loop: tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme.c_str());
+#endif
              }
 
 #if DEBUG_TRIM_FROM_LEFT
-          printf ("In trimLeadingWhiteSpaceFromLeft(): after loop: leading_whitespace_start = %d \n",leading_whitespace_start);
+          printf ("In trimLeadingWhiteSpaceFromLeft(): after loop: leading_whitespace_start            = %d \n",leading_whitespace_start);
+          printf ("In trimLeadingWhiteSpaceFromLeft(): after loop: original_start_of_token_subsequence = %d \n",original_start_of_token_subsequence);
 #endif
 
        // If the positions are out of bounds then we don't have any leading whitespace.
           if (leading_whitespace_start < original_start_of_token_subsequence && leading_whitespace_end < original_start_of_token_subsequence)
              {
+#if DEBUG_TRIM_FROM_LEFT
+               printf ("In trimLeadingWhiteSpaceFromLeft(): after loop: reset leading_whitespace_start and end to -1 \n");
+#endif
                leading_whitespace_start = -1;
                leading_whitespace_end   = -1;
              }
@@ -1145,8 +1156,9 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
      mappingInfo->leading_whitespace_end   = leading_whitespace_end;
 
 #if DEBUG_TRIM_FROM_LEFT
-     printf ("In trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
-     printf ("In trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
+     printf ("Leaving trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
+     printf ("Leaving trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
+     printf ("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL \n");
 #endif
 
      ROSE_ASSERT(mappingInfo->leading_whitespace_start <= mappingInfo->leading_whitespace_end);
@@ -1371,7 +1383,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      int original_end_of_token_subsequence   = inheritedAttribute.end_of_token_sequence;
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
-     printf ("\nIn evaluateSynthesizedAttribute(): n = %p = %s = %s childAttributes.size() = %zu (start=%d,end=%d) \n",
+     printf ("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("In evaluateSynthesizedAttribute(): n = %p = %s = %s childAttributes.size() = %zu (start=%d,end=%d) \n",
              n,n->class_name().c_str(),SageInterface::get_name(n).c_str(),childAttributes.size(),original_start_of_token_subsequence,original_end_of_token_subsequence);
      if (isSgClassDeclaration(n) != NULL)
         {
@@ -1384,6 +1397,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
      printf ("   --- inheritedAttribute.processChildNodes         = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
      printf ("   --- inheritedAttribute.sourceFile->getFileName() = %s \n",inheritedAttribute.sourceFile->getFileName().c_str());
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
   // DQ (3/19/2021): Debugging how reading a second header file overwrites the leading 
@@ -2363,7 +2377,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
                          string nodeName = childAttributes[i].node != NULL ? childAttributes[i].node->class_name() : "null";
-                         printf ("      --- No mapping has been found at childAttributes[i].node = %p = %s \n",childAttributes[i].node,nodeName.c_str());
+                         string getName  = childAttributes[i].node != NULL ? SageInterface::get_name(childAttributes[i].node).c_str() : "null";
+                         printf ("      --- No mapping has been found at childAttributes[i].node = %p = %s name = %s \n",childAttributes[i].node,nodeName.c_str(),getName.c_str());
 #endif
                       // We need to ignore NULL pointers.
                       // nodesWithoutTokenMappings.push_back(childAttributes[i].node);
@@ -2760,6 +2775,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // DQ (1/2/2015): New more general mechanism, we now want to uniformally make sure that the leading and trailing whitespace does not include syntax.
 
 #if 1
+                      // DQ (4/9/2021): Use the original code for testing (failing move tool regression testing).
                       // DQ (3/22/2021): We need to only process the token subsequences that are associated with nodes that are in
                       // the current file being processed. This is essential to supporting the token unparsing across multiple files.
                       // trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -2889,10 +2905,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
 
 #if DEBUG_DARK_TOKEN_FIXUP
-                         printf ("fixupDarkTokenSubsequencesForTrailingWhitespace = %s n = %p = %s mappingInfo->node = %p = %s \n",fixupDarkTokenSubsequencesForTrailingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
+                         printf ("fixupDarkTokenSubsequencesForTrailingWhitespace = %s n = %p = %s mappingInfo->node = %p = %s \n",
+                              fixupDarkTokenSubsequencesForTrailingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
-                         printf ("fixupDarkTokenSubsequencesForLeadingWhitespace  = %s n = %p = %s mappingInfo->node = %p = %s \n",fixupDarkTokenSubsequencesForLeadingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
+                         printf ("fixupDarkTokenSubsequencesForLeadingWhitespace  = %s n = %p = %s mappingInfo->node = %p = %s \n",
+                              fixupDarkTokenSubsequencesForLeadingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
 
                          if (fixupDarkTokenSubsequencesForLeadingWhitespace == true)
@@ -2917,7 +2935,19 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                                    if (previous_mappingInfo != NULL)
                                       {
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        printf ("   --- previous_mappingInfo->token_subsequence_start = %d \n",previous_mappingInfo->token_subsequence_start);
+#endif
+                                     // DQ (4/10/2021): If this is the first of the token sequence, then this should be set to zero.
+                                     // int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
                                         int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
+                                        if (previous_mappingInfo->token_subsequence_start == 0)
+                                           {
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                             printf ("   --- set explicitly to zero: previous_mappingInfo_leading_whitespace_end = 0 \n");
+#endif
+                                             previous_mappingInfo_leading_whitespace_end = 0;
+                                           }
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
                                         int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
                                         printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
@@ -2953,8 +2983,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       {
                                      // This is likely a shared token sequence and we need to go back one more.
 #if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE || 0
-                                        printf ("WARNING: (in leading whitespace computation): previous_mappingInfo->node == mappingInfo->node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
-                                        printf ("   --- This is likely a shared token sequence and we need to go back one more to define the previous_mappingInfo = %p node = %p \n",previous_mappingInfo,previous_mappingInfo->node);
+                                        printf ("WARNING: (in leading whitespace computation): previous_mappingInfo->node == mappingInfo->node = %p = %s \n",
+                                             mappingInfo->node,mappingInfo->node->class_name().c_str());
+                                        printf ("   --- This is likely a shared token sequence and we need to go back one more to define the previous_mappingInfo = %p node = %p \n",
+                                             previous_mappingInfo,previous_mappingInfo->node);
 #endif
                                         while (temp_i >= 1 && previous_mappingInfo->node == mappingInfo->node)
                                            {
@@ -3292,7 +3324,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
 #endif
 #if DEBUG_DARK_TOKEN_FIXUP
-                                          // printf ("Dark tokens fixup: Reset test 2 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_token_subsequence_end);
+                                          // printf ("Dark tokens fixup: Reset test 2 the mappingInfo->trailing_whitespace_end from %d to %d \n",
+                                          // mappingInfo->trailing_whitespace_end,previous_mappingInfo_token_subsequence_end);
 #endif
                                              ROSE_ASSERT(previous_mappingInfo_token_subsequence_end >= 0);
                                           // ROSE_ASSERT(current_mappingInfo_leading_whitespace_start >= 0);
@@ -3373,6 +3406,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (i == 0)
                             {
                            // Use the current node's lower bound as the base of the leading whitespace subsequence.
+#error "DEAD CODE!"
                               mappingInfo->leading_whitespace_start = current_node_token_subsequence_start;
                               mappingInfo->leading_whitespace_end   = mappingInfo->token_subsequence_start - 1;
 #if 0
@@ -3380,6 +3414,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               printf ("   --- mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
 #endif
                            // I think that if this fails then both of these need to be set to the default value: -1.
+#error "DEAD CODE!"
                               if (mappingInfo->leading_whitespace_start > mappingInfo->leading_whitespace_end)
                                  {
 #if 0
@@ -3389,7 +3424,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    mappingInfo->leading_whitespace_start = -1;
                                    mappingInfo->leading_whitespace_end   = -1;
                                  }
-
+#error "DEAD CODE!"
                               ROSE_ASSERT(mappingInfo->leading_whitespace_start <= mappingInfo->leading_whitespace_end);
 #if 0
                               printf ("Note: i = %zu: mappingInfo->leading_whitespace_start=%d > mappingInfo->leading_whitespace_end=%d: (reset) \n",i,mappingInfo->leading_whitespace_start,mappingInfo->leading_whitespace_end);
@@ -3414,6 +3449,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                      // DQ (11/30/2013): This case is added to support test2012_166.c.
                                      // mappingInfo->leading_whitespace_start++;
+#error "DEAD CODE!"
                                         if (mappingInfo->leading_whitespace_start < mappingInfo->leading_whitespace_end)
                                            {
                                              mappingInfo->leading_whitespace_start++;
@@ -3450,6 +3486,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  {
                                    ROSE_ASSERT(mappingInfo->node != NULL);
                                    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(mappingInfo->node);
+#error "DEAD CODE!"
                                    if (functionDefinition != NULL)
                                       {
 #if 0
@@ -3480,6 +3517,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         ROSE_ABORT();
 #endif
                                       }
+#error "DEAD CODE!"
+
 #if 0
                                    SgStatement* body = isSgStatement(mappingInfo->node);
 
@@ -3509,6 +3548,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    SgStatement* conditionStatement = isSgStatement(mappingInfo->node);
                                    if (conditionStatement != NULL)
                                       {
+#error "DEAD CODE!"
                                         if ( (whileStatement  != NULL && conditionStatement == whileStatement->get_condition()) ||
                                              (switchStatement != NULL && conditionStatement == switchStatement->get_item_selector()) ||
                                              (ifStatement     != NULL && conditionStatement == ifStatement->get_conditional()) )
@@ -3577,7 +3617,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    mappingInfo->leading_whitespace_start = last_node_token_subsequence_end + 1;
                                    ROSE_ASSERT(last_node_token_subsequence_end >= 0);
                                    mappingInfo->leading_whitespace_end   = mappingInfo->token_subsequence_start - 1;
-
+#error "DEAD CODE!"
                                 // I think that if this fails then both of these need to be set to the default value: -1.
                                    if (mappingInfo->leading_whitespace_start > mappingInfo->leading_whitespace_end)
                                       {
@@ -3601,6 +3641,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         ROSE_ASSERT(mappingInfo->node != NULL);
 
                                         SgBasicBlock* basicBlock = isSgBasicBlock(mappingInfo->node);
+#error "DEAD CODE!"
                                         if (basicBlock != NULL)
                                            {
 #if 0
@@ -3621,6 +3662,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                            {
                                              ROSE_ASSERT(mappingInfo->node != NULL);
                                              SgStatement* body = isSgStatement(mappingInfo->node);
+#error "DEAD CODE!"
                                              if (body != NULL && forStatement->get_loop_body() == body)
                                                 {
 #if 0
@@ -3642,12 +3684,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         SgIfStmt* ifStatement = isSgIfStmt(mappingInfo->node);
                                         if (ifStatement != NULL && ifStatement->get_false_body() != NULL)
                                            {
-#if 1
+#if 0
                                              printf ("$$$$$$$$$$$$ Handle special case of else syntax in SgIfStmt in SgStatement (not the first child) \n");
 #endif
                                              discoverElseSyntax(true_body_mappingInfo,false_body_mappingInfo);
 
-#if 1
+#if 0
                                              printf ("Exiting as a test! \n");
                                              ROSE_ABORT();
 #endif
@@ -3660,7 +3702,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if (ifStatement != NULL)
                                       {
                                         ROSE_ASSERT(mappingInfo->node != NULL);
-
+#error "DEAD CODE!"
                                         SgStatement* true_body_statement = isSgStatement(mappingInfo->node);
                                         if (true_body_statement == ifStatement->get_true_body() && ifStatement->get_false_body() != NULL)
                                            {
@@ -3698,7 +3740,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if (basicBlock != NULL)
                                       {
                                         ROSE_ASSERT(mappingInfo->node != NULL);
-
+#error "DEAD CODE!"
                                      // These are not set correctly in EDG.
                                         SgCaseOptionStmt* caseOptionStatement       = isSgCaseOptionStmt(mappingInfo->node);
                                         SgDefaultOptionStmt* defaultOptionStatement = isSgDefaultOptionStmt(mappingInfo->node);
@@ -3723,6 +3765,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
                                    if (switchStatement != NULL)
                                       {
+#error "DEAD CODE!"
                                         ROSE_ASSERT(mappingInfo->node != NULL);
                                         SgBasicBlock* body = isSgBasicBlock(mappingInfo->node);
                                         if (body != NULL)
@@ -3742,6 +3785,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       }
 #endif
                                  }
+#error "DEAD CODE!"
                                 else
                                  {
 #if 0
@@ -3766,7 +3810,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         mappingInfo->leading_whitespace_start = last_node_token_subsequence_end + 1;
                                         ROSE_ASSERT(last_node_token_subsequence_end >= 0);
                                         mappingInfo->leading_whitespace_end   = mappingInfo->token_subsequence_start - 1;
-
+#error "DEAD CODE!"
                                      // If this happends then we need to set the leading whitespace position to the default (-1).
                                      // ROSE_ASSERT (mappingInfo->leading_whitespace_start <= mappingInfo->leading_whitespace_end);
                                         if (mappingInfo->leading_whitespace_start > mappingInfo->leading_whitespace_end)
@@ -3793,6 +3837,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          if (i == (tokenToNodeVector.size()-1))
                             {
                            // Use the current node's lower bound as the base of the leading whitespace subsequence.
+#error "DEAD CODE!"
                               mappingInfo->trailing_whitespace_start = mappingInfo->token_subsequence_end + 1;
                               mappingInfo->trailing_whitespace_end   = current_node_token_subsequence_end;
 
@@ -3816,6 +3861,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            // DQ (12/1/2013): Added support for the SgClassDefinition.
                            // DQ (11/30/2013): Added to support trimming of the token stream for the first and last children to exclude the trailing "}" token.
                            // if (isSgBasicBlock(n) != NULL)
+#error "DEAD CODE!"
                               if (isSgBasicBlock(n) != NULL || isSgClassDefinition(n) != NULL)
                                  {
                                 // This is a search of the token stream that we would like to avoid.
@@ -3827,6 +3873,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                      // DQ (11/30/2013): This case is added to support test2012_166.c.
                                      // mappingInfo->trailing_whitespace_end--;
+#error "DEAD CODE!"
                                         if (mappingInfo->trailing_whitespace_start < mappingInfo->trailing_whitespace_end)
                                            {
                                              mappingInfo->trailing_whitespace_end--;
@@ -3851,7 +3898,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            else
                             {
                            // Handle the right edge of a non-rightmost child in the synthisized attribute list.
-
+#error "DEAD CODE!"
                               if (mappingInfo->shared == false)
                                  {
                                    ROSE_ASSERT(i+1 < tokenToNodeVector.size());
@@ -3866,6 +3913,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    bool skipUpdate = false;
                                    printf ("#################### Fix mistaken reset of trailing whitespace end position for the case of the true body of a SgIfStmt! ##################### \n");
                                    SgIfStmt* ifStatement = isSgIfStmt(n);
+#error "DEAD CODE!"
                                    if (ifStatement != NULL)
                                       {
                                      // if (mappingInfo->node == isSgIfStmt(n)->get_true_body())
@@ -4950,8 +4998,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
   // ROSE_ASSERT(include_sourceFile->get_tokenSubsequenceMap().find(include_sourceFile->get_globalScope()) != include_sourceFile->get_tokenSubsequenceMap().end());
 
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-     printf ("In evaluateInheritedAttribute(): n = %p = %s original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d processed = %s \n",
-          n,n->class_name().c_str(),original_start_of_token_subsequence,original_end_of_token_subsequence,processed ? "true" : "false");
+     printf ("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+     printf ("In evaluateInheritedAttribute(): n = %p = %s name = %s original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d processed = %s \n",
+             n,n->class_name().c_str(),SageInterface::get_name(n).c_str(),original_start_of_token_subsequence,original_end_of_token_subsequence,processed ? "true" : "false");
      if (isSgClassDeclaration(n) != NULL)
         {
           printf ("   --- class name = %s \n",isSgClassDeclaration(n)->get_name().str());
@@ -4962,6 +5011,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
         }
      printf ("   --- start_of_token_subsequence          = %d end_of_token_subsequence          = %d \n",start_of_token_subsequence,end_of_token_subsequence);
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
+     printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
 #if ERROR_CONSISTANCY_CHECKING
