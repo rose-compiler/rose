@@ -164,6 +164,9 @@ void Rose::Options::set_backend_warnings(bool flag)
 // std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
 std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
+// DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
+std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
+
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
 // std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
@@ -1671,7 +1674,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
               nextStatement = lableStatement->get_statement();
               ROSE_ASSERT(nextStatement != NULL);
-#if 1
+#if 0
               printf ("In getNextStatement(): case V_SgLabelStatement: nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
 #endif
               break;
@@ -1730,6 +1733,9 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                          cerr<<currentStatement->get_file_info()->displayString()<<endl;
                          cerr<<"Its scope is "<<scope->class_name()<<endl;
                          cerr<<scope->get_file_info()->displayString()<<endl;
+#if 0
+                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");                 
+#endif
                          ROSE_ABORT ();
                        }
 
