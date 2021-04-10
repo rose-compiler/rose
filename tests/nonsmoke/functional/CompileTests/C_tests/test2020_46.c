@@ -1,0 +1,6 @@
+void foobar()
+   {
+     for(;;)
+        {
+        }
+   }

@@ -749,16 +749,16 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
   //! Find the preprocessingInfo node representing #include <header.h> or #include "header.h" within a source file. Return NULL if not found.
-  PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
+ROSE_DLL_API PreprocessingInfo * findHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
-PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
+ROSE_DLL_API PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
 
 //! Insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
-void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
+ROSE_DLL_API void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
-PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
+ROSE_DLL_API PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
 
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX.
 ROSE_DLL_API PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
@@ -860,6 +860,10 @@ void setSourcePositionPointersToNull(SgNode *node);
 
 //! Check if a node is from a system header file
   ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
+
+// DQ (2/27/2021): Adding support to detect if a SgLocatedNode is located in a header file.
+//! Check if a node is from a header file
+  ROSE_DLL_API bool insideHeader (SgLocatedNode* node);
 
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
 // ROSE_DLL_API void setSourcePosition (SgLocatedNode * locatedNode);
@@ -1883,6 +1887,18 @@ struct DeferredTransformation
 
      typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
      FuncDeclList_t targetFriends;
+
+  // DQ (2/28/2021): Adding support for outlining where it involves building up pre-transformations.
+  // For example, in the code segregation, we build a conditiona around the interval of statements 
+  // that we are outlining. This conditional is used to overwrite the first statement in the interval 
+  // list.  Because we don't want to transform the AST until after the outlining, we need so save the
+  // whole interval so that we, after the outlining, remove the statements in the interval after that
+  // first statement.
+     typedef std::vector<SgStatement*> IntervalType;
+     IntervalType statementInterval;
+     SgStatement* locationToOverwriteWithTransformation;
+     SgStatement* transformationToOverwriteFirstStatementInInterval;
+     SgBasicBlock* blockOfStatementsToOutline;
 
   // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
      ROSE_DLL_API DeferredTransformation();
