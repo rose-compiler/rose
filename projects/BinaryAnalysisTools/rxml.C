@@ -120,7 +120,7 @@ main(int argc, char *argv[]) {
             break;
         }
     }
-    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"; took " <<timer <<"\n";
 }
 
 #else

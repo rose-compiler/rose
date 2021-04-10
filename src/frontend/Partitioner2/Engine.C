@@ -1500,7 +1500,7 @@ Engine::createBarePartitioner() {
         info <<"loading configuration files";
         BOOST_FOREACH (const std::string &configName, settings_.engine.configurationNames)
             p.configuration().loadFromFile(configName);
-        info <<"; took " <<timer <<" seconds\n";
+        info <<"; took " <<timer <<"\n";
     }
 
     // Build the may-return blacklist and/or whitelist.  This could be made specific to the type of interpretation being
@@ -1821,7 +1821,7 @@ Engine::runPartitioner(Partitioner &partitioner) {
     runPartitionerInit(partitioner);
     runPartitionerRecursive(partitioner);
     runPartitionerFinal(partitioner);
-    info <<"; took " <<timer <<" seconds\n";
+    info <<"; took " <<timer <<"\n";
 
     if (settings_.partitioner.doingPostAnalysis)
         updateAnalysisResults(partitioner);
@@ -1880,7 +1880,7 @@ Engine::savePartitioner(const Partitioner &partitioner, const boost::filesystem:
             archive->saveAst(file);
     }
 
-    info <<"; took " <<timer <<" seconds\n";
+    info <<"; took " <<timer <<"\n";
 }
 
 Partitioner
@@ -1904,7 +1904,7 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
         }
     }
 
-    info <<"; took " <<timer << " seconds\n";
+    info <<"; took " <<timer << "\n";
     map_ = partitioner.memoryMap();
     return boost::move(partitioner);
 }
@@ -2629,7 +2629,7 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
         partitioner.allFunctionCallingConventionDefinition(dfltCcDef);
     }
 
-    info <<"; total " <<timer <<" seconds\n";
+    info <<"; total " <<timer <<"\n";
 }
 
 // class method called by ROSE's ::frontend to disassemble instructions.
