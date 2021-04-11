@@ -3256,7 +3256,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                  }
                                 else
                                  {
+#if 0
                                    printf ("case SgBasicBlock: previousStatement == NULL \n");
+#endif
                                  }
 #if 0
                               printf ("Exiting as a test! \n");

@@ -17151,6 +17151,9 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
         {
 #if 0
           printf ("Adding a new object to the Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+          printf (" --- associated source file  = %p \n",this);
+          printf (" --- associated filename     = %s \n",this->getFileName().c_str());
+          printf (" --- associated global scope = %p \n",this->get_globalScope());
 #endif
           Rose::tokenSubsequenceMapOfMapsBySourceFile.insert(std::pair<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >(this,tokenStreamSequenceMap));
 #if 0
