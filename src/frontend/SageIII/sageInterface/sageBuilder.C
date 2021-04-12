@@ -8897,7 +8897,7 @@ SageBuilder::buildMemberFunctionCall( std::string       className,
 }
 
 // with known varRef and mem function symbol :  a.size()
-SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+SgFunctionCallExp* SageBuilder::buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
     SgExprListExp*    params)
 {
   SgMemberFunctionRefExp* memref = SageBuilder::buildMemberFunctionRefExp(functionSymbol, false, false);
