@@ -806,6 +806,30 @@ ROSE_DLL_API SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprList
 ROSE_DLL_API SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+
+//! Build member function calls
+/*! 
+ *Create a member function call
+ *  This function looks for the function symbol in the given className
+ *  The function should exist in the class
+ *  The class should be #included or present in the source file parsed by frontend
+ *   
+ * Parameters: 
+ *  className: template class name, e.g. vector
+ *  objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1; 
+ *  functionName: member function name: size
+ *  params: function parameter list
+ *  scope: the scope this function call expression will be inserted into.
+ * Credit to Peter's previous work at:  
+ * projects/MatlabTranslation/src/transformations/MatlabSimpleTransformer.cc
+ */
+ROSE_DLL_API SgFunctionCallExp* 
+buildMemberFunctionCall (std::string className, SgExpression *objectExpression, std::string functionName, SgExprListExp *params, SgScopeStatement *scope);
+  
+//! Build member function calls. objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1;
+ROSE_DLL_API SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+                                          SgExprListExp*    params);
+
 SgTypeTraitBuiltinOperator*
 buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
 
