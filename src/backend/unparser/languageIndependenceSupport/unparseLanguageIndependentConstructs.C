@@ -635,11 +635,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   }
              }
 
+       // DQ (4/11/2021): The case of just using the unparseHeaderFiles without the token needs to work as well.
        // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence 
        // and if they are not marked as transformations, then we want to skip their output. And example of 
        // 
        // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
-          if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
+       // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
+          if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
              {
             // bool isOutputInCodeGeneration = stmt->get_file_info()->isOutputInCodeGeneration();
                bool isTransformation = stmt->get_file_info()->isTransformation();
@@ -746,11 +748,39 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                             }
                            else
                             {
-                              statementInFile = false;
+                           // DQ (4/11/2021): If we are only unparsing headers without the token unparsing, then this is true, 
+                           // else if we needed the token subsequences, then it is false.
+                           // statementInFile = false;
+                           // if (sourceFile->get_unparseHeaderFiles() == true)
+                              if (sourceFile->get_unparse_tokens() == true)
+                                 {
+                                   statementInFile = false;
+                                 }
+                                else
+                                 {
+                                // DQ (4/11/2021): If we are not using the token, then we need not have found them, but we 
+                                // should be unparsing the header files.
+                                   ROSE_ASSERT(sourceFile->get_unparseHeaderFiles() == true);
+#if DEBUG_STATEMENT_FROM_FILE
+                                   printf ("Comparing filename: sourceFilename = %s \n",sourceFilename.c_str());
+                                   printf (" ----------------statementfilename = %s \n",statementfilename.c_str());
+#endif
+                                // DQ (4/11/2021): if the token subsequence is unavailable then we also have to check the names.
+                                // This is a bit more efficent if we use file_ids instead of strings.
+                                   if (sourceFilename == statementfilename)
+                                      {
+                                        statementInFile = true;
+                                      }
+                                     else
+                                      {
+                                        statementInFile = false;
+                                      }
+                                 }
+
 #if DEBUG_STATEMENT_FROM_FILE
                               printf ("################################################################ \n");
                               printf ("################################################################ \n");
-                              printf ("In statementFromFile(): Token map is not available for this file \n");
+                              printf ("In statementFromFile(): Token map is not available for this file (but unparsing the header files without the tokens is OK) \n");
                               printf ("################################################################ \n");
                               printf ("################################################################ \n");
 #endif
