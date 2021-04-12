@@ -8861,6 +8861,49 @@ SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* pa
   return expStmt;
 }
 
+
+//! AST builder functions for template instantiation etc.
+/**
+ * Create a member function call
+ * This function looks for the function symbol in the given className
+ * The function should exist in the class
+ * The class should be #included or present in the source file parsed by frontend
+ */
+  SgFunctionCallExp*
+SageBuilder::buildMemberFunctionCall( std::string       className,
+    SgExpression*     objectExpression,
+    std::string       functionName,
+    SgExprListExp*    params,
+    SgScopeStatement* scope
+    )
+{
+  SgClassSymbol* classSymbol = SageInterface::lookupClassSymbolInParentScopes(className, scope);
+  ROSE_ASSERT(classSymbol);
+
+  SgDeclarationStatement* classDecl = classSymbol->get_declaration()->get_definingDeclaration();
+  SgClassDeclaration*     classDeclaration = isSgClassDeclaration(classDecl);
+  ROSE_ASSERT(classDeclaration != NULL);
+
+  SgClassDefinition*      classDefinition = classDeclaration->get_definition();
+  ROSE_ASSERT(classDefinition);
+
+  SgSymbol*               funsy = lookupFunctionSymbolInParentScopes(functionName, classDefinition);
+  SgMemberFunctionSymbol* functionSymbol = isSgMemberFunctionSymbol(funsy);
+  ROSE_ASSERT(functionSymbol);
+
+  SgMemberFunctionRefExp* memref = buildMemberFunctionRefExp(functionSymbol, false, false);
+
+  return buildFunctionCallExp(buildDotExp(objectExpression, memref), params);
+}
+
+// with known varRef and mem function symbol :  a.size()
+SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+    SgExprListExp*    params)
+{
+  SgMemberFunctionRefExp* memref = SageBuilder::buildMemberFunctionRefExp(functionSymbol, false, false);
+  return SageBuilder::buildFunctionCallExp(SageBuilder::buildDotExp(objectExpression, memref), params);
+}
+
 SgTypeTraitBuiltinOperator*
 SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters)
    {
