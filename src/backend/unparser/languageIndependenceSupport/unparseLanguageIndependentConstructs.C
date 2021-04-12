@@ -9580,12 +9580,13 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgSubtractOp:       // return 12;
                                      precedence_value = 12; break;
 
+          case V_SgJovialPresetPositionExp:
+          case V_SgReplicationOp: // Rasmussen (4/12/21) Jovial operator
           case V_SgRemOp: // PP (14/10/20) add Ada operator
           case V_SgMultiplyOp:       // return 13;
           case V_SgIntegerDivideOp:
           case V_SgDivideOp:         // return 13;
           case V_SgModOp:            // return 13;
-          case V_SgReplicationOp:    // return 13;
                                      precedence_value = 13; break;
 
           case V_SgDotStarOp:        // return 14;
@@ -10279,7 +10280,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
   // DQ (11/9/2009): I think this can no longer be true since we have removed the use of SgExpressionRoot.
      ROSE_ASSERT(parentExpr == NULL || parentExpr->variantT() != V_SgExpressionRoot);
 
-     if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
+     if (parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || parentExpr->variantT() == V_SgJovialPresetPositionExp || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("     Special case of parentExpr == NULL || SgExpressionRoot || SgExprListExp || SgConstructorInitializer || SgDesignatedInitializer (return false) \n");

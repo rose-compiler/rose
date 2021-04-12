@@ -65,9 +65,10 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
        // initializers
-          case V_SgAssignInitializer:    unparseAssnInit     (expr, info);       break;
-          case V_SgJovialTablePresetExp: unparseTablePreset  (expr, info);       break;
-          case V_SgReplicationOp:        unparseReplicationOp(expr, info);       break;
+          case V_SgAssignInitializer:       unparseAssnInit     (expr, info);    break;
+          case V_SgJovialTablePresetExp:    unparseTablePreset  (expr, info);    break;
+          case V_SgJovialPresetPositionExp: unparsePresetPos    (expr, info);    break;
+          case V_SgReplicationOp:           unparseReplicationOp(expr, info);    break;
 
           case V_SgNullExpression:                                               break;
 
@@ -517,40 +518,43 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
      SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
      ASSERT_not_null(table_preset);
 
-     SgExprListExp* default_sublist = table_preset->get_default_sublist();
-     SgExprListExp* specified_sublist = table_preset->get_specified_sublist();
+     SgExprListExp* presets = table_preset->get_preset_list();
+     ASSERT_not_null(presets);
 
-     ASSERT_not_null(default_sublist);
-     ASSERT_not_null(specified_sublist);
+     if (table_preset->get_need_paren()) curprint("(");
 
-     int sublist_size = specified_sublist->get_expressions().size();
-     bool has_specified_sublist = (sublist_size > 0);
+  // Unparse the preset list individually (to get parentheses/precedence proper)
+     bool first = true;
+     for (SgExpression* preset : presets->get_expressions())
+       {
+         if (first) first = false;
+         else curprint(",");
+         if (preset->variantT() != V_SgNullExpression) // otherwise "()" is printed
+           unparseExpression(preset, info);
+       }
 
-  // Unparse the optional DefaultPresetSublist
-     if (default_sublist->get_expressions().size() > 0)
-        {
-           unparseExpression(default_sublist, info);
-           if (has_specified_sublist) curprint(", ");
-        }
+     if (table_preset->get_need_paren()) curprint(")");
+  }
 
-     if (has_specified_sublist)
-        {
-        // They come in pairs
-           ROSE_ASSERT((sublist_size % 2) == 0);
+void
+Unparse_Jovial::unparsePresetPos(SgExpression* expr, SgUnparse_Info& info)
+  {
+     SgJovialPresetPositionExp* pos_preset = isSgJovialPresetPositionExp(expr);
+     ASSERT_not_null(pos_preset);
 
-           for (int i=0; i < sublist_size; i+=2)
-              {
-              // Unparse the PresetIndexSpecifier
-                 curprint("\n");
-                 curprint_indented("    POS(", info);
-                 unparseExpression(specified_sublist->get_expressions()[i], info);
-                 curprint("): ");
+     SgExprListExp* indices = pos_preset->get_indices();
+     SgExpression* value = pos_preset->get_value();
 
-              // Unparse the PresetValuesOption
-                 unparseExpression(specified_sublist->get_expressions()[i+1], info);
-                 if (i+2 < sublist_size) curprint(",");
-              }
-        }
+     ASSERT_not_null(indices);
+     ASSERT_not_null(value);
+
+  // Unparse the position
+     curprint("POS(");
+     unparseExpression(indices, info);
+     curprint("):");
+
+  // Unparse the value
+     unparseExpression(value, info);
   }
 
 void

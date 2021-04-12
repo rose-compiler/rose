@@ -109,6 +109,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Initializers
           void unparseAssnInit      (SgExpression* expr, SgUnparse_Info& info);
           void unparseTablePreset   (SgExpression* expr, SgUnparse_Info& info);
+          void unparsePresetPos     (SgExpression* expr, SgUnparse_Info& info);
           void unparseReplicationOp (SgExpression* expr, SgUnparse_Info& info);
 
        // Table dimension list
