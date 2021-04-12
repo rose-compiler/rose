@@ -346,8 +346,11 @@ Grammar::setUpExpressions ()
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
-  // CR (06/24/2020) An initializer for Jovial tables containing two kinds of lists
+  // Rasmussen (06/24/2020) Initializer for Jovial tables (wraps SgExprListExp, useful for unparsing/analysis)
      NEW_TERMINAL_MACRO (JovialTablePresetExp, "JovialTablePresetExp", "JOVIAL_TABLE_PRESET_EXP" );
+
+  // Rasmussen (04/09/2021) Used for specifying a value at a position/location in a Jovial table
+     NEW_TERMINAL_MACRO (JovialPresetPositionExp, "JovialPresetPositionExp", "JOVIAL_PRESET_POSITION_EXP" );
 
      //SK (06/23/2015) SgMatrixExp for Matlab Matrix
      NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
@@ -468,7 +471,7 @@ Grammar::setUpExpressions ()
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
           AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
-          JovialTablePresetExp, "Expression", "ExpressionTag", false);
+          JovialTablePresetExp| JovialPresetPositionExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -2870,10 +2873,14 @@ Grammar::setUpExpressions ()
   // DesignatedInitializer.setDataPrototype("SgExpression*" , "designator", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // CR (6/24/2020): An initializer for Jovial tables
+  // Rasmussen (6/24/2020): An initializer for Jovial tables
      JovialTablePresetExp.setFunctionPrototype ( "HEADER_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
-     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "default_sublist", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "specified_sublist", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "preset_list", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (4/9/2021): Used in Jovial table initialization.
+     JovialPresetPositionExp.setFunctionPrototype ("HEADER_JOVIAL_PRESET_POSITION_EXP", "../Grammar/Expression.code");
+     JovialPresetPositionExp.setDataPrototype("SgExprListExp*", "indices", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialPresetPositionExp.setDataPrototype("SgExpression*", "value", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
  // TV (04/22/2010): CUDA support
      CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
@@ -3247,6 +3254,7 @@ Grammar::setUpExpressions ()
      DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
 
      JovialTablePresetExp.setFunctionSource ( "SOURCE_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
+     JovialPresetPositionExp.setFunctionSource ( "SOURCE_JOVIAL_PRESET_POSITION_EXP", "../Grammar/Expression.code" );
 
      //FMZ (2/6/2009): Added for CoArray Reference
      CAFCoExpression.setFunctionSource ( "SOURCE_CO_EXPRESSION", "../Grammar/Expression.code" );

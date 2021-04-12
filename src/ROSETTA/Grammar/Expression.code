@@ -1854,9 +1854,13 @@ HEADER_DESIGNATED_INITIALIZER_START
 
 HEADER_DESIGNATED_INITIALIZER_END
 
-// CR (6/25/2020): Added SgJovialTablePreset to support initializers for Jovial tables
+// Rasmussen (6/25/2020): Added SgJovialTablePresetExp to support initializers for Jovial tables
 HEADER_JOVIAL_TABLE_PRESET_EXP_START
 HEADER_JOVIAL_TABLE_PRESET_EXP_END
+
+// Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
+HEADER_JOVIAL_PRESET_POSITION_EXP_START
+HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
 //        virtual unsigned int cfgIndexForEnd() const;
@@ -9444,19 +9448,12 @@ SOURCE_DESIGNATED_INITIALIZER_END
 
 
 SOURCE_JOVIAL_TABLE_PRESET_EXP_START
-
 void
 SgJovialTablePresetExp::post_construction_initialization()
-   {
-     if (p_default_sublist)
-       {
-          p_default_sublist->set_parent(this);
-       }
-     if (p_specified_sublist)
-       {
-          p_specified_sublist->set_parent(this);
-       }
-   }
+{
+  ROSE_ASSERT(p_preset_list);
+  p_preset_list->set_parent(this);
+}
 
 SgType*
 SgJovialTablePresetExp::get_type() const
@@ -9466,9 +9463,26 @@ SgJovialTablePresetExp::get_type() const
 
   return parent->get_type();
 }
-
 SOURCE_JOVIAL_TABLE_PRESET_EXP_END
 
+
+SOURCE_JOVIAL_PRESET_POSITION_EXP_START
+void
+SgJovialPresetPositionExp::post_construction_initialization()
+{
+  ROSE_ASSERT(p_indices);
+  ROSE_ASSERT(p_value);
+  p_indices->set_parent(this);
+  p_value->set_parent(this);
+}
+
+SgType*
+SgJovialPresetPositionExp::get_type() const
+{
+  ROSE_ASSERT(p_value);
+  return p_value->get_type();
+}
+SOURCE_JOVIAL_PRESET_POSITION_EXP_END
 
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_START
