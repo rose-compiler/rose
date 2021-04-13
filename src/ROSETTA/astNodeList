@@ -486,6 +486,7 @@ SgJovialForThenStatement
 SgJovialDefineDeclaration
 SgJovialDirectiveStatement
 SgJovialOverlayDeclaration
+SgJovialPresetPositionExp
 SgJovialTablePresetExp
 SgJovialTableStatement
 SgKeyDatumPair

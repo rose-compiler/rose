@@ -1135,6 +1135,17 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      SgScopeStatement *scope_stmt = initializedNameNode->get_scope();
 #endif
 
+  // DQ (2/4/2021): Adding support for enum values (in SgEnumDeclarations).
+     if (isSgEnumDeclaration(initializedNameNode->get_parent()) != NULL)
+        {
+          ROSE_ASSERT(scope_stmt != NULL);
+          printf ("scope_stmt = %p = %s \n",scope_stmt,scope_stmt->class_name().c_str());
+#if 0
+          printf ("Detected isSgEnumDeclaration as parent: exiting as a test in SageInterface::set_name() \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
      ROSE_ASSERT(scope_stmt != NULL);
      ROSE_ASSERT(scope_stmt->get_symbol_table() != NULL);
      ROSE_ASSERT(scope_stmt->get_symbol_table()->get_table() != NULL);
@@ -1150,37 +1161,53 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
      for (SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
         {
+#if 1
+          printf ("Looking for symbol in scope = %p = %s \n",scope_stmt,scope_stmt->class_name().c_str());
+          printf (" --- *it = %p = %s \n",(*it).second,(*it).second->class_name().c_str());
+#endif
           switch(parent_declaration->variantT())
              {
                case V_SgFunctionParameterList:
                case V_SgVariableDeclaration:
                   {
-                    if (isSgVariableSymbol((*it).second)!=NULL)
+                    if (isSgVariableSymbol((*it).second) != NULL)
                          found_it = it;
                     break;
                   }
+
                case V_SgClassDeclaration:
                   {
-                    if (isSgClassSymbol((*it).second)!=NULL)
+                    if (isSgClassSymbol((*it).second) != NULL)
                          found_it = it;
                     break;
                   }
+
                case V_SgFunctionDeclaration:
                   {
-                    if (isSgFunctionSymbol((*it).second)!=NULL)
+                    if (isSgFunctionSymbol((*it).second) != NULL)
                          found_it = it;
                     break;
                   }
+
+            // DQ (2/4/2021): Adding support for enum values (in SgEnumDeclarations).
+               case V_SgEnumDeclaration:
+                  {
+                    if (isSgEnumFieldSymbol((*it).second) != NULL)
+                         found_it = it;
+                    break;
+                  }
+
                default:
                   {
+                    printf ("Default reached in switch in SageInterface::set_name() \n");
                   }
              };
         }
 
-  // there is no Variable,Class or Function symbol associated with p_name
+  // there is no Variable, Class or Function symbol associated with p_name
      if (found_it == scope_stmt->get_symbol_table()->get_table()->end())
         {
-          printf ("Warning: There is no Variable,Class or Function symbol associated with p_name \n");
+          printf ("Warning: There is no Variable, Class, Function, or EnumValue symbol associated with p_name \n");
           return 0;
         }
 
@@ -1600,7 +1627,9 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                const SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(declaration);
                ROSE_ASSERT(templateInstantiationDirective != NULL);
                ROSE_ASSERT(templateInstantiationDirective->get_declaration() != NULL);
+#if 0
                printf ("declaration->get_declaration() = %p = %s \n",templateInstantiationDirective->get_declaration(),templateInstantiationDirective->get_declaration()->class_name().c_str());
+#endif
                name += get_name(templateInstantiationDirective->get_declaration());
                break;
              }
@@ -9510,13 +9539,21 @@ SageInterface::DeferredTransformation::DeferredTransformation()
      statementToAdd(NULL),
      class_definition(NULL),
      target_class_member(NULL),
-     new_function_prototype(NULL)
+     new_function_prototype(NULL),
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     locationToOverwriteWithTransformation(NULL),
+     transformationToOverwriteFirstStatementInInterval(NULL),
+     blockOfStatementsToOutline(NULL)
    {
   // Default constructor (not particularly useful).
 #if 0
      printf ("In SageInterface::DeferredTransformation default constructor called \n");
 #endif
    }
+
+// DQ (2/28/2021): Added new data member to support deferred transformations.
+// IntervalType statementInterval;
+// SgStatement* locationToOverwriteWithTransformation;
 
 SageInterface::DeferredTransformation::DeferredTransformation(
    SgClassDefinition* input_class_definition, 
@@ -9527,7 +9564,11 @@ SageInterface::DeferredTransformation::DeferredTransformation(
      statementToAdd(NULL),
      class_definition(input_class_definition),
      target_class_member(input_target_class_member),
-     new_function_prototype(input_new_function_prototype)
+     new_function_prototype(input_new_function_prototype),
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     locationToOverwriteWithTransformation(NULL),
+     transformationToOverwriteFirstStatementInInterval(NULL),
+     blockOfStatementsToOutline(NULL)
    {
   // This constructor is used by the outliner.
 #if 0
@@ -9552,6 +9593,12 @@ SageInterface::DeferredTransformation::replaceDefiningFunctionDeclarationWithFun
      X.target_class_member        = NULL;
      X.new_function_prototype     = NULL;
 
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+  // X.statementInterval;
+     X.locationToOverwriteWithTransformation             = NULL;
+     X.transformationToOverwriteFirstStatementInInterval = NULL;
+     X.blockOfStatementsToOutline                        = NULL;
+
      return X;
    }
 
@@ -9571,6 +9618,12 @@ SageInterface::DeferredTransformation::replaceStatement(SgStatement* oldStmt, Sg
      X.class_definition           = NULL;
      X.target_class_member        = NULL;
      X.new_function_prototype     = NULL;
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+  // X.statementInterval;
+     X.locationToOverwriteWithTransformation = NULL;
+     X.transformationToOverwriteFirstStatementInInterval = NULL;
+     X.blockOfStatementsToOutline = NULL;
 
      return X;
    }
@@ -9624,6 +9677,14 @@ SageInterface::DeferredTransformation & SageInterface::DeferredTransformation::o
      new_function_prototype     = X.new_function_prototype;
      targetClasses              = X.targetClasses;
      targetFriends              = X.targetFriends;
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     statementInterval                                 = X.statementInterval;
+     locationToOverwriteWithTransformation             = X.locationToOverwriteWithTransformation;
+     transformationToOverwriteFirstStatementInInterval = X.transformationToOverwriteFirstStatementInInterval;
+
+  // DQ (3/1/2021): Added new data member to support deferred transformations.
+     blockOfStatementsToOutline                        = X.blockOfStatementsToOutline;
 #endif
 
      return *this;
@@ -9686,7 +9747,8 @@ void SageInterface::DeferredTransformation::display ( std::string label ) const
 
      if (class_definition != NULL)
         {
-          printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
+       // printf (" --- class_definition = %p = %s name = %s \n",class_definition,class_definition->class_name().c_str(),get_name(class_definition).c_str());
+          printf (" --- class_definition = %p \n",class_definition);
         }
 
      if (target_class_member != NULL)
@@ -9699,8 +9761,34 @@ void SageInterface::DeferredTransformation::display ( std::string label ) const
           printf (" --- new_function_prototype = %p = %s name = %s \n",new_function_prototype,new_function_prototype->class_name().c_str(),get_name(new_function_prototype).c_str());
         }
 
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     if (locationToOverwriteWithTransformation != NULL)
+        {
+       // printf (" --- locationToOverwriteWithTransformation = %p = %s name = %s \n",locationToOverwriteWithTransformation,
+       //      locationToOverwriteWithTransformation->class_name().c_str(),get_name(locationToOverwriteWithTransformation).c_str());
+          printf (" --- locationToOverwriteWithTransformation = %p \n",locationToOverwriteWithTransformation);
+        }
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     if (transformationToOverwriteFirstStatementInInterval != NULL)
+        {
+       // printf (" --- transformationToOverwriteFirstStatementInInterval = %p = %s name = %s \n",transformationToOverwriteFirstStatementInInterval,
+       //      transformationToOverwriteFirstStatementInInterval->class_name().c_str(),get_name(transformationToOverwriteFirstStatementInInterval).c_str());
+          printf (" --- transformationToOverwriteFirstStatementInInterval = %p \n",transformationToOverwriteFirstStatementInInterval);
+        }
+
+  // DQ (3/1/2021): Added new data member to support deferred transformations.
+     if (blockOfStatementsToOutline != NULL)
+        {
+          printf (" --- blockOfStatementsToOutline = %p \n",blockOfStatementsToOutline);
+        }
+
      printf ("targetClasses.size() = %zu \n",targetClasses.size());
      printf ("targetFriends.size() = %zu \n",targetFriends.size());
+
+  // DQ (2/28/2021): Added new data member to support deferred transformations.
+     printf ("statementInterval.size() = %zu \n",statementInterval.size());
+
    }
 #endif
 
@@ -10042,7 +10130,7 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
      SgStatement* surroundingStatement = targetStmt;
      int surroundingStatement_fileId   = Sg_File_Info::BAD_FILE_ID; // No file id can have this value.
 
-#if REMOVE_STATEMENT_DEBUG || 1
+#if REMOVE_STATEMENT_DEBUG || 0
      printf ("TOP of findSurroundingStatementFromSameFile(): surroundingStatementPreceedsTargetStatement = %s \n",surroundingStatementPreceedsTargetStatement ? "true" : "false");
 #endif
 
@@ -13466,7 +13554,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In SageInterface::appendStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
 #endif
 
   // DQ (6/19/2012): Exit as a test...
@@ -13599,7 +13687,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      bool statementAlreadyExistsInScope = scope->statementExistsInScope(stmt);
      if (skipAddingStatement == false && statementAlreadyExistsInScope == true)
         {
-#if 1
+#if 0
           printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
                stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
@@ -15480,6 +15568,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
 
      ROSE_ASSERT(func != NULL && scope != NULL);
 
+     ROSE_ASSERT(func  != NULL);
+     ROSE_ASSERT(scope != NULL);
+
      SgStatementPtrList stmtList, sameFuncList;
 
   // SgFunctionDeclaration* first_nondef = NULL;
@@ -15551,13 +15642,23 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              }
         }
 
-     if (func->get_definingDeclaration()==func)
+#if 1
+     printf ("func                            = %p \n",func);
+     printf ("func->get_definingDeclaration() = %p \n",func->get_definingDeclaration());
+     printf ("func                            = %p \n",func);
+#endif
+
+     ROSE_ASSERT(func != NULL);
+
+     if (func->get_definingDeclaration() == func)
         {
           for (j = sameFuncList.begin(); j != sameFuncList.end(); j++)
                isSgFunctionDeclaration(*j)->set_definingDeclaration(func);
         }
        else
         {
+          ROSE_ASSERT(func  != NULL);
+
        // DQ (3/9/2012): Added assertion to avoid empty list that would be an error in both cases below.
           ROSE_ASSERT(sameFuncList.empty() == false);
 
@@ -15835,8 +15936,9 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
 
 #if 0
      printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
-     printf ("source_file  = %p \n",source_file);
-     printf ("global_scope = %p \n",global_scope);
+     printf ("supportUnparseHeaders = %s \n",supportUnparseHeaders ? "true" : "false");
+     printf ("source_file           = %p \n",source_file);
+     printf ("global_scope          = %p \n",global_scope);
 #endif
 #if 0
      printf ("Exiting as a test! \n");
@@ -15873,11 +15975,16 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
           global_scope->prepend_statement(emptyDeclaration);
         }
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      return result;
    }
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
-  {
+   {
   // DQ (3/22/2019): If we are using the token based unparsing, then this will not work, since the global scope will not
   // be marked as a transformation.  So it might be better to implement this with an option to support the token based
   // unparsing, and specifically add a null declaration so that we can attach the #include directive directly to that statement.
@@ -15886,22 +15993,29 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
  // DQ (8/12/2020): This is a compiler warning.
  // bool successful = false;
 
-    if (scope == NULL)
-        scope = SageBuilder::topScopeStack();
-    ROSE_ASSERT(scope);
-    SgGlobal* globalScope = getGlobalScope(scope);
-    ROSE_ASSERT(globalScope);
+#if 0
+     printf ("In SageInterface::insertHeader(): filename = %s \n",filename.c_str());
+     printf (" --- position = %s \n",PreprocessingInfo::relativePositionName(position).c_str());
+#endif
 
-    // To support inserting a header file into a header file, we need this srcScope to indicate the src file in which to insert the header
-    // if the input scope is within a header file,
-    // its global scope will jump to a .cpp file. Later looping will not find a match.
-    SgScopeStatement* srcScope = globalScope;
-    PreprocessingInfo* result=NULL;
-    string content;
-    if (isSystemHeader)
-      content = "#include <" + filename + "> \n";
-    else
-      content = "#include \"" + filename + "\" \n";
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+     ROSE_ASSERT(scope);
+
+     SgGlobal* globalScope = getGlobalScope(scope);
+     ROSE_ASSERT(globalScope != NULL);
+
+  // To support inserting a header file into a header file, we need this srcScope to indicate the src file in which to insert the header
+  // if the input scope is within a header file,
+  // its global scope will jump to a .cpp file. Later looping will not find a match.
+     SgScopeStatement* srcScope = globalScope;
+     PreprocessingInfo* result=NULL;
+     string content;
+     if (isSystemHeader)
+          content = "#include <" + filename + "> \n";
+       else
+          content = "#include \"" + filename + "\" \n";
 
   // DQ (11/21/2019): Token based unparsing has an additional requirement, we need to mark that the
   // whitespace around the statement has been modified.  This will trigger the unparser to output
@@ -15917,14 +16031,14 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
      bool supportUnparseHeaders = sourceFile->get_unparseHeaderFiles();
      // if unparsing header and the scope is within a header file, we adjust srcScope to be scope, not its enclosing global scope
      if (supportUnparseHeaders)
-     {
-       string filename= scope->get_file_info()->get_filename();
-       string suffix = Rose::StringUtility ::fileNameSuffix(filename);
+        {
+          string filename= scope->get_file_info()->get_filename();
+          string suffix = Rose::StringUtility ::fileNameSuffix(filename);
 
-       //vector.tcc: This is an internal header file, included by other library headers
-       if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
-         srcScope = scope;
-     }
+       // vector.tcc: This is an internal header file, included by other library headers
+          if (suffix=="h" ||suffix=="hpp"|| suffix=="hh"||suffix=="H" ||suffix=="hxx"||suffix=="h++" ||suffix=="tcc")
+               srcScope = scope;
+        }
 
 #if 0
      printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
@@ -15940,100 +16054,135 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
      ROSE_ABORT();
 #endif
 
-    SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
-    if (stmtList.size() > 0) // the source file is not empty
-     {
-      for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
-           j != stmtList.end (); j++)
-      {
-            //must have this judgement, otherwise wrong file will be modified!
-            //It could also be the transformation generated statements with #include attached
-        if ( ((*j)->get_file_info ())->isSameFile(srcScope->get_file_info ())||
-              ((*j)->get_file_info ())->isTransformation()
-           )
-         {
-           result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-                                          content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
-           ROSE_ASSERT(result);
+     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations();
 
-           // DQ (3/22/2019): Fixing this to work with the token-based unparsing.
-           // add to the last position
-           // TODO: support to add to the first,
-           // TODO: support fine positioning with #include directives
-           // (*j)->addToAttachedPreprocessingInfo(result,position);
-
-           if (supportTokenUnparsing == false)
-              {
-                (*j)->addToAttachedPreprocessingInfo(result,position);
-              }
-             else
-              {
-
-                (*j)->addToAttachedPreprocessingInfo(result,position);
-#if 0 // Liao, let's try the new way.
-             // global_scope->prepend_statement(null_statement);
-                SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
-
-                if (supportUnparseHeaders == true)
-                   {
-                  // In this case we need to set the physical_file_id to match the target file to be unparsed.
-                     int physical_file_id = globalScope->get_startOfConstruct()->get_physical_file_id();
 #if 0
-                     printf ("physical_file_id = %d \n",physical_file_id);
+     printf ("stmtList.size() = %zu \n",stmtList.size());
 #endif
-                     emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
-                     emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+
+     if (stmtList.size() > 0) // the source file is not empty
+        {
+          for (SgDeclarationStatementPtrList::iterator j = stmtList.begin (); j != stmtList.end (); j++)
+             {
+            // must have this judgement, otherwise wrong file will be modified!
+            // It could also be the transformation generated statements with #include attached
+               if ( ((*j)->get_file_info())->isSameFile(srcScope->get_file_info ()) || ((*j)->get_file_info ())->isTransformation() )
+                  {
+                    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+                    ROSE_ASSERT(result != NULL);
 #if 0
-                     printf ("Exiting as a test! \n");
-                     ROSE_ABORT();
+                    printf ("Building a PreprocessingInfo: result = %p \n",result);
 #endif
-                   }
+                 // DQ (3/22/2019): Fixing this to work with the token-based unparsing.
+                 // add to the last position
+                 // TODO: support to add to the first,
+                 // TODO: support fine positioning with #include directives
+                 // (*j)->addToAttachedPreprocessingInfo(result,position);
 
-                emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
-
-                globalScope->insert_statement(*j,emptyDeclaration);
+                    if (supportTokenUnparsing == false)
+                       {
+                         (*j)->addToAttachedPreprocessingInfo(result,position);
+                       }
+                      else
+                       {
+                         (*j)->addToAttachedPreprocessingInfo(result,position);
+#if 0
+                         printf ("In SageInterface::insertHeader(): Calling set_containsTransformationToSurroundingWhitespace(true) \n");
 #endif
-              }
+#if 1
+                      // DQ (12/31/2020): Set the whitespace around the statement as being modified.
+                         (*j)->set_containsTransformationToSurroundingWhitespace(true);
+#endif
+#if 0
+                         SgDeclarationStatement* declarationStatement = *j;
 
-        // DQ (8/12/2020): This is a compiler warning.
-        // successful = true;
-           break;
-         }
-      }
-     }
-    else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
-     {
-       cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
-       cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
-       cerr<<"You may have to insert some statement first before inserting a header"<<endl;
-       ROSE_ABORT();
-#if 0 // [Robb Matzke 2021-03-24]: unreachable
-       result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-                content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
-       ROSE_ASSERT(result);
-       globalScope->addToAttachedPreprocessingInfo(result,position);
+                      // DQ (1/5/2021): Don't call unparseToString, since this triggers the unparer which then unparses 
+                      // from the token stream and makrs some token stream elements as already unparsed.
+                      // printf ("declarationStatement = %p = %s unparseToString() = %s \n",declarationStatement,
+                      //     declarationStatement->class_name().c_str(),declarationStatement->unparseToString().c_str());
+                         printf ("In SageInterface::insertHeader(): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+                         printf ("In SageInterface::insertHeader(): declarationStatement->get_containsTransformationToSurroundingWhitespace() = %s \n",
+                              declarationStatement->get_containsTransformationToSurroundingWhitespace() ? "true" : "false");
+#endif
+#if 0
+                      // Liao, let's try the new way.
+                      // global_scope->prepend_statement(null_statement);
+                         SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+                         if (supportUnparseHeaders == true)
+                            {
+                           // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                              int physical_file_id = globalScope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                              printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                              emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                              emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+
+                         emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
+
+                         globalScope->insert_statement(*j,emptyDeclaration);
+#endif
+                       }
+#if 0
+                    printf ("break out of for loop: result = %p \n",result);
+#endif
+                 // DQ (8/12/2020): This is a compiler warning.
+                 // successful = true;
+                    break;
+                  }
+             }
+        }
+       else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
+        {
+          cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
+          cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+          cerr<<"You may have to insert some statement first before inserting a header"<<endl;
+          ROSE_ASSERT(false);
+          result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
+          ROSE_ASSERT(result);
+          globalScope->addToAttachedPreprocessingInfo(result,position);
+
+       // DQ (8/12/2020): This is a compiler warning.
+       // successful = true;
+        }
+
+  // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
+  // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
+  // when multiple files are used on the command line.
+  // DQ (3/12/2019): This can be NULL for the omp tests.
+     if (result != NULL)
+        {
+          result->get_file_info()->setTransformation();
+        }
+
+  // must be inserted once somehow
+  // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
+  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
+  // ROSE_ASSERT(successful==true);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
-    // DQ (8/12/2020): This is a compiler warning.
-    // successful = true;
-    }
+#if 0
+     printf ("Leaving SageInterface::insertHeader(): filename = %s \n",filename.c_str());
+#endif
 
- // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
- // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
- // when multiple files are used on the command line.
- // DQ (3/12/2019): This can be NULL for the omp tests.
-    if (result != NULL)
-       {
-         result->get_file_info()->setTransformation();
-       }
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
-    // must be inserted once somehow
-    // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
-    // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
-    //ROSE_ASSERT(successful==true);
+     return result;
+   }
 
-    return result;
-  }
 
 // insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
 void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader)
@@ -16143,7 +16292,14 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
   }
   else // No comments at all, first and last header mean the same, just attach to the located node
     stmt->addToAttachedPreprocessingInfo(newheader, position);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
 }
+
 
 // The recommended version
 PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader , bool asLastHeader)
@@ -16159,12 +16315,15 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   else
     content = "#include \"" + filename + "\" \n";
 
+#if 0
+// DQ (4/6/2021): This is a compiler warning, this variable is set but not used since some unreachable code is now commented out below.
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
      position = PreprocessingInfo::after;
   else
      position = PreprocessingInfo::before;
+#endif
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
   if (stmtList.size()>0) // the source file is not empty
@@ -16216,13 +16375,19 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // must be inserted once somehow
   // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
   // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
-  //ROSE_ASSERT(successful==true);
+  // ROSE_ASSERT(successful==true);
   return result;
 
 } // end insertHeader
+
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
 PreprocessingInfo*
@@ -24420,8 +24585,10 @@ SageInterface::printOutComments ( SgLocatedNode* locatedNode )
           for (i = comments->begin(); i != comments->end(); i++)
              {
                ROSE_ASSERT ( (*i) != NULL );
-               printf ("          Attached Comment (relativePosition=%s): %s\n",
-                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+               printf ("          Attached Comment (relativePosition=%s): %s \n",
+                 // DQ (2/11/2021): Fixed to report correct relative locations.
+                 // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
             // curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
@@ -24433,7 +24600,9 @@ SageInterface::printOutComments ( SgLocatedNode* locatedNode )
         }
        else
         {
-          printf ("No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+#if 0
+          printf ("In SageInterface::printOutComments(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
         }
    }
 
@@ -24842,6 +25011,42 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
   }
   return rtval;
 }
+
+
+// DQ (2/27/2021): Adding support to detect if a SgLocatedNode is located in a header file.
+bool SageInterface::insideHeader (SgLocatedNode* node)
+   {
+  // Check if a node is from a header file
+
+     bool returnValue = false;
+
+     Sg_File_Info* fileInfo = node->get_file_info();
+     ROSE_ASSERT(fileInfo != NULL);
+     string filename = fileInfo->get_filenameString();
+
+#if 0
+     printf ("In SageInterface::insideHeader(): node = %s line: %d column: %d file: %s \n",node->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),filename.c_str());
+#endif
+
+  // DQ (2/27/2021): We save a map of all of the header files processed in the generation of the ROSE AST,
+  // so the test is only if the filename is in the list.
+     if (EDG_ROSE_Translation::edg_include_file_map.find(filename) == EDG_ROSE_Translation::edg_include_file_map.end())
+        {
+#if 0
+          printf ("This is NOT in the EDG_ROSE_Translation::edg_include_file_map \n");
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("This IS in the EDG_ROSE_Translation::edg_include_file_map \n");
+#endif
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 //! Find the function type matching a function signature plus a given return type
 SgFunctionType* SageInterface::findFunctionType (SgType* return_type, SgFunctionParameterTypeList* typeList)

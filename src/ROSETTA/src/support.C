@@ -921,6 +921,12 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/11/2021): We need to to support the dynamic library feature (used by the code segregation tool, and likely future tools).
+  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the 
+  // computation of first and last statements of include file.
+     SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1027,6 +1033,14 @@ Grammar::setUpSupport ()
   // DQ (5/26/2020): Allow us to mark the SgIncludeFile as being the root (associated with the input sourde file).
      IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/9/2021): Save the first and last statement associated with the file (required to support the 
+  // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
+     IncludeFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     IncludeFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
   // (though this one is computed from the EDG/ROSE translation instead of from the CPP include directives).

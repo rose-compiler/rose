@@ -8861,6 +8861,49 @@ SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* pa
   return expStmt;
 }
 
+
+//! AST builder functions for template instantiation etc.
+/**
+ * Create a member function call
+ * This function looks for the function symbol in the given className
+ * The function should exist in the class
+ * The class should be #included or present in the source file parsed by frontend
+ */
+  SgFunctionCallExp*
+SageBuilder::buildMemberFunctionCall( std::string       className,
+    SgExpression*     objectExpression,
+    std::string       functionName,
+    SgExprListExp*    params,
+    SgScopeStatement* scope
+    )
+{
+  SgClassSymbol* classSymbol = SageInterface::lookupClassSymbolInParentScopes(className, scope);
+  ROSE_ASSERT(classSymbol);
+
+  SgDeclarationStatement* classDecl = classSymbol->get_declaration()->get_definingDeclaration();
+  SgClassDeclaration*     classDeclaration = isSgClassDeclaration(classDecl);
+  ROSE_ASSERT(classDeclaration != NULL);
+
+  SgClassDefinition*      classDefinition = classDeclaration->get_definition();
+  ROSE_ASSERT(classDefinition);
+
+  SgSymbol*               funsy = lookupFunctionSymbolInParentScopes(functionName, classDefinition);
+  SgMemberFunctionSymbol* functionSymbol = isSgMemberFunctionSymbol(funsy);
+  ROSE_ASSERT(functionSymbol);
+
+  SgMemberFunctionRefExp* memref = buildMemberFunctionRefExp(functionSymbol, false, false);
+
+  return buildFunctionCallExp(buildDotExp(objectExpression, memref), params);
+}
+
+// with known varRef and mem function symbol :  a.size()
+SgFunctionCallExp* SageBuilder::buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+    SgExprListExp*    params)
+{
+  SgMemberFunctionRefExp* memref = SageBuilder::buildMemberFunctionRefExp(functionSymbol, false, false);
+  return SageBuilder::buildFunctionCallExp(SageBuilder::buildDotExp(objectExpression, memref), params);
+}
+
 SgTypeTraitBuiltinOperator*
 SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters)
    {
@@ -10290,6 +10333,15 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgStatement *body)
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   if (body) body->set_parent(result);
+
+#if 0
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("SageBuilder::buildDefaultOptionStmt() body = %p \n",body);
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+#endif
+
   return result;
 }
 
@@ -10299,6 +10351,24 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt_nfi( SgStatement *body
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   if (body) body->set_parent(result);
+
+#if 0
+  static int count = 0;
+
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("SageBuilder::buildDefaultOptionStmt_nfi() body = %p \n",body);
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+  printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+
+  if (count >= 1)
+     {
+       printf ("Exiting as a test! \n");
+       ROSE_ASSERT(false);
+     }
+  count++;
+#endif
+
   return result;
 }
 
@@ -17250,12 +17320,17 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ABORT();
 #endif
 
+  // DQ (1/11/2021): I think we should be calling secondaryPassOverSourceFile() instead of attachPreprocessingInfo() because we need to support the token-based unparsing.
+#if 0
+
+#error "DEAD CODE!"
+
 #if 1
   // DQ (11/4/2019): I need to add this when I went back to testing tool_G.
   // It is required in the functions to attach CPP directives and comments.
      if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
         {
-#if 0
+#if 1
           printf ("Initialize NULL p_preprocessorDirectivesAndCommentsList to empty ROSEAttributesListContainer \n");
 #endif
           ROSEAttributesListContainer* tmp_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
@@ -17263,7 +17338,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
         }
        else
         {
-#if 0
+#if 1
           printf ("NOTE: p_preprocessorDirectivesAndCommentsList is already defined! \n");
           printf (" --- inputFileName  = %s \n",inputFileName.c_str());
           printf (" --- outputFileName = %s \n",outputFileName.c_str());
@@ -17285,12 +17360,38 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
+#error "DEAD CODE!"
+
 #if 0
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
+     printf (" --- sourceFile->get_preprocessorDirectivesAndCommentsList()->getList().size() = %zu \n",sourceFile->get_preprocessorDirectivesAndCommentsList()->getList().size());
 #endif
 
+#if 0
+  // DQ (12/3/2020): This is the root of the problem, the comments are built for the outputFileName, but the comments are marked with the inputFileName.
+     printf ("We read the comments in filename inputFileName, and build outputFileName, and this is a problem since the comments are marked with the inputFileName \n");
+     printf (" --- inputFileName  = %s \n",inputFileName.c_str());
+     printf (" --- outputFileName = %s \n",outputFileName.c_str());
+     printf ("sourceFile                                   = %p \n",sourceFile);
+     printf ("sourceFile->get_token_list.size()            = %zu \n",sourceFile->get_token_list().size());
+     printf ("sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
+
+#error "DEAD CODE!"
+
+  // DQ (1/4/2020): Adding support to permit comments and CPP directives and token stream to be defined using the outputFileName.
   // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
-     attachPreprocessingInfo (sourceFile);
+  // attachPreprocessingInfo (sourceFile);
+     attachPreprocessingInfo (sourceFile,outputFileName);
+#else
+  // DQ (1/11/2021): Call the secondaryPassOverSourceFile() instead of attachPreprocessingInfo() because we need to support the token-based unparsing.
+     file->secondaryPassOverSourceFile();
+#endif
+
+#if 0
+     printf ("Exiting after test! processed first phase of collecting comments and CPP directives for source file) \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      printf ("DONE: In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
@@ -17311,10 +17412,27 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      fixupSourcePositionFileSpecification(sourceFile,outputFileName);
 #endif
 
+  // DQ (1/8/2021): Set the filename used in the generated SgSourceFile to be the output file.
+  // This appears to be important so that we can get either key correct for the comments and CPP 
+  // directives and or the comments and CPP directives to be consistant as well as the token stream,
+  // I think this might be less about the comments and CPP directives than the key for the token stream.
+  // Either that or I need to have an extra field for the SgSourceFile name when it is read from one 
+  // file, but trying to be another file.
+  // sourceFile->setFileName(outputFileName);
+
+#if 0
+     printf ("In SageBuilder::buildSourceFile(): changing the name of the file represented in sourceFile: \n");
+     printf ("inputFileName   = %s \n",inputFileName.c_str());
+     printf ("outputFileName  = %s \n",outputFileName.c_str());
+     printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+#endif
+
 #if 0
      printf ("Leaving SageBuilder::buildSourceFile() sourceFile = %p globalScope = %p \n",sourceFile,sourceFile->get_globalScope());
      printf ("sourceFile->get_file_info()->get_file_id()          = %d \n",sourceFile->get_file_info()->get_file_id());
      printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
+     printf ("sourceFile->get_token_list.size()                   = %zu \n",sourceFile->get_token_list().size());
+     printf ("sourceFile->get_tokenSubsequenceMap().size()        = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
 #if 0

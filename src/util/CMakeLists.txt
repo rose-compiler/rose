@@ -12,7 +12,7 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string 
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_TOP_SRCDIR    = \"${ROSE_TOP_SRC_DIR}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_TOP_BUILDDIR  = \"${ROSE_TOP_BINARY_DIR}\";\n")
 #FIXME: may be a different directory at times. Not sure what the semantics are.
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_PREFIX        = \"${ROSE_TOP_BINARY_DIR}\";\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_PREFIX        = \"${CMAKE_INSTALL_PREFIX}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_DATADIR       = \"/*deprecated*/\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_BINDIR        = \"/*deprecated*/\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_INCLUDEDIR    = \"/*deprecated*/\";\n")

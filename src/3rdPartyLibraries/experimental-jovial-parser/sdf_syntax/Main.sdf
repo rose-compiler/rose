@@ -266,18 +266,13 @@ TableTypeSpecifier
 BlockTypeDeclaration
 TableTypeDeclaration
 ItemTypeDeclaration
-OptBlockPresetList
-OptTablePresetList
-BlockPresetValuesOption
 BlockPreset
 BlockPresetList
+BlockPresetValue
 RepetitionCount
 ConstantIndex
-PresetIndexSpecifier
-PresetValuesOption
-SpecifiedPresetSublist
-OptDefaultPresetSublist
-DefaultPresetSublist
+PresetValue
+PresetValuePositioner
 TablePreset
 TablePresetList
 OptItemPresetValue
@@ -963,36 +958,32 @@ context-free syntax
   ItemPresetValue                 -> OptItemPresetValue
   % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
 
+%% The grammar for table and block presets departs from the standard in
+%% order to produce a single list (rather than a wierd list of lists). This
+%% is hinted as in standard examples and is helpful for a list with
+%% empty members, e.g., [1,,3,4]
+%%
   '=' TablePresetList             -> TablePreset             {cons("TablePreset")}
 
   TablePreset                     -> OptTablePreset
   % empty %                       -> OptTablePreset          {cons("no-table-preset")}
 
-  DefaultPresetSublist            -> TablePresetList
-  OptDefaultPresetSublist
-    {SpecifiedPresetSublist ','}+ -> TablePresetList         {cons("TablePresetList")}
-
-  {PresetValuesOption ','}+       -> DefaultPresetSublist    {cons("DefaultPresetSublist")}
-
-  DefaultPresetSublist ','        -> OptDefaultPresetSublist
-  % empty %                       -> OptDefaultPresetSublist {cons("no-default-preset-sublist")}
-
-  PresetIndexSpecifier
-    {PresetValuesOption ','}+     -> SpecifiedPresetSublist  {cons("SpecifiedPresetSublist")}
+  {PresetValue ','}+              -> TablePresetList         {cons("TablePresetList")}
+  % empty %                       -> PresetValue             {cons("PresetValueNone")}
+  Formula                         -> PresetValue
+  RepetitionCount
+    '('
+       {PresetValue ','}+
+    ')'                           -> PresetValue             {cons("PresetValueRep")}
+  PresetValuePositioner           -> PresetValue
 
   'POS'
     '('
        {ConstantIndex ','}+
-    ')' ':'                       -> PresetIndexSpecifier    {cons("PresetIndexSpecifier")}
+    ')'
+    ':' PresetValue               -> PresetValuePositioner   {cons("PresetValuePositioner")}
 
   CompileTimeNumericFormula       -> ConstantIndex
-  
-  OptItemPresetValue              -> PresetValuesOption    {cons("PresetValuesOption"), prefer}
-  RepetitionCount
-    '('
-       {PresetValuesOption ','}+
-    ')'                           -> PresetValuesOption    {cons("PresetValuesOptionRep")}
-
   CompileTimeNumericFormula       -> RepetitionCount
 
   '=' BlockPresetList             -> BlockPreset           {cons("BlockPreset")}
@@ -1000,17 +991,12 @@ context-free syntax
   BlockPreset                     -> OptBlockPreset
   % empty %                       -> OptBlockPreset        {cons("no-block-preset")}
 
-  {BlockPresetValuesOption ','}+  -> BlockPresetList
+  {BlockPresetValue ','}+         -> BlockPresetList       {cons("BlockPresetList")}
 
-  PresetValuesOption              -> BlockPresetValuesOption
-  OptTablePresetList              -> BlockPresetValuesOption
-  OptBlockPresetList              -> BlockPresetValuesOption
+  PresetValue                     -> BlockPresetValue
+  '(' TablePresetList ')'         -> BlockPresetValue      {cons("BlockPresetValueParens")}
+%%'(' BlockPresetList ')'         -> BlockPresetValue      %% AMBIGUOUS
 
-  '(' TablePresetList ')'         -> OptTablePresetList    {cons("OptTablePresetlist")}
-  % empty %                       -> OptTablePresetList    {cons("no-table-preset-list")}
-
-  '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist"), prefer}
-  % empty %                       -> OptBlockPresetList    {cons("no-table-preset-list")}
 
 %% 2.2 TYPE DECLARATIONS
 %%
