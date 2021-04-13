@@ -1667,16 +1667,6 @@ Leave(SgCommonBlock* common_block)
    SageInterface::appendStatement(common_block, SageBuilder::topScopeStack());
 }
 
-void SageTreeBuilder::
-importModule(const std::string &module_name)
-{
-   mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
-   ROSE_ASSERT(isSgGlobal(SageBuilder::topScopeStack()));
-
-   ModuleBuilder & compool_builder = ModuleBuilderFactory::get_compool_builder();
-   compool_builder.loadModule(module_name, isSgGlobal(SageBuilder::topScopeStack()));
-}
-
 // Jovial allows implicitly declared variables (like Fortran?) but does require there to
 // be an explicit declaration at some point (unlike Fortran). This builder function manages
 // name and symbol information so that the variable reference can be cleaned/fixed up when
