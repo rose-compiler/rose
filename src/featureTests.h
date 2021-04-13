@@ -17,6 +17,17 @@
 #include <rosePublicConfig.h>
 #include <boost/version.hpp>
 
+#if defined(_MSC_VER)
+    // Microsoft Visual C++ Compiler erroneously advertises that it's a C++98 compiler. The "fix" for Visual Studio 2017
+    // version 15.7 Preview 3 is not really a fix -- the user has to explicitly opt-in on the command-line that __cplusplus
+    // should be set to the correct value. Therefore, we just avoid checking this compiler and let the user try to figure out
+    // that they're using the wrong language based on the compiler's error messages.
+    //   See https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-160
+    //   See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
+#elif __cplusplus < 201103L
+    #error "ROSE requires a C++11 or later compiler"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Binary analysis features
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +38,7 @@
 #define ROSE_ENABLE_BINARY_ANALYSIS
 
 // ARM AArch64 A64 instructions (Sage nodes, disassembly, unparsing, semantics, etc.)
-#if !defined(ROSE_ENABLE_ASM_AARCH64) && __cplusplus >= 201103L && defined(ROSE_HAVE_CAPSTONE)
+#if !defined(ROSE_ENABLE_ASM_AARCH64) && defined(ROSE_HAVE_CAPSTONE)
     #define ROSE_ENABLE_ASM_AARCH64
 #endif
 
