@@ -1995,6 +1995,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_79.C \
    test2020_80.C \
    test2020_82.C \
+   test2020_83.C \
+   test2021_01.C \
+   test2021_02.C \
+   test2021_03.C \
+   test2021_04.C \
+   test2021_05.C \
+   test2021_06.C \
+   test2021_07.C \
+   test2021_08.C \
+   test2021_09.C \
+   test2021_10.C \
+   test2021_11.C \
+   test2021_12.C \
+   test2021_13.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \

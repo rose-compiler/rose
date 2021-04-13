@@ -95,6 +95,36 @@ class TokenStreamSequenceToNodeMapping
    };
 
 
+class Graph_TokenMappingTraversal : public AstSimpleProcessing
+   {
+     public:
+       // File for output for generated graph.
+          static std::ofstream file;
+
+       // The map is stored so that we can lookup the token subsequence information using the SgNode pointer as a key.
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap;
+
+       // The vector is stored so that we can build the list of nodes with edges (edges
+       // are missing the the token information, which might be better to support there).
+          std::vector<stream_element*> & tokenList;
+
+          Graph_TokenMappingTraversal(std::vector<stream_element*> & input_tokenList, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap);
+
+          void visit(SgNode* n);
+
+       // static void graph_ast_and_token_stream(SgSourceFile* file, vector<stream_element*> & tokenList);
+          static void graph_ast_and_token_stream(SgSourceFile* file, std::vector<stream_element*> & tokenList, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+
+          static void graph_ast_and_token_stream(SgSourceFile* file);
+          static void graph_ast_and_token_stream(std::string filename);
+
+       // Map the toke_id to a string.
+          static std::string getTokenIdString (int i);
+
+          static int* first_leading_whitespace_start;
+   };
+
+
 #include "frontierDetection.h"
 
 // DQ (12/4/2014): Added alternative form of detection where to switch 
@@ -109,5 +139,9 @@ class TokenStreamSequenceToNodeMapping
 // token stream is only as the unexpanded macro).
 #include "detectMacroOrIncludeFileExpansions.h"
 #include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
+
+
+// DQ (1/7/2021): Adding function to header so that I can call it elsewhere for testing.
+std::vector<stream_element*> getTokenStream( SgSourceFile* file );
 
 #endif

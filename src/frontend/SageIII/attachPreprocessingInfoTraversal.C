@@ -226,6 +226,84 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
 
 
 void
+AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocatedNode, SgStatement* bracedScope,int lineOfClosingBrace, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)
+   {
+  // DQ (2/16/2021): This function supports iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber().
+  // It seperates the case where comments and CPP directives are put in the scope or attached to the bottom of the previous statement.
+
+#if 0
+     printf ("In handleBracedScopes: previousLocatedNode = %p = %s \n",previousLocatedNode,previousLocatedNode->class_name().c_str());
+     printf (" ----------------------------- bracedScope = %p = %s \n",bracedScope,bracedScope->class_name().c_str());
+#endif
+
+     SgStatement* previousStatement = isSgStatement(previousLocatedNode);
+
+#if 1
+  // if (previousStatement != NULL && previousStatement != basicBlock)
+     if (previousStatement != NULL && previousStatement != bracedScope)
+        {
+#if 0
+          printf ("In handleBracedScopes: Found previous statement: previousStatement = %p = %s (adding directive after) \n",previousStatement,previousStatement->class_name().c_str());
+#endif
+          bool reset_start_index = false;
+          iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+             ( previousStatement, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
+        }
+       else
+        {
+       // ROSE_ASSERT(previousStatement != NULL);
+#if 0
+          if (previousStatement != NULL)
+             {
+               printf ("In handleBracedScopes: Found a case where the previousStatement was not a SgStatement: previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+             }
+            else
+             {
+               printf ("In handleBracedScopes: Found a case where the previousStatement was not a SgStatement: previousStatement = %p \n",previousStatement);
+             }
+#endif
+       // If the previous statement was the current basicBlock, then there were no statements 
+       // in the SgBasicBlock and we have to add the comments inside the basic block.
+       // if (previousStatement == basicBlock)
+       // if (previousStatement == bracedScope)
+          if (previousStatement != NULL && previousStatement == bracedScope)
+             {
+#if 0
+               printf ("In handleBracedScopes: previousStatement != NULL && previousStatement == bracedScope \n");
+#endif
+               bool reset_start_index = false;
+            // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
+               iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( bracedScope, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
+             }
+            else
+             {
+#if 0
+               printf ("In handleBracedScopes: previousStatement == NULL || previousStatement != bracedScope \n");
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#else
+  // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
+
+#error "DEAD CODE!"
+
+     bool reset_start_index = false;
+  // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
+     iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber ( bracedScope, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
+#endif
+   }
+
+
+void
 AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
    ( SgLocatedNode* locatedNode, int lineNumber, PreprocessingInfo::RelativePositionType location, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)
    {
@@ -246,9 +324,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
 #define DEBUG_IterateOverList 0
 
-#if DEBUG_IterateOverList
+#if DEBUG_IterateOverList || 0
   // DQ (8/22/2018): Added debugging information.
      printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
+     printf (" --- locatedNode = %p = %s lineNumber = %d location = %s \n",
+          locatedNode,locatedNode->class_name().c_str(),lineNumber,PreprocessingInfo::relativePositionName(location).c_str());
 #endif
 #if DEBUG_IterateOverList
      currentListOfAttributes->display("Top of iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()");
@@ -320,6 +400,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
        // DQ (8/6/2012): Added support for endOfConstruct().
+          printf ("locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
           cout << "Visiting SgStatement node (starting: " << line << ":" << col << ") (ending " << ending_line << ":" << ending_col << ") -> ";
           cout << getVariantName(locatedNode->variantT()) << endl;
           cout << "-----> Filename: " << locatedNode->get_file_info()->get_filename() << endl;
@@ -393,13 +474,17 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
    //  end do
    //
      bool isFortranBlockAndBeforePoisition = false; // should we skip a Fortran basic block when the position is before?
-     if (SageInterface::is_Fortran_language() )
+     if (SageInterface::is_Fortran_language() == true)
         {
           if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
              {
                isFortranBlockAndBeforePoisition = true; 
              }
         }
+
+#if DEBUG_IterateOverList
+     printf ("isFortranBlockAndBeforePoisition = %s \n",isFortranBlockAndBeforePoisition ? "true" : "false");
+#endif
 
   // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index,
   // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
@@ -485,7 +570,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     attachCommentOrDirective = false;
                   }
 
-#if DEBUG_IterateOverList
+#if DEBUG_IterateOverList || 0
                printf ("@@@@@@@@@@@@@@@@@@ attachCommentOrDirective = %s currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",attachCommentOrDirective ? "true" : "false",currentPreprocessingInfoLineNumber,lineNumber);
 #endif
                if ( attachCommentOrDirective == true )
@@ -808,15 +893,29 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
    }
 
 
+// DQ (1/18/2021): Adding call to buildTokenStreamMapping.
+void buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & tokenVector);
+
+
+// DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
 // ROSEAttributesList* AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, std::string fileNameForDirectivesAndComments )
 ROSEAttributesList* 
-AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string fileNameForDirectivesAndComments )
+AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string fileNameForDirectivesAndComments, std::string new_filename )
    {
-  // This function abstracts the collection of comments and CPP directives into a list.  
+  // This function abstracts the collection of comments and CPP directives into a list.
   // The list is then used to draw from as the AST is traversed and the list elements 
   // are woven into the AST.
-#if 0
+
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST buildCommentAndCppDirectiveList():");
+
+#define DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST 0
+
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST || 0
+  // DQ (1/4/2021): adding debugging support.
      printf ("Inside of AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
+     printf (" --- sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+     printf (" --- new_filename = %s \n",new_filename.c_str());
 #endif
 
 #if 0
@@ -830,7 +929,6 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      ROSE_ASSERT(isRecursiveCall == false);
 
      isRecursiveCall = true;
-
 
   // Liao 4/26/2010 support --enable-only-c
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -851,55 +949,328 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      ROSEAttributesList* returnListOfAttributes = NULL;
      ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 
-#if 0
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
      printf ("filePreprocInfo = %p \n",filePreprocInfo);
      printf ("sourceFile = %p \n",sourceFile);
      printf ("sourceFile->get_file_info() = %p \n",sourceFile->get_file_info());
      printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
 #endif
 
+  // DQ (1/9/2021): Cleaned up the logic here.
   // DQ (12/3/2019): Need to test for filePreprocInfo != NULL when compiling Fortran code.
-     if (sourceFile->get_Fortran_only() == false)
+  // if (sourceFile->get_Fortran_only() == false)
+  //    {
+  // if (filePreprocInfo != NULL)
+     if ((sourceFile->get_Fortran_only() == false) && (filePreprocInfo != NULL) )
         {
-     if (filePreprocInfo != NULL)
-        {
-     if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
-        {
-#if 0
-          int currentFileNameId = sourceFile->get_file_info()->get_file_id();
-          printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
+          if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+             {
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+               int currentFileNameId = sourceFile->get_file_info()->get_file_id();
+               printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
 #endif
 
 #ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
-       // DQ (11/2/2019): A call to getListOfAttributes() will generate infinite recursion.
-       // returnListOfAttributes = getListOfAttributes(currentFileNameId);
-          returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+            // DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
+            // DQ (11/2/2019): A call to getListOfAttributes() will generate infinite recursion.
+            // returnListOfAttributes = getListOfAttributes(currentFileNameId);
+            // returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+               returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments,new_filename);
 #endif
-#if 0
-          printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
-          printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+               printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
 #endif
 
 #if 0
-       // DQ (11/2/2019): Adding debugging code.
-          returnListOfAttributes->display("Display after DONE: Generating a new ROSEAttributesList");
+               printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
-       // DQ (11/2/2019): Add the new attributes to the list.
-          filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = returnListOfAttributes;
+
+            // DQ (1/17/2020): Get the token list from the 
+            // LexTokenStreamTypePointer token_list_pointer = returnListOfAttributes->get_rawTokenStream();
+            // ROSE_ASSERT(token_list_pointer != NULL);
+               ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
+
+#if 0
+            // This is a list<stream_element*> type.
+               LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
+
+               printf ("Output token list (number of CPP directives and comments = %d): \n",returnListOfAttributes->size());
+               printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
+
+               int counter = 0;
+               for (LexTokenStreamType::iterator i = tokenList.begin(); i != tokenList.end(); i++)
+                  {
+#if 1
+                    ROSE_ASSERT((*i)->p_tok_elem != NULL);
+#if 1
+                    printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
+                         counter,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
+                         (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
+#endif
+#else
+                    printf ("   --- token #%d token = %p \n",counter,(*i)->p_tok_elem);
+                    if ((*i)->p_tok_elem != NULL)
+                       {
+                         printf ("   --- --- token id = %d token = %s \n",(*i)->p_tok_elem->token_id,(*i)->p_tok_elem->token_lexeme.c_str());
+                       }
+
+                 // DQ (9/29/2013): Added support for reference to the PreprocessingInfo object in the token stream.
+                    printf ("   --- token #%d p_preprocessingInfo = %p \n",counter,(*i)->p_preprocessingInfo);
+                    printf ("   --- token #%d beginning_fpi line  = %d column = %d \n",counter,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num);
+                    printf ("   --- token #%d ending_fpi    line  = %d column = %d \n",counter,(*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num);
+#endif
+                    counter++;
+                  }
+#endif
+
+#if 1
+            // DQ (1/18/2021): This is useless code, except that it converts the list<stream_element*> type to 
+            // a vector<stream_element*> type.  Obviously we should change the handling in the lexing step to 
+            // generate a vector<stream_element*> type directly so that we can avoid this silly translations.
+            // The reason we need it is because the processing of the mapping of the toke stream to the AST 
+            // is using the vector<stream_element*> type (which is likely best for being the most efficient, 
+            // and allows for integer indexing of the vector).  Then the token sequence mapping is just the 
+            // the lists of index values into the vector of tokens.  However, I don't see where the list or 
+            // vector if SgTokens* is used or located.
+
+            // LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
+               LexTokenStreamType* tokenStream = returnListOfAttributes->get_rawTokenStream();
+               ROSE_ASSERT(tokenStream != NULL);
+
+            // Set this value so that we can generate unique keys for any interval.
+            // I think that a better mehcanism for generating unique keys would be possible (but this is simple).
+               TokenStreamSequenceToNodeMapping::tokenStreamSize = tokenStream->size();
+
+            // Convert this list to a vectors so that we can use integer indexing instead of iterators into a list.
+               vector<stream_element*> tokenVector;
+               for (LexTokenStreamType::iterator i = tokenStream->begin(); i != tokenStream->end(); i++)
+                  {
+                    tokenVector.push_back(*i);
+                  }
+
+            // DQ (1/30/2014): I have added the corner case for an empty file, with zero tokens to find.
+            // We need to make sure this is not an error (OK it issue a warning).
+            // ROSE_ASSERT(tokenVector.empty() == false);
+               if (tokenVector.empty() == true)
+                  {
+                    printf ("Warning: this is an empty file (no tokens found): not even a CR present! (but not an error using the token stream unparsing) \n");
+                  }
+
+            // return tokenVector;
+#endif
+
+#if 0
+#if 0
+               printf ("Convert the LexTokenStreamType to a SgTokenPtrList \n");
+#endif
+            // DQ (10/27/2013): Build the SgToken IR nodes and the vector of them into the SgSourceFile IR node.
+               SgTokenPtrList & roseTokenList = sourceFile->get_token_list();
+
+#error "DEAD CODE!"
+
+            // DQ (11/29/2013): I think this should be empty at this point.
+               ROSE_ASSERT(roseTokenList.empty() == true);
+
+            // Setup the current file ID from the name in the source file.
+               ROSE_ASSERT(sourceFile->get_file_info() != NULL);
+               int currentFileId = sourceFile->get_file_info()->get_file_id();
+
+            // DQ (1/7/2021): Output info on this converstion from the data structure used in the lex file
+            // to the data structure used in the rest of ROSE.
+               if (SgProject::get_unparseHeaderFilesDebug() >= 0)
+                  {
+                    printf ("In buildCommentAndCppDirectiveList(): building the SgToken objects from the tokens collected by the lex file: size = %zu \n",roseTokenList.size());
+                  }
+
+#error "DEAD CODE!"
+
+#if 1
+            // LexTokenStreamType & tokenVector = *(returnListOfAttributes->get_rawTokenStream());
+            // LexTokenStreamType & tokenVector = *(returnListOfAttributes->get_rawTokenStream());
+
+            // This should now include all of the CPP directives and C/C++ style comments as tokens.
+            // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+            // int counter = 0;
+               int counter_B = 0;
+            // for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+               for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+                  {
+                    ROSE_ASSERT((*i)->p_tok_elem != NULL);
+#if 1
+                    printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
+                         counter_B,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
+                         (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
+#endif
+
+                    SgToken* roseToken = new SgToken( (*i)->p_tok_elem->token_lexeme,(*i)->p_tok_elem->token_id);
+                    ROSE_ASSERT(roseToken != NULL);
+
+                    roseToken->set_startOfConstruct(new Sg_File_Info(currentFileId,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num));
+                    roseToken->set_endOfConstruct  (new Sg_File_Info(currentFileId,(*i)->ending_fpi.line_num,   (*i)->ending_fpi.column_num));
+
+#error "DEAD CODE!"
+
+                    roseTokenList.push_back(roseToken);
+                    counter_B++;
+                  }
+#endif
+#endif
+            // typedef std::list<stream_element*> LexTokenStreamType;
+
+            // TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = token_list_pointer;
+
+            // std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = *token_list_pointer;
+            // std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = *token_list_pointer;
+            // sourceFile->set_tokenSubsequenceMap(tokenStreamSequenceMap);
+#if 0
+            // DQ (1/17/2021): Last step at the end of Sunday, put up the rest tomorrow.
+               printf ("This is an much as we should do to process the token stream, then we have to call the token stream mapping traversal \n");
+
+               printf ("tokenVector.size() = %zu \n",tokenVector.size());
+#endif
+            // DQ (1/18/2021): Only in the most trivial of empty files should the vector of tokens be empty.
+            // ROSE_ASSERT(tokenVector.size() > 0);
+
+               ROSE_ASSERT(filePreprocInfo != NULL);
+            // ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
+
+#if 0
+               printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+#endif
+#if 0
+               printf ("sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
+#endif
+
+            // DQ (2/20/2021): This conditional fixes the performance problem with the use of ROSE without the token-based unparsing.
+            // The token based unparsing is more expensive mostly because of the call to buildTokenStreamMapping().  We might have to
+            // look into that seperately.  Since it is about as expensive as the cost of the frontend with token-based unparsing.
+            // DQ (2/18/2021): We only want to process the token stream if sourceFile->get_unparse_tokens() is true (specified on the command line).
+            // Currently we have to call this else we get an error in the unparser.  This should be fixed for performance reasons.
+            // We currently output a message in buildTokenStreamMapping() when sourceFile->get_unparse_tokens() == false.
+#if 1
+            // This code now works and solves the perfoermance problem that was present for ROSE when used without the token-based unparsing.
+               if (sourceFile->get_unparse_tokens() == true)
+#else
+            // DQ (2/20/2021): This works, but it is the cause of a performance problem (mapping takes about twice as long as the normal compile time).
+               if (sourceFile->get_unparse_tokens() == true || true)
+#endif
+                  {
+                 // DQ (02/20/2021): Using the performance tracking within ROSE.
+                    TimingPerformance timer ("AST calling buildTokenStreamMapping():");
+#if 0
+                    printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+                    printf ("In buildCommentAndCppDirectiveList(): Calling buildTokenStreamMapping() \n");
+                    printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+#endif
+                 // DQ (2/20/2021): This is a pretty expensive operation, about the same cost of the frontend (without the call to this function).
+                    buildTokenStreamMapping(sourceFile,tokenVector);
+#if 0
+                    printf ("DONE: Calling buildTokenStreamMapping() \n");
+#endif
+                  }
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
+
+#if 0
+               if (sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
+                  {
+                    printf ("Found specific file: tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+
+#if 0
+            // DQ (1/17/2021): Debugging how the token stream is supported.
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+
+#if 0
+               printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+               if (returnListOfAttributes->get_rawTokenStream() != NULL)
+                  {
+                    printf (" --- returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+                  }
+               printf (" --- (container for all files) filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+
+               printf ("Output vector of PreprocessingInfo pointers: \n");
+               for (std::vector<PreprocessingInfo*>::iterator i = returnListOfAttributes->getList().begin(); i != returnListOfAttributes->getList().end(); i++)
+                  {
+                    printf (" --- *i->directiveTypeName = %s \n",PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective()).c_str());
+                    printf (" --- --- associated string = %s \n",(*i)->getString().c_str());
+                  }
+
+               printf ("Output map of filename keys and ROSEAttributesList pointers (before assignment): \n");
+               for (std::map<std::string, ROSEAttributesList*>::iterator i = filePreprocInfo->getList().begin(); i != filePreprocInfo->getList().end(); i++)
+                  {
+                    std::string         filename_key                = i->first;
+                    ROSEAttributesList* comments_and_cpp_directives = i->second;
+                    printf (" --- filename_key = %s comments_and_cpp_directives = %p \n",filename_key.c_str(),comments_and_cpp_directives);
+                  }
+#endif
+
+#if 0
+            // DQ (11/2/2019): Adding debugging code.
+               returnListOfAttributes->display("Display after DONE: Generating a new ROSEAttributesList");
+#endif
+            // DQ (1/9/2021): This adds the token list and the comments and CPP directives to the list of such things.
+            // DQ (11/2/2019): Add the new attributes to the list.
+               filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = returnListOfAttributes;
+#if 0
+               string filename = sourceFile->get_file_info()->get_filename();
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+               printf ("Added token stream, comments, and CPP directives to map using key: sourceFile = %p filename = %s new_filename = %s \n",sourceFile,filename.c_str(),new_filename.c_str());
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+#endif
+
+#if 0
+               printf ("Output map of filename keys and ROSEAttributesList pointers (after assignment): \n");
+               for (std::map<std::string, ROSEAttributesList*>::iterator i = filePreprocInfo->getList().begin(); i != filePreprocInfo->getList().end(); i++)
+                  {
+                    std::string         filename_key                = i->first;
+                    ROSEAttributesList* comments_and_cpp_directives = i->second;
+                    printf (" --- filename_key = %s comments_and_cpp_directives = %p \n",filename_key.c_str(),comments_and_cpp_directives);
+                  }
+#endif
+
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+#if 0
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+               printf ("Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
+#endif
+               returnListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+#if 0
+               printf ("DONE: Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
+               printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+#endif
+#if 1
+            // DQ (1/9/2021): Debugging.
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
         }
        else
         {
 #if 0
-          printf ("Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
-#endif
-          returnListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
-#if 0
-          printf ("DONE: Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
-          printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+       // DQ (1/16/2021): Added debugging code.
+          printf ("sourceFile->get_Fortran_only() = %s \n",sourceFile->get_Fortran_only() ? "true" : "false");
+          printf ("filePreprocInfo = %p \n",filePreprocInfo);
 #endif
         }
-        }
-        }
+     // }
 
   // Build an empty list while we skip the translation of tokens
   // returnListOfAttributes = new ROSEAttributesList();
@@ -909,6 +1280,18 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
      printf ("Inside of buildCommentAndCppDirectiveList(): fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
      printf ("                                             fileNameForTokenStream           = %s \n",fileNameForTokenStream.c_str());
+#endif
+
+#if 0
+     ROSE_ASSERT(returnListOfAttributes != NULL);
+     printf (" --- returnListOfAttributes->getFileName()                = %s \n",returnListOfAttributes->getFileName().c_str());
+     printf (" --- returnListOfAttributes->getList().size()             = %zu \n",returnListOfAttributes->getList().size());
+     ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
+     printf (" --- returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+
+     printf ("sourceFile                                   = %p \n",sourceFile);
+     printf ("sourceFile->get_token_list.size()            = %zu \n",sourceFile->get_token_list().size());
+  // printf ("sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
   // currentFileNameId = currentFilePtr->get_file_info()->get_file_id();
@@ -1129,12 +1512,24 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #else
                if (returnListOfAttributes == NULL)
                   {
-#if 0
+#if 1
                     printf ("Found returnListOfAttributes == NULL, calling getPreprocessorDirectives() \n");
+                    printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
 #endif
 #ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
                     returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
 #endif
+#if 1
+                    printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+#endif
+#if 1
+                    printf ("########################################################### \n");
+                    printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+                    printf ("new_filename              = %s \n",new_filename.c_str());
+                    printf ("tokenVector.size()        = %zu \n",getTokenStream(sourceFile).size());
+                    printf ("########################################################### \n");
+#endif
+
                   }
 #endif
              }
@@ -1177,11 +1572,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // DQ (9/29/2013): Check the generated returnListOfAttributes for tokens.
      if (returnListOfAttributes->get_rawTokenStream() != NULL)
         {
-#if 0
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
           printf ("Found the raw token stream in ROSE! returnListOfAttributes->get_rawTokenStream() = %p \n",returnListOfAttributes->get_rawTokenStream());
 #endif
 #if 0
           LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
+          printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list: fileName = %s): \n",returnListOfAttributes->getFileName().c_str());
           printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of CPP directives and comments = %d): \n",returnListOfAttributes->size());
           printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of tokens = %" PRIuPTR "): \n",tokenList.size());
 
@@ -1197,7 +1593,6 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
             // DQ (9/29/2013): Added support for reference to the PreprocessingInfo object in the token stream.
                printf ("   --- token #%d p_preprocessingInfo = %p \n",counter,(*i)->p_preprocessingInfo);
-
                printf ("   --- token #%d beginning_fpi line = %d column = %d \n",counter,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num);
                printf ("   --- token #%d ending_fpi    line = %d column = %d \n",counter,(*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num);
 
@@ -1210,7 +1605,13 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
         }
 
-#if 0
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+     printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+     printf ("new_filename              = %s \n",new_filename.c_str());
+     printf ("tokenVector.size()        = %zu \n",getTokenStream(sourceFile).size());
+#endif
+
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
      printf ("Leaving AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 
@@ -1832,7 +2233,19 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                       // ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
                          if (sourceFile->get_Fortran_only() == false)
                             {
-                              ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+                           // DQ (1/5/2021): Adding debugging code now that the filename of the token stream and the comments and CPP 
+                           // directives is computed based on the output filename for the source file. Relevant when a single source 
+                           // file is read twice to build two different files.
+                              if (currentLocNode_physical_filename_from_id != currentListOfAttributes->getFileName())
+                                {
+                                  printf ("Error: currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
+                                  printf (" ----- currentListOfAttributes->getFileName()   = %s \n",currentListOfAttributes->getFileName().c_str());
+                                }
+#if 0
+                           // DQ (1/5/2021): The physical filename is now no longer the same as the filename associated with the currentListOfAttributes->getFileName().
+                              printf ("Skipping test for currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName() \n");
+                           // ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+#endif
                             }
                            else
                             {
@@ -2074,7 +2487,6 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
         }
 #endif
 
-
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
 
 #if 0
@@ -2278,7 +2690,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                if (currentListOfAttributes == NULL)
                   {
                  // This case is used to handle the case of the currentFileNameId being negative (not a real file).
-#if 1
+#if 0
                     printf ("Not supporting gathering of CPP directives and comments for this file currentFileNameId = %d \n",currentFileNameId);
 #endif
                     return returnSynthesizeAttribute;
@@ -2358,12 +2770,26 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     tmp_locatedNode->get_file_info()->display("tmp_locatedNode before switch");
                     printf ("target_source_file_id = %d \n",target_source_file_id);
                     printf ("currentFileNameId = %d \n",currentFileNameId);
+
+                 // Debugging information...
+                       {
+                      // int line        = locatedNode->get_startOfConstruct()->get_line();
+                         int line        = locatedNode->get_startOfConstruct()->get_physical_line(source_file_id);
+                         int col         = locatedNode->get_startOfConstruct()->get_col();
+                      // int ending_line = locatedNode->get_endOfConstruct()->get_line();
+                         int ending_line = locatedNode->get_endOfConstruct()->get_physical_line(source_file_id);
+                         int ending_col  = locatedNode->get_endOfConstruct()->get_col();
+
+                      // DQ (8/6/2012): Added support for endOfConstruct().
+                         printf ("locatedNode = %p = %s (starting: (%d,%d) ending: (%d,%d) \n",locatedNode,locatedNode->class_name().c_str(),line,col,ending_line,ending_col);
+                       }
                   }
                  else
                   {
                     printf (" --- tmp_locatedNode == NULL \n");
                   }
-               printf ("Processing switch \n");
+
+               printf ("AAAAAAAAAAAAAAA Processing switch AAAAAAAAAAAAAAAAAA \n");
 #endif
                switch (n->variantT())
                   {
@@ -2675,46 +3101,267 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                  // This case helps place the comment or directive relative to the closing brace of a SgBasicBlock.
                     case V_SgBasicBlock:
-                          {
-#if 0
-                            printf ("Processing case: V_SgBasicBlock \n");
-#endif
-                            ROSE_ASSERT (locatedNode != NULL);
-                            ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
+                       {
+                         ROSE_ASSERT (locatedNode != NULL);
+                         ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
-                         // The following should always work since each statement is a located node
-                            SgBasicBlock* basicBlock = dynamic_cast<SgBasicBlock*>(n);
+                      // The following should always work since each statement is a located node
+                      // SgBasicBlock* basicBlock = dynamic_cast<SgBasicBlock*>(n);
+                         SgBasicBlock* basicBlock = isSgBasicBlock(n);
+                         ROSE_ASSERT(basicBlock != NULL);
 #if 0
-                            printf ("Case SgBasicBlock: lineOfClosingBrace = %d \n",lineOfClosingBrace);
-                            printf ("Case SgBasicBlock: See if we can find a better target to attach these comments than %s \n",previousLocNodePtr->sage_class_name());
+                         printf ("\nProcessing case: V_SgBasicBlock: basicBlock = %p \n",basicBlock);
 #endif
 #if 0
-                            printf ("In case V_SgBasicBlock: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+                         printf ("Case SgBasicBlock: lineOfClosingBrace = %d \n",lineOfClosingBrace);
+                         printf ("Case SgBasicBlock: See if we can find a better target to attach these comments than %s \n",previousLocNodePtr->sage_class_name());
 #endif
-                         // DQ (6/8/2020): This appear to be NULL in some cases I am debugging currently.
-                            ROSE_ASSERT(basicBlock != NULL);
-
-                         // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
-
-                         // DQ (4/9/2005): We need to point to the SgBasicBlock and not the last return statement (I think)
-                         // Reset the previousLocNodePtr to the current node so that all 
-                         // PreprocessingInfo objects will be inserted relative to the 
-                         // current node next time.
-                         // previousLocNodePtr = basicBlock;
-#if 1
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
 #if 0
-                         // DQ (5/1/2020): Removed the previousLocatedNodeMap.
-                            previousLocatedNodeMap[currentFileNameId] = basicBlock;
+                         printf ("In case V_SgBasicBlock: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+#endif
+                      // DQ (6/8/2020): This appear to be NULL in some cases I am debugging currently.
+                         ROSE_ASSERT(basicBlock != NULL);
+
+                      // DQ (3/23/2021): Testing the case of a lambda function with Cxx11_tests/test2018_30.C.
+#if 0
+                      // DQ (2/16/2021): Refactored code so that we can support comments at the end of a block being attached to the bottom (after) the last statement.
+                         bool reset_start_index = false;
+#error "DEAD CODE!"
+                         handleBracedScopes(previousLocatedNode, basicBlock, lineOfClosingBrace, reset_start_index, currentListOfAttributes);
 #else
-                            previousLocatedNode = basicBlock;
+
+#if 1
+
+#if 0
+                         printf ("previousLocatedNode = %p = %s \n",previousLocatedNode,previousLocatedNode->class_name().c_str());
+#endif
+                         SgStatementExpression* statementExpression = NULL;
+                      // DQ (2/15/2021): I would like to insert comments and CPP directives after the last statement, where it exists, instead of inside the block.
+                      // Only when there are no statements in the SgBasciBlock should we add the comments and CPP directives inside the SgBasicBlock.
+                         SgStatement* previousStatement = isSgStatement(previousLocatedNode);
+
+                      // ROSE_ASSERT(previousStatement != NULL);
+                         if (previousStatement != NULL)
+                            {
+#if 0
+                              printf ("previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+#endif
+                           // SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+                              SgLocatedNode* parentLocatedNode = isSgLocatedNode(previousStatement->get_parent());
+#if 0
+                              printf ("parentLocatedNode = %p = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str());
+#endif
+                           // SgStatementExpression* statementExpression = isSgStatementExpression(parentLocatedNode);
+                              statementExpression = isSgStatementExpression(parentLocatedNode);
+#if 0
+                              printf ("previousStatement   = %p = %s \n",previousStatement,previousStatement == NULL ? "N/A" : previousStatement->class_name().c_str());
+                              printf ("basicBlock          = %p = %s \n",basicBlock,basicBlock == NULL ? "N/A" : basicBlock->class_name().c_str());
+                              printf ("statementExpression = %p = %s \n",statementExpression,statementExpression == NULL ? "N/A" : statementExpression->class_name().c_str());
+#endif
+#if 1
+                              SgStatement* enclosingStatement = NULL;
+                              if (statementExpression != NULL)
+                                 {
+                                // enclosingStatement = SageInterface::getEnclosingStatement(statementExpression);
+                                   bool includingSelf = false;
+                                   enclosingStatement = SageInterface::getEnclosingNode<SgStatement>(statementExpression,includingSelf);
+                                   ROSE_ASSERT(enclosingStatement != NULL);
+#if 0
+                                   printf ("(before loop) enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+
+#if 0
+                                // We need to find the associated parent statement that is in the target basicBlock.
+                                   while (enclosingStatement->get_scope() != basicBlock)
+                                      {
+#error "DEAD CODE!"
+                                        enclosingStatement = SageInterface::getEnclosingNode<SgStatement>(enclosingStatement,includingSelf);
+                                        ROSE_ASSERT(enclosingStatement != NULL);
+#if 0
+                                        printf ("(in loop) enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+                                      }
+#endif
+
+#if 0
+                                   printf ("(after loop) enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+                                   previousStatement = enclosingStatement;
+#if 0
+                                   printf ("enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+                                // ROSE_ASSERT(enclosingStatement != statementExpression);
+                                 }
+                                else
+                                 {
+                                   SgLambdaExp* lambdaExpression = isSgLambdaExp(parentLocatedNode);
+                                   if (lambdaExpression != NULL)
+                                      {
+                                        bool includingSelf = false;
+                                        enclosingStatement = SageInterface::getEnclosingNode<SgStatement>(lambdaExpression,includingSelf);
+                                        ROSE_ASSERT(enclosingStatement != NULL);
+#if 0
+                                        printf ("enclosingStatement = %p = %s \n",enclosingStatement,enclosingStatement->class_name().c_str());
+#endif
+                                        previousStatement = enclosingStatement;
+
+                                      }
+                                 }
+#endif
+                            }
+
+                      // if (previousStatement != NULL && previousStatement != basicBlock)
+                         if (previousStatement != NULL && previousStatement != basicBlock && statementExpression == NULL)
+                            {
+#if 0
+                              printf ("case SgBasicBlock: Found previous statement: previousStatement = %p = %s (adding directive after) \n",previousStatement,previousStatement->class_name().c_str());
+#endif
+                              bool reset_start_index = false;
+                              iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                                 ( previousStatement, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
+                            }
+                           else
+                            {
+                           // ROSE_ASSERT(previousStatement != NULL);
+                              if (previousStatement != NULL)
+                                 {
+#if 0
+                                   printf ("case SgBasicBlock: Found a case where the previousStatement was not a SgStatement: previousStatement = %p = %s \n",
+                                        previousStatement,previousStatement->class_name().c_str());
+                                   printf ("case SgBasicBlock:  --------------------------------------------------------------------- basicBlock = %p \n",basicBlock);
+#endif
+                                // If the previous statement was the current basicBlock, then there were no statements 
+                                // in the SgBasicBlock and we have to add the comments inside the basic block.
+                                   if (previousStatement == basicBlock)
+                                      {
+                                        bool reset_start_index = false;
+                                        iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                                           ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
+                                      }
+                                     else
+                                      {
+                                     // Use the basicBlock and mark the comments to be inside.
+#if 0
+                                        printf ("case SgBasicBlock: Use the previousStatement and mark the comments to be after: previousStatement = %p = %s \n",
+                                             previousStatement,previousStatement->class_name().c_str());
+#endif
+                                        bool reset_start_index = false;
+                                        iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                                           ( previousStatement, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+                                else
+                                 {
+                                   printf ("case SgBasicBlock: previousStatement == NULL \n");
+                                 }
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+#else
+                      // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
+                         bool reset_start_index = false;
+#error "DEAD CODE!"
+                         iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                            ( basicBlock, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index, currentListOfAttributes );
 #endif
 #endif
-                            break;
-                          }
+                      // DQ (4/9/2005): We need to point to the SgBasicBlock and not the last return statement (I think)
+                      // Reset the previousLocNodePtr to the current node so that all 
+                      // PreprocessingInfo objects will be inserted relative to the 
+                      // current node next time.
+                      // previousLocNodePtr = basicBlock;
+#if 1
+                      // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+#if 0
+                      // DQ (5/1/2020): Removed the previousLocatedNodeMap.
+                         previousLocatedNodeMap[currentFileNameId] = basicBlock;
+#else
+
+                      // DQ (2/18/2021): If this is a block from a gnu SgStatementExpression, then don't record it as a previousLocatedNode.
+#if 1
+                      // Original code.
+                         previousLocatedNode = basicBlock;
+#if 0
+                      // SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+                      // SgLocatedNode* parentLocatedNode = (basicBlock->get_parent());
+                         bool includingSelf = false;
+                         SgLambdaExp* parentLambdaExpression = SageInterface::getEnclosingNode<SgLambdaExp>(basicBlock->get_parent(),includingSelf);
+                      // printf ("case SgBasicBlock: parentLocatedNode = %p = %s = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str(),SageInterface::get_name(parentLocatedNode).c_str());
+                         if (parentLambdaExpression != NULL)
+                            {
+                              printf ("Found parentLambdaExpression as SgLambdaExp: set previousLocatedNode = parent basic block \n");
+
+                           // SgFunctionDefinition* parentfunctionDefinition = SageInterface::getEnclosingNode<SgFunctionDefinition>(parentLambdaExpression,includingSelf);
+                              SgBasicBlock* parentBasicBlock = SageInterface::getEnclosingNode<SgBasicBlock>(parentLambdaExpression,includingSelf);
+
+                           // previousLocatedNode = parentfunctionDefinition;
+                              previousLocatedNode = parentBasicBlock;
+                            }
+#endif
+
+#if 0
+                         if (parentLocatedNode != NULL)
+                            {
+                              printf ("parentLocatedNode = %p = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str());
+                              SgStatementExpression* statementExpression = isSgStatementExpression(parentLocatedNode);
+                              if (statementExpression != NULL)
+                                 {
+                                // Not clear what is the best node to set the previousLocatedNode to, so use the parent of the statementExpression.
+                                   printf ("Case of statementExpression != NULL: Setting previousLocatedNode = NULL \n");
+                                // previousLocatedNode = NULL;
+                                   SgLocatedNode* statementExpressionParent = isSgLocatedNode(statementExpression->get_parent());
+                                   previousLocatedNode = statementExpressionParent;
+                                 }
+                                else
+                                 {
+                                   printf ("Setting previousLocatedNode = basicBlock \n");
+                                   previousLocatedNode = basicBlock;
+                                 }
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(basicBlock->get_parent() != NULL);
+                              printf ("parentStatement == NULL: basicBlock->get_parent() = %s \n",basicBlock->get_parent()->class_name().c_str());
+                            }
+#endif
+#else
+                         SgLocatedNode* parentLocatedNode = isSgLocatedNode(basicBlock->get_parent());
+                         if (parentLocatedNode != NULL)
+                            {
+#error "DEAD CODE!"
+                              printf ("parentLocatedNode = %p = %s \n",parentLocatedNode,parentLocatedNode->class_name().c_str());
+                              SgStatementExpression* statementExpression = isSgStatementExpression(parentLocatedNode);
+                              if (statementExpression != NULL)
+                                 {
+                                // Not clear what is the best node to set the previousLocatedNode to, so use the parent of the statementExpression.
+                                   printf ("Case of statementExpression != NULL: Setting previousLocatedNode = NULL \n");
+                                // previousLocatedNode = NULL;
+                                   SgLocatedNode* statementExpressionParent = isSgLocatedNode(statementExpression->get_parent());
+                                   previousLocatedNode = statementExpressionParent;
+                                 }
+                                else
+                                 {
+                                   printf ("Setting previousLocatedNode = basicBlock \n");
+                                   previousLocatedNode = basicBlock;
+                                 }
+#error "DEAD CODE!"
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(basicBlock->get_parent() != NULL);
+                              printf ("parentStatement == NULL: basicBlock->get_parent() = %s \n",basicBlock->get_parent()->class_name().c_str());
+                            }
+#endif
+#endif
+#endif
+                         break;
+                       }
                         // Liao 11/2/2010, support #include within SgAggregateInitializer { }   
                         // e.g.
                         /*
@@ -2763,42 +3410,48 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgTemplateClassDeclaration:
 
                     case V_SgClassDeclaration:
-                          {
+                       {
 #if 0
-                            printf ("Processing case: V_SgClassDeclaration \n");
+                         printf ("Processing case: V_SgClassDeclaration \n");
 #endif
-                            ROSE_ASSERT (locatedNode != NULL);
-                            ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
+                         ROSE_ASSERT (locatedNode != NULL);
+                         ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
-                         // The following should always work since each statement is a located node
-                            SgClassDeclaration* classDeclaration = dynamic_cast<SgClassDeclaration*>(n);
-                            ROSE_ASSERT(classDeclaration != NULL);
+                      // The following should always work since each statement is a located node
+                         SgClassDeclaration* classDeclaration = dynamic_cast<SgClassDeclaration*>(n);
+                         ROSE_ASSERT(classDeclaration != NULL);
 #if 0
-                            printf ("In case V_SgClassDeclaration: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+                         printf ("In case V_SgClassDeclaration: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
-                         // DQ (6/8/2020): This appear to be NULL in some cases I am debugging currently.
-                            ROSE_ASSERT(previousLocNodePtr != NULL);
+                      // DQ (6/8/2020): This appear to be NULL in some cases I am debugging currently.
+                         ROSE_ASSERT(previousLocNodePtr != NULL);
 
-                         // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,currentListOfAttributes );
-                         // printf ("Adding comment/directive to base of class declaration \n");
-                         // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                         //    ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside );
-
-                         // previousLocNodePtr = classDeclaration;
 #if 1
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
-#if 0
-                         // DQ (5/1/2020): Removed the previousLocatedNodeMap.
-                            previousLocatedNodeMap[currentFileNameId] = classDeclaration;
+                      // DQ (2/16/2021): Refactored code so that we can support comments at the end of a block being attached to the bottom (after) the last statement.
+                         bool reset_start_index = false;
+                         handleBracedScopes(previousLocNodePtr, classDeclaration, lineOfClosingBrace, reset_start_index, currentListOfAttributes);
 #else
-                            previousLocatedNode = classDeclaration;
+                      // DQ (3/18/2005): This is a more robust process (although it introduces a new location for a comment/directive)
+                         bool reset_start_index = false;
+                         iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                            ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index,currentListOfAttributes );
+#endif
+                      // printf ("Adding comment/directive to base of class declaration \n");
+                      // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                      //    ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside );
+
+                      // previousLocNodePtr = classDeclaration;
+#if 1
+                      // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+#if 0
+                      // DQ (5/1/2020): Removed the previousLocatedNodeMap.
+                         previousLocatedNodeMap[currentFileNameId] = classDeclaration;
+#else
+                         previousLocatedNode = classDeclaration;
 #endif
 #endif
-                            break;
-                          }
+                         break;
+                       }
 
                  // GB (09/18/2007): Added support for preprocessing info inside typedef declarations (e.g. after the
                  // base type, which is what the previousLocNodePtr might point to).
@@ -2938,31 +3591,39 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                        }
 
                     case V_SgClassDefinition:
-                          {
+                       {
 #if 0
-                            printf ("Processing case: V_SgClassDefinition \n");
+                         printf ("Processing case: V_SgClassDefinition \n");
 #endif
-                            ROSE_ASSERT (locatedNode != NULL);
-                            ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
+                         ROSE_ASSERT (locatedNode != NULL);
+                         ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
 
-                         // DQ (3/19/2005): This is a more robust process (although it introduces a new location for a comment/directive)
-                         // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                         //    ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after );
-                         // printf ("Adding comment/directive to base of class definition \n");
+                      // DQ (3/19/2005): This is a more robust process (although it introduces a new location for a comment/directive)
+                      // iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                      //    ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after );
+                      // printf ("Adding comment/directive to base of class definition \n");
 #if 0
-                            printf ("In case V_SgClassDefinition: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
+                         printf ("In case V_SgClassDefinition: calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() \n");
 #endif
-                         // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
-                            ROSE_ASSERT(locatedNode != NULL);
+                      // DQ (6/9/2020): This appear to be NULL in some cases I am debugging currently.
+                         ROSE_ASSERT(locatedNode != NULL);
 
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                              ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
-
-                         // previousLocNodePtr = locatedNode;
-                         // previousLocatedNodeMap[currentFileNameId] = locatedNode;
-                            break;
-                          }
+                      // The following should always work since each statement is a located node
+                         SgClassDefinition* classDefinition = dynamic_cast<SgClassDefinition*>(n);
+                         ROSE_ASSERT(classDefinition != NULL);
+#if 1
+                      // DQ (2/16/2021): Refactored code so that we can support comments at the end of a block being attached to the bottom (after) the last statement.
+                         bool reset_start_index = false;
+                         handleBracedScopes(previousLocNodePtr, classDefinition, lineOfClosingBrace, reset_start_index, currentListOfAttributes);
+#else
+                         bool reset_start_index = false;
+                         iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                            ( locatedNode, lineOfClosingBrace, PreprocessingInfo::inside, reset_start_index,currentListOfAttributes );
+#endif
+                      // previousLocNodePtr = locatedNode;
+                      // previousLocatedNodeMap[currentFileNameId] = locatedNode;
+                         break;
+                       }
 
                     case V_SgEnumDeclaration:
                           {
@@ -3171,6 +3832,45 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          break;
                        }
 
+                 // The following cases are required because the fortran blocks can be nest in syntax, so a comment 
+                 // after the block should be after the closing syntax for the consruct containing the block.
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgIfStmt:
+                       {
+                      // I might need an example of this.
+                         if (SageInterface::is_Fortran_language() == true)
+                            {
+#if 0
+                              printf ("Handle the case of fortran specific SgIfStmt (which contains a SgBasicBlock) \n");
+#endif
+                              previousLocatedNode = locatedNode;
+                            }
+                       }
+
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgDoWhileStmt:
+                       {
+                      // I might need an example of this.
+                         if (SageInterface::is_Fortran_language() == true)
+                            {
+#if 0
+                              printf ("Handle the case of fortran specific SgDoWhileStmt (which contains a SgBasicBlock) \n");
+#endif
+                              previousLocatedNode = locatedNode;
+                            }
+                       }
+
+                 // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
+                    case V_SgFortranDo:
+                       {
+                      // test2021_01.f90 through test2021_04.f90 are examples of this issue, but it fails in the OpenMP tests for Fortran.
+                      // Note: Craign things that the case of a loop ending on a label might be an issue.
+#if 0
+                         printf ("Handle the case of SgFortranDo (which contains a SgBasicBlock) \n");
+#endif
+                         previousLocatedNode = locatedNode;
+                       }
+
                     default:
                        {
                       // DQ (11/11/2012): Added assertion.
@@ -3185,7 +3885,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          n->get_file_info()->display("Skipping any possability of attaching a comment/directive: debug");
 #endif
 #if 0
-                         // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
+                      // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
                       // DQ (6/17/2020): Set the previousLocatedNode
                          if (locatedNode != NULL)
                             {

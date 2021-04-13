@@ -7,7 +7,12 @@ int main(int argc, char* argv[])
      ROSE_ASSERT(argc > 1);
 
      SgProject* project = frontend(argc,argv);
-    
+
+     SgProject::set_unparseHeaderFilesDebug(2);
+#if 1
+     printf ("Setting unparseHeaderFilesDebug: value = %d \n",SgProject::get_unparseHeaderFilesDebug());
+#endif
+
   // AstTests::runAllTests(project);
 
      UnparseHeadersTransformVisitor transformVisitor;

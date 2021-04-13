@@ -1248,6 +1248,25 @@ namespace OmpSupport
     }
 #endif
     SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
+
+#if 0
+ // DQ (4/6/2021): Debugging OpenMP pragma support. 
+ // the last statement after the for loop is outlined 
+ // is a return statement, so I'm not clear why there 
+ // is an error in getNextStatement().
+    printf ("Output the scope of the pragma: \n");
+    SgScopeStatement* scope = pragmadecl->get_scope();
+    bool containsOnlyDeclarations = scope->containsOnlyDeclarations(); 
+    if (containsOnlyDeclarations == false)
+       {
+         SgStatementPtrList & statementList = scope->getStatementList ();
+         for (size_t i = 0; i < statementList.size(); i++)
+            {
+              printf ("statementList[%zu] = %p = %s \n",i,statementList[i],statementList[i]->class_name().c_str());
+            }
+       }
+#endif
+
     result = getNextStatement(pragmadecl);
     // Not all pragma decl has a structured body. We check those which do have one
     // TODO: more types to be checked
@@ -2212,6 +2231,10 @@ This is no perfect solution until we handle preprocessing information as structu
     ROSE_ASSERT (sageFilePtr != NULL);
     // step 1: Each OmpAttribute will have a dedicated SgPragmaDeclaration for it
     list <OmpAttribute *>::iterator iter; 
+
+    // we record the last pragma inserted after a statement, if any
+    std::map<SgStatement*, SgPragmaDeclaration*> stmt_last_pragma_dict; 
+
     for (iter = omp_comment_list.begin(); iter != omp_comment_list.end(); iter ++)
     {
       OmpAttribute * att = *iter;
@@ -2293,7 +2316,19 @@ This is no perfect solution until we handle preprocessing information as structu
       }
       else if (position == PreprocessingInfo::after)
       {
-        insertStatementAfter(stmt, p_decl, false);
+        SgStatement* last= stmt; 
+        if (stmt_last_pragma_dict.count(stmt))
+          last = stmt_last_pragma_dict[stmt];
+        // Liao, 3/31/2021
+        // It is possible there are several comments attached after a same statement.
+        // In this case, we should not just insert each generated pragma right after the statement.
+        // We should insert each pragma after the previously inserted pragma to preserve the original order.
+        // Otherwise , we will end up with reversed order of pragmas, causing later pragma pair matching problem.
+        
+         // insertStatementAfter(stmt, p_decl, false);
+         insertStatementAfter(last, p_decl, false);
+         
+        stmt_last_pragma_dict[stmt] = p_decl;
       }
       else
       {
