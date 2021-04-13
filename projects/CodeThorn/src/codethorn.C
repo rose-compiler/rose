@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.27";
+const std::string versionString="1.12.28";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -187,7 +187,6 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
     
-    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
@@ -226,6 +225,7 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
 
+    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 

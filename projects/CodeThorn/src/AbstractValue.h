@@ -219,13 +219,6 @@ class AbstractValue {
   static bool pointerSetsEnabled;
 };
 
-// arithmetic operators
- AbstractValue operator+(AbstractValue& a,AbstractValue& b);
- AbstractValue operator-(AbstractValue& a,AbstractValue& b);
- AbstractValue operator*(AbstractValue& a,AbstractValue& b);
- AbstractValue operator/(AbstractValue& a,AbstractValue& b);
- AbstractValue operator%(AbstractValue& a,AbstractValue& b);
-
  ostream& operator<<(ostream& os, const AbstractValue& value);
  istream& operator>>(istream& is, AbstractValue& value);
 

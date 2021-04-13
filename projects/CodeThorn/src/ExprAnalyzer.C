@@ -666,7 +666,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddOp(SgAddOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=(lhsResult.result+rhsResult.result);
+  res.result=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
   resultList.push_back(res);
   return resultList;
 }
@@ -677,7 +677,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSubOp(SgSubtractOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=(lhsResult.result-rhsResult.result);
+  res.result=AbstractValue::operatorSub(lhsResult.result,rhsResult.result);
   resultList.push_back(res);
   return resultList;
 }
@@ -689,7 +689,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalMulOp(SgMultiplyOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=(lhsResult.result*rhsResult.result);
+  res.result=AbstractValue::operatorMul(lhsResult.result,rhsResult.result);
   resultList.push_back(res);
   return resultList;
 }
@@ -701,7 +701,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDivOp(SgDivideOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=(lhsResult.result/rhsResult.result);
+  res.result=AbstractValue::operatorDiv(lhsResult.result,rhsResult.result);
   resultList.push_back(res);
   return resultList;
 }
@@ -714,7 +714,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalModOp(SgModOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=(lhsResult.result%rhsResult.result);
+  res.result=AbstractValue::operatorMod(lhsResult.result,rhsResult.result);
   resultList.push_back(res);
   return resultList;
 }
@@ -1338,7 +1338,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   // TODO change from precomp to postcomp
   SingleEvalResultConstInt res;
   AbstractValue oldValue=readFromMemoryLocation(estate.label(),estate.pstate(),address);
-  AbstractValue newValue=oldValue+change;
+  AbstractValue newValue=AbstractValue::operatorAdd(oldValue,change);
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
   writeToMemoryLocation(estate.label(),&newPState,address,newValue);
