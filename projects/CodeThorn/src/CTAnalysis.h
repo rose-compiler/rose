@@ -111,7 +111,7 @@ namespace CodeThorn {
   public:
     
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver2(std::string functionToStartAt, SgProject* root);
+    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -186,9 +186,9 @@ namespace CodeThorn {
     void setSkipUnknownFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
-    void setIgnoreUndefinedDereference(bool);
+
+    // obtained from ctopt
     bool getIgnoreUndefinedDereference();
-    void setIgnoreFunctionPointers(bool);
     bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
@@ -248,6 +248,8 @@ namespace CodeThorn {
         not supported yet) */
     void setOptionContextSensitiveAnalysis(bool flag);
     bool getOptionContextSensitiveAnalysis();
+    bool isReachableLabel(Label lab);
+    bool isUnreachableLabel(Label lab);
   protected:
     using super = CTAnalysis; // allows use of super like in Java without repeating the class name
   public:
@@ -262,6 +264,8 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
+    void initializeGlobalVariablesOld(SgProject* root, EState& estate);
+    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
@@ -322,9 +326,12 @@ namespace CodeThorn {
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 
-    void recordAnalyzedFunction(SgFunctionDefinition* funDef);
+    LabelSet functionEntryLabels();
+    LabelSet reachableFunctionEntryLabels();
+    SgFunctionDefinition* getFunctionDefinitionOfEntryLabel(Label lab);
     std::string analyzedFunctionsToString();
     std::string analyzedFilesToString();
+
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
@@ -350,6 +357,10 @@ namespace CodeThorn {
     const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
+
+    std::pair<CallString,const EState*> popWorkListCS();
+    std::pair<CallString,const EState*> topWorkListCS();
+    void pushWorkListCS(CallString,const EState*);
 
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
@@ -384,30 +395,17 @@ namespace CodeThorn {
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
-    std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
-    std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
-    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferIdentity(Edge edge, const EState* estate);
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
-    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-    
+
+    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+
+    // only implemented in CTAnalysis
+    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
@@ -514,7 +512,7 @@ namespace CodeThorn {
     // this is used in abstract mode to hold a pointer to the
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
-    size_t getSummaryStateMapSize();
+    //size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
     bool isLTLRelevantEState(const EState* estate);
 
@@ -527,8 +525,12 @@ namespace CodeThorn {
     ExternalFunctionsContainerType externalFunctions;
 
   private:
+
     //std::unordered_map<int,const EState*> _summaryStateMap;
-    std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
+    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
+
     const CodeThorn::PState* _initialPStateStored=nullptr;
     const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;

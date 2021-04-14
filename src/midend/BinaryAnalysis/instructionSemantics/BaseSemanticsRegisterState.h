@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RegisterState_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RegisterState_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemanticsMerger.h>
 #include <BaseSemanticsSValue.h>
@@ -109,12 +109,29 @@ public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr protoval() const { return protoval_; }
 
-    /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
      *  this time (May 2013) the dictionary is only used when printing.
+     *
      * @{ */
-    const RegisterDictionary *get_register_dictionary() const { return regdict; }
-    void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
+    const RegisterDictionary *registerDictionary() const /*final*/ {
+        return regdict;
+    }
+    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
+        regdict = rd;
+    }
     /** @} */
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    const RegisterDictionary *get_register_dictionary() const ROSE_DEPRECATED("use registerDictionary property") {
+        return registerDictionary();
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    void set_register_dictionary(const RegisterDictionary *rd) ROSE_DEPRECATED("use registerDictionary property") {
+        registerDictionary(rd);
+    }
 
     /** Removes stored values from the register state.
      *

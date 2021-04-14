@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_ModulesX86_H
 #define ROSE_Partitioner2_ModulesX86_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Thunk.h>
@@ -97,8 +97,23 @@ public:
  *  the "case" labels, adding them as successors to this basic block. */
 class SwitchSuccessors: public BasicBlockCallback {
 public:
+    enum EntryType { ABSOLUTE, RELATIVE };
+
+private:
+    Sawyer::Optional<rose_addr_t> tableVa_;             // possible address for jump table
+    EntryType entryType_;                               // type of table entries
+    size_t entrySizeBytes_;                             // size of each table entry
+
+public:
+    SwitchSuccessors()
+        : entryType_(ABSOLUTE), entrySizeBytes_(4) {}
     static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+private:
+    bool matchPattern1(SgAsmExpression *jmpArg);
+    bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);
+    bool matchPattern3(const Partitioner&, const BasicBlockPtr&, SgAsmInstruction *jmp);
+    bool matchPatterns(const Partitioner&, const BasicBlockPtr&);
 };
 
 /** Matches "ENTER x, 0" */
@@ -143,7 +158,8 @@ bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
  *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
  *  table. */
 std::vector<rose_addr_t> scanCodeAddressTable(const Partitioner&, AddressInterval &tableLimits /*in,out*/,
-                                              const AddressInterval &targetLimits, size_t tableEntrySize,
+                                              const AddressInterval &targetLimits,
+                                              SwitchSuccessors::EntryType tableEntryType, size_t tableEntrySizeBytes,
                                               Sawyer::Optional<rose_addr_t> probableStartVa = Sawyer::Nothing(),
                                               size_t nSkippable = 0);
 

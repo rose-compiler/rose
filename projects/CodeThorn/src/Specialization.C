@@ -311,7 +311,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
      if(useConstExprSubstRule) {
        int numConstExprElim=substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
        rewriteSystem.getRewriteStatisticsPtr()->numConstExprElim+=numConstExprElim;
-       rewriteSystem.rewriteCompoundAssignments(p_expCopy,variableIdMapping);
+       rewriteSystem.rewriteCompoundAssignments(p_expCopy);
      } else {
        rewriteSystem.getRewriteStatisticsPtr()->numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
        // turn disable commutative sort when eliminating variables, but restore setting afterwards

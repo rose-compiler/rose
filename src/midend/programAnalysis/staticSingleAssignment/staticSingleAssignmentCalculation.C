@@ -157,7 +157,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         } else if (funcNonrealScope != NULL) {
           decl = isSgDeclarationStatement(funcNonrealScope->get_parent());
         } else {
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
         //The two are not from the same class. Let's see if there is a friend class declaration
@@ -606,7 +606,7 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
                     {
                         printf("ERROR: At node %s@%d, two different definitions reach for variable %s\n",
                                 astNode->class_name().c_str(), astNode->get_file_info()->get_line(), varnameToString(var).c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
             }
@@ -639,7 +639,7 @@ void StaticSingleAssignment::buildUseTable(const vector<FilteredCfgNode>& cfgNod
                 printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
                         node->get_file_info()->get_filename());
                 continue; // FIXME ROSE-1392
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
     }

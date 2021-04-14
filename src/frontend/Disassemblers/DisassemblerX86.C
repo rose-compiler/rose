@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <DisassemblerX86.h>
 
@@ -115,7 +115,7 @@ DisassemblerX86::init(size_t wordsize)
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
     InstructionSemantics2::DispatcherX86Ptr d = InstructionSemantics2::DispatcherX86::instance(addrWidth, regdict);
-    d->set_register_dictionary(regdict);                // so register cache is initialized
+    d->registerDictionary(regdict);                     // so register cache is initialized
     p_proto_dispatcher = d; 
 
     registerDictionary(regdict);

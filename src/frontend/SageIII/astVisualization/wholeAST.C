@@ -8,7 +8,7 @@
 #include "transformationTracking.h"
 #include "wholeAST.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -383,7 +383,7 @@ CustomMemoryPoolDOTGenerationData::skipEdge(EdgeType e)
        else
         {
           printf ("ERROR: In CustomMemoryPoolDOTGenerationData::skipEdge(): edge is already present in set \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
 #if 0
@@ -1038,7 +1038,7 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
 #endif
 #if 0
      printf ("Exiting as a test in CustomMemoryPoolDOTGeneration::edgeFilter() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1075,7 +1075,7 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
      if (isSgAsmExecutableFileFormat(node) != NULL)
         {
@@ -1087,7 +1087,7 @@ CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
    {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
      if (isSgAsmType(node) != NULL)
         {
@@ -2100,7 +2100,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
 #endif
                   {
@@ -2234,7 +2234,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateArgument: templateArgument->get_argumentType() \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 
@@ -2276,7 +2276,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateParameter: templateParameter->get_argumentType() = %d \n",templateParameter->get_parameterType());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 
@@ -2408,7 +2408,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
         }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmType(node) != NULL)
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2431,7 +2431,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (isSgAsmNode(node) != NULL)
         {
        // Color selection for the binary file format and binary instruction IR nodes.
@@ -2800,7 +2800,7 @@ SimpleColorMemoryPoolTraversal::generateGraph(string filename, const set<SgNode*
 
 #if 0
      printf ("In SimpleColorMemoryPoolTraversal::generateGraph(): exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // Custom control over the coloring of the "whole" AST for a memory pool traversal
@@ -2882,7 +2882,7 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 #if 0
   // DQ (2/20/2012): This is actually called.
      printf ("This does not appear to be used! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (11/26/2016): Debugging.
@@ -3283,7 +3283,7 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
 
 #if 0
      printf ("DONE: Calling CustomMemoryPoolDOTGeneration::print_filter_flags(): exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      generateWholeGraphOfAST_filteredFrontendSpecificNodes(filename, flags);

@@ -36,8 +36,13 @@ protected:
 public:
     ~SystemCall();
 
-    /* Allocating constructor. */
+    /** Allocating constructor. */
     static Ptr instance();
+
+    /** Cloning constructor.
+     *
+     *  The new system call has all the same properties as the old one except the timestamp and test case are cleared. */
+    static Ptr instance(const SystemCallPtr&);
 
     /** Property: Owning test case.
      *
@@ -45,7 +50,6 @@ public:
      *
      *  @{ */
     TestCasePtr testCase();
-    void testCase(TestCaseId);
     void testCase(const TestCasePtr&);
     /** @} */
 

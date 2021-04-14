@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
@@ -507,8 +510,7 @@ NodeFact* DFStateAtReturns::copy() const{
                 newState->latsRetVal.push_back((*l)->copy());
         return newState;*/
         // We don't need a copy method
-        ROSE_ASSERT(0);
-        return NULL;
+        ROSE_ABORT();
 }
 
 // Applies the MergeAllReturnStates analysis on the given function, incorporating the results into
@@ -797,10 +799,15 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                                 Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer Incoming Dataflow info modified\n";
                         // Record that the callee function needs to be re-analyzed because of new information from the caller
                         TraverseCallGraphDataflow::addToRemaining(getFunc(callee));
-                        ROSE_ASSERT(getFunc(callee) != NULL);
-                        remainingDueToCallers.insert(getFunc(callee));
+                        {
+                           const CGFunction* theFunc;
+
+                           theFunc = getFunc(callee);
+                           ROSE_ASSERT(theFunc != NULL);
+                           remainingDueToCallers.insert(theFunc);
+                        }
                 }
-                
+
                 // The lattices after the function (forward: before=above, after=below; backward: before=below, after=above).
                 const vector<Lattice*>* funcLatticesAfter;
                 if(fw) funcLatticesAfter = &(funcS->state.getLatticeBelow((Analysis*)intraAnalysis));
@@ -962,3 +969,5 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                 }
         }
 }
+
+#endif

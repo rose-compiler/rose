@@ -234,7 +234,7 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
 
         default:
             std::cerr << "Unhandled type" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     ROSE_ASSERT(result != NULL);

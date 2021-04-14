@@ -394,6 +394,17 @@ inline Sawyer::Optional<size_t> highestSetBit(Unsigned src) {
     return Sawyer::Nothing();
 }
 
+template<typename Unsigned>
+inline size_t nSet(Unsigned src) {
+    size_t retval = 0;
+    while (src != 0) {
+        if ((src & 1) != 0)
+            ++retval;
+        src >>= 1;
+    }
+    return retval;
+}
+
 } // namespace
 } // namespace
 #endif

@@ -94,7 +94,7 @@ static enum omp_rtl_enum get_rtl_type()
     else 
     {
       printf ("unset or unrecognized OpenMP runtime type:%s\n", e_value);
-      assert (0);
+      ROSE_ABORT ();
     }
   }
   return t;
@@ -236,8 +236,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
    #include "run_me_callers.inc"
    default:
     printf("Error. Unhandled number of parameters %d \n", *argcount);
-    assert (0);
-    break;
+    ROSE_ABORT ();
   }
 }
 
@@ -509,8 +508,7 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
 #include "run_me_callers2.inc"
     default:
       printf("Error. xomp_task(): unhandled number of parameters %d \n", *argcount);
-      assert (0);
-      break;
+      ROSE_ABORT ();
   }
 }
 
@@ -596,7 +594,7 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, l
     if (stride >0)
     {
       printf("Error: in XOMP_loop_default() of xomp.c: stride must be negative for decremental iteration. stride = %d \n ", stride);
-      assert (0);
+      ROSE_ABORT ();
     }
   }
   else // incremental
@@ -605,7 +603,7 @@ extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, l
     if (stride <0)
     {
       printf("Error: in XOMP_loop_default() of xomp.c: stride must be positive for incremental iteration. stride = %d \n ", stride);
-      assert (0);
+      ROSE_ABORT ();
     }
   }
   // addOne is needed here only if the input upper bound is non-inclusive

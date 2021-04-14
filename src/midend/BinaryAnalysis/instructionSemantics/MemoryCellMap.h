@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellMap_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellMap_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <boost/foreach.hpp>
@@ -64,7 +64,7 @@ protected:
     MemoryCellMap(const MemoryCellMap &other)
         : MemoryCellState(other) {
         BOOST_FOREACH (const MemoryCellPtr &cell, other.cells.values())
-            cells.insert(other.generateCellKey(cell->get_address()), cell->clone());
+            cells.insert(other.generateCellKey(cell->address()), cell->clone());
     }
 
 private:

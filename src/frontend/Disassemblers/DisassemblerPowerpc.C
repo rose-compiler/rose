@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "DisassemblerPowerpc.h"
 
@@ -99,7 +99,7 @@ DisassemblerPowerpc::init() {
     REG_SP = regdict->findOrThrow("r1");
     REG_LINK = regdict->findOrThrow("lr");
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
-    d->set_register_dictionary(regdict);
+    d->registerDictionary(regdict);
     p_proto_dispatcher = d;
     registerDictionary(regdict);
 }

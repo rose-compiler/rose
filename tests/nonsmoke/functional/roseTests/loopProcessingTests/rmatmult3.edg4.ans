@@ -88,6 +88,8 @@ void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int 
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
         b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + ucc[ii + jj * jp + kk * kp] * x[ii + jj * jp + (kk + 1) * kp] + ucr[ii + jj * jp + kk * kp] * x[ii + 1 + jj * jp + (kk + 1) * kp] + ufl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj + 1) * jp + (kk + 1) * kp] + ufc[ii + jj * jp + kk * kp] * x[ii + (jj + 1) * jp + (kk + 1) * kp] + ufr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj + 1) * jp + (kk + 1) * kp];
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */
       }
     }
   }

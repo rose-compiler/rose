@@ -320,8 +320,8 @@ functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &functi
     int64_t result = SgAsmInstruction::INVALID_STACK_DELTA;
     if (function && !function->optionalAttribute<int64_t>(ATTR_StackDelta).assignTo(result)) {
         SValuePtr delta = partitioner.functionStackDelta(function);
-        if (delta && delta->is_number() && delta->get_width()<=64)
-            result = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+        if (delta)
+            delta->toSigned().assignTo(result);
         function->setAttribute(ATTR_StackDelta, result);
     }
     return result;

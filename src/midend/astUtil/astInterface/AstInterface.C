@@ -268,7 +268,7 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
-       assert(false);
+       ROSE_ABORT();
     }
 }
 
@@ -304,7 +304,7 @@ SgScopeStatement* GetScope( SgNode* loc)
                        }
                       else {
                          printf ("Error: Unprepared for this case in GetScope(%p = %s) \n",loc,(loc != NULL) ? loc->class_name().c_str() : "NULL");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }
@@ -435,7 +435,7 @@ SgVariableSymbol* LookupQualifiedVar (const std::string& name, SgScopeStatement*
         else //this is the second :, impossible if we always skip by two :
         {
           cerr<<"Error: unexpected : appears in LookUpQualifiedVar()"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
       }
       else // last char? 
@@ -845,7 +845,7 @@ NewVar( SgType* type, const std::string& _name, bool makeunique, bool delayDecl,
      if (delayDecl) SaveVarDecl(decl,loc);
      else if (loc != 0) 
         { loc->insertStatementInScope(decl, true); decl->set_parent(loc); }
-     else assert(0);
+     else ROSE_ABORT();
 
   }
   else {
@@ -1319,7 +1319,7 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
          return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
     }
     cerr << "Error: not recognizable function type : " << s->sage_class_name() << endl;
-    assert(false);
+    ROSE_ABORT();
 }
 
 bool AstInterface::
@@ -1826,7 +1826,7 @@ AstNodeType AstInterface::GetExpressionType( const AstNodePtr& s)
 {
   AstNodeType t;
   if (IsExpression(s, &t) == AST_NULL)
-     assert(false);
+     ROSE_ABORT();
   return t;
 }
 
@@ -1864,7 +1864,7 @@ void AstInterface:: AddNewVarDecls()
 void AstInterface:: CopyNewVarDecls(const AstNodePtr& nblock, bool clear)
 { 
    SgBasicBlock* blk = isSgBasicBlock((SgNode*)nblock.get_ptr()); 
-   if (blk == 0) { std::cerr << "nblock is not a block: " << AstToString(nblock) << "\n"; assert(false); }
+   if (blk == 0) { std::cerr << "nblock is not a block: " << AstToString(nblock) << "\n"; ROSE_ABORT(); }
    impl->CopyNewVarDecls(blk, clear);
 }
 
@@ -1906,14 +1906,14 @@ AstInterfaceImpl:: CreateFieldRef(std::string name1, std::string name2)
    SgClassSymbol *c = GetClass(name1);
    if (c == 0) {
       cerr << "Error: cannot find class declaration for " << name1 << endl;
-      assert(false);
+      ROSE_ABORT();
    }
    SgClassDeclaration *decl = c->get_declaration(); assert( decl != 0);
    SgClassDefinition *def = GetClassDefn(decl); assert(def != 0);
    SgVariableSymbol *vs = LookupVar( name2, def);
    if (vs == 0) {
        cerr << "Error : variable " << name2 << " not found in " << def->unparseToString() << ". \n";
-       assert(false); 
+       ROSE_ABORT();
    }
    SgVarRefExp* r = new SgVarRefExp(GetFileInfo(),vs);
    r->set_endOfConstruct(r->get_file_info());
@@ -1926,13 +1926,13 @@ CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFo
       SgClassSymbol *c = GetClass(classname);
       if (c == 0) {
          cerr << "Error: cannot find class declaration for " << classname << endl;
-         assert(false);
+         ROSE_ABORT();
       }
       SgMemberFunctionSymbol *f1 = GetMemberFunc(c, fieldname);
       if (f1 == 0) {
          if (!createIfNotFound) {
             cerr << "Error: cannot find member function " << fieldname << endl;
-            assert(false);
+            ROSE_ABORT();
          }
          else {
             f1 = NewMemberFunc(c, fieldname, 
@@ -1965,7 +1965,7 @@ CreateVarRef(std::string varname, SgNode* loc)
     SgVariableSymbol *sym = LookupVar(varname, loc1);
     if (sym == 0) {
          cerr << "Error : variable " << varname << " not found in scope " << loc1 << ". \n";
-         assert(false); 
+         ROSE_ABORT();
       }
     SgVarRefExp *r = new SgVarRefExp( GetFileInfo(), sym);
     r->set_endOfConstruct(r->get_file_info());
@@ -2016,7 +2016,7 @@ AstNodeType AstInterface::GetType(const string& name)
        SgClassSymbol *c = impl->GetClass(name);
        if (c == 0) {
           cerr << "Error: not recognize type name : " << name << endl;
-          assert(false);
+          ROSE_ABORT();
        }
        else
           return AstNodeTypeImpl(new SgClassType(c->get_declaration()));
@@ -2377,7 +2377,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
      AstNodeType _ftype;
      if (!IsVarRef(AstNodePtrImpl(f), &_ftype))
      {
-        assert(false);
+        ROSE_ABORT();
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
      ROSE_ASSERT(t != NULL);
@@ -2396,10 +2396,10 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
         if (fdecl == 0) {
             std::cerr << "func has no decl: " << AstToString(s) << "\n";
-           assert(0);
+           ROSE_ABORT();
         }
         if (!IsFunctionDefinition(fdecl, 0,0,0,0,paramtypes,returntype))
-         assert(false);
+         ROSE_ABORT();
      }
      // Store arguments of reference types into outargs
      if (outargs != 0) {
@@ -2686,7 +2686,7 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
       SgExpression *init = f->get_initialization();
       SgNode* ivarast, *lbast;
       if (!IsAssignment( init, &ivarast, &lbast))
-        assert(false); 
+        ROSE_ABORT();
 
       if (ivar != 0) *ivar = ivarast;
       if (lb != 0) *lb = lbast;
@@ -2920,7 +2920,7 @@ AstInterface::AstNodeList AstInterface::GetBlockStmtList( const AstNodePtr& _n)
        return result;
       }
   default:  
-      assert(false);
+      ROSE_ABORT();
   }
   for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
      result.push_back(*p);
@@ -2942,7 +2942,7 @@ int AstInterface::GetBlockSize( const AstNodePtr& _n)
   case V_SgSwitchStatement:
        return 1;
   default:
-      assert(false);
+      ROSE_ABORT();
   }
   return l.size();
 }
@@ -2962,7 +2962,7 @@ AstNodePtr AstInterface::GetBlockFirstStmt( const AstNodePtr& _n)
   case V_SgSwitchStatement:
        return AstNodePtrImpl(isSgSwitchStatement(n.get_ptr())->get_body());
   default:  
-      assert(false);
+      ROSE_ABORT();
   }
   return (l.size() == 0)? AST_NULL : AstNodePtrImpl(l.front());
 }
@@ -2981,7 +2981,7 @@ AstNodePtr AstInterface::GetBlockLastStmt( const AstNodePtr& _n)
   case V_SgSwitchStatement:
        return AstNodePtrImpl(isSgSwitchStatement(n.get_ptr())->get_body());
   default:  
-      assert(false);
+      ROSE_ABORT();
   }
   if (l.size() > 0)
      return AstNodePtrImpl(l.back());
@@ -3041,7 +3041,8 @@ CreateConstant( const string& valtype, const string& val)
   }
   else {
        cerr << "Error: non-recognized value type for creating constant AST: " << valtype << endl;
-        assert(false);
+        ROSE_ABORT();
+        abort();
   }
 }
 
@@ -3145,7 +3146,7 @@ CreateFunction( string name, int numOfPars)
      }
      else  {
        std::cerr << "Unknown function: " << name << "\n";
-       assert(false);
+       ROSE_ABORT();
      }
   }
   SgFunctionRefExp* NEW_FUNCTION_REF(result,funcSymbol);
@@ -3171,7 +3172,7 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
      break;
    default:
      std::cerr << "unexpected uop:" << op << "\n";
-     assert(false);
+     ROSE_ABORT();
   }
   e->set_parent(result);
   return AstNodePtrImpl(result);
@@ -3223,7 +3224,7 @@ CreateBinaryOP( OperatorEnum op, const AstNodePtr& _a0, const AstNodePtr& _a1)
       n = new SgLshiftOp(GetFileInfo(), e0,e1); break;
   default:
       cerr << "Error: non-recognized binary operator: \n";
-      assert(false);
+      ROSE_ABORT();
   }
   e0->set_parent(n); e1->set_parent(n);
   n->set_endOfConstruct(n->get_file_info());
@@ -3818,7 +3819,7 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
            NEW_SYMBOL(sb, SgVariableSymbol, scope, n);
         }
         else if (n != sb->get_declaration()) {
-           assert(false);
+           ROSE_ABORT();
         }
     }
   }
@@ -3848,7 +3849,7 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
         std::cerr << "Incorrect parent for AST: " << AstInterface::AstToString(AstNodePtrImpl(ast)) << "\n";
         std::cerr << "It has parent : " << ((ast->get_parent() == v.get_ptr())? "NULL" : AstInterface::AstToString(AstNodePtrImpl(ast->get_parent()))) << "\n";
         std::cerr << "It should have parent: "  << AstInterface::AstToString(v) << "\n";
-        assert(false);
+        ROSE_ABORT();
      }
      switch (ast->variantT()) {
      case V_SgVariableDeclaration:

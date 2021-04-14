@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "SageBuilderAsm.h"
 
@@ -538,64 +538,42 @@ buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *t
     return a;
 }
 
-SgAsmBinaryAddPreupdate*
-buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
-    SgAsmBinaryAddPreupdate *a = new SgAsmBinaryAddPreupdate(lhs, rhs);
-    lhs->set_parent(a);
-    rhs->set_parent(a);
+SgAsmBinaryPreupdate*
+buildPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
+    ASSERT_not_null(lhs);
+    ASSERT_not_null(rhs);
+    ASSERT_forbid(lhs->get_parent());
+    ASSERT_forbid(rhs->get_parent());
+    SgAsmBinaryPreupdate *retval = new SgAsmBinaryPreupdate(lhs, rhs);
+    lhs->set_parent(retval);
+    rhs->set_parent(retval);
     if (type) {
-        a->set_type(type);
+        retval->set_type(type);
     } else if (lhs->get_type()) {
-        a->set_type(lhs->get_type());
+        retval->set_type(lhs->get_type());
     } else {
-        a->set_type(rhs->get_type());
+        retval->set_type(rhs->get_type());
     }
-    return a;
+    return retval;
 }
 
-SgAsmBinarySubtractPreupdate*
-buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
-    SgAsmBinarySubtractPreupdate *a = new SgAsmBinarySubtractPreupdate(lhs, rhs);
-    lhs->set_parent(a);
-    rhs->set_parent(a);
+SgAsmBinaryPostupdate*
+buildPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
+    ASSERT_not_null(lhs);
+    ASSERT_not_null(rhs);
+    ASSERT_forbid(lhs->get_parent());
+    ASSERT_forbid(rhs->get_parent());
+    SgAsmBinaryPostupdate *retval = new SgAsmBinaryPostupdate(lhs, rhs);
+    lhs->set_parent(retval);
+    rhs->set_parent(retval);
     if (type) {
-        a->set_type(type);
+        retval->set_type(type);
     } else if (lhs->get_type()) {
-        a->set_type(lhs->get_type());
+        retval->set_type(lhs->get_type());
     } else {
-        a->set_type(rhs->get_type());
+        retval->set_type(rhs->get_type());
     }
-    return a;
-}
-
-SgAsmBinaryAddPostupdate*
-buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
-    SgAsmBinaryAddPostupdate *a = new SgAsmBinaryAddPostupdate(lhs, rhs);
-    lhs->set_parent(a);
-    rhs->set_parent(a);
-    if (type) {
-        a->set_type(type);
-    } else if (lhs->get_type()) {
-        a->set_type(lhs->get_type());
-    } else {
-        a->set_type(rhs->get_type());
-    }
-    return a;
-}
-
-SgAsmBinarySubtractPostupdate*
-buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
-    SgAsmBinarySubtractPostupdate *a = new SgAsmBinarySubtractPostupdate(lhs, rhs);
-    lhs->set_parent(a);
-    rhs->set_parent(a);
-    if (type) {
-        a->set_type(type);
-    } else if (lhs->get_type()) {
-        a->set_type(lhs->get_type());
-    } else {
-        a->set_type(rhs->get_type());
-    }
-    return a;
+    return retval;
 }
 
 SgAsmBinaryMultiply*
@@ -685,6 +663,22 @@ buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     } else {
         a->set_type(rhs->get_type());
     }
+    return a;
+}
+
+SgAsmBinaryConcat*
+buildConcatExpression(SgAsmExpression *msb, SgAsmExpression *lsb) {
+    ASSERT_not_null(msb);
+    ASSERT_not_null(lsb);
+    ASSERT_not_null(msb->get_type());
+    ASSERT_not_null(lsb->get_type());
+    ASSERT_forbid(msb->get_parent());
+    ASSERT_forbid(lsb->get_parent());
+
+    SgAsmBinaryConcat *a = new SgAsmBinaryConcat(msb, lsb);
+    msb->set_parent(a);
+    lsb->set_parent(a);
+    a->set_type(buildTypeU(msb->get_type()->get_nBits() + lsb->get_type()->get_nBits()));
     return a;
 }
 

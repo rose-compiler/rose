@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -205,7 +205,7 @@ BinaryToSource::emitEffects(std::ostream &out) {
     BOOST_FOREACH (const RiscOperators::SideEffect &sideEffect, raisingOps_->sideEffects()) {
         std::string value = SValue::promote(sideEffect.expression)->ctext();
         if (sideEffect.temporary) {
-            std::string tempType = SValue::unsignedTypeNameForSize(sideEffect.expression->get_width());
+            std::string tempType = SValue::unsignedTypeNameForSize(sideEffect.expression->nBits());
             std::string tempName = SValue::promote(sideEffect.temporary)->ctext();
             out <<"                    " <<tempType <<" " <<tempName <<" = " <<value <<";\n";
         } else {

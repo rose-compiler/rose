@@ -16,6 +16,9 @@
 #include "Diagnostics.h"
 #include "sageGeneric.h"
 
+// required for rewriteCompoundAssignmentStatementsInAst
+#include "RewriteSystem.h"
+
 using namespace Sawyer::Message;
 
 // Author: Markus Schordan, 2018
@@ -138,7 +141,7 @@ namespace CodeThorn {
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=12;
+    normPhaseNrLast=13;
     printNormalizationPhase();
     if (options.normalizeCplusplus) {
       // \todo reconsider when to run C++ normalization
@@ -173,23 +176,30 @@ namespace CodeThorn {
       hoistBranchInitStatementsInAst(root);
     }
     printNormalizationPhase();
+    if(options.normalizeCompoundAssignments) {
+      normalizeCompoundAssignmentsInAst(root);
+    }
+    printNormalizationPhase();
     if(options.hoistConditionExpressions) {
-      hoistConditionsInAst(root,options.restrictToFunCallExpressions);
+      hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
     }
     printNormalizationPhase();
     if(options.normalizeExpressions) {
       normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
     }
     printNormalizationPhase();
+    // obsolete, done as part of expression normalization, off by default
     if(options.normalizeVariableDeclarations) {
       normalizeAllVariableDeclarations(root,false);
     }
     printNormalizationPhase();
+    // obsolete, done as part of expression normalization, off by default
     if(options.normalizeVariableDeclarationsWithFunctionCalls) {
       bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
       normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
     }
     printNormalizationPhase();
+    // off by default
     if(options.inlining) {
       InlinerBase* inliner=getInliner();
       ROSE_ASSERT(inliner);
@@ -258,7 +268,7 @@ namespace CodeThorn {
   bool Normalization::hasFunctionCall(SgExpression* expr) {
     RoseAst ast(expr);
     for(auto node:ast) {
-      if(isSgFunctionCallExp(node)) {
+      if(isSgFunctionCallExp(node)||isSgConditionalExp(node)||isSgPlusPlusOp(node)||isSgMinusMinusOp(node)) {
         return true;
       }
     }
@@ -668,7 +678,17 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
     }
   }
 
-  /***************************************************************************
+
+void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
+  if(isSgCompoundAssignOp(node)) {
+    cout<<"Error: compound assignment normalization: tree has compound assignment as root:"<<node->unparseToString()<<endl;
+    exit(1);
+  }
+  RewriteSystem rewriteSystem;
+  rewriteSystem.rewriteCompoundAssignmentsInAst(node);
+}
+
+/***************************************************************************
    * NORMALIZE EXPRESSIONS
    **************************************************************************/
 
@@ -1503,7 +1523,16 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
     //MS 06/24/2020: If the expression is an assignment then ensure
     //that tmp var is of reference type. In case of array use base
     //type.
-    if (isSgAssignOp(expression))
+    //MS 01/21/21 also consider cases where copying may require
+    //reference semantics in case of destructive updates of referred
+    //field or pointer dereference - but exclude all type-cases where
+    //copying is guaranteed to be sufficient
+    if (
+        isSgAssignOp(expression)
+        ||( (isSgDotExp(expression)||isSgArrowExp(expression)||isSgPointerDerefExp(expression))
+            && !isSgPointerType(expressionType)
+            && !isSgReferenceType(expressionType) )
+        )
     {
       if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
@@ -1525,7 +1554,7 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
 
     /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
      copy semantics which would make assignments to the members of the struct not having any effect on the original data */
-    if(isSgClassType(variableType)) {
+    if(isSgClassType(variableType) && !isSgReferenceType(variableType)) {
       variableType = SageBuilder::buildReferenceType(variableType);
     }
 

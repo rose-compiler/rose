@@ -45,16 +45,21 @@
 ###############################################################################
 # BEGIN bash strict mode setup
 script_name=$0
+
+# Used by EXIT trap in set_strict:
 finish () {
   __exit_status=$? 
   if [[ ${__exit_status} -ne 0 ]]
   then
-    echo "finish: Stack: BASH_SOURCE, FUNCNAME, BASH_LINENO:"
+    echo "finish: ###############################################################################"
+    echo "finish: ERROR: ${script_name} got status ${__exit_status}."
+    echo "finish: Bash Stack follows.  Fields: BASH_SOURCE, FUNCNAME, BASH_LINENO:"
     for ((x=0; x < ${#FUNCNAME[*]}; x += 1 ))
     do
-      echo "finish: ${BASH_SOURCE[x]}, ${FUNCNAME[x]}, ${BASH_LINENO[x]}"
+      echo "finish: Stack: ${BASH_SOURCE[x]}, ${FUNCNAME[x]}, ${BASH_LINENO[x]}"
     done
-    echo "finish: ERROR: Exiting ${script_name} with status ${__exit_status}"
+    echo "finish: Exiting ${script_name} with status ${__exit_status}"
+    echo "finish: ###############################################################################"
   fi
   exit ${__exit_status}
 }

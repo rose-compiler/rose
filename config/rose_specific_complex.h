@@ -1,6 +1,11 @@
 #ifndef	_ROSE_SPECIFIC_COMPLEX_H
 #define	_ROSE_SPECIFIC_COMPLEX_H	1
 
+/*
+Pei-Hung (03/08/2021) This file is no longer needed as EDG can handle the complex type
+Also the /usr/include/ is removed by Mac OSX since version 10.15. 
+*/
+
 /* Note that /usr/include/complex.h defines _Complex_I as (__extension__ 1.0iF)
    and EDG can not handle the "iF" literal suffix and reports an error.
    This ROSE specific solution allows us to define _Complex_I after it is

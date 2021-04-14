@@ -22,6 +22,7 @@ using namespace Sawyer::Message; // required for logger[WARN]
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
+bool AbstractValue::pointerSetsEnabled=false;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -30,7 +31,7 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 
 
 // default constructor
-AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
+AbstractValue::AbstractValue():valueType(AbstractValue::BOT),extension(0) {}
 
 // type conversion
 // TODO: represent value 'undefined' here
@@ -44,7 +45,65 @@ AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),var
 }
 
 AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
+AbstractValue::~AbstractValue() {
+  switch(valueType) {
+  case BOT:
+  case INTEGER:
+  case FLOAT:
+  case PTR:
+  case REF:
+  case FUN_PTR:
+  case TOP:
+  case UNDEFINED:
+    // nothing to do
+    break;
+  case AV_SET:
+    deallocateExtension();
+    break;
+    // intentionally no default case to get compiler warning if one is missing
+  }
+}
 
+AbstractValueSet* AbstractValue::abstractValueSetCopy() const {
+  AbstractValueSet* avs=new AbstractValueSet();
+  AbstractValueSet* current=getAbstractValueSet();
+  for(AbstractValueSet::iterator i=current->begin();i!=current->end();++i) {
+    avs->insert(*i);
+  }
+  return avs;
+}
+
+void AbstractValue::copy(const AbstractValue& other) {
+  valueType = other.valueType;
+  variableId = other.variableId;
+  label= other.label;
+  typeSize=other.typeSize;
+  elementTypeSize=other.elementTypeSize;
+  switch(valueType) {
+  case BOT:
+  case TOP:
+  case UNDEFINED:
+  case FUN_PTR: // uses label
+    break;
+  case PTR:
+  case REF:
+  case INTEGER: intValue=other.intValue;
+    break;
+  case FLOAT: floatValue=other.floatValue;
+    break;
+  case AV_SET: extension=other.abstractValueSetCopy();
+    break;
+  }
+}
+
+AbstractValue::AbstractValue(const AbstractValue& other) {
+  copy(other);
+}
+
+AbstractValue& AbstractValue::operator=(AbstractValue other) {
+  copy(other);
+  return *this;
+}
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
@@ -66,7 +125,7 @@ CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
 
 CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_variableIdMapping);
-  return AbstractValue::_variableIdMapping->getTypeSize(btype);
+  return AbstractValue::_variableIdMapping->getBuiltInTypeSize(btype);
 }
 
 void AbstractValue::setValue(long int val) {
@@ -190,7 +249,11 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
       val.intValue=index.getIntValue()*elemSize;
       val.setElementTypeSize(elemSize);
     }
-    return val;
+    if(pointerSetsEnabled) {
+      return convertPtrToPtrSet(val);
+    } else {
+      return val;
+    }
   } else {
     cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
     exit(1);
@@ -200,6 +263,15 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
 AbstractValue 
 AbstractValue::createAddressOfFunction(CodeThorn::Label lab) {
   return AbstractValue(lab);
+}
+
+AbstractValue AbstractValue::convertPtrToPtrSet(AbstractValue val) {
+  ROSE_ASSERT(val.isPtr());
+  AbstractValue newVal;
+  newVal.allocateExtension(AV_SET);
+  ROSE_ASSERT(newVal.isPtrSet());
+  newVal.addSetElement(val);
+  return newVal;
 }
 
 std::string AbstractValue::valueTypeToString() const {
@@ -212,6 +284,7 @@ std::string AbstractValue::valueTypeToString() const {
   case FUN_PTR: return "funptr";
   case REF: return "ref";
   case BOT: return "bot";
+  case AV_SET: return "ptrset";
   default:
     return "unknown";
   }
@@ -228,6 +301,9 @@ bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+// deprecated
+bool AbstractValue::isPtrSet() const {return (isAVSet());}
+bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
@@ -250,6 +326,21 @@ long AbstractValue::hash() const {
   }
 }
 
+bool AbstractValue::ptrSetContainsNullPtr() const {
+  ROSE_ASSERT(valueType==AV_SET);
+  return getAbstractValueSet()->find(createNullPtr())!=getAbstractValueSet()->end();
+}
+
+// deprecated
+size_t AbstractValue::getPtrSetSize() const {
+  return getAVSetSize();
+}
+
+size_t AbstractValue::getAVSetSize() const {
+  ROSE_ASSERT(valueType==AV_SET);
+  return getAbstractValueSet()->size();
+}
+
 AbstractValue AbstractValue::operatorNot() {
   AbstractValue tmp;
   switch(valueType) {
@@ -264,6 +355,17 @@ AbstractValue AbstractValue::operatorNot() {
   case AbstractValue::TOP: tmp=Top();break;
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::UNDEFINED: tmp=*this;break;
+  case AbstractValue::AV_SET:
+    if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()>1) {
+    tmp=Top();
+  } else if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()==1) {
+    tmp.intValue=1;
+  } else if(!AbstractValue::ptrSetContainsNullPtr()) {
+    tmp.intValue=0;
+  } else {
+    SAWYER_MESG(logger[ERROR])<<"Error: unhandled case in AbstractValue::operatorNot() (AV_SET)."<<endl;
+    exit(1);
+  }
   default:
     // other cases should not appear because there must be a proper cast
     SAWYER_MESG(logger[WARN])<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
@@ -348,6 +450,30 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
             return c1.getElementTypeSize()<c2.getElementTypeSize();
         }
       }
+    } else if(c1.isPtrSet() && c2.isPtrSet()) {
+      if(c1.getPtrSetSize()!=c2.getPtrSetSize()) {
+        return c1.getPtrSetSize()<c2.getPtrSetSize();
+      } else {
+        // since the set is an ordered set, there exists a weak ordering
+        // [1,2,3]<[1,2,4]; [1,2,3] >= [1,2,3]; [1,4,5] > [1,3,6]
+        AbstractValueSet& s1=*c1.getAbstractValueSet();
+        AbstractValueSet& s2=*c2.getAbstractValueSet();
+        for(auto e1 : s1) {
+          size_t eqCnt=0;
+          for(auto e2 : s2) {
+            if(e1!=e2) {
+              if(!(e1<e2))
+                return false;
+            } else {
+              eqCnt++;
+            }
+            if(eqCnt==s2.size()) {
+              return false; // case ==
+            }
+          }
+        }
+        return true;
+      }
     } else if (c1.isBot()==c2.isBot()) {
       return false;
     } else if (c1.isTop()==c2.isTop()) {
@@ -366,6 +492,8 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
       return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize();
     } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
       return c1.getLabel()==c2.getLabel();
+    } else if(c1.isPtrSet() && c2.isPtrSet()) {
+      return c1.getAbstractValueSet()->isEqual(*c2.getAbstractValueSet());
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -555,6 +683,17 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     ss<<getIntValue();
     return ss.str();
   }
+  case AV_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      el.toString(vim);
+      ss<<" ";
+    }
+    ss<<"}";
+  }
   case PTR: {
     stringstream ss;
     if(vim->getNumberOfElements(variableId)==1) {
@@ -568,7 +707,8 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      stringstream ss;ss<<valueType;
+      return "<<ERROR0-"+ss.str()+">>";
     }
   }
 }
@@ -597,7 +737,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR1>>";
     }
   }
 }
@@ -613,7 +753,7 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR2>>";
     }
   }
 }
@@ -632,7 +772,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     return getFloatValueString();
   }
   case PTR: {
-    //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+    //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
         <<variableId.toUniqueString(vim)
@@ -646,6 +786,18 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //      return variableId.toString(vim);
       //    }
   }
+  case AV_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      ss<<el.toString(vim);
+      ss<<" ";
+    }
+    ss<<"}";
+    return ss.str();
+  }
   case FUN_PTR: {
     return "fptr:"+label.toString();
   }
@@ -653,7 +805,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR3>>";
     }
   }
 }
@@ -679,11 +831,23 @@ string AbstractValue::toString() const {
   case FUN_PTR: {
     return "fptr:"+label.toString();
   }
+  case AV_SET: {
+    // print set of abstract values
+    AbstractValueSet& avSet=*static_cast<AbstractValueSet*>(extension);
+    stringstream ss;
+    ss<<"{";
+    for (auto el:avSet) {
+      ss<<el.toString();
+      ss<<" ";
+    }
+    ss<<"}";
+    return ss.str();
+  }
   default:
     if(strictChecking) {
       throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
     } else {
-      return "<<ERROR>>";
+      return "<<ERROR4>>";
     }
   }
 }
@@ -782,8 +946,8 @@ CodeThorn::VariableId AbstractValue::getVariableId() const {
   if(valueType!=PTR && valueType!=REF) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     cerr << "AbstractValue: value:"<<toString()<<endl;
-    int *x=0;
-    *x=1;
+    //int *x=0;
+    //*x=1; // trigger stack trace
     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
   }
   else 
@@ -813,6 +977,8 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
   case AbstractValue::REF:
     return topOrError("Error: AbstractValue operator unary minus on reference value.");
     //  default case intentionally not present to force all values to be handled explicitly
+  case AbstractValue::AV_SET:
+    return topOrError("Error: AbstractValue operator unary minus on ptrset value.");
   }
   return tmp;
 }
@@ -958,6 +1124,11 @@ AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   return a.getIntValue()%b.getIntValue();
 }
 
+AbstractValueSet* AbstractValue::getAbstractValueSet() const {
+  ROSE_ASSERT(valueType==AV_SET);
+  return static_cast<AbstractValueSet*>(extension);
+}
+
 // static function, two arguments
 bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
   if(val1.isBot()||val2.isTop()) {
@@ -980,6 +1151,13 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
       // should be unreachable because of 2nd if-condition above
       // TODO: enforce non-reachable here
       return true;
+    case AV_SET: {
+      AbstractValueSet* set1=val1.getAbstractValueSet();
+      AbstractValueSet* set2=val2.getAbstractValueSet();
+      // (val1 approximatedBy val2) iff (val1 subsetOf val2) iff (val2 includes val1)
+      return std::includes(set2->begin(),set2->end(),
+                           set1->begin(),set1->end());
+    }
     }
   }
   return false;
@@ -1025,7 +1203,21 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
          &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
       } else {
-        return createTop();
+        if(AbstractValue::pointerSetsEnabled) {
+          // promote to ptr set in case the values are not equal (handled above)
+          //cout<<"DEBUG: promoto to pointer set"<<endl;
+          AbstractValueSet* resultSet=new AbstractValueSet();
+          //cout<<"DEBUG: result set:"<<resultSet<<endl;
+          resultSet->insert(val1);
+          resultSet->insert(val2);
+          AbstractValue av=createAbstractValuePtrSet(resultSet);
+          //cout<<"DEBUG: promot to potiner set, result set:"<<resultSet<<" elements:"<<resultSet->size()
+          //    <<" av:"<<av.toString()<<endl;
+          //cout<<"DEBUG: pointer set number of elems:"<<av.getAbstractValueSet()->size()<<endl;
+          return av;
+        } else {
+          return createTop();
+        }
       }
     }
     case FUN_PTR: {
@@ -1034,6 +1226,24 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
       } else {
         return createTop();
       }
+    }
+    case AV_SET: {
+      // set union
+      AbstractValueSet* set1=val1.getAbstractValueSet();
+      AbstractValueSet* set2=val2.getAbstractValueSet();
+      AbstractValueSet* resultSet=new AbstractValueSet();
+      //cout<<"DEBUG: combine: set union: new set:"<<resultSet<<endl;
+#if 1
+      for(AbstractValueSet::iterator i=set1->begin();i!=set1->end();++i) {
+        resultSet->insert(*i);
+      }
+      for(AbstractValueSet::iterator i=set2->begin();i!=set2->end();++i) {
+        resultSet->insert(*i);
+      }
+#else
+      std::set_union(set1->begin(),set1->end(),set2->begin(),set2->end(),resultSet->begin());
+#endif
+      return createAbstractValuePtrSet(resultSet);
     }
     }
   }
@@ -1054,31 +1264,78 @@ AbstractValue AbstractValue::createBot() {
   return AbstractValue(bot);
 }
 
+AbstractValue AbstractValue::createAbstractValuePtrSet(AbstractValueSet* set) {
+  AbstractValue val;
+  val.setAbstractValueSetPtr(set);
+  return val;
+}
+
+void AbstractValue::setAbstractValueSetPtr(AbstractValueSet* avPtr) {
+  //cout<<"DEBUG: setAbstractValueSetPtr:"<<avPtr<<endl;
+  valueType=AV_SET;
+  extension=avPtr;
+  //cout<<"DEBUG: toString:"<<this->toString()<<endl;
+}
+
+void AbstractValue::addSetElement(AbstractValue av) {
+  ROSE_ASSERT(valueType==AV_SET);
+  AbstractValueSet* avs=getAbstractValueSet();
+  ROSE_ASSERT(avs);
+  avs->insert(av);
+}
+
 bool AbstractValue::isReferenceVariableAddress() {
   // TODO: remove this test, once null pointers are no longer represented as zero integers, it will then be covered by one of the other two predicates
   if(isNullPtr()) {
     return true;
   }
   if(isPtr()||isRef()) {
-    return getVariableIdMapping()->hasReferenceType(getVariableId());
+    return getVariableIdMapping()->isOfReferenceType(getVariableId());
   }
   return false;
 }
 
-AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorAdd(a,b);
+void AbstractValue::allocateExtension(ValueType valueTypeParam) {
+  valueType=valueTypeParam;
+  switch(valueType) {
+  case AV_SET:
+    extension=new AbstractValueSet();
+    //cout<<"DEBUG: ALLOC:"<<extension<<endl;
+    break;
+  default:
+    cerr<<"Error: unsupported value type extension:"<<valueType<<endl;
+    exit(1);
+  }
 }
-AbstractValue CodeThorn::operator-(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorSub(a,b);
+
+void AbstractValue::deallocateExtension() {
+  ROSE_ASSERT(valueType==AV_SET);
+  AbstractValueSet* avs=getAbstractValueSet();
+  //cout<<"DELETE: "<<this<<":"<<avs<<":"<<this->toString()<<endl;
+  if(avs)
+    delete avs;
 }
-AbstractValue CodeThorn::operator*(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMul(a,b);
+
+bool AbstractValueSet::isEqual(AbstractValueSet& other) const {
+  if(this->size()==other.size()) {
+    for(auto e2 : other) {
+      if(this->find(e2)==this->end())
+        return false;
+    }
+    return true;
+  } else {
+    return false;
+  }
 }
-AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorDiv(a,b);
-}
-AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMod(a,b);
+
+std::string AbstractValueSet::toString(VariableIdMapping* vim) const {
+  stringstream ss;
+  ss<<"{";
+  for(auto i=this->begin();i!=this->end();++i) {
+    ss<<(*i).toString(vim)+" ";
+  }
+  ss<<"}";
+  return ss.str();
 }
 
 AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {

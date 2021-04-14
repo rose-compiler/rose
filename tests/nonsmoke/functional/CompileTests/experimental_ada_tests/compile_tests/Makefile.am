@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
-ROSE_FLAGS    ?= -rose:skipfinalCompileStep  --asis:process_predefined_units
+ROSE_FLAGS    ?= -rose:skipfinalCompileStep --asis:process_predefined_units --asis:process_implementation_units
 
 
 # ROSE_COMPILER ?= $(abs_top_builddir)/src/rose-compiler
@@ -29,6 +29,7 @@ ROSE_COMPILER ?= $(abs_builddir)/../../../testTranslator
 # rose-backend-todo-list, rose-frontend-todo-list.mk, asis-todo-list.mk
 # are not included, b/c they are currently not tested.
 
+include $(srcdir)/../AdaTest.mk
 include $(srcdir)/../passing-tests-list.mk
 include $(srcdir)/../passing-incomplete-tests-list.mk
 #~ include $(srcdir)/../rose-backend-todo-list.mk
@@ -47,8 +48,8 @@ ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
 TEST_TARGETS := $(ROSE_OUTPUT_DIR)/default.gpr
-TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_TESTS))
-TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(PASSING_INCOMPLETE_TESTS))
+TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(ROSE_PASSING_ADA_TESTS))
+TEST_TARGETS += $(addprefix $(ROSE_OUTPUT_DIR)/,$(ROSE_PASSING_IMCOMPLETE_ADA_TESTS))
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
@@ -88,6 +89,14 @@ $(ROSE_OUTPUT_DIR)/%.ads:$(abs_srcdir)/../tests/%.ads $(ROSE_COMPILER)
 
 $(ROSE_OUTPUT_DIR)/%.adb:$(abs_srcdir)/../tests/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
+
+print-file-summary:
+	@echo "Output Makefile variables:"
+	@echo "ROSE_PASSING_ADA_TESTS = $(ROSE_PASSING_ADA_TESTS)"
+	@echo "ROSE_PASSING_INCOMPLETE_ADA_TESTS = $(ROSE_PASSING_INCOMPLETE_ADA_TESTS)"
+	@echo "ROSE_FAILING_ADA_TESTS = $(ROSE_FAILING_ADA_TESTS)"
+	@echo "PASSING_TESTS = $(PASSING_TESTS)"
+	@echo "PASSING_INCOMPLETE_TESTS = $(PASSING_INCOMPLETE_TESTS)"
 
 .PHONY: clean-local
 clean-local:

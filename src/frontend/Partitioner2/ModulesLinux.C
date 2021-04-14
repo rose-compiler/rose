@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Partitioner2/ModulesLinux.h>
 
@@ -178,26 +178,26 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             BaseSemantics::SValuePtr fourthArg = state->peekRegister(FOURTH_ARG, dispatcher->undefined_(64), ops.get());
             BaseSemantics::SValuePtr fifthArg = state->peekRegister(FIFTH_ARG, dispatcher->undefined_(64), ops.get());
 
-            if (firstArg->is_number() && fourthArg->is_number() && fifthArg->is_number() &&
-                args.partitioner.memoryMap()->at(firstArg->get_number()).require(MemoryMap::EXECUTABLE).exists() &&
-                args.partitioner.memoryMap()->at(fourthArg->get_number()).require(MemoryMap::EXECUTABLE).exists() &&
-                args.partitioner.memoryMap()->at(fifthArg->get_number()).require(MemoryMap::EXECUTABLE).exists()) {
+            if (firstArg->isConcrete() && fourthArg->isConcrete() && fifthArg->isConcrete() &&
+                args.partitioner.memoryMap()->at(firstArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner.memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner.memoryMap()->at(fifthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
                 // Sometimes the address of main is passed as the first argument (rdi) with __libc_csu_init and __libc_csu_fini
                 // passed as the fourth (rcx) and fifth (r8) arguments. By this point in the disassembly process, would not
                 // have discovered PLT function yet. So if the first, fourth, and fifth arguments seem to point at executable
                 // memory then assume they are "main", "__libc_csu_fini@plt", and "libc_csu_init@plt". Don't bother naming the
                 // two PLT functions though since we'll get their names later by processing the PLT.
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: amd64 with main as the fisrt argument\n";
-                mainVa_ = firstArg->get_number();
+                mainVa_ = firstArg->toUnsigned().get();
                 functionPtrs.push_back(firstArg);
                 functionPtrs.push_back(fourthArg);
                 functionPtrs.push_back(fifthArg);
 
-            } else if (fourthArg->is_number() &&
-                       args.partitioner.memoryMap()->at(fourthArg->get_number()).require(MemoryMap::EXECUTABLE).exists()) {
+            } else if (fourthArg->toUnsigned() &&
+                       args.partitioner.memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
                 // Sometimes then address of main is passed as the fourth argument (in rcx).
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: amd64 with main as the fourth argument\n";
-                mainVa_ = fourthArg->get_number();
+                mainVa_ = fourthArg->toUnsigned().get();
                 functionPtrs.push_back(fourthArg);
             }
 
@@ -205,9 +205,8 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             // x86 integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
             // into the stack because the return address has also been pushed onto the stack.
             BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
-            if (arg0->is_number()) {
+            if (arg0->toUnsigned().assignTo(mainVa_)) {
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: x86 with main as the first argument\n";
-                mainVa_ = arg0->get_number();
                 functionPtrs.push_back(arg0);
             }
         }
@@ -215,11 +214,20 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         // M68k integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
         // into the stack because the return address has also been pushed onto the stack.
         BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
-        if (arg0->is_number()) {
+        if (arg0->toUnsigned().assignTo(mainVa_)) {
             SAWYER_MESG(debug) <<"LibcStartMain analysis: m68k with main as the first argument\n";
-            mainVa_ = arg0->get_number();
             functionPtrs.push_back(arg0);
         }
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    } else if (isSgAsmAarch32Instruction(args.bblock->instructions().back())) {
+        // The "main" pointer is passed to __libc_start_main@plt in the r0 register.
+        const RegisterDescriptor REG_R0 = regs->findOrThrow("r0");
+        BaseSemantics::SValuePtr r0 = state->peekRegister(REG_R0, dispatcher->undefined_(32), ops.get());
+        if (r0->toUnsigned().assignTo(mainVa_)) {
+            SAWYER_MESG(debug) <<"LibcStartMain analysis: AArch32 with main in r0\n";
+            functionPtrs.push_back(r0);
+        }
+#endif
     }
 
     if (!functionPtrs.empty()) {
@@ -228,7 +236,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         BOOST_FOREACH (const BaseSemantics::SValuePtr &calleeVa, functionPtrs) {
             succs.push_back(BasicBlock::Successor(Semantics::SValue::promote(calleeVa), E_FUNCTION_CALL));
             SAWYER_MESG(debug) <<"LibcStartMain analysis: fcall to " <<*calleeVa
-                               <<(mainVa_ && calleeVa->get_number() == *mainVa_ ? ", assumed to be \"main\"" : "") <<"\n";
+                               <<(mainVa_ && calleeVa->toUnsigned().get() == *mainVa_ ? ", assumed to be \"main\"" : "") <<"\n";
         }
         args.bblock->successors() = succs;
     }

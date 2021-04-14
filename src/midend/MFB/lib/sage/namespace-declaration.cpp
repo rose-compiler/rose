@@ -156,9 +156,9 @@ SgNamespaceDefinitionStatement * Sage<SgNamespaceDeclarationStatement>::getDefin
     it_decl_to_file = it_per_file_namespace_decl->second.find(NULL);
     assert(it_decl_to_file != it_per_file_namespace_decl->second.end());
 
-    assert(false); // TODO build decl and defn for the requested file
+    ROSE_ABORT(); // TODO build decl and defn for the requested file
   }
-  else assert(false);
+  else ROSE_ABORT();
 
   assert(namespace_decl != NULL);
 
@@ -182,9 +182,9 @@ SgNamespaceDeclarationStatement * Sage<SgNamespaceDeclarationStatement>::getDecl
     it_decl_to_file = it_per_file_namespace_decl->second.find(NULL);
     assert(it_decl_to_file != it_per_file_namespace_decl->second.end());
 
-    assert(false); // TODO build decl and defn for the requested file
+    ROSE_ABORT(); // TODO build decl and defn for the requested file
   }
-  else assert(false);
+  else ROSE_ABORT();
 
   assert(namespace_decl != NULL);
 

@@ -18,34 +18,41 @@ namespace CodeThorn {
    * \date 2019.
    */
   struct FunctionCallInfo {
+    std::string getFunctionName() {
+      return funCallName;
+    }
     SgFunctionType* funCallType=nullptr; // type of function to be called
     SgName mangledFunCallTypeName;
     std::string funCallName; // name of function to be called.
     bool isFunctionPointerCall();
     void print();
+    SgFunctionSymbol* functionSymbol=0;
+    bool functionResolved = true;
+    bool problematic=false;
   };
 
   class FunctionCallMapping {
   public:
+    FunctionCallMapping();
     void computeFunctionCallMapping(SgNode* root);
     FunctionCallTargetSet resolveFunctionCall(SgFunctionCallExp* funCall);
     std::string toString();
     static void initDiagnostics();
     FunctionCallInfo determineFunctionCallInfo(SgFunctionCallExp* fc);
-
+    static bool isFunctionPointerCall(SgFunctionCallExp* fc);
+    
     /** access the class hierarchy for analyzing member function calls.
      *  @{
      */
     void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
     ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
     /** @} */
-
   protected:
     static Sawyer::Message::Facility logger;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
   private:
-    unsigned int _matchMode=3; // workaround mode
-    ClassHierarchyWrapper* classHierarchy = nullptr;
+    unsigned int _matchMode; // init in constructor
+    ClassHierarchyWrapper* classHierarchy; // init in constructor
   };
 
 } // end of namespace CodeThorn

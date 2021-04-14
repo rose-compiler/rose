@@ -38,8 +38,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printA
           case V_SgTypeUnknown:
              {
                printf ("Error: SgTypeUnknown should not be found in AST \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case V_SgTypeDefault:
@@ -129,8 +128,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool printA
           default: 
              {
                printf("UnparserFort::unparseType: Error: No handler for %s (variant: %d)\n",type->sage_class_name(), type->variantT());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 

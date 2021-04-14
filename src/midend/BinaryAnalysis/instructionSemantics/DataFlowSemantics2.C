@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "DataFlowSemantics2.h"
 
@@ -60,7 +60,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         retval->sources_ = sources_;
         return retval;
@@ -222,19 +222,19 @@ public:
     }
 
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a);
+        return mergeSources(a->nBits(), a);
     }
 
     virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr &a,
@@ -243,40 +243,40 @@ public:
     }
 
     virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width() + b->get_width(), a, b);
+        return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a);
+        return mergeSources(a->nBits(), a);
     }
 
     virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a);
+        return mergeSources(a->nBits(), a);
     }
 
     virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr &a,
                                                 const BaseSemantics::SValuePtr &sa) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, sa);
+        return mergeSources(a->nBits(), a, sa);
     }
 
     virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr &a,
                                                  const BaseSemantics::SValuePtr &sa) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, sa);
+        return mergeSources(a->nBits(), a, sa);
     }
 
     virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr &a,
                                                const BaseSemantics::SValuePtr &sa) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, sa);
+        return mergeSources(a->nBits(), a, sa);
     }
 
     virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr &a,
                                                 const BaseSemantics::SValuePtr &sa) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, sa);
+        return mergeSources(a->nBits(), a, sa);
     }
 
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a,
                                                           const BaseSemantics::SValuePtr &sa) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, sa);
+        return mergeSources(a->nBits(), a, sa);
     }
 
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE {
@@ -285,7 +285,7 @@ public:
 
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
                                          const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), sel, a, b);
+        return mergeSources(a->nBits(), sel, a, b);
     }
 
     virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a, size_t new_width) ROSE_OVERRIDE {
@@ -297,48 +297,48 @@ public:
     }
 
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                                                     const BaseSemantics::SValuePtr &c,
                                                     BaseSemantics::SValuePtr &carry_out/*out*/)ROSE_OVERRIDE {
-        carry_out = mergeSources(a->get_width(), a, b, c);
-        return mergeSources(a->get_width(), a, b, c);
+        carry_out = mergeSources(a->nBits(), a, b, c);
+        return mergeSources(a->nBits(), a, b, c);
     }
 
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a);
+        return mergeSources(a->nBits(), a);
     }
     
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a,
                                                   const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr &a,
                                                   const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(b->get_width(), a, b);
+        return mergeSources(b->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr &a,
                                                     const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width() + b->get_width(), a, b);
+        return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr &a,
                                                     const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width(), a, b);
+        return mergeSources(a->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr &a,
                                                     const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(b->get_width(), a, b);
+        return mergeSources(b->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a,
                                                       const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
-        return mergeSources(a->get_width() + b->get_width(), a, b);
+        return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
@@ -393,7 +393,7 @@ public:
 void
 RiscOperators::init(const BaseSemantics::RiscOperatorsPtr &userDomain) {
     name("DataFlow(Outer)");
-    regdict_ = userDomain->currentState()->registerState()->get_register_dictionary();
+    regdict_ = userDomain->currentState()->registerState()->registerDictionary();
     InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->solver());
     innerDomainId_ = add_subdomain(innerDomain, "DataFlow(Inner)");
     userDomainId_ = add_subdomain(userDomain, userDomain->name());
@@ -489,8 +489,8 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
         result = MultiSemantics::SValue::promote(Super::peekMemory(segreg, addr, dflt));
     }
 
-    size_t addrWidth = addr->get_width();
-    size_t valueWidth = dflt->get_width();
+    size_t addrWidth = addr->nBits();
+    size_t valueWidth = dflt->nBits();
     ASSERT_require(0 == valueWidth % 8);
 
     BaseSemantics::RiscOperatorsPtr userOps = get_subdomain(userDomainId_);
@@ -509,7 +509,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return dflt;
     return readOrPeekMemory(segreg, addr, dflt, cond, true /*allow side effects*/);
 }
@@ -523,15 +523,15 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr data = MultiSemantics::SValue::promote(data_);
     Super::writeMemory(segreg, addr, data, cond);
 
-    size_t addrWidth = addr->get_width();
-    size_t valueWidth = data->get_width();
+    size_t addrWidth = addr->nBits();
+    size_t valueWidth = data->nBits();
     ASSERT_require(0 == valueWidth % 8);
 
     BaseSemantics::RiscOperatorsPtr userOps = get_subdomain(userDomainId_);

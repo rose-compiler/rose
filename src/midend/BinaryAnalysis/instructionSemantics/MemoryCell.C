@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <MemoryCell.h>
 
@@ -17,19 +17,19 @@ bool
 MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
-    if (8==value_->get_width() && 8==other->get_value()->get_width())
-        return address_->may_equal(other->get_address(), addrOps->solver());
+    if (8==value_->nBits() && 8==other->value()->nBits())
+        return address_->mayEqual(other->address(), addrOps->solver());
 
-    size_t addr_nbits = address_->get_width();
-    ASSERT_require(other->get_address()->get_width()==addr_nbits);
+    size_t addr_nbits = address_->nBits();
+    ASSERT_require(other->address()->nBits()==addr_nbits);
 
-    ASSERT_require(value_->get_width() % 8 == 0);       // memory is byte addressable, so values must be multiples of a byte
+    ASSERT_require(value_->nBits() % 8 == 0);       // memory is byte addressable, so values must be multiples of a byte
     SValuePtr lo1 = address_;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->nBits(), value_->nBits() / 8));
 
-    ASSERT_require(other->get_value()->get_width() % 8 == 0);
-    SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+    ASSERT_require(other->value()->nBits() % 8 == 0);
+    SValuePtr lo2 = other->address();
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->value()->nBits() / 8));
 
     // Two cells may_alias iff we can prove that they are not disjoint.  The two cells are disjoint iff lo2 >= hi1 or lo1 >=
     // hi2. Two things complicate this: first, the values might not be known quantities, depending on the semantic domain.
@@ -47,28 +47,26 @@ MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
                        addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond2 = addrOps->invert(addrOps->xor_(sf, of));
     SValuePtr disjoint = addrOps->or_(cond1, cond2);
-    if (disjoint->is_number() && disjoint->get_number()!=0)
-        return false;
-    return true;
+    return !disjoint->isTrue();
 }
 
 bool
 MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
-    if (8==value_->get_width() && 8==other->get_value()->get_width())
-        return address_->must_equal(other->get_address(), addrOps->solver());
+    if (8==value_->nBits() && 8==other->value()->nBits())
+        return address_->mustEqual(other->address(), addrOps->solver());
 
-    size_t addr_nbits = address_->get_width();
-    ASSERT_require(other->get_address()->get_width()==addr_nbits);
+    size_t addr_nbits = address_->nBits();
+    ASSERT_require(other->address()->nBits()==addr_nbits);
 
-    ASSERT_require(value_->get_width() % 8 == 0);
+    ASSERT_require(value_->nBits() % 8 == 0);
     SValuePtr lo1 = address_;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->nBits(), value_->nBits() / 8));
 
-    ASSERT_require(other->get_value()->get_width() % 8 == 0);
-    SValuePtr lo2 = other->get_address();
-    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+    ASSERT_require(other->value()->nBits() % 8 == 0);
+    SValuePtr lo2 = other->address();
+    SValuePtr hi2 = addrOps->add(lo2, addrOps->number_(lo2->nBits(), other->value()->nBits() / 8));
 
     // Two cells must_alias iff hi2 >= lo1 and hi1 >= lo2. Two things complicate this: first, the values might not be known
     // quantities, depending on the semantic domain.  Second, the RiscOperators does not define a greater-than-or-equal
@@ -86,9 +84,7 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
                        addrOps->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond2 = addrOps->invert(addrOps->xor_(sf, of));
     SValuePtr overlap = addrOps->and_(cond1, cond2);
-    if (overlap->is_number() && overlap->get_number()!=0)
-        return true;
-    return false;
+    return overlap->isTrue();
 }
 
 void

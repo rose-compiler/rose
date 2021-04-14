@@ -183,7 +183,7 @@ bool ControlDependenceGraph::checkCycle(const ControlFlowGraph& cfg)
      // DQ (8/28/2015): from Intel v14 icpc: 
         int num = 0;
         printf ("Error: code not supported by Intel v14 compiler \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #else
         int num = boost::strong_components(cfgCopy, &component[0]);
 #endif

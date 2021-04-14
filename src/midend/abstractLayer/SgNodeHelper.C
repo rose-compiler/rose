@@ -367,6 +367,10 @@ list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
   return globalList;
 }
 
+bool SgNodeHelper::isGlobalVariableDeclaration(SgVariableDeclaration* varDecl) {
+  ROSE_ASSERT(varDecl);
+  return isSgGlobal(varDecl->get_parent())!=0;
+}
 
 /*!
   * \author Markus Schordan
@@ -873,8 +877,7 @@ SgExpression* SgNodeHelper::getCalleeOfCall(/*const*/ SgFunctionCallExp* call) {
     return calleeExpression;
   }
   else {
-    ROSE_ASSERT(false);
-    return 0;
+    ROSE_ABORT();
   }
 }
 
@@ -1833,6 +1836,11 @@ SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVa
       cout<<"DEBUG:initializer->class_name:"<<initializer->class_name()<<endl;
     }
   }
+  //
+  // This dereferences a nil pointer on purpose (see klocwork id midend #1837:
+  //
+  //    Null pointer 'xp' that comes from line 1841 will be dereferenced at line 1842.
+  //
   int* xp=0;
   *xp=1;
   throw CodeThorn::Exception("SgNodeHelper::getInitializerListOfAggregateDeclaration: getInitializerListOfArrayVariable failed.");

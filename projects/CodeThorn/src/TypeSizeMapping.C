@@ -32,14 +32,14 @@ namespace CodeThorn {
     _mapping[bitype]=size;
   }
   
-  CodeThorn::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
+  CodeThorn::TypeSize TypeSizeMapping::getBuiltInTypeSize(BuiltInType bitype) {
     ROSE_ASSERT(bitype<_mapping.size());
     return _mapping[bitype];
   }
 
   std::size_t TypeSizeMapping::sizeOfOp(BuiltInType bitype) {
     ROSE_ASSERT(bitype<_mapping.size());
-    return getTypeSize(bitype);
+    return getBuiltInTypeSize(bitype);
   }
   
   bool TypeSizeMapping::isCpp11StandardCompliant() {
@@ -55,6 +55,64 @@ namespace CodeThorn {
     return size==-1;
   }
 
+  BuiltInType TypeSizeMapping::determineBuiltInTypeId(SgType* sgType) {
+    switch (sgType->variantT()) {
+    case V_SgTypeVoid:
+      return BITYPE_VOID;
+
+    case V_SgPointerType:
+      return BITYPE_POINTER;
+
+    case V_SgTypeBool:
+      return BITYPE_BOOL;
+
+    case V_SgTypeChar:
+    case V_SgTypeSignedChar:
+    case V_SgTypeUnsignedChar: 
+      return BITYPE_CHAR;
+
+    case V_SgTypeShort:
+    case V_SgTypeSignedShort:
+    case V_SgTypeUnsignedShort:
+      return BITYPE_SHORT;
+
+    case V_SgTypeUnsignedInt:
+    case V_SgTypeInt:
+    case V_SgTypeSignedInt:
+      return BITYPE_INT;
+
+    case V_SgTypeUnsignedLong:
+    case V_SgTypeLong:
+    case V_SgTypeSignedLong:
+      return BITYPE_LONG;
+
+    case V_SgTypeUnsignedLongLong:
+    case V_SgTypeLongLong:
+    case V_SgTypeSignedLongLong:
+      return BITYPE_LONG_LONG;
+
+    case V_SgTypeFloat:
+      return BITYPE_FLOAT;
+      
+    case V_SgTypeDouble:
+      return BITYPE_DOUBLE;
+      
+    case V_SgTypeLongDouble:
+      return BITYPE_LONG_DOUBLE;
+      
+    case V_SgReferenceType:
+      return BITYPE_REFERENCE;
+    case V_SgFunctionType:
+      return BITYPE_POINTER;
+    case V_SgEnumType:
+      return BITYPE_INT; // enum size is of size int in C++
+      //case V_SgTypeComplex:
+    default:
+      return BITYPE_UNKNOWN;
+    }
+    // unreachable
+  }
+  
   CodeThorn::TypeSize TypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
@@ -67,59 +125,29 @@ namespace CodeThorn {
     sgType=sgType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
     switch (sgType->variantT()) {
 
-    case V_SgTypeVoid:
-      return 0;
-
-    case V_SgPointerType:
-      return getTypeSize(BITYPE_POINTER);
-
-    case V_SgTypeBool:
-      return getTypeSize(BITYPE_BOOL);
-
-    case V_SgTypeChar:
-    case V_SgTypeSignedChar:
-    case V_SgTypeUnsignedChar: 
-      return getTypeSize(BITYPE_CHAR);
-
-    case V_SgTypeShort:
-    case V_SgTypeSignedShort:
-    case V_SgTypeUnsignedShort:
-      return getTypeSize(BITYPE_SHORT);
-
-    case V_SgTypeUnsignedInt:
-    case V_SgTypeInt:
-    case V_SgTypeSignedInt:
-      return getTypeSize(BITYPE_INT);
-
-    case V_SgTypeUnsignedLong:
-    case V_SgTypeLong:
-    case V_SgTypeSignedLong:
-      return getTypeSize(BITYPE_LONG);
-
-    case V_SgTypeUnsignedLongLong:
-    case V_SgTypeLongLong:
-    case V_SgTypeSignedLongLong:
-      return getTypeSize(BITYPE_LONG_LONG);
-
-    case V_SgTypeFloat:
-      return getTypeSize(BITYPE_FLOAT);
-    case V_SgTypeDouble:
-      return getTypeSize(BITYPE_DOUBLE);
-    case V_SgTypeLongDouble:
-      return getTypeSize(BITYPE_LONG_DOUBLE);
-    case V_SgReferenceType:
-      return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
       CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
+      if(elementTypeSize>10000) {
+	cout<<"DEBUG: ARRAY: ELEMENT TYPE SIZE:"<<elementTypeSize<<endl;
+	return -1;
+      }
       CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
-      unsigned int totalSize=numberOfElements*elementTypeSize;
-      if(elementTypeSize>0) {
-        _typeToSizeMapping[sgType]=totalSize; // cache result
+      if(numberOfElements>10000) {
+	cout<<"DEBUG: ARRAY: NUM ELEMENTS:"<<elementTypeSize<<endl;
+	return -1;
+      }
+      unsigned int totalSize=-1;
+      if(elementTypeSize!=-1 && numberOfElements!=-1) {
+	totalSize=numberOfElements*elementTypeSize;
+	if(elementTypeSize>0) {
+	  _typeToSizeMapping[sgType]=totalSize; // cache result
+	}
       }
       return totalSize;
     }
+      /*
     case V_SgClassType: {
       CodeThorn::logger[TRACE]<<"CLASSTYPE: "<<sgType->unparseToString()<<endl;
       CodeThorn::TypeSize sum=0;
@@ -132,15 +160,18 @@ namespace CodeThorn {
       }
       return sum;
     }
-    case V_SgFunctionType:
-      return getTypeSize(BITYPE_POINTER);
-      //case V_SgTypeComplex:
-    case V_SgEnumType:
-      return getTypeSize(BITYPE_INT); // enum size is of size int in C++
+      */
+    default: {
+      unsigned int totalSize=-1;
+      totalSize=getBuiltInTypeSize(determineBuiltInTypeId(sgType));
+      if(totalSize>10000) {
+	cout<<"DEBUG: TYPESIZE: DEFAULT (BUILT-IN): typesize="<<totalSize<<endl;
+	return -1;
+      }
 
-    default:
       //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;
+    }
     }
     return 0;
   }
@@ -151,6 +182,8 @@ namespace CodeThorn {
     return determineTypeSize(elementType);
   }
 
+  CodeThorn::TypeSize unknownSizeValue() { return -1; }
+  
   //! Calculate the number of elements of an array type
   CodeThorn::TypeSize TypeSizeMapping::determineNumberOfElements(SgArrayType* t) {
     //return SageInterface::getArrayElementCount(sgType);
@@ -160,16 +193,19 @@ namespace CodeThorn {
   
     // assume dimension default to 1 if not specified ,such as a[] 
     if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
-      result = 0;
+      result = unknownSizeValue();
     } else { 
       if(AbstractValue::getVariableIdMapping()==nullptr) {
+	while(SgCastExp* castExp=isSgCastExp(indexExp)) {
+	  indexExp=castExp->get_operand_i();
+	}
         //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
         SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
         SgIntVal * valExpInt = isSgIntVal(indexExp);
         if(!(valExp || valExpInt)) {
           //SAWYER_MESG(CodeThorn::logger[ERROR])<<"Unexpected value: determineNumberOfElements: "<<indexExp->class_name()<<endl;
           //exit(1);
-          return 0;
+          return unknownSizeValue();
         } else {
           if (valExp)
             result = valExp->get_value(); 
@@ -184,14 +220,17 @@ namespace CodeThorn {
           result=abstractSize.getIntValue();
         } else {
           // TODO: make the result of this entire function an abstract value
-          result=0;
+	  cout<<"DEBUG:P2"<<endl;
+          result=unknownSizeValue();
         }
       }
     }
     // consider multi dimensional case 
+#if 0
     SgArrayType* arraybase = isSgArrayType(t->get_base_type());
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
+#endif
     return result;
   }
   
@@ -244,124 +283,5 @@ namespace CodeThorn {
     return false;
   }
 
-  void TypeSizeMapping::computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim) {
-#if 1
-    ROSE_ASSERT(root);
-    ROSE_ASSERT(vim);
-    RoseAst ast(root);
-    int numUnknownVarType=0;
-    int numNonValidVarId=0;
-    int numZeroTypeSize=0;
-    int numUndefinedTypeSize=0;
-    for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-#if 1
-      SgNode* node=*i;
-      ROSE_ASSERT(node);
-      if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-        CodeThorn::logger[TRACE]<<"class def: "<<classDef->unparseToString()<<endl;
-        std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
-        int offset=0;
-        for(auto dataMember : dataMembers) {
-          CodeThorn::logger[TRACE]<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
-#if 1
-          if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
-            SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-            if(VariableIdMapping::isAnonymousBitfield(initName)) {
-              // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
-              continue;
-            }
-            CodeThorn::logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
-            VariableId varId=vim->variableId(dataMember);
-            vim->setIsMemberVariable(varId,true);
-            if(varId.isValid()) {
-              SgType* varType=vim->getType(varId);
-              varType=varType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
-              if(varType) {
-                // determine if size of type is already known
-                int typeSize=vim->getTypeSize(varType);
-                if(isUndefinedTypeSize(typeSize)) {
-                  if(isClassOrStructDeclaration(varDecl)) {
-                    computeOffsets(varDecl,vim);
-                    typeSize=vim->getTypeSize(varType);
-                  }
-                  // different varids can be mapped to the same offset
-                  // every varid is inserted exactly once.
-                  if(_typeToSizeMapping.find(varType)!=_typeToSizeMapping.end()) {
-                    // if the same varId is found, ensure that the offset
-                    // is the same again (e.g. the same headerfile is
-                    // included in 2 different files, both provided on the
-                    // command line
-                    if(_typeToSizeMapping[varType]!=(size_t)offset) {
-                      continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
-                      // do nothing for now
-                      //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
-                      
-                      //variableIdMapping->toStream(cerr);
-                      //cerr<<"Internal error: TypeSizeMapping::initializeOffsets: varid already exists."<<endl;
-                      //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
-                      //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
-                      //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
-                      //cerr<<"Declaration: "<<node->unparseToString()<<endl;
-                      //exit(1);
-                    }
-                  } else {
-                    // typesize is unknown, invalidate offset computation
-                    offset=-1;
-                    break;
-                  }
-                  // for unions the offset is not increased (it is the same for all members)
-                  if(!isUnionDeclaration(node)) {
-                    offset+=typeSize;
-                  }
-                } else {
-                  // type size is already known
-                  vim->setOffset(varId,offset);
-                  if(!isUnionDeclaration(node)) {
-                    offset+=typeSize;
-                  }
-                }
-              } else {
-                // could not determine var type
-                // ...
-                //cout<<"DEBUG: unknown var type."<<endl;
-                numUnknownVarType++;
-              }
-            } else {
-              // non valid var id
-              CodeThorn::logger[WARN]<<"TypeSizeMapping (offset computation): invalid varid at "
-                                     <<SgNodeHelper::sourceFilenameLineColumnToString(varDecl)<<endl;
-              numNonValidVarId++;
-            }
-          } else {
-            // var decl is 0
-          }
-#endif
-        } // end of loop on all data members of a type
-        // skip subtree of class definition (would revisit nodes).
-        i.skipChildrenOnForward();
-      }
-#endif
-    }  // iterate on all declarations
-#if 1
-    CodeThorn::logger[INFO]<<"Number of unknown var types: "<<numUnknownVarType<<endl;
-    CodeThorn::logger[INFO]<<"Number of non-valid varids: "<<numNonValidVarId<<endl;
-    CodeThorn::logger[INFO]<<"Number of types with 0 size: "<<numZeroTypeSize<<endl;
-    //CodeThorn::logger[INFO]<<"Typesize map size: "<<_typeToSizeMapping.size()<<endl;
-#endif
-#endif
-  }
-
-#if 0
-  int TypeSizeMapping::getOffset(CodeThorn::VariableId varId) {
-    ROSE_ASSERT(varId.isValid());
-    auto varIdOffsetPairIter=varIdTypeSizeMap.find(varId);
-    if(varIdOffsetPairIter!=varIdTypeSizeMap.end()) {
-      return (*varIdOffsetPairIter).second;
-    } else {
-      return 0;
-    }
-    return 0;
-  }
-#endif
 
 } // end of namespace CodeThorn

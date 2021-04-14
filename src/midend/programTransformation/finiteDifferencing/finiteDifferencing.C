@@ -350,7 +350,7 @@ void doFiniteDifferencingOne(SgExpression* e,
 
                     default:
                          cerr << modstmt->sage_class_name() << endl;
-                         assert (false);
+                         ROSE_ABORT ();
                          break;
                   }
 
@@ -409,7 +409,7 @@ void doFiniteDifferencingOne(SgExpression* e,
                             {
                               ROSE_ASSERT(ifp != NULL);
                               printf ("Error: parent is neither a SgExpression nor a SgStatement ifp = %p = %s \n",ifp,ifp->class_name().c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 

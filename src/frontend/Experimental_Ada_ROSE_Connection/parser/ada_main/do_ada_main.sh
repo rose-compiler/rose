@@ -63,7 +63,7 @@ build_asis_tool () {
   # -Xnm=val Specify an external reference for Project Files
   log_then_run gprbuild \
   -p \
-  -P ${base_dir}/ada_main.gpr \
+  -P ${base_dir}/dot_asis.gpr \
   -ws \
   -XLIBRARY_TYPE=static \
   -XASIS_BUILD=static \
@@ -73,7 +73,6 @@ build_asis_tool () {
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
 process_units () {
   status=0  
-  cd ${current_dir}
   log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}."
   log "Writing dot files to ${output_dir}."

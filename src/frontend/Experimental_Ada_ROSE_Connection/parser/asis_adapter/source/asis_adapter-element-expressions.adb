@@ -246,22 +246,41 @@ package body Asis_Adapter.Element.Expressions is
       end;
 
       procedure Add_Name_Image is
+         
+         function TQS (This : in Wide_String) return String 
+                       renames To_Quoted_String;
+         
+         procedure Add_It_Quoted (It : in Wide_String) is
+         begin
+            State.Add_To_Dot_Label ("Name_Image", TQS (It));
+         end Add_It_Quoted;
+         
          WS : constant Wide_String := Asis.Expressions.Name_Image (Element);
-      begin
-         --If the name image contains < or >, graphviz will barf.  Use the correct
-         --special character identifier for those.
+         S  : constant String := To_String(WS);
+         
+         -- If the name image contains < or >, graphviz will barf. Use the
+         -- correct special character identifier for those:
+         procedure Add_To_Dot_Label is
+         begin
+            -- Look for ">", "<", ">=", or "<=":
+            If S = TQS (">") then
+               Add_It_Quoted ("&gt;");
+            elsif S = TQS ("<") then
+               Add_It_Quoted ("&lt;");
+            elsif S = TQS (">=") then
+               Add_It_Quoted ("&gt;=");
+            elsif S = TQS ("<=") then
+               Add_It_Quoted ("&lt;=");           
+            else
+               -- Not adding quotes in order to reduce changes to dot files 
+               -- during RC-511.  Created RC-524 to straighten this out.
+               State.Add_To_Dot_Label ("Name_Image", WS);
+            end if;
+         end Add_To_Dot_Label;
+         
+      begin -- Add_Name_Image
          Result.Name_Image := To_Chars_Ptr (WS);
-         If(To_String(WS) = To_Quoted_String(">")) then
-            State.Add_To_Dot_Label ("Name_Image", String'("&gt;"));
-         elsif(To_String(WS) = To_Quoted_String("<")) then
-            State.Add_To_Dot_Label ("Name_Image", String'("&lt;"));
-         elsif(To_String(WS) = To_Quoted_String(">=")) then
-            State.Add_To_Dot_Label ("Name_Image", String'("&gt;="));
-         elsif(To_String(WS) = To_Quoted_String("<=")) then
-            State.Add_To_Dot_Label ("Name_Image", String'("&lt;="));           
-         else
-            State.Add_To_Dot_Label ("Name_Image", To_String (WS));
-         end if;
+         Add_To_Dot_Label;
       end;
 
       procedure Add_Expression_Parenthesized is

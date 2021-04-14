@@ -28,5 +28,5 @@ endif()
 set(ROSE_FLAGS -rose:verbose 0 -rose:C99 --edg:no_warnings -w --edg:restrict)
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} C99TEST)
 endforeach()

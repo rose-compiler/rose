@@ -3,6 +3,8 @@
 
 /* 
 
+   Author: Markus Schordan
+   
    The class TimeMeasurement performs a simple wall time measurement
    using the linux system function gettimeofday. The measurement can
    be started with 'start()' and stopped with 'stop()'. The start and
@@ -53,6 +55,7 @@ class TimeDuration {
   double seconds();
   double minutes();
   double hours();
+  // overloaded operators to perform simple computations of time
   TimeDuration operator+(const TimeDuration &other);
   TimeDuration operator-(const TimeDuration &other);
   TimeDuration& operator+=(const TimeDuration& rhs);

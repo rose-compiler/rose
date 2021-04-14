@@ -177,7 +177,7 @@ ResetTypes::visit(SgNode* node)
                                       {
                                         printf ("Error: ResetTypes::visit(node = %p = %s) \n",node,node->class_name().c_str());
                                         printf ("Warning: Must merge both SgTypedefSeq objects \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                       }
                                  }
                             }                         
@@ -235,7 +235,7 @@ ResetTypes::visit(SgNode* node)
                                       {
                                         printf ("Error: ResetTypes::visit(node = %p = %s) \n",node,node->class_name().c_str());
                                         printf ("Warning: get_type() == NULL for both defining and nondefining declarations \n");
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                       }
                                  }
                             }

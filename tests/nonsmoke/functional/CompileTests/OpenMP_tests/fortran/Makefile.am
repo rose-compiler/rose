@@ -37,10 +37,11 @@ F77_TESTCODES_TO_PASS += testNewOFP.f
 F90_TESTCODES_TO_PASS = \
   paralleldo.f90 \
   paralleldo-1.f90 \
-  collapse.f90 \
   critical.f90 \
-  single-copyprivate.f90 \
-  continuation.f90
+  continuation.f90 \
+  collapse.f90 \
+  single-copyprivate.f90 
+
 
 #if !OS_VENDOR_DEBIAN
 ## This fails for Debian 5.0 systems (at least 32-bit, all compilers (4.3 tested), I think)

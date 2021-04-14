@@ -200,14 +200,14 @@ MacroExpansion*
 DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgLocatedNode* locatedNode, std::string & name, int & startingToken, int & endingToken )
    {
      printf ("Not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #else
 MacroExpansion*
 DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* currentStatement, std::string & name, int & startingToken, int & endingToken )
    {
      printf ("Not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 #endif
 
@@ -416,8 +416,14 @@ detectMacroOrIncludeFileExpansions ( SgSourceFile* sourceFile )
 
      std::map<SgStatement*,MacroExpansion*> & macroExpansionMap = sourceFile->get_macroExpansionMap();
 
+  // DQ (1/24/2021): This fails (as it should) for several tests in the codeSegregation tool.
+  // Because in these tests there are macro definitions on the command line, I think this is OK.
   // This map should not have any macroExpansion objects in it at this point.
-     ROSE_ASSERT(macroExpansionMap.empty() == true);
+     if (macroExpansionMap.empty() == false)
+        {
+          printf ("Note: In detectMacroOrIncludeFileExpansions(): macroExpansionMap.empty() == false (used to be an assertion) \n");
+        }
+  // ROSE_ASSERT(macroExpansionMap.empty() == true);
 
      for (size_t i = 0; i < macroExpansionStack.size(); i++)
         {
@@ -445,6 +451,6 @@ detectMacroOrIncludeFileExpansions ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }

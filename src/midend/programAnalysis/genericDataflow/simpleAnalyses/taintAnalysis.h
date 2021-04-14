@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ROSE_TaintAnalysis_H
 #define ROSE_TaintAnalysis_H
 
@@ -209,4 +212,5 @@ protected:
     bool magic_tainted(SgNode *node, FiniteVarsExprsProductLattice *prodLat);
 };
 
+#endif
 #endif

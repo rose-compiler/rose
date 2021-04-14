@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ANALYSIS_H
 #define ANALYSIS_H
 
@@ -90,4 +93,5 @@ class UnstructuredPassInterAnalysis : virtual public InterProceduralAnalysis
         void runAnalysis();
 };
 
+#endif
 #endif

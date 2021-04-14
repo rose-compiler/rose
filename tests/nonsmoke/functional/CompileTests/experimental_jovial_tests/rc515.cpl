@@ -1,0 +1,10 @@
+START
+
+COMPOOL RC515;
+
+TYPE TABLETYPE TABLE (0:5) F;
+DEF TABLE TABLE1 TABLETYPE;
+ref table table2 U 4;
+def table table3; item item1 U 4;
+
+TERM

@@ -44,7 +44,7 @@ void RewriteSystem::initDiagnostics() {
   }
 }
 
-void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
+void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root) {
   RoseAst ast(root);
   typedef list<SgCompoundAssignOp*> AssignOpListType;
   AssignOpListType assignOpList;
@@ -61,7 +61,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
   for(AssignOpListType::iterator i=assignOpList.begin();i!=assignOpList.end();++i) {
     //cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
     timer.start();
-    SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
+    SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i));
     buildTime+=timer.getTimeDurationAndStop().milliSeconds();
 
     if(newRoot) {
@@ -77,7 +77,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
   logger[INFO]<<"transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
-SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
+SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root) {
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
     _rewriteStatistics.numElimCompoundAssignOperator++;
@@ -124,9 +124,9 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
   return 0;
 }
 
-void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
+void RewriteSystem::rewriteCompoundAssignments(SgNode*& root) {
 #if 1
-  SgNode* newRoot=buildRewriteCompoundAssignment(root,variableIdMapping);
+  SgNode* newRoot=buildRewriteCompoundAssignment(root);
   if(newRoot)
     root=newRoot;
 #else
@@ -308,7 +308,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
   }
   
   if(performCompoundAssignmentsElimination) {
-    rewriteCompoundAssignments(root,variableIdMapping);
+    rewriteCompoundAssignments(root);
   }
   normalizeFloatingPointNumbersForUnparsing(root);
 

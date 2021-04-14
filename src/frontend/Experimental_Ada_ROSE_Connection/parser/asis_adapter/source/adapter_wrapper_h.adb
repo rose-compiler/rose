@@ -46,7 +46,9 @@ package body adapter_wrapper_h is
       Module_Name : constant String := Parent_Name & ".adapter_wrapper_with_flags";
       procedure Log (Message : in String) is
       begin
-         Ada.Text_Io.Put_Line (Module_Name & ":  " & Message);
+         if Boolean (debug) then
+            Ada.Text_Io.Put_Line (Module_Name & ":  " & Message);
+         end if;
       end;
 
       Target_File_In_String_Access : access String :=

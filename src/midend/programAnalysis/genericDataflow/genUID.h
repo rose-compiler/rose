@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef GEN_UID_H
 #define GEN_UID_H
 
@@ -22,4 +25,5 @@ class genUID
         unsigned long getUID();
 };
 
+#endif
 #endif

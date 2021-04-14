@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Partitioner2/Utility.h>
 
@@ -63,10 +63,12 @@ sortFunctionNodesByAddress(const SgAsmFunction *a, const SgAsmFunction *b) {
 // when comparing.
 bool
 sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b) {
-    if (a.expr()->is_number() && b.expr()->is_number())
-        return a.expr()->get_number() < b.expr()->get_number();
-    if (a.expr()->is_number() || b.expr()->is_number())
-        return a.expr()->is_number();                   // concrete values are less than abstract expressions
+    auto aval = a.expr()->toUnsigned();
+    auto bval = b.expr()->toUnsigned();
+    if (aval && bval)
+        return *aval < *bval;
+    if (aval || bval)
+        return aval ? true : false;                     // concrete values are less than abstract expressions
     return a.expr()->get_expression()->compareStructure(b.expr()->get_expression()) < 0;
 }
 

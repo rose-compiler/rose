@@ -53,7 +53,6 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/TestCase.C						\
     Concolic/TestSuite.C					\
     Concolic/Utility.C						\
-    DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/BaseSemanticsDispatcher.C		\
     instructionSemantics/BaseSemanticsException.C		\
@@ -65,7 +64,8 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/BaseSemanticsSValue.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
-    instructionSemantics/DispatcherA64.C			\
+    instructionSemantics/DispatcherAarch32.C			\
+    instructionSemantics/DispatcherAarch64.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
@@ -131,7 +131,6 @@ pkginclude_HEADERS =					\
     BinaryVariables.h					\
     BinaryYicesSolver.h					\
     BinaryZ3Solver.h					\
-    DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
     instructionSemantics/BaseSemanticsDispatcher.h	\
@@ -146,7 +145,8 @@ pkginclude_HEADERS =					\
     instructionSemantics/BaseSemanticsTypes.h		\
     instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
-    instructionSemantics/DispatcherA64.h		\
+    instructionSemantics/DispatcherAarch32.h		\
+    instructionSemantics/DispatcherAarch64.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\

@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <MemoryCellMap.h>
 
@@ -19,7 +19,7 @@ MemoryCellMap::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
     SValuePtr retval;
     CellKey key = generateCellKey(address);
     if (MemoryCellPtr cell = cells.getOrDefault(key)) {
-        retval = cell->get_value();
+        retval = cell->value();
     } else {
         retval = dflt->copy();
         cell = protocell->create(address, retval);
@@ -37,7 +37,7 @@ MemoryCellMap::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
     SValuePtr retval;
     CellKey key = generateCellKey(address);
     if (MemoryCellPtr cell = cells.getOrDefault(key)) {
-        retval = cell->get_value();
+        retval = cell->value();
     } else {
         retval = dflt->copy();
     }
@@ -47,7 +47,7 @@ MemoryCellMap::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
 void
 MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(address);
-    ASSERT_require(!byteRestricted() || value->get_width() == 8);
+    ASSERT_require(!byteRestricted() || value->nBits() == 8);
     MemoryCellPtr newCell = protocell->create(address, value);
     if (addrOps->currentInstruction() || valOps->currentInstruction()) {
         newCell->ioProperties().insert(IO_WRITE);
@@ -64,7 +64,7 @@ bool
 MemoryCellMap::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const {
     ASSERT_not_null(addrOps);
     for (size_t offset = 0; offset < nBytes; ++offset) {
-        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->get_width(), offset));
+        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->nBits(), offset));
         CellKey key = generateCellKey(byteAddress);
         if (!cells.exists(key))
             return false;
@@ -90,8 +90,8 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         bool thisCellChanged = false;
 
         ASSERT_require(thisCell != NULL || otherCell != NULL);
-        SValuePtr thisValue  = thisCell  ? thisCell->get_value()  : valOps->undefined_(otherCell->get_value()->get_width());
-        SValuePtr otherValue = otherCell ? otherCell->get_value() : valOps->undefined_(thisCell->get_value()->get_width());
+        SValuePtr thisValue  = thisCell  ? thisCell->value()  : valOps->undefined_(otherCell->value()->nBits());
+        SValuePtr otherValue = otherCell ? otherCell->value() : valOps->undefined_(thisCell->value()->nBits());
         SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
         if (newValue)
             thisCellChanged = true;
@@ -111,7 +111,7 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         if (thisCellChanged) {
             if (!newValue)
                 newValue = thisValue->copy();
-            SValuePtr address = thisCell ? thisCell->get_address() : otherCell->get_address();
+            SValuePtr address = thisCell ? thisCell->address() : otherCell->address();
             writeMemory(address, newValue, addrOps, valOps);
             latestWrittenCell_->setWriters(newWriters);
             latestWrittenCell_->ioProperties() = newProps;
@@ -132,7 +132,7 @@ MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
     CellMap newMap;
     BOOST_FOREACH (MemoryCellPtr &cell, cells.values()) {
         (visitor)(cell);
-        newMap.insert(generateCellKey(cell->get_address()), cell);
+        newMap.insert(generateCellKey(cell->address()), cell);
     }
     cells = newMap;
 }

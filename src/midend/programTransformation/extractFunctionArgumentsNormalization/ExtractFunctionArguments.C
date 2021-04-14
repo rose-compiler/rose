@@ -363,7 +363,7 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
         }
         case FunctionCallInfo::INVALID:
         default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 }
 

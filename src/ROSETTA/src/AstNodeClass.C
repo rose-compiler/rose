@@ -264,7 +264,7 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
                     returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
                     break;
                default:
-                    assert(false);     
+                    ROSE_ABORT();
              }
        }
 
@@ -467,7 +467,7 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
                               default:
                                  {
                                    printf ("Default reached in AstNodeClass::buildCopyMemberFunctionSource \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -889,7 +889,7 @@ AstNodeClass::buildDataAccessFunctions ( const GrammarString & inputMemberData)
                filename = "../Grammar/listMemberAccessFunctions.macro";
                break;
           default:
-               assert(false);
+               ROSE_ABORT();
         }
 
      string markerString = "DATA_ACCESS_FUNCTION";
@@ -2347,7 +2347,7 @@ AstNodeClass::typeEvaluationName ( TypeEvaluation x )
           default:
              {
                printf ("Default reached in switch: x = %d \n",(int)x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 

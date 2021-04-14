@@ -7,21 +7,16 @@
 #include "unparser.h" //charles4:  I replaced this include:   #include "unparseX10.h"
 
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-//~ #include "rose_config.h"
-
-
-//~ void replaceString (std::string& str, const std::string& from, const std::string& to);
+namespace si = SageInterface;
 
 namespace
 {
   struct AdaTypeUnparser
   {
-    AdaTypeUnparser(Unparse_Ada& unp, SgScopeStatement* where, SgUnparse_Info& inf, std::ostream& outp)
-    : unparser(unp), ctx(where), info(inf), os(outp)
+    AdaTypeUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
+    : unparser(unp), info(inf), os(outp)
     {}
 
     void prn(const std::string& s)
@@ -30,11 +25,11 @@ namespace
       //~ os << s;
     }
 
-    std::string scopeQual(SgScopeStatement& local, SgDeclarationStatement& remote);
+    std::string scopeQual(SgDeclarationStatement& remote);
 
-    std::string scopeQual(SgScopeStatement& local, SgDeclarationStatement* remote)
+    std::string scopeQual(SgDeclarationStatement* remote)
     {
-      return scopeQual(local, SG_DEREF(remote));
+      return scopeQual(SG_DEREF(remote));
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
@@ -58,12 +53,16 @@ namespace
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)   { prn(" Boolean"); }
-    void handle(SgTypeInt&)    { prn(" Integer"); }
-    void handle(SgTypeChar&)   { prn(" Character"); }
-    void handle(SgTypeFloat&)  { prn(" Float"); }
-    void handle(SgTypeString&) { prn(" String"); }
-    void handle(SgTypeVoid&)   { prn(" -- void\n"); }
+    void handle(SgTypeBool&)       { prn(" Boolean"); }
+    void handle(SgTypeChar&)       { prn(" Character"); }
+    void handle(SgTypeInt&)        { prn(" Integer"); }
+    void handle(SgTypeFloat&)      { prn(" Float"); }
+    void handle(SgTypeDouble&)     { prn(" Long_Float"); }
+    void handle(SgTypeLongDouble&) { prn(" Long_Long_Float"); }
+    void handle(SgTypeString&)     { prn(" String"); }
+    void handle(SgTypeLong&)       { prn(" Long_Integer"); }
+    void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
+    void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
 
     //
     // Ada types
@@ -72,6 +71,11 @@ namespace
     {
       type(n.get_base_type());
       support_opt(n.get_constraint());
+    }
+
+    void handle(SgAdaDerivedType& n)
+    {
+      type(n.get_base_type());
     }
 
     void handle(SgAdaModularType& n)
@@ -98,20 +102,11 @@ namespace
       /* print nothing - used for Integer and Real Number constants */
     }
 
-    void setCtxIfNeeded(SgDeclarationStatement& dcl)
-    {
-      if (ctx) return;
-
-      ctx = &sg::ancestor<SgScopeStatement>(dcl);
-    }
-
 
     void handle(SgNamedType& n)
     {
-      setCtxIfNeeded(SG_DEREF(n.get_declaration()));
-
       prn(" ");
-      prn(scopeQual(SG_DEREF(ctx), n.get_declaration()));
+      prn(scopeQual(n.get_declaration()));
       prn(n.get_name());
     }
 
@@ -138,7 +133,7 @@ namespace
     {
       prn(" array");
       prn("(");
-      arrayDimList(SG_DEREF(n.get_dim_info()), (n.get_is_variable_length_array() ? " range <>" : ""));
+      arrayDimList(SG_DEREF(n.get_dim_info()), (si::ada::unconstrained(n) ? " range <>" : ""));
       prn(")");
       prn(" of");
       type(n.get_base_type());
@@ -148,17 +143,56 @@ namespace
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       prn(" ");
-      prn(scopeQual(SG_DEREF(ctx), n.get_decl()));
-      // prn(scopeQual(SG_DEREF(ctx), n.get_declaration()));
+      prn(scopeQual(n.get_decl()));
       prn(SG_DEREF(n.get_decl()).get_name());
     }
 
     void handle(SgAdaFloatType& n)
     {
-      prn(" is ");
+      prn("digits ");
       expr(n.get_digits());
 
       support_opt(n.get_constraint());
+    }
+
+    void handle(SgAdaAccessType& n)
+    {
+      prn("access");
+      if (n.get_is_object_type()) {
+        if (n.get_is_general_access()) {
+          prn(" all");
+        }
+
+        if (n.get_is_constant()) {
+          prn(" constant");
+        }
+
+        if (n.get_base_type() != NULL) {
+          type(n.get_base_type());
+        }
+
+      } else {
+        // subprogram access type
+        if (n.get_is_protected()) {
+          prn(" protected");
+        }
+
+        if (n.get_return_type() != NULL) {
+          prn(" function");
+        } else {
+          prn(" procedure");
+        }
+
+        // TODO: print parameter profile here if it is specified.
+        //       parameter profiles are not currently implemented for
+        //       AdaAccessType nodes.
+
+        if (n.get_return_type() != NULL) {
+          prn(" return");
+          type(n.get_return_type());
+        }
+      }
+
     }
 
     void type(SgType* ty)
@@ -192,7 +226,7 @@ namespace
       }
     }
 
-    void rangeList(SgRangeExpPtrList& lst)
+    void rangeList(SgExpressionPtrList& lst) // \todo remove
     {
       if (lst.empty()) return;
 
@@ -206,15 +240,19 @@ namespace
     }
 
     Unparse_Ada&      unparser;
-    SgScopeStatement* ctx;
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
 
   std::string
-  AdaTypeUnparser::scopeQual(SgScopeStatement& local, SgDeclarationStatement& remote)
+  AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
   {
-    return unparser.computeScopeQual(local, SG_DEREF(remote.get_scope()));
+    if (info.get_current_scope() == NULL)
+      return "<missing-scope>";
+
+    SgScopeStatement& current = SG_DEREF(info.get_current_scope());
+
+    return unparser.computeScopeQual(current, SG_DEREF(remote.get_scope()));
   }
 }
 
@@ -226,10 +264,10 @@ namespace
 //  to the appropriate function to unparse each Ada type.
 //-----------------------------------------------------------------------------------
 void
-Unparse_Ada::unparseType(SgType* type, SgScopeStatement* where, SgUnparse_Info& info)
+Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
 {
   ASSERT_not_null(type);
 
-  sg::dispatch(AdaTypeUnparser(*this, where, info, std::cerr), type);
+  sg::dispatch(AdaTypeUnparser(*this, info, std::cerr), type);
 }
 

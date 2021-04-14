@@ -19,7 +19,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
         LIBDWARF_PREFIX=
         AC_CHECK_LIB(dwarf, dwarf_child,
                      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-                      ROSE_HAVE_LIBDWARF=yes
+                      ROSE_HAVE_LIBDWARF=system
                       LIBDWARF_CPPFLAGS=
                       LIBDWARF_LDFLAGS="-ldwarf"])
     elif test -n "$with_dwarf" -a "$with_dwarf" != no; then
@@ -27,7 +27,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
         # ROSE requires the use of a shared library for libdwarf
         AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib/libdwarf.so"],
                       [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-                       ROSE_HAVE_LIBDWARF=yes
+                       ROSE_HAVE_LIBDWARF="$LIBDWARF_PREFIX"
                        LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
                        LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
                        ])

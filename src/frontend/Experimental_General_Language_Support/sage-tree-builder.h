@@ -29,8 +29,10 @@ class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
+class SgNamedType;
 class SgNamespaceDeclarationStatement;
 class SgPntrArrRefExp;
+class SgPointerType;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
 class SgReplicationOp;
@@ -44,24 +46,10 @@ class SgVariableDeclaration;
 class SgVarRefExp;
 class SgWhileStmt;
 
-// Jovial specific classes
-class SgJovialCompoolStatement;
-class SgJovialDefineDeclaration;
-class SgJovialDirectiveStatement;
-class SgJovialForThenStatement;
-class SgJovialOverlayDeclaration;
-class SgJovialTableStatement;
-
 enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
 
 namespace Rose {
 namespace builder {
-
-// Need std=c++11
-//
-#ifndef nullptr
-#define nullptr NULL
-#endif
 
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
@@ -111,7 +99,8 @@ public:
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
 
-   void Leave(SgScopeStatement* &);
+   void Enter(SgScopeStatement* &);
+   void Leave(SgScopeStatement*);
 
    void Enter(SgBasicBlock* &);
    void Leave(SgBasicBlock*);
@@ -192,7 +181,7 @@ public:
 #endif
    void Leave(SgImplicitStatement*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+   SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
 // Expressions
 //
@@ -204,10 +193,12 @@ public:
 
 // Jovial specific nodes
 //
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);
@@ -223,14 +214,19 @@ public:
 
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
+#endif
 
 private:
 
    LanguageEnum language_;
    TraversalContext context_;
+   std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::map<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
+
+   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
 
 public:
    bool is_Fortran_language() {return (language_ == e_language_fortran);}
@@ -249,6 +245,12 @@ public:
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
 
+// Builder function manages implicitly declared variable references
+   SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
+
+// Builder function manages pointer references to undeclared types
+   SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
+
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);
 
@@ -261,6 +263,12 @@ namespace SageBuilderCpp17 {
 // Types
    SgType* buildBoolType();
    SgType* buildIntType();
+   SgType* buildFloatType();
+   SgType* buildCharType();
+   SgType* buildDoubleType();
+   SgType* buildComplexType(SgType* base_type = nullptr);
+   SgType* buildStringType(SgExpression* stringLengthExpression);
+   SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
@@ -280,10 +288,15 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildBoolValExp_nfi(bool value);
    SgExpression*  buildIntVal_nfi(int);
    SgExpression*  buildStringVal_nfi(std::string);
+   SgExpression*  buildFloatVal_nfi(const std::string &);
+   SgExpression*  buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str);
    SgExpression*  buildExprListExp_nfi();
    SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
+   SgExpression*  buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type = nullptr);
+   SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 

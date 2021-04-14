@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ROSE_ANALYSIS_DEBUGGING_UTILS_H
 #define ROSE_ANALYSIS_DEBUGGING_UTILS_H
 
@@ -170,4 +173,5 @@ public:
         std::string escape(std::string s);
 }
 
+#endif
 #endif

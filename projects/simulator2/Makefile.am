@@ -12,7 +12,8 @@ include_HEADERS=
 noinst_HEADERS=
 bin_PROGRAMS=
 noinst_PROGRAMS=
-TEST_TARGETS = 
+TEST_TARGETS =
+PHONY =
 
 warn_no_tests:
 	@echo "  NOTE    simulator testing is disabled (no i386 support)"
@@ -161,7 +162,7 @@ $(SyscallTests_Standalone_Tests): %.passed: % rsim-x86sim
 		CMD="x86_64 -R $(abspath .)/rsim-x86sim $(SimulatorFlags) $(abspath $<)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-.PHONY: check-syscalltests-standalone
+PHONY += check-syscalltests-standalone
 check-syscalltests-standalone: $(SyscallTests_Standalone_Tests)
 
 #-----------------------------------------------------------------------
@@ -435,7 +436,7 @@ $(SyscallTests_WithTestLib_Tests): %.passed: % rsim-x86sim
 		CMD="x86_64 -R $(abspath .)/rsim-x86sim $(SimulatorFlags) $(abspath $<)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-.PHONY: check-syscalltests-withtestlib
+PHONY += check-syscalltests-withtestlib
 check-syscalltests-withtestlib: $(SyscallTests_WithTestLib_Tests)
 
 #-----------------------------------------------------------------------
@@ -665,7 +666,7 @@ $(SYS_TEST_INPUTS_NM): %: $(srcdir)/syscall_tests/%.c
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ 
 
 # Target to manually build the syscall test inputs. (Not used internally)
-.PHONY: sys_test_inputs
+PHONY += sys_test_inputs
 sys_test_inputs: $(SYS_TEST_INPUTS)
 
 
@@ -724,7 +725,7 @@ MOSTLYCLEANFILES += 						   \
 # as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
 # clean-local depend on it.
 SYS_TEST_CLEANUPS = $(addsuffix .clean, $(SYS_TEST_INPUTS))
-.PHONY: $(SYS_TEST_CLEANUPS)
+PHONY += $(SYS_TEST_CLEANUPS)
 $(SYS_TEST_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
 
@@ -1222,7 +1223,7 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
 
 # Target to manually build the test inputs. (Not used internally)
-.PHONY: pthread_test_inputs
+PHONY += pthread_test_inputs
 pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
 
 # Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
@@ -1241,7 +1242,7 @@ endif
 # as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
 # clean-local depend on it.
 PTHREAD_TEST_CLEANUPS = $(addsuffix .clean, $(PTHREAD_TEST_INPUTS))
-.PHONY: $(SYS_TEST_CLEANUPS)
+PHONY += $(SYS_TEST_CLEANUPS)
 $(PTHREAD_TEST_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
 
@@ -1254,10 +1255,10 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 ###############################################################################################################################
 
 # Conveniently build all test inputs in case we want to run some manually
-.PHONY: test-inputs
+PHONY += test-inputs
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
-.PHONY: run-tests
+PHONY += run-tests
 run-tests: check-syscalls
 	@$(RTH_STATS)
 
@@ -1280,6 +1281,8 @@ clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS) $(TYPES_1_CLEANUPS)
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt
 	rm -rf             fchmodattestdir* fchmodattestfile*.txt
+
+.PHONY: $(PHONY)
 
 ###############################################################################################################################
 # These things are reported by the policy checkers as being unused. They should be investigated and them removed. Some of them

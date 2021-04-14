@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
@@ -183,7 +183,9 @@ Engine::loaderSwitches(LoaderSettings &settings) {
 
     sg.insert(Switch("executable")
               .intrinsicValue(true, settings.memoryIsExecutable)
-              .doc("Adds execute permission to the entire memory map, aside from regions excluded by @s{remove-zeros}. "
+              .doc("This switch is for backward compatibility. It is equivalent to adding \"meta:0:perm+x\" to the end "
+                   "of the command line.\n\n"
+                   "Adds execute permission to the entire memory map, aside from regions excluded by @s{remove-zeros}. "
                    "The executable bit determines whether the partitioner is allowed to make instructions at some address, "
                    "so using this switch is an easy way to make the disassembler think that all of memory may contain "
                    "instructions.  The default is to not add executable permission to all of memory."));
@@ -919,6 +921,9 @@ Engine::specimenNameDocumentation() {
             "no equal sign is specified is read, write, and execute.  The only file attribute recognized at this time is "
             "\"version=@v{v}\" where @v{v} is a version number, and ROSE currently supports only version 1.}"
 
+            "@bullet{If the name begins with the string \"meta:\" then it adjusts meta information about the memory "
+            "map, such as permissions. " + MemoryMap::adjustMapDocumentation() + "}"
+
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
@@ -998,6 +1003,7 @@ Engine::isNonContainer(const std::string &name) {
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
             boost::starts_with(name, "vxcore:") ||      // Jim Lee's format of a VxWorks core dump
+            boost::starts_with(name, "meta:") ||        // Adjust meta information about the map
             isRbaFile(name));                           // ROSE Binary Analysis file
 }
 
@@ -1251,8 +1257,11 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map_->insertFile(resource);
         } else if (boost::starts_with(fileName, "data:")) {
-            std::string resource = fileName.substr(4);  // remove "data:", leaving colon and the rest of the string
+            std::string resource = fileName.substr(4);  // remove "data", leaving colon and the rest of the string
             map_->insertData(resource);
+        } else if (boost::starts_with(fileName, "meta:")) {
+            std::string resource = fileName.substr(4);  // "remove "meta", leaving the colon and the rest of the string
+            map_->adjustMap(resource);
         } else if (boost::starts_with(fileName, "proc:")) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_->insertProcess(resource);
@@ -2311,28 +2320,27 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
             BasicBlock::Successors successors = partitioner.basicBlockSuccessors(bb, Precision::LOW);
             BOOST_FOREACH (const BasicBlock::Successor &succ, successors) {
-                if (succ.expr()->is_number() && succ.expr()->get_width() <= 64) {
-                    rose_addr_t targetVa = succ.expr()->get_number();
-                    if (targetVa == bb->fallthroughVa()) {
-                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" is fall-through\n";
-                    } else if (partitioner.functionExists(targetVa)) {
+                if (auto targetVa = succ.expr()->toUnsigned()) {
+                    if (*targetVa == bb->fallthroughVa()) {
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(*targetVa) <<" is fall-through\n";
+                    } else if (partitioner.functionExists(*targetVa)) {
                         // We already know about this function, so move on -- nothing to see here.
-                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" already exists\n";
-                    } else if (partitioner.aum().exists(targetVa)) {
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(*targetVa) <<" already exists\n";
+                    } else if (partitioner.aum().exists(*targetVa)) {
                         // Target is inside some basic block, data block, or function but not a function entry. The basic block
                         // we just discovered is probably bogus, therefore ignore everything about it.
                         candidateFunctionVas.clear();
-                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" has a conflict\n";
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(*targetVa) <<" has a conflict\n";
                         break;
-                    } else if (!map_->at(targetVa).require(MemoryMap::EXECUTABLE).exists()) {
+                    } else if (!map_->at(*targetVa).require(MemoryMap::EXECUTABLE).exists()) {
                         // Target is in an unmapped area or is not executable. The basic block we just discovered is probably
                         // bogus, therefore ignore everything about it.
-                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(targetVa) <<" not executable\n";
+                        SAWYER_MESG(debug) <<me <<"successor " <<StringUtility::addrToString(*targetVa) <<" not executable\n";
                         candidateFunctionVas.clear();
                         break;
                     } else {
                         // Looks good.
-                        candidateFunctionVas.insert(targetVa);
+                        candidateFunctionVas.insert(*targetVa);
                     }
                 }
             }
@@ -2676,7 +2684,7 @@ Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
         bool hadCorrectEdge = false, edgeModified = false;
         BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
         for (size_t i = 0; i < successors.size(); ++i) {
-            if (!successors[i].expr()->is_number() ||
+            if (!successors[i].expr()->isConcrete() ||
                 (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
                 if (successors[i].type() == E_FUNCTION_RETURN) {
                     hadCorrectEdge = true;
@@ -2733,13 +2741,13 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     bool addIndeterminateEdge = false;
     size_t addrWidth = 0;
     BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
-        if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
+        if (!successor.expr()->isConcrete()) {          // BB already has an indeterminate successor?
             addIndeterminateEdge = false;
             break;
         } else if (!addIndeterminateEdge &&
                    (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
             addIndeterminateEdge = true;
-            addrWidth = successor.expr()->get_width();
+            addrWidth = successor.expr()->nBits();
         }
     }
 

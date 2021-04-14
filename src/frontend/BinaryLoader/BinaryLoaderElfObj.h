@@ -1,8 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_BinaryLoaderElfObj_H
 #define ROSE_BinaryAnalysis_BinaryLoaderElfObj_H
 
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "BinaryLoaderElf.h"
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {

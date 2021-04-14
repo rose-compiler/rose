@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_FeasiblePath_H
 #define ROSE_BinaryAnalysis_FeasiblePath_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
@@ -11,6 +11,7 @@
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
+#include <boost/logic/tribool.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -127,6 +128,7 @@ public:
 
     /** Statistics from path searching. */
     struct Statistics {
+        size_t nPathsExplored;                          /**< Number of paths explored. */
         size_t maxVertexVisitHits;                      /**< Number of times settings.maxVertexVisit was hit. */
         size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
         size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
@@ -134,7 +136,7 @@ public:
         Sawyer::Container::Map<rose_addr_t, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
 
         Statistics()
-            : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
+            : nPathsExplored(0), maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
 
         Statistics& operator+=(const Statistics&);
     };
@@ -356,11 +358,12 @@ private:
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
-    Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
 
+    mutable SAWYER_THREAD_TRAITS::Mutex statsMutex_;    // protects the following data member
+    Statistics stats_;                                  // statistical results of the analysis
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Construction, destruction
@@ -388,8 +391,11 @@ public:
         resetStatistics();
     }
 
-    /** Reset only statistics. */
+    /** Reset only statistics.
+     *
+     *  Thread safety: This method is thread safe. */
     void resetStatistics() {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         stats_ = Statistics();
     }
 
@@ -471,7 +477,7 @@ public:
     virtual void
     processVertex(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
                   const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
-                  size_t &pathInsnIndex /*in,out*/);
+                  size_t pathInsnIndex);
 
     /** Determines whether a function call should be summarized instead of inlined. */
     virtual bool
@@ -635,18 +641,21 @@ public:
      *  adjusted values are stored as attributes of the path, and this function returns the current value. */
     double pathEffectiveK(const Partitioner2::CfgPath&) const;
 
-    /** Total length of path.
+    /** Total length of path up to and including the specified vertex.
      *
      *  The path length is different than the number of vertices (@ref Partitioner2::CfgPath::nVertices). Path length is
      *  measured by summing the sizes of all the vertices. The size of a vertex that represents a basic block is the number
      *  of instructions in that basic block. The path length is what's used to limit the depth of the search in k-bounded
      *  model checking. */
-    static size_t pathLength(const Partitioner2::CfgPath&);
+    static size_t pathLength(const Partitioner2::CfgPath&, int position = -1);
 
     /** Cumulative statistics about prior analyses.
      *
-     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics. */
+     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics.
+     *
+     *  Thread safety: This method is thread safe. */
     Statistics statistics() const {
+        SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         return stats_;
     }
 
@@ -677,28 +686,96 @@ private:
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
     SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
-                                         InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
+                                         const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
     Expression parseExpression(Expression, const std::string &where, SymbolicExprParser&) const;
 
-    SymbolicExpr::Ptr expandExpression(const Expression&, SymbolicExprParser&);
+    SymbolicExpr::Ptr expandExpression(const Expression&, const SymbolicExprParser&);
 
     // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
     void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
-                          const std::vector<Expression> &assertions, bool atEndOfPath, SymbolicExprParser&);
+                          const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExprParser&);
 
     // Size of vertex. How much of "k" does this vertex consume?
     static size_t vertexSize(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 
+    // Information needed for adding user-supplied assertions to the solver.
+    struct Substitutions {
+        SymbolicExprParser exprParser;
+        std::vector<Expression> assertions;
+        SymbolicExprParser::RegisterSubstituter::Ptr regSubber;
+        SymbolicExprParser::MemorySubstituter::Ptr memSubber;
+    };
+
     // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
-    solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
-                         const std::vector<Expression> &userAssertions, bool atEndOfPath, SymbolicExprParser&);
+    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
+                         const Substitutions&, bool atEndOfPath);
 
     // Mark vertex as being reached
     void markAsReached(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
+
+    // Top-level info for debugging
+    void dfsDebugHeader(Sawyer::Message::Stream &trace, Sawyer::Message::Stream &debug, size_t callId, size_t graphId);
+
+    // Top-level info for debugging a path.
+    void dfsDebugCurrentPath(Sawyer::Message::Stream&, const Partitioner2::CfgPath&, const SmtSolverPtr&, size_t effectiveK);
+
+    // Prepare substitutions for registers and memory based on user-supplied symbolic expressions.
+    Substitutions parseSubstitutions();
+
+    // Substitute registers and memory values into user-supplied symbolic expressions.
+    void makeSubstitutions(const Substitutions&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+
+    // Create an SMT solver. It will have an initial state plus, eventually, a transaction for each path edge.
+    SmtSolverPtr createSmtSolver();
+
+    // The parts of the instruction semantics framework
+    struct Semantics {
+        InstructionSemantics2::BaseSemantics::DispatcherPtr cpu;
+        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
+        InstructionSemantics2::BaseSemantics::StatePtr originalState;
+    };
+
+    // Create the parts of the instruction semantics framework.
+    Semantics createSemantics(const Partitioner2::CfgPath&, PathProcessor&, const SmtSolverPtr&);
+
+    // Convert a position to an index. Negative positions measure from the end of the sequence so that -1 refers to the last
+    // element, -2 to the second-to-last element, etc. Non-negative positions are the same thing as an index.  Returns nothing
+    // if the position is out of range.
+    static Sawyer::Optional<size_t> positionToIndex(int position, size_t nElmts);
+
+    // Obtain the incoming state for the specified path vertex. This is a pointer to the state, so copy it if you make changes.
+    // The incoming state for the first vertex is the specified initial state.
+    InstructionSemantics2::BaseSemantics::StatePtr
+    incomingState(const Partitioner2::CfgPath&, int position, const InstructionSemantics2::BaseSemantics::StatePtr &initialState);
+
+    // Number of steps (e.g., instructions) up to but not including the specified path vertex.
+    size_t incomingStepCount(const Partitioner2::CfgPath&, int position);
+
+    // Number of steps (e.g., instructions) up to and including the specified path vertex.
+    size_t outgoingStepCount(const Partitioner2::CfgPath&, int position);
+
+    // Evaluate semantics up to and including the specified path vertex, returning the outgoing state for that vertex. If
+    // semantics fails, then returns a null state pointer.
+    InstructionSemantics2::BaseSemantics::StatePtr evaluate(Partitioner2::CfgPath&, int position, const Semantics&);
+
+    // Check whether the last vertex of the path is feasible. Returns true if provably feasible, false if provably infeasible,
+    // or indeterminate if not provable one way or the other.
+    boost::logic::tribool isFeasible(Partitioner2::CfgPath&, const Substitutions&, const Semantics&, const SmtSolverPtr&);
+
+    // Safely call the path processor's "found" action for the path's final vertex and return its value.
+    PathProcessor::Action callPathProcessorFound(PathProcessor&, Partitioner2::CfgPath&, const Semantics&, const SmtSolverPtr&);
+
+    // Given an effective K value, adjust it based on how often the last vertex of the path has been visited.  Returns a new
+    // effective K. As a special case, the new K is zero if the last vertex has been visited too often.
+    double adjustEffectiveK(Partitioner2::CfgPath&, double oldK);
+
+    // Given a path that ends with a function call, inline the function or a summary of the function, adjusting the paths_
+    // control flow graph.
+    void summarizeOrInline(Partitioner2::CfgPath&, const Semantics&);
 };
 
 } // namespace

@@ -18,7 +18,7 @@ HEADER_START
 
       //! Replace an expression child of this node with another one.
           virtual int replace_expression(SgExpression *oldChild,SgExpression *newChild);
-      
+
       //! unparsing support for pragmas
       //  void output_pragma(ostream& os);
 
@@ -53,7 +53,7 @@ HEADER_START
      public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-	  // Overriding SgNode versions of these
+    // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual bool cfgIsIndexInteresting(unsigned int index) const $ROSE_OVERRIDE;
           virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
@@ -69,7 +69,7 @@ HEADER_START
           virtual bool isUsedAsLValue() const; // Calls parent.isChildUsedAsLValue(this)
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-       // DQ (11/6/2006): use this to return the operatorPosition 
+       // DQ (11/6/2006): use this to return the operatorPosition
        // (instead of the startOfConstruct as it is used for SgStatement objects)
           virtual Sg_File_Info* get_file_info(void) const $ROSE_OVERRIDE;
           virtual void set_file_info(Sg_File_Info* X) $ROSE_OVERRIDE;
@@ -129,8 +129,8 @@ HEADER_START
 
           Result is true if it stores a type explicitly as a data member, else false.
 
-          \internal True only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
-                    SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+          \internal True only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp,
+                    SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp,
                     SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
                     SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
        */
@@ -205,12 +205,12 @@ HEADER_UNARY_EXPRESSION_START
           void set_operand (SgExpression * exp);
           SgType* get_type() const $ROSE_OVERRIDE;
 
-       // Enums are not properly scoped in the class declaration and are assigned 
-       // to a global scope so we have to change the name to make it unique across 
+       // Enums are not properly scoped in the class declaration and are assigned
+       // to a global scope so we have to change the name to make it unique across
        // different grammars
       /*! \brief Enum value defines operators as prefix or postfix, as appropriate, e.g. operator++().
 
-          This enum type provides support for specification of prefix/postfix operators such 
+          This enum type provides support for specification of prefix/postfix operators such
           as operator++() using a simpler mechanism thatn that provided by C++.  See C++
           standard for details of specification of prefix and postfix operators.
 
@@ -218,7 +218,7 @@ HEADER_UNARY_EXPRESSION_START
        */
           enum Sgop_mode
              {
-               prefix=0 /*! Prefix Operator Specifier */, 
+               prefix=0 /*! Prefix Operator Specifier */,
                postfix  /*! Postfix Operator Specifier */
              };
 
@@ -370,7 +370,7 @@ HEADER_LABEL_REF_EXPRESSION_START
 
           int get_numeric_label_value() const;
 
-       // DQ (12/30/2007): I don't think there is any control flow through this sorts of variables, but this 
+       // DQ (12/30/2007): I don't think there is any control flow through this sorts of variables, but this
        // should be discussed (might apply to assigned goto).
        // virtual unsigned int cfgIndexForEnd() const;
        // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
@@ -401,10 +401,10 @@ HEADER_FUNCTION_REF_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
-			* such as function pointers and virtual functions, the function called cannot be resolved statically;
-			* for those cases this function returns NULL. The actual function expression is available through
-			* get_function(). */
+      /** Returns the associated function declaration, if it can be resolved statically. In some cases,
+      * such as function pointers and virtual functions, the function called cannot be resolved statically;
+      * for those cases this function returns NULL. The actual function expression is available through
+      * get_function(). */
           SgFunctionDeclaration* getAssociatedFunctionDeclaration() const;
 
 //       // get lvalue
@@ -436,9 +436,9 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-      	  //! This is helpful in chasing down the associated declaration to this member function reference.
-		  //! Note: This function can return NULL - for example when the function call occurs through a function
-		  //! pointer.
+          //! This is helpful in chasing down the associated declaration to this member function reference.
+      //! Note: This function can return NULL - for example when the function call occurs through a function
+      //! pointer.
           SgMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
 
        // get lvalue
@@ -472,10 +472,10 @@ HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
-			* such as function pointers and virtual functions, the function called cannot be resolved statically;
-			* for those cases this function returns NULL. The actual function expression is available through
-			* get_function(). */
+      /** Returns the associated function declaration, if it can be resolved statically. In some cases,
+      * such as function pointers and virtual functions, the function called cannot be resolved statically;
+      * for those cases this function returns NULL. The actual function expression is available through
+      * get_function(). */
           SgTemplateFunctionDeclaration* getAssociatedFunctionDeclaration() const;
 
 //       // get lvalue
@@ -510,8 +510,8 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_START
 #endif
 
         //! This is helpful in chasing down the associated declaration to this member function reference.
-		  //! Note: This function can return NULL - for example when the function call occurs through a function
-		  //! pointer.
+      //! Note: This function can return NULL - for example when the function call occurs through a function
+      //! pointer.
           SgTemplateMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
 
        // DQ (12/15/2011): We might require this...
@@ -688,6 +688,11 @@ HEADER_ADA_TASK_REF_EXPRESSION_START
 //~ SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_ADA_TASK_REF_EXPRESSION_END
 
+HEADER_ADA_ATTRIBUTE_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+//~ SgType* get_type() const $ROSE_OVERRIDE;
+HEADER_ADA_ATTRIBUTE_EXPRESSION_END
+
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
 
        // DQ (11/28/2011): Added to support template declarations in the AST.
@@ -742,16 +747,16 @@ HEADER_FUNCTION_CALL_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
-			* such as function pointers and virtual functions, the function called cannot be resolved statically;
-			* for those cases this function returns NULL. The actual function expression is available through
-			* get_function(). */
+      /** Returns the associated function declaration, if it can be resolved statically. In some cases,
+      * such as function pointers and virtual functions, the function called cannot be resolved statically;
+      * for those cases this function returns NULL. The actual function expression is available through
+      * get_function(). */
           SgFunctionDeclaration* getAssociatedFunctionDeclaration() const;
 
-		  /** Returns the associated function symbol, if it can be resolved statically. In some cases,
-			* such as function pointers and virtual functions, the function called cannot be resolved statically;
-			* for those cases this function returns NULL. The actual function expression is available through
-			* get_function(). */
+      /** Returns the associated function symbol, if it can be resolved statically. In some cases,
+      * such as function pointers and virtual functions, the function called cannot be resolved statically;
+      * for those cases this function returns NULL. The actual function expression is available through
+      * get_function(). */
           SgFunctionSymbol* getAssociatedFunctionSymbol() const;
 
        // get lvalue
@@ -906,7 +911,7 @@ HEADER_NARY_OP_START
     VariantTList& get_operators();
     const VariantTList& get_operators() const;
 
-    virtual void append_operation(VariantT sg_operator, SgExpression* operand); 
+    virtual void append_operation(VariantT sg_operator, SgExpression* operand);
 
 HEADER_NARY_OP_END
 
@@ -1012,7 +1017,7 @@ HEADER_SIZEOF_OPERATOR_START
           void set_global_qualification_required(bool global_qualification_required) $ROSE_OVERRIDE;
 
        // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE; 
+          int get_name_qualification_for_pointer_to_member_class_length() const $ROSE_OVERRIDE;
           void set_name_qualification_for_pointer_to_member_class_length(int name_qualification_length) $ROSE_OVERRIDE;
 
        // DQ (4/15/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
@@ -1236,10 +1241,10 @@ HEADER_CONDITIONAL_EXPRESSION_END
 
 HEADER_CAST_EXPRESSION_START
        // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
-       // enum Sg_e_cast_type 
+       // enum Sg_e_cast_type
       /*! \brief Classification of Casts
 
-          Must be either C style cast or C++ style const_cast<>, static_cast<>, 
+          Must be either C style cast or C++ style const_cast<>, static_cast<>,
           dynamic_cast<>, or reinterpret_cast<>.
 
           \internal Only a single value is permited.
@@ -1258,13 +1263,14 @@ HEADER_CAST_EXPRESSION_START
             // e_reference_cast        = 7, /*!< C++ reference cast (base class cast) */
             // e_rvalue_reference_cast = 8,  /*!< C++ rvalue reference cast (base class cast to rvalue) */
                e_safe_cast             = 8, /*!< C++ MSVC specific safe cast */
+               e_ada_type_qualification = 9, /*!< Ada qualified expression */
                e_last_cast  /*!< Last entry in enum of cast types */
              };
 
        // Sg_e_cast_type cast_type();
           cast_type_enum cast_type() const;
 
-       // DQ (1/16/2006): Added to support special version of get_type which uses the p_expression_type 
+       // DQ (1/16/2006): Added to support special version of get_type which uses the p_expression_type
        // (one of the few places where we have to store the expression type explicitly).
           SgType* get_type() const $ROSE_OVERRIDE;
 
@@ -1554,9 +1560,9 @@ HEADER_LIST_DECLARATIONS
           bool get_global_qualification_required_for_type() const;
           void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
 #else
-       // DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support 
+       // DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support
        // using the same support as for the SgConstructor initializer.  The name qualification that is supported for
-       // an aggregate initializer is just that for the C++11 specific type specifier that is sometime required 
+       // an aggregate initializer is just that for the C++11 specific type specifier that is sometime required
        // (for an example of this see Cxx11_tests/test2018_47.C).  Since it is the type name that is qualified
        // it does make sens to use the original names (e.g. name_qualification_length_for_type), but it would be
        // inconsistant with the constructor initializer support, and eliminate the opportunity to reuse that
@@ -1596,7 +1602,7 @@ HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
       /*! \brief Get the SgClassDeclaration associated with this constructor call.
 
           Note that in rare cases where the constructor is associated with a primative type
-          this function will return a NULL pointer.  In which case p_expression_type is a 
+          this function will return a NULL pointer.  In which case p_expression_type is a
           pointer to a SgType which is not a SgClassType, but is a valid pointer to a
           primative type.
 
@@ -1848,9 +1854,13 @@ HEADER_DESIGNATED_INITIALIZER_START
 
 HEADER_DESIGNATED_INITIALIZER_END
 
-// CR (6/25/2020): Added SgJovialTablePreset to support initializers for Jovial tables
+// Rasmussen (6/25/2020): Added SgJovialTablePresetExp to support initializers for Jovial tables
 HEADER_JOVIAL_TABLE_PRESET_EXP_START
 HEADER_JOVIAL_TABLE_PRESET_EXP_END
+
+// Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
+HEADER_JOVIAL_PRESET_POSITION_EXP_START
+HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
 //        virtual unsigned int cfgIndexForEnd() const;
@@ -1979,11 +1989,11 @@ HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION_END
 // #########################################################
 // #########################################################
 
-NOTES: SgAggregateInitializer, SgConstructorInitializer, and 
-       SgAssignInitializer all have different set_type functions 
+NOTES: SgAggregateInitializer, SgConstructorInitializer, and
+       SgAssignInitializer all have different set_type functions
        (is this a bug?).
 
-       set_type in SgPlusAssignOp is different from every other SgxxxAssignOp 
+       set_type in SgPlusAssignOp is different from every other SgxxxAssignOp
 
        SgBitComplementOp set_type function is different from all other Bit operators
 
@@ -1996,10 +2006,10 @@ SOURCE_BASECLASS_EXPRESSION_START
 Sg_File_Info*
 SgExpression::get_file_info() const
    {
-  // DQ (11/8/2006): Note that the EDG/SageIII translation only 
+  // DQ (11/8/2006): Note that the EDG/SageIII translation only
   // uses set_startOfConstruct() and set_endOfConstruct().
 
-  // This redefines get_file_info() as it is implemented for a SgLocatedNode 
+  // This redefines get_file_info() as it is implemented for a SgLocatedNode
   // to use the "get_operatorPosition()" instead of the get_startOfConstruct()"
   // Most if not all operator positions will associated with syntax for the operator.
   // return get_operatorPosition();
@@ -2012,7 +2022,7 @@ SgExpression::get_file_info() const
 void
 SgExpression::set_file_info(Sg_File_Info* fileInfo)
    {
-  // DQ (11/8/2006): Note that the EDG/SageIII translation only 
+  // DQ (11/8/2006): Note that the EDG/SageIII translation only
   // uses set_startOfConstruct() and set_endOfConstruct().
 
   // This redefines get_file_info() as it is implemented for a SgLocatedNode
@@ -2036,8 +2046,8 @@ SgExpression::get_qualified_name_prefix() const
      printf ("In get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
-  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgExpression*>(this));
@@ -2073,7 +2083,7 @@ SgExpression::get_qualified_name_prefix() const
 
      return nameQualifier;
    }
- 
+
 
 SgName
 SgExpression::get_qualified_name_prefix_for_referenced_type() const
@@ -2084,8 +2094,8 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
      printf ("In get_qualified_name_prefix_for_referenced_type(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
-  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
      std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgExpression*>(this));
@@ -2138,12 +2148,12 @@ SgExpression::replace_expression(SgExpression *,SgExpression *)
 void
 SgExpression::set_type()
    {
-    /* 
+    /*
      * this is a quick hack to allow me to rely on being to create a non
-     * abstract object.  For some expression classes this had not been 
+     * abstract object.  For some expression classes this had not been
      * overridden
      */
-     
+
      cerr << "Call to undefined set_type(): aborting" << endl;
      exit(1);
    }
@@ -2255,14 +2265,14 @@ SgExpression::set_lvalue()
    }
 
 int
-SgExpression::get_is_lvalue() const 
+SgExpression::get_is_lvalue() const
    { return is_system_bitflag(p_uattributes,e_lvalue); }
 #endif
 
- 
+
 #if 0
 void
-SgExpression::unset_lvalue() 
+SgExpression::unset_lvalue()
    { unset_system_bitflag(p_uattributes,e_lvalue); }
 
 void
@@ -2271,12 +2281,12 @@ SgExpression::add_pragma(int cnt, SgPragma** plist)
      for(int i=0; i<cnt; i++)
         {
           ::add_pragma(p_uattributes, plist[i]);
-          plist[i]=0; 
+          plist[i]=0;
         }
    }
 
 SgPragma*
-SgExpression::add_pragma(char *nm) 
+SgExpression::add_pragma(char *nm)
    { return ::add_pragma(p_uattributes, nm); }
 
 SgPragma*
@@ -2284,7 +2294,7 @@ SgExpression::get_pragma(char *nm) const
    { return ::get_pragma(p_uattributes, nm); }
 
 int
-SgExpression::remove_pragma(char *nm) 
+SgExpression::remove_pragma(char *nm)
    { return ::remove_pragma(p_uattributes,nm); }
 
 // get attribute,
@@ -2338,7 +2348,7 @@ set_system_bitflag(SgAttributePtrList & pattr, unsigned long int bit)
 void
 unset_system_bitflag(SgAttributePtrList& pattr, unsigned long int bit)
    {
-     SgAttributePtrList::iterator p=pattr.begin();  
+     SgAttributePtrList::iterator p=pattr.begin();
      if(p==pattr.end())
         {
           SgBitAttribute* newAttribute = new SgBitAttribute("SYS_BITFLAG");
@@ -2355,7 +2365,7 @@ unset_system_bitflag(SgAttributePtrList& pattr, unsigned long int bit)
 int
 is_system_bitflag(const SgAttributePtrList& pattr, unsigned long int bit)
    {
-     SgAttributePtrList::const_iterator p=pattr.begin();  
+     SgAttributePtrList::const_iterator p=pattr.begin();
      if(p==pattr.end())
           return 0;
 
@@ -2401,7 +2411,7 @@ Sgget_user_attribute(const SgAttributePtrList& pattr, char *attr_name)
      while( p != pattr.end())
         {
           assert((*p) != NULL);
-          if( !(*p)->isPragma() && (*p)->isSame(attr_name) ) 
+          if( !(*p)->isPragma() && (*p)->isSame(attr_name) )
              {
                assert((*p) != NULL);
                return (SgAttribute *)(*p);
@@ -2438,7 +2448,7 @@ remove_user_attribute(SgAttributePtrList& pattr, char *attr_name)
 #endif
 
 
-int 
+int
 SgExpression::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2455,7 +2465,7 @@ SgExpression::set_name_qualification_length ( int name_qualification_length )
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
@@ -2463,7 +2473,7 @@ SgExpression::set_name_qualification_length ( int name_qualification_length )
    }
 
 
-bool 
+bool
 SgExpression::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2480,14 +2490,14 @@ SgExpression::set_type_elaboration_required ( bool type_elaboration_required )
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
   // p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgExpression::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2504,7 +2514,7 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
@@ -2512,7 +2522,7 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
    }
 
 
-int 
+int
 SgExpression::get_name_qualification_for_pointer_to_member_class_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2529,7 +2539,7 @@ SgExpression::set_name_qualification_for_pointer_to_member_class_length ( int na
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
@@ -2537,7 +2547,7 @@ SgExpression::set_name_qualification_for_pointer_to_member_class_length ( int na
    }
 
 
-bool 
+bool
 SgExpression::get_type_elaboration_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2554,14 +2564,14 @@ SgExpression::set_type_elaboration_for_pointer_to_member_class_required ( bool t
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
   // p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgExpression::get_global_qualification_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -2578,7 +2588,7 @@ SgExpression::set_global_qualification_for_pointer_to_member_class_required ( bo
      ROSE_ASSERT (this != NULL);
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
-     
+
      printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
 
@@ -2613,12 +2623,12 @@ SgExpression::set_originalExpressionTree(SgExpression* X)
 bool
 SgExpression::hasExplicitType()
    {
-  // DQ (3/7/2014):  This could be implemented as a virtual function but would require 11 functions to be 
+  // DQ (3/7/2014):  This could be implemented as a virtual function but would require 11 functions to be
   // implemented. I have thus instead implemented it as a single function on the SgType instead. We
   // can review this if it is important.
 
-  // This function returns true only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp, 
-  // SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp, 
+  // This function returns true only if this is either a SgTemplateParameterVal, SgComplexVal, SgSizeOfOp, SgAlignOfOp,
+  // SgJavaInstanceOfOp, SgJavaAnnotation, SgTypeIdOp, SgVarArgStartOp, SgVarArgStartOneOperandOp,
   // SgVarArgOp, SgVarArgEndOp, SgVarArgCopyOp, SgNewExp, SgRefExp, SgAggregateInitializer, SgCompoundInitializer,
   // SgConstructorInitializer, SgAssignInitializer, SgPseudoDestructorRefExp.
 
@@ -2626,11 +2636,11 @@ SgExpression::hasExplicitType()
 
   // Need to add: SgUpcLocalsizeofExpression, SgUpcBlocksizeofExpression, SgUpcElemsizeofExpression.
 
-  // There are no access functions for SgJavaAnnotation, SgJavaTypeExpression, SgJavaTypeExpression, 
+  // There are no access functions for SgJavaAnnotation, SgJavaTypeExpression, SgJavaTypeExpression,
 
   // DQ (11/10/2014): Added support for SgFunctionParameterRefExp node to store the type explicitly.
 
-     if ( isSgTemplateParameterVal(this) != NULL     || isSgComplexVal(this)    != NULL            || isSgSizeOfOp(this) != NULL                 || 
+     if ( isSgTemplateParameterVal(this) != NULL     || isSgComplexVal(this)    != NULL            || isSgSizeOfOp(this) != NULL                 ||
           isSgAlignOfOp(this) != NULL                || isSgJavaInstanceOfOp(this) != NULL         || isSgTypeIdOp(this)  != NULL                ||
           isSgVarArgStartOp(this) != NULL            || isSgVarArgStartOneOperandOp(this) != NULL  || isSgVarArgOp(this)  != NULL                ||
           isSgVarArgEndOp(this) != NULL              || isSgVarArgCopyOp(this) != NULL             || isSgNewExp(this)  != NULL                  ||
@@ -2840,7 +2850,7 @@ SgExpression::set_explicitly_stored_type( SgType* type )
                break;
              }
 #endif
-          default: 
+          default:
              {
                printf ("Error: SgExpression::set_explicit_type(): default reached: expression = %p = %s \n",this,this->class_name().c_str());
                ROSE_ASSERT(false);
@@ -2927,7 +2937,7 @@ SgUnaryOp::get_type() const
    }
 
 int
-SgUnaryOp::length() const 
+SgUnaryOp::length() const
    { return 1;}
 
 bool
@@ -2939,7 +2949,7 @@ SgUnaryOp::empty() const
 #if 0
 // This should be automatically generated!
 int
-SgUnaryOp::get_mode() 
+SgUnaryOp::get_mode()
    { return p_mode; }
 
 void
@@ -2964,7 +2974,7 @@ SgUnaryOp::get_next (int &n) const
 int
 SgUnaryOp::replace_expression (SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -3006,7 +3016,7 @@ SgBinaryOp::set_lhs_operand(SgExpression * exp)
    {
      set_lhs_operand_i(exp);
 // #ifndef REMOVE_SET_PARENT_FUNCTION
-     if (exp) 
+     if (exp)
         exp->set_parent(this);
 // #endif
 
@@ -3036,7 +3046,7 @@ SgBinaryOp::set_rhs_operand(SgExpression * exp)
    {
      set_rhs_operand_i(exp);
 // #ifndef REMOVE_SET_PARENT_FUNCTION
-     if (exp) 
+     if (exp)
           exp->set_parent(this);
 // #endif
 
@@ -3047,7 +3057,7 @@ SgBinaryOp::set_rhs_operand(SgExpression * exp)
 SgType*
 SgBinaryOp::get_type() const
    {
-  // We have to select one, so for now chose the lhs, it might be that 
+  // We have to select one, so for now chose the lhs, it might be that
   // we have to explicitly store the return type of binary operators.
 
      ROSE_ASSERT(get_lhs_operand() != NULL);
@@ -3105,7 +3115,7 @@ SgBinaryOp::get_next(int& n) const
    {
      if(n==0)
         {
-          n++; 
+          n++;
           return get_lhs_operand();
         }
        else
@@ -3123,7 +3133,7 @@ SgBinaryOp::get_next(int& n) const
 int
 SgBinaryOp::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -3138,9 +3148,9 @@ SgBinaryOp::replace_expression(SgExpression *o, SgExpression *n)
           if (get_rhs_operand() == o)
              {
                set_rhs_operand(n);
-               return 1;  
-             } 
-            else 
+               return 1;
+             }
+            else
              {
                printf ("Warning: inside of SgBinaryOp::replace_expression original SgExpression unidentified \n");
                return 0;
@@ -3156,7 +3166,7 @@ SOURCE_EXPRESSION_ROOT_START
 void
 SgExpressionRoot::initialize_root ( SgExpression* exp, SgStatement* stmt )
    {
-  // The root of an expression should be an expression.  
+  // The root of an expression should be an expression.
   // If the expression's parent is a statement then the
   // statement should contain an expression root object.
 
@@ -3171,14 +3181,14 @@ SgExpressionRoot::initialize_root ( SgExpression* exp, SgStatement* stmt )
   // set_parent(NULL);
   // We can't call the set_parent function because it can't take a NULL pointer
 
-  // We don't want to call set_statement since this will attempt to 
+  // We don't want to call set_statement since this will attempt to
   // initialize the parent of stmt (which would be backwards)
   // set_statement(stmt);
   // p_statement = stmt;
   // call the modified set_statement function
      set_statement(stmt);
 
-  // We use the SgExpressionRoot as the parent of the exp 
+  // We use the SgExpressionRoot as the parent of the exp
   // (this is the purpose of the SgExpressionRoot object)
 // #ifndef REMOVE_SET_PARENT_FUNCTION
      if (exp)
@@ -3194,7 +3204,7 @@ void
 SgExpressionRoot::set_type()
    {
      if (get_operand())
-          set_expression_type(get_operand()->get_type()); 
+          set_expression_type(get_operand()->get_type());
        else
           set_expression_type(SgTypeDefault::createType());
    }
@@ -3217,7 +3227,7 @@ SgExpressionRoot::get_statement() const
         return 0;
      SgStatement* res= isSgStatement( get_parent());
      assert(res != 0);
-     return res; 
+     return res;
    }
 #endif
 
@@ -3331,7 +3341,7 @@ SgExprListExp::replace_expression(SgExpression *o, SgExpression *n)
 int
 SgExprListExp::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -3424,7 +3434,7 @@ SgVarRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
    }
 #endif
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
 int
@@ -3605,7 +3615,7 @@ SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType() const
    }
 
 #if 0
-const SgName & 
+const SgName &
 SgLabelRefExp::get_name() const
    {
      ROSE_ASSERT(p_symbol != NULL);
@@ -3681,7 +3691,7 @@ SgFunctionRefExp::post_construction_initialization()
    {
   // DQ (1/14/2006): set_type is removed
   // if (! get_function_type())
-  //      set_type(); 
+  //      set_type();
    }
 
 SgFunctionSymbol*
@@ -3715,10 +3725,10 @@ SgFunctionRefExp::getAssociatedFunctionDeclaration() const
      return returnFunctionDeclaration;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgFunctionRefExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3735,7 +3745,7 @@ SgFunctionRefExp::set_name_qualification_length ( int name_qualification_length 
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgFunctionRefExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3752,7 +3762,7 @@ SgFunctionRefExp::set_type_elaboration_required ( bool type_elaboration_required
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgFunctionRefExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3776,7 +3786,7 @@ SOURCE_FUNCTION_REFERENCE_EXPRESSION_END
 SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_START
 
 void
-SgMemberFunctionRefExp::post_construction_initialization() 
+SgMemberFunctionRefExp::post_construction_initialization()
    {
    }
 
@@ -3828,10 +3838,10 @@ SgMemberFunctionRefExp::getAssociatedMemberFunctionDeclaration() const
      return returnMemberFunctionDeclaration;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgMemberFunctionRefExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3848,7 +3858,7 @@ SgMemberFunctionRefExp::set_name_qualification_length ( int name_qualification_l
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgMemberFunctionRefExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3865,7 +3875,7 @@ SgMemberFunctionRefExp::set_type_elaboration_required ( bool type_elaboration_re
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgMemberFunctionRefExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3921,10 +3931,10 @@ SgTemplateFunctionRefExp::getAssociatedFunctionDeclaration() const
      return returnFunctionDeclaration;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgTemplateFunctionRefExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3941,7 +3951,7 @@ SgTemplateFunctionRefExp::set_name_qualification_length ( int name_qualification
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgTemplateFunctionRefExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3958,7 +3968,7 @@ SgTemplateFunctionRefExp::set_type_elaboration_required ( bool type_elaboration_
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgTemplateFunctionRefExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -3982,7 +3992,7 @@ SOURCE_TEMPLATE_FUNCTION_REFERENCE_EXPRESSION_END
 SOURCE_TEMPLATE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_START
 
 void
-SgTemplateMemberFunctionRefExp::post_construction_initialization() 
+SgTemplateMemberFunctionRefExp::post_construction_initialization()
    {
    }
 
@@ -4015,10 +4025,10 @@ SgTemplateMemberFunctionRefExp::getAssociatedMemberFunctionDeclaration() const
      return returnMemberFunctionDeclaration;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgTemplateMemberFunctionRefExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4035,7 +4045,7 @@ SgTemplateMemberFunctionRefExp::set_name_qualification_length ( int name_qualifi
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgTemplateMemberFunctionRefExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4052,7 +4062,7 @@ SgTemplateMemberFunctionRefExp::set_type_elaboration_required ( bool type_elabor
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgTemplateMemberFunctionRefExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4240,10 +4250,10 @@ SgType* SgEnumVal::get_type() const
      return SgEnumType::createType(enumDeclaration);
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgEnumVal::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4260,7 +4270,7 @@ SgEnumVal::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgEnumVal::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4277,7 +4287,7 @@ SgEnumVal::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgEnumVal::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -4342,11 +4352,30 @@ SOURCE_JOVIAL_BIT_VALUE_EXPRESSION_START
 SOURCE_JOVIAL_BIT_VALUE_EXPRESSION_END
 
 SOURCE_ADA_TASK_REF_EXPRESSION_START
-SgType* SgAdaTaskRefExp::get_type() const 
+SgType* SgAdaTaskRefExp::get_type() const
 {
   return SgAdaTaskType::createType(get_decl(), NULL);
 }
 SOURCE_ADA_TASK_REF_EXPRESSION_END
+
+
+SOURCE_ADA_ATTRIBUTE_EXPRESSION_START
+SgType* SgAdaAttributeExp::get_type() const
+{
+  // \todo \pp repl w/ type of attribute
+  //       ==> introduce type as a member?
+  return SgTypeUnknown::createType(NULL);
+}
+
+void
+SgAdaAttributeExp::append_arg(SgExpression* expr)
+{
+  ROSE_ASSERT(p_args != NULL);
+
+  p_args->append_expression(expr);
+}
+
+SOURCE_ADA_ATTRIBUTE_EXPRESSION_END
 
 
 SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
@@ -4357,10 +4386,10 @@ SgTemplateParameterVal::get_template_parameter_name() const
   // DQ (11/28/2011): Added to support template declarations in the AST.
 
   // Note that we have to store the index position into the template parameter list
-  // so that this template parameter can be identified and its name used.  It 
+  // so that this template parameter can be identified and its name used.  It
   // can be different from the template parameter name of the template class declaration
   // (which is the name referenced in EDG), so we have to find the enclosing template
-  // declaration and use the index position into its template parameter list (which 
+  // declaration and use the index position into its template parameter list (which
   // can of course use different names).
 
   // DQ (7/24/2012): Added test.
@@ -4505,7 +4534,7 @@ SgTemplateParameterVal::get_template_parameter_name() const
 SgType*
 SgTemplateParameterVal::get_type() const
    {
-  // DQ (8/6/2013): The correct type is now saved explicitly so that it can be used to disambiguate 
+  // DQ (8/6/2013): The correct type is now saved explicitly so that it can be used to disambiguate
   // template functions overloaded on template parameters. See test2013_303.C for an example.
      ROSE_ASSERT(this->get_valueType() != NULL);
 
@@ -4575,8 +4604,8 @@ SgCallExpression::get_next(int& n) const
         {
           n++;
           return get_function();
-        } 
-       else 
+        }
+       else
           if(p_args && n==1)
              {
                n++;
@@ -4615,7 +4644,7 @@ SgCallExpression::append_arg(SgExpression* what)
 void
 SgCallExpression::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
    {
-     p_args->insert_expression(where,what); 
+     p_args->insert_expression(where,what);
    }
 #endif
 
@@ -4623,7 +4652,7 @@ SgCallExpression::insert_arg(const SgExpressionPtrList::iterator& where, SgExpre
 int
 SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -4717,11 +4746,11 @@ SgFunctionCallExp::get_type() const
 
        // DQ (7/15/2007): Handle case of typedef of function type
        // Milind Chabbi, after discussing with DQ (7/29/2013), we need to strip all. See test: CompileTests/Cxx_tests/test2013_milind_01.C
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE | 
-                                                             SgType::STRIP_REFERENCE_TYPE | 
-                                                             SgType::STRIP_RVALUE_REFERENCE_TYPE | 
-                                                             SgType::STRIP_POINTER_TYPE | 
-                                                             SgType::STRIP_ARRAY_TYPE | 
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE |
+                                                             SgType::STRIP_REFERENCE_TYPE |
+                                                             SgType::STRIP_RVALUE_REFERENCE_TYPE |
+                                                             SgType::STRIP_POINTER_TYPE |
+                                                             SgType::STRIP_ARRAY_TYPE |
                                                              SgType::STRIP_TYPEDEF_TYPE);
 
        // printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
@@ -4731,7 +4760,7 @@ SgFunctionCallExp::get_type() const
           if (functionType == NULL) {
               //printf ("Warning: Unable to infer the return type of %s in SgFunctionCallExp\n", likelyFunctionType->class_name().c_str());
               return SgTypeUnknown::createType();
-          } 
+          }
         }
      ROSE_ASSERT(functionType);
      returnType = functionType->get_return_type();
@@ -4805,7 +4834,7 @@ SgArrowExp::get_type() const
      printf ("SgArrowExp::get_type(): get the type of the rhs operand returnType = %p = %s \n",returnType,returnType->class_name().c_str());
 #endif
 
-  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as 
+  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as
   // shared (even if the type on the rhs_operand is non-shared) (see UPC_tests/test2014_56.c for an example).
      returnType = checkForSharedTypeAndReturnSharedType(returnType);
 
@@ -4820,7 +4849,7 @@ SgArrowExp::get_type() const
 SgType*
 SgArrowExp::checkForSharedTypeAndReturnSharedType( SgType* possibleReturnType ) const
    {
-  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as 
+  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as
   // shared (even if the type on the rhs_operand is non-shared) (see UPC_tests/test2014_56.c for an example).
 
      SgType* returnType = possibleReturnType;
@@ -4919,8 +4948,8 @@ SgDotStarOp::get_type() const
   // For the SgDotStarOp, the type is the type of the rhs operand (e.g. "A.*x" where "x" is a member function pointer of the class "A").
 
   // Comment from Jeremiah (7/20/2006)
-  // In SOURCE_DOT_STAR_OPERATOR_EXPRESSION's get_type() method, the expression type is computed as the type of the RHS operand.  
-  // This is most likely a pointer to member type, though, not the type of the underlying member (assuming the types of 
+  // In SOURCE_DOT_STAR_OPERATOR_EXPRESSION's get_type() method, the expression type is computed as the type of the RHS operand.
+  // This is most likely a pointer to member type, though, not the type of the underlying member (assuming the types of
   // pointer-to-member expressions are set correctly).  The same issue applies to SOURCE_ARROW_STAR_OPERATOR_EXPRESSION.
 
   // printf ("SgDotStarOp::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
@@ -4943,7 +4972,7 @@ SgDotStarOp::get_type() const
      switch(someType->variantT())
         {
        // These cases all have base types and the pointer dereferencing returns the base type
-       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // But since p_base_type is placed at each of the different SgType IR nodes we have
        // to handle each case separately.
           case V_SgPointerType:
              {
@@ -5024,7 +5053,7 @@ SgArrowStarOp::get_type() const
      switch(someType->variantT())
         {
        // These cases all have base types and the pointer dereferencing returns the base type
-       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // But since p_base_type is placed at each of the different SgType IR nodes we have
        // to handle each case separately.
           case V_SgPointerType:
              {
@@ -5109,11 +5138,11 @@ $CLASSNAME::get_type() const
      printf ("In $CLASSNAME::get_type() \n");
 #endif
 
-  // DQ (8/27/2006): We can get this result more quickly without searching the AST backward to the root and 
-  // if we do so it will be more consistant with what we have to do for the SgTypeBool which similarly must 
+  // DQ (8/27/2006): We can get this result more quickly without searching the AST backward to the root and
+  // if we do so it will be more consistant with what we have to do for the SgTypeBool which similarly must
   // be unparsed differently for C99 and C++ (gnu gcc also accepts "_Bool" as a type).
-     SgType* returnType = (SageInterface::is_C_language() == true) ? 
-                               static_cast<SgType*>(SgTypeInt::createType()) : 
+     SgType* returnType = (SageInterface::is_C_language() == true) ?
+                               static_cast<SgType*>(SgTypeInt::createType()) :
                                static_cast<SgType*>(SgTypeBool::createType());
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -5267,7 +5296,7 @@ SOURCE_NARY_OP_END
 
 SOURCE_NARY_COMPARISON_OP_START
 SgType*
-SgNaryComparisonOp::get_type() const 
+SgNaryComparisonOp::get_type() const
    {
 #if 1
      printf ("In SgNaryComparisonOp::get_type() \n");
@@ -5279,7 +5308,7 @@ SOURCE_NARY_COMPARISON_OP_END
 
 SOURCE_NARY_BOOLEAN_OP_START
 SgType*
-SgNaryBooleanOp::get_type() const 
+SgNaryBooleanOp::get_type() const
    {
      return SageBuilder::buildVoidType();
    }
@@ -5290,7 +5319,7 @@ SOURCE_AND_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an integer representing the logical type 
+  // This function returns an integer representing the logical type
 
 #if 0
      printf ("In $CLASSNAME::get_type() \n");
@@ -5313,7 +5342,7 @@ SOURCE_OR_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an integer representing the logical type 
+  // This function returns an integer representing the logical type
 
 #if 0
      printf ("In $CLASSNAME::get_type() \n");
@@ -5349,8 +5378,8 @@ SOURCE_COMMA_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // DQ (10/2/2006): Comma operator's get_type function didn't previously exist, but it should 
-  // because its semantics is different from the default SgBinaryOp::get_type() which returns 
+  // DQ (10/2/2006): Comma operator's get_type function didn't previously exist, but it should
+  // because its semantics is different from the default SgBinaryOp::get_type() which returns
   // the type associated with the lhs.  This returns the type of the rhs.
      ROSE_ASSERT(get_lhs_operand() != NULL);
      ROSE_ASSERT(get_rhs_operand() != NULL);
@@ -5389,7 +5418,7 @@ SOURCE_SIZE_OF_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
@@ -5408,7 +5437,7 @@ $CLASSNAME::get_type() const
 int
 SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -5424,12 +5453,12 @@ SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
           printf ("Warning: inside of SgSizeOfOp::replace_expression original SgExpression unidentified \n");
           return 0;
         }
-   } 
+   }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgSizeOfOp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5446,7 +5475,7 @@ SgSizeOfOp::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgSizeOfOp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5463,7 +5492,7 @@ SgSizeOfOp::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgSizeOfOp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5481,10 +5510,10 @@ SgSizeOfOp::set_global_qualification_required ( bool global_qualification_requir
      p_global_qualification_required = global_qualification_required;
    }
 
-// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgSizeOfOp::get_name_qualification_for_pointer_to_member_class_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5501,7 +5530,7 @@ SgSizeOfOp::set_name_qualification_for_pointer_to_member_class_length ( int name
      p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
    }
 
-bool 
+bool
 SgSizeOfOp::get_type_elaboration_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5518,7 +5547,7 @@ SgSizeOfOp::set_type_elaboration_for_pointer_to_member_class_required ( bool typ
      p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgSizeOfOp::get_global_qualification_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5547,7 +5576,7 @@ SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
@@ -5566,7 +5595,7 @@ $CLASSNAME::get_type() const
 int
 SgAlignOfOp::replace_expression (SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -5582,12 +5611,12 @@ SgAlignOfOp::replace_expression (SgExpression *o, SgExpression *n)
           printf ("Warning: inside of SgAlignOfOp::replace_expression original SgExpression unidentified \n");
           return 0;
         }
-   } 
+   }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgAlignOfOp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5604,7 +5633,7 @@ SgAlignOfOp::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgAlignOfOp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5621,7 +5650,7 @@ SgAlignOfOp::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgAlignOfOp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5667,7 +5696,7 @@ SgNoexceptOp::get_type() const
 int
 SgNoexceptOp::replace_expression (SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -5683,7 +5712,7 @@ SgNoexceptOp::replace_expression (SgExpression *o, SgExpression *n)
           printf ("Warning: inside of SgAlignOfOp::replace_expression original SgExpression unidentified \n");
           return 0;
         }
-   } 
+   }
 #endif
 
 SOURCE_NOEXCEPT_OPERATOR_EXPRESSION_END
@@ -5693,7 +5722,7 @@ SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
@@ -5713,7 +5742,7 @@ $CLASSNAME::get_type() const
 int
 SgJavaInstanceOfOp::replace_expression (SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -5738,7 +5767,7 @@ SOURCE_TYPE_ID_OPERATOR_EXPRESSION_START
 
 #if 0
 // DQ (1/17/2008): There is already an operand_type with get and set functions generated by ROSETTA.
-// DQ (1/17/2008): Added set_type function since this is one of three IR nodes that require 
+// DQ (1/17/2008): Added set_type function since this is one of three IR nodes that require
 // the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
 void
 SgTypeIdOp::set_type( SgType* type )
@@ -5755,9 +5784,9 @@ SgTypeIdOp::get_type() const
 #endif
 
 #if 0
-  // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
-  // type of expression expr. You must include the standard template library header <typeinfo> to use the 
-  // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a 
+  // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the
+  // type of expression expr. You must include the standard template library header <typeinfo> to use the
+  // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a
   // SgClassType with reference to the class declaration that should have been seen or we can perhaps assume to be
   // simply: "std::type_info"
 
@@ -5812,10 +5841,10 @@ SgTypeIdOp::get_type() const
 #endif
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgTypeIdOp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5832,7 +5861,7 @@ SgTypeIdOp::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgTypeIdOp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5849,7 +5878,7 @@ SgTypeIdOp::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgTypeIdOp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5867,10 +5896,10 @@ SgTypeIdOp::set_global_qualification_required ( bool global_qualification_requir
      p_global_qualification_required = global_qualification_required;
    }
 
-// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgTypeIdOp::get_name_qualification_for_pointer_to_member_class_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5887,7 +5916,7 @@ SgTypeIdOp::set_name_qualification_for_pointer_to_member_class_length ( int name
      p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
    }
 
-bool 
+bool
 SgTypeIdOp::get_type_elaboration_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5904,7 +5933,7 @@ SgTypeIdOp::set_type_elaboration_for_pointer_to_member_class_required ( bool typ
      p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgTypeIdOp::get_global_qualification_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -5933,7 +5962,7 @@ SOURCE_VARARG_OPERATOR_START
 
 #if 0
 // There is a set_expression_type function alread, soe we don't need this.
-// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require 
+// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require
 // the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
 void
 $CLASSNAME::set_type( SgType* type )
@@ -6011,7 +6040,7 @@ SgPointerDerefExp::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
 
-  // DQ (7/28/2006): This code can't be used for both the SgPointerDerefExp and the SgPntrArrRefExp IR nodes because 
+  // DQ (7/28/2006): This code can't be used for both the SgPointerDerefExp and the SgPntrArrRefExp IR nodes because
   // it is a bit different (one node is a unary operator and the other is a binary operator).
 
   // This function returns the base type of the type returned from get_operand()->get_type() (which should be a SgPointerType).
@@ -6038,7 +6067,7 @@ SgPointerDerefExp::get_type() const
 
   // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes
   // A better idea would be to have a function that strips off types based on a set of flags
-  // that would control stripping of pointer references, array references, C++ references, 
+  // that would control stripping of pointer references, array references, C++ references,
   // modifiers, and typedefs.
 
      SgType* returnType = NULL;
@@ -6047,7 +6076,7 @@ SgPointerDerefExp::get_type() const
      switch(someType->variantT())
         {
        // These cases all have base types and the pointer dereferencing returns the base type
-       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // But since p_base_type is placed at each of the different SgType IR nodes we have
        // to handle each case separately.
           case V_SgPointerType:
              {
@@ -6141,10 +6170,10 @@ SgPointerDerefExp::get_type() const
              }
 
 #if 0
-       // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
+       // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an
        // expression (not required to be an lvalue)!
        // DQ (9/30/2006): This case appears where the expression of sizeof is a literal (in this case a char*).
-       // This can be a SgTypeChar for "sizeof('\x1234567890123456789012345678901234567890')", 
+       // This can be a SgTypeChar for "sizeof('\x1234567890123456789012345678901234567890')",
        // it is not clear how to handle this case, at present we just return the SgTypeChar type.
           case V_SgTypeChar:
              {
@@ -6225,15 +6254,15 @@ SgAddressOfOp::get_type() const
         }
        else
         {
-       // Milind Chabbi (8/1/2013) We must strip the reference else we will get pointer to a reference. 
+       // Milind Chabbi (8/1/2013) We must strip the reference else we will get pointer to a reference.
        // See CompileTests/Cxx_tests/test2004_157.C run under extractFunctionArgumentsNormalization
        // TODO: should we strip STRIP_TYPEDEF_TYPE? Not sure, need to talk to Dan.
-       // DQ (7/16/2014): Dan says no. Don't strip the typedef or we could generate references to types 
+       // DQ (7/16/2014): Dan says no. Don't strip the typedef or we could generate references to types
        // in the AST that might be private or inaccessible when we compile the unparsed the source code).
        // TV (11/13/2018): Added r-value reference handling
           returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE));
 
-       // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as 
+       // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as
        // shared (even if the type on the rhs_operand is non-shared) (see UPC_tests/test2014_56.c for an example).
           returnType = checkForSharedTypeAndReturnSharedType(returnType);
         }
@@ -6248,7 +6277,7 @@ SgAddressOfOp::get_type() const
 SgType*
 SgAddressOfOp::checkForSharedTypeAndReturnSharedType( SgType* possibleReturnType ) const
    {
-  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as 
+  // DQ (7/16/2014): In the case of UPC shared type for the lhs_operand, we need to return a type that is marked as
   // shared (even if the type on the rhs_operand is non-shared) (see UPC_tests/test2014_56.c for an example).
 
      SgType* returnType = possibleReturnType;
@@ -6312,7 +6341,7 @@ $CLASSNAME::$CLASSNAME(Sg_File_Info * fi, SgExpression * exp, Sgop_mode a_mode)
    {
      set_mode(a_mode);
      if (exp)
-          exp->set_parent(this); 
+          exp->set_parent(this);
    }
 
 $CLASSNAME::$CLASSNAME(SgExpression * exp, Sgop_mode a_mode)
@@ -6320,7 +6349,7 @@ $CLASSNAME::$CLASSNAME(SgExpression * exp, Sgop_mode a_mode)
    {
      set_mode(a_mode);
      if (exp)
-          exp->set_parent(this); 
+          exp->set_parent(this);
    }
 
 void
@@ -6336,7 +6365,7 @@ SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION_START
 $CLASSNAME::$CLASSNAME(Sg_File_Info * fi, SgExpression * exp, Sgop_mode a_mode)
    : $BASECLASS(fi, exp, NULL)
    {
-     set_mode(a_mode); 
+     set_mode(a_mode);
      if (exp)
           exp->set_parent(this);
    }
@@ -6344,13 +6373,13 @@ $CLASSNAME::$CLASSNAME(Sg_File_Info * fi, SgExpression * exp, Sgop_mode a_mode)
 $CLASSNAME::$CLASSNAME( SgExpression * exp, Sgop_mode a_mode)
    : $BASECLASS(exp, NULL)
    {
-     set_mode(a_mode); 
+     set_mode(a_mode);
      if (exp)
           exp->set_parent(this);
    }
 
 void
-$CLASSNAME::post_construction_initialization() 
+$CLASSNAME::post_construction_initialization()
    {
      set_mode(SgUnaryOp::prefix);
    }
@@ -6361,7 +6390,7 @@ SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION_END
 SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION_START
 
 void
-SgBitComplementOp::post_construction_initialization() 
+SgBitComplementOp::post_construction_initialization()
    {
   // DQ (1/20/2019): This function must be defined here so that we can properly mark this operator as a prefix operator (see test2019_10.C).
      set_mode(SgUnaryOp::prefix);
@@ -6450,9 +6479,9 @@ $CLASSNAME::get_type() const
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
 
-  // Jeremiah (7/20/2006): Despite the comments, SOURCE_CONDITIONAL_EXPRESSION refers to a p_expression_type member, 
-  // but then ignores it.  I think you may want to store the type explicitly for this operator, as computing it is 
-  // difficult (requires handling user-defined conversions and such).  The return type can be either the true or false 
+  // Jeremiah (7/20/2006): Despite the comments, SOURCE_CONDITIONAL_EXPRESSION refers to a p_expression_type member,
+  // but then ignores it.  I think you may want to store the type explicitly for this operator, as computing it is
+  // difficult (requires handling user-defined conversions and such).  The return type can be either the true or false
   // types, and they can be different.
 
      ROSE_ASSERT(p_true_exp  != NULL);
@@ -6482,7 +6511,7 @@ $CLASSNAME::get_type() const
         }
 #endif
 
-  // This was the previous choice for how p_expression_type was set, 
+  // This was the previous choice for how p_expression_type was set,
   // so to be consistant we will select the same branch.
      SgType* returnType = trueType;
 
@@ -6514,7 +6543,7 @@ $CLASSNAME::get_next(int& n) const
 int
 $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -6525,14 +6554,14 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
           set_conditional_exp(n);
           n->set_parent(this);
           return 1;
-        } 
+        }
        else
         {
           if (get_true_exp() == o)
              {
                set_true_exp(n);
                n->set_parent(this);
-               return 1; 
+               return 1;
              }
             else
              {
@@ -6556,7 +6585,7 @@ SOURCE_CONDITIONAL_EXPRESSION_END
 SOURCE_CAST_EXPRESSION_START
 
 void
-SgCastExp::post_construction_initialization() 
+SgCastExp::post_construction_initialization()
    {
    }
 
@@ -6568,7 +6597,7 @@ SgCastExp::cast_type() const
      return p_cast_type;
    }
 
-// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require 
+// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require
 // the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
 void
 SgCastExp::set_type( SgType* type )
@@ -6580,7 +6609,7 @@ SgType*
 SgCastExp::get_type() const
    {
   // DQ (1/16/2006): In this function we want to return the stored p_expression_type.
-  // This IR node has to store the type explicitly since there is no other way to 
+  // This IR node has to store the type explicitly since there is no other way to
   // recover what the cast is TO (since the operand stored what the cast in FROM).
 
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
@@ -6595,7 +6624,7 @@ SgCastExp::get_type() const
      return p_expression_type;
    }
 
-bool 
+bool
 SgCastExp::cast_looses_precision()
    {
   // DQ (10/24/2014): Added support to determine when cast should be allowable.
@@ -6615,16 +6644,16 @@ SgCastExp::cast_looses_precision()
               isSgTypeSignedInt(operantType) != NULL   || isSgTypeSignedLong(operantType) != NULL   || isSgTypeSignedShort(operantType) != NULL   || isSgTypeSignedChar(operantType) != NULL)
              {
                result = true;
-             }  
+             }
         }
 
      return result;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgCastExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6641,7 +6670,7 @@ SgCastExp::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgCastExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6658,7 +6687,7 @@ SgCastExp::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgCastExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6700,10 +6729,10 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
      return s;
    }
 
-// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgCastExp::get_name_qualification_for_pointer_to_member_class_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6720,7 +6749,7 @@ SgCastExp::set_name_qualification_for_pointer_to_member_class_length ( int name_
      p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
    }
 
-bool 
+bool
 SgCastExp::get_type_elaboration_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6737,7 +6766,7 @@ SgCastExp::set_type_elaboration_for_pointer_to_member_class_required ( bool type
      p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgCastExp::get_global_qualification_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -6794,7 +6823,7 @@ SgPntrArrRefExp::get_type() const
 
   // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes
   // A better idea would be to have a function that strips off types based on a set of flags
-  // that would control stripping of pointer references, array references, C++ references, 
+  // that would control stripping of pointer references, array references, C++ references,
   // modifiers, and typedefs.
 
      SgType* returnType = NULL;
@@ -6808,7 +6837,7 @@ SgPntrArrRefExp::get_type() const
      switch(someType->variantT())
         {
        // These cases all have base types and the pointer dereferencing returns the base type
-       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // But since p_base_type is placed at each of the different SgType IR nodes we have
        // to handle each case separately.
           case V_SgPointerType:
              {
@@ -6930,7 +6959,7 @@ $CLASSNAME::get_next(int& n) const
                     return get_builtin_args();
              }
         }
-       else 
+       else
           if(n==1)
              {
                n++;
@@ -6946,7 +6975,7 @@ $CLASSNAME::get_next(int& n) const
 int
 $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -6956,7 +6985,7 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
         {
           set_placement_args(isSgExprListExp(n));
           n->set_parent(this);
-          return 1; 
+          return 1;
         }
        else
         {
@@ -6989,9 +7018,9 @@ $CLASSNAME::get_type() const
 
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
 
-  // The p_constructor_args really just identifies the constructor being called, 
+  // The p_constructor_args really just identifies the constructor being called,
   // from which we can get the type to be returned from the new operator!
-  // If there is no constructor then this might be a primative type or perhaps 
+  // If there is no constructor then this might be a primative type or perhaps
   // a class or struct without an explicit constructor.
      // ROSE_ASSERT(p_constructor_args != NULL); -- JJW hack
 
@@ -6999,8 +7028,8 @@ $CLASSNAME::get_type() const
      printf ("In $CLASSNAME::get_type() \n");
 #endif
 
-  // Since where the p_constructor_args->get_declaration() == NULL (often for primative types) 
-  // we need the explicitly stored p_expression_type pointer anyway so we can just make it the 
+  // Since where the p_constructor_args->get_declaration() == NULL (often for primative types)
+  // we need the explicitly stored p_expression_type pointer anyway so we can just make it the
   // return type for all cases.
   // SgType* returnType = p_expression_type;
   // SgType* returnType = SgPointerType::createType(p_expression_type);
@@ -7013,10 +7042,10 @@ $CLASSNAME::get_type() const
      return returnType;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgNewExp::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7033,7 +7062,7 @@ SgNewExp::set_name_qualification_length ( int name_qualification_length )
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgNewExp::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7050,7 +7079,7 @@ SgNewExp::set_type_elaboration_required ( bool type_elaboration_required )
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgNewExp::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7069,10 +7098,10 @@ SgNewExp::set_global_qualification_required ( bool global_qualification_required
    }
 
 
-// DQ (4/15/2019): These six access functions should not be generated by ROSETTA 
+// DQ (4/15/2019): These six access functions should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgNewExp::get_name_qualification_for_pointer_to_member_class_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7089,7 +7118,7 @@ SgNewExp::set_name_qualification_for_pointer_to_member_class_length ( int name_q
      p_name_qualification_for_pointer_to_member_class_length = name_qualification_length;
    }
 
-bool 
+bool
 SgNewExp::get_type_elaboration_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7106,7 +7135,7 @@ SgNewExp::set_type_elaboration_for_pointer_to_member_class_required ( bool type_
      p_type_elaboration_for_pointer_to_member_class_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgNewExp::get_global_qualification_for_pointer_to_member_class_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7190,7 +7219,7 @@ SgDeleteExp::get_next(int& n) const
 int
 SgDeleteExp::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -7212,7 +7241,7 @@ SOURCE_DELETE_OPERATOR_EXPRESSION_END
 
 SOURCE_HERE_EXPRESSION_START
 void
-$CLASSNAME::post_construction_initialization() 
+$CLASSNAME::post_construction_initialization()
    {
    }
 
@@ -7266,7 +7295,7 @@ SgRangeExp* SgRangeExp::append(SgExpression *exp)
   //or start:increment:end
 
   ROSE_ASSERT(exp != NULL);
-  
+
   if(p_start == NULL)
     {
       p_start = exp;
@@ -7274,23 +7303,23 @@ SgRangeExp* SgRangeExp::append(SgExpression *exp)
   else
     {
       if(p_end == NULL)
-	{
-	  p_end = exp;
-	}
+  {
+    p_end = exp;
+  }
       else
-	{
-	  if(p_stride == NULL)
-	    {
-	      //Swap stride with end. 1:2 then 1:2:3 comes, 2 was end. now 2 becomes stride
-	      p_stride = p_end;
-	      p_end = exp;	      
-	    }
-	  else
-	    {
-	      //cannot do more appends. Max 3 items allowed. Raise an error
-	      return NULL;
-	    }
-	}
+  {
+    if(p_stride == NULL)
+      {
+        //Swap stride with end. 1:2 then 1:2:3 comes, 2 was end. now 2 becomes stride
+        p_stride = p_end;
+        p_end = exp;
+      }
+    else
+      {
+        //cannot do more appends. Max 3 items allowed. Raise an error
+        return NULL;
+      }
+  }
     }
 
   exp->set_parent(this);
@@ -7399,7 +7428,7 @@ SOURCE_INITIALIZER_EXPRESSION_END
 SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_START
 
 void
-SgAggregateInitializer::post_construction_initialization() 
+SgAggregateInitializer::post_construction_initialization()
    {
      if (get_initializers())
           get_initializers()->set_parent(this);
@@ -7441,7 +7470,7 @@ SgAggregateInitializer::get_next(int& n) const
 int
 SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -7485,11 +7514,11 @@ SgAggregateInitializer::get_type() const
         }
    }
 
-// DQ (6/11/2015): Moved these eight access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these eight access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
 #if 1
-bool 
+bool
 SgAggregateInitializer::get_requiresGlobalNameQualificationOnType () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7506,7 +7535,7 @@ SgAggregateInitializer::set_requiresGlobalNameQualificationOnType ( bool require
      p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
    }
 
-int 
+int
 SgAggregateInitializer::get_name_qualification_length_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7523,7 +7552,7 @@ SgAggregateInitializer::set_name_qualification_length_for_type ( int name_qualif
      p_name_qualification_length_for_type = name_qualification_length_for_type;
    }
 
-bool 
+bool
 SgAggregateInitializer::get_type_elaboration_required_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7540,7 +7569,7 @@ SgAggregateInitializer::set_type_elaboration_required_for_type ( bool type_elabo
      p_type_elaboration_required_for_type = type_elaboration_required_for_type;
    }
 
-bool 
+bool
 SgAggregateInitializer::get_global_qualification_required_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7557,14 +7586,14 @@ SgAggregateInitializer::set_global_qualification_required_for_type ( bool global
      p_global_qualification_required_for_type = global_qualification_required_for_type;
    }
 #else
-// DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support 
+// DQ (3/22/2018): The names of the data members have been renamed to support the name qualification support
 // using the same support as for the SgConstructor initializer.  The name qualification that is supported for
-// an aggregate initializer is just that for the C++11 specific type specifier that is sometime required 
+// an aggregate initializer is just that for the C++11 specific type specifier that is sometime required
 // (for an example of this see Cxx11_tests/test2018_47.C).  Since it is the type name that is qualified
 // it does make sens to use the original names (e.g. name_qualification_length_for_type), but it would be
 // inconsistant with the constructor initializer support, and eliminate the opportunity to reuse that
 // supporting name qualification code.
-int 
+int
 SgAggregateInitializer::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7581,7 +7610,7 @@ SgAggregateInitializer::set_name_qualification_length ( int name_qualification_l
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgAggregateInitializer::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7598,7 +7627,7 @@ SgAggregateInitializer::set_type_elaboration_required ( bool type_elaboration_re
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgAggregateInitializer::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7622,7 +7651,7 @@ SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_END
 SOURCE_COMPOUND_INITIALIZER_EXPRESSION_START
 
 void
-SgCompoundInitializer::post_construction_initialization() 
+SgCompoundInitializer::post_construction_initialization()
    {
      if (get_initializers())
           get_initializers()->set_parent(this);
@@ -7664,7 +7693,7 @@ SgCompoundInitializer::get_next(int& n) const
 int
 SgCompoundInitializer::replace_expression(SgExpression* o, SgExpression* n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -7741,7 +7770,7 @@ SgConstructorInitializer::get_class_decl () const
 #else
      // DQ (11/11/2014): Original code which does not work for Fortran (the fortran_constructor_function for a data type is not in the same scope as the data type).
      // This might be something that we want to visit at some point.  But this is caught as an error because the C++11 support caused more
-     // debug information to be placed into the generated AST graphs and so this function is now called for Fortran code where it had not 
+     // debug information to be placed into the generated AST graphs and so this function is now called for Fortran code where it had not
      // previously been called for Fortran code.
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
@@ -7754,17 +7783,17 @@ SgConstructorInitializer::get_class_decl () const
         class_decl = isSgClassDeclaration(expr_type->get_declaration());
         assert(class_decl!=NULL);
     } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
-	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
-	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
-	    // SAGE Representation.
+      // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
+      // an SgJavaParameterizedType is a class.  However, this is not the case in the current
+      // SAGE Representation.
         class_decl = isSgClassDeclaration(parmType->get_declaration());
-        ROSE_ASSERT(class_decl != NULL);    
+        ROSE_ASSERT(class_decl != NULL);
     } else if (SgJavaQualifiedType *qualType = isSgJavaQualifiedType(p_expression_type)) {
-	    // 01/24/15 PC added case of SgJavaQualifiedType... Note that Strictly speaking,
-	    // an SgJavaQualifiedType is a class.  However, this is not the case in the current
-	    // SAGE Representation.
+      // 01/24/15 PC added case of SgJavaQualifiedType... Note that Strictly speaking,
+      // an SgJavaQualifiedType is a class.  However, this is not the case in the current
+      // SAGE Representation.
         class_decl = isSgClassDeclaration(qualType->get_declaration());
-        ROSE_ASSERT(class_decl != NULL);    
+        ROSE_ASSERT(class_decl != NULL);
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
@@ -7829,7 +7858,7 @@ SgConstructorInitializer::post_construction_initialization()
    }
 
 #if 0
-SgClassDeclaration* 
+SgClassDeclaration*
 SgConstructorInitializer::get_class_decl () const
    {
      assert (this != NULL);
@@ -7839,13 +7868,13 @@ SgConstructorInitializer::get_class_decl () const
 
      SgClassDeclaration* classDeclaration = NULL;
      ROSE_ASSERT(this->get_type() != NULL);
-     
+
      return classDeclaration;
    }
 #endif
 
 #if 0
-// Need a feature in the grammar code generator to permit 
+// Need a feature in the grammar code generator to permit
 // user specification of the set_DATA member function
 void
 SgConstructorInitializer::set_declaration(SgMemberFunctionDeclaration* new_val)
@@ -7891,7 +7920,7 @@ SgConstructorInitializer::get_next(int& n) const
 int
 SgConstructorInitializer::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -7907,10 +7936,10 @@ SgConstructorInitializer::replace_expression(SgExpression *o, SgExpression *n)
           return 0;
    }
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-int 
+int
 SgConstructorInitializer::get_name_qualification_length () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7927,7 +7956,7 @@ SgConstructorInitializer::set_name_qualification_length ( int name_qualification
      p_name_qualification_length = name_qualification_length;
    }
 
-bool 
+bool
 SgConstructorInitializer::get_type_elaboration_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7945,7 +7974,7 @@ SgConstructorInitializer::set_type_elaboration_required ( bool type_elaboration_
      p_type_elaboration_required = type_elaboration_required;
    }
 
-bool 
+bool
 SgConstructorInitializer::get_global_qualification_required () const
    {
      ROSE_ASSERT (this != NULL);
@@ -7980,7 +8009,7 @@ $CLASSNAME::post_construction_initialization()
 // #endif
 
   // DQ (1/14/2006): set_type is removed
-  // set_type(); 
+  // set_type();
    }
 
 SgType*
@@ -8033,7 +8062,7 @@ $CLASSNAME::get_next(int& n) const
         {
           n++;
           return get_operand();
-        } 
+        }
        else
           return 0;
    }
@@ -8041,7 +8070,7 @@ $CLASSNAME::get_next(int& n) const
 int
 $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -8063,7 +8092,7 @@ SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 SOURCE_BRACED_INITIALIZER_EXPRESSION_START
 
 void
-SgBracedInitializer::post_construction_initialization() 
+SgBracedInitializer::post_construction_initialization()
    {
      if (get_initializers())
           get_initializers()->set_parent(this);
@@ -8105,7 +8134,7 @@ SgBracedInitializer::get_next(int& n) const
 int
 SgBracedInitializer::replace_expression(SgExpression* o, SgExpression* n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -8152,10 +8181,10 @@ SgBracedInitializer::get_type() const
 #if 0
 // DQ (11/15/2016): I don' think that name qualification maes sense for a braced initializer.
 
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
 // so that we could avoid them setting the isModified flag which is a problem in the
 // name qualification support for C++ (interfering with the token-based unparsing).
-bool 
+bool
 SgBracedInitializer::get_requiresGlobalNameQualificationOnType () const
    {
      ROSE_ASSERT (this != NULL);
@@ -8172,7 +8201,7 @@ SgBracedInitializer::set_requiresGlobalNameQualificationOnType ( bool requiresGl
      p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
    }
 
-int 
+int
 SgBracedInitializer::get_name_qualification_length_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -8189,7 +8218,7 @@ SgBracedInitializer::set_name_qualification_length_for_type ( int name_qualifica
      p_name_qualification_length_for_type = name_qualification_length_for_type;
    }
 
-bool 
+bool
 SgBracedInitializer::get_type_elaboration_required_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -8206,7 +8235,7 @@ SgBracedInitializer::set_type_elaboration_required_for_type ( bool type_elaborat
      p_type_elaboration_required_for_type = type_elaboration_required_for_type;
    }
 
-bool 
+bool
 SgBracedInitializer::get_global_qualification_required_for_type () const
    {
      ROSE_ASSERT (this != NULL);
@@ -8297,7 +8326,7 @@ SOURCE_SET_TYPE_BOOLEAN_OPERATOR_EXPRESSION_START
 // DQ (1/14/2006): set_type is removed
 void
 $CLASSNAME::set_type()
-   { 
+   {
      set_expression_type(SgTypeBool::createType());
    }
 
@@ -8404,8 +8433,8 @@ SOURCE_SET_TYPE_SHIFT_OPERATOR_EXPRESSION_START
 
 // DQ (1/14/2006): set_type is removed
 void
-$CLASSNAME::set_type() 
-   { 
+$CLASSNAME::set_type()
+   {
      assert(get_lhs_operand() != NULL);
      set_expression_type(get_lhs_operand()->get_type());
    }
@@ -8425,7 +8454,7 @@ SOURCE_SET_TYPE_UNARY_OPERATOR_EXPRESSION_START
 
 // DQ (1/14/2006): set_type is removed
 void
-$CLASSNAME::set_type() 
+$CLASSNAME::set_type()
    {
      assert(get_operand() != NULL);
      set_expression_type(get_operand()->get_type());
@@ -8446,7 +8475,7 @@ $CLASSNAME::set_type()
    {
      if(get_operand_expr() != NULL)
           set_expression_type(get_operand_expr()->get_type());
-       else 
+       else
           set_expression_type(get_operand_type());
    }
 
@@ -8478,7 +8507,7 @@ SOURCE_DEFAULT_GET_TYPE_START
 SgType*
 
 $CLASSNAME::get_type() const
-   { 
+   {
      ROSE_ASSERT(this != NULL);
 
 #if 0
@@ -8544,7 +8573,7 @@ $CLASSNAME::get_type() const
   // DQ (1/14/2006): explicit type is now computed instead of being stored.
   // assert(p_function_type != NULL);
 
-  // DQ (7/30/2004): The type of a SgFunctionRefExp should be a SgFunctionType, 
+  // DQ (7/30/2004): The type of a SgFunctionRefExp should be a SgFunctionType,
   // not the return type of the function associated with the SgFunctionRefExp.
   // return p_function_type->get_return_type();
   // return get_function_type();
@@ -8689,7 +8718,7 @@ SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION_END
 SOURCE_GET_TYPE_HERE_EXPRESSION_START
 #if 0
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
   // DQ (1/14/2006): The p_pobj_this data member was CC++ specific and no longer used (deprecated in Sage III), p_pobj_this is now removed
      ROSE_ASSERT(get_class_symbol() != NULL);
@@ -8702,7 +8731,7 @@ SOURCE_GET_TYPE_HERE_EXPRESSION_END
 SOURCE_GET_TYPE_THIS_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      SgType * type = NULL;
      if (get_class_symbol() != NULL) {
@@ -8725,7 +8754,7 @@ SOURCE_GET_TYPE_THIS_EXPRESSION_END
 SOURCE_GET_TYPE_SUPER_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      ROSE_ASSERT(get_class_symbol() != NULL);
      ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
@@ -8742,7 +8771,7 @@ SOURCE_GET_TYPE_SUPER_EXPRESSION_END
 SOURCE_GET_TYPE_CLASS_EXPRESSION_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      ROSE_ASSERT(get_class_symbol() != NULL);
      ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
@@ -8771,14 +8800,14 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(p_statement != NULL);
 
   // DQ (7/21/2006): For now we implement this partially and fix it up later.
-  // We might want to store the type explicitly since it might be difficult 
-  // to compute for complex sequences of statements.  It appears that the 
+  // We might want to store the type explicitly since it might be difficult
+  // to compute for complex sequences of statements.  It appears that the
   // type is just the type of the expression in the last statement of the block,
   // but it is not clear if it can be more complex than this!
 
-  // The rules are: The last thing in the compound statement should be an expression 
-  // followed by a semicolon; the value of this subexpression serves as the value of 
-  // the entire construct. (If you use some other kind of statement last within the 
+  // The rules are: The last thing in the compound statement should be an expression
+  // followed by a semicolon; the value of this subexpression serves as the value of
+  // the entire construct. (If you use some other kind of statement last within the
   // braces, the construct has type void, and thus effectively no value.).
 
   // printf ("$CLASSNAME::get_type() for GNU Statement Expression extension not implemented p_statement = %p = %s \n",p_statement,p_statement->class_name().c_str());
@@ -8791,8 +8820,8 @@ $CLASSNAME::get_type() const
      printf ("In $CLASSNAME::get_type() \n");
 #endif
 
-  // DQ (8/6/2006): The rules for the type of a statement expression are that it is the 
-  // type of the last expression in the statement list or void if the last statement is 
+  // DQ (8/6/2006): The rules for the type of a statement expression are that it is the
+  // type of the last expression in the statement list or void if the last statement is
   // not an expression (expression statement, SgExpressionStatement).
      SgBasicBlock* block = isSgBasicBlock(p_statement);
      ROSE_ASSERT(block != NULL);
@@ -8812,7 +8841,7 @@ $CLASSNAME::get_type() const
           SgExprStatement* expressionStatement = isSgExprStatement(lastStatement);
           if (expressionStatement != NULL)
              {
-            // The type of the statement expression is the 
+            // The type of the statement expression is the
             // SgExpression* expression = expressionStatement->get_the_expr();
                SgExpression* expression = expressionStatement->get_expression();
                ROSE_ASSERT(expression != NULL);
@@ -8863,7 +8892,7 @@ SOURCE_ASM_OP_END
 SOURCE_EXPONENTIATION_EXPRESSION_START
 
 void
-$CLASSNAME::post_construction_initialization() 
+$CLASSNAME::post_construction_initialization()
    {
    }
 
@@ -8884,7 +8913,7 @@ SOURCE_INTRINSICFN_EXPRESSION_START
 #error "DEAD CODE!"
 
 void
-SgIntrinsicFn::post_construction_initialization() 
+SgIntrinsicFn::post_construction_initialization()
    { }
 
 #error "DEAD CODE!"
@@ -8932,7 +8961,7 @@ SOURCE_INTRINSICFN_EXPRESSION_END
 SOURCE_SUBSCRIPT_EXPR_EXPRESSION_START
 
 void
-SgSubscriptExpression::post_construction_initialization() 
+SgSubscriptExpression::post_construction_initialization()
    { }
 
 SgType*
@@ -9005,14 +9034,14 @@ SgSubscriptExpression::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMA
           if(get_upperBound()==o)
              {
                set_upperBound(n);
-               return 1;  
+               return 1;
              }
           else
              if(get_stride()==o)
                 {
                   set_stride(n);
-                  return 1;  
-                } 
+                  return 1;
+                }
                 else
                   return 0;
    }
@@ -9026,7 +9055,7 @@ SOURCE_SUBSCRIPT_COLON_EXPRESSION_START
 #error "DEAD CODE!"
 
 void
-SgSubscriptColon::post_construction_initialization() 
+SgSubscriptColon::post_construction_initialization()
    { }
 
 
@@ -9056,8 +9085,8 @@ SgSubscriptColon::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PRE
           if(get_stride()==o)
              {
                set_stride(n);
-               return 1;  
-             } 
+               return 1;
+             }
              else
                return 0;
    }
@@ -9071,7 +9100,7 @@ SOURCE_SUBSCRIPT_COLON_EXPRESSION_END
 SOURCE_COLON_SHAPE_EXPRESSION_START
 
 void
-SgColonShapeExp::post_construction_initialization() 
+SgColonShapeExp::post_construction_initialization()
    { }
 
 
@@ -9102,8 +9131,8 @@ SgColonShapeExp::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREF
           if(get_stride()==o)
              {
                set_stride(n);
-               return 1;  
-             } 
+               return 1;
+             }
              else
                return 0;
    }
@@ -9115,7 +9144,7 @@ SOURCE_COLON_SHAPE_EXPRESSION_END
 SOURCE_ASTERISK_SHAPE_EXPRESSION_START
 
 void
-SgAsteriskShapeExp::post_construction_initialization() 
+SgAsteriskShapeExp::post_construction_initialization()
    { }
 
 SgType*
@@ -9145,8 +9174,8 @@ SgAsteriskShapeExp::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_P
           if(get_stride()==o)
              {
                set_stride(n);
-               return 1;  
-             } 
+               return 1;
+             }
              else
                return 0;
    }
@@ -9158,7 +9187,7 @@ SOURCE_ASTERISK_SHAPE_EXPRESSION_END
 SOURCE_USE_ONLY_EXPR_START
 
 void
-SgUseOnlyExpression::post_construction_initialization() 
+SgUseOnlyExpression::post_construction_initialization()
    { }
 
 SgType*
@@ -9191,7 +9220,7 @@ SOURCE_USE_ONLY_EXPR_END
 SOURCE_USE_RENAME_EXPR_START
 
 void
-SgUseRenameExpression::post_construction_initialization() 
+SgUseRenameExpression::post_construction_initialization()
    { }
 
 SgType*
@@ -9217,9 +9246,9 @@ SgUseRenameExpression::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMA
           if(get_oldname()==o)
              {
                set_oldname(n);
-               return 1;  
-             } 
-            else 
+               return 1;
+             }
+            else
                return 0;
    }
 #endif
@@ -9230,7 +9259,7 @@ SOURCE_USE_RENAME_EXPR_END
 SOURCE_IO_ITEM_EXPR_START
 
 void
-SgIOItemExpression::post_construction_initialization() 
+SgIOItemExpression::post_construction_initialization()
    { }
 
 SgType*
@@ -9263,7 +9292,7 @@ SOURCE_IO_ITEM_EXPR_END
 SOURCE_IMPLIED_DO_START
 
 void
-SgImpliedDo::post_construction_initialization() 
+SgImpliedDo::post_construction_initialization()
    { }
 
 SgType*
@@ -9301,7 +9330,7 @@ SOURCE_IMPLIED_DO_END
 SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_START
 
 void
-SgUnknownArrayOrFunctionReference::post_construction_initialization() 
+SgUnknownArrayOrFunctionReference::post_construction_initialization()
    { }
 
 SgType*
@@ -9319,7 +9348,7 @@ SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
 SOURCE_ACTUAL_ARGUMENT_EXPRESSION_START
 
 void
-SgActualArgumentExpression::post_construction_initialization() 
+SgActualArgumentExpression::post_construction_initialization()
    {
      ROSE_ASSERT(p_expression != NULL);
      p_expression->set_parent(this);
@@ -9342,7 +9371,7 @@ SOURCE_ACTUAL_ARGUMENT_EXPRESSION_END
 SOURCE_DESIGNATED_INITIALIZER_START
 
 void
-SgDesignatedInitializer::post_construction_initialization() 
+SgDesignatedInitializer::post_construction_initialization()
    {
   // This should be a list of designators to handle the case of multi-deminsional array references.
      ROSE_ASSERT(p_designatorList != NULL);
@@ -9371,7 +9400,7 @@ SgDesignatedInitializer::get_type() const
 int
 SgDesignatedInitializer::replace_expression(SgExpression *o, SgExpression *n)
    {
-  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
   // structural change to the AST, thus it is free to set the parent of the new expression.
 
      ROSE_ASSERT(o != NULL);
@@ -9419,19 +9448,12 @@ SOURCE_DESIGNATED_INITIALIZER_END
 
 
 SOURCE_JOVIAL_TABLE_PRESET_EXP_START
-
 void
 SgJovialTablePresetExp::post_construction_initialization()
-   {
-     if (p_default_sublist)
-       {
-          p_default_sublist->set_parent(this);
-       }
-     if (p_specified_sublist)
-       {
-          p_specified_sublist->set_parent(this);
-       }
-   }
+{
+  ROSE_ASSERT(p_preset_list);
+  p_preset_list->set_parent(this);
+}
 
 SgType*
 SgJovialTablePresetExp::get_type() const
@@ -9441,9 +9463,26 @@ SgJovialTablePresetExp::get_type() const
 
   return parent->get_type();
 }
-
 SOURCE_JOVIAL_TABLE_PRESET_EXP_END
 
+
+SOURCE_JOVIAL_PRESET_POSITION_EXP_START
+void
+SgJovialPresetPositionExp::post_construction_initialization()
+{
+  ROSE_ASSERT(p_indices);
+  ROSE_ASSERT(p_value);
+  p_indices->set_parent(this);
+  p_value->set_parent(this);
+}
+
+SgType*
+SgJovialPresetPositionExp::get_type() const
+{
+  ROSE_ASSERT(p_value);
+  return p_value->get_type();
+}
+SOURCE_JOVIAL_PRESET_POSITION_EXP_END
 
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_START
@@ -9456,7 +9495,7 @@ SgUpcLocalsizeofExpression::post_construction_initialization()
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
@@ -9494,7 +9533,7 @@ SgUpcBlocksizeofExpression::post_construction_initialization()
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
@@ -9531,7 +9570,7 @@ SgUpcElemsizeofExpression::post_construction_initialization()
 SgType*
 $CLASSNAME::get_type() const
    {
-  // This function returns an unsigned integer representing the size of type 
+  // This function returns an unsigned integer representing the size of type
   // (the unsigned int should match size_t, which may or may not be defined).
 
      ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
@@ -9696,12 +9735,12 @@ SgType* SgLambdaRefExp::get_type() const
    }
 
 void
-SgLambdaRefExp::post_construction_initialization() 
+SgLambdaRefExp::post_construction_initialization()
    {
    }
 
 SgFunctionParameterList*
-SgLambdaRefExp::get_parameterList() 
+SgLambdaRefExp::get_parameterList()
    {
      ROSE_ASSERT(this != NULL);
 
@@ -9734,22 +9773,22 @@ SOURCE_CUDA_KERNEL_EXEC_CONFIG_END
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_START
 
 void
-SgCudaKernelCallExp::post_construction_initialization() 
+SgCudaKernelCallExp::post_construction_initialization()
    {
      if (p_function != NULL)
           p_function->set_parent(this);
-          
+
      // TODO : exec_config
    }
 
 SgType*
-SgCudaKernelCallExp::get_type() const 
-   { 
+SgCudaKernelCallExp::get_type() const
+   {
 #if 0
      printf ("In SgCudaKernelCallExp::get_type() \n");
 #endif
 
-     return SgFunctionCallExp::get_type(); 
+     return SgFunctionCallExp::get_type();
    }
 
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
@@ -9757,7 +9796,7 @@ SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END
 
 SOURCE_JAVA_ANNOTATION_START
 
-// DQ (1/13/2014): This function helps to provide a uniform interface even though 
+// DQ (1/13/2014): This function helps to provide a uniform interface even though
 // the type is held in a field called p_expression_type.  This supports Java annotations
 // for the SgJavaMarkerAnnotation, SgJavaSingleMemberAnnotation, and SgJavaNormalAnnotation.
 SgType*

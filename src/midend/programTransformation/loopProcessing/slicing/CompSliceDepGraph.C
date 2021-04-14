@@ -7,7 +7,7 @@
 #include <DGBaseGraphImpl.h>
 #include <CompSliceDepGraph.h>
 #include <GraphGroup.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 extern bool DebugDep();
 
@@ -235,7 +235,7 @@ GenXformRoot(LoopTreeNode* top) const
    if (vec.NumberOfEntries() == 0)
     {
       std::cerr << "error: empty slice : " << vec.toString() << "\n";
-      assert(0);
+      ROSE_ABORT();
     }
    const CompSlice* cur = vec[0];
    CompSliceSelect sel(cur);

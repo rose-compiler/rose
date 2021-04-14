@@ -35,7 +35,7 @@ class HandleMap : public LoopTreeObserver, public AstObserver
    LocalVar* NewLoopHandle();
    LocalVar* NewBodyHandle();
    virtual void UpdateCodeGen(const LoopTreeCodeGenInfo& info);
-   virtual void UpdateDeleteNode(LoopTreeNode* n);
+   virtual void UpdateDeleteNode(const LoopTreeNode* n);
    virtual void ObserveCopyAst(AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& n);
 
  public:
@@ -183,9 +183,11 @@ class AutoTuningInterface
 /*QY: loop unrolling optimization*/
 class UnrollSpec : public OptSpec
 {
+#if 0 // [Robb Matzke 2021-03-17]: unused
    /*QY: relevant POET invocation names 
          (need to be consistent with POET/lib/opt.pi*/
    LocalVar* paramVar;
+#endif
 
  public:
   UnrollSpec(LocalVar* handle, int unrollSize); 
@@ -210,9 +212,11 @@ class UnrollSpec : public OptSpec
 
 class ParLoopSpec : public OptSpec
 {
+#if 0 // [Robb Matzke 2021-03-17]: unused
   POETCode* privateVars;
   POETCode* ivarName, *bvarName;
   LocalVar* parVar, *parblockVar;
+#endif
  public:
   ParLoopSpec(LocalVar* outerHandle, LoopTreeNode* loop, int bsize);
   virtual OptEnum get_enum() const { return PARLOOP; }
@@ -236,9 +240,11 @@ class ParLoopSpec : public OptSpec
 class BlockSpec : public OptSpec
 {
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
+#if 0 // [Robb Matzke 2021-03-17]: unused
    POETCode* nonperfect; /*QY: the non-perfect loops*/
    LocalVar* blockPar, *ujPar;
    HandleMap& handleMap;
+#endif
    unsigned loopnum;
 
    /*QY: compute the blocking dimension configuration */
@@ -345,7 +351,7 @@ class CopyArraySpec : public OptSpec
     switch (optLevel) {
     case OPT_CACHE_LEVEL: return false;
     case OPT_REG_LEVEL: return true;
-    default: assert(0);
+    default: ROSE_ABORT();
     }
   }
   std::string get_opt_prefix(OptLevel optLevel)
@@ -353,7 +359,7 @@ class CopyArraySpec : public OptSpec
     switch (optLevel) {
     case OPT_CACHE_LEVEL: return "copy"+cur_id;
     case OPT_REG_LEVEL: return "scalar"+cur_id;
-    default: assert(0);
+    default: ROSE_ABORT();
     }
   }
   virtual std::string to_string(OptLevel level);

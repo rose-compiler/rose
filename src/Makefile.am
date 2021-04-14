@@ -43,6 +43,7 @@ endif
 # Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
    libroseExperimentalFlangParserlibraries = \
+        frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
         frontend/Experimental_Flang_ROSE_Connection/libexperimentalRoseFlang.la \
         3rdPartyLibraries/flang-parser/libFlangParser.la
 else

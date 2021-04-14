@@ -54,7 +54,7 @@ public:
         if (!ArrayAnnotation::get_inst()->is_access_array_elem(ai,lhs, &modarray, &subs))
         {
           std::cerr << "unrecognized array reference: " << AstInterface::AstToString(lhs) << "\n";
-           assert(false);
+           ROSE_ABORT();
         }
         size = subs.size();
       }
@@ -106,7 +106,7 @@ create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const std::strin
 {
   std::string expname;
   if (!fa.IsVarRef(arrayExp,0,&expname))
-      assert(false);
+      ROSE_ABORT();
   AstNodePtr& split = varmap[expname];
   if (split == 0) {
      AstNodeType t =  fa.GetExpressionType(arrayExp);
@@ -140,7 +140,7 @@ operator()( const SymbolicVal& orig)
     anal.set_array_dimension( arrayExp, args.size());
     SymbolicFunctionDeclarationGroup elem;
     if (anal.is_array_construct_op( fa, arrayExp, 0, 0, 0, &elem)) {
-      if (! elem.get_val( args, result)) assert(false);
+      if (! elem.get_val( args, result)) ROSE_ABORT();
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -153,7 +153,7 @@ operator()( const SymbolicVal& orig)
     if (anal.is_array_construct_op(fa, arrayExp, 0, 0, &len)) {
       args.clear();
       args.push_back(dim);
-      if (! len.get_val( args, result)) assert(false);
+      if (! len.get_val( args, result)) ROSE_ABORT();
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -207,7 +207,7 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
   }
   SymbolicVal rhs;
   if (!elem.get_val( ivarList, rhs))
-    assert(false);
+    ROSE_ABORT();
 
 
   std::map<std::string,AstNodePtr> varmap;
@@ -230,7 +230,7 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
     args.push_back( SymbolicConst(i));
     SymbolicVal ubval;
     if (!len.get_val(args, ubval))
-      assert(false);
+      ROSE_ABORT();
     ubval = ReplaceVal( ubval, constructArrayRewrite);
     ubval = ubval -1;
     lenlist.push_back(ubval);
@@ -238,7 +238,7 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
     AstNodePtr lb = fa.CreateConstInt(0), step = fa.CreateConstInt(1);
     AstNodePtr ivarAst;
     if (! ivarList[i].isAstWrap(ivarAst))
-        assert(false);
+        ROSE_ABORT();
     body = fa.CreateLoop( ivarAst, lb, ub, step, body, false);
   }
 

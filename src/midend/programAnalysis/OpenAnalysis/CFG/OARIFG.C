@@ -92,7 +92,7 @@ public:
         return RIFG_NIL;
     }
   }
-  void Reset() { assert(0); };
+  void Reset() { ROSE_ABORT(); };
   virtual ~OARIFGEdgeIterator() { };
 private:
   RIFG &fg;
@@ -140,7 +140,7 @@ public:
     return old ? (int)old->getID() : RIFG_NIL; // FIXME
   }
 
-  void Reset() { assert(0); }
+  void Reset() { ROSE_ABORT(); }
   virtual ~OARIFGNodeIterator() {};
 private:
   RIFG::ForwardBackward fb;     
@@ -192,8 +192,7 @@ int OARIFG::IsValid(RIFGNodeId n)     // is the node id still valid, or has it b
 
 int OARIFG::GetFanin(TarjanIntervals *tj, RIFGNodeId n)
 {
-  assert(0);
-  return 0;
+  ROSE_ABORT();
 }
 
 RIFGNodeId OARIFG::GetRootNode()
@@ -203,26 +202,22 @@ RIFGNodeId OARIFG::GetRootNode()
 
 RIFGNodeId OARIFG::GetFirstNode()
 {
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 RIFGNodeId OARIFG::GetLastNode()
 {
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 RIFGNodeId OARIFG::GetNextNode(RIFGNodeId n)
 {
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 RIFGNodeId OARIFG::GetPrevNode(RIFGNodeId n)
 {
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 RIFGNodeId OARIFG::GetEdgeSrc(RIFGEdgeId eid)
@@ -241,8 +236,7 @@ RIFGNodeId OARIFG::GetEdgeSink(RIFGEdgeId eid)
 
 RIFGNodeId *OARIFG::GetTopologicalMap(TarjanIntervals *tj)
 {
-  assert (0);
-  return 0;
+  ROSE_ABORT ();
 }
 
 RIFGNode *OARIFG::GetRIFGNode(RIFGNodeId nid)

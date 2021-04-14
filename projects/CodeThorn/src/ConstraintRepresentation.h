@@ -23,7 +23,7 @@ using namespace CodeThorn;
 namespace CodeThorn {
 
   typedef std::list<AbstractValue> ListOfAValue;
-  typedef AbstractValueSet SetOfVariableId;
+  //typedef AbstractValueSet SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
@@ -104,7 +104,7 @@ class ConstraintSet : public std::set<Constraint> {
   ListOfAValue getEqVarConst(const CodeThorn::AbstractValue varId) const;
   //! returns set of concrete values for which an inequality exists
   ListOfAValue getNeqVarConst(const CodeThorn::AbstractValue varId) const;
-  SetOfVariableId getEqVars(const CodeThorn::AbstractValue varId) const;
+  std::set<AbstractValue> getEqVars(const CodeThorn::AbstractValue varId) const;
 
   //! maintains consistency of set and creates DIS if inconsistent constraints are added
   void addConstraint(Constraint c);

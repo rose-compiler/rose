@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Disassembler.h>
 
@@ -8,7 +8,8 @@
 #include <AsmUnparser_compat.h>
 #include <Diagnostics.h>
 #include <DisassemblerPowerpc.h>
-#include <DisassemblerA64.h>
+#include <DisassemblerAarch32.h>
+#include <DisassemblerAarch64.h>
 #include <DisassemblerM68k.h>
 #include <DisassemblerMips.h>
 #include <DisassemblerNull.h>
@@ -79,8 +80,15 @@ operator<<(std::ostream &o, const Disassembler::Exception &e)
 void
 Disassembler::initclassHelper()
 {
-#ifdef ROSE_ENABLE_ASM_A64
-    registerSubclass(new DisassemblerArm(DisassemblerArm::ARCH_ARM64));
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    registerSubclass(DisassemblerAarch32::instanceA32());
+    registerSubclass(DisassemblerAarch32::instanceT32());
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    registerSubclass(new DisassemblerAarch64());
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    registerSubclass(new DisassemblerAarch32());
 #endif
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_MSB));
     registerSubclass(new DisassemblerPowerpc(powerpc_32, ByteOrder::ORDER_LSB));
@@ -180,8 +188,12 @@ std::vector<std::string>
 Disassembler::isaNames() {
     std::vector<std::string> v;
     v.push_back("amd64");
-#ifdef ROSE_ENABLE_ASM_A64
-    v.push_back("a64");         // ARM AArch64 A64
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    v.push_back("a32");                                 // AArch32 A32
+    v.push_back("t32");                                 // AArch32 T32
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    v.push_back("a64");                                 // AArch64 A64
 #endif
     v.push_back("coldfire");
     v.push_back("i386");
@@ -206,9 +218,21 @@ Disassembler::lookup(const std::string &name)
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
+    } else if (name == "a32") {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        retval = DisassemblerAarch32::instanceA32();
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
+    } else if (name == "t32") {
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        retval = DisassemblerAarch32::instanceT32();
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
     } else if (name == "a64") {
-#ifdef ROSE_ENABLE_ASM_A64
-        retval = new DisassemblerArm(DisassemblerArm::ARCH_ARM64);
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        retval = new DisassemblerAarch64();
 #else
         throw Exception(name + " disassembler is not enabled in this ROSE configuration");
 #endif

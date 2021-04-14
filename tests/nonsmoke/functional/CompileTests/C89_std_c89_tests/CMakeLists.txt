@@ -26,5 +26,5 @@ endif()
 list(APPEND ROSE_FLAGS -w)
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test} TRUE)
+  compile_test(${file_to_test} C89TEST TRUE)
 endforeach()

@@ -1022,7 +1022,7 @@ TransformationSupport::getTransformationOptions (
 #else
             // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
                printf ("ERROR: access to symbol table is restricted from SgGlobal \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
             // printf ("Processed global scope, exiting .. \n");
             // ROSE_ABORT();
@@ -1165,7 +1165,7 @@ TransformationSupport::getTransformationOptions (
 #else
             // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
                printf ("ERROR: access to symbol table is restricted from SgBasicBlock \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
             // Next go (fall through this case) to the default case so that we traverse the parent
             // of the SgBasicBlock.
@@ -2016,7 +2016,7 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
      return const_cast<SgSourceFile*>(file);
    }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 // DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
 SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
@@ -2395,7 +2395,7 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
                printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
 #endif
        // ROSE_ABORT();
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
        else
         {
@@ -2532,7 +2532,7 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
           if (astNode == NULL)
              {
                printf ("Error: could not trace back to SgTemplateDeclaration node \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
             else
              {

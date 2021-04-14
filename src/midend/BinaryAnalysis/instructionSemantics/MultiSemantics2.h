@@ -1,7 +1,7 @@
 #ifndef Rose_MultiSemantics2_H
 #define Rose_MultiSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 
@@ -91,7 +91,7 @@ protected:
         : BaseSemantics::SValue(nbits) {}
 
     SValue(const SValue &other)
-        : BaseSemantics::SValue(other.get_width()) {
+        : BaseSemantics::SValue(other.nBits()) {
         init(other);
     }
 
@@ -196,7 +196,7 @@ public:
      *  whether the value has a valid dynamic type for that slot.  If the value is not a null pointer, then is_valid() will
      *  return true after this call. */
     virtual void set_subvalue(size_t idx, const BaseSemantics::SValuePtr &value) { // hot
-        ASSERT_require(value==NULL || value->get_width()==get_width());
+        ASSERT_require(value==NULL || value->nBits()==nBits());
         if (idx>=subvalues.size())
             subvalues.resize(idx+1);
         subvalues[idx] = value;
@@ -361,7 +361,7 @@ public:
      * @code
      *  BaseSemantics::SValuePtr
      *  RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-     *      SValuePtr retval(a->get_width());
+     *      SValuePtr retval(a->nBits());
      *      for (Cursor c(this, a, b); !c.at_end(); c.next())
      *          retval->set_subvalue(c->idx(), c->add(a, b));
      *      }

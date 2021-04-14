@@ -1,6 +1,6 @@
 /* ELF Symbol Tables (SgAsmElfSymbolSection and related classes) */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "stringify.h"
@@ -111,8 +111,7 @@ SgAsmElfSymbol::to_string(ElfSymBinding val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymBinding(val);
 #else
-    ROSE_ASSERT(false);
-    return "";
+    ROSE_ABORT();
 #endif
 }
 
@@ -122,8 +121,7 @@ SgAsmElfSymbol::to_string(ElfSymType val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymType(val);
 #else
-    ROSE_ASSERT(false);
-    return "";
+    ROSE_ABORT();
 #endif
 }  
 

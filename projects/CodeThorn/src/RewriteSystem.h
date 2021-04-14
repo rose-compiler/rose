@@ -18,9 +18,9 @@ class RewriteSystem {
   RewriteStatistics getRewriteStatistics();
   RewriteStatistics* getRewriteStatisticsPtr() { return &_rewriteStatistics; }
 
-  void rewriteCompoundAssignmentsInAst(SgNode* root, CodeThorn::VariableIdMapping* variableIdMapping);
-  void rewriteCompoundAssignments(SgNode*& root, CodeThorn::VariableIdMapping* variableIdMapping);
-  SgNode* buildRewriteCompoundAssignment(SgNode* root, CodeThorn::VariableIdMapping* variableIdMapping);
+  void rewriteCompoundAssignmentsInAst(SgNode* root);
+  void rewriteCompoundAssignments(SgNode*& root);
+  SgNode* buildRewriteCompoundAssignment(SgNode* root);
 
   // sorts nodes of operators SgAddOp and SgMultiplyOp according to variantT bottom up
   // shallow sort at each node

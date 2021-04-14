@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <DisassemblerPowerpc.h>
 
@@ -210,7 +210,7 @@ isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     BaseSemantics::SValuePtr retAddr = sem.operators->and_(sem.operators->peekRegister(REG_LR), mask);
     BaseSemantics::SValuePtr ip = sem.operators->and_(sem.operators->peekRegister(REG_IP), mask);
     BaseSemantics::SValuePtr isEqual = sem.operators->isEqual(retAddr, ip);
-    bool isReturn = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+    bool isReturn = isEqual->isTrue();
 
     if (debug) {
         debug <<"    retAddr      = " <<*retAddr <<"\n";

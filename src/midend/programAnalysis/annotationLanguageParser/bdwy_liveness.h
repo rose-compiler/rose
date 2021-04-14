@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_LIVENESS_H
 #define BDWY_LIVENESS_H
@@ -32,3 +34,4 @@ public:
 };
 
 #endif /* BDWY_LIVENESS_H */
+#endif

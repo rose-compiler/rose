@@ -178,6 +178,10 @@ class AttachPreprocessingInfoTreeTrav
              ( SgLocatedNode* locatedNode, int lineNumber, PreprocessingInfo::RelativePositionType location,
                bool reset_start_index, ROSEAttributesList *currentListOfAttributes );
 
+       // DQ (2/16/2021): This function supports iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber().
+       // It seperates the case where comments and CPP directives are put in the scope or attached to the bottom of the previous statement.
+          void handleBracedScopes(SgLocatedNode* previousLocatedNode, SgStatement* bracedScope, int lineOfClosingBrace, bool reset_start_index, ROSEAttributesList *currentListOfAttributes);
+
        // Member function to be executed on each node of the AST
        // in the course of its traversal
           AttachPreprocessingInfoTreeTraversalInheritedAttrribute
@@ -198,16 +202,17 @@ class AttachPreprocessingInfoTreeTrav
 
           void setMapOfAttributes();
 
-
        // output for debugging.
        // void display_static_data( const std::string & label ) const;
 
+       // DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
        // DQ (7/4/2020): Make this a static function to support Fortran handling.
        // DQ (11/30/2008): Refactored code to isolate this from the inherited attribute evaluation.
        // static ROSEAttributesList* buildCommentAndCppDirectiveList ( SgFile *currentFilePtr, std::map<std::string,ROSEAttributesList*>* mapOfAttributes, bool use_Wave );
        // ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
        // static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
-          static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string currentFilename );
+       // static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string currentFilename );
+          static ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string currentFilename, std::string new_filename );
    };
 
 #endif

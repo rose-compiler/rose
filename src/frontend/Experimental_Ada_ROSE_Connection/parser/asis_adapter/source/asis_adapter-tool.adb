@@ -87,7 +87,7 @@ package body Asis_Adapter.Tool is
          2 => Project_File'Unchecked_Access,
          3 => Relocate_build_tree'Unchecked_Access);
    begin
-      Asis_Adapter.Trace_On := Debug;
+      Asis_Tool_2.Trace_On := Debug;
       Log ("BEGIN");
       Log ("File_Name  => """ & File_Name & """");
       Log ("Output_Dir => """ & Output_Dir & """");

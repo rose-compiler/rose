@@ -1,6 +1,8 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -87,3 +89,4 @@ void ruleAnn::lookup(propertyAnn * default_property,
     (*p)->lookup(default_property, procedure, annotations);
 }
 
+#endif

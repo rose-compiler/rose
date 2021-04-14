@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_CallingConvention_H
 #define ROSE_BinaryAnalysis_CallingConvention_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <BinaryVariables.h>
@@ -596,8 +596,11 @@ typedef std::vector<Definition::Ptr> Dictionary;
 /** Common calling conventions for amd64 (x86-64). */
 const Dictionary& dictionaryAmd64();
 
-/** Common calling conventions for ARM. */
-const Dictionary& dictionaryArm64();
+/** Common calling conventions for ARM AArch32. */
+const Dictionary& dictionaryAarch32();
+
+/** Common calling conventions for ARM AArch64. */
+const Dictionary& dictionaryAarch64();
 
 /** Common calling conventions for m68k. */
 const Dictionary& dictionaryM68k();

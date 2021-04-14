@@ -83,6 +83,8 @@ namespace CodeThorn {
       // of subexpressions).
       bool normalizeExpressions=true;
 
+      bool normalizeCompoundAssignments=true;
+      
       bool normalizeVariableDeclarations=false;
       bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
@@ -180,7 +182,7 @@ namespace CodeThorn {
     static bool isTemplateInstantiationNode(SgNode* node);
     static SgClassDeclaration* isSpecialization(SgNode* node);
     static bool isTemplateNode(SgNode* node);
-
+    static void normalizeCompoundAssignmentsInAst(SgNode* node);
   private:
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
