@@ -49,7 +49,7 @@ finish () {
   __exit_status=$? 
   if [[ ${__exit_status} -ne 0 ]]
   then 
-    echo "finish: Stack: BASH_SOURCE, FUNCNAME, BASH_LINENO:"
+    echo "finish: ERROR: Stack fields below are: BASH_SOURCE, FUNCNAME, BASH_LINENO:"
     for ((x=0; x < ${#FUNCNAME[*]}; x += 1 ))
     do
       echo "finish: ${BASH_SOURCE[x]}, ${FUNCNAME[x]}, ${BASH_LINENO[x]}"
@@ -59,6 +59,8 @@ finish () {
   exit ${__exit_status}
 }
 
+# Exit on nonzero status.  Unset variable is err.  Use status of rightmost 
+# command in pipeline.  Echo exit status.  Echo trace if status not 0:
 set_strict () {
   # See http://redsymbol.net/articles/unofficial-bash-strict-mode/
   # -e, -o errexit -
@@ -67,7 +69,7 @@ set_strict () {
   # -u, -o nounset -
   #      Treat unset variables as errors.
   # -o pipefail -
-  #      Change exit status of a pipeline to be that of the rightmost commad that
+  #      Change exit status of a pipeline to be that of the rightmost command that
   #      failed, or zero if all exited successfully.
   # Changes behavior of commands chained together with || or &&.
   # Makes script exit if grep fails:
@@ -80,8 +82,6 @@ unset_strict () {
   # Turn trap off:
   trap EXIT
 }
-
-set_strict
 
 # END bash strict mode setup
 ###############################################################################
@@ -208,9 +208,9 @@ do_env () {
   env | sort
 }
 
-script_file=`basename $0`
+Utility_functions_script_file=`basename $0`
 log () {
-  echo ${script_file}: "$*"
+  echo ${Utility_functions_script_file}: "$*"
 }
 
 log_w_time() {
