@@ -1865,8 +1865,6 @@ namespace
       {
         ROSE_ASSERT (el.Element_Kind == An_Expression);
 
-        //~ std::cerr << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-
         NameData                     usepkg = getName(el, ctx);
         SgScopeStatement&            scope  = ctx.scope();
         Expression_Struct&           expr   = asisExpression(usepkg.elem());
@@ -1874,12 +1872,11 @@ namespace
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
 
         //~ std::cerr
-        logError()
-                   << "use decl: " << usepkg.fullName
-                   << " " << typeid(*used).name()
-                   << " (" << expr.Corresponding_Name_Definition
-                   << ", " << expr.Corresponding_Name_Declaration << ")"
-                   << std::endl;
+        //~ logError() << "use decl: " << usepkg.fullName
+                   //~ << " " << typeid(*used).name()
+                   //~ << " (" << expr.Corresponding_Name_Definition
+                   //~ << ", " << expr.Corresponding_Name_Declaration << ")"
+                   //~ << std::endl;
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
