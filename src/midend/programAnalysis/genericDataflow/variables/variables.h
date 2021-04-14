@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef VARIABLES_H
 #define VARIABLES_H
 
@@ -390,4 +393,5 @@ class arrayElt : public variable
 // returns a set of arrayElts that correspond to all the arrays (of SgDotExp/SgVarRefExp[SgExpression][][][]... form)
 // that were referenced in the given subtree
 std::set<arrayElt> getArrayRefsInSubtree(SgNode* root);
+#endif
 #endif

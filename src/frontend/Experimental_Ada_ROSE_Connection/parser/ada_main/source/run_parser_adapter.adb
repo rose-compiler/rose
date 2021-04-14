@@ -53,7 +53,7 @@ procedure Run_Parser_Adapter is
       GCL.Getopt (Options.Config);
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.");
+         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.",  Options.Debug);
          raise;
    end Get_Options;
 
@@ -65,7 +65,7 @@ procedure Run_Parser_Adapter is
 
 begin
    Get_Options;
-   Log ("BEGIN");
+   Log ("BEGIN", Options.Debug);
    asis_adapterinit;
    Tool.Process
      (File_Name                    => Options.File_Name.all,
@@ -75,5 +75,5 @@ begin
       Process_Implementation_Units => Options.Process_Implementation_Units,
       Debug                        => Options.Debug);
    asis_adapterfinal;
-   Log ("END");
+   Log ("END", Options.Debug);
 end Run_Parser_Adapter;

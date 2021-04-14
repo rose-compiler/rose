@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef RW_ACCESS_LABELER_H
 #define RW_ACCESS_LABELER_H
 
@@ -24,4 +27,5 @@ std::string accessTypeToStr(accessType t);
 
 }
 
+#endif
 #endif

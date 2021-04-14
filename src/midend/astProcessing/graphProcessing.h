@@ -594,7 +594,7 @@ int tg = getTarget(oeds[j], g);
     while (true) {
         if (paths.size() > 1000000) {
            std::cout << "too many paths, consider a subgraph" << std::endl;
-           ROSE_ASSERT(false);
+           ROSE_ABORT();
        }
        //#pragma omp parallel for schedule(guided)
        for (unsigned int qq = 0; qq < paths.size(); qq++) {

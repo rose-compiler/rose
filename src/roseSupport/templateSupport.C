@@ -57,7 +57,7 @@ buildTemplateInstantiationSupportFile( SgProject* project )
   //      SgProject* frontend (int argc, char** argv); 
   // located in ROSE/src/roseSupport/utility_functions.C.
      printf ("In buildTemplateInstantiationSupportFile(): I think this is now dead code! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // After frontend processing with EDG, if there are templates, a template 
   // instantiation file (*.ti) is built.  We have to modify that file
@@ -250,7 +250,7 @@ instantiateTemplates ( SgProject* project )
   // DQ (9/6/2005): I think these operations have been superseded
   // by the AST post processing mechanism which is more complete.
      printf ("In instantiateTemplates(): I think this may be dead code! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // After compilation we can start the process of template instantiation
   //    1) Compiling to object files (building *.ti files)
@@ -390,7 +390,7 @@ instantiateTemplates ( SgProject* project )
 
 #if 0
      printf ("Exiting after handling newly instantiated code! \n");
-     ROSE_ASSERT (false);
+     ROSE_ABORT ();
 #endif
    }
 #endif
@@ -408,7 +408,7 @@ fixupInstantiatedTemplates ( SgProject* project )
   // DQ (9/6/2005): I think these operations have been superseded
   // by the AST post processing mechanism which is more complete.
      printf ("In fixupInstantiatedTemplates(): I think this may be dead code! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // This must be done prior to the unparsing of the SAGE III AST, so that any transformations
   // (new function prototypes for the specialized template function) can be inserted before we 

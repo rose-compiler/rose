@@ -41,10 +41,6 @@ void fixupAstDeclarationScope( SgNode* node )
      while (i != mapOfSets.end())
         {
           SgDeclarationStatement* firstNondefiningDeclaration = i->first;
-          if (isSgNonrealDecl(firstNondefiningDeclaration)) {
-            i++;
-            continue;
-          }
 
        // DQ (3/2/2015): Added assertion.
           ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -111,7 +107,7 @@ void fixupAstDeclarationScope( SgNode* node )
                        }
 #if 0
                     printf ("Make this an error for now! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -156,8 +152,13 @@ FixupAstDeclarationScope::visit ( SgNode* node )
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 
        // Note that these declarations don't follow the same rules (namely the get_firstNondefiningDeclaration() can be NULL).
-          if ( isSgFunctionParameterList(node) != NULL || isSgVariableDefinition(node) != NULL)
-             {
+          if ( isSgFunctionParameterList(node)    ||
+               isSgVariableDefinition(node)       ||
+               isSgNonrealDecl(node)              ||
+               isSgJovialCompoolStatement(node)   ||
+               isSgJovialDirectiveStatement(node) ||
+               isSgJovialDefineDeclaration(node)
+             ) {
 #if 0
                printf ("In FixupAstDeclarationScope::visit(): node = %p = %s firstNondefiningDeclaration = %p (skipping this processing) \n",node,node->class_name().c_str(),firstNondefiningDeclaration);
 #endif
@@ -172,7 +173,7 @@ FixupAstDeclarationScope::visit ( SgNode* node )
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration == NULL)
                   {
-                    printf ("WARNING: In FixupAstDeclarationScope::visit(): firstNondefiningDeclaration == NULL for case of node = %p = %s (allowed for tutorial example transformations only) \n",node,node->class_name().c_str());
+                    mprintf ("WARNING: In FixupAstDeclarationScope::visit(): firstNondefiningDeclaration == NULL for case of node = %p = %s (allowed for tutorial example transformations only) \n",node,node->class_name().c_str());
                   }
                  else
                   {

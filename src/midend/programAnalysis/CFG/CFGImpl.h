@@ -5,6 +5,7 @@
 #include <CFG.h>
 #include <sstream>
 #include <list>
+#include <ROSE_ABORT.h>
 
 template <class Node, class Edge>
 class CFGImplTemplate 
@@ -89,7 +90,7 @@ class CFGEdgeImpl : public MultiGraphElem
        case CFGConfig::COND_FALSE: return "false"; 
        case CFGConfig::ALWAYS: return "always";
        default:
-           assert(false);
+           ROSE_ABORT();
        }
     }
   virtual void write(std:: ostream& out) const

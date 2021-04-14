@@ -8,7 +8,7 @@
 #include <CommandOptions.h>
 #include <CopyArrayAnal.h>
 #include <ParallelizeLoop.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class DynamicTuning {
   static int dt;

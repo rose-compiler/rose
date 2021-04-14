@@ -375,7 +375,7 @@ MetricAttribute::unpacked_data(int size, char* data) {
     else
       {
         std::cout << "Error: In MetricAttribute::unpacked_data(): data string is zero length" << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
 }
 

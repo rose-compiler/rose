@@ -2051,7 +2051,6 @@ projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/RaaS/Makefile
 projects/RaaS/src/Makefile
-projects/RaaS/include/nlohmann/Makefile
 projects/RaaS/examples/demo/Makefile
 projects/RaaS/examples/demo/compile_commands.json
 projects/CompilationDB/Makefile
@@ -2089,7 +2088,6 @@ projects/ShiftCalculus4/Makefile
 projects/TemplateAnalysis/Makefile
 projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/include/ROSE/proposed/Makefile
-projects/TemplateAnalysis/include/nlohmann/Makefile
 projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
 projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
 projects/TemplateAnalysis/src/Makefile
@@ -2189,6 +2187,8 @@ python/Rose/BinaryAnalysis/Makefile
 python/Rose/BinaryAnalysis/Partitioner2/Makefile
 python/Rose/BinaryAnalysis/Unparser/Makefile
 scripts/Makefile
+src/3rdPartyLibraries/json/Makefile
+src/3rdPartyLibraries/json/nlohmann/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
@@ -2386,6 +2386,7 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/sageInterfaceAda_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
@@ -2439,6 +2440,8 @@ tests/nonsmoke/functional/CompilerOptionsTests/testGnuOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testNostdincOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testAnsiOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
@@ -2542,6 +2545,7 @@ tools/BinaryAnalysis/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/featureVector/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

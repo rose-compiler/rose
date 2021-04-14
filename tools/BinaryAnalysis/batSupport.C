@@ -233,7 +233,7 @@ PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string
     out <<"      " <<title <<"\n";
     if (state) {
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        ");
         out <<(*state + fmt);
     } else {
@@ -480,7 +480,7 @@ YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &tit
         writeln(out, "      semantics:", title);
         writeln(out, "      state:");
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        - ");
         out <<(*state + fmt);
     }
@@ -840,79 +840,121 @@ assignCallingConventions(const P2::Partitioner &partitioner) {
 // Path selector for pruning path outputs.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool
+PathSelector::RejectEndNames::shouldReject(const Rose::BinaryAnalysis::FeasiblePath &fpAnalysis,
+                                           const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                           SgAsmInstruction *offendingInstruction) {
+    std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(offendingInstruction);
+    size_t lastVertexIdx = lastIndices.first;
+    std::pair<std::string, std::string> endpointNames = pathEndpointFunctionNames(fpAnalysis, path, lastVertexIdx);
+    // Interesting if starts with no name and ends with a name, so reject all others.
+    return !endpointNames.first.empty() || endpointNames.second.empty();
+}
+
+bool
+PathSelector::RejectDuplicateEndpoints::shouldReject(const Rose::BinaryAnalysis::FeasiblePath&,
+                                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                                     SgAsmInstruction*) {
+    rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+    size_t seenLength = seen_.getOrElse(va, Rose::UNLIMITED);
+    size_t curLength = path.nVertices();
+    return curLength >= seenLength;
+}
+
+void
+PathSelector::RejectDuplicateEndpoints::wasRejected(bool rejected, const Rose::BinaryAnalysis::FeasiblePath&,
+                                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
+                                                     SgAsmInstruction*) {
+    if (!rejected) {
+        rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+        seen_.insert(va, showShorterPaths_ ? path.nVertices() : 0);
+    }
+}
+
+void
+PathSelector::resetStats() {
+    nSelected_ = nRejected_ = 0;
+    for (auto predicate: predicates) {
+        predicate->nCalls = predicate->nRejects = 0;
+    }
+}
+
 size_t
 PathSelector::operator()(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, SgAsmInstruction *offendingInstruction) {
+    size_t pathId = 0;
+    shouldReject(fpAnalysis, path, offendingInstruction, pathId /*out*/);
+    return pathId;
+}
+
+std::shared_ptr<PathSelector::Predicate>
+PathSelector::shouldReject(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, SgAsmInstruction *offendingInstruction,
+                           size_t &pathId /*out*/) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    pathId = 0;
 
-    // Suppress all paths?  This is used when we want to create only summaries.
-    if (suppressAll) {
-        ++nSuppressed_;
-        return 0;
-    }
-
-    // Suppress uninteresting paths.
-    if (suppressUninteresting) {
-        std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(offendingInstruction);
-        size_t lastVertexIdx = lastIndices.first;
-        std::pair<std::string, std::string> endpointNames = pathEndpointFunctionNames(fpAnalysis, path, lastVertexIdx);
-        if (endpointNames.first.empty() && !endpointNames.second.empty()) {
-            // Interesting because the path starts in unnamed user code and ends in a function whose name we know from library
-            // attribution results.
-        } else {
-            ++nSuppressed_;
-            ++nUninteresting_;
-            return 0;
+    // Run the predicates until one says "reject!"
+    std::shared_ptr<Predicate> rejector;                // he who says "reject"
+    for (auto predicate: predicates) {
+        ASSERT_not_null(predicate);
+        ++predicate->nCalls;
+        if (predicate->shouldReject(fpAnalysis, path, offendingInstruction)) {
+            ++predicate->nRejects;                      // nRejects counter is for the specific predicate that said "reject"
+            rejector = predicate;
+            break;
         }
     }
 
-    uint64_t hash = path.hash(offendingInstruction);
+    // Tell all the predicates what happened.
+    bool wasRejected = rejector != nullptr;
+    for (auto predicate: predicates)
+        predicate->wasRejected(wasRejected, fpAnalysis, path, offendingInstruction);
 
-    // If a non-empty set of path hashes is specified, then suppress all but those that are present in the set.
-    if (!requiredHashes.empty() && requiredHashes.find(hash) == requiredHashes.end()) {
-        ++nSuppressed_;
-        ++nWrongHashes_;
-        return 0;
+    if (wasRejected) {
+        ++nRejected_;
+    } else {
+        pathId = ++nSelected_;
     }
 
-    // It's possible for the same path to occur more than once. For instance, encountering a possible weakness doesn't
-    // necessarily mean that the execution path terminates -- the model checker may continue trying to extend the path.
-    // Therefore, in order to prevent printing redundant paths, we hash each path and print it only if we haven't seen the hash
-    // before.
-    if (suppressDuplicatePaths && !seenPaths_.insert(hash).second) {
-        ++nSuppressed_;
-        ++nDuplicatePaths_;
-        return 0;
-    }
+    return rejector;
+}
 
-    // The user might want to show only one path per end-point.
-    if (suppressDuplicateEndpoints) {
-        rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
-        size_t &oldLength = seenEndpoints_.insertMaybe(va, 0);
-        size_t newLength = path.nVertices();
-        bool show = 0==oldLength || (showShorterPaths && newLength < oldLength);
-        oldLength = newLength;
-        if (!show) {
-            ++nSuppressed_;
-            ++nDuplicateEndpoints_;
-            return 0;
-        }
+std::shared_ptr<PathSelector::Predicate>
+PathSelector::findPredicate(const std::string &name) const {
+    for (auto predicate: predicates) {
+        if (predicate->name == name)
+            return predicate;
     }
+    return {};
+}
 
-    // Have we selected too many paths already?
-    if (nSelected_ >= maxPaths) {
-        ++nSuppressed_;
-        ++nLimitExceeded_;
-        return 0;
-    }
+size_t
+PathSelector::nRejected() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return nRejected_;
+}
 
-    // Assume the path should be shown
-    return ++nSelected_;
+size_t
+PathSelector::nSelected() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return nSelected_;
 }
 
 void
 PathSelector::maybeTerminate() const {
-    if (nSelected_ >= maxPaths)
-        _exit(0);
+    if (auto predicate = findPredicate<RejectTooMany>()) {
+        if (nSelected_ >= predicate->limit()) {
+            std::cerr <<"path limit reached\n";
+            _exit(0);
+        }
+    }
+}
+
+void
+PathSelector::printStatistics(std::ostream &out, const std::string &prefix) const {
+    out <<prefix <<"  total paths reported:                      " <<nSelected() <<"\n";
+    out <<prefix <<"  total reports suppressed:                  " <<nRejected() <<"\n";
+    for (auto predicate: predicates)
+        out <<(boost::format("%s    because %-32s %d\n") %prefix %predicate->description %predicate->nRejects);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

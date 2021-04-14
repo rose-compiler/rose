@@ -61,19 +61,14 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UNARY_EXPRESSION:
              {
                printf ("This should never be called: case UNARY_EXPRESSION\n");
-               ROSE_ASSERT(false);
-
-               unparseUnaryExpr (expr, info);
-               break;
+               ROSE_ABORT();
              }
 
        // DQ (4/18/2013): I don't think this is ever called this way, IR node resolve to the derived classes not the base classes.
           case BINARY_EXPRESSION: 
              {
                printf ("This should never be called: case BINARY_EXPRESSION \n");
-               ROSE_ASSERT(false);
-
-               unparseBinaryExpr(expr, info); break; 
+               ROSE_ABORT();
              }
 
        // case EXPRESSION_ROOT:       { unparseExprRoot(expr, info); break; }
@@ -237,8 +232,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
                printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 
@@ -514,7 +508,7 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -558,7 +552,7 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -573,7 +567,7 @@ Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info& inf
 
 #if 1
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -797,7 +791,7 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -895,7 +889,7 @@ SgTemplateArgument::outputTemplateArgument()
                          isAssociatedWithLambdaExp = true;
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -1490,7 +1484,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                   }
 #if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1545,7 +1539,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
                curprint(nrdecl->get_name());
 #if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1553,8 +1547,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
           default:
              {
                printf ("Error: default reached \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
    }
@@ -1609,7 +1602,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -1683,7 +1676,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
 #if 0
      printf ("Exiting in unparseTemplateArgument() to see where this is called \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
@@ -1940,7 +1933,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                  assoc_type = nrdecl->get_type();
                } else {
                  printf("Error: Unexpected declaration %p (%s) for template template argument %p\n", decl, decl->class_name().c_str(), templateArgument);
-                 ROSE_ASSERT(false);
+                 ROSE_ABORT();
                }
                
 #if 0
@@ -2592,7 +2585,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
 #endif
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -2659,7 +2652,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
 #endif
 #if 0
           printf ("Exiting as a tesxt! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2803,7 +2796,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
           is_literal_operator = true;
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -2857,7 +2850,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
 
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 
@@ -3203,12 +3196,12 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #endif
@@ -3674,7 +3667,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #if 0
                                 // DQ (4/1/2018): Added debbuging for test2018_69.C.
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
                                 else
@@ -4562,7 +4555,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -4689,12 +4682,12 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                               suppress_implicit_conversion_operator = true;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
 #if 0
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
                   }
@@ -5481,7 +5474,7 @@ void
 Unparse_ExprStmt::unparseAwaitExpression(SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("C++20 await expression unparse support not implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -5490,7 +5483,7 @@ void
 Unparse_ExprStmt::unparseChooseExpression(SgExpression* expr, SgUnparse_Info& info)
    {
      printf ("C++20 choose expression unparse support not implemented \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -6126,15 +6119,13 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
           case SgCastExp::e_unknown:
              {
                printf ("SgCastExp::e_unknown found \n");
-               ROSE_ASSERT(false);
-               break; 
+               ROSE_ABORT();
              }
 
           case SgCastExp::e_default:
              {
                printf ("SgCastExp::e_default found \n");
-               ROSE_ASSERT(false);
-               break; 
+               ROSE_ABORT();
              }
 
           case SgCastExp::e_dynamic_cast:
@@ -6315,8 +6306,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
           default:
              {
                printf ("Default reached in cast_op->cast_type() = %d \n",cast_op->cast_type());
-               ROSE_ASSERT(false);
-               break; 
+               ROSE_ABORT();
              }
         }
 
@@ -7204,7 +7194,7 @@ bool uses_cxx11_initialization (SgNode* n)
                               returnValue = true;
 #if 0
                               printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
 #endif
                             }
                        }
@@ -7646,7 +7636,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      if (need_cxx11_class_specifier == true)
         {
           printf ("Found case of need_cxx11_class_specifier == true \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -7808,7 +7798,7 @@ Unparse_ExprStmt::isAssociatedWithCxx11_initializationList( SgConstructorInitial
                     is_cxx11_initialization_list = true;
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
              }
@@ -7861,7 +7851,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
         {
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
           return;
         }
@@ -8232,7 +8222,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
 #if 0
           printf ("Case of con_init->get_is_used_in_conditional() == true: exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -8252,7 +8242,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
 #if 0
           printf ("Case of process_using_cxx11_initialization_list_syntax == true: exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 #endif
@@ -8712,8 +8702,7 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
           case SgThrowOp::unknown_throw:
              {
                printf ("Error: case of SgThrowOp::unknown_throw in unparseThrowOp() \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case SgThrowOp::throw_expression:
@@ -8782,8 +8771,7 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
 
           default:
                printf ("Error: default reached in unparseThrowOp() \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
         }
    }
 
@@ -9186,7 +9174,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                  else
                   {
                     printf ("ERROR: designator is an inappropriate expression (should be SgVarRefExp or SgUnsignedLongVal): designator = %p = %s \n",designator,designator->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }

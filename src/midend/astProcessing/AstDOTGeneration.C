@@ -22,7 +22,7 @@
 #undef TEMPLATE_IMPLEMENTATIONS
 #include "AstConsistencyTests.h"
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
 
@@ -617,7 +617,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 #endif
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
         {
@@ -804,7 +804,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                dotrep.addNode(node,dotrep.traceFormat(buTrace)+nodelabel,nodeoption);
                break;
           default:
-               assert(false);
+               ROSE_ABORT();
         }
 
      ++tdbuTrace;
@@ -862,7 +862,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                          dotrep.addEdge(node,edgelabel,(*iter).node,edgeoption + "dir=back");
                          break;
                     default:
-                         assert(false);
+                         ROSE_ABORT();
                   }
              }
 
@@ -944,7 +944,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
        // case V_SgFile:
           case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           case V_SgBinaryComposite:
 #endif
              {

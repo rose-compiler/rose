@@ -75,7 +75,7 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
                if (grandParentNode->get_file_info() != NULL)
                     grandParentNode->get_file_info()->display("parentNode->get_parent()");
 
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
           counter++;
@@ -308,7 +308,7 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
   // DQ (10/12/2007): This is now called for the case of a forward enum in a typedef (e.g. "typedef a b;", at least for the case of C if not C++).
   // DQ (9/24/2007): This function should not be called now that Gergo's fix the the AST islands not being traversed is in place!
      printf ("Error: this function should not be called and has been eliminated by the fix to the AST island problems \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // This strips off and pointer types or reference types array types and modifier types that might hide the base type
@@ -454,8 +454,7 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
           default:
              {
                printf ("Default reached in ResetParentPointers::resetParentPointersInType(%s) \n",typeNode->sage_class_name());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
    }
@@ -483,8 +482,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                case SgTemplateArgument::argument_undefined:
                   {
                     printf ("Error: SgTemplateArgument::argument_undefined not allowed \n");
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
 
                case SgTemplateArgument::type_argument:
@@ -558,7 +556,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                                         default:
                                            {
                                              printf ("Error: default reached symbol = %p = %s \n",symbol,symbol->sage_class_name());
-                                             ROSE_ASSERT(false);
+                                             ROSE_ABORT();
                                            }
                                       }
 #if 0
@@ -1190,7 +1188,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                                    printf (" --- parentAfterReset  = %p = %s \n",parentAfterReset,parentAfterReset->class_name().c_str());
 #if 0
                                    printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 #endif
@@ -1504,7 +1502,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                          printf ("directive = %p = %s \n",directive,directive->class_name().c_str());
                          printf ("Error: declaration = %p = %s  (declaration->get_parent() = %p = %s) \n",declaration,declaration->class_name().c_str(),declaration->get_parent(),declaration->get_parent()->class_name().c_str());
                          declaration->get_file_info()->display("location of problem code");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
 #endif
                        }
 #if 0
@@ -1545,7 +1543,7 @@ ResetParentPointers::evaluateInheritedAttribute (
           printf ("Found a type or symbol while resetting parents \n");
           printf ("$$$$$ In evaluateInheritedAttribute() \n");
           printf ("   --- astNode->class_name() = %s \n",node->class_name().c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // I/O useful for debugging
@@ -1851,7 +1849,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 #endif
             // case V_SgFile:
                case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
 #endif
                case V_SgUnknownFile:
@@ -1931,7 +1929,7 @@ resetParentPointersInMemoryPool(SgNode* node)
                globalScope = sourceFile->get_globalScope();
              }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           ROSE_ASSERT(globalScope != NULL || isSgBinaryComposite(file) != NULL);
 #else
           ROSE_ASSERT(globalScope != NULL);
@@ -2185,15 +2183,13 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 
                       // DQ (2/28/2015): I think this is not possible to fix here, so we need to report the error and exit.
                          printf ("ERROR: parent for SgAliasSymbol not set (can't be fixed up here) \n");
-                         ROSE_ASSERT(false);
-
-                         break;
+                         ROSE_ABORT();
                        }
 
                     default:
                        {
                          printf ("Error: default reached in switch(symbol->variantT()) symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
              }

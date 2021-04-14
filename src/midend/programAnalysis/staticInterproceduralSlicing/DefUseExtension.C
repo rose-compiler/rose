@@ -577,8 +577,7 @@ namespace DUVariableAnalysisExt
                         {
                                 cerr<<"another statement reached than spedcified with sgfunctioncallexp"<<endl;
                                 // segfault
-                                ROSE_ASSERT(false);
-                                exit( -1);
+                                ROSE_ABORT();
                         }
                 }
                 return false;

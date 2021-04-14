@@ -231,7 +231,7 @@ class AttributeListMap {
                                                 break;
                                        //These directive have expression attached to them and should be handled
                                        //by  found_directive(TokenT const& directive, ContainerT const& expression)
-                                       ROSE_ASSERT(false); 
+                                       ROSE_ABORT();
                                        break;
                                case T_PP_DEFINE:    //#define
                                        rose_typeid = PreprocessingInfo::CpreprocessorDefineDeclaration;
@@ -293,7 +293,7 @@ class AttributeListMap {
                           std::cout << "Error: Unknown preprocessor declaration found : " << directive.get_value().c_str() << std::endl;
                           std::cout << boost::wave::get_token_name(wave_typeid) << " " << directive.get_position().get_file().c_str() << " " << directive.get_position().get_line() 
                                     << " " << directive.get_position().get_column() << std::endl;
-                          ROSE_ASSERT(false);
+                          ROSE_ABORT();
                         }
 
                      rose_typeid  = PreprocessingInfo::CpreprocessorUnknownDeclaration;

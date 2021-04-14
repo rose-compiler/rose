@@ -164,6 +164,9 @@ void Rose::Options::set_backend_warnings(bool flag)
 // std::set<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*> > Rose::tokenSubsequenceMapSet;
 std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMaps;
 
+// DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
+std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
+
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
 // std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
@@ -375,12 +378,17 @@ std::string version_message()
          "\n  --- using libmagic version: " + libmagicVersionString() +
          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
          "\n  --- using lib-yices version: " + yicesVersionString() +
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
          "\n  --- binary analysis is enabled"
-#ifdef ROSE_ENABLE_ASM_A64
-         "\n  ---   ARM A64 is enabled"
+#ifdef ROSE_ENABLE_ASM_AARCH64
+         "\n  ---   ARM AArch64 is enabled"
 #else
-         "\n  ---   ARM A64 is disabled"
+         "\n  ---   ARM AArch64 is disabled"
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+         "\n  ---   ARM AArch32 is enabled"
+#else
+         "\n  ---   ARM AArch32 is disasbled"
 #endif
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
          "\n  ---   concolic testing is enabled"
@@ -686,7 +694,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 #if 0
   // DQ (9/8/2017): Debugging ROSE_ASSERT.
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      if (project->get_binary_only() == true)
@@ -768,7 +776,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
              {
             // DQ (9/6/2005): I think that this is no longer needed
                printf ("I don't think we need to call instantiateTemplates() any more! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 
             // The instantiation of templates can cause new projects (sets of source files) 
             // to be generated, but since the object files are already processed this is 
@@ -883,7 +891,7 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
                printf ("Default reached in switch in backendCompilesUsingOriginalInputFile() \n");
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -1007,7 +1015,7 @@ copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
         }
 #else
      printf ("Error: Inside of copy_backend(), the copy backend has been disabled in favor of a token based mechanism for unparsing. \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (5/19/2005): I had to make up a return value since one was not previously specified
@@ -1656,9 +1664,8 @@ Rose::getNextStatement ( SgStatement *currentStatement )
           case V_SgStatement:
           case V_SgFunctionParameterList:
              {
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
             // not specified
-               break;
              }
 
        // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/nonsmoke/functional/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
@@ -1667,7 +1674,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
               SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
               nextStatement = lableStatement->get_statement();
               ROSE_ASSERT(nextStatement != NULL);
-#if 1
+#if 0
               printf ("In getNextStatement(): case V_SgLabelStatement: nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
 #endif
               break;
@@ -1726,7 +1733,10 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                          cerr<<currentStatement->get_file_info()->displayString()<<endl;
                          cerr<<"Its scope is "<<scope->class_name()<<endl;
                          cerr<<scope->get_file_info()->displayString()<<endl;
-                         ROSE_ASSERT (false);
+#if 0
+                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");                 
+#endif
+                         ROSE_ABORT ();
                        }
 
                  // now i == currentStatement

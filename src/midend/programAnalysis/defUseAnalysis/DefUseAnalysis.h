@@ -60,7 +60,9 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
  private:
   SgProject* project;
   bool DEBUG_MODE;
+#if 0 // [Robb Matzke 2021-03-17]: unused
   bool DEBUG_MODE_EXTRA;
+#endif
   std::vector<SgInitializedName*> globalVarList;
 
   bool visualizationEnabled;
@@ -107,7 +109,11 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
 
  public:
   DefUseAnalysis(SgProject* proj): project(proj), 
-    DEBUG_MODE(false), DEBUG_MODE_EXTRA(false){
+    DEBUG_MODE(false)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+      , DEBUG_MODE_EXTRA(false)
+#endif
+      {
     //visualizationEnabled=true;
     //table.clear();
     //usetable.clear();

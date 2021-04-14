@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef SEQUENCE_STRUCT_ANALYSIS_H
 #define SEQUENCE_STRUCT_ANALYSIS_H
 
@@ -206,4 +209,5 @@ class SeqStructAnalysis : public IntraFWDataflow
 void printSeqStructAnalysisStates(SeqStructAnalysis* ssa, string indent="");
 
 
+#endif
 #endif

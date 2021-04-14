@@ -41,14 +41,18 @@ package body Asis_Adapter is
       ------------
       procedure Log (Message : in String) is
       begin
-         Put_Line (Module_Name & ":  " & Message);
+         if Log_On then 
+           Put_Line (Module_Name & ":  " & Message);
+         end if; 
       end Log;
       ------------
       -- EXPORTED:
       ------------
       procedure Log_Wide (Message : in Wide_String) is
       begin
-         Put_Line_Wide (To_Wide_String (Module_Name) & ":  " & Message);
+         if Log_On then 
+           Put_Line_Wide (To_Wide_String (Module_Name) & ":  " & Message);
+         end if; 
       end Log_Wide;
 
       ------------

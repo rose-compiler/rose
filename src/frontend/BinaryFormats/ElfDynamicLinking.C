@@ -1,6 +1,6 @@
 /* ELF Dynamic Linking (SgAsmElfDynamicSection and related classes) */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "stringify.h"
@@ -58,8 +58,7 @@ SgAsmElfDynamicEntry::to_string(EntryType t)
 #ifndef _MSC_VER
     return stringifySgAsmElfDynamicEntryEntryType(t);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 
 }

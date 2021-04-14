@@ -1,4 +1,6 @@
 %{
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 /* DQ (12/10/2016): This is a technique to suppress warnings in generated code that we want to be an error elsewhere in ROSE. 
    See https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html for more detail.
@@ -36,6 +38,7 @@ void adjust_line_number(char * text);
 
 int line_number_offset = 0;
 
+#endif
 %}
 
         /* -- Prefix all symbols with "ann" */
@@ -84,7 +87,10 @@ s_char ([^"\\\n]|{escape_sequence})
         /* -- General rules for handling line number directives */
 
 <INITIAL,C,BDWY,META>^{hwhite}*"#"{hwhite}*[0-9].*"\n" |
-<INITIAL,C,BDWY,META>^{hwhite}*"#"{hwhite}*line.*"\n" { adjust_line_number(anntext); }
+<INITIAL,C,BDWY,META>^{hwhite}*"#"{hwhite}*line.*"\n"
+                {
+                    adjust_line_number(anntext);
+                }
 
         /* -- State transition (context sensitivity) rules */
 
@@ -103,117 +109,391 @@ s_char ([^"\\\n]|{escape_sequence})
 
 "//".*"\n"       {  }
 
-<INITIAL>.       { annlval.t_tok = (annlineno - line_number_offset); return anntext[0]; }
+<INITIAL>.       {
+                 #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                     annlval.t_tok = (annlineno - line_number_offset); return anntext[0];
+                 #endif
+                 }
 
         /* -- Broadway annotation tokens ------------------------------------------------------ */
 
-<BDWY>"property"       { annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY; }
-<BDWY>"may-property"   { annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY; }
-<BDWY>"must-property"  { annlval.t_tok = (annlineno - line_number_offset); return tokMUSTPROPERTY; }
-<BDWY>"initially"      { annlval.t_tok = (annlineno - line_number_offset); return tokINITIALLY; }
-<BDWY>"diagnostic"     { annlval.t_tok = (annlineno - line_number_offset); return tokDIAGNOSTIC; /* TB new */ }
-
-<BDWY>"global"         { annlval.t_tok = (annlineno - line_number_offset); return tokGLOBAL; }
-
-<BDWY>"procedure"      { annlval.t_tok = (annlineno - line_number_offset);
-                         BEGIN(BDWYID);
-                         return tokPROCEDURE; }
-
-<BDWY>"enable"         { annlval.t_tok = (annlineno - line_number_offset); return tokENABLE; }
-<BDWY>"disable"        { annlval.t_tok = (annlineno - line_number_offset); return tokDISABLE; }
-
-<BDWYID>{identifier}   { annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
-                         BEGIN(BDWY);
-                         return tokID; }
-
-<BDWY>"access"         { annlval.t_tok = (annlineno - line_number_offset); return tokACCESS; }
-<BDWY>"modify"         { annlval.t_tok = (annlineno - line_number_offset); return tokMODIFY; }
-
-<BDWY>"analyze"        { annlval.t_tok = (annlineno - line_number_offset); return tokANALYZE; }
-<BDWY>"default"        { annlval.t_tok = (annlineno - line_number_offset); return tokDEFAULT ; }
-<BDWY>"if"             { annlval.t_tok = (annlineno - line_number_offset); return tokIF; }
-
-<BDWY>"is-exactly"     { annlval.t_tok = (annlineno - line_number_offset); return tokIS_EXACTLY; }
-<BDWY>"could-be"       { annlval.t_tok = (annlineno - line_number_offset); return tokCOULD_BE; }
-
-<BDWY>"is-atleast"     { annlval.t_tok = (annlineno - line_number_offset); return tokIS_ATLEAST; }
-<BDWY>"is-atmost"      { annlval.t_tok = (annlineno - line_number_offset); return tokIS_ATMOST; }
-<BDWY>"is-??"          { annlval.t_tok = (annlineno - line_number_offset); return tokIS_BOTTOM; }
-
-<BDWY>"@before"        { annlval.t_tok = (annlineno - line_number_offset); return tokBEFORE; }
-<BDWY>"@after"         { annlval.t_tok = (annlineno - line_number_offset); return tokAFTER; }
-<BDWY>"@always"        { annlval.t_tok = (annlineno - line_number_offset); return tokALWAYS; }
-<BDWY>"@ever"          { annlval.t_tok = (annlineno - line_number_offset); return tokEVER; }
-<BDWY>"@trace"         { annlval.t_tok = (annlineno - line_number_offset); return tokTRACE; }
-<BDWY>"@confidence"    { annlval.t_tok = (annlineno - line_number_offset); return tokCONFIDENCE; }
-
-<BDWY>"@forward"       { annlval.t_tok = (annlineno - line_number_offset); return tokFORWARD; }
-<BDWY>"@backward"      { annlval.t_tok = (annlineno - line_number_offset); return tokBACKWARD; }
-
-<BDWY>"is-aliasof"     { annlval.t_tok = (annlineno - line_number_offset); return tokIS_ALIASOF; }
-<BDWY>"is-sameas"      { annlval.t_tok = (annlineno - line_number_offset); return tokIS_SAMEAS; }
-<BDWY>"is-empty"       { annlval.t_tok = (annlineno - line_number_offset); return tokIS_EMPTY; }
-
-<BDWY>"on_entry"       { annlval.t_tok = (annlineno - line_number_offset); return tokON_ENTRY; }
-<BDWY>"on_exit"        { annlval.t_tok = (annlineno - line_number_offset); return tokON_EXIT; }
-<BDWY>"new"            { annlval.t_tok = (annlineno - line_number_offset); return tokNEW; }
-<BDWY>"-->"            { annlval.t_tok = (annlineno - line_number_offset); return tokARROW; }
-<BDWY>"delete"         { annlval.t_tok = (annlineno - line_number_offset); return tokDELETE; }
-
-<BDWY>"pattern"        { annlval.t_tok = (annlineno - line_number_offset); return tokPATTERN; }
-
-<BDWY>"&&"             { annlval.t_tok = (annlineno - line_number_offset); return tokANDAND; }
-<BDWY>"||"             { annlval.t_tok = (annlineno - line_number_offset); return tokOROR; }
-
-<BDWY>"!="             { annlval.t_tok = (annlineno - line_number_offset); return tokNOT_EQUALS; }
-<BDWY>"=="             { annlval.t_tok = (annlineno - line_number_offset); return tokEQUALS_EQUALS; }
-<BDWY>"<="             { annlval.t_tok = (annlineno - line_number_offset); return tokLESS_EQUALS; }
-<BDWY>">="             { annlval.t_tok = (annlineno - line_number_offset); return tokGREATER_EQUALS; }
-
-<BDWY>"is-#"           { annlval.t_tok = (annlineno - line_number_offset); return tokIS_CONSTANT; }
-
-<BDWY>"="              { annlval.t_tok = (annlineno - line_number_offset); return tokEQUALS; }
-
-<BDWY>"<-"             { annlval.t_tok = (annlineno - line_number_offset); return tokASSIGN; }
-<BDWY>"<-+"            { annlval.t_tok = (annlineno - line_number_offset); return tokWEAKASSIGN; }
-
-<BDWY>"report"        { annlval.t_tok = (annlineno - line_number_offset); return tokREPORT; }
-<BDWY>"error"         { annlval.t_tok = (annlineno - line_number_offset); return tokERROR; }
-<BDWY>"++"            { annlval.t_tok = (annlineno - line_number_offset); return tokAPPEND; }
-
-<BDWY>"when"          { annlval.t_tok = (annlineno - line_number_offset); return tokWHEN; }
-<BDWY>"replace-with"  { annlval.t_tok = (annlineno - line_number_offset); return tokREPLACE; }
-<BDWY>"inline"        { annlval.t_tok = (annlineno - line_number_offset); return tokINLINE; }
-
-<BDWY>"{union-set}"     { annlval.t_tok = (annlineno - line_number_offset); return tokUNION_SET; }
-<BDWY>"{intersect-set}" { annlval.t_tok = (annlineno - line_number_offset); return tokINTERSECT_SET; }
-<BDWY>"{union-equivalence}" { annlval.t_tok = (annlineno - line_number_offset); return tokUNION_EQUIV; }
-<BDWY>"{intersect-equivalence}" { annlval.t_tok = (annlineno - line_number_offset); return tokINTERSECT_EQUIV; }
-
-<BDWY>"is-element-of" { annlval.t_tok = (annlineno - line_number_offset); return tokIS_ELEMENT_OF; }
-<BDWY>"is-{}"         { annlval.t_tok = (annlineno - line_number_offset); return tokIS_EMPTYSET; }
-
-<BDWY>"set-add"       { annlval.t_tok = (annlineno - line_number_offset); return tokADD; }
-
-<BDWY>{identifier}     { annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
-                         return tokID;
+<BDWY>"property"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY;
+                        #endif
+                       }
+<BDWY>"may-property"   {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokMAYPROPERTY;
+                        #endif
+                       }
+<BDWY>"must-property"  {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokMUSTPROPERTY;
+                        #endif
+                       }
+<BDWY>"initially"      {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokINITIALLY;
+                        #endif
+                       }
+<BDWY>"diagnostic"     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokDIAGNOSTIC; /* TB new */
+                        #endif
                        }
 
-<BDWY>"I/O"           { annlval.t_tok = (annlineno - line_number_offset); return tokIO; }
+<BDWY>"global"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokGLOBAL;
+                        #endif
+                       }
 
-<BDWY>.              { annlval.t_tok = (annlineno - line_number_offset); return anntext[0]; }
+<BDWY>"procedure"      {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset);
+                         BEGIN(BDWYID);
+                         return tokPROCEDURE;
+                        #endif
+                       }
+
+<BDWY>"enable"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokENABLE;
+                        #endif
+                       }
+<BDWY>"disable"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_tok = (annlineno - line_number_offset); return tokDISABLE;
+                        #endif
+                       }
+
+<BDWYID>{identifier}   {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                         annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
+                         BEGIN(BDWY);
+                         return tokID;
+                        #endif
+                       }
+
+<BDWY>"access"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokACCESS;
+                        #endif
+                       }
+<BDWY>"modify"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokMODIFY;
+                        #endif
+                       }
+
+<BDWY>"analyze"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokANALYZE;
+                        #endif
+                       }
+<BDWY>"default"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokDEFAULT ;
+                        #endif
+                       }
+<BDWY>"if"             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIF;
+                        #endif
+                       }
+
+<BDWY>"is-exactly"     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_EXACTLY;
+                        #endif
+                       }
+<BDWY>"could-be"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokCOULD_BE;
+                        #endif
+                       }
+
+<BDWY>"is-atleast"     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_ATLEAST;
+                        #endif
+                       }
+<BDWY>"is-atmost"      {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_ATMOST;
+                        #endif
+                       }
+<BDWY>"is-??"          {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_BOTTOM;
+                        #endif
+                       }
+
+<BDWY>"@before"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokBEFORE;
+                        #endif
+                       }
+<BDWY>"@after"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokAFTER;
+                        #endif
+                       }
+<BDWY>"@always"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokALWAYS;
+                        #endif
+                       }
+<BDWY>"@ever"          {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokEVER;
+                        #endif
+                       }
+<BDWY>"@trace"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokTRACE;
+                        #endif
+                       }
+<BDWY>"@confidence"    {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokCONFIDENCE;
+                        #endif
+                       }
+
+<BDWY>"@forward"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokFORWARD;
+                        #endif
+                       }
+<BDWY>"@backward"      {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokBACKWARD;
+                        #endif
+                       }
+
+<BDWY>"is-aliasof"     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_ALIASOF;
+                        #endif
+                       }
+<BDWY>"is-sameas"      {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_SAMEAS;
+                        #endif
+                       }
+<BDWY>"is-empty"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_EMPTY;
+                        #endif
+                       }
+
+<BDWY>"on_entry"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokON_ENTRY;
+                        #endif
+                       }
+<BDWY>"on_exit"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokON_EXIT;
+                        #endif
+                       }
+<BDWY>"new"            {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokNEW;
+                        #endif
+                       }
+<BDWY>"-->"            {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokARROW;
+                        #endif
+                       }
+<BDWY>"delete"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokDELETE;
+                        #endif
+                       }
+
+<BDWY>"pattern"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokPATTERN;
+                        #endif
+                       }
+
+<BDWY>"&&"             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokANDAND;
+                        #endif
+                       }
+<BDWY>"||"             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokOROR;
+                        #endif
+                       }
+
+<BDWY>"!="             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokNOT_EQUALS;
+                        #endif
+                       }
+<BDWY>"=="             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokEQUALS_EQUALS;
+                        #endif
+                       }
+<BDWY>"<="             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokLESS_EQUALS;
+                        #endif
+                       }
+<BDWY>">="             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokGREATER_EQUALS;
+                        #endif
+                       }
+
+<BDWY>"is-#"           {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_CONSTANT;
+                        #endif
+                       }
+
+<BDWY>"="              {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokEQUALS;
+                        #endif
+                       }
+
+<BDWY>"<-"             {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokASSIGN;
+                        #endif
+                       }
+<BDWY>"<-+"            {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokWEAKASSIGN;
+                        #endif
+                       }
+
+<BDWY>"report"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokREPORT;
+                        #endif
+                       }
+<BDWY>"error"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokERROR;
+                        #endif
+                       }
+<BDWY>"++"            {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokAPPEND;
+                        #endif
+                       }
+
+<BDWY>"when"          {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokWHEN;
+                        #endif
+                       }
+<BDWY>"replace-with"  {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokREPLACE;
+                        #endif
+                       }
+<BDWY>"inline"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokINLINE;
+                        #endif
+                       }
+
+<BDWY>"{union-set}"     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokUNION_SET;
+                        #endif
+                       }
+<BDWY>"{intersect-set}" {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokINTERSECT_SET;
+                        #endif
+                       }
+<BDWY>"{union-equivalence}" {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokUNION_EQUIV;
+                        #endif
+                       }
+<BDWY>"{intersect-equivalence}" {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokINTERSECT_EQUIV;
+                        #endif
+                       }
+
+<BDWY>"is-element-of" {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_ELEMENT_OF;
+                        #endif
+                       }
+<BDWY>"is-{}"         {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIS_EMPTYSET;
+                        #endif
+                       }
+
+<BDWY>"set-add"       {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokADD;
+                        #endif
+                       }
+
+<BDWY>{identifier}     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
+                          return tokID;
+                        #endif
+                       }
+
+<BDWY>"I/O"           {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return tokIO;
+                        #endif
+                       }
+
+<BDWY>.              {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return anntext[0];
+                        #endif
+                       }
 
         /* -- Embedded meta-tokens ------------------------------------------------------------ */
 
-<META>"expr"        { annlval.t_tok = (annlineno - line_number_offset); return metatokEXPR; }
-<META>"stmt"        { annlval.t_tok = (annlineno - line_number_offset); return metatokSTMT; }
-<META>"type"        { annlval.t_tok = (annlineno - line_number_offset); return metatokTYPE; }
-
-<META>{identifier}     { annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
-                         return metatokID;
+<META>"expr"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return metatokEXPR;
+                        #endif
+                       }
+<META>"stmt"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return metatokSTMT;
+                        #endif
+                       }
+<META>"type"        {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return metatokTYPE;
+                        #endif
                        }
 
-<META>.                { annlval.t_tok = (annlineno - line_number_offset); return anntext[0]; }
+<META>{identifier}     {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_id = new parserID(anntext, (annlineno - line_number_offset));
+                         return metatokID;
+                        #endif
+                       }
+
+<META>.                {
+                        #ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+                          annlval.t_tok = (annlineno - line_number_offset); return anntext[0];
+                        #endif
+                       }
 
 %%
 
@@ -221,6 +501,7 @@ s_char ([^"\\\n]|{escape_sequence})
 
 void adjust_line_number(char * s)
 {
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
  char *p;
   int val;
 
@@ -253,4 +534,5 @@ void adjust_line_number(char * s)
   }
 
   line_number_offset = annlineno - val;
+#endif
 }

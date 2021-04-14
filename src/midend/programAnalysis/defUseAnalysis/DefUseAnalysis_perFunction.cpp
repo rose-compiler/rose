@@ -1036,7 +1036,7 @@ FilteredCFGNode<IsDFAFilter> DefUseAnalysisPF::run(
             cerr << "Dumping AST into a pdf file" << endl;
             AstPDFGeneration pdf;
             pdf.generateInputFiles(SageInterface::getProject());
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 #endif        
       vector<FilteredCFGEdge<IsDFAFilter> > out_edges = source.outEdges();

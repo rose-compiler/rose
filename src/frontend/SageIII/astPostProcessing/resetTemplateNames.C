@@ -670,7 +670,7 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
                       else
                        {
                          printf ("Case where templateMemberFunctionDeclaration->get_class_scope() == NULL \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
                  else

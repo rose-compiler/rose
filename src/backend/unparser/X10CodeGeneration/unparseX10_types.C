@@ -55,8 +55,7 @@ Unparse_X10::unparseType(SgType* type, SgUnparse_Info& info)
 
           default:
                cout << "Unparse_X10::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
         }
    }
 

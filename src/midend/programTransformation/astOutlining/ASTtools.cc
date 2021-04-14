@@ -246,7 +246,7 @@ ASTtools::isC99 (const SgNode* n)
         break;
    // case V_SgFile:
       case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
       case V_SgBinaryComposite:
 #endif
         {
@@ -457,9 +457,11 @@ ASTtools::getClassName (const SgMemberFunctionDeclaration* mem_func)
       return nrdecl->get_name ();
     } else {
       ROSE_ASSERT(false);
+      abort();
     }
   } else {
     ROSE_ASSERT(false);
+    abort();
   }
 }
 

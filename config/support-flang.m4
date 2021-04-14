@@ -14,7 +14,6 @@
 #   This macro calls:
 #
 #     AC_SUBST(FLANG_INSTALL_PATH)
-#     AC_SUBST(FLANG_SOURCE_PATH)
 #
 #   And sets:
 #
@@ -23,7 +22,6 @@
 #
 #     CPP #defines:
 #     AC_DEFINE_UNQUOTED(FLANG_INSTALL_PATH)
-#     AC_DEFINE_UNQUOTED(FLANG_SOURCE_PATH)
 #
 # EXAMPLE
 #
@@ -49,7 +47,6 @@ AC_DEFUN([ROSE_SUPPORT_FLANG],
       FLANG_INSTALL_PATH="$ROSE_WITH_FLANG"
   else
     FLANG_INSTALL_PATH=
-    FLANG_SOURCE_PATH=
   fi
 
   #============================================================================
@@ -61,12 +58,8 @@ AC_DEFUN([ROSE_SUPPORT_FLANG],
     [specify the path to the Flang compiler source files],
     []
   )
-  if test "x$CONFIG_HAS_ROSE_WITH_FLANG_SRC" != "xno"; then
-      FLANG_SOURCE_PATH="$ROSE_WITH_FLANG_SRC"
-  fi
 
   AC_MSG_NOTICE([FLANG_INSTALL_PATH = "$FLANG_INSTALL_PATH"])
-  AC_MSG_NOTICE([FLANG_SOURCE_PATH = "$FLANG_SOURCE_PATH"])
 
   #============================================================================
   # Validate installation (if provided)
@@ -80,25 +73,14 @@ AC_DEFUN([ROSE_SUPPORT_FLANG],
           [],
           [ROSE_MSG_ERROR([flang_install_path/lib directory is missing, can't use this FLANG installation])])
   fi
-  if test "x$FLANG_SOURCE_PATH" != "x"; then
-      #========================================================
-      # Check for the FLANG parser directory (for include files
-      #========================================================
-      AC_CHECK_FILE(
-          [${FLANG_SOURCE_PATH}/lib/parser],
-          [],
-          [ROSE_MSG_ERROR([flang_source_path/lib/parser directory is missing, can't use this FLANG installation])])
-  fi
 
   #============================================================================
   # Set Automake Conditionals and Substitutions
   #============================================================================
   AM_CONDITIONAL(ROSE_WITH_FLANG, [test "x$FLANG_INSTALL_PATH" != "x"])
-  AM_CONDITIONAL(ROSE_WITH_FLANG_SRC, [test "x$FLANG_SOURCE_PATH" != "x"])
-  AM_CONDITIONAL(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION, [test "x$FLANG_INSTALL_PATH" != "x" && test "x$FLANG_SOURCE_PATH" != "x"])
+  AM_CONDITIONAL(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION, [test "x$FLANG_INSTALL_PATH" != "x"])
 
   AC_SUBST(FLANG_INSTALL_PATH)
-  AC_SUBST(FLANG_SOURCE_PATH)
 
   #============================================================================
   # Set CPP #defines
@@ -107,10 +89,6 @@ AC_DEFUN([ROSE_SUPPORT_FLANG],
     FLANG_INSTALL_PATH,
     ["$FLANG_INSTALL_PATH"],
     [Absolute path of the FLANG installation])
-  AC_DEFINE_UNQUOTED(
-    FLANG_SOURCE_PATH,
-    ["$FLANG_SOURCE_PATH"],
-    [Absolute path of the FLANG compilersource files])
 
 # End macro ROSE_SUPPORT_FLANG.
 ])

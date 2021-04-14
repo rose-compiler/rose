@@ -8,6 +8,7 @@
 
 
 #include "Ada_to_ROSE.h"
+#include "AdaMaker.h"
 #include "a_nodes.h"
 
 namespace Ada_ROSE_Translation
@@ -35,6 +36,13 @@ namespace Ada_ROSE_Translation
   SgExpression&
   getDefinitionExprID(Element_ID id, AstContext ctx);
 
+  /// returns an expression for attribute defined in expr
+  SgAdaAttributeExp&
+  getAttributeExpr(Expression_Struct& expr, AstContext ctx);
+
+  /// returns an expression for an Asis element ID \ref id.
+  SgAdaAttributeExp&
+  getAttributeExprID(Element_ID id, AstContext ctx);
 
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
@@ -91,9 +99,7 @@ namespace Ada_ROSE_Translation
       /// result read-out
       operator SgExprListExp& ()
       {
-        namespace sb = SageBuilder;
-
-        return SG_DEREF(sb::buildExprListExp(args));
+        return mkExprListExp(args);
       }
 
       operator std::vector<SgExpression*> () &&
@@ -128,14 +134,14 @@ namespace Ada_ROSE_Translation
       void operator()(Element_Struct& elem);
 
       /// result read-out
-      operator SgRangeExpPtrList () &&
+      operator SgExpressionPtrList () &&
       {
         return std::move(lst);
       }
 
     private:
-      AstContext        ctx;
-      SgRangeExpPtrList lst;
+      AstContext          ctx;
+      SgExpressionPtrList lst;
 
       RangeListCreator() = delete;
   };

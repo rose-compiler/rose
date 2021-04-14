@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "liveDeadVarAnalysis.h"
 
 int liveDeadAnalysisDebugLevel=0;
@@ -185,7 +188,7 @@ class LDVAExpressionTransfer : public ROSE_VisitorPatternDefaultBase
 
 public:
   // Should only be called on expressions
-  void visit(SgNode *) { assert(0); }
+  void visit(SgNode *) { ROSE_ABORT(); }
   // Catch up any other expressions that are not yet handled
   void visit(SgExpression *)
   {
@@ -1306,3 +1309,5 @@ void printLiveDeadVarsAnalysisStates(LiveDeadVarsAnalysis* ldva, string indent)
         UnstructuredPassInterAnalysis upia_pas(pas);
         upia_pas.runAnalysis();
 }
+
+#endif

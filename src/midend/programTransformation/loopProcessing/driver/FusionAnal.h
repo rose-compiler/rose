@@ -67,7 +67,7 @@ class LoopNestFusion
   virtual bool Fusible(CompSliceLocalityRegistry *anal,CompSliceNest &n1,CompSliceNest &n2,
                            const DepInfo &e) const { return false; }
   virtual void Fuse( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, 
-                     DepInfo &e) const { assert(false); }
+                     DepInfo &e) const { ROSE_ABORT(); }
   virtual LoopTransformOptions::OptType GetOptimizationType() { return LoopTransformOptions::MULTI_LEVEL_OPT; }
 };
 

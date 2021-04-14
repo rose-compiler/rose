@@ -39,7 +39,7 @@ SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute()
 #if 1
   // DQ (11/13/2018): I want to use the other constructor that will always at least set the SgSourceFile pointer.
      printf ("Exitng as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // isPartOfTypedefDeclaration   = false;
@@ -242,7 +242,7 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #endif
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
                  else
@@ -393,6 +393,9 @@ SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFil
    {
      int value = 0;
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree():");
+
      class CountTraversal : public SgSimpleProcessing
         {
           public:
@@ -421,6 +424,9 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
   // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
 
+  // DQ (02/20/2021): Using the performance tracking within ROSE.
+     TimingPerformance timer ("AST Simple Frontier Detection For Token Stream Mapping:");
+
   // DQ (11/13/2018): We need to make sure that the SgSourceFile pointer is set.
   // SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute;
      ROSE_ASSERT(sourceFile != NULL);
@@ -428,9 +434,13 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      SimpleFrontierDetectionForTokenStreamMapping fdTraversal(sourceFile);
 
 #if 0
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
      printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
      printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
      printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
+     printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
 #endif
 #if 0
   // printf ("   --- global scope NOT present in tokenSubsequenceMap \n");
@@ -455,7 +465,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
@@ -517,7 +527,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0

@@ -1,7 +1,7 @@
 /* SgAsmMipsInstruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 using namespace Rose;
@@ -77,7 +77,8 @@ SgAsmMipsInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &i
         case mips_jalr:
         case mips_jalr_hb:
         case mips_jalx: {
-            (void) last->getBranchTarget(target); // target will not be changed if unknown
+            if (target)
+                last->branchTarget().assignTo(*target); // target will not be changed if unknown
             if (return_va)
                 *return_va = last->get_address() + last->get_size();
             return true;
@@ -128,8 +129,8 @@ AddressSet
 SgAsmMipsInstruction::getSuccessors(bool &complete)
 {
     complete = false;
-    rose_addr_t target_va = 0;
     AddressSet successors;
+
     switch (get_kind()) {
         case mips_break:
         case mips_j:
@@ -140,8 +141,10 @@ SgAsmMipsInstruction::getSuccessors(bool &complete)
         case mips_jr_hb:
         case mips_syscall:
             // unconditional branch
-            if ((complete=getBranchTarget(&target_va)))
-                successors.insert(target_va);
+            if (Sawyer::Optional<rose_addr_t> target = branchTarget()) {
+                successors.insert(*target);
+                complete = true;
+            }
             break;
 
         case mips_beq:
@@ -173,8 +176,10 @@ SgAsmMipsInstruction::getSuccessors(bool &complete)
         case mips_tne:
         case mips_tnei:
             // conditional branch
-            if ((complete=getBranchTarget(&target_va)))
-                successors.insert(target_va);
+            if (Sawyer::Optional<rose_addr_t> target = branchTarget()) {
+                successors.insert(*target);
+                complete = true;
+            }
             successors.insert(get_address() + get_size()); // fall through address
             break;
 
@@ -182,6 +187,7 @@ SgAsmMipsInstruction::getSuccessors(bool &complete)
             // fall through
             successors.insert(get_address() + get_size());
             complete = true;
+            break;
     }
     return successors;
 }
@@ -193,23 +199,18 @@ SgAsmMipsInstruction::isUnknown() const
     return mips_unknown_instruction == get_kind();
 }
 
-bool
-SgAsmMipsInstruction::getBranchTarget(rose_addr_t *target)
+Sawyer::Optional<rose_addr_t>
+SgAsmMipsInstruction::branchTarget()
 {
     SgAsmExpressionPtrList &args = get_operandList()->get_operands();
     switch (get_kind()) {
         case mips_j:
         case mips_jal:
-        case mips_jalx: {
+        case mips_jalx:
             // target address stored in first argument
-            assert(args.size()>=1);
-            if (target) {
-                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[0]);
-                assert(ival!=NULL);
-                *target = ival->get_absoluteValue();
-            }
-            return true;
-        }
+            ASSERT_require(args.size() >= 1);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
+            return isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
 
         case mips_bgez:
         case mips_bgezal:
@@ -222,34 +223,24 @@ SgAsmMipsInstruction::getBranchTarget(rose_addr_t *target)
         case mips_bltz:
         case mips_bltzal:
         case mips_bltzall:
-        case mips_bltzl: {
+        case mips_bltzl:
             // target address stored in the second argument
-            assert(args.size()>=2);
-            if (target) {
-                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[1]);
-                assert(ival!=NULL);
-                *target = ival->get_absoluteValue();
-            }
-            return true;
-        }
+            ASSERT_require(args.size() >= 2);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+            return isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
 
         case mips_beq:
         case mips_beql:
         case mips_bne:
-        case mips_bnel: {
+        case mips_bnel:
             // target address stored in the third argument
-            assert(args.size()>=3);
-            if (target) {
-                SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[2]);
-                assert(ival!=NULL);
-                *target = ival->get_absoluteValue();
-            }
-            return true;
-        }
+            ASSERT_require(args.size() >= 3);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[2]));
+            return isSgAsmIntegerValueExpression(args[2])->get_absoluteValue();
 
         default:
-            // no known target; do not modify *target
-            return false;
+            // no known target
+            return Sawyer::Nothing();
     }
 }
 

@@ -6,6 +6,14 @@
 void
 fixupInClassDataInitialization( SgNode* node )
    {
+  // PP (15/01/2020) Ada's code should not need this fixup (see also CR's comment below).
+  //    a particular problem was:
+  //    type X is record y : float := 0; end record; -- here y was set to "const float"
+     if (SageInterface::is_Ada_language())
+        {
+           return;
+        }
+
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("Fixup class data member initialization:");
 
@@ -194,7 +202,7 @@ FixupInClassDataInitialization::visit (SgNode* node)
                          default:
                             {
                               printf ("Error default reached parentOfProblemExpression = %s \n",parentOfProblemExpression->sage_class_name());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }

@@ -97,7 +97,7 @@ X10_Token_t *convert_X10_token(JNIEnv *env, jobject token) {
         text = env -> GetStringUTFChars(java_string, NULL);
         if (text == NULL) {
             fprintf(stderr, "Unable to retrieve text string from String object\n");
-            assert(false);
+            ROSE_ABORT();
         }
     }
     else {

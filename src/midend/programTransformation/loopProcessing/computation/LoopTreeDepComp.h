@@ -84,11 +84,11 @@ class LoopTreeDepGraphNode
    int AstTreeDim2LoopTreeDim( int index) 
       { for (int i = 0; i < loopMap.cols(); ++i)
              if (!loopMap.Entry(index,i).IsBottom()) return i;
-        assert(false); }
+          ROSE_ABORT(); }
    int LoopTreeDim2AstTreeDim( int index)
       { for (int i = 0; i < loopMap.rows(); ++i)
              if (!loopMap.Entry(i,index).IsBottom()) return i;
-        assert(false); }
+          ROSE_ABORT(); }
    const DepInfo& GetLoopMap() const { return loopMap; }
    const DomainCond& GetDomain() const { return domain; }
    std::string toString() const { return GetInfo()->toString(); }

@@ -79,10 +79,6 @@ class ATermTraversal
    void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
    void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
 
-#ifdef CONVERT_LABELS
-   SgUntypedStatement* convert_Labels (std::vector<std::string> & labels, std::vector<PosInfo> & locations, SgUntypedStatement* stmt);
-#endif
-
 }; // class ATermTraversal
 }  // namespace ATermSupport
 

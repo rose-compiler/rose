@@ -108,7 +108,7 @@ AstTextAttributesHandling::visit(SgNode* node)
                     cerr << "error: undefined mode in AstTextAttributesHandling." << endl;
 
                  // DQ (9/5/2006): Added assertion to make default case fail!
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
              }
         }
    }

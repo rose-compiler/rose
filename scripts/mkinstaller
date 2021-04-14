@@ -7,7 +7,7 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#   Copyright 1985-99,2000-20 James Frederick Reus
+#   Copyright 1985-99,2000-21 James Frederick Reus
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "6";
-$mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.6.6";
-$mkinstaller_ver_time  = "21Nov2020,18:52:34z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.6 - 21Nov2020,18:52:34z";
+$mkinstaller_ver_build = "8";
+$mkinstaller_ver_patch = "1";
+$mkinstaller_ver_name  = "2.6.8.1";
+$mkinstaller_ver_time  = "19Mar2021,18:42:47z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.8.1 - 19Mar2021,18:42:47z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
-$perl_library_ver_build = "2";
+$perl_library_ver_build = "5";
 $perl_library_ver_patch = "";
-$perl_library_ver_name  = "2.0.2";
-$perl_library_ver_time  = "13Oct2020,16:47:23z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.2 - 13Oct2020,16:47:23z";
+$perl_library_ver_name  = "2.0.5";
+$perl_library_ver_time  = "19Mar2021,17:56:54z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.5 - 19Mar2021,17:56:54z";
 
 #{------------------------------------------------------------------------------
 #
@@ -84,7 +84,7 @@ $TBG_LIB_PFX    = "lib";
 #}------------------------------------------------------------------------------
 
 @defaultCopyrightOwners
-  = ( "Copyright 1985-99,2000-20 James Frederick Reus\n"
+  = ( "Copyright 1985-99,2000-21 James Frederick Reus\n"
     );
 
 @defaultCopyrightStatement
@@ -3436,7 +3436,7 @@ $TBG_LIB_PFX    = "lib";
 
       {
          print DBGOUT "mkinstaller: Check C compiler version\n" if $debugging_app;
-         my $tmp        = mki_checkForCompilerVersion($CC_pathname,$CC_basename);
+         my $tmp        = pKit_checkForCompilerVersion($CC_pathname,$CC_basename);
          if ($tmp =~ /^\s*(\S+)\s+(\d+(\.\d+)*)([^.0-9].*)?$/) {
             my $part1   = $1;
             my $part2   = $2;
@@ -3453,7 +3453,7 @@ $TBG_LIB_PFX    = "lib";
             print DBGOUT "mkinstaller:    failed\n" if $debugging_app;
          }
          print DBGOUT "mkinstaller: Check C++ compiler version\n" if $debugging_app;
-         my $tmp        = mki_checkForCompilerVersion($CXX_pathname);
+         my $tmp        = pKit_checkForCompilerVersion($CXX_pathname);
          if ($tmp =~ /^\s*(\S+)\s+(\d+(\.\d+)*)([^.0-9].*)?$/) {
             my $part1   = $1;
             my $part2   = $2;
@@ -6183,9 +6183,9 @@ EOF09
          |#        amd64    x86_64
          |#        x86      x86_32
          |#
-         |#  see: totebag/src/sh-lib/idTheHardware.shfrag
+         |#  see: totebag/src/sh-lib/idTheHardware.shfunc
          |#
-         |#  Dated: 17Jan2019
+         |#  Dated: 17Feb2021
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -6280,9 +6280,9 @@ EOF09
          |#
          |#  return: The value is passed back through the global variable PerlOStype.
          |#
-         |#  see: totebag/src/sh-lib/map_uname_s_to_perl.shfrag
+         |#  see: totebag/src/sh-lib/map_uname_s_to_perl.shfunc
          |#
-         |#  Dated: 12Apr2019
+         |#  Dated: 17Feb2021
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -6364,9 +6364,9 @@ EOF09
          |#        there are Bourne-shell implementations for Windows but we can't
          |#        rely on availability.
          |#
-         |#  see: totebag/src/sh-lib/getOSclass.shfrag
+         |#  see: totebag/src/sh-lib/getOSclass.shfunc
          |#
-         |#  Dated: 17Apr2019
+         |#  Dated: 17Feb2021
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -6393,9 +6393,9 @@ EOF09
          |#  variable that is to be used. The default is to simply use the value of
          |#  Perl's special varable \$^O (this default is almost always what is wanted).
          |#
-         |#  see: totebag/src/sh-lib/getOSname.shfrag
+         |#  see: totebag/src/sh-lib/getOSname.shfunc
          |#
-         |#  Dated: 01Sep2019
+         |#  Dated: 17Feb2021
          |#
          |#  NOTE: This code has only been tested on FreeBSD, Linux, MacOS, and Solaris
          |#        Other other implementations has been known to work but haven't been
@@ -13867,1571 +13867,6 @@ EOF67
    }
 
 #{= cut here ========================================================================================================== cut here ===
-   #----------------------------------------------------------------------------
-   #
-   #  This function is used to figure-out the version number of the given
-   #  compiler or linker. This code is quite complex and was derived from
-   #  the code used in an autokonf generated configure script. This is only
-   #  done on Linux hosts. Note that this function was derived from the code
-   #  used in an autokonf generated cobfigure script. Changes made to this
-   #  function should be propagated to autokonf.
-   #
-   #  See: totebag/src/autokonf/autokonf.pmain
-   #
-   #  Dated: 11Apr2019
-   #
-   #  NOTE: This really should be replaced with the more up-to-date function
-   #        in pKit/checkForCompilerVersion.psub
-   #
-   #----------------------------------------------------------------------------
-
-   sub mki_checkForCompilerVersion {
-      my $pathname    = shift;
-      my $treatAs     = shift;
-      print DBGOUT "mki_checkForCompilerVersion[ pathname=\"$pathname\", treatAs=\"$treatAs\"...\n" if $debugging_app;
-      my $result      = "";
-
-      my $theBasename;
-      if ($treatAs eq "") {
-         $theBasename = pKit_basename($pathname);
-      }
-      else {
-         $theBasename = $treatAs;
-      }
-      print DBGOUT "mki_checkForCompilerVersion: ...compiler name is \"$theBasename\"\n" if $debugging_app;
-      $_              = $theBasename;
-      identify: {
-                  #---------------------------------------
-                  #
-                  #  HP C++ compiler naming...
-                  #
-                  #---------------------------------------
-
-                  /^aCC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...HP C++ compiler name\n" if $debugging_app;
-                        print DBGOUT "mki_checkForCompilerVersion:    on an HP, probably native\n" if $debugging_app;
-                        my $cmd      = "$pathname -V 2>&1";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*aCC:\s+HP\s+ANSI\s+C\+\+\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Microsoft compiler naming...
-                  #
-                  #---------------------------------------
-
-                  /^cl(.exe)?$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...Microsoft C/C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ( $OSclass eq "Windows-like") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on Windows, probably native\n" if $debugging_app;
-                           my $Wpathname = pKit_makePathNative($pathname);
-                           my $cmd       = "\"$Wpathname\" 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response  = `$cmd`;
-                           my $status    = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response     =~ tr!\n! !;
-                           $response     =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^.*Microsoft\s+.*\s+Optimizing Compiler Version ([0-9]+\.[0-9]+\S*)/) {
-                              $result    = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Clang C/C++ compiler...
-                  #
-                  #     Note that clang and clang++ are
-                  #     sometimes given funny names.
-                  #
-                  #---------------------------------------
-
-                  /^(bg)?clang$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...clang C compiler name on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^.*\bLLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*Apple\s+LLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)\s+.*\s+\(based on LLVM\s+([0-9]+\.[0-9]+).*\)/) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^(bg)?clang\+\+$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...clang C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^.*\bbgclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^.*\bLLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*Apple\s+LLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)\s+.*\s+\(based on LLVM\s+([0-9]+\.[0-9]+).*\)/) {
-                           $result   = "$theBasename $2";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Generic compiler naming...
-                  #
-                  #---------------------------------------
-
-                  /^cc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic C compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "darwin") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a mac, possibly gcc (GNU C)\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*cc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif ($OSname eq "hpux") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on an HP, probably native\n" if $debugging_app;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...create trivial C source file\n" if $debugging_app;
-                           my $baseName = "dummy".$$;
-                           my $srcName  = $baseName.".c";
-                           my $objName  = $baseName.".o";
-                           if (open(DUMMY,"> $srcName")) {
-                              print DUMMY <<EOF;
-int main ( )
-{
-   return 0;
-}
-
-EOF
-                              close DUMMY;
-                              print DBGOUT "mki_checkForCompilerVersion:       done\n" if $debugging_app;
-                              my $cmd      = "$pathname -Ae -c -V $srcName 2>&1";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              my $response = `$cmd`;
-                              my $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response    =~ tr!\n! !;
-                              $response    =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^.*ccom:\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S+)\s+HP\s+C\s+Compiler/) {
-                                 $result   = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                              }
-                              print DBGOUT "mki_checkForCompilerVersion:    ...cleanup\n" if $debugging_app;
-                              unlink($objName);
-                              unlink($srcName);
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       failed\n" if $debugging_app;
-                           }
-                        }
-                        elsif ($OSname eq "irix64") {
-                           print DBGOUT "mki_checkForCompilerVersion: ...on an SGI, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif ($OSname eq "osf") {
-                           print DBGOUT "mki_checkForCompilerVersion: ...on an DEC, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -V 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^.*DEC\s+C\s+V([0-9]+\.\S+)\s+/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif (($OSname eq "SunOS") || ($OSname eq "solaris")) {
-                           print DBGOUT "mki_checkForCompilerVersion: ...on an SUN, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -V 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $2";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -version 2>&1";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                              }
-                              elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $2";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion: ...not an HP, mac, SGI, or SUN\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*cc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case F\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case G (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^cxx$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "osf") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a DEC, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -V 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^.*DIGITAL\s+C\+\+\s+V([0-9]+\.\S+)\s+/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:    not a DEC\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^c\+\+$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "darwin") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a mac, possibly g++ (GNU C++)\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:    not a mac\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^CC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "darwin") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a mac, possibly g++ (GNU C++)\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*\S+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif ($OSname eq "irix64") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif (($OSname eq "SunOS") || ($OSname eq "solaris")) {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -V 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $2";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -V 2>&1";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                              }
-                              elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $2";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:    not an HP, mac, SGI, or SUN\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^f77$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic FORTAN 77 compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "irix64") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif (($OSname eq "SunOS") || ($OSname eq "solaris")) {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $2";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -V 2>&1";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                              }
-                              elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $2";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:    not an SGI or SUN\n" if $debugging_app;
-                           my $cmd      = "$pathname --version";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*GNU\s+Fortran\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^f90$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...generic FORTAN 90 compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ($OSname eq "hpux") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on an HP, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname +version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*HP\s+F90\s+v([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif ($OSname eq "irix64") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        elsif (($OSname eq "SunOS") || ($OSname eq "solaris")) {
-                           print DBGOUT "mki_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging_app;
-                           my $cmd      = "$pathname -version 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response = `$cmd`;
-                           my $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response    =~ tr!\n! !;
-                           $response    =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result   = "$theBasename $2";
-                              print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -V 2>&1";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response    =~ tr!\n! !;
-                              $response    =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                              }
-                              elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                                 $result   = "$theBasename $2";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case F\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:    not an HP, SGI, or SUN\n" if $debugging_app;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...case A (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  GNU compilers...
-                  #
-                  #---------------------------------------
-
-                  /^g77$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like g77 (GNU FORTRAN) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*GNU\s+Fortran\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^gcc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like gcc (GNU C) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*gcc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case F (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^gfortran$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like gfortran (GNU FORTRAN) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^g\+\+$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like g++ (GNU C++) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*g\+\+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case F (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Intel compilers...
-                  #
-                  #---------------------------------------
-
-                  /^icc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like icc (Intel C) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*icc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^icpc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like icpc (Intel C++) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*icpc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^ifort$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like ifort (Intel FORTRAN) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*ifort\s+\(IFORT\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*ifort\s+version\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Microsoft linker naming...
-                  #
-                  #---------------------------------------
-
-                  /^link(.exe)?$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...Microsoft C/C++ compiler name on \"$OSname\"\n" if $debugging_app;
-                        if ( $OSclass eq "Windows-like") {
-                           print DBGOUT "mki_checkForCompilerVersion:    on Windows, probably native\n" if $debugging_app;
-                           my $Wpathname = pKit_makePathNative($pathname);
-                           my $cmd       = "\"$Wpathname\" 2>&1";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           my $response  = `$cmd`;
-                           my $status    = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response     =~ tr!\n! !;
-                           $response     =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^.*Microsoft\s+.*\s+Incremental\s+Linker\s+Version\s+([0-9]+\.[0-9]+\S*)/) {
-                              $result    = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                           }
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  MPI compiler wrappers...
-                  #
-                  #---------------------------------------
-
-                  /^mpicc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like mpicc (MPI C compiler) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*gcc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*icc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case F (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -V";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
-                                 $result = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case G\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case H (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^mpiCC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like mpiCC (MPI C++ compiler) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*g\+\+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*g\+\+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*icpc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case C\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case D (failed)\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case E\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case F\n" if $debugging_app;
-                              $cmd      = "$pathname -V";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
-                                 $result = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case G\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case G (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        last identify;
-                     };
-
-                  /^mpif77$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like mpif77 (MPI FORTRAN 77 compiler) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname --version";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        elsif ($response =~ /^\s*ifort\s+\(IFORT\)\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case B\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case C (failed)\n" if $debugging_app;
-                           $cmd      = "$pathname -v";
-                           print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                           $response = `$cmd`;
-                           $status   = $?;
-                           chomp $response; $response =~ s/\r$//;
-                           $response =~ tr!\n! !;
-                           $response =~ tr!\r!!d;
-                           print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                           if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
-                              $result = "$theBasename $1";
-                              print DBGOUT "mki_checkForCompilerVersion:       case D\n" if $debugging_app;
-                           }
-                           else {
-                              print DBGOUT "mki_checkForCompilerVersion:       case E (failed)\n" if $debugging_app;
-                              $cmd      = "$pathname -V";
-                              print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                              $response = `$cmd`;
-                              $status   = $?;
-                              chomp $response; $response =~ s/\r$//;
-                              $response =~ tr!\n! !;
-                              $response =~ tr!\r!!d;
-                              print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                              if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
-                                 $result = "$theBasename $1";
-                                 print DBGOUT "mki_checkForCompilerVersion:       case F\n" if $debugging_app;
-                              }
-                              else {
-                                 print DBGOUT "mki_checkForCompilerVersion:       case G (failed)\n" if $debugging_app;
-                              }
-                           }
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  Portland Group compilers...
-                  #
-                  #---------------------------------------
-
-                  /^pgcc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like pgcc (PGI C) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^pgCC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like pgCC (PGI C++) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^pgf77$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like pgf77 (PGI FORTRAN 77) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^pgf90$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like pgf90 (PGI FORTRAN 90) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*pgf90\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^pgf95$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like pgf95 (PGI FORTRAN 95) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*pgf95\s+([0-9]+\.\S+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  SUN compilers...
-                  #
-                  #---------------------------------------
-
-                  /^suncc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like suncc (SunPRO C) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd 2>&1`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^sunCC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like sunCC (SunPRO C++) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd 2>&1`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^sunf77$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like sunf77 (SunPRO FORTRAN 77) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd 2>&1`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*-f77.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^sunf90$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like sunf90 (SunPRO FORTRAN 90) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd 2>&1`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^sunf95$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like sunf95 (SunPRO FORTRAN 95) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -V";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd 2>&1`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  #---------------------------------------
-                  #
-                  #  IBM compilers...
-                  #
-                  #---------------------------------------
-
-                  /^xlf$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like xlf (IBM FORTRAN) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -qversion";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^xlf90$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like xlf90 (IBM FORTRAN 90) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -qversion";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^xlf95$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like xlf95 (IBM FORTRAN 95) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -qversion";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^xlc$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like xlc (IBM C) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -qversion";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                  /^xlC$/
-
-                     && do {
-                        print DBGOUT "mki_checkForCompilerVersion: ...looks like xlC (IBM C++) on \"$OSname\"\n" if $debugging_app;
-                        my $cmd      = "$pathname -qversion";
-                        print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging_app;
-                        my $response = `$cmd`;
-                        my $status   = $?;
-                        chomp $response; $response =~ s/\r$//;
-                        $response    =~ tr!\n! !;
-                        $response    =~ tr!\r!!d;
-                        print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging_app;
-                        if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
-                           $result   = "$theBasename $1";
-                           print DBGOUT "mki_checkForCompilerVersion:       case A\n" if $debugging_app;
-                        }
-                        else {
-                           print DBGOUT "mki_checkForCompilerVersion:       case B (failed)\n" if $debugging_app;
-                        }
-                        last identify;
-                     };
-
-                }
-      print DBGOUT "mki_checkForCompilerVersion] ...result is \"$result\"" if $debugging_app;
-      if ($result ne "") {
-         print DBGOUT " (success)\n" if $debugging_app;
-      }
-      else {
-         print DBGOUT " (failure)\n" if $debugging_app;
-      }
-      return $result;
-   }
 
    #----------------------------------------------------------------------------
    #
@@ -17452,8 +15887,6 @@ EOFc
       return $result;
    }
 
-#}--------------------------------------
-
    #----------------------------------------------------------------------------
    #
    #  This function is used to form an object file by using the C++ compiler.
@@ -18091,6 +16524,1615 @@ sub pKit_checkDebugEnvVars {
       *DBGOUT           = STDERR;
       $dbgOutToPathname = "";
    }
+}
+
+# MyUniqueFileId: ab04a84d-b42f-4177-ed9c-fe66ebb4b620
+#-------------------------------------------------------------------------------
+#
+#  This function attempts to determine the compiler version by invoking it with
+#  particular options. The idea is to get it to report the version number. Note
+#  that the version number is typically embedded in a more complex message often
+#  including stuff like copyrights and such.
+#
+#  This is a rather clumsy solution which doesn't really scale very well. Some
+#  sort of "hook"-like mechanism would be almost certainly better.
+#
+#  This function uses: pKit_basename(),
+#                      pKit_getOSclass(),
+#                      pKit_getOSname(),
+#                      pKit_nativePathname(),
+#                      pKit_quoteIfReqd()
+#
+#  see: totebag/src/pKit/checkForCompilerVersion.psub
+#
+#  Dated: 19Mar2021 pKit_checkForCompilerVersion
+#
+#-------------------------------------------------------------------------------
+
+sub pKit_checkForCompilerVersion {
+   my $pathname      = shift;
+   my $treatAs       = shift;
+   print DBGOUT "pKit_checkForCompilerVersion[ pathname=\"".$pathname."\", treatAs=\"$treatAs\"...\n" if $debugging;
+   my $theOSclass    = pKit_getOSclass();
+   print DBGOUT "pKit_checkForCompilerVersion: ...OS class    = \"".$theOSclass."\"...\n" if $debugging;
+   my $theOSreported = lc $^O;
+   print DBGOUT "pKit_checkForCompilerVersion:    OS reported = \"".$theOSreported."\"...\n" if $debugging;
+   my $theOSname     = pKit_getOSname(3);
+   print DBGOUT "pKit_checkForCompilerVersion:    OS name     = \"".$theOSclass."\"...\n" if $debugging;
+   my $result        = "";
+
+   my $theBasename;
+   if ($treatAs eq "") {
+      $theBasename   = pKit_basename($pathname);
+   }
+   else {
+      $theBasename   = $treatAs;
+   }
+   print DBGOUT "pKit_checkForCompilerVersion: ...compiler name is \"$theBasename\"\n" if $debugging;
+   $_                = $theBasename;
+   identify: {
+               #---------------------------------------
+               #
+               #  HP C++ compiler naming...
+               #
+               #---------------------------------------
+
+               /^aCC$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...HP C++ compiler name\n" if $debugging;
+                     print DBGOUT "pKit_checkForCompilerVersion:    on an HP, probably native\n" if $debugging;
+                     my $cmd      = "$pathname -V 2>&1";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*aCC:\s+HP\s+ANSI\s+C\+\+\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Microsoft compiler naming...
+               #
+               #---------------------------------------
+
+               /^cl(\.exe)?$/
+
+                  && do {
+                     if ( $theOSclass eq "Windows-like") {
+                        print DBGOUT "pKit_checkForCompilerVersion: ...Microsoft C/C++ compiler name on \"Windows\"\n" if $debugging;
+                        my $cmd       = pKit_quoteIfReqd(pKit_nativePathname($pathname))." 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response  = `$cmd`;
+                        my $status    = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response     =~ tr!\n! !;
+                        $response     =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^.*Microsoft\s+.*\s+Optimizing Compiler Version ([0-9]+\.[0-9]+\S*)/) {
+                           $result    = "cl $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Clang C/C++ compiler...
+               #
+               #     Note that clang and clang++ are
+               #     sometimes given funny names.
+               #
+               #---------------------------------------
+
+               /^(bg)?clang(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...clang C compiler name on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^.*\bLLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*Apple\s+LLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)\s+.*\s+\(based on LLVM\s+([0-9]+\.[0-9]+).*\)/) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^(bg)?clang\+\+(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...clang C++ compiler name on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^.*\bLLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*Apple\s+LLVM\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)\s+.*\s+\(based on LLVM\s+([0-9]+\.[0-9]+).*\)/) {
+                        $result   = "$theBasename $2";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Generic compiler naming...
+               #
+               #---------------------------------------
+
+               /^cc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic C compiler name on \"$theOSname\"\n" if $debugging;
+                     if ($theOSreported eq "darwin") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a mac, possibly gcc (GNU C)\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*cc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif ($theOSreported eq "hpux") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an HP, probably native\n" if $debugging;
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...create trivial C source file\n" if $debugging;
+                        my $baseName = "dummy".$$;
+                        my $srcName  = $baseName.".c";
+                        my $objName  = $baseName.".o";
+                        if (open(DUMMY,"> $srcName")) {
+                           print DUMMY <<EOF;
+int main ( )
+{
+   return 0;
+}
+
+EOF
+                           close DUMMY;
+                           print DBGOUT "pKit_checkForCompilerVersion:       done\n" if $debugging;
+                           my $cmd      = "$pathname -Ae -c -V $srcName 2>&1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...run [$cmd]\n" if $debugging;
+                           my $response = `$cmd`;
+                           my $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:       gives [$response]\n" if $debugging;
+                           if ($response =~ /^.*ccom:\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S+)\s+HP\s+C\s+Compiler/) {
+                              $result   = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:       ...case A\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:       ...case B (failed)\n" if $debugging;
+                           }
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...cleanup\n" if $debugging;
+                           unlink($objName);
+                           unlink($srcName);
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:       failed\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "irix") || ($theOSreported eq "irix64")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif ($AK_os eq "osf") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a DEC, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -V 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^.*DEC\s+C\s+V([0-9]+\.\S+)\s+/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "sunos") || ($theOSreported eq "solaris")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -V 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $2";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                           $cmd      = "$pathname -version 2>&1";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                           }
+                           elsif ($response =~ /^\s*cc:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $2";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not an HP, mac, SGI, or SUN\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*cc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case F\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case G (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^cxx$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic C++ compiler name on \"$theOSname\"\n" if $debugging;
+                     if ($theOSreported eq "osf") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a DEC, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -V 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^.*DIGITAL\s+C\+\+\s+V([0-9]+\.\S+)\s+/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not a DEC\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^c\+\+$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic C++ compiler name on \"$theOSname\"\n" if $debugging;
+                     if ($theOSreported eq "darwin") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a mac, possibly g++ (GNU C++)\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not a mac\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^CC$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic C++ compiler name on \"$theOSname\"\n" if $debugging;
+                     if ($theOSreported eq "darwin") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a mac, possibly g++ (GNU C++)\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*\S+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "irix") || ($theOSreported eq "irix64")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "sunos") || ($theOSreported eq "solaris")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $2";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V 2>&1";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                           }
+                           elsif ($response =~ /^\s*CC:\s+Studio\s+([0-9]+\.[0-9]+)\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $2";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not an HP, mac, SGI, or SUN\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^f77$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic FORTRAN 77 compiler name on \"$theOSname\"\n" if $debugging;
+                     if (($theOSreported eq "irix") || ($theOSreported eq "irix64")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "sunos") || ($theOSreported eq "solaris")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $2";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V 2>&1";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                           }
+                           elsif ($response =~ /^.+\s+-f77\s+.+f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $2";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not an SGI or SUN\n" if $debugging;
+                        my $cmd      = "$pathname --version";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*GNU\s+Fortran\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case E (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^f90$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...generic FORTRAN 90 compiler name on \"$theOSname\"\n" if $debugging;
+                     if ($theOSreported eq "hpux") {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an HP, probably native\n" if $debugging;
+                        my $cmd      = "$pathname +version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*HP\s+F90\s+v([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     if (($theOSreported eq "irix") || ($theOSreported eq "irix64")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on an SGI, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     elsif (($theOSreported eq "sunos") || ($theOSreported eq "solaris")) {
+                        print DBGOUT "pKit_checkForCompilerVersion:    on a SUN, probably native\n" if $debugging;
+                        my $cmd      = "$pathname -version 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response = `$cmd`;
+                        my $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result   = "$theBasename $2";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V 2>&1";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                           }
+                           elsif ($response =~ /^\s*f90:\s+Studio\s+([0-9]+\.[0-9]+)\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                              $result   = "$theBasename $2";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    not an HP, SGI, or SUN\n" if $debugging;
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  GNU compilers...
+               #
+               #---------------------------------------
+
+               /^g77(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like g77 (GNU FORTRAN) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if    ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*GNU\s+Fortran\s+\(GCC[^\(\)]*\([^\(\)]+\)\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*GNU\s+Fortran\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^gcc(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like gcc (GNU C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*gcc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^gfortran(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like gfortran (GNU FORTRAN) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*GNU\s+Fortran\s+95\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*GNU\s+Fortran\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case E (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^g\+\+(-\d+(\.\d+)?)?$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like g++ (GNU C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*g\+\+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*[^ \(]+\s+\([^\)]+\)\s+([0-9]+\.\S+)\s+.*Free\s+Software\s+Foundation/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*egcs-([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*([0-9]+\.[0-9]+(\.[0-9]+)?)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Intel compilers...
+               #
+               #---------------------------------------
+
+               /^icc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like icc (Intel C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*icc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^icpc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like icpc (Intel C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*icpc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^ifort$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like ifort (Intel FORTRAN) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*ifort\s+\(IFORT\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*ifort\s+version\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Microsoft linker naming...
+               #
+               #---------------------------------------
+
+               /^link(\.exe)?$/
+
+                  && do {
+                     if ( $theOSclass eq "Windows-like") {
+                        print DBGOUT "pKit_checkForCompilerVersion: ...Microsoft C/C++ linker name on \"$theOSname\"\n" if $debugging;
+                        my $cmd       = pKit_quoteIfReqd(pKit_nativePathname($pathname))." 2>&1";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        my $response  = `$cmd`;
+                        my $status    = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response     =~ tr!\n! !;
+                        $response     =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^.*Microsoft\s+.*\s+Incremental\s+Linker\s+Version\s+([0-9]+\.[0-9]+\S*)/) {
+                           $result    = "link $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                        }
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  MPI compiler wrappers...
+               #
+               #---------------------------------------
+
+               /^mpicc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like mpicc (parallel C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*gcc\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*icc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case E\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case F (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
+                              $result = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case G\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case H (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^(mpiCC|mpicxx)$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like ".$theBasename." (parallel C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*g\+\+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*g\+\+\s+\([^\)]+\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*icpc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*c\+\+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case E (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case F\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case G (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
+                              $result = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case H\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case I (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     last identify;
+                  };
+
+               /^mpif77$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like mpif77 (parallel FORTRAN) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname --version";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*GNU\s+Fortran\s+\([^()]*\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     elsif ($response =~ /^\s*ifort\s+\([^()]*\)\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case C (failed)\n" if $debugging;
+                        $cmd      = "$pathname -v";
+                        print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                        $response = `$cmd`;
+                        $status   = $?;
+                        chomp $response; $response =~ s/\r$//;
+                        $response =~ tr!\n! !;
+                        $response =~ tr!\r!!d;
+                        print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                        if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
+                           $result = "$theBasename $1";
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case D\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "pKit_checkForCompilerVersion:    ...case E (failed)\n" if $debugging;
+                           $cmd      = "$pathname -V";
+                           print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                           $response = `$cmd`;
+                           $status   = $?;
+                           chomp $response; $response =~ s/\r$//;
+                           $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
+                           print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                           if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
+                              $result = "$theBasename $1";
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case F\n" if $debugging;
+                           }
+                           else {
+                              print DBGOUT "pKit_checkForCompilerVersion:    ...case G (failed)\n" if $debugging;
+                           }
+                        }
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Portland Group compilers...
+               #
+               #---------------------------------------
+
+               /^pgcc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like pgcc (PGI C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^pgCC$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like pgCC (PGI C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^pgf77$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like pgf77 (PGI FORTRAN 77) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^pgf90$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like pgf90 (PGI FORTRAN 90) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*pgf90\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^pgf95$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like pgf95 (PGI FORTRAN 95) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*pgf95\s+([0-9]+\.\S+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  SUN compilers...
+               #
+               #---------------------------------------
+
+               /^suncc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like suncc (SunPRO C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd 2>&1]\n" if $debugging;
+                     my $response = `$cmd 2>&1`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^sunCC$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like sunCC (SunPRO C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd 2>&1]\n" if $debugging;
+                     my $response = `$cmd 2>&1`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^sunf77$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like sunf77 (SunPRO FORTRAN 77)\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd 2>&1]\n" if $debugging;
+                     my $response = `$cmd 2>&1`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*-f77.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^sunf90$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like sunf90 (SunPRO FORTRAN 90) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd 2>&1]\n" if $debugging;
+                     my $response = `$cmd 2>&1`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^sunf95$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like sunf95 (SunPRO FORTRAN 95) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -V";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd 2>&1]\n" if $debugging;
+                     my $response = `$cmd 2>&1`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  Tiny C Compiler...
+               #
+               #---------------------------------------
+
+               /^tcc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like tcc (Tiny C Compiler) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -v";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*tcc\s+version\s+([0-9]+(\.[0-9]+(\.[0-9]+(\.[0-9]+)?)?)?)\S*/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               #---------------------------------------
+               #
+               #  IBM compilers...
+               #
+               #---------------------------------------
+
+               /^xlf$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like xlf (IBM FORTRAN) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -qversion";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^xlf90$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like xlf90 (IBM FORTRAN 90) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -qversion";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^xlf95$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like xlf95 (IBM FORTRAN 95) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -qversion";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^xlc$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like xlc (IBM C) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -qversion";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+
+               /^xlC$/
+
+                  && do {
+                     print DBGOUT "pKit_checkForCompilerVersion: ...looks like xlC (IBM C++) on \"$theOSname\"\n" if $debugging;
+                     my $cmd      = "$pathname -qversion";
+                     print DBGOUT "pKit_checkForCompilerVersion: ...run [$cmd]\n" if $debugging;
+                     my $response = `$cmd`;
+                     my $status   = $?;
+                     chomp $response; $response =~ s/\r$//;
+                     $response    =~ tr!\n! !;
+                     $response    =~ tr!\r!!d;
+                     print DBGOUT "pKit_checkForCompilerVersion:    gives [$response]\n" if $debugging;
+                     if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
+                        $result   = "$theBasename $1";
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case A\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "pKit_checkForCompilerVersion:    ...case B (failed)\n" if $debugging;
+                     }
+                     last identify;
+                  };
+             }
+   print DBGOUT "pKit_checkForCompilerVersion] ...done(=\"".$result if $debugging;
+   if ($result ne "") {
+      print DBGOUT "=success" if $debugging;
+   }
+   else {
+      print DBGOUT "=failure" if $debugging;
+   }
+   print DBGOUT "\")\n" if $debugging;
+   return $result;
 }
 
 # MyUniqueFileId: a237e8e4-1371-49f0-da30-aad98b482e1f

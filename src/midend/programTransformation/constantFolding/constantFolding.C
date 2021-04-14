@@ -174,7 +174,7 @@ static int cf_get_int_value(SgValueExp * sg_value_exp)
   else
   {
     cerr<<"error: wrong value exp type for cf_get_int_value():"<<sg_value_exp->class_name()<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
   return rtval;
 }
@@ -667,7 +667,7 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                                       }
 #else
                                    printf ("Warning: originalExpressionTree is no longer a part of the AST traversal (must be accessed explicitly). code in constant folding is disabled. \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
 #endif
                                  }
 

@@ -23,6 +23,7 @@ package Asis_Adapter is
    -- Controls behavior of Trace_ routines.  Renamed here so clients have to
    -- with fewer packages:
    Trace_On : Boolean renames Indented_Text.Trace_On;
+   Log_On : Boolean ;
 
    type Outputs_Record is record -- Initialized
       Output_Dir : Ada.Strings.Unbounded.Unbounded_String; -- Initialized
