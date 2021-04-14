@@ -52,6 +52,11 @@ namespace ada
   SgRangeExp* range(const SgAdaAttributeExp* rangeAttribute);
   SgRangeExp* range(const SgAdaAttributeExp& rangeAttribute);
   /// @}
+
+  /// converts all Ada style comments to C++ comments
+  // \todo mv into Ada to C++ converter
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
+
 } // Ada
 } // SageInterface
 

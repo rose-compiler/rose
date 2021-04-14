@@ -143,14 +143,14 @@ void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
 {
   ROSE_ASSERT(n && orig);
 
+  n->unsetCompilerGenerated();
+  n->unsetTransformation();
   n->set_physical_filename(orig->get_physical_filename());
   n->set_filenameString(orig->get_filenameString());
   n->set_line(orig->get_line());
   n->set_col(orig->get_line());
 
   n->setOutputInCodeGeneration();
-  n->unsetCompilerGenerated();
-  n->unsetTransformation();
 }
 
 template <class SageNode>
@@ -164,14 +164,15 @@ void setFileInfo( SageNode& n,
 {
   if (Sg_File_Info* info = (n.*getter)())
   {
+    info->unsetCompilerGenerated();
+    info->unsetTransformation();
     info->set_physical_filename(filename);
     info->set_filenameString(filename);
     info->set_line(line);
+    info->set_physical_line(line);
     info->set_col(col);
 
     info->setOutputInCodeGeneration();
-    info->unsetCompilerGenerated();
-    info->unsetTransformation();
     return;
   }
 
