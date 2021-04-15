@@ -4528,6 +4528,11 @@ DispatcherX86::stackPointerRegister() const {
 }
 
 RegisterDescriptor
+DispatcherX86::stackFrameRegister() const {
+    return REG_anyBP;
+}
+
+RegisterDescriptor
 DispatcherX86::callReturnRegister() const {
     return RegisterDescriptor();
 }

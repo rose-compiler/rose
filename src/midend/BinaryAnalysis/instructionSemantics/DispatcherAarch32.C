@@ -3036,6 +3036,11 @@ DispatcherAarch32::stackPointerRegister() const {
 }
 
 RegisterDescriptor
+DispatcherAarch32::stackFrameRegister() const {
+    return RegisterDescriptor();
+}
+
+RegisterDescriptor
 DispatcherAarch32::callReturnRegister() const {
     return REG_LR;
 }

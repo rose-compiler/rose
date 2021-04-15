@@ -121,6 +121,12 @@ Dispatcher::stackPointerRegister() const {
 }
 
 RegisterDescriptor
+Dispatcher::stackFrameRegister() const {
+    ASSERT_not_null(process_);
+    return process_->disassembler()->stackFrameRegister();
+}
+
+RegisterDescriptor
 Dispatcher::callReturnRegister() const {
     ASSERT_not_null(process_);
     return process_->disassembler()->callReturnRegister();
