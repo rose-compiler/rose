@@ -189,6 +189,13 @@ public:
         return type_ != other.type_ || reg_ != other.reg_ || offset_ != other.offset_; // &va_ == &offset_
     }
 
+    /** String representation. */
+    std::string toString(const RegisterDictionary *regdict) const {
+        std::ostringstream ss;
+        print(ss, RegisterNames(regdict));
+        return ss.str();
+    }
+
     /** Print location.
      *
      * @{ */
