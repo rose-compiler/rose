@@ -53,9 +53,23 @@ namespace ada
   SgRangeExp* range(const SgAdaAttributeExp& rangeAttribute);
   /// @}
 
+  /// returns the declaration node for the package specification
+  /// @{
+  SgAdaPackageSpecDecl& getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl);
+  SgAdaPackageSpecDecl* getSpecificationDeclaration(const SgAdaPackageBodyDecl* bodyDecl);
+  /// @}
+
+  /// returns the declaration node for the package body, if available
+  /// @{
+  SgAdaPackageBodyDecl& getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl);
+  SgAdaPackageBodyDecl* getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
+  /// @}
+
+
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
+
 
 } // Ada
 } // SageInterface

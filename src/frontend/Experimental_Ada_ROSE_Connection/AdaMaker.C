@@ -109,7 +109,8 @@ void markCompilerGenerated(SgLocatedNode& n)
   n.set_startOfConstruct(&mkFileInfo());
   n.set_endOfConstruct  (&mkFileInfo());
 
-  //~ n.unsetTransformation();
+  n.unsetTransformation();
+  n.setCompilerGenerated();
 }
 
 
@@ -576,6 +577,7 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
 
   pkgbody.set_parent(&sgnode);
   sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
 
