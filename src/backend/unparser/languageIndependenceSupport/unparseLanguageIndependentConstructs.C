@@ -29,6 +29,7 @@ Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
 #define OUTPUT_HIDDEN_LIST_DATA 0
 #define OUTPUT_DEBUGGING_INFORMATION 0
 
+// DQ (4/15/2021): This is required to be set (to one) by default.
 #define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
 // DQ (2/5/2021): Adding debugging support for token-based unparsing.
@@ -3829,6 +3830,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
 #endif
 
+#if 0
+       // DQ (4/15/2021): I think this is the cause of the last comments and CPP directives being redundantly output.
           if (stmt == lastStatement)
              {
             // Output the trailing whitespace.
@@ -3859,6 +3862,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                skipOutputOfPreprocessingInfo = true;
              }
+#else
+          printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
+          printf ("Skipped processing of last statement in token-based unparsing of last statement \n");
+          printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
+#endif
 
 #if 0
           printf ("SageInterface::get_name(stmt) = %s \n",SageInterface::get_name(stmt).c_str());
