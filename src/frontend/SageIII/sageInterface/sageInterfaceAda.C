@@ -347,6 +347,73 @@ namespace ada
   {
     return unconstrained(SG_DEREF(ty));
   }
+
+
+  //
+  // \todo move code below to Ada to C++ translator
+
+  /// Traversal to change the comment style from Ada to C++
+  struct CommentCxxifier : AstSimpleProcessing
+  {
+    explicit
+    CommentCxxifier(bool useLineComments)
+    : AstSimpleProcessing(),
+      prefix(useLineComments ? "//" : "/*"),
+      suffix(useLineComments ? ""   : "*/"),
+      commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
+    {}
+
+    void visit(SgNode*) ROSE_OVERRIDE;
+
+    private:
+      //~ bool lineComments;
+      const std::string                      prefix;
+      const std::string                      suffix;
+      const PreprocessingInfo::DirectiveType commentKind;
+
+      CommentCxxifier()                                  = delete;
+      CommentCxxifier(const CommentCxxifier&)            = delete;
+      CommentCxxifier(CommentCxxifier&&)                 = delete;
+      CommentCxxifier& operator=(CommentCxxifier&&)      = delete;
+      CommentCxxifier& operator=(const CommentCxxifier&) = delete;
+  };
+
+  void CommentCxxifier::visit(SgNode* n)
+  {
+    SgLocatedNode* node = isSgLocatedNode(n);
+    if (node == nullptr) return;
+
+    AttachedPreprocessingInfoType* prepInfo = node->getAttachedPreprocessingInfo();
+    if (prepInfo == nullptr) return;
+
+    for (PreprocessingInfo* ppinfo : *prepInfo)
+    {
+      ROSE_ASSERT(ppinfo);
+
+      if (ppinfo->getTypeOfDirective() != PreprocessingInfo::AdaStyleComment) continue;
+
+      std::string comment = ppinfo->getString();
+
+      ROSE_ASSERT(comment.rfind("--", 0) == 0);
+      comment.replace(0, 2, prefix);
+      comment.append(suffix);
+      ppinfo->setString(comment);
+      // \todo PreprocessingInfo does not allow to update the directive type
+      //       possible solutions: either add new function or gen new object
+      // ppinfo->setTypeOfDirective(commentKind);
+    }
+  }
+
+
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
+  {
+    ROSE_ASSERT(root);
+
+    CommentCxxifier adaToCxxCommentConverter{cxxLineComments};
+
+    adaToCxxCommentConverter.traverse(root, preorder);
+  }
+
 } // Ada
 } // SageInterface
 

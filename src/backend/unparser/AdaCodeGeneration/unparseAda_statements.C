@@ -110,7 +110,7 @@ namespace
 
   bool isAdaFunction(SgFunctionType& ty)
   {
-    return isSgTypeVoid(ty.get_return_type()) == NULL;
+    return isSgTypeVoid(ty.get_return_type()) == nullptr;
   }
 
   SgExpression* underlyingExpr(SgStatement* s)
@@ -595,7 +595,7 @@ namespace
 
       ScopeUpdateGuard    scopeGuard(info, n);
       SgStatementPtrList& stmts = n.get_statements();
-      SgBasicBlock*       block = NULL;
+      SgBasicBlock*       block = nullptr;
       Iterator            zz = stmts.end();
 
       if (stmts.size()) block = isSgBasicBlock(stmts.back());
@@ -807,7 +807,7 @@ namespace
         prn(loopName);
       }
 
-      if (isSgNullExpression(n.get_condition()) == NULL)
+      if (isSgNullExpression(n.get_condition()) == nullptr)
       {
         prn(" when ");
         expr(n.get_condition());
@@ -1204,7 +1204,7 @@ namespace
 
   bool isNormalStatement(const SgStatement* s)
   {
-    return isSgDeclarationStatement(s) == NULL;
+    return isSgDeclarationStatement(s) == nullptr;
   }
 
   void AdaStatementUnparser::handle(SgStatement& n)
@@ -1342,7 +1342,7 @@ namespace
     // print the renaming syntax after the function/procedure declaration
     // and immediately return.
     SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n);
-    if (renaming != NULL)
+    if (renaming != nullptr)
     {
       prn(" renames ");
       prn(renaming->get_renamed_function()->get_name());
@@ -1511,7 +1511,10 @@ namespace
   {
     startPrivateIfNeeded(isSgDeclarationStatement(s));
 
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::before);
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
     sg::dispatch(*this, s);
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::after);
   }
 
   /*
@@ -1643,8 +1646,9 @@ Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
 void
 Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
-  //~ std::cerr << typeid(*stmt).name() << std::endl;
-  sg::dispatch(AdaStatementUnparser(*this, info, std::cerr), stmt);
+  AdaStatementUnparser adaUnparser{*this, info, std::cerr};
+
+  adaUnparser.stmt(stmt);
 }
 
 void
