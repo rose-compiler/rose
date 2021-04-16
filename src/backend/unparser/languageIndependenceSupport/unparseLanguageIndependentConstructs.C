@@ -633,9 +633,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   }
              }
 
-       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence 
-       // and if they are not marked as transformations, then we want to skip their output. And example of 
-       // 
+       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence
+       // and if they are not marked as transformations, then we want to skip their output. And example of
+       //
        // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
           if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
              {
@@ -1146,7 +1146,7 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
 
 
 // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-// regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+// regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
 // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
 // bool UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(SgSourceFile* sourceFile, SgStatement* stmt)
 bool
@@ -1182,7 +1182,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 #endif
 
   // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-  // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+  // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
   // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
      if (info.usedInUparseToStringFunction() == true)
         {
@@ -1504,10 +1504,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
 
 int
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeContainingTransformation(
-   SgSourceFile* sourceFile, 
-   SgStatement* stmt, 
-   SgUnparse_Info & info, 
-   bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream, 
+   SgSourceFile* sourceFile,
+   SgStatement* stmt,
+   SgUnparse_Info & info,
+   bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream,
    unparsed_as_enum_type unparsed_as)
    {
   // This function returns non-zero value if the input statement can be wholely unparsed using the token stream (not partially and not from the AST).
@@ -1550,7 +1550,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
      if (unparseStatus == true)
         {
        // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
        // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
@@ -1609,7 +1609,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
      printf (" --- stmt->get_containsTransformationToSurroundingWhitespace() = %s \n",stmt->get_containsTransformationToSurroundingWhitespace() ? "true" : "false");
 #endif
 #if DEBUG_USING_CURPRINT
-     curprint( string("\n/* In unparseStatementFromTokenStream(file,stmt,info,bool): get_containsTransformationToSurroundingWhitespace = ") + 
+     curprint( string("\n/* In unparseStatementFromTokenStream(file,stmt,info,bool): get_containsTransformationToSurroundingWhitespace = ") +
           string(stmt->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
 #endif
 
@@ -1637,7 +1637,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
           curprint("/* In unparseStatementFromTokenStream(file,stmt,info,bool): unparseStatus == true */");
 #endif
        // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
        // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
        // bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
@@ -1682,9 +1682,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                printf ("In unparseStatementFromTokenStream(): tokenSubsequence = %p (%d,%d) \n",tokenSubsequence,tokenSubsequence->token_subsequence_start,tokenSubsequence->token_subsequence_end);
 
-               string tmp_s0 = "\n/* sourceFile = " + sourceFile->getFileName() + " */ \n"; 
-               string tmp_s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " name = " + SageInterface::get_name(stmt) + " */ \n"; 
-               string tmp_s2 = "\n/* tokenSubsequence->leading_whitespace_start = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_start) + 
+               string tmp_s0 = "\n/* sourceFile = " + sourceFile->getFileName() + " */ \n";
+               string tmp_s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " name = " + SageInterface::get_name(stmt) + " */ \n";
+               string tmp_s2 = "\n/* tokenSubsequence->leading_whitespace_start = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_start) +
                            " end = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_end) + " */";
                curprint(tmp_s0);
                curprint(tmp_s1);
@@ -1718,7 +1718,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                bool unparseStatus_previousStatement = false;
                bool unparseLeadingTokenStream       = false;
 
-            // DQ (2/22/2021): When the previous statement was unparsed from the AST, then the leading whitespace 
+            // DQ (2/22/2021): When the previous statement was unparsed from the AST, then the leading whitespace
             // of the current statement may require an additional CR if it has a CPP directive.
                bool checkLeadingTokenStreamForCppDirective = false;
 
@@ -1987,9 +1987,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                               printf ("tokenSubsequence->leading_whitespace_start = %d \n",tokenSubsequence->leading_whitespace_start);
                               printf ("tokenSubsequence->leading_whitespace_end   = %d \n",tokenSubsequence->leading_whitespace_end);
 #endif
-                           // DQ (2/22/2021): This might be the place to insert a CR, if the previous statement was a transformation 
-                           // (unparsed from the AST, and the next token of the whitespace between statements is a #include (or 
-                           // any CPP directive), or if there is only whitespace that does not include a CR before a CPP directive.  
+                           // DQ (2/22/2021): This might be the place to insert a CR, if the previous statement was a transformation
+                           // (unparsed from the AST, and the next token of the whitespace between statements is a #include (or
+                           // any CPP directive), or if there is only whitespace that does not include a CR before a CPP directive.
                            // Basically CPP directives must be on the next line, and not at the end of an unparsed statement.
 #if 0
                               printf ("checkLeadingTokenStreamForCppDirective = %s \n",checkLeadingTokenStreamForCppDirective ? "true" : "false");
@@ -2004,8 +2004,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
                                 // DQ (2/22/2021): For CPP directives the insertion of an extra CR is required, but for comments it just makes it look nicer.
                                 // while (j <= tokenSubsequence->leading_whitespace_end && tokenVector[j]->get_classification_code() != ROSE_token_ids::C_CXX_PREPROCESSING_INFO)
-                                   while (j <= tokenSubsequence->leading_whitespace_end && 
-                                             tokenVector[j]->get_classification_code() != ROSE_token_ids::C_CXX_PREPROCESSING_INFO && 
+                                   while (j <= tokenSubsequence->leading_whitespace_end &&
+                                             tokenVector[j]->get_classification_code() != ROSE_token_ids::C_CXX_PREPROCESSING_INFO &&
                                              tokenVector[j]->get_classification_code() != ROSE_token_ids::C_CXX_COMMENTS)
                                       {
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
@@ -2048,9 +2048,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
 #if DEBUG_USING_CURPRINT
                               curprint("\n/* In unparseStatementFromTokenStream(): above for loop unparsing leading whitespace */ \n");
-                           // string s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " */ \n"; 
-                              string s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " name = " + SageInterface::get_name(stmt) + " */ \n"; 
-                              string s2 = "\n/* tokenSubsequence->leading_whitespace_start = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_start) + 
+                           // string s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " */ \n";
+                              string s1 = "\n/* stmt = " + StringUtility::numberToString(stmt) + " = " + stmt->class_name() + " name = " + SageInterface::get_name(stmt) + " */ \n";
+                              string s2 = "\n/* tokenSubsequence->leading_whitespace_start = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_start) +
                                          " end = " + StringUtility::numberToString(tokenSubsequence->leading_whitespace_end) + " */";
                               curprint(s1);
                               curprint(s2);
@@ -2076,7 +2076,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                                  }
 #if 0
-                           // DQ (2/22/2021): This is part of debugging the unparsing of a transformation followed 
+                           // DQ (2/22/2021): This is part of debugging the unparsing of a transformation followed
                            // by the leading whitespace of the next statement which begins with a CPP directive.
                               printf ("Exiting as a test in the unparsing of the leading white space \n");
                               ROSE_ASSERT(false);
@@ -2116,7 +2116,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     curprint(tokenVector[j]->get_lexeme_string());
 #endif
 #if 0
-                 // DQ (1/5/2021): Testing where this is used, need to make sure it is not called from unparseToString 
+                 // DQ (1/5/2021): Testing where this is used, need to make sure it is not called from unparseToString
                  // by accident (debugging test_124.cpp in codeSegregation).
                     if (tokenVector[j]->get_lexeme_string() == "abxyz")
                        {
@@ -2340,7 +2340,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                   }
                  else
                   {
-                 // DQ (3/7/2021): Note that if this is the last statement of a header file (global scope or not) we need to trigger 
+                 // DQ (3/7/2021): Note that if this is the last statement of a header file (global scope or not) we need to trigger
                  // the same step to unparse the trailing whitespace token sequence.
                   }
 #else
@@ -3003,7 +3003,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     curprint( string("\n/* In unparseStatement(): get_containsTransformationToSurroundingWhitespace = ") + string(stmt->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
 #endif
 #if 0
-                 // DQ (1/25/2021): This is handled now in the unparseStatementFromTokenStream() function 
+                 // DQ (1/25/2021): This is handled now in the unparseStatementFromTokenStream() function
                  // (previously did not check: stmt->get_containsTransformationToSurroundingWhitespace() == true).
                  // DQ (1/22/2021): Adding support to unparse include files added from SageInterface::insertHeader() function.
                     if (stmt->get_containsTransformationToSurroundingWhitespace() == true)
@@ -3056,7 +3056,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): DONE: unparseStatementFromTokenStream(): status = %d \n",status);
 #endif
 #if 0
-                 // DQ (1/25/2021): This is handled now in the unparseStatementFromTokenStream() function 
+                 // DQ (1/25/2021): This is handled now in the unparseStatementFromTokenStream() function
                  // (previously did not check: stmt->get_containsTransformationToSurroundingWhitespace() == true).
                  // DQ (1/22/2021): Adding support to unparse include files added from SageInterface::insertHeader() function.
 #error "DEAD CODE!"
@@ -3667,7 +3667,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens == true (skipping output of trailing whitespace) \n");
 #endif
 
-       // DQ (3/7/2021): Note that an issue is when the token unparsing is used on a header file, and then the 
+       // DQ (3/7/2021): Note that an issue is when the token unparsing is used on a header file, and then the
        // last statement of the scope is not the last statement of the file.
           SgSourceFile* sourceFile = info.get_current_source_file();
           ROSE_ASSERT(sourceFile != NULL);
@@ -3786,20 +3786,20 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
           // The bug is that the #endif is not generated in the output.
           // The reason is because the statement before it is transformed (literally replaced)
-          // This causes the mapping to the leading tokens (before the transformed statement) 
-          // to be unparsed, but the trailing whitespace after the statement can't be looked 
-          // up in the map because the statement used as a key does not exist. Normally the 
-          // leading whitespace of the next statement would be used, but this transformed 
-          // statement is the last statement in the block. 
+          // This causes the mapping to the leading tokens (before the transformed statement)
+          // to be unparsed, but the trailing whitespace after the statement can't be looked
+          // up in the map because the statement used as a key does not exist. Normally the
+          // leading whitespace of the next statement would be used, but this transformed
+          // statement is the last statement in the block.
 
-          // Note that adding a statement after the transformed statement (so it is not the 
-          // last statement in the block) allows the leading whitespace of the statement after 
+          // Note that adding a statement after the transformed statement (so it is not the
+          // last statement in the block) allows the leading whitespace of the statement after
           // the transformed statement to be found.
 
-          // To fix this, it might be best to either not unparse the leading whitespace before 
-          // the transformed statement, or have a secondary key that can be used to lookup the 
-          // trailing whitespace of the statement that was removed.  However, this is sufficiently 
-          // obscure that we can ignore it for the moment while I get ready to test the spnosor's 
+          // To fix this, it might be best to either not unparse the leading whitespace before
+          // the transformed statement, or have a secondary key that can be used to lookup the
+          // trailing whitespace of the statement that was removed.  However, this is sufficiently
+          // obscure that we can ignore it for the moment while I get ready to test the spnosor's
           // code in the morning.
 
 
@@ -4886,8 +4886,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
                     first_statement->get_file_info()->display("first_statement: debug");
 #endif
 #if 0
-                 // DQ (3/11/2021): unparsing include files will now support knowing what are the first and last statement. 
-                 // Ultimately we could also restrict the iteration to be over just the statements between the first and 
+                 // DQ (3/11/2021): unparsing include files will now support knowing what are the first and last statement.
+                 // Ultimately we could also restrict the iteration to be over just the statements between the first and
                  // last statements (inclusive).
                     if (first_statement == firstStatement)
                        {
@@ -4975,8 +4975,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
                   }
 
 #if 0
-                 // DQ (3/11/2021): unparsing include files will now support knowing what are the first and last statement. 
-                 // Ultimately we could also restrict the iteration to be over just the statements between the first and 
+                 // DQ (3/11/2021): unparsing include files will now support knowing what are the first and last statement.
+                 // Ultimately we could also restrict the iteration to be over just the statements between the first and
                  // last statements (inclusive).
                     if (currentStatement == firstStatement)
                        {
@@ -5525,6 +5525,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                               break;
 
                       // Comments don't have to be further commented
+                         case PreprocessingInfo::AdaStyleComment:
                          case PreprocessingInfo::FortranStyleComment:
                          case PreprocessingInfo::F90StyleComment:
                          case PreprocessingInfo::C_StyleComment:

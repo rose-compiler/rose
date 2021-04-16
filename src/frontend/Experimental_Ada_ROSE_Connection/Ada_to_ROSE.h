@@ -177,10 +177,20 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
+/**
+    /// returns a new context with the element
+    AstContext element(Element_struct& el) const;
+
+    /// returns the current element and returns a new context
+    Element_struct& element() const;
+**/
+
   private:
     SgScopeStatement*    the_scope;
     LabelAndLoopManager* all_labels_loops;
     const std::string*   unit_file_name;
+    Element_Struct*      elem;
+
 };
 
 
