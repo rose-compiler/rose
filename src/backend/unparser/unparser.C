@@ -4133,7 +4133,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      ASSERT_not_null(project);
 
-#define DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE 1
+#define DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE 0
 
 #if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
@@ -4910,7 +4910,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
      printf ("After call to traversal \n");
 #endif
 
-#if DEBUG_FIRST_LAST_STMTS || 1
+#if DEBUG_FIRST_LAST_STMTS || 0
   // DQ (3/14/2021): Output include saved in the SgIncludeFile about first and last computed statements in each header file.
   // void outputFirstAndLastIncludeFileInfo();
      outputFirstAndLastIncludeFileInfo();

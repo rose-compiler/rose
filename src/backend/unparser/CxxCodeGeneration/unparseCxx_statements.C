@@ -158,7 +158,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
   // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
 
-#define DEBUG_TOKEN_STREAM_UNPARSING 1
+#define DEBUG_TOKEN_STREAM_UNPARSING 0
 
 #if DEBUG_TOKEN_STREAM_UNPARSING
      printf ("In unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
