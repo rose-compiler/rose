@@ -2775,6 +2775,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
+#if 0
      if (skipOutputOfPreprocessingInfo == false)
         {
 #if 0
@@ -2805,6 +2806,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("In unparseStatement(): skipping output of comments and CCP directives for SgStatement stmt = %p = %s (before) \n",stmt,stmt->class_name().c_str());
 #endif
         }
+#endif
 
   // This is the other part of the accumulation of the compiler-generated statements into compilerGeneratedStatementQueue
   // so that they can be unparsed after any CPP directives or comments are unparsed (above). Because there is a return
@@ -3092,7 +3094,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                        }
 #else
                  // If we are unparsing from the token stream, then we need to handle the attached preprocessing info as well.
-                 // But we need to handle them as part of unparing the token stream, not from the AST. The reason this is important
+                 // But we need to handle them as part of unparsing the token stream, not from the AST. The reason this is important
                  // is demonstrated by test2014_101.c and test2014_102.c when used with the testing mode (ROSE_tokenUnparsingTestingMode == true).
                  // In this mode AST nodes are periodically marked for unparsing from the AST and thus exersizing the logic to
                  // switch back and forth between the unparsing from the token stream and unparsing from the AST.
@@ -3760,6 +3762,58 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      printf ("   --- lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
 #endif
 
+#if 1
+  // DQ (4/16/2021): Moved outside of true branch (below) so that it can be used after the executaion of the 
+  // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
+     SgSourceFile* sourceFile = info.get_current_source_file();
+  // ROSE_ASSERT(sourceFile != NULL);
+     if (sourceFile == NULL)
+        {
+          printf ("NOTE: In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens = %s sourceFile == NULL \n",outputStatementAsTokens ? "true" : "false");
+        }
+#if 0
+     printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+     SgStatement* firstStatement = NULL;
+     SgStatement* lastStatement  = NULL;
+     if (sourceFile != NULL && sourceFile->get_isHeaderFile() == true)
+        {
+          SgIncludeFile* include_file = sourceFile->get_associated_include_file();
+          ROSE_ASSERT(include_file != NULL);
+#if 0
+          printf ("include_file->get_first_source_sequence_number() = %u \n",include_file->get_first_source_sequence_number());
+          printf ("include_file->get_last_source_sequence_number()  = %u \n",include_file->get_last_source_sequence_number());
+#endif
+          firstStatement = include_file->get_firstStatement();
+          lastStatement  = include_file->get_lastStatement();
+
+       // ROSE_ASSERT(firstStatement != NULL);
+       // ROSE_ASSERT(lastStatement  != NULL);
+
+          if (firstStatement != NULL && lastStatement != NULL)
+             {
+#if 0
+               Sg_File_Info* first_file_info = firstStatement->get_file_info();
+               ROSE_ASSERT(first_file_info != NULL);
+               printf (" --- firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+               printf (" --- firstStatement = %p: (physical) line = %d column = %d filename = %s \n",firstStatement,
+                    first_file_info->get_physical_line(),first_file_info->get_col(),first_file_info->get_physical_filename().c_str());
+
+               Sg_File_Info* last_file_info = lastStatement->get_file_info();
+               ROSE_ASSERT(last_file_info != NULL);
+               printf (" --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+               printf (" --- lastStatement = %p: (physical) line = %d column = %d filename = %s \n",lastStatement,
+                    last_file_info->get_physical_line(),last_file_info->get_col(),last_file_info->get_physical_filename().c_str());
+#endif
+             }
+            else
+             {
+               ROSE_ASSERT(firstStatement == NULL);
+               ROSE_ASSERT(lastStatement  == NULL);
+             }
+        }
+#endif
+
   // DQ (1/10/2014): We need to handle the general case of trailing tokens at the end of a statements.
      if (outputStatementAsTokens == true)
         {
@@ -3771,7 +3825,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
        // DQ (3/7/2021): Note that an issue is when the token unparsing is used on a header file, and then the 
        // last statement of the scope is not the last statement of the file.
-          SgSourceFile* sourceFile = info.get_current_source_file();
+       // SgSourceFile* sourceFile = info.get_current_source_file();
           ROSE_ASSERT(sourceFile != NULL);
 #if 0
           printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
@@ -3784,6 +3838,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // include_file->set_first_source_sequence_number(first_seq_number);
        // include_file->set_last_source_sequence_number(last_seq_number);
 
+#if 0
+       // DQ (4/16/2021): Moved outside of this true branch (above) so that it can be used after the executaion of the 
+       // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
           SgStatement* firstStatement = NULL;
           SgStatement* lastStatement  = NULL;
           if (sourceFile->get_isHeaderFile() == true)
@@ -3822,7 +3879,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     ROSE_ASSERT(lastStatement  == NULL);
                   }
              }
-
+#endif
 #if 0
           if (lastStatement != NULL)
              {
@@ -3866,6 +3923,19 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
           printf ("Skipped processing of last statement in token-based unparsing of last statement \n");
           printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
+
+          printf ("outputStatementAsTokens == true: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          ROSE_ASSERT(info.get_current_source_file() != NULL);
+          printf ("outputStatementAsTokens == true: info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
+#if 0
+       // DQ (4/16/2021): I think we need to skip the output of the tailing whitespace, is this is a statement from a header file and the current file is
+       // if (stmt == lastStatement)
+          SgGlobal* globalScope = isSgGlobal(stmt);
+          if (globalScope != NULL)
+             {
+               skipOutputOfPreprocessingInfo = true;
+             }
+#endif
 #endif
 
 #if 0
@@ -3889,6 +3959,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
 #if 0
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens == false (process trailing whitespace) \n");
+#endif
+#if 0
+          printf ("outputStatementAsTokens == false: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          ROSE_ASSERT(info.get_current_source_file() != NULL);
+          printf ("outputStatementAsTokens == false: info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
 #endif
        // DQ (2/18/2021): This is a bug in the token-based unparsing for test_127.cpp in the code segregation tests.
        // The details below are copied from the top of that test code. This will need to be fixed later.
@@ -4088,7 +4163,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): DONE: e_trailing_whitespace_start, e_trailing_whitespace_end */ \n ");
 #endif
 
-#if 0
+#if 1
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Unparse the last token explicitly: Calling unparseStatementFromTokenStream() \n");
 #endif
                  // Unparse the last token explicitly.
@@ -4210,6 +4285,29 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
      curprint("/* test 3 */\n");
 #endif
+#if 0
+     printf ("Leaving unparseStatement(): stmt          = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("Leaving unparseStatement(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+          printf ("Leaving unparseStatement(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+        }
+     ROSE_ASSERT(info.get_current_source_file() != NULL);
+     printf ("Leaving unparseStatement(): info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
+#endif
+
+  // DQ (4/16/2021): As a rule, the comments and CPP directives attached to global scope can't be unparsed in the header files.
+     SgGlobal* globalScope = isSgGlobal(stmt);
+     if (globalScope != NULL && sourceFile->get_isHeaderFile() == true)
+        {
+#if 0
+          printf ("Resetting skipOutputOfPreprocessingInfo = true \n");
+#endif
+#if DEBUG_USING_CURPRINT
+          curprint("/* reseting skipOutputOfPreprocessingInfo = true */\n");
+#endif
+          skipOutputOfPreprocessingInfo = true;
+        }
 
      if (skipOutputOfPreprocessingInfo == false)
         {
