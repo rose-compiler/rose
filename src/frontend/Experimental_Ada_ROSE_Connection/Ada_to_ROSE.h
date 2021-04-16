@@ -90,11 +90,19 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
-/// returns a mapping from string to builtin type nodes
+//
+// the following functions provide access to elements that are
+// defined with the standard package, which is currently not
+// provided by Asis.
+
+/// returns a mapping from string to standard type nodes
 map_t<AdaIdentifier, SgType*>& adaTypes();
 
 /// returns a mapping from string to builtin exception types
 map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
 
 //

@@ -348,6 +348,56 @@ namespace ada
     return unconstrained(SG_DEREF(ty));
   }
 
+  SgAdaPackageSpecDecl*
+  getSpecificationDeclaration(const SgAdaPackageBodyDecl* bodyDecl)
+  {
+    if (!bodyDecl) return nullptr;
+
+    SgAdaPackageBody*     body = bodyDecl->get_definition();
+    if (!body) return nullptr;
+
+    SgAdaPackageSpec*     spec = body->get_spec();
+    if (!spec) return nullptr;
+
+    return isSgAdaPackageSpecDecl(spec->get_parent());
+  }
+
+  SgAdaPackageSpecDecl&
+  getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl)
+  {
+    SgAdaPackageBody&     body = SG_DEREF(bodyDecl.get_definition());
+    SgAdaPackageSpec&     spec = SG_DEREF(body.get_spec());
+    SgAdaPackageSpecDecl* specDecl = isSgAdaPackageSpecDecl(spec.get_parent());
+
+    return SG_DEREF(specDecl);
+  }
+
+  SgAdaPackageBodyDecl*
+  getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl)
+  {
+    if (!specDecl) return nullptr;
+
+    SgAdaPackageSpec*     spec = specDecl->get_definition();
+    if (!spec) return nullptr;
+
+    SgAdaPackageBody*     body = spec->get_body();
+    if (!body) return nullptr;
+
+    return isSgAdaPackageBodyDecl(body->get_parent());
+
+  }
+
+  SgAdaPackageBodyDecl&
+  getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl)
+  {
+    SgAdaPackageSpec&     spec = SG_DEREF(specDecl.get_definition());
+    SgAdaPackageBody&     body = SG_DEREF(spec.get_body());
+    SgAdaPackageBodyDecl* bodyDecl = isSgAdaPackageBodyDecl(body.get_parent());
+
+    return SG_DEREF(bodyDecl);
+  }
+
+
 
   //
   // \todo move code below to Ada to C++ translator

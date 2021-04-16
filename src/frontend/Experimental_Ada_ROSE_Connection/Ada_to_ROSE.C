@@ -57,15 +57,19 @@ namespace
 
   /// stores a mapping from string to builtin exception nodes
   map_t<AdaIdentifier, SgInitializedName*> adaExcpsMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 } // anonymous namespace
 
-//~ map_t<int, SgDeclarationStatement*>& asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&           asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&           asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>&      asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>&      asisTypes() { return asisTypesMap; }
-map_t<AdaIdentifier, SgType*>&            adaTypes()  { return adaTypesMap;  }
-map_t<AdaIdentifier, SgInitializedName*>& adaExcps()  { return adaExcpsMap;  }
+//~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
+map_t<int, SgInitializedName*>&              asisVars()  { return asisVarsMap;  }
+map_t<int, SgInitializedName*>&              asisExcps() { return asisExcpsMap; }
+map_t<int, SgDeclarationStatement*>&         asisDecls() { return asisDeclsMap; }
+map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; }
+map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
+map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
 
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
@@ -225,6 +229,7 @@ namespace
     asisTypes().clear();
     adaTypes().clear();
     adaExcps().clear();
+    adaPkgs().clear();
   }
 
   //

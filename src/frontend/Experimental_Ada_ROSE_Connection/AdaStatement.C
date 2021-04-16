@@ -1869,6 +1869,16 @@ namespace
         SgScopeStatement&            scope  = ctx.scope();
         Expression_Struct&           expr   = asisExpression(usepkg.elem());
         SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+
+        // fallback code for packages not extracted from Asis
+        if (!used)
+        {
+          logWarn() << "using unknown package: " << usepkg.fullName
+                    << std::endl;
+
+          used = findFirst(adaPkgs(), AdaIdentifier{usepkg.fullName});
+        }
+
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
 
         //~ std::cerr
@@ -2432,9 +2442,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // private items
         {
           ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
-          ROSE_ASSERT((!range.empty()) == decl.Is_Private_Present);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true /* private items */});
+
+          // a package may contain an empty private section
+          pkgspec.set_hasPrivate(decl.Is_Private_Present);
         }
 
         placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));

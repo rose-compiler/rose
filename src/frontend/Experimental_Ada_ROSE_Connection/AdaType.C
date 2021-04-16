@@ -676,6 +676,20 @@ namespace
     scope.append_statement(&exvar);
     return sgnode;
   }
+
+  SgAdaPackageSpecDecl&
+  declarePackage(const std::string& name, SgAdaPackageSpec& scope)
+  {
+    SgAdaPackageSpecDecl& sgnode = mkAdaPackageSpecDecl(name, scope);
+    SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
+
+    scope.append_statement(&sgnode);
+    sgnode.set_scope(&scope);
+
+    markCompilerGenerated(pkgspec);
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
 } // anonymous
 
 SgAdaTypeConstraint&
@@ -836,6 +850,9 @@ void initializeAdaTypes(SgGlobal& global)
   adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, hiddenScope);
   adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, hiddenScope);
   adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, hiddenScope);
+
+  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", hiddenScope);
+  adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
 
 

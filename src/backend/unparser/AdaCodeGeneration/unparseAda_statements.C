@@ -357,10 +357,10 @@ namespace
     {}
 
     template <class SageStmtList>
-    void list(SageStmtList& lst);
+    void list(SageStmtList& lst, bool hasPrivateSection = false);
 
     template <class ForwardIterator>
-    void list(ForwardIterator aa, ForwardIterator zz);
+    void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
 
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
 
@@ -538,8 +538,6 @@ namespace
 
     void handle(SgAdaTaskSpec& n)
     {
-      ROSE_ASSERT(n.get_hasMembers());
-
       ScopeUpdateGuard scopeGuard(info, n);
 
       list(n.get_declarations());
@@ -586,7 +584,7 @@ namespace
     {
       ScopeUpdateGuard scopeGuard(info, n);
 
-      list(n.get_declarations());
+      list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaPackageBody& n)
@@ -1345,7 +1343,7 @@ namespace
     if (renaming != nullptr)
     {
       prn(" renames ");
-      prn(renaming->get_renamed_function()->get_name());
+      prn(convertOperatorNames(renaming->get_renamed_function()->get_name()));
       prn(STMT_SEP);
       return;
     }
@@ -1367,15 +1365,19 @@ namespace
   }
 
   template <class ForwardIterator>
-  void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz)
+  void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection)
   {
-    std::for_each(aa, zz, *this);
+    const bool endedInPublicMode = std::for_each(aa, zz, *this).publicMode;
+
+    // add private keyword for empty private sections
+    if (hasPrivateSection && endedInPublicMode)
+      prn("private\n");
   }
 
   template <class SageNodeList>
-  void AdaStatementUnparser::list(SageNodeList& lst)
+  void AdaStatementUnparser::list(SageNodeList& lst, bool hasPrivateSection)
   {
-    list(lst.begin(), lst.end());
+    list(lst.begin(), lst.end(), hasPrivateSection);
   }
 
   void AdaStatementUnparser::modifiers(SgDeclarationStatement& n)
