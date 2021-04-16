@@ -114,8 +114,23 @@ void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
         }
 #endif
 
+  // DQ (4/15/2021): Unless a global scope has no statements, then any comments or CPP directives should be associated with either the first statement or the last statement.
   // unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end);
-     unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end,info);
+  // unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end,info);
+     SgGlobal* globalScope = isSgGlobal(stmt);
+     if (globalScope != NULL)
+        {
+          printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+          printf ("Skipping call to unparseStatementFromTokenStream() for globalScope = %p \n",globalScope);
+          printf (" --- globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+          printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
+
+       // DQ (4/15/2021): Testing that the number of declarations is zero will not be enough, so maybe we should test the first and last statements are NULL?
+        }
+       else
+        {
+          unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end,info);
+        }
 
 #if DEBUG_USING_CURPRINT
   // curprint("\n/* Leaving unparseStatementFromTokenStream(stmt,start,end,info): */ \n");
@@ -143,7 +158,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
   // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
 
-#define DEBUG_TOKEN_STREAM_UNPARSING 0
+#define DEBUG_TOKEN_STREAM_UNPARSING 1
 
 #if DEBUG_TOKEN_STREAM_UNPARSING
      printf ("In unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
@@ -179,12 +194,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
      curprint( string("\n/* --- stmt_2: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_2->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
 #endif
 
+#if 0
   // DQ (3/22/2021): Exit to debug test_125.cpp.
      if (isSgVariableDeclaration(stmt_1) != NULL && isSgGlobal(stmt_2) != NULL)
         {
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
         }
+#endif
 
      if ( SgProject::get_verbose() > 0 )
         {

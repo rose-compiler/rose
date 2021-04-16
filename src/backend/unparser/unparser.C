@@ -4133,7 +4133,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      ASSERT_not_null(project);
 
-#define DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE 0
+#define DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE 1
 
 #if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      printf ("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n");
@@ -4556,7 +4556,7 @@ void outputFirstAndLastIncludeFileInfo()
      printf ("In outputFirstAndLastIncludeFileInfo(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
-#define DEBUG_FIRST_LAST_DATA 0
+#define DEBUG_FIRST_LAST_DATA 1
 
 #if DEBUG_FIRST_LAST_DATA
      printf ("Output collected information about first and last statements for each include file \n");
@@ -4683,6 +4683,14 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 
 #define DEBUG_FIRST_LAST_STMTS 0
 
+#if 0
+     printf ("###################################################### \n");
+     printf ("###################################################### \n");
+     printf ("####  buildFirstAndLastStatementsForIncludeFiles  #### \n");
+     printf ("###################################################### \n");
+     printf ("###################################################### \n");
+#endif
+
 #if DEBUG_FIRST_LAST_STMTS
      printf ("In buildFirstAndLastStatementsForIncludeFiles(): project = %p \n",project);
   // printf ("In buildFirstAndLastStatementsForIncludeFiles(): sourceFile = %p \n",sourceFile);
@@ -4765,7 +4773,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 #endif
                          filename = Sg_File_Info::getFilenameFromID(physical_file_id);
 #if DEBUG_FIRST_LAST_STMTS
-                         printf ("after reset filename: pphysical_file_id = %d filename = %s \n",physical_file_id,filename.c_str());
+                         printf ("after reset filename: physical_file_id  = %d filename = %s \n",physical_file_id,filename.c_str());
 #endif
                          if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
                             {
@@ -4902,7 +4910,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
      printf ("After call to traversal \n");
 #endif
 
-#if DEBUG_FIRST_LAST_STMTS || 0
+#if DEBUG_FIRST_LAST_STMTS || 1
   // DQ (3/14/2021): Output include saved in the SgIncludeFile about first and last computed statements in each header file.
   // void outputFirstAndLastIncludeFileInfo();
      outputFirstAndLastIncludeFileInfo();
