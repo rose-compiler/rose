@@ -1108,11 +1108,14 @@ namespace
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
+      const bool    requiresBeginEnd = !si::ada::isFunctionTryBlock(n);
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
+      if (requiresBeginEnd) prn("begin\n");
       list(blk.get_statements());
       prn("exception\n");
       stmt(n.get_catch_statement_seq_root());
+      if (requiresBeginEnd) { prn("end"); prn(STMT_SEP); }
     }
 
     void handle(SgCatchStatementSeq& n)
@@ -1200,11 +1203,6 @@ namespace
     bool            publicMode;
   };
 
-  bool isNormalStatement(const SgStatement* s)
-  {
-    return isSgDeclarationStatement(s) == nullptr;
-  }
-
   void AdaStatementUnparser::handle(SgStatement& n)
   {
     // if not handled here, have the language independent parser handle it..
@@ -1217,20 +1215,23 @@ namespace
     SgStatementPtrList&          stmts    = n.get_statements();
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
-    SgStatementPtrList::iterator dcllimit = std::find_if(aa, zz, isNormalStatement);
+    SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
 
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
     const std::string label = n.get_string_label();
-    const bool        requiresBeginEnd = (functionbody || (aa != dcllimit) || label.size());
+    const bool        requiresBeginEnd = (  functionbody
+                                         || (aa != dcllimit)
+                                         || label.size()
+                                         );
 
-    list(stmts.begin(), dcllimit);
+    list(aa, dcllimit);
 
     if (requiresBeginEnd)
       prn("begin\n");
 
-    list(dcllimit, stmts.end());
+    list(dcllimit, zz);
 
     if (requiresBeginEnd)
     {

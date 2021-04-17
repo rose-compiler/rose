@@ -75,6 +75,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_operator_symbol.ads         \
   enumeration.adb                      \
   exception_declaration.ads            \
+  exhandler.adb                        \
   function_renaming.adb                \
   myarray.ads                          \
   myarray.adb                          \
