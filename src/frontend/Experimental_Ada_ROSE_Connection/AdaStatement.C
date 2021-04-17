@@ -1512,13 +1512,13 @@ namespace
           SgTryStmt*    tryblk   = trydata.first;
           SgBasicBlock& block    = trydata.second;
 
-          completeStmt(block, elem, ctx, stmt.Statement_Identifier);
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
           traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
           traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           if (tryblk)
           {
-            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
+            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope_npc(sgnode), SG_DEREF(tryblk)});
 
             placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
           }

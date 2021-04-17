@@ -859,14 +859,21 @@ void initializeAdaTypes(SgGlobal& global)
 
 void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 {
-  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  SgExpression* exceptExpr = nullptr;
 
-  Expression_Struct& asisexpr  = elem.The_Union.Expression;
-  SgInitializedName& exception = getException(asisexpr, ctx);
-  SgExpression&      exref     = mkExceptionRef(exception, ctx.scope());
-  SgType&            extype    = mkExceptionType(exref);
+  if (elem.Element_Kind == An_Expression)
+  {
+    Expression_Struct& asisexpr  = elem.The_Union.Expression;
+    SgInitializedName& exception = getException(asisexpr, ctx);
 
-  lst.push_back(&extype);
+    exceptExpr = &mkExceptionRef(exception, ctx.scope());
+  }
+  else if (elem.Element_Kind == A_Definition)
+  {
+    exceptExpr = &getDefinitionExpr(elem, ctx);
+  }
+
+  lst.push_back(&mkExceptionType(SG_DEREF(exceptExpr)));
 }
 
 ExHandlerTypeCreator::operator SgType&() const

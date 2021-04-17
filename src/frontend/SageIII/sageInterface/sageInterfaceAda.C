@@ -398,6 +398,71 @@ namespace ada
   }
 
 
+  namespace
+  {
+    bool isNormalStatement(const SgStatement* s)
+    {
+      return isSgDeclarationStatement(s) == nullptr;
+    }
+  }
+
+  SgStatementPtrList::const_iterator
+  declarationLimit(const SgStatementPtrList& list)
+  {
+    return std::find_if(list.begin(), list.end(), isNormalStatement);
+  }
+
+  SgStatementPtrList::const_iterator
+  declarationLimit(const SgBasicBlock& block)
+  {
+    return declarationLimit(block.get_statements());
+  }
+
+  SgStatementPtrList::const_iterator
+  declarationLimit(const SgBasicBlock* block)
+  {
+    return declarationLimit(SG_DEREF(block));
+  }
+
+  SgStatementPtrList::iterator
+  declarationLimit(SgStatementPtrList& list)
+  {
+    return std::find_if(list.begin(), list.end(), isNormalStatement);
+  }
+
+  SgStatementPtrList::iterator
+  declarationLimit(SgBasicBlock& block)
+  {
+    return declarationLimit(block.get_statements());
+  }
+
+  SgStatementPtrList::iterator
+  declarationLimit(SgBasicBlock* block)
+  {
+    return declarationLimit(SG_DEREF(block));
+  }
+
+  bool isFunctionTryBlock(const SgTryStmt& n)
+  {
+    SgBasicBlock*                blk = isSgBasicBlock(n.get_parent());
+    if (blk == nullptr) return false;
+
+    SgFunctionDefinition*        def = isSgFunctionDefinition(blk->get_parent());
+    if (def == nullptr) return false;
+
+    SgStatementPtrList&          stmts = blk->get_statements();
+    SgStatementPtrList::iterator dcllimit = declarationLimit(stmts);
+
+    // return true iff n is the only stmt within the block
+    return std::distance(dcllimit, stmts.end()) == 1;
+  }
+
+  bool isFunctionTryBlock(const SgTryStmt* n)
+  {
+    return isFunctionTryBlock(SG_DEREF(n));
+  }
+
+
 
   //
   // \todo move code below to Ada to C++ translator
@@ -453,7 +518,6 @@ namespace ada
       // ppinfo->setTypeOfDirective(commentKind);
     }
   }
-
 
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
   {
