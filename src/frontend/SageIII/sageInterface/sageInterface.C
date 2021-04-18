@@ -10949,6 +10949,15 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     } else {
       ROSE_ABORT();
     }
+  } else if (isSgProcessControlStatement(parent)) {
+    SgProcessControlStatement * ctrl_stmt = (SgProcessControlStatement*)parent;
+    if (oldExp == ctrl_stmt->get_quiet()) {
+      ctrl_stmt->set_quiet(newExp);
+    } else if (oldExp == ctrl_stmt->get_code()) {
+      ctrl_stmt->set_code(newExp);
+    } else {
+      ROSE_ABORT();
+    }
   } else if (isSgFortranDo(parent)) {
     SgFortranDo* fortranDo = isSgFortranDo(parent);
     if (oldExp == fortranDo->get_initialization()) {
