@@ -322,7 +322,31 @@ string Visualizer::transitionGraphToDot() {
   stringstream ss;
   ss<<"compound=true;"<<endl; // required for cluster edges to appear
   ss<<"node [shape=box style=filled color=lightgrey];"<<endl;
+  ss<<"graph [ordering=out];"<<endl;
   // generate all graph node ids with label strings
+  int numInvisibleLayoutEdges=2; // only used for memory subgraphs
+
+  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
+
+    // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
+    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
+    
+    ss <<dotEStateAddressString((*j)->source)<<"_"<<numInvisibleLayoutEdges<< "->"<<dotEStateAddressString((*j)->target); // cluster edge
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
+    ss <<"["<<(*j)->edge.typesToString()<<"]";
+    ss <<"\" ";
+    //ss <<" color="<<(*j)->edge.color()<<" ";
+    ss <<" color="<<"red"<<" ";
+    ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
+    if(getOptionMemorySubGraphs()) {
+      // change head and tail of arrows for clusters
+      ss<<" ltail="<<dotClusterName((*j)->source);
+      ss<<" lhead="<<dotClusterName((*j)->target);
+    }
+    ss<<" penwidth=3.0 weight=1.0"; // bold cfg edges
+    ss <<"]"<<";"<<endl;
+  }
+
   if(!getOptionMemorySubGraphs()) {
     // default behavior
     for(auto s : allEStates) {
@@ -339,45 +363,26 @@ string Visualizer::transitionGraphToDot() {
       //ss<<"label=\"@"<<s<<"\";"<<endl;
       ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
 
-      // deactivated because putting all cluster nodes at the same
-      // rank triggers a dot assertion to fail when a node is shared.
-#if 0
-      
-      ss<<"{ rank = same; "; // rank start
-      string prefix=dotClusterName(s);
-      auto idStringsSet=s->pstate()->getDotNodeIdStrings(prefix);
-      for(auto id : idStringsSet) {
-        ss<<"\""<<id<<"\""<<";"<<endl;
+      // generate fake invisible edges inside cluster for better layout
+      for(int i=0;i<numInvisibleLayoutEdges;i++) {
+	string fakeEdgeSource=dotEStateAddressString(s);
+	if(i!=0) {
+	  fakeEdgeSource+=("_"+std::to_string(i));
+	  ss<<fakeEdgeSource<<" [label=\"\" style = invis]"<<endl;
+	}
+	ss<< fakeEdgeSource<<"->"<<dotEStateAddressString(s)<<"_"<<i+1<<" [ style=invis ]"<<endl;
       }
-      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
-      ss<< " }"<<endl; // rank end
-#endif
+      // special case: last node of invisible layout edges (note: numInvisibleLayoutEdges == i+1)
+      ss<<dotEStateAddressString(s)<<"_"<<numInvisibleLayoutEdges<<" [label=\"\" style = invis]"<<endl;
+
       ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
       ss<<dotEStateAddressString(s)<<endl; // hook for cluster edges
       ss<<dotEStateMemoryString(s);
+
       ss<<"}"<<endl; // end of subgraph
     } 
   }
 
-  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-
-    // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
-    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
-
-    ss <<dotEStateAddressString((*j)->source)<< "->"<<dotEStateAddressString((*j)->target);
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
-    ss <<"["<<(*j)->edge.typesToString()<<"]";
-    ss <<"\" ";
-    ss <<" color="<<(*j)->edge.color()<<" ";
-    ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
-    if(getOptionMemorySubGraphs()) {
-      // change head and tail of arrows for clusters
-      ss<<" ltail="<<dotClusterName((*j)->source);
-      ss<<" lhead="<<dotClusterName((*j)->target);
-    }
-    ss<<" penwidth=3.0 weight=1.0"; // bold cfg edges
-    ss <<"]"<<";"<<endl;
-  }
   tg1=false;
   return ss.str();
 }
