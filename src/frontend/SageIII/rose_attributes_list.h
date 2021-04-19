@@ -411,6 +411,7 @@ class PreprocessingInfo
           void setString ( const std::string & s );
           int getStringLength() const;
           DirectiveType getTypeOfDirective() const;
+          void setTypeOfDirective(DirectiveType);
           RelativePositionType getRelativePosition(void) const;
           void setRelativePosition(RelativePositionType relPos);
 
