@@ -432,6 +432,20 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgAdaTaskBody:
+                  {
+                    const SgAdaTaskBody*     body   = isSgAdaTaskBody(scope);
+                    const SgNode*            parent = body->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    const SgAdaTaskBodyDecl* bodydecl = isSgAdaTaskBodyDecl(parent);
+                    ROSE_ASSERT(bodydecl);
+
+                    mangled_name = bodydecl->get_name().getString();
+                    break;
+                  }
+
 
            // PP (06/01/20) - not sure how to handle function parameter scope;
            //                 for now, handle like SgGlobal
@@ -1511,6 +1525,11 @@ mangleExpression (const SgExpression* expr)
         case V_SgFunctionParameterRefExp: {
           const SgFunctionParameterRefExp* e = isSgFunctionParameterRefExp (expr);
           mangled_name << "_bFunctionParameterRefExp_" << std::hex << e << "_eFunctionParameterRefExp_";
+          break;
+        }
+        case V_SgAdaAttributeExp: {
+          const SgAdaAttributeExp* e = isSgAdaAttributeExp (expr);
+          mangled_name << "_badaAttributeExp_" << std::hex << e << "_eadaAttributeExp_";
           break;
         }
         default: {
