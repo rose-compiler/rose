@@ -1114,6 +1114,7 @@ SgAsmAarch32Instruction::branchTarget() {
         case Kind::ARM_INS_TRAP:
             return Sawyer::Nothing();
     }
+    ASSERT_not_reachable("insn not handled: " + get_mnemonic());
 }
 
 bool
