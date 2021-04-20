@@ -1147,48 +1147,6 @@ namespace
     SgExpression& ub = getExprID(constraint.Upper_Bound, ctx);
     return mkRangeExp(lb, ub);
   }
-
-  /// \private
-  /// returns an expression from the Asis definition \ref def
-  SgExpression&
-  getDefinitionExpr(Element_Struct& el, AstContext ctx)
-  {
-    ROSE_ASSERT(el.Element_Kind == A_Definition);
-
-    Definition_Struct& def = el.The_Union.Definition;
-    SgExpression*      res = nullptr;
-
-    switch (def.Definition_Kind)
-    {
-      case A_Discrete_Range:
-        logKind("A_Discrete_Range");
-        res = &getDiscreteRange(el, def, ctx);
-        break;
-
-      case A_Discrete_Subtype_Definition:
-        logKind("A_Discrete_Subtype_Definition");
-        res = &getDiscreteSubtype(el, def, ctx);
-        break;
-
-      case An_Others_Choice:
-        logKind("An_Others_Choice");
-        res = &mkOthersExp();
-        break;
-
-      case A_Constraint:
-        logKind("A_Constraint");
-        res = &getConstraintExpr(def, ctx);
-        break;
-
-      default:
-        logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
-        res = sb::buildNullExpression();
-        ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
-
-    attachSourceLocation(SG_DEREF(res), el, ctx);
-    return *res;
-  }
 }
 
 void ExprSeqCreator::operator()(Element_Struct& el)
@@ -1215,6 +1173,47 @@ void RangeListCreator::operator()(Element_Struct& elem)
   lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
+
+/// returns an expression from the Asis definition \ref def
+SgExpression&
+getDefinitionExpr(Element_Struct& el, AstContext ctx)
+{
+  ROSE_ASSERT(el.Element_Kind == A_Definition);
+
+  Definition_Struct& def = el.The_Union.Definition;
+  SgExpression*      res = nullptr;
+
+  switch (def.Definition_Kind)
+  {
+    case A_Discrete_Range:
+      logKind("A_Discrete_Range");
+      res = &getDiscreteRange(el, def, ctx);
+      break;
+
+    case A_Discrete_Subtype_Definition:
+      logKind("A_Discrete_Subtype_Definition");
+      res = &getDiscreteSubtype(el, def, ctx);
+      break;
+
+    case An_Others_Choice:
+      logKind("An_Others_Choice");
+      res = &mkOthersExp();
+      break;
+
+    case A_Constraint:
+      logKind("A_Constraint");
+      res = &getConstraintExpr(def, ctx);
+      break;
+
+    default:
+      logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
+      res = sb::buildNullExpression();
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+
+  attachSourceLocation(SG_DEREF(res), el, ctx);
+  return *res;
+}
 
 SgExpression&
 getDiscreteRangeID(Element_ID id, AstContext ctx)

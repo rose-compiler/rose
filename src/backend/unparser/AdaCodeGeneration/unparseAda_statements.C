@@ -110,7 +110,7 @@ namespace
 
   bool isAdaFunction(SgFunctionType& ty)
   {
-    return isSgTypeVoid(ty.get_return_type()) == NULL;
+    return isSgTypeVoid(ty.get_return_type()) == nullptr;
   }
 
   SgExpression* underlyingExpr(SgStatement* s)
@@ -357,10 +357,10 @@ namespace
     {}
 
     template <class SageStmtList>
-    void list(SageStmtList& lst);
+    void list(SageStmtList& lst, bool hasPrivateSection = false);
 
     template <class ForwardIterator>
-    void list(ForwardIterator aa, ForwardIterator zz);
+    void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
 
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
 
@@ -538,8 +538,6 @@ namespace
 
     void handle(SgAdaTaskSpec& n)
     {
-      ROSE_ASSERT(n.get_hasMembers());
-
       ScopeUpdateGuard scopeGuard(info, n);
 
       list(n.get_declarations());
@@ -586,7 +584,7 @@ namespace
     {
       ScopeUpdateGuard scopeGuard(info, n);
 
-      list(n.get_declarations());
+      list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaPackageBody& n)
@@ -595,7 +593,7 @@ namespace
 
       ScopeUpdateGuard    scopeGuard(info, n);
       SgStatementPtrList& stmts = n.get_statements();
-      SgBasicBlock*       block = NULL;
+      SgBasicBlock*       block = nullptr;
       Iterator            zz = stmts.end();
 
       if (stmts.size()) block = isSgBasicBlock(stmts.back());
@@ -807,7 +805,7 @@ namespace
         prn(loopName);
       }
 
-      if (isSgNullExpression(n.get_condition()) == NULL)
+      if (isSgNullExpression(n.get_condition()) == nullptr)
       {
         prn(" when ");
         expr(n.get_condition());
@@ -1110,11 +1108,14 @@ namespace
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
+      const bool    requiresBeginEnd = !si::ada::isFunctionTryBlock(n);
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
+      if (requiresBeginEnd) prn("begin\n");
       list(blk.get_statements());
       prn("exception\n");
       stmt(n.get_catch_statement_seq_root());
+      if (requiresBeginEnd) { prn("end"); prn(STMT_SEP); }
     }
 
     void handle(SgCatchStatementSeq& n)
@@ -1202,11 +1203,6 @@ namespace
     bool            publicMode;
   };
 
-  bool isNormalStatement(const SgStatement* s)
-  {
-    return isSgDeclarationStatement(s) == NULL;
-  }
-
   void AdaStatementUnparser::handle(SgStatement& n)
   {
     // if not handled here, have the language independent parser handle it..
@@ -1219,20 +1215,23 @@ namespace
     SgStatementPtrList&          stmts    = n.get_statements();
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
-    SgStatementPtrList::iterator dcllimit = std::find_if(aa, zz, isNormalStatement);
+    SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
 
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
     const std::string label = n.get_string_label();
-    const bool        requiresBeginEnd = (functionbody || (aa != dcllimit) || label.size());
+    const bool        requiresBeginEnd = (  functionbody
+                                         || (aa != dcllimit)
+                                         || label.size()
+                                         );
 
-    list(stmts.begin(), dcllimit);
+    list(aa, dcllimit);
 
     if (requiresBeginEnd)
       prn("begin\n");
 
-    list(dcllimit, stmts.end());
+    list(dcllimit, zz);
 
     if (requiresBeginEnd)
     {
@@ -1342,10 +1341,10 @@ namespace
     // print the renaming syntax after the function/procedure declaration
     // and immediately return.
     SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n);
-    if (renaming != NULL)
+    if (renaming != nullptr)
     {
       prn(" renames ");
-      prn(renaming->get_renamed_function()->get_name());
+      prn(convertOperatorNames(renaming->get_renamed_function()->get_name()));
       prn(STMT_SEP);
       return;
     }
@@ -1367,15 +1366,19 @@ namespace
   }
 
   template <class ForwardIterator>
-  void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz)
+  void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection)
   {
-    std::for_each(aa, zz, *this);
+    const bool endedInPublicMode = std::for_each(aa, zz, *this).publicMode;
+
+    // add private keyword for empty private sections
+    if (hasPrivateSection && endedInPublicMode)
+      prn("private\n");
   }
 
   template <class SageNodeList>
-  void AdaStatementUnparser::list(SageNodeList& lst)
+  void AdaStatementUnparser::list(SageNodeList& lst, bool hasPrivateSection)
   {
-    list(lst.begin(), lst.end());
+    list(lst.begin(), lst.end(), hasPrivateSection);
   }
 
   void AdaStatementUnparser::modifiers(SgDeclarationStatement& n)
@@ -1511,7 +1514,10 @@ namespace
   {
     startPrivateIfNeeded(isSgDeclarationStatement(s));
 
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::before);
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
     sg::dispatch(*this, s);
+    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::after);
   }
 
   /*
@@ -1643,8 +1649,9 @@ Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
 void
 Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
-  //~ std::cerr << typeid(*stmt).name() << std::endl;
-  sg::dispatch(AdaStatementUnparser(*this, info, std::cerr), stmt);
+  AdaStatementUnparser adaUnparser{*this, info, std::cerr};
+
+  adaUnparser.stmt(stmt);
 }
 
 void

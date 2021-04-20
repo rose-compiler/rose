@@ -144,7 +144,7 @@ namespace PredefinedSemanticFunctions {
       int pos=0;
       while(1) {
         AbstractValue AbstractPos=AbstractValue(pos);
-        AbstractValue currentPos=(stringPtr+AbstractPos);
+        AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,AbstractPos);
         //cout<<"DEBUG: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
           exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
