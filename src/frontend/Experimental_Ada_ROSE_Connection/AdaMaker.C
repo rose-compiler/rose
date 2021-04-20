@@ -1321,32 +1321,45 @@ namespace
   }
 */
 
-  size_t char2Val(char c)
+  std::pair<size_t, bool>
+  check(size_t s, size_t m)
   {
+    return std::make_pair(s, s < m);
+  }
+
+  std::pair<size_t, bool>
+  char2Val(char c, size_t max)
+  {
+    using ResultType = std::pair<size_t, bool>;
+
     if ((c >= '0') && (c <= '9'))
-      return c - '0';
+      return check(c - '0', max);
 
     if ((c >= 'A') && (c <= 'F'))
-      return c - 'A' + 10;
+      return check(c - 'A' + 10, max);
 
-    ROSE_ASSERT((c >= 'a') && (c <= 'f'));
-    return c - 'a' + 10;
+    if ((c >= 'a') && (c <= 'f'))
+      return check(c - 'a' + 10, max);
+
+    return ResultType{0, false};
   }
 
   template <class T>
   std::pair<T, const char*>
-  parseDec(const char* buf, size_t base = 10, char delim = 0)
+  parseDec(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
 
     T res = 0;
 
-    while ((*buf != 0) && (*buf != '#') && (*buf != delim))
+    while (*buf != 0)
     {
-      const size_t v = char2Val(*buf);
+      const auto v = char2Val(*buf, base);
 
-      ROSE_ASSERT(v < base);
-      res = res*base + v;
+      if (!v.second)
+        return std::make_pair(res, buf);
+
+      res = res*base + v.first;
 
       ++buf;
 
@@ -1363,17 +1376,20 @@ namespace
   std::pair<T, const char*>
   parseFrac(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && (*buf != '#'));
+    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
 
     T      res = 0;
     size_t divisor = 1*base;
 
     while ((*buf != 0) && (*buf != '#'))
     {
-      T v = char2Val(*buf);
+      const auto v = char2Val(*buf, base);
 
-      ROSE_ASSERT(v < base);
-      res += v/divisor;
+      ROSE_ASSERT(v.second);
+
+      T val = v.first;
+
+      res += val/divisor;
       divisor = divisor*base;
 
       ++buf;
@@ -1411,8 +1427,36 @@ namespace
 
     return std::make_pair(exp, buf);
   }
-}
 
+  template <class T>
+  T computeLiteral(T val, int base, int exp)
+  {
+    return val * std::pow(base, exp);
+  }
+
+
+  long int
+  basedLiteral(long int res, const char* cur, int base)
+  {
+    int exp = 0;
+
+    ROSE_ASSERT(*cur == '#');
+
+    ++cur;
+    base = res;
+
+    std::tie(res, cur) = parseDec<long int>(cur, base);
+
+    if (*cur == '#')
+    {
+      ++cur;
+
+      std::tie(exp, cur) = parseExp(cur);
+    }
+
+    return computeLiteral(res, base, exp);
+  }
+}
 
 
 template <>
@@ -1423,34 +1467,21 @@ int convAdaLiteral<int>(const char* img)
   int         exp  = 0;
   const char* cur  = img;
 
-  std::tie(res, cur) = parseDec<long int>(cur);
-
-  // we just parsed the base
   if (*cur == '#')
-  {
-    ++cur;
-    base = res;
+    return basedLiteral(res, cur, base);
 
-    std::tie(res, cur) = parseDec<long int>(cur, base);
+  if (*cur == '.')
+  {
+    logError() << "decimal literals not yet handled!" << std::endl;
+    long int decimal = 0;
+
+    ++cur;
+    std::tie(decimal, cur) = parseDec<long int>(cur);
   }
 
-  if (*cur == '#')
-  {
-    ++cur;
+  std::tie(exp, cur) = parseExp(cur);
 
-    std::tie(exp, cur) = parseExp(cur);
-  }
-
-  //~ base = powInt(base, exp);
-  base = std::pow(base, exp);
-
-  /*
-  logWarn() << "i: "
-            << res << ' ' << base << ' ' << exp << '\n'
-            << res * base
-            << std::endl;
-  */
-  return res * base;
+  return computeLiteral(res, base, exp);
 }
 
 
@@ -1479,7 +1510,7 @@ long double convAdaLiteral<long double>(const char* img)
   ROSE_ASSERT(*cur == '#');
 
   ++cur;
-  std::tie(dec, cur) = parseDec<long double>(cur, base, '.');
+  std::tie(dec, cur) = parseDec<long double>(cur, base);
 
   if (*cur == '.')
   {
@@ -1487,14 +1518,12 @@ long double convAdaLiteral<long double>(const char* img)
     std::tie(frac, cur) = parseFrac<long double>(cur, base);
   }
 
-  long double res = dec + frac;
+  const long double res = dec + frac;
 
   ROSE_ASSERT(*cur == '#');
   ++cur;
 
   std::tie(exp, cur) = parseExp(cur);
-
-  base = std::pow(base, exp);
 
 /*
   logWarn() << "r: "
@@ -1502,7 +1531,7 @@ long double convAdaLiteral<long double>(const char* img)
             << res * base
             << std::endl;
 */
-  return res * base;
+  return computeLiteral(res, base, exp);
 }
 
 
