@@ -129,6 +129,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_with_body.adb                \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  ranges.adb                           \
   real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
