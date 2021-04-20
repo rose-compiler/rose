@@ -77,6 +77,10 @@ std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const 
   return ss.str();
 }
 
+std::string PState::memoryValueToDotString(AbstractValue av,VariableIdMapping* variableIdMapping) const {
+  return ":"+av.toString(variableIdMapping);
+}
+			  
 string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   for(PState::const_iterator j=begin();j!=end();++j) {
@@ -98,7 +102,15 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
       AbstractValueSet* avTargetSet=(*j).second.getAbstractValueSet();
       for(auto av : *avTargetSet) {
-        ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping)<<"\"];"<<endl;
+	AbstractValue memVal;
+	ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping);
+	if(memLocExists(av)) {
+	  memVal=readFromMemoryLocation(av);
+	  ss<<memoryValueToDotString(memVal,variableIdMapping);
+	} else {
+	  ss<<"???";
+	}
+	ss<<"\"];"<<endl;
       }
       //endl; // target label intentionally not generated
       // edge
@@ -109,7 +121,7 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
         ss<<";"<<endl;
       }
     } else {
-      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<memoryValueToDotString((*j).second,variableIdMapping)<<"\"];"<<endl;
     }
   }  
   return ss.str();

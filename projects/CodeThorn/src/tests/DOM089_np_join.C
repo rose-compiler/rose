@@ -5,19 +5,20 @@ int main() {
   int y;
   x=1;
   y=2;
-  int* xp1;
-  xp1=0;
+  int* xp;
+  xp=0;
   int c=rand();
   if(c) {
-    xp1=&x;
+    xp=&x;
     ;
   } else {
-    xp1=&y;
+    xp=&y;
     ;
   }
-  *xp1=100;
-  xp1=0;
-  printf("%d",*xp1);
+  *xp=100;
+  int** xxp;
+  xxp=&xp;
+  printf("%d",*xp);
   return 0;
 }
 
