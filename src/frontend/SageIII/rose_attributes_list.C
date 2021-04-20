@@ -780,6 +780,15 @@ PreprocessingInfo::getTypeOfDirective () const
      return whatSortOfDirective;
    }
 
+void 
+PreprocessingInfo::setTypeOfDirective (PreprocessingInfo::DirectiveType dt)
+   {
+  // Access function for the type of directive
+     ROSE_ASSERT(this != NULL);
+     whatSortOfDirective = dt;
+   }
+
+
 #if 0
 ************* OLD CODE **************
 char*

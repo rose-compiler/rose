@@ -77,7 +77,12 @@ namespace
     ROSE_ASSERT(!FAIL_ON_ERROR);
     logError() << "Unknown exception: " << ex.Name_Image << std::endl;
 
-    return mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
+    // \todo create an SgInitializedName if the exception was not found
+    // \todo the exception could be from a renaming declaration
+    SgInitializedName& sgnode = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
+
+    sgnode.set_scope(&ctx.scope());
+    return sgnode;
   }
 
   SgNode&

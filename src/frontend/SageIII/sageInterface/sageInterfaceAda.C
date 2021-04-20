@@ -513,9 +513,7 @@ namespace ada
       comment.replace(0, 2, prefix);
       comment.append(suffix);
       ppinfo->setString(comment);
-      // \todo PreprocessingInfo does not allow to update the directive type
-      //       possible solutions: either add new function or gen new object
-      // ppinfo->setTypeOfDirective(commentKind);
+      ppinfo->setTypeOfDirective(commentKind);
     }
   }
 
