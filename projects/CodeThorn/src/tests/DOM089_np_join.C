@@ -20,12 +20,15 @@ int main() {
   pp=&p;
   if(*p==50) {
     // this is dead code
-    printf("dead:%d",*p);
+    printf("B1:dead:%d",*p);
   }
   if(x+y==101 || x+y==102) {
-    printf("%d",*p);
+    printf("B2:live:%d",*p);
+  } else {
+    // this is dead code
+    printf("B2:dead:%d",*p);
   }
-  printf("%d",*p);
+  printf("live:%d",*p);
   return 0;
 }
 

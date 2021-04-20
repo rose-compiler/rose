@@ -331,12 +331,11 @@ string Visualizer::transitionGraphToDot() {
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
     
-    ss <<dotEStateAddressString((*j)->source)<<"_"<<numInvisibleLayoutEdges<< "->"<<dotEStateAddressString((*j)->target); // cluster edge
+    ss <<dotEStateAddressString((*j)->source)<<"_"<<numInvisibleLayoutEdges<< "->"<<dotEStateAddressString((*j)->target); // inter-cluster edge
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
-    //ss <<" color="<<(*j)->edge.color()<<" ";
-    ss <<" color="<<"red"<<" ";
+    ss <<" color="<<(*j)->edge.color()<<" "; // inter-cluster edge color
     ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
     if(getOptionMemorySubGraphs()) {
       // change head and tail of arrows for clusters
