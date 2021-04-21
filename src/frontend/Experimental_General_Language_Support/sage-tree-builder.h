@@ -210,7 +210,6 @@ public:
    void Enter(SgJovialForThenStatement* &, const std::string &);
    void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
                                            SgJovialForThenStatement::loop_statement_type_enum);
-
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
