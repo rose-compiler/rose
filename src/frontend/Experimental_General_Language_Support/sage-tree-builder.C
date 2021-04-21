@@ -399,6 +399,20 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
 }
 
 void SageTreeBuilder::
+Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const std::list<std::string> &dummy_arg_name_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
+
+   BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
+      SgInitializedName* init_name = symbol->get_declaration();
+      param_list->append_arg(init_name);
+   }
+
+   SageBuilder::popScopeStack(); // remove parameter scope from the stack
+}
+
+void SageTreeBuilder::
 Enter(SgFunctionDefinition* &function_def)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
@@ -472,6 +486,9 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 
    if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
    if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+
+   if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
+   if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
 }
 
 void SageTreeBuilder::
@@ -537,6 +554,47 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
      }
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope, bool have_end_stmt, const std::string &result_name /* = "" */)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+
+   // Call more generic leave for SgFunctionDeclaration, will move declarations out of param_scope into
+   // the body of the function declaration and will set the result name as name of the function
+   Leave(function_decl, param_scope);
+
+   // If result is named, get symbol and init name of the result to set it for the function declaration
+   if (!result_name.empty()) {
+      // Get symbol and associated initialized name
+      SgFunctionDefinition* func_def = function_decl->get_definition();
+      ROSE_ASSERT(func_def);
+      SgBasicBlock* body = func_def->get_body();
+      ROSE_ASSERT(body);
+      SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(result_name, body);
+      ROSE_ASSERT(symbol);
+      SgInitializedName* init_name = symbol->get_declaration();
+      ROSE_ASSERT(init_name);
+
+      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(function_decl);
+      ROSE_ASSERT(proc_header_stmt);
+
+      // If result is named but not declared, need to fix up initialized name created earlier for it
+      if (!init_name->get_parent()) {
+         init_name->set_parent(proc_header_stmt);
+         init_name->set_scope(body);
+         proc_header_stmt->get_scope()->insert_symbol(result_name, symbol);
+      }
+
+      // Reset the result name to the correct initialized name
+      proc_header_stmt->set_result_name(init_name);
+   }
+
+   // Set named end statement if needed
+   if (have_end_stmt) {
+      function_decl->set_named_in_end_statement(have_end_stmt);
+   }
 }
 
 void SageTreeBuilder::
@@ -1494,6 +1552,34 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 }
 
 void SageTreeBuilder::
+Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
+
+   BOOST_FOREACH(LanguageTranslation::ExpressionKind modifier_enum, modifier_enum_list) {
+      switch(modifier_enum)
+       {
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_in();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_out();
+               break;
+            }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
+               break;
+            }
+         default: break;
+       }
+   }
+}
+
+void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
@@ -1998,6 +2084,11 @@ SgExpression* buildNullExpression_nfi()
    return SageBuilder::buildNullExpression_nfi();
 }
 
+SgExpression* buildFunctionCallExp(SgFunctionCallExp* func_call)
+{
+   return func_call;
+}
+
 SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
 {
    SgExprListExp* expr_list = SageBuilder::buildExprListExp_nfi();
@@ -2014,6 +2105,20 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
    SageInterface::setSourcePosition(common_block_object);
    return common_block_object;
 }
+
+void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type)
+{
+   // This function should only be called if there is no symbol and there is a result type
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(result_name, scope);
+   ROSE_ASSERT(!symbol);
+   ROSE_ASSERT(result_type);
+
+   SgInitializedName* init_name = SageBuilder::buildInitializedName(result_name, result_type);
+   SageInterface::setSourcePosition(init_name);
+   init_name->set_scope(scope);
+   SgVariableSymbol* result_symbol = new SgVariableSymbol(init_name);
+   ROSE_ASSERT(result_symbol);
+   scope->insert_symbol(result_name, result_symbol);
 
 SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgScopeStatement* scope)
 {
