@@ -208,8 +208,8 @@ public:
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);
-   //   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
-   //                                           SgJovialForThenStatement::loop_statement_type_enum);
+   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
+                                           SgJovialForThenStatement::loop_statement_type_enum);
 
    void Leave(SgJovialForThenStatement*);
 

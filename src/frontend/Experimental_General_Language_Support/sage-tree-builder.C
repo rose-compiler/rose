@@ -1330,7 +1330,7 @@ Enter(SgJovialForThenStatement* &for_stmt, const std::string &init_var_name)
    SageInterface::appendStatement(for_stmt, scope);
    SageBuilder::pushScopeStack(body);
 }
-#if 0
+
 void SageTreeBuilder::
 Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
       SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
@@ -1351,7 +1351,7 @@ Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression
    SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(body);
 }
-#endif
+
 void SageTreeBuilder::
 Leave(SgJovialForThenStatement* for_stmt)
 {
