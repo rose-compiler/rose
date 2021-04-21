@@ -1859,6 +1859,12 @@ This is no perfect solution until we handle preprocessing information as structu
       if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
           && !(decl->get_file_info()->isTransformation()))
         continue;
+
+      // We now support building a lib file from the same input file. The filename will be identical even we have two different ASTs.
+      // We must add another check to skip pragma nodes from the first AST.
+      if (getEnclosingSourceFile(decl)!=sageFilePtr)
+        continue; 
+
        // Liao 10/19/2010
        // We now support OpenMP AST construction for both C/C++ and Fortran
        // But we allow Fortran End directives to exist after -rose:openmp:ast_only
