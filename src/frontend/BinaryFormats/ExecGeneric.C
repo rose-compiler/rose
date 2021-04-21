@@ -1,6 +1,6 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "checkIsModifiedFlag.h"
@@ -111,7 +111,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 #ifdef _MSC_VER
 #pragma message ("WARNING: Commented out use of functions from sys/wait.h")
                 printf ("ERROR: Commented out use of functions from sys/wait.h \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #else
         if (pipe(child_stdout) == -1)
             throw FormatError("unrecognized file format for \"" + StringUtility::cEscape(name) + "\"");

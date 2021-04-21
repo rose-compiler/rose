@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include <sage3.h>
 #include "arrIndexLabeler.h"
 
@@ -319,3 +322,5 @@ list<SgExpression*>& getArrayIndexExprs(SgPntrArrRefExp* n)
 }
 
 }
+
+#endif

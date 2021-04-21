@@ -15,6 +15,7 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
+static constexpr bool NEW_PARTIAL_TYPE_HANDLING = true; // \todo rm after refactoring
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -24,30 +25,6 @@ namespace Ada_ROSE_Translation
 
 namespace
 {
-  /// auto deleter of an expression object
-  typedef std::unique_ptr<SgExpression> GuardedExpression;
-
-  struct NameData
-  {
-      NameData(std::string id, std::string full, SgScopeStatement* scope, Element_Struct* el)
-      : ident(id), fullName(full), parent(scope), asisElem(el)
-      {}
-
-      Element_ID id() const { return SG_DEREF(asisElem).ID; }
-
-      std::string       ident;
-      std::string       fullName;
-      SgScopeStatement* parent;
-      Element_Struct*   asisElem;
-
-    private:
-      NameData() = delete;
-  };
-
-  /// extracts NameData from \ref elem
-  NameData
-  getName(Element_Struct& elem, AstContext ctx);
-
   /// creates a vector of NameData objects from a sequence of Asis names.
   struct NameCreator
   {
@@ -112,6 +89,11 @@ namespace
     // \todo add handlers as needed
   };
 
+
+  SgScopeStatement&
+  getScopeID(Element_ID& el, AstContext ctx);
+
+
   /// returns the ROSE scope of an already converted Asis element \ref elem.
   SgScopeStatement&
   getScope(Element_Struct& elem, AstContext ctx)
@@ -119,34 +101,41 @@ namespace
     ROSE_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr = elem.The_Union.Expression;
-    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
 
-    SgDeclarationStatement* dcl = findFirst( asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+    if (expr.Expression_Kind == A_Selected_Component)
+      return getScopeID(expr.Prefix, ctx);
+
+    if (expr.Expression_Kind != An_Identifier)
+      logError() << "unexpected identifier" << expr.Expression_Kind;
+
+    ROSE_ASSERT (expr.Expression_Kind == An_Identifier);
+    logKind("An_Identifier");
+
+    SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+
+    if (dcl == nullptr)
+    {
+      logError() << "Unable to find scope/declaration for " << expr.Name_Image
+                 << std::endl;
+      ROSE_ABORT();
+    }
+
     SgScopeStatement*       res = sg::dispatch(ScopeQuery(), dcl);
 
     return SG_DEREF(res);
   }
 
-
-  /// returns a NameData object for the element \ref el
-  NameData
-  getNameID(Element_ID el, AstContext ctx);
-
-  /// asserts that \ref decl has exactly one associated name
-  /// and returns the respective NameData data.
-  NameData
-  singleName(Declaration_Struct& decl, AstContext ctx)
+  SgScopeStatement&
+  getScopeID(Element_ID& el, AstContext ctx)
   {
-    ElemIdRange     range = idRange(decl.Names);
-    ROSE_ASSERT(range.size() == 1);
-
-    return getNameID(*range.first, ctx);
+    return getScope(retrieveAs<Element_Struct>(elemMap(), el), ctx);
   }
+
 
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)
   NameData
-  getExprName(Element_Struct& elem, AstContext ctx)
+  getQualName(Element_Struct& elem, AstContext ctx)
   {
     ROSE_ASSERT(elem.Element_Kind == An_Expression);
 
@@ -154,9 +143,11 @@ namespace
 
     if (idex.Expression_Kind == An_Identifier)
     {
+      logKind("An_Identifier");
+
       std::string        ident{idex.Name_Image};
 
-      return NameData{ ident, ident, &ctx.scope(), &elem };
+      return NameData{ ident, ident, ctx.scope(), elem };
     }
 
     ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
@@ -166,65 +157,9 @@ namespace
 
     return NameData{ selected.ident,
                      compound.fullName + "." + selected.fullName,
-                     &ctx.scope(),
-                     selected.asisElem
+                     ctx.scope(),
+                     selected.elem()
                    };
-  }
-
-
-  NameData
-  getName(Element_Struct& elem, AstContext ctx)
-  {
-    if (elem.Element_Kind == An_Expression)
-      return getExprName(elem, ctx);
-
-    if (elem.Element_Kind != A_Defining_Name)
-      logWarn() << "unexpected elem kind (getName)" << elem.Element_Kind << std::endl;
-
-    ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
-
-    Defining_Name_Struct& asisname = elem.The_Union.Defining_Name;
-    SgScopeStatement*     parent = &ctx.scope();
-    std::string           ident{asisname.Defining_Name_Image};
-    std::string           name{asisname.Defining_Name_Image};
-
-    switch (asisname.Defining_Name_Kind)
-    {
-      case A_Defining_Expanded_Name:
-        {
-          NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
-          Element_Struct& prefixelem = retrieveAs<Element_Struct>(elemMap(), asisname.Defining_Prefix);
-
-          ident  = defname.ident;
-          parent = &getScope(prefixelem, ctx);
-          break;
-        }
-
-      case A_Defining_Identifier:
-        // nothing to do, the fields are already set
-        break;
-
-      case Not_A_Defining_Name:
-        /* break; */
-
-      case A_Defining_Character_Literal:   // 3.5.1(4)
-      case A_Defining_Enumeration_Literal: // 3.5.1(3)
-      case A_Defining_Operator_Symbol:     // 6.1(9)
-      default:
-        logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
-                  << " (" << name << ")"
-                  << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
-
-    return NameData{ ident, name, parent, &elem };
-  }
-
-
-  NameData
-  getNameID(Element_ID el, AstContext ctx)
-  {
-    return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
   }
 
 
@@ -238,10 +173,8 @@ namespace
     dcl.get_declarationModifier().get_accessModifier().setPrivate();
   }
 
-  /// labels a statement with a block label or a sequence of labels (if needed)
-  /// @{
-  SgStatement&
-  labelIfNeeded(SgStatement& stmt, std::string lblname, Defining_Name_ID lblid, AstContext ctx)
+  SgLabelStatement&
+  labelStmt(SgStatement& stmt, std::string lblname, Defining_Name_ID lblid, AstContext ctx)
   {
     ROSE_ASSERT(lblid > 0);
 
@@ -250,7 +183,7 @@ namespace
     Element_Struct&   lblelem = retrieveAs<Element_Struct>(elemMap(), lblid);
 
     //~ copyFileInfo(stmt, sgn);
-    attachSourceLocation(sgn, lblelem);
+    attachSourceLocation(sgn, lblelem, ctx);
     sgn.set_parent(&parent);
     ctx.labelsAndLoops().label(lblid, sgn);
 
@@ -264,6 +197,8 @@ namespace
     return getNameID(el, ctx).fullName;
   }
 
+  /// labels a statement with a block label or a sequence of labels (if needed)
+  /// @{
   template <class SageAdaStmt>
   SgStatement&
   labelIfNeeded(SageAdaStmt& stmt, Defining_Name_ID lblid, AstContext ctx)
@@ -275,7 +210,7 @@ namespace
     std::string lblname = getLabelName(lblid, ctx);
 
     stmt.set_string_label(lblname);
-    return labelIfNeeded(stmt, lblname, lblid, ctx);
+    return labelStmt(stmt, lblname, lblid, ctx);
   }
 
   SgStatement&
@@ -290,7 +225,7 @@ namespace
                                              [&](SgStatement* labeled, const NameData& el) -> SgStatement*
                                              {
                                                ROSE_ASSERT(el.fullName == el.ident);
-                                               return &labelIfNeeded(SG_DEREF(labeled), el.fullName, el.id(), ctx);
+                                               return &labelStmt(SG_DEREF(labeled), el.fullName, el.id(), ctx);
                                              }
                                            );
 
@@ -308,7 +243,7 @@ namespace
   {
     ROSE_ASSERT(elem.Element_Kind == A_Statement);
 
-    attachSourceLocation(sgnode, elem);
+    attachSourceLocation(sgnode, elem, ctx);
     sgnode.set_parent(&ctx.scope());
 
     Statement_Struct& stmt = elem.The_Union.Statement;
@@ -318,13 +253,13 @@ namespace
     ROSE_ASSERT(sgn.get_parent() == &ctx.scope());
   }
 
-  template <class SageAdaStmt>
+  template <class SageScopeStmt>
   void
-  completeStmt(SageAdaStmt& sgnode, Element_Struct& elem, AstContext ctx, Defining_Name_ID lblid)
+  completeStmt(SageScopeStmt& sgnode, Element_Struct& elem, AstContext ctx, Defining_Name_ID lblid)
   {
     ROSE_ASSERT(elem.Element_Kind == A_Statement);
 
-    attachSourceLocation(sgnode, elem);
+    attachSourceLocation(sgnode, elem, ctx);
     sgnode.set_parent(&ctx.scope());
 
     SgStatement&      sgn0 = labelIfNeeded(sgnode, lblid, ctx);
@@ -378,9 +313,15 @@ namespace
   /// creates a deep-copyW of \ref exp
   /// if \ref exp is null, null will be returned
   SgExpression*
-  cloneNonNull(SgExpression* exp)
+  cloneIfNeeded(SgExpression* exp, bool required)
   {
-    return exp ? si::deepCopy(exp) : exp;
+    if (!required) return exp;
+
+    exp = si::deepCopy(exp);
+
+    // \todo use a traversal to set all children nodes to compiler generated
+    markCompilerGenerated(SG_DEREF(exp));
+    return exp;
   }
 
 
@@ -391,10 +332,11 @@ namespace
   /// \param initexpr the initializer (if it exists) that will be cloned for each
   ///                 of the initialized names.
   SgInitializedNamePtrList
-  constructInitializedNamePtrList( std::map<int, SgInitializedName*>& m,
+  constructInitializedNamePtrList( AstContext ctx,
+                                   std::map<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   GuardedExpression initexpr = nullptr
+                                   SgExpression* initexpr
                                  )
   {
     SgInitializedNamePtrList lst;
@@ -402,13 +344,15 @@ namespace
 
     for (int i = 0; i < num; ++i)
     {
-      ROSE_ASSERT(names.at(i).fullName == names.at(i).ident);
+      const NameCreator::result_container::value_type obj = names.at(i);
 
-      const std::string& name = names.at(i).fullName;
-      Element_ID         id   = names.at(i).id();
-      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneNonNull(initexpr.get()));
+      ROSE_ASSERT(obj.fullName == obj.ident);
 
-      attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id));
+      const std::string& name = obj.fullName;
+      Element_ID         id   = obj.id();
+      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
+
+      attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
 
       lst.push_back(&dcl);
       recordNonUniqueNode(m, id, dcl);
@@ -427,25 +371,28 @@ namespace
     switch (asisKind)
     {
       case A_Default_In_Mode:
+        logKind("A_Default_In_Mode");
         res.setDefault();
         break;
 
       case An_In_Mode:
+        logKind("An_In_Mode");
         res.setIntent_in();
         break;
 
       case An_Out_Mode:
+        logKind("An_Out_Mode");
         res.setIntent_out();
         break;
 
       case An_In_Out_Mode:
+        logKind("An_In_Out_Mode");
         res.setIntent_inout();
         break;
 
       case Not_A_Mode: /* break; */
       default:
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
     }
 
     return res;
@@ -455,8 +402,9 @@ namespace
 
   /// creates a ROSE expression for an Asis declaration's initializer expression
   /// returns null, if no declaration exists.
+  /// \param expectedType a type that is carried over from a lhs constant declaration
   SgExpression*
-  getVarInit(Declaration_Struct& decl, AstContext ctx)
+  getVarInit(Declaration_Struct& decl, SgType* /*expectedType*/, AstContext ctx)
   {
     if (decl.Declaration_Kind == A_Deferred_Constant_Declaration)
       return nullptr;
@@ -473,7 +421,12 @@ namespace
     if (decl.Initialization_Expression == 0)
       return nullptr;
 
-    return &getExprID_opt(decl.Initialization_Expression, ctx);
+    SgExpression& res = getExprID_opt(decl.Initialization_Expression, ctx);
+
+    //  \todo this fails ...
+    //        discuss with DQ expression types
+    //~ if (expectedType) res.set_explicitly_stored_type(expectedType);
+    return &res;
   }
 
   SgType&
@@ -496,6 +449,7 @@ namespace
     Expression_Struct& labelexp = labelref.The_Union.Expression;
     ROSE_ASSERT(labelexp.Expression_Kind == An_Identifier);
 
+    logKind("An_Identifier");
     return labelexp.Corresponding_Name_Definition;
   }
 
@@ -516,11 +470,12 @@ namespace
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
     SgType&                  parmtype = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
-    GuardedExpression        initexpr{getVarInit(asisDecl, ctx)};
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(asisVars(), names, parmtype, std::move(initexpr));
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
+                                                                         parmtype, getVarInit(asisDecl, &parmtype, ctx)
+                                                                       );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
-    attachSourceLocation(sgnode, elem);
+    attachSourceLocation(sgnode, elem, ctx);
     /* unused fields:
          bool                           Has_Aliased;
          bool                           Has_Null_Exclusion;
@@ -563,120 +518,105 @@ namespace
       AstContext               ctx;
   };
 
-  /// call-back to complete a function/procedure/entry declarations
-  ///   by adding parameters to the scopes (after they have been created)
-  struct ParameterCompletion
+
+  SgClassDeclaration&
+  createRecordDecl( const std::string& name,
+                    SgClassDefinition& def,
+                    SgScopeStatement& scope,
+                    SgDeclarationStatement* nondefdcl
+                  )
   {
-      ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
-      : range(paramrange), ctx(astctx)
-      {}
+    if (SgClassDeclaration* recdcl = isSgClassDeclaration(nondefdcl))
+      return mkRecordDecl(*recdcl, def, scope);
 
-      void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
-      {
-        traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
-      }
+    // if nondefdcl is set, it must be a SgClassDeclaration
+    if (nondefdcl)
+      logError() << name << " " << typeid(*nondefdcl).name() << std::endl;
 
-    private:
-      ElemIdRange range;
-      AstContext  ctx;
+    ROSE_ASSERT(!nondefdcl);
+    return mkRecordDecl(name, def, scope);
+  }
 
-      ParameterCompletion() = delete;
-  };
-
-
-  /// creates a sequence of type declarations in ROSE from a
-  ///   a single Asis declarations with multiple names.
-  struct DeclarePrivateType
+  void
+  setModifiers(SgDeclarationStatement& dcl, bool abstract, bool limited, bool tagged)
   {
-      DeclarePrivateType(SgType& tyrep, AstContext astctx, bool privateItems)
-      : ty(tyrep), scope(astctx.scope()), privateElems(privateItems)
-      {}
+    SgDeclarationModifier& mod = dcl.get_declarationModifier();
 
-      void operator()(const NameData& nameelem)
-      {
-        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
+    if (abstract) mod.setAdaAbstract();
+    if (limited)  mod.setAdaLimited();
+    if (tagged)   mod.setAdaTagged();
 
-        const std::string&      name = nameelem.fullName;
-        Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl  = &mkTypeDecl(name, ty, scope);
-        ROSE_ASSERT(dcl);
+    //~ logError() << typeid(dcl).name() << " " << abstract << limited << tagged
+               //~ << std::endl;
+  }
 
-        markCompilerGenerated(*dcl);
-        privatize(*dcl, privateElems);
-        scope.append_statement(dcl);
-        recordNode(asisTypes(), id, *dcl);
-        ROSE_ASSERT(dcl->get_parent() == &scope);
-      }
+  void
+  setModifiers(SgDeclarationStatement& dcl, const TypeData& info)
+  {
+    setModifiers(dcl, info.hasAbstract, info.hasLimited, info.hasTagged);
+  }
 
-    private:
-      SgType&           ty;
-      SgScopeStatement& scope;
-      bool              privateElems;
-  };
+  template <class AsisStruct>
+  void
+  setModifiers(SgDeclarationStatement& dcl, const AsisStruct& info)
+  {
+    setModifiers(dcl, info.Has_Abstract, info.Has_Limited, info.Has_Tagged);
+  }
 
+  template <class AsisStruct>
+  void
+  setModifiersUntagged(SgDeclarationStatement& dcl, const AsisStruct& info)
+  {
+    setModifiers(dcl, info.Has_Abstract, info.Has_Limited, false);
+  }
 
   /// creates a ROSE declaration depending on the provided type/definition
   struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
   {
       typedef sg::DispatchHandler<SgDeclarationStatement*> base;
 
-      MakeDeclaration(const std::string& name, SgScopeStatement& scope, TypeData basis)
-      : base(), dclname(name), dclscope(scope), foundation(basis)
+      MakeDeclaration(const std::string& name, SgScopeStatement& scope, TypeData basis, SgDeclarationStatement* incompl)
+      : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-      void handle(SgType& n) { res = &mkTypeDecl(dclname, n, dclscope); }
+      void handle(SgType& n)
+      {
+        res = &mkTypeDecl(dclname, n, dclscope);
+
+        if (incomplDecl)
+        {
+          res->set_firstNondefiningDeclaration(incomplDecl);
+          res->set_definingDeclaration(res);
+          incomplDecl->set_definingDeclaration(res);
+        }
+      }
+
+      void handle(SgEnumDeclaration& n)
+      {
+        ROSE_ASSERT(n.get_scope() == &dclscope);
+
+        res = &n;
+      }
 
       void handle(SgClassDefinition& n)
       {
-        SgClassDeclaration&    rec = mkRecordDecl(dclname, n, dclscope);
-        SgDeclarationModifier& mod = rec.get_declarationModifier();
+        SgClassDeclaration& rec = createRecordDecl(dclname, n, dclscope, incomplDecl);
 
-        if (foundation.hasAbstract) mod.setAdaAbstract();
-        if (foundation.hasLimited)  mod.setAdaLimited();
-        if (foundation.hasTagged)   mod.setAdaTagged();
-
+        setModifiers(rec, foundation);
         res = &rec;
       }
 
-    private:
-      std::string       dclname;
-      SgScopeStatement& dclscope;
-      TypeData          foundation;
-  };
-
-
-  /// creates a sequence of type declarations in ROSE from a
-  ///   a single Asis declarations with multiple names.
-  /// \note the created type depends on data provided in the TypeData object.
-  struct DeclareType
-  {
-      DeclareType(TypeData what, AstContext astctx, bool privateItems)
-      : foundation(what), scope(astctx.scope()), privateElems(privateItems)
-      {}
-
-      void operator()(const NameData& nameelem)
+      operator SgDeclarationStatement& () const
       {
-        ROSE_ASSERT(nameelem.fullName == nameelem.ident);
-
-        const std::string&      name = nameelem.fullName;
-        Element_ID              id   = nameelem.id();
-        SgDeclarationStatement* dcl = sg::dispatch(MakeDeclaration(name, scope, foundation), foundation.n);
-        ROSE_ASSERT(dcl);
-
-        markCompilerGenerated(*dcl);
-        privatize(*dcl, privateElems);
-        scope.append_statement(dcl);
-        recordNode(asisTypes(), id, *dcl);
-        ROSE_ASSERT(dcl->get_parent() == &scope);
+        return SG_DEREF(res);
       }
 
     private:
-      TypeData   foundation;
-      SgScopeStatement& scope;
-      bool              privateElems;
-
-      DeclareType() = delete;
+      std::string             dclname;
+      SgScopeStatement&       dclscope;
+      TypeData                foundation;
+      SgDeclarationStatement* incomplDecl;
   };
 
 
@@ -718,18 +658,19 @@ namespace
   // helper function for combined handling of variables and constant declarations
 
   void
-  handleNumVarCstDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& dcltype, Element_Struct& elem)
+  handleNumVarCstDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& dclType, SgType* expectedType, Element_Struct& elem)
   {
     typedef NameCreator::result_container name_container;
 
     ElemIdRange              range    = idRange(decl.Names);
     name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
     SgScopeStatement&        scope    = ctx.scope();
-    GuardedExpression        initexp{getVarInit(decl, ctx)};
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(asisVars(), names, dcltype, std::move(initexp));
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
+                                                                         dclType, getVarInit(decl, expectedType, ctx)
+                                                                       );
     SgVariableDeclaration&   vardcl   = mkVarDecl(dclnames, scope);
 
-    attachSourceLocation(vardcl, elem);
+    attachSourceLocation(vardcl, elem, ctx);
     privatize(vardcl, isPrivate);
     scope.append_statement(&vardcl);
 
@@ -737,17 +678,17 @@ namespace
   }
 
   void
-  handleNumberDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& numty, Element_Struct& elem)
+  handleNumberDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& numty, SgType& expctty, Element_Struct& elem)
   {
     SgType& cstty = SG_DEREF( sb::buildConstType(&numty) );
 
-    handleNumVarCstDecl(decl, ctx, isPrivate, cstty, elem);
+    handleNumVarCstDecl(decl, ctx, isPrivate, cstty, &expctty, elem);
   }
 
   void
   handleVarCstDecl(Declaration_Struct& dcl, AstContext ctx, bool isPrivate, TypeModiferFn tyModifier, Element_Struct& elem)
   {
-    handleNumVarCstDecl(dcl, ctx, isPrivate, tyModifier(getVarType(dcl, ctx)), elem);
+    handleNumVarCstDecl(dcl, ctx, isPrivate, tyModifier(getVarType(dcl, ctx)), nullptr /* no expected type */, elem);
   }
 
   SgDeclarationStatement&
@@ -757,9 +698,13 @@ namespace
   getAliased(Expression_Struct& expr, AstContext ctx)
   {
     if (expr.Expression_Kind == An_Identifier)
+    {
+      logKind("An_Identifier");
       return SG_DEREF(getDecl_opt(expr, ctx));
+    }
 
     ROSE_ASSERT(expr.Expression_Kind == A_Selected_Component);
+    logKind("A_Selected_Component");
     return getAliasedID(expr.Selector, ctx);
   }
 
@@ -772,49 +717,48 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
-  SgDeclarationStatement&
+  SgInitializedName&
   getAliasedExcnDecl(Element_ID declid, AstContext ctx)
   {
     Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
     ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
 
     SgInitializedName* the_name = findFirst(asisExcps(), elem.ID, elem.ID);
-    return SG_DEREF(the_name->get_declaration());
+    return SG_DEREF(the_name);
   }
 
-  SgAdaTaskBody&
-  getTaskBody(Declaration_Struct& decl, AstContext ctx)
+  void
+  fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
   {
     ROSE_ASSERT(decl.Declaration_Kind == A_Task_Body_Declaration);
 
-    SgAdaTaskBody& sgnode = mkAdaTaskBody();
-    ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
-    ElemIdRange    stmts = idRange(decl.Body_Statements);
+    {
+      ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
 
-    traverseIDs(decls, elemMap(), StmtCreator{ctx.scope_npc(sgnode)});
-    traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope_npc(sgnode)});
+      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
+    }
 
-    return sgnode;
+    {
+      ElemIdRange         stmts = idRange(decl.Body_Statements);
+      LabelAndLoopManager lblmgr;
+
+      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
+    }
   }
 
   SgAdaTaskSpec&
-  getTaskSpec(Declaration_Struct& decl, AstContext ctx)
+  getTaskSpec(Element_Struct& elem, AstContext ctx)
   {
-    ROSE_ASSERT(decl.Declaration_Kind == A_Task_Type_Declaration);
+    ROSE_ASSERT(elem.Element_Kind == A_Definition);
 
     SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
 
-    if (decl.Type_Declaration_View == 0)
-      return sgnode;
-
     sgnode.set_hasMembers(true);
-
-    // Definition_ID Discriminant_Part
-    Element_Struct&         elem = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
-    ROSE_ASSERT(elem.Element_Kind == A_Definition);
 
     Definition_Struct&      def = elem.The_Union.Definition;
     ROSE_ASSERT(def.Definition_Kind == A_Task_Definition);
+
+    logKind("A_Task_Definition");
 
     Task_Definition_Struct& tasknode = def.The_Union.The_Task_Definition;
 
@@ -839,6 +783,31 @@ namespace
     return sgnode;
   }
 
+  SgAdaTaskSpec&
+  getTaskSpecID(Element_ID id, AstContext ctx)
+  {
+    return getTaskSpec(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  }
+
+  SgAdaTaskSpec&
+  getTaskSpecForTaskType(Declaration_Struct& decl, AstContext ctx)
+  {
+    ROSE_ASSERT(decl.Declaration_Kind == A_Task_Type_Declaration);
+
+    if (decl.Type_Declaration_View == 0)
+      return mkAdaTaskSpec();
+
+    return getTaskSpecID(decl.Type_Declaration_View, ctx);
+  }
+
+  SgAdaTaskSpec&
+  getTaskSpecForSingleTask(Declaration_Struct& decl, AstContext ctx)
+  {
+    ROSE_ASSERT(decl.Declaration_Kind == A_Single_Task_Declaration);
+
+    return getTaskSpecID(decl.Object_Declaration_View, ctx);
+  }
+
 
   struct CaseStmtCreator
   {
@@ -849,6 +818,19 @@ namespace
       : ctx(astctx), caseNode(caseStmt)
       {}
 
+      bool isWhenOthers(ElemIdRange choices)
+      {
+        ROSE_ASSERT(!choices.empty());
+
+        if (choices.size() > 1) return false;
+
+        Element_Struct& el = retrieveAs<Element_Struct>(elemMap(), *choices.first);
+
+        return (  el.Element_Kind == A_Definition
+               && el.The_Union.Definition.Definition_Kind == An_Others_Choice
+               );
+      }
+
       void operator()(Element_Struct& elem)
       {
         Path_Struct& path = elem.The_Union.Path;
@@ -857,30 +839,45 @@ namespace
         {
           case A_Case_Path:
             {
-              ElemIdRange                caseChoices = idRange(path.Case_Path_Alternative_Choices);
-              std::vector<SgExpression*> choices     = traverseIDs(caseChoices, elemMap(), ExprSeqCreator{ctx});
-              ElemIdRange                caseBlock   = idRange(path.Sequence_Of_Statements);
+              logKind("A_Case_Path");
 
-              // \todo reconsider the "reuse" of SgCommaOp
-              //   SgCommaOp is only used to separate discrete choices in case-when
-              ROSE_ASSERT(choices.size());
-              SgExpression&              caseCond    = SG_DEREF( std::accumulate( choices.begin()+1, choices.end(),
-                                                                                  choices.front(),
-                                                                                  sb::buildCommaOpExp
-                                                                                ));
+              SgStatement*  sgnode      = nullptr;
+              SgBasicBlock& block       = mkBasicBlock();
+              ElemIdRange   caseChoices = idRange(path.Case_Path_Alternative_Choices);
 
-              SgBasicBlock&              block       = mkBasicBlock();
-              SgCaseOptionStmt*          sgnode      = sb::buildCaseOptionStmt(&caseCond, &block);
+              if (isWhenOthers(caseChoices))
+              {
+                logKind("An_Others_Choice");
 
-              attachSourceLocation(SG_DEREF(sgnode), elem);
-              sgnode->set_has_fall_through(false);
-              caseNode.append_case(sgnode);
+                SgDefaultOptionStmt* whenOthersNode = &mkWhenOthersPath(block);
+
+                caseNode.append_default(whenOthersNode);
+                sgnode = whenOthersNode;
+              }
+              else
+              {
+                std::vector<SgExpression*> choices   = traverseIDs(caseChoices, elemMap(), ExprSeqCreator{ctx});
+
+                // \todo reconsider the "reuse" of SgCommaOp
+                //   SgCommaOp is only used to separate discrete choices in case-when
+                ROSE_ASSERT(choices.size());
+                SgExpression&              caseCond  = mkChoiceExpIfNeeded(std::move(choices));
+                SgCaseOptionStmt*          whenNode  = &mkWhenPath(caseCond, block);
+
+                caseNode.append_case(whenNode);
+                sgnode = whenNode;
+              }
+
+              ROSE_ASSERT(sgnode);
+              ElemIdRange caseBlock = idRange(path.Sequence_Of_Statements);
+
               traverseIDs(caseBlock, elemMap(), StmtCreator{ctx.scope(block)});
+              attachSourceLocation(*sgnode, elem, ctx);
               break;
             }
 
           default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
       }
 
@@ -921,6 +918,7 @@ namespace
         {
           case An_If_Path:
             {
+              logKind("An_If_Path");
               ROSE_ASSERT(branches.size() == 0);
               conditionedBranch(path);
               break;
@@ -928,6 +926,7 @@ namespace
 
           case An_Elsif_Path:
             {
+              logKind("An_Elsif_Path");
               ROSE_ASSERT(branches.size() != 0);
               conditionedBranch(path);
               break;
@@ -935,13 +934,14 @@ namespace
 
           case An_Else_Path:
             {
+              logKind("An_Else_Path");
               ROSE_ASSERT(branches.size() != 0);
               commonBranch(path);
               break;
             }
 
           default:
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
       }
 
@@ -951,7 +951,8 @@ namespace
       {
         ROSE_ASSERT(thenPath.first && thenPath.second);
 
-        return sb::buildIfStmt(thenPath.first, thenPath.second, elsePath);
+        return &mkIfStmt(SG_DEREF(thenPath.first), SG_DEREF(thenPath.second), elsePath);
+        //~ return sb::buildIfStmt(thenPath.first, thenPath.second, elsePath);
       }
 
       operator SgStatement&()
@@ -974,6 +975,368 @@ namespace
       IfStmtCreator() = delete;
   };
 
+  // MS 11/17/2020 : builders not in sageBuilder (yet)
+  SgAdaSelectAlternativeStmt* buildAdaSelectAlternativeStmt(SgExpression *guard,
+                                                            SgBasicBlock *body)
+  {
+    ROSE_ASSERT(body);
+
+    SgAdaSelectAlternativeStmt *stmt =
+      new SgAdaSelectAlternativeStmt();
+    ROSE_ASSERT(stmt);
+
+    stmt->set_guard(guard);
+    stmt->set_body(body);
+
+    body->set_parent(stmt);
+    guard->set_parent(stmt);
+
+    markCompilerGenerated(*stmt);
+    return stmt;
+  }
+
+  SgAdaSelectStmt* buildAdaSelectStmt()
+  {
+    SgAdaSelectStmt *stmt = new SgAdaSelectStmt();
+    ROSE_ASSERT(stmt);
+
+    markCompilerGenerated(*stmt);
+    return stmt;
+  }
+
+  // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
+  struct SelectStmtCreator
+  {
+    typedef SgAdaSelectAlternativeStmt*  alternative;
+    typedef std::vector<alternative>     alternative_container;
+
+    explicit
+    SelectStmtCreator(AstContext astctx, SgAdaSelectStmt::select_type_enum sty)
+      : ctx(astctx), ty(sty)
+    {
+      abort_path = nullptr;
+      else_path = nullptr;
+      select_path = nullptr;
+    }
+
+    SgAdaSelectAlternativeStmt *commonAltStmt(Path_Struct& path) {
+      // create body of alternative
+      SgBasicBlock& block    = mkBasicBlock();
+      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
+
+      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
+
+      // create guard
+      SgExpression* guard = &getExprID_opt(path.Guard, ctx);
+
+      // instantiate SgAdaSelectAlternativeStmt node and return it
+      SgAdaSelectAlternativeStmt* stmt = buildAdaSelectAlternativeStmt(guard, &block);
+
+      return stmt;
+    }
+
+    SgBasicBlock *commonMakeBlock(Path_Struct& path) {
+      SgBasicBlock& block    = mkBasicBlock();
+      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
+      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
+      return &block;
+    }
+
+    void orAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == An_Or_Path);
+      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
+      or_paths.emplace_back(alt);
+    }
+
+    void selectAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == A_Select_Path);
+      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
+      select_path = alt;
+    }
+
+    void elseAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == An_Else_Path);
+      SgBasicBlock* alt = commonMakeBlock(path);
+      else_path = alt;
+    }
+
+    void abortAlternative(Path_Struct& path)
+    {
+      ROSE_ASSERT(path.Path_Kind == A_Then_Abort_Path);
+      SgBasicBlock* alt = commonMakeBlock(path);
+      abort_path = alt;
+    }
+
+    void operator()(Element_Struct& elem)
+    {
+      Path_Struct& path = elem.The_Union.Path;
+
+      switch (path.Path_Kind)
+        {
+        case A_Select_Path:
+          {
+            selectAlternative(path);
+            break;
+          }
+
+        case An_Or_Path:
+          {
+            orAlternative(path);
+            break;
+          }
+
+        case An_Else_Path:
+          {
+            elseAlternative(path);
+            break;
+          }
+
+        case A_Then_Abort_Path:
+          {
+            abortAlternative(path);
+            break;
+          }
+
+        default:
+          ROSE_ABORT();
+        }
+    }
+
+    SgAdaSelectAlternativeStmt*
+    chainOr()
+    {
+      SgAdaSelectAlternativeStmt *cur = NULL;
+
+      for (SgAdaSelectAlternativeStmt* s : or_paths) {
+        if (cur == NULL)
+          {
+            cur = s;
+          }
+        else
+          {
+            cur->set_next(s);
+            s->set_parent(cur);
+            cur = s;
+          }
+      }
+
+      return or_paths.front();
+    }
+
+    operator SgStatement&()
+    {
+      SgAdaSelectStmt *stmt = buildAdaSelectStmt();
+      stmt->set_select_type(ty);
+      switch (ty)
+        {
+        case SgAdaSelectStmt::e_selective_accept:
+          {
+            stmt->set_select_path(select_path);
+            select_path->set_parent(stmt);
+
+            SgAdaSelectAlternativeStmt* orRoot = chainOr();
+            stmt->set_or_path(orRoot);
+            orRoot->set_parent(stmt);
+
+            stmt->set_else_path(else_path);
+            if (else_path != nullptr) {
+              else_path->set_parent(stmt);
+            }
+            break;
+          }
+
+        case SgAdaSelectStmt::e_timed_entry:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          // require only one or path
+          ROSE_ASSERT(or_paths.size() == 1);
+          stmt->set_or_path(or_paths.front());
+          or_paths.front()->set_parent(stmt);
+          break;
+
+        case SgAdaSelectStmt::e_conditional_entry:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          stmt->set_else_path(else_path);
+          else_path->set_parent(stmt);
+          break;
+
+        case SgAdaSelectStmt::e_asynchronous:
+          stmt->set_select_path(select_path);
+          select_path->set_parent(stmt);
+
+          stmt->set_abort_path(abort_path);
+          abort_path->set_parent(stmt);
+          break;
+
+        default:
+          ROSE_ABORT();
+        }
+      return SG_DEREF( stmt );
+    }
+
+  private:
+    AstContext                        ctx;
+    SgAdaSelectStmt::select_type_enum ty;
+    alternative_container             or_paths;
+    alternative                       select_path;
+    SgBasicBlock*                     abort_path;
+    SgBasicBlock*                     else_path;
+
+    SelectStmtCreator() = delete;
+  };
+
+
+  struct PragmaCreator
+  {
+      typedef std::vector<SgPragmaDeclaration*> result_container;
+
+      explicit
+      PragmaCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == A_Pragma);
+        logKind("A_Pragma");
+
+        Pragma_Struct&       pragma = el.The_Union.The_Pragma;
+        std::string          name{pragma.Pragma_Name_Image};
+        ElemIdRange          argRange = idRange(pragma.Pragma_Argument_Associations);
+        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
+        SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args);
+
+        ROSE_ASSERT(args.get_parent());
+        attachSourceLocation(sgnode, el, ctx);
+        attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
+        res.push_back(&sgnode);
+      }
+
+      operator result_container() && { return std::move(res); }
+
+    private:
+      result_container res;
+      AstContext       ctx;
+  };
+
+
+  struct SourceLocationComparator
+  {
+    bool operator()(Sg_File_Info* lhs, Sg_File_Info* rhs) const
+    {
+      ROSE_ASSERT(lhs && rhs);
+
+      if (lhs->get_line() < rhs->get_line())
+        return true;
+
+      if (rhs->get_line() < lhs->get_line())
+        return false;
+
+      if (lhs->get_col() < rhs->get_col())
+        return true;
+
+      return false;
+    }
+
+    bool operator()(SgLocatedNode* n, Sg_File_Info* rhs) const
+    {
+      ROSE_ASSERT(n);
+
+      return (*this)(n->get_startOfConstruct(), rhs);
+    }
+  };
+
+
+  struct PragmaPlacer
+  {
+      explicit
+      PragmaPlacer(SgScopeStatement& one)
+      : all(), last(one)
+      {
+        copyToAll(one);
+      }
+
+      PragmaPlacer(SgScopeStatement& one, SgScopeStatement& two)
+      : all(), last(two)
+      {
+        copyToAll(one); copyToAll(two);
+      }
+
+      template <class Iterator>
+      void copyToAll(Iterator begin, Iterator limit)
+      {
+        std::copy(begin, limit, std::back_inserter(all));
+      }
+
+      void copyToAll(SgScopeStatement& lst)
+      {
+        if (lst.containsOnlyDeclarations())
+        {
+          SgDeclarationStatementPtrList& stmts = lst.getDeclarationList();
+
+          copyToAll(stmts.begin(), stmts.end());
+        }
+        else
+        {
+          SgStatementPtrList& stmts = lst.getStatementList();
+
+          copyToAll(stmts.begin(), stmts.end());
+        }
+      }
+
+
+      void operator()(SgPragmaDeclaration* pragma) const
+      {
+        typedef std::vector<SgStatement*>::const_iterator const_iterator;
+        ROSE_ASSERT(pragma);
+
+        const_iterator pos = std::lower_bound( all.begin(), all.end(),
+                                               pragma->get_startOfConstruct(),
+                                               SourceLocationComparator{}
+                                             );
+
+        if (pos != all.end())
+          SageInterface::insertStatementBefore(*pos, pragma);
+        else
+          SageInterface::appendStatement(pragma, &last);
+      }
+
+    private:
+      std::vector<SgStatement*> all;
+      SgScopeStatement&         last;
+  };
+
+  template <class... Scopes>
+  void placePragmas(Pragma_Element_ID_List pragmalst, AstContext ctx, Scopes... scopes)
+  {
+    typedef PragmaCreator::result_container PragmaNodes;
+
+    ElemIdRange pragmas = idRange(pragmalst);
+
+    if (pragmas.empty()) return; // early exit to prevent scope flattening
+
+    PragmaNodes pragmadcls = traverseIDs(pragmas, elemMap(), PragmaCreator{ctx});
+
+    // retroactively place pragmas according to their source position information
+    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{scopes...});
+  }
+
+
+  bool isForwardLoop(Element_Struct& forvar)
+  {
+    ROSE_ASSERT (forvar.Element_Kind == A_Declaration);
+
+    Declaration_Struct& decl = forvar.The_Union.Declaration;
+    ROSE_ASSERT(decl.Declaration_Kind == A_Loop_Parameter_Specification);
+
+    return !decl.Has_Reverse;
+  }
 
 
   void handleStmt(Element_Struct& elem, AstContext ctx)
@@ -995,7 +1358,9 @@ namespace
     {
       case A_Null_Statement:                    // 5.1
         {
-          completeStmt(mkNullStmt(), elem, ctx);
+          logKind("A_Null_Statement");
+
+          completeStmt(mkNullStatement(), elem, ctx);
           /* unused fields:
           */
           break;
@@ -1003,11 +1368,14 @@ namespace
 
       case An_Assignment_Statement:             // 5.2
         {
+          logKind("An_Assignment_Statement");
+
           SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
           SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
           SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
 
+          attachSourceLocation(assign, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
           */
@@ -1016,6 +1384,8 @@ namespace
 
       case An_If_Statement:                     // 5.3
         {
+          logKind("An_If_Statement");
+
           ElemIdRange  range  = idRange(stmt.Statement_Paths);
           SgStatement& sgnode = traverseIDs(range, elemMap(), IfStmtCreator{ctx});
 
@@ -1027,6 +1397,8 @@ namespace
 
       case A_Case_Statement:                    // 5.4
         {
+          logKind("A_Case_Statement");
+
           SgExpression&      caseexpr = getExprID(stmt.Case_Expression, ctx);
           SgBasicBlock&      casebody = mkBasicBlock();
           SgSwitchStatement& sgnode   = mkAdaCaseStmt(caseexpr, casebody);
@@ -1041,6 +1413,8 @@ namespace
 
       case A_While_Loop_Statement:              // 5.5
         {
+          logKind("A_While_Loop_Statement");
+
           SgExpression& cond     = getExprID(stmt.While_Condition, ctx);
           SgBasicBlock& block    = mkBasicBlock();
           ElemIdRange   adaStmts = idRange(stmt.Loop_Statements);
@@ -1050,8 +1424,9 @@ namespace
 
           recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
+
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
           */
           break;
@@ -1059,6 +1434,8 @@ namespace
 
         case A_Loop_Statement:                    // 5.5
         {
+          logKind("A_Loop_Statement");
+
           SgBasicBlock&  block    = mkBasicBlock();
           ElemIdRange    adaStmts = idRange(stmt.Loop_Statements);
           SgAdaLoopStmt& sgnode   = mkLoopStmt(block);
@@ -1068,8 +1445,9 @@ namespace
           recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
           traverseIDs(adaStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
+
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
                 bool                      Is_Name_Repeated;
           */
@@ -1078,24 +1456,38 @@ namespace
 
       case A_For_Loop_Statement:                // 5.5
         {
-          SgBasicBlock&       block  = mkBasicBlock();
-          SgForStatement&     sgnode = mkForStatement(block);
-          Element_Struct&     forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
-          SgForInitStatement& forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
+          logKind("A_For_Loop_Statement");
 
+          SgBasicBlock&          block  = mkBasicBlock();
+          SgForStatement&        sgnode = mkForStatement(block);
+          Element_Struct&        forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
+          SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
+
+          attachSourceLocation(forini, forvar, ctx);
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
           handleDeclaration(forvar, ctx.scope_npc(sgnode));
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
-          ROSE_ASSERT(sgnode.getStatementList().size() <= 1 /* \todo should be 0 */);
 
-          // \todo this swap is needed, otherwise the variable declaration ends
-          //       up in the body instead of the initializer.. ???
+          // this swap is needed, b/c SgForInitStatement is not a scope
+          // and when the loop variable declaration is created, the declaration
+          // is pushed to the wrong statement list.
+          ROSE_ASSERT(sgnode.getStatementList().size() == 1);
           std::swap(forini.get_init_stmt(), block.get_statements());
 
-          ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
+          SgVariableDeclaration* inductionVar = isSgVariableDeclaration(forini.get_init_stmt().front());
+          SgExpression&          direction    = mkForLoopIncrement(isForwardLoop(forvar), SG_DEREF(inductionVar));
 
-          recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
-          traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
+          sg::linkParentChild(sgnode, direction, &SgForStatement::set_increment);
+
+          // loop body
+          {
+            ElemIdRange            loopStmts = idRange(stmt.Loop_Statements);
+
+            recordNode(ctx.labelsAndLoops().asisLoops(), elem.ID, sgnode);
+            traverseIDs(loopStmts, elemMap(), StmtCreator{ctx.scope(block)});
+          }
+
+          placePragmas(stmt.Pragmas, ctx, std::ref(block));
 
           /* unused fields:
                Pragma_Element_ID_List Pragmas;
@@ -1106,6 +1498,8 @@ namespace
 
       case A_Block_Statement:                   // 5.6
         {
+          logKind("A_Block_Statement");
+
           SgBasicBlock& sgnode   = mkBasicBlock();
           ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
           ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
@@ -1116,17 +1510,22 @@ namespace
           SgTryStmt*    tryblk   = trydata.first;
           SgBasicBlock& block    = trydata.second;
 
-          completeStmt(block, elem, ctx, stmt.Statement_Identifier);
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
           traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
           traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           if (tryblk)
           {
-            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
+            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope_npc(sgnode), SG_DEREF(tryblk)});
+
+            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
+          }
+          else
+          {
+            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode));
           }
 
           /* unused fields:
-                Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
                 bool                      Is_Name_Repeated;
                 bool                      Is_Declare_Block;
@@ -1136,6 +1535,8 @@ namespace
 
       case An_Exit_Statement:                   // 5.7
         {
+          logKind("An_Exit_Statement");
+
           SgStatement&  exitedLoop    = lookupNode(ctx.labelsAndLoops().asisLoops(), stmt.Corresponding_Loop_Exited);
           SgExpression& exitCondition = getExprID_opt(stmt.Exit_Condition, ctx);
           const bool    loopIsNamed   = stmt.Exit_Loop_Name > 0;
@@ -1150,6 +1551,7 @@ namespace
 
       case A_Goto_Statement:                    // 5.8
         {
+          logKind("A_Goto_Statement");
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
           ctx.labelsAndLoops().gotojmp(getLabelRef(stmt.Goto_Label, ctx), sgnode);
@@ -1161,41 +1563,37 @@ namespace
           break;
         }
 
+
+      case An_Entry_Call_Statement:             // 9.5.3
       case A_Procedure_Call_Statement:          // 6.4
         {
-          SgExpression*  funrefexp = nullptr;
+          logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
 
-          //~ SgDeclarationStatement& tgt    = lookupNode(asisDecls(), stmt.Corresponding_Called_Entity);
+          SgExpression&    funrefexp = getExprID(stmt.Called_Name, ctx);
+          ElemIdRange      range  = idRange(stmt.Call_Statement_Parameters);
+          SgExprListExp&   arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+          SgExprStatement& sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funrefexp, &arglst));
+          SgExpression&    call   = SG_DEREF(sgnode.get_expression());
 
-          if (SgDeclarationStatement* tgt = findNode(asisDecls(), stmt.Corresponding_Called_Entity))
-          {
-            funrefexp = sb::buildFunctionRefExp(isSgFunctionDeclaration(tgt));
-          }
-          else
-          {
-            logWarn() << "unable to find declaration for procedure call"
-                      << std::endl;
-
-            funrefexp = &getExprID(stmt.Called_Name, ctx);
-          }
-
-          ROSE_ASSERT(funrefexp);
-          ElemIdRange    range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp& arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgStatement&   sgnode = SG_DEREF(sb::buildFunctionCallStmt(funrefexp, &arglst));
-
+          ROSE_ASSERT(arglst.get_parent());
+          attachSourceLocation(call, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
+              + for A_Procedure_Call_Statement / An_Entry_Call_Statement
+              Declaration Corresponding_Called_Entity_Unwound
+
+              + for A_Procedure_Call_Statement
               bool        Is_Prefix_Notation
               bool        Is_Dispatching_Call
               bool        Is_Call_On_Dispatching_Operation
-              Declaration Corresponding_Called_Entity_Unwound
+              break;
           */
           break;
         }
 
       case A_Return_Statement:                  // 6.5
         {
+          logKind("A_Return_Statement");
           Element_Struct* exprel = retrieveAsOpt<Element_Struct>(elemMap(), stmt.Return_Expression);
           SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : NULL;
           SgStatement&    sgnode = SG_DEREF( sb::buildReturnStmt(retval) );
@@ -1208,6 +1606,7 @@ namespace
 
       case An_Accept_Statement:                 // 9.5.2
         {
+          logKind("An_Accept_Statement");
           SgExpression&           entryref = getExprID(stmt.Accept_Entry_Direct_Name, ctx);
           SgExpression&           idx      = getExprID_opt(stmt.Accept_Entry_Index, ctx);
           SgAdaAcceptStmt&        sgnode   = mkAdaAcceptStmt(entryref, idx);
@@ -1223,7 +1622,7 @@ namespace
 
           if (stmts.empty())
           {
-            SgStatement&          noblock = mkNullStmt();
+            SgStatement&          noblock = mkNullStatement();
 
             sg::linkParentChild(sgnode, noblock, &SgAdaAcceptStmt::set_body);
           }
@@ -1248,6 +1647,8 @@ namespace
       case A_Delay_Until_Statement:             // 9.6
       case A_Delay_Relative_Statement:          // 9.6
         {
+          logKind(stmt.Statement_Kind == A_Delay_Until_Statement ? "A_Delay_Until_Statement" : "A_Delay_Relative_Statement");
+
           SgExpression&   delayexpr = getExprID(stmt.Delay_Expression, ctx);
           SgAdaDelayStmt& sgnode    = mkAdaDelayStmt(delayexpr, stmt.Statement_Kind != A_Delay_Until_Statement);
 
@@ -1263,6 +1664,7 @@ namespace
 
       case A_Raise_Statement:                   // 11.3
         {
+          logKind("A_Raise_Statement");
           SgExpression&   raised = getExprID(stmt.Raised_Exception, ctx);
           SgStatement&    sgnode = mkRaiseStmt(raised);
 
@@ -1272,21 +1674,68 @@ namespace
           */
           break;
         }
+      case A_Selective_Accept_Statement:        // 9.7.1
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_selective_accept});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case A_Timed_Entry_Call_Statement:        // 9.7.2
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_timed_entry});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case A_Conditional_Entry_Call_Statement:  // 9.7.3
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_conditional_entry});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case An_Asynchronous_Select_Statement:    // 9.7.4
+        {
+          ElemIdRange  range  = idRange(stmt.Statement_Paths);
+          SgStatement& sgnode = traverseIDs(range, elemMap(),
+                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_asynchronous});
+          completeStmt(sgnode, elem, ctx);
+          break;
+        }
+      case An_Abort_Statement:                  // 9.8
+        {
+          logKind("An_Abort_Statement");
 
+          ElemIdRange                range     = idRange(stmt.Aborted_Tasks);
+          std::vector<SgExpression*> aborted   = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+          SgExprListExp&             abortList = mkExprListExp(aborted);
+          SgProcessControlStatement& sgnode    = mkAbortStmt(abortList);
+
+          ROSE_ASSERT(abortList.get_parent());
+          completeStmt(sgnode, elem, ctx);
+
+          /* unused fields:
+          */
+          break;
+        }
+      case A_Terminate_Alternative_Statement:   // 9.7.1
+        {
+          logKind("A_Terminate_Alternative_Statement");
+
+          completeStmt(mkTerminateStmt(), elem, ctx);
+          break;
+        }
 
       case Not_A_Statement: /* break; */        // An unexpected element
       //|A2005 start
       case An_Extended_Return_Statement:        // 6.5
       //|A2005 end
-      case An_Entry_Call_Statement:             // 9.5.3
       case A_Requeue_Statement:                 // 9.5.4
       case A_Requeue_Statement_With_Abort:      // 9.5.4
-      case A_Terminate_Alternative_Statement:   // 9.7.1
-      case A_Selective_Accept_Statement:        // 9.7.1
-      case A_Timed_Entry_Call_Statement:        // 9.7.2
-      case A_Conditional_Entry_Call_Statement:  // 9.7.3
-      case An_Asynchronous_Select_Statement:    // 9.7.4
-      case An_Abort_Statement:                  // 9.8
       case A_Code_Statement:                    // 13.8 assembly
       default:
         logWarn() << "Unhandled statement " << stmt.Statement_Kind << std::endl;
@@ -1308,6 +1757,7 @@ namespace
 
     ROSE_ASSERT((asisDecl.Declaration_Kind == A_Choice_Parameter_Specification));
 
+    logKind("A_Choice_Parameter_Specification");
     // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
     ElemIdRange              range    = idRange(asisDecl.Names);
 
@@ -1320,19 +1770,20 @@ namespace
 
     ROSE_ASSERT(elem.Element_Kind == An_Exception_Handler);
 
+    logKind("An_Exception_Handler");
     Exception_Handler_Struct& ex      = elem.The_Union.Exception_Handler;
     name_container            names   = queryDeclNames(ex.Choice_Parameter_Specification, ctx);
 
     if (names.size() == 0)
     {
       // add an unnamed exception handler
-      names.emplace_back(std::string{}, std::string{}, &ctx.scope(), &elem);
+      names.emplace_back(std::string{}, std::string{}, ctx.scope(), elem);
     }
 
-    ROSE_ASSERT (names.size() == 1);
+    ROSE_ASSERT(names.size() == 1);
     ElemIdRange              tyRange = idRange(ex.Exception_Choices);
     SgType&                  extypes = traverseIDs(tyRange, elemMap(), ExHandlerTypeCreator{ctx});
-    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(asisVars(), names, extypes);
+    SgInitializedNamePtrList lst     = constructInitializedNamePtrList(ctx, asisVars(), names, extypes, nullptr);
     SgBasicBlock&            body    = mkBasicBlock();
 
     ROSE_ASSERT(lst.size() == 1);
@@ -1344,9 +1795,16 @@ namespace
 
     traverseIDs(range, elemMap(), StmtCreator{ctx.scope(body)});
 
+    placePragmas(ex.Pragmas, ctx, std::ref(body));
     /* unused fields:
-         Pragma_Element_ID_List Pragmas;
     */
+  }
+
+  Expression_Struct& asisExpression(Element_Struct& elem)
+  {
+    ROSE_ASSERT (elem.Element_Kind == An_Expression);
+
+    return elem.The_Union.Expression;
   }
 
   /// Functor to create an import statement (actually, a declaration)
@@ -1363,26 +1821,25 @@ namespace
       void operator()(Element_Struct& el)
       {
         ROSE_ASSERT (el.Element_Kind == An_Expression);
-        //~ else if (el.Element_Kind == A_Definition)
-          //~ res = &getDefinitionExpr(el.The_Union.Definition, ctx);
 
         NameData                   imported = getName(el, ctx);
-        SgExpression&              res = mkUnresolvedName(imported.fullName, ctx.scope());
+        SgScopeStatement&          scope = ctx.scope();
+        SgExpression&              res = mkUnresolvedName(imported.fullName, scope);
         std::vector<SgExpression*> elems{&res};
         SgImportStatement&         sgnode = mkWithClause(elems);
 
         recordNode(asisDecls(), el.ID, sgnode);
-        attachSourceLocation(sgnode, el);
-        ctx.scope().append_statement(&sgnode);
+        attachSourceLocation(sgnode, el, ctx);
+
+        //~ sg::linkParentChild(scope, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
+        scope.append_statement(&sgnode);
 
         // an imported element may not be in the AST
         //   -> add the mapping if the element has not been seen.
-        Element_Struct&            asisElem = SG_DEREF(imported.asisElem);
-        Expression_Struct&         asisExpr = asisElem.The_Union.Expression;
-        Element_ID                 impID    = asisExpr.Corresponding_Name_Declaration;
+        Element_ID                 impID    = asisExpression(imported.elem()).Corresponding_Name_Declaration;
 
         recordNonUniqueNode(asisDecls(), impID, sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
       }
 
     private:
@@ -1391,6 +1848,330 @@ namespace
       WithClauseCreator() = delete;
   };
 
+
+  /// Functor to create an import statement (actually, a declaration)
+  ///   for each element of a with clause; e.g., with Ada.Calendar, Ada.Clock;
+  ///   yields two important statements, each of them is its own declaration
+  ///   that can be referenced.
+  struct UseClauseCreator
+  {
+      UseClauseCreator(map_t<int, SgDeclarationStatement*>& mapping, AstContext astctx)
+      : m(mapping), ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT (el.Element_Kind == An_Expression);
+
+        NameData                     usepkg = getName(el, ctx);
+        SgScopeStatement&            scope  = ctx.scope();
+        Expression_Struct&           expr   = asisExpression(usepkg.elem());
+        SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+
+        // fallback code for packages not extracted from Asis
+        if (!used)
+        {
+          logWarn() << "using unknown package: " << usepkg.fullName
+                    << std::endl;
+
+          used = findFirst(adaPkgs(), AdaIdentifier{usepkg.fullName});
+        }
+
+        SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+
+        //~ std::cerr
+        //~ logError() << "use decl: " << usepkg.fullName
+                   //~ << " " << typeid(*used).name()
+                   //~ << " (" << expr.Corresponding_Name_Definition
+                   //~ << ", " << expr.Corresponding_Name_Declaration << ")"
+                   //~ << std::endl;
+
+        recordNode(asisDecls(), el.ID, sgnode);
+        attachSourceLocation(sgnode, el, ctx);
+        scope.append_statement(&sgnode);
+
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+      }
+
+    private:
+      map_t<int, SgDeclarationStatement*>& m;
+      AstContext ctx;
+
+      UseClauseCreator() = delete;
+  };
+
+
+  struct ComponentClauseCreator
+  {
+      explicit
+      ComponentClauseCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == A_Clause);
+
+        Clause_Struct& clause = el.The_Union.Clause;
+        ROSE_ASSERT(clause.Clause_Kind == A_Component_Clause);
+
+        // \todo use getQualName?
+        SgExpression&         field  = getExprID(clause.Representation_Clause_Name, ctx);
+        SgVarRefExp&          fldref = SG_DEREF(isSgVarRefExp(&field));
+        SgExpression&         ofs    = getExprID(clause.Component_Clause_Position, ctx);
+        SgExpression&         rngexp = getDiscreteRangeID(clause.Component_Clause_Range, ctx);
+        SgRangeExp*           range  = isSgRangeExp(&rngexp);
+        SgAdaComponentClause& sgnode = mkAdaComponentClause(fldref, ofs, SG_DEREF(range));
+
+        //~ recordNode(asisDecls(), el.ID, sgnode);
+        attachSourceLocation(sgnode, el, ctx);
+
+        ctx.scope().append_statement(&sgnode);
+      }
+
+    private:
+      AstContext                       ctx;
+  };
+
+  struct EnumValueCreator
+  {
+      explicit
+      EnumValueCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      SgAssignOp& itemValuePair(Element_Struct& el, Element_ID item, SgExpression& enumval)
+      {
+        SgExpression& enumitem = getExprID(item, ctx);
+
+        return SG_DEREF(sb::buildAssignOp(&enumitem, &enumval));
+      }
+
+      void operator()(Element_Struct& el)
+      {
+        ROSE_ASSERT(el.Element_Kind == An_Association);
+        logKind("An_Association");
+
+        Association_Struct&        assoc = el.The_Union.Association;
+        ROSE_ASSERT(assoc.Association_Kind == An_Array_Component_Association);
+        logKind("An_Array_Component_Association");
+
+        ElemIdRange                range  = idRange(assoc.Array_Component_Choices);
+        SgExpression&              enumval = getExprID(assoc.Component_Expression, ctx);
+
+        ROSE_ASSERT(range.size() <= 1);
+        SgExpression&              sgnode = range.size() == 0
+                                                ? enumval
+                                                : itemValuePair(el, *range.first, enumval);
+                                                ;
+
+        attachSourceLocation(sgnode, el, ctx);
+        values.push_back(&sgnode);
+      }
+
+      operator SgExprListExp& ()
+      {
+        return mkExprListExp(values);
+      }
+
+    private:
+      AstContext                 ctx;
+      std::vector<SgExpression*> values;
+  };
+
+
+
+  std::pair<Element_ID, Type_Kinds>
+  queryDefinitionData(Element_ID completeElementId, AstContext ctx)
+  {
+    Element_Struct&     complElem = retrieveAs<Element_Struct>(elemMap(), completeElementId);
+
+    ROSE_ASSERT(complElem.Element_Kind == A_Declaration);
+
+    Declaration_Struct& complDecl = complElem.The_Union.Declaration;
+    NameData            declname  = singleName(complDecl, ctx);
+
+    ROSE_ASSERT(complDecl.Declaration_Kind == An_Ordinary_Type_Declaration);
+
+    Element_Struct&     typeElem = retrieveAs<Element_Struct>(elemMap(), complDecl.Type_Declaration_View);
+    ROSE_ASSERT(typeElem.Element_Kind == A_Definition);
+
+    Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
+    ROSE_ASSERT(typeDefn.Definition_Kind == A_Type_Definition);
+
+    return std::make_pair(declname.id(), typeDefn.The_Union.The_Type_Definition.Type_Kind);
+  }
+
+  void
+  setParentRecordConstraintIfAvail(SgClassDeclaration& sgnode, Definition_Struct& def, AstContext ctx)
+  {
+    if (def.Definition_Kind != A_Private_Extension_Definition)
+      return;
+
+    logKind("A_Private_Extension_Definition");
+
+    Private_Extension_Definition_Struct& ext = def.The_Union.The_Private_Extension_Definition;
+    SgClassDeclaration&                  parent = getParentRecordDeclID(ext.Ancestor_Subtype_Indication, ctx);
+    SgBaseClass&                         pardcl = mkRecordParent(parent);
+
+    sg::linkParentChild(sgnode, pardcl, &SgClassDeclaration::set_adaParentType);
+  }
+
+  void
+  setTypeModifiers(SgDeclarationStatement& dcl, Definition_Struct& def, AstContext ctx)
+  {
+    switch (def.Definition_Kind)
+    {
+      case A_Private_Type_Definition:
+        {
+          logKind("A_Private_Type_Definition");
+
+          setModifiersUntagged(dcl, def.The_Union.The_Private_Type_Definition);
+          break;
+        }
+
+      case A_Private_Extension_Definition:
+        {
+          logKind("A_Private_Extension_Definition");
+
+          setModifiersUntagged(dcl, def.The_Union.The_Private_Extension_Definition);
+          break;
+        }
+
+      case A_Tagged_Private_Type_Definition:
+        {
+          logKind("A_Tagged_Private_Type_Definition");
+
+          setModifiers(dcl, def.The_Union.The_Tagged_Private_Type_Definition);
+          break;
+        }
+
+      default:
+        logWarn() << "Unknown type declaration view: " << def.Definition_Kind
+                  << std::endl;
+        ROSE_ASSERT(!FAIL_ON_ERROR);
+    }
+  }
+
+  SgDeclarationStatement&
+  createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
+  {
+    SgDeclarationStatement* res = nullptr;
+    SgScopeStatement&       scope = ctx.scope();
+    Element_Struct*         typeview = nullptr;
+
+    if (!isInvalidId(decl.Type_Declaration_View))
+    {
+      typeview = &retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+      ROSE_ASSERT(typeview->Element_Kind == A_Definition);
+    }
+
+    switch (tyKind)
+    {
+      case A_Derived_Type_Definition:
+      case A_Signed_Integer_Type_Definition:
+      case A_Modular_Type_Definition:
+      case A_Floating_Point_Definition:
+      case An_Ordinary_Fixed_Point_Definition:
+      case A_Decimal_Fixed_Point_Definition:
+        {
+          res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+          break;
+        }
+
+      case A_Record_Type_Definition:
+      case A_Derived_Record_Extension_Definition:
+      case A_Tagged_Record_Type_Definition:
+        {
+          SgClassDeclaration& sgnode = mkRecordDecl(adaname.ident, scope);
+
+          if (typeview)
+            setParentRecordConstraintIfAvail(sgnode, typeview->The_Union.Definition, ctx);
+
+          res = &sgnode;
+          break;
+        }
+
+  /*
+  Not_A_Type_Definition,                 // An unexpected element
+  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+  An_Enumeration_Type_Definition,        // 3.5.1(2)
+  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
+  //                                               -> Root_Type_Kinds
+  An_Unconstrained_Array_Definition,     // 3.6(2)
+  A_Constrained_Array_Definition,        // 3.6(2)
+
+  //  //|A2005 start
+  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+  //  //|A2005 end
+
+  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
+  */
+
+      default:
+        logWarn() << "unhandled opaque type declaration: " << tyKind
+                  << std::endl;
+        ROSE_ASSERT(!FAIL_ON_ERROR);
+        res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+    }
+
+    // \todo put declaration tags on
+    SgDeclarationStatement& resdcl = SG_DEREF(res);
+
+    if (typeview)
+      setTypeModifiers(resdcl, typeview->The_Union.Definition, ctx);
+    else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
+      setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
+
+
+    return resdcl;
+  }
+
+  /// chooses between making an additional non-defining declaration
+  SgFunctionDeclaration&
+  createFunDef( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
+                  : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
+
+
+  // handles incomplete (but completed) and private types
+  void handleOpaqueTypes( Element_Struct& elem,
+                          Declaration_Struct& decl,
+                          bool isPrivate,
+                          AstContext ctx
+                        )
+  {
+    typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
+
+    logTrace() << "\n  abstract: " << decl.Has_Abstract
+               << "\n  limited: " << decl.Has_Limited
+               << "\n  private: " << decl.Has_Private
+               << std::endl;
+
+    //~ DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Completion, ctx);
+    DefinitionData          defdata = queryDefinitionData(decl.Corresponding_Type_Declaration, ctx);
+    NameData                adaname = singleName(decl, ctx);
+    ROSE_ASSERT(adaname.fullName == adaname.ident);
+
+    Element_ID              id     = adaname.id();
+    SgScopeStatement&       scope  = ctx.scope();
+    SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, decl, defdata.second, ctx);
+
+    attachSourceLocation(sgnode, elem, ctx);
+    scope.append_statement(&sgnode);
+    privatize(sgnode, isPrivate);
+    recordNode(asisTypes(), id, sgnode);
+    recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
+    ROSE_ASSERT(sgnode.get_parent() == &scope);
+  }
 } // anonymous
 
 
@@ -1401,14 +2182,97 @@ getDecl_opt(Expression_Struct& expr, AstContext ctx)
 }
 
 
+void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
+{
+  Clause_Struct&                clause = elem.The_Union.Clause;
+
+  ROSE_ASSERT(clause.Clause_Kind == A_Representation_Clause);
+
+  Representation_Clause_Struct& repclause = clause.Representation_Clause;
+
+  switch (repclause.Representation_Clause_Kind)
+  {
+    case A_Record_Representation_Clause:           // 13.5.1
+      {
+        using SageRecordClause = SgAdaRecordRepresentationClause;
+
+        logKind("A_Record_Representation_Clause");
+
+        SgType&           tyrep      = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
+        SgClassType&      rec        = SG_DEREF(isSgClassType(&tyrep));
+        SgExpression&     modclause  = getExprID_opt(repclause.Mod_Clause_Expression, ctx);
+        SageRecordClause& sgnode     = mkAdaRecordRepresentationClause(rec, modclause);
+        SgBasicBlock&     components = SG_DEREF(sgnode.get_components());
+        ElemIdRange       range      = idRange(repclause.Component_Clauses);
+
+        // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+
+        traverseIDs(range, elemMap(), ComponentClauseCreator{ctx.scope(components)});
+
+        placePragmas(repclause.Pragmas, ctx, std::ref(components));
+        /* unhandled fields:
+         */
+        break;
+      }
+
+    case An_Attribute_Definition_Clause:           // 13.3
+      {
+        SgAdaAttributeExp& lenattr = getAttributeExprID(repclause.Representation_Clause_Name, ctx);
+        SgExpression&      lenexpr = getExprID(repclause.Representation_Clause_Expression, ctx);
+        SgAdaLengthClause& sgnode  = mkAdaLengthClause(lenattr, lenexpr);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+        /* unhandled fields:
+         */
+        break;
+      }
+
+    case An_Enumeration_Representation_Clause:     // 13.4
+      {
+        SgType&                 ty       = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
+        SgEnumType&             enumtype = SG_DEREF(isSgEnumType(&ty));
+        Element_Struct&         inielem  = retrieveAs<Element_Struct>(elemMap(), repclause.Representation_Clause_Expression);
+        ROSE_ASSERT(inielem.Element_Kind == An_Expression);
+
+        Expression_Struct&      inilist  = inielem.The_Union.Expression;
+
+        ROSE_ASSERT(  inilist.Expression_Kind == A_Named_Array_Aggregate
+                   || inilist.Expression_Kind == A_Positional_Array_Aggregate
+                   );
+
+        ElemIdRange             range    = idRange(inilist.Array_Component_Associations);
+        SgExprListExp&          enumvals = traverseIDs(range, elemMap(), EnumValueCreator{ctx});
+        SgAdaEnumRepresentationClause& sgnode = mkAdaEnumRepresentationClause(enumtype, enumvals);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+        /* unhandled fields:
+         */
+        break;
+      }
+
+    case An_At_Clause:                             // J.7
+    case Not_A_Representation_Clause:              // An unexpected element
+    default:
+      logWarn() << "unhandled representation clause kind: " << repclause.Representation_Clause_Kind << std::endl;
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+}
+
 void handleClause(Element_Struct& elem, AstContext ctx)
 {
+  ROSE_ASSERT(elem.Element_Kind == A_Clause);
+
   Clause_Struct& clause = elem.The_Union.Clause;
 
   switch (clause.Clause_Kind)
   {
     case A_With_Clause:                // 10.1.2
       {
+        logKind("A_Choice_Parameter_Specification");
         ElemIdRange        range  = idRange(clause.Clause_Names);
 
         traverseIDs(range, elemMap(), WithClauseCreator{ctx});
@@ -1418,14 +2282,115 @@ void handleClause(Element_Struct& elem, AstContext ctx)
         break;
       }
 
-    case Not_A_Clause: /* break; */    // An unexpected element
-    case A_Use_Package_Clause:         // 8.4
     case A_Use_Type_Clause:            // 8.4
-    case A_Use_All_Type_Clause:        // 8.4: Ada 2012
+    case A_Use_Package_Clause:         // 8.4
+      {
+        const bool typeClause = (clause.Clause_Kind == A_Use_Type_Clause);
+
+        logKind(typeClause ? "A_Use_Type_Clause" : "A_Use_Package_Clause");
+
+        ElemIdRange        range  = idRange(clause.Clause_Names);
+        traverseIDs(range, elemMap(), UseClauseCreator{(typeClause ? asisTypes() : asisDecls()), ctx});
+        /* unused fields:
+            bool   Has_Limited
+        */
+        break;
+      }
+
     case A_Representation_Clause:      // 13.1     -> Representation_Clause_Kinds
+      {
+        handleRepresentationClause(elem, ctx);
+        break;
+      }
+
     case A_Component_Clause:           // 13.5.1
+      // handled in ComponentClauseCreator
+      // break;
+
+    case A_Use_All_Type_Clause:        // 8.4: Ada 2012
+    case Not_A_Clause: /* break; */    // An unexpected element
     default:
       logWarn() << "unhandled clause kind: " << clause.Clause_Kind << std::endl;
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+}
+
+
+void handleDefinition(Element_Struct& elem, AstContext ctx)
+{
+  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+
+  // many definitions are handled else where
+  // here we want to convert the rest that can appear in declarative context
+
+  Definition_Struct& def = elem.The_Union.Definition;
+
+  switch (def.Definition_Kind)
+  {
+    case A_Null_Component:                 // 3.8(4)
+      {
+        SgScopeStatement&   scope = ctx.scope();
+        SgEmptyDeclaration& sgnode = mkNullDecl(scope);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        break;
+      }
+
+    case A_Type_Definition:                // 3.2.1(4)    -> Type_Kinds
+      // handled in getTypeFoundation
+      ROSE_ABORT();
+
+    case A_Subtype_Indication:             // 3.2.2(3)
+      // handled in getDefinitionType
+      ROSE_ABORT();
+
+    case A_Constraint:                     // 3.2.2(5)    -> Constraint_Kinds
+      // handled in getRangeConstraint
+      ROSE_ABORT();
+
+    case A_Component_Definition:           // 3.6(7)      -> Trait_Kinds
+      // handled in getDefinitionType
+      ROSE_ABORT();
+
+    case A_Discrete_Range:                 // 3.6.1(3)    -> Discrete_Range_Kinds
+      // handled in getDefinitionExpr
+      ROSE_ABORT();
+
+    case A_Record_Definition:              // 3.8(3)
+      // handled in getRecordBodyID
+      ROSE_ABORT();
+
+    case A_Null_Record_Definition:         // 3.8(3)
+      // handled in getRecordBodyID
+      ROSE_ABORT();
+
+    case An_Others_Choice:                 // 3.8.1(5): 4.3.1(5): 4.3.3(5): 11.2(5)
+      // handled in case creation (and getDefinitionExpr (obsolete?))
+      ROSE_ABORT();
+
+    case An_Access_Definition:             // 3.10(6/2)   -> Access_Definition_Kinds, A2005 start
+      // handled in getAccessType
+      ROSE_ABORT();
+
+    case A_Task_Definition:                // 9.1(4)
+      // handled in getTaskSpec
+      ROSE_ABORT();
+
+    case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
+    case An_Unknown_Discriminant_Part:     // 3.7(3)
+    case A_Known_Discriminant_Part:        // 3.7(2)
+    case Not_A_Definition:                 // An unexpected element
+    case A_Variant_Part:                   // 3.8.1(2)
+    case A_Variant:                        // 3.8.1(3)
+    case A_Private_Type_Definition:        // 7.3(2)      -> Trait_Kinds
+    case A_Tagged_Private_Type_Definition: // 7.3(2)      -> Trait_Kinds
+    case A_Private_Extension_Definition:   // 7.3(3)      -> Trait_Kinds
+    case A_Protected_Definition:           // 9.4(4)
+    case A_Formal_Type_Definition:         // 12.5(3)     -> Formal_Type_Kinds
+    case An_Aspect_Specification:          // 13.3.1, A2012
+    default:
+      logWarn() << "unhandled definition kind: " << def.Definition_Kind << std::endl;
       ROSE_ASSERT(!FAIL_ON_ERROR);
   }
 }
@@ -1440,25 +2405,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
   {
     case A_Package_Declaration:                    // 7.1(2)
       {
+        logKind("A_Package_Declaration");
+
         SgScopeStatement&     outer   = ctx.scope();
         NameData              adaname = singleName(decl, ctx);
         //~ SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, outer);
-        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, SG_DEREF(adaname.parent));
+        SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, adaname.parent_scope());
         SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
 
-        ROSE_ASSERT(adaname.parent);
-        sgnode.set_scope(adaname.parent);
+        sgnode.set_scope(&adaname.parent_scope());
         //~ sgnode.set_scope(&outer);
         logTrace() << "package decl " << adaname.ident
                    << " (" <<  adaname.fullName << ")"
                    << std::endl;
 
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
-        attachSourceLocation(pkgspec, elem);
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(pkgspec, elem, ctx);
+        attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
@@ -1474,13 +2440,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // private items
         {
           ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
-          ROSE_ASSERT((!range.empty()) == decl.Is_Private_Present);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true /* private items */});
+
+          // a package may contain an empty private section
+          pkgspec.set_hasPrivate(decl.Is_Private_Present);
         }
 
+        placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));
+
         /* unused nodes:
-               Pragma_Element_ID_List         Pragmas;
                Element_ID                     Corresponding_End_Name;
                bool                           Is_Name_Repeated;
                Declaration_ID                 Corresponding_Declaration;
@@ -1490,7 +2459,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Package_Body_Declaration:               // 7.2(2)
       {
-        logTrace() << "package body decl" << std::endl;
+        logKind("A_Package_Body_Declaration");
 
         SgScopeStatement&     outer   = ctx.scope();
         Element_ID            specID  = decl.Corresponding_Declaration;
@@ -1498,7 +2467,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(specdcl, outer);
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
 
+        //~ recordNode(asisDecls(), elem.ID, sgnode);
+        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+
         sgnode.set_scope(specdcl.get_scope());
+        attachSourceLocation(pkgbody, elem, ctx);
+        attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
@@ -1513,8 +2487,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           ElemIdRange range = idRange(decl.Body_Statements);
 
-          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgbody)});
+          if (range.size())
+          {
+            LabelAndLoopManager lblmgr;
+            SgBasicBlock&       pkgblock = mkBasicBlock();
+
+            pkgbody.append_statement(&pkgblock);
+            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock).labelsAndLoops(lblmgr)});
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
+          }
+          else
+          {
+            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
+          }
         }
+
 
         /*
          * unused nodes:
@@ -1532,25 +2519,24 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Function_Declaration:                   // 6.1(4)   -> Trait_Kinds
     case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
       {
-        logTrace() << (decl.Declaration_Kind == A_Function_Declaration ? "function" : "procedure") << " decl"
-                   << std::endl;
+        logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Declaration" : "A_Procedure_Declaration");
 
         const bool             isFunc  = decl.Declaration_Kind == A_Function_Declaration;
         SgScopeStatement&      outer   = ctx.scope();
         NameData               adaname = singleName(decl, ctx);
-        ElemIdRange            range   = idRange(decl.Parameter_Profile);
+        ElemIdRange            params  = idRange(decl.Parameter_Profile);
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                 : SG_DEREF(sb::buildVoidType());
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion{range, ctx});
+        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
 
         setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
         privatize(sgnode, isPrivate);
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
@@ -1574,36 +2560,40 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+
     case A_Function_Body_Declaration:              // 6.3(2)
     case A_Procedure_Body_Declaration:             // 6.3(2)
       {
-        logTrace() << (decl.Declaration_Kind == A_Function_Body_Declaration ? "function" : "procedure") << " body decl"
-                   << std::endl;
+        logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Body_Declaration" : "A_Procedure_Body_Declaration");
 
-        const bool             isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
-        SgScopeStatement&      outer   = ctx.scope();
-        NameData               adaname = singleName(decl, ctx);
-        ElemIdRange            params  = idRange(decl.Parameter_Profile);
-        SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                : SG_DEREF(sb::buildVoidType());
+        const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                 : SG_DEREF(sb::buildVoidType());
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedureDef(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
-        SgBasicBlock&          declblk = getFunctionBody(sgnode);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = isSgFunctionDeclaration(ndef);
+        ROSE_ASSERT(nondef || !ndef);
+
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, outer, rettype, ParameterCompletion{params, ctx});
+        SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
-        //~ recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &outer);
 
-        ElemIdRange            hndlrs  = idRange(decl.Body_Exception_Handlers);
+        ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
-        TryBlockNodes          trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-        SgTryStmt*             trystmt = trydata.first;
-        SgBasicBlock&          stmtblk = trydata.second;
+        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
+        SgTryStmt*              trystmt = trydata.first;
+        SgBasicBlock&           stmtblk = trydata.second;
 
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);
@@ -1621,7 +2611,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         if (trystmt)
         {
           traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(declblk), SG_DEREF(trystmt)});
+          placePragmas(decl.Pragmas, ctx, std::ref(declblk), std::ref(stmtblk));
         }
+        else
+        {
+          placePragmas(decl.Pragmas, ctx, std::ref(declblk));
+        }
+
 
         /* unhandled field
            Declaration_ID                 Body_Block_Statement;
@@ -1634,58 +2630,98 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
-    case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
+    case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
+    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
       {
-        typedef NameCreator::result_container name_container;
+        logKind( decl.Declaration_Kind == An_Incomplete_Type_Declaration
+                        ? "An_Incomplete_Type_Declaration"
+                        : "A_Tagged_Incomplete_Type_Declaration"
+               );
 
-        logTrace() << "Private Type "
-                   << "\n  abstract: " << decl.Has_Abstract
-                   << "\n  limited: " << decl.Has_Limited
-                   << "\n  private: " << decl.Has_Private
-                   << std::endl;
+        if (decl.Corresponding_Type_Declaration)
+        {
+          handleOpaqueTypes(elem, decl, isPrivate, ctx);
+        }
+        else
+        {
+          // no definition is available, ... (e.g., in System)
+          NameData                adaname = singleName(decl, ctx);
+          ROSE_ASSERT(adaname.fullName == adaname.ident);
+          SgScopeStatement&       scope  = ctx.scope();
+          SgType&                 opaque = mkOpaqueType();
+          SgDeclarationStatement& sgnode = mkTypeDecl(adaname.ident, opaque, scope);
 
-        // \todo this may only declare one name (use singleName)
-        ElemIdRange     range  = idRange(decl.Names);
-        ROSE_ASSERT(range.size() == 1);
-        name_container  names  = traverseIDs(range, elemMap(), NameCreator{ctx});
-        SgType&         opaque = mkDefaultType();
-
-        ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclarePrivateType{opaque, ctx, isPrivate});
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          recordNode(asisTypes(), adaname.id(), sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+        }
 
         /*
-          bool                           Has_Abstract;
-          bool                           Has_Limited;
-          bool                           Has_Private;
-          Definition_ID                  Discriminant_Part;
-          Definition_ID                  Type_Declaration_View;
-          Declaration_ID                 Corresponding_Type_Declaration;
-          Declaration_ID                 Corresponding_Type_Completion;
-          Declaration_ID                 Corresponding_Type_Partial_View;
-          Declaration_ID                 Corresponding_First_Subtype;
-          Declaration_ID                 Corresponding_Last_Constraint;
-          Declaration_ID                 Corresponding_Last_Subtype;
+           unhandled fields:
+             bool                           Has_Abstract;
+             bool                           Has_Limited;
+             bool                           Has_Private;
+             Definition_ID                  Discriminant_Part
+             Declaration_ID                 Corresponding_Type_Completion
+             Declaration_ID                 Corresponding_Type_Partial_View
         */
+        break;
+      }
 
+    case A_Private_Extension_Declaration:
+    case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
+      {
+        logKind( decl.Declaration_Kind == A_Private_Type_Declaration
+                        ? "A_Private_Type_Declaration"
+                        : "A_Private_Extension_Declaration"
+               );
+
+        handleOpaqueTypes(elem, decl, isPrivate, ctx);
+
+        /* unused fields:
+              bool                           Has_Abstract;
+              bool                           Has_Limited;
+              bool                           Has_Private;
+              Definition_ID                  Discriminant_Part;
+              Declaration_ID                 Corresponding_Type_Completion;
+              Declaration_ID                 Corresponding_Type_Partial_View;
+              Declaration_ID                 Corresponding_First_Subtype;
+              Declaration_ID                 Corresponding_Last_Constraint;
+              Declaration_ID                 Corresponding_Last_Subtype;
+        */
         break;
       }
 
     case An_Ordinary_Type_Declaration:            // 3.2.1(3)
       {
-        typedef NameCreator::result_container name_container;
+        logKind("An_Ordinary_Type_Declaration");
 
         logTrace() << "Ordinary Type "
                    << "\n  abstract: " << decl.Has_Abstract
                    << "\n  limited: " << decl.Has_Limited
                    << std::endl;
         // \todo this may only declare one name (use singleName)
-        ElemIdRange    range  = idRange(decl.Names);
-        ROSE_ASSERT(range.size() == 1);
-        name_container names = traverseIDs(range, elemMap(), NameCreator{ctx});
-        TypeData       ty    = getTypeFoundation(decl, ctx);
+        NameData                adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
 
-        ROSE_ASSERT(ctx.scope().get_parent());
-        std::for_each(names.begin(), names.end(), DeclareType{ty, ctx, isPrivate});
+        TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx);
+        SgScopeStatement&       scope = ctx.scope();
+        //~ ROSE_ASSERT(scope.get_parent());
+
+        Element_ID              id   = adaname.id();
+        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
+        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+
+        privatize(sgnode, isPrivate);
+        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
+        attachSourceLocation(sgnode, elem, ctx);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        // \todo double check that recorded types are consistent with ROSE representation
+
 
         /* unused fields
             bool                           Has_Abstract;
@@ -1703,6 +2739,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Subtype_Declaration:                    // 3.2.2(2)
       {
+        logKind("A_Subtype_Declaration");
+
         NameData              adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 
@@ -1710,8 +2748,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&     scope   = ctx.scope();
         SgTypedefDeclaration& sgnode  = mkTypeDecl(adaname.ident, subtype, scope);
 
-        attachSourceLocation(sgnode, elem);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
         scope.append_statement(&sgnode);
+        recordNode(asisTypes(), adaname.id(), sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
 
         /* unused fields:
@@ -1724,6 +2764,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Variable_Declaration:                   // 3.3.1(2) -> Trait_Kinds
       {
+        logKind("A_Variable_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
         /* unused fields:
              bool                           Has_Aliased;
@@ -1733,7 +2775,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Integer_Number_Declaration:            // 3.3.2(2)
       {
-        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildIntType()), elem);
+        logKind("An_Integer_Number_Declaration");
+
+        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkIntegralType(), elem);
 
         /* unused fields:
         */
@@ -1743,6 +2787,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
     case A_Constant_Declaration:
       {
+        logKind(decl.Declaration_Kind == A_Constant_Declaration ? "A_Constant_Declaration" : "A_Deferred_Constant_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
         /* unused fields:
              bool                           Has_Aliased;
@@ -1754,7 +2800,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Real_Number_Declaration:                // 3.5.6(2)
       {
-        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildFloatType()), elem);
+        logKind("A_Real_Number_Declaration");
+
+        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType(), elem);
 
         /* unused fields:
          */
@@ -1763,27 +2811,28 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Loop_Parameter_Specification:           // 5.5(4)   -> Trait_Kinds
       {
+        logKind("A_Loop_Parameter_Specification");
+
         ROSE_ASSERT(!isPrivate);
 
         NameData               adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
 
         SgType&                vartype = SG_DEREF( sb::buildIntType() ); // \todo
-        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, nullptr);
+        SgExpression&          range   = getDefinitionExprID(decl.Specification_Subtype_Definition, ctx);
+        SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, &range);
         SgScopeStatement&      scope   = ctx.scope();
 
         recordNode(asisVars(), adaname.id(), loopvar);
 
         SgVariableDeclaration& sgnode  = mkVarDecl(loopvar, scope);
 
-        attachSourceLocation(loopvar, elem);
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(loopvar, elem, ctx);
+        attachSourceLocation(sgnode, elem, ctx);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
 
         /* unused fields:
-             bool                           Has_Reverse;
-             Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
          */
         break;
       }
@@ -1791,18 +2840,19 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Parameter_Specification:                // 6.1(15)  -> Trait_Kinds
       {
         // handled in getParm
-        // break;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
 
     case A_Task_Type_Declaration:                  // 9.1(2)
       {
-        SgAdaTaskSpec&     spec    = getTaskSpec(decl, ctx);
+        logKind("A_Task_Type_Declaration");
+
+        SgAdaTaskSpec&     spec    = getTaskSpecForTaskType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ROSE_ASSERT(adaname.fullName == adaname.ident);
         SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, spec, ctx.scope());
 
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
@@ -1827,9 +2877,38 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
          break;
       }
 
+    case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
+      {
+        logKind("A_Single_Task_Declaration");
+
+        SgAdaTaskSpec&     spec    = getTaskSpecForSingleTask(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(adaname.fullName, spec, ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
+        //~ recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        /* unused fields:
+             bool                           Has_Task;
+             Element_ID                     Corresponding_End_Name;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             Declaration_ID                 Corresponding_Body;
+             Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
     case A_Task_Body_Declaration:                  // 9.1(6)
       {
-        SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
+        logKind("A_Task_Body_Declaration");
+
+        SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
         SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
@@ -1839,12 +2918,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
                                                   : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
 
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
+
+        placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
+
+        fillTaskBody(decl, tskbody, ctx);
 
         /* unused fields:
              bool                           Has_Task;
@@ -1862,17 +2945,23 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Entry_Declaration:                     // 9.5.2(2)
       {
+        logKind("An_Entry_Declaration");
+
         NameData        adaname = singleName(decl, ctx);
         ElemIdRange     range   = idRange(decl.Parameter_Profile);
 
         ROSE_ASSERT(adaname.fullName == adaname.ident);
         SgAdaEntryDecl& sgnode  = mkAdaEntryDecl(adaname.fullName, ctx.scope(), ParameterCompletion{range, ctx});
 
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &ctx.scope());
-        //~ recordNode(asisDecls(), elem.ID, sgnode);
+
+        // the entry call links back to the declaration ID
+        recordNode(asisDecls(), elem.ID, sgnode);
+
+        // for consistency, also map the name id to the node
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         /* unused fields:
@@ -1886,16 +2975,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Declaration:                 // 11.1(2)
       {
+        logKind("An_Exception_Declaration");
+
         typedef NameCreator::result_container name_container;
 
         ElemIdRange              range    = idRange(decl.Names);
         name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
         SgScopeStatement&        scope    = ctx.scope();
-        SgType&                  excty    = lookupNode(adaTypes(), std::string{"Exception"});
-        SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(asisExcps(), names, excty);
+        SgType&                  excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
+        SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(ctx, asisExcps(), names, excty, nullptr);
         SgVariableDeclaration&   sgnode   = mkExceptionDecl(dclnames, scope);
 
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
@@ -1904,6 +2995,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Component_Declaration:                  // 3.8(6)
       {
+        logKind("A_Component_Declaration");
+
         handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
         /* unused clause:
               Pragma_Element_ID_List         Corresponding_Pragmas;
@@ -1937,9 +3030,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case A_Package_Renaming_Declaration:           // 8.5.3(2)
       {
+        logKind("A_Package_Renaming_Declaration");
+
         NameData                adaname = singleName(decl, ctx);
 
-        if (decl.Renamed_Entity < 0)
+        if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
@@ -1951,7 +3046,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&       scope   = ctx.scope();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
-        attachSourceLocation(sgnode, elem);
+        attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         scope.append_statement(&sgnode);
         ROSE_ASSERT(sgnode.get_parent() == &scope);
@@ -1962,11 +3057,57 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
+    case A_Function_Renaming_Declaration:          // 8.5.4(2)
+      {
+        logKind(decl.Declaration_Kind == A_Function_Renaming_Declaration ?
+                "A_Function_Renaming_Declaration" : "A_Procedure_Renaming_Declaration");
+
+        const bool        isFuncRename = decl.Declaration_Kind == A_Function_Renaming_Declaration;
+        SgScopeStatement& outer        = ctx.scope();
+        NameData          adaname      = singleName(decl, ctx);
+        ElemIdRange       range        = idRange(decl.Parameter_Profile);
+        SgType&           rettype      = isFuncRename ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                      : SG_DEREF(sb::buildVoidType());
+
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaFunctionRenamingDecl& sgnode  = mkAdaFunctionRenamingDecl(adaname.fullName,
+                                                                       outer,
+                                                                       rettype,
+                                                                       ParameterCompletion{range, ctx});
+        setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        // find declaration for the thing being renamed
+        auto re = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        auto renamed_entity = re.The_Union.Expression;
+        SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamed_entity, ctx));
+
+        if (renamedDecl != nullptr)
+        {
+          sgnode.set_renamed_function(renamedDecl);
+        }
+        else
+        {
+          logError() << "cannot find renamed proc/func decl for:" << adaname.fullName << std::endl;
+        }
+
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &outer);
+
+        break;
+      }
+
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
+        logKind("An_Exception_Renaming_Declaration");
+
         NameData                adaname = singleName(decl, ctx);
 
-        if (decl.Renamed_Entity < 0)
+        if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
                     << ": " << elem.ID << " / " << decl.Renamed_Entity
@@ -1978,14 +3119,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
 
         Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
-        SgDeclarationStatement& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
-        SgScopeStatement&       scope   = ctx.scope();
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
-        attachSourceLocation(sgnode, elem);
-        privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        // PP (11/18/20) Test whether Corresponding_Name_Definition is a valid ID
+        if (isInvalidId(renamed_entity_expr.Corresponding_Name_Definition))
+        {
+          logError() << "unavailable name definition: "
+                     << adaname.ident << "/" << renamed_entity_expr.Name_Image
+                     << std::endl;
+        }
+        else
+        {
+          SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
+          SgScopeStatement&       scope   = ctx.scope();
+          SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+
+          attachSourceLocation(sgnode, elem, ctx);
+          privatize(sgnode, isPrivate);
+          scope.append_statement(&sgnode);
+          ROSE_ASSERT(sgnode.get_parent() == &scope);
+        }
       break;
     }
 
@@ -1993,27 +3145,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
         // handled in handleExceptionHandler
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
+      }
+
+    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
+      {
+        // handled in EnumElementCreator
+        ROSE_ABORT();
       }
 
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
-    case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
-    case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
-    case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
-    case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
-    case An_Enumeration_Literal_Specification:     // 3.5.1(3)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
     case A_Return_Constant_Specification:          // 6.5
     case A_Null_Procedure_Declaration:             // 6.7
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
-    case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
-    case A_Function_Renaming_Declaration:          // 8.5.4(2)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
     case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
     case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
@@ -2044,9 +3194,114 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
   }
 }
 
+void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
+{
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope_npc(parmscope)});
+}
+
 void StmtCreator::operator()(Element_Struct& elem)
 {
   handleStmt(elem, ctx);
+}
+
+/// asserts that \ref decl has exactly one associated name
+/// and returns the respective NameData data.
+NameData
+singleName(Declaration_Struct& decl, AstContext ctx)
+{
+  ElemIdRange     range = idRange(decl.Names);
+  ROSE_ASSERT(range.size() == 1);
+
+  return getNameID(*range.first, ctx);
+}
+
+
+NameData
+getName(Element_Struct& elem, AstContext ctx)
+{
+  // \todo can getName be distinguished from getQualName by the call context?
+  if (elem.Element_Kind == An_Expression)
+    return getQualName(elem, ctx);
+
+  if (elem.Element_Kind != A_Defining_Name)
+    logWarn() << "unexpected elem kind (getName)" << elem.Element_Kind << std::endl;
+
+  ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
+  logKind("A_Defining_Name");
+
+  Defining_Name_Struct& asisname = elem.The_Union.Defining_Name;
+  SgScopeStatement*     parent = &ctx.scope();
+  std::string           ident{asisname.Defining_Name_Image};
+  std::string           name{ident};
+
+  switch (asisname.Defining_Name_Kind)
+  {
+    case A_Defining_Expanded_Name:
+      {
+        logKind("A_Defining_Expanded_Name");
+
+        NameData        defname    = getNameID(asisname.Defining_Selector, ctx);
+
+        ident  = defname.ident;
+        parent = &getScopeID(asisname.Defining_Prefix, ctx);
+        break;
+      }
+
+    case A_Defining_Identifier:
+      {
+        logKind("A_Defining_Identifier");
+        // nothing to do, the fields are already set
+        break;
+      }
+
+    case A_Defining_Operator_Symbol:     // 6.1(9)
+      {
+        static const std::string cxxprefix{"operator"};
+
+        logKind("A_Defining_Operator_Symbol");
+
+        ROSE_ASSERT(ident.size() > 2);
+        name = ident = cxxprefix + ident.substr(1, ident.size() - 2);
+
+        // nothing to do, the fields are already set
+
+        /* unused field:
+             enum Operator_Kinds       Operator_Kind
+        */
+        break;
+      }
+
+    case A_Defining_Enumeration_Literal: // 3.5.1(3)
+      {
+        logKind("A_Defining_Enumeration_Literal");
+
+        /* unused fields:
+             char* Position_Number_Image;      // \pp implied by name sequence
+             char* Representation_Value_Image; // \pp not in code, but could be defined by representation clause
+        */
+
+        break;
+      }
+
+    case Not_A_Defining_Name:
+      /* break; */
+
+    case A_Defining_Character_Literal:   // 3.5.1(4)
+    default:
+      logWarn() << "unknown name kind " << asisname.Defining_Name_Kind
+                << " (" << name << ")"
+                << std::endl;
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+
+  return NameData{ ident, name, SG_DEREF(parent), elem };
+}
+
+
+NameData
+getNameID(Element_ID el, AstContext ctx)
+{
+  return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
 }
 
 

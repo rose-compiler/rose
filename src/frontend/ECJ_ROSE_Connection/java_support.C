@@ -1258,7 +1258,7 @@ cout.flush();
              class_scope -> append_member(package_declaration);
         else if (global_scope)
              global_scope -> append_declaration(package_declaration);
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
     }
     else {
         package_declaration = isSgJavaPackageDeclaration(package_symbol -> get_declaration() -> get_definingDeclaration());
@@ -2283,7 +2283,7 @@ SgClassDefinition *getCurrentTypeDefinition() {
     }
     else {
         printf ("Error in getCurrentTypeDefinition(): SgTypeDefinition not found \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     ROSE_ASSERT(class_definition != NULL);

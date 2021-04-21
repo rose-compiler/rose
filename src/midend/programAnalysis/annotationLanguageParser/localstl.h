@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef _LOCALSTL_H
 #define _LOCALSTL_H
@@ -23,4 +25,4 @@ typedef char Direction;
 // using namespace std;
 
 #endif /* _LOCALSTL_H */
-
+#endif

@@ -92,7 +92,7 @@ WalrusGraph::generateEdges( SgNode* node )
 
 #if 0
      printf ("Exiting as a test ... processing SgGraph_outputEdges::generateEdges() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 void
@@ -114,7 +114,7 @@ WalrusGraph::generateNodes( SgNode* node )
 
 #if 0
      printf ("Exiting as a test ... processing SgGraph_outputNodes::generateNodes() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -133,7 +133,7 @@ WalrusGraph::generateWalrusGraph( SgNode* node, string outputFilename )
         {
           printf ("Found the SgProject \n");
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
           SgFile* fileNode = project->get_fileList()[0];
           if (isSgBinaryComposite(fileNode) != NULL)
              {

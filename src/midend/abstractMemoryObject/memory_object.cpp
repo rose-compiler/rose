@@ -9,14 +9,14 @@ namespace  AbstractMemoryObject
   {
     std::set<SgType*> rt;
     cerr<<"Error. Direct call to base class's getType() is not allowed."<<endl;
-    assert (false);
+    ROSE_ABORT ();
     return rt;
   };
 
   size_t  ObjSet::objCount()
   {
     cerr<<"Error. Direct call to base class's objCount() is not allowed."<<endl;
-    assert (false);
+    ROSE_ABORT ();
     return 0;
   }
 
@@ -26,13 +26,13 @@ namespace  AbstractMemoryObject
   bool ObjSet::maySet()
   {
     cerr<<"Error. Direct call to base class's maySet() is not allowed."<<endl;
-    assert (false);
+    ROSE_ABORT ();
     return false;  
   }
   bool ObjSet::mustSet()
   {
     cerr<<"Error. Direct call to base class's mustSet() is not allowed."<<endl;
-    assert (false);
+    ROSE_ABORT ();
     return false;  
   }
 
@@ -48,30 +48,26 @@ namespace  AbstractMemoryObject
   bool ObjSet:: operator == (const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
   }
 
   bool ObjSet::mayEqual(const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's mayEqual () is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
   }
 
   bool ObjSet:: mustEqual (const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's mustEqual () is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
   }
 
 
   bool ObjSet::operator < ( const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator <() is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
   }
 
 /*
@@ -108,22 +104,19 @@ namespace  AbstractMemoryObject
   std::string ObjSet::toString()
   {
     cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
-    assert (false);
-    return "";  
+    ROSE_ABORT ();
   }
   std::vector<LabeledAggregateField*> LabeledAggregate::getElements() const 
   {
     std::vector<LabeledAggregateField*> rt;
     cerr<<"Error. Direct call to base class's getElements() is not allowed."<<endl;
-    assert (false);
-    return rt;
+    ROSE_ABORT ();
   }
 
   size_t LabeledAggregate::fieldCount()
   {
     cerr<<"Error. Direct call to base class's filedCount() is not allowed."<<endl;
-    assert (false);
-    return 0;
+    ROSE_ABORT ();
   }
 
 /*
@@ -144,74 +137,65 @@ namespace  AbstractMemoryObject
    std::string LabeledAggregateField::getName()
    {
     cerr<<"Error. Direct call to base class's getName() is not allowed."<<endl;
-    assert (false);
-    return "";  
+    ROSE_ABORT ();
    }
 
    ObjSet * LabeledAggregateField::getField()
    {
 
     cerr<<"Error. Direct call to base class's getField() is not allowed."<<endl;
-    assert (false);
-    return NULL;  
+    ROSE_ABORT ();
    }
    size_t LabeledAggregateField::getIndex()
    {
 
      cerr<<"Error. Direct call to base class's getIndex() is not allowed."<<endl;
-     assert (false);
-     return 0;
+     ROSE_ABORT ();
    }
    std::string LabeledAggregateField::toString()
    {
      
     cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
-    assert (false);
-    return "";  
+    ROSE_ABORT ();
    }
 
    void LabeledAggregateField::setField(ObjSet* f)
    {
      cerr<<"Error. Direct call to base class's setField() is not allowed."<<endl;
-     assert (false);
+     ROSE_ABORT ();
    }
 
    void LabeledAggregateField::setParent(LabeledAggregate* p)
    {
     cerr<<"Error. Direct call to base class's setParent() is not allowed."<<endl;
-    assert (false);
+    ROSE_ABORT ();
    }
 
    LabeledAggregate* LabeledAggregateField::getParent()
    {
      cerr<<"Error. Direct call to base class's getParent() is not allowed."<<endl;
-     assert (false);
-     return NULL;  
+     ROSE_ABORT ();
    }
    std::string IndexVector::toString()
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s toString() is not allowed."<<endl;
-    assert (false);
-    return "";  
+    ROSE_ABORT ();
    }
 
    bool IndexVector::operator ==( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s operator==() is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
    }
    bool IndexVector::mayEqual( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s mayEqual() is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
    }
    bool IndexVector::mustEqual( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s mustEqual() is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
    }
 
 
@@ -219,37 +203,32 @@ namespace  AbstractMemoryObject
    bool IndexVector::operator !=( const IndexVector & other) const
    {
     cerr<<"Error. Direct call to base class (IndexVector)'s operator!=() is not allowed."<<endl;
-    assert (false);
-    return false;  
+    ROSE_ABORT ();
    }
 
 
    ObjSet* Array::getElements()
    {
      cerr<<"Error. Direct call to base class (Array)'s getElements() is not allowed."<<endl;
-     assert (false);
-     return NULL;  
+     ROSE_ABORT ();
    }
 
    ObjSet* Array::getElements(IndexVector* ai)
    {
      cerr<<"Error. Direct call to base class (Array)'s getElements(IndexVector* ai) is not allowed."<<endl;
-     assert (false);
-     return NULL;  
+     ROSE_ABORT ();
    }
 
    size_t Array::getNumDims()
    {
      cerr<<"Error. Direct call to base class (Array)'s getNumDims( ) is not allowed."<<endl;
-     assert (false);
-    return 0;
+     ROSE_ABORT ();
    }
 
    ObjSet * Array::getDereference()
    {
      cerr<<"Error. Direct call to base class (Array)'s getDereference( ) is not allowed."<<endl;
-     assert (false);
-    return 0;
+     ROSE_ABORT ();
    }
 
 
@@ -271,15 +250,13 @@ namespace  AbstractMemoryObject
    ObjSet * Pointer::getDereference()
    {
      cerr<<"Error. Direct call to base class (Pointer)'s getDereference( ) is not allowed."<<endl;
-     assert (false);
-    return 0;
+     ROSE_ABORT ();
    }
 
    bool Pointer::equalPoints(Pointer & that)
    {
      cerr<<"Error. Direct call to base class (Pointer)'s equalPoints( ) is not allowed."<<endl;
-     assert (false);
-    return false;
+     ROSE_ABORT ();
    }
 
 

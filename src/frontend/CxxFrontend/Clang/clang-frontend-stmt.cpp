@@ -14,91 +14,120 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
 
     switch (stmt->getStmtClass()) {
         case clang::Stmt::GCCAsmStmtClass:
-          ret_status = VisitGCCAsmStmt((clang::GCCAsmStmt *)stmt, &result);
+            ret_status = VisitGCCAsmStmt((clang::GCCAsmStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MSAsmStmtClass:
-          ret_status = VisitMSAsmStmt((clang::MSAsmStmt *)stmt, &result);
+            ret_status = VisitMSAsmStmt((clang::MSAsmStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::BreakStmtClass:
             ret_status = VisitBreakStmt((clang::BreakStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CapturedStmtClass:
             ret_status = VisitCapturedStmt((clang::CapturedStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CompoundStmtClass:
             ret_status = VisitCompoundStmt((clang::CompoundStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ContinueStmtClass:
             ret_status = VisitContinueStmt((clang::ContinueStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CoreturnStmtClass:
             ret_status = VisitCoreturnStmt((clang::CoreturnStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXCatchStmtClass:
             ret_status = VisitCXXCatchStmt((clang::CXXCatchStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXForRangeStmtClass:
             ret_status = VisitCXXForRangeStmt((clang::CXXForRangeStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXTryStmtClass:
             ret_status = VisitCXXTryStmt((clang::CXXTryStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DeclStmtClass:
             ret_status = VisitDeclStmt((clang::DeclStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DoStmtClass:
             ret_status = VisitDoStmt((clang::DoStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ForStmtClass:
             ret_status = VisitForStmt((clang::ForStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::GotoStmtClass:
             ret_status = VisitGotoStmt((clang::GotoStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::IfStmtClass:
             ret_status = VisitIfStmt((clang::IfStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::IndirectGotoStmtClass:
             ret_status = VisitIndirectGotoStmt((clang::IndirectGotoStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MSDependentExistsStmtClass:
             ret_status = VisitMSDependentExistsStmt((clang::MSDependentExistsStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::NullStmtClass:
             ret_status = VisitNullStmt((clang::NullStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPAtomicDirectiveClass:
             ret_status = VisitOMPAtomicDirective((clang::OMPAtomicDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPBarrierDirectiveClass:
             ret_status = VisitOMPBarrierDirective((clang::OMPBarrierDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPCancellationPointDirectiveClass:
             ret_status = VisitOMPCancellationPointDirective((clang::OMPCancellationPointDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPCriticalDirectiveClass:
             ret_status = VisitOMPCriticalDirective((clang::OMPCriticalDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPFlushDirectiveClass:
             ret_status = VisitOMPFlushDirective((clang::OMPFlushDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPDistributeDirectiveClass:
             ret_status = VisitOMPDistributeDirective((clang::OMPDistributeDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPDistributeParallelForDirectiveClass:
             ret_status = VisitOMPDistributeParallelForDirective((clang::OMPDistributeParallelForDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPDistributeParallelForSimdDirectiveClass:
             ret_status = VisitOMPDistributeParallelForSimdDirective((clang::OMPDistributeParallelForSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPDistributeSimdDirectiveClass:
             ret_status = VisitOMPDistributeSimdDirective((clang::OMPDistributeSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPForDirectiveClass:
             ret_status = VisitOMPForDirective((clang::OMPForDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPForSimdDirectiveClass:
             ret_status = VisitOMPForSimdDirective((clang::OMPForSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::OMPMasterTaskLoopDirectiveClass:
         //    ret_status = VisitOMPMasterTaskLoopDirective((clang::OMPMasterTaskLoopDirective *)stmt, &result);
@@ -108,39 +137,49 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         //    break;
         case clang::Stmt::OMPParallelForDirectiveClass:
             ret_status = VisitOMPParallelForDirective((clang::OMPParallelForDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPParallelForSimdDirectiveClass:
             ret_status = VisitOMPParallelForSimdDirective((clang::OMPParallelForSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::OMPParallelMasterTaskLoopDirectiveClass:
         //    ret_status = VisitOMPParallelMasterTaskLoopDirective((clang::OMPParallelMasterTaskLoopDirective *)stmt, &result);
         //    break;
         case clang::Stmt::OMPSimdDirectiveClass:
             ret_status = VisitOMPSimdDirective((clang::OMPSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTargetParallelForDirectiveClass:
             ret_status = VisitOMPTargetParallelForDirective((clang::OMPTargetParallelForDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTargetParallelForSimdDirectiveClass:
             ret_status = VisitOMPTargetParallelForSimdDirective((clang::OMPTargetParallelForSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTargetSimdDirectiveClass:
             ret_status = VisitOMPTargetSimdDirective((clang::OMPTargetSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTargetTeamsDistributeDirectiveClass:
             ret_status = VisitOMPTargetTeamsDistributeDirective((clang::OMPTargetTeamsDistributeDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::OMPTargetTeamsDistributeParallelForSimdDirectiveClass:
         //    ret_status = VisitOMPTargetTeamsDistributeParallelForSimdDirective((clang::OMPTargetTeamsDistributeParallelForSimdDirective *)stmt, &result);
         //    break;
         case clang::Stmt::OMPTargetTeamsDistributeSimdDirectiveClass:
             ret_status = VisitOMPTargetTeamsDistributeSimdDirective((clang::OMPTargetTeamsDistributeSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTaskLoopDirectiveClass:
             ret_status = VisitOMPTaskLoopDirective((clang::OMPTaskLoopDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPTaskLoopSimdDirectiveClass:
             ret_status = VisitOMPTaskLoopSimdDirective((clang::OMPTaskLoopSimdDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::OMPTeamDistributeDirectiveClass:
         //    ret_status = VisitOMPTeamDistributeDirective((clang::OMPTeamDistributeDirective *)stmt, &result);
@@ -153,346 +192,458 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         //    break;
         case clang::Stmt::OMPMasterDirectiveClass:
             ret_status = VisitOMPMasterDirective((clang::OMPMasterDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPOrderedDirectiveClass:
             ret_status = VisitOMPOrderedDirective((clang::OMPOrderedDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPParallelDirectiveClass:
             ret_status = VisitOMPParallelDirective((clang::OMPParallelDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPParallelSectionsDirectiveClass:
             ret_status = VisitOMPParallelSectionsDirective((clang::OMPParallelSectionsDirective *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ReturnStmtClass:
             ret_status = VisitReturnStmt((clang::ReturnStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SEHExceptStmtClass:
             ret_status = VisitSEHExceptStmt((clang::SEHExceptStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SEHFinallyStmtClass:
             ret_status = VisitSEHFinallyStmt((clang::SEHFinallyStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SEHLeaveStmtClass:
             ret_status = VisitSEHLeaveStmt((clang::SEHLeaveStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SEHTryStmtClass:
             ret_status = VisitSEHTryStmt((clang::SEHTryStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CaseStmtClass:
             ret_status = VisitCaseStmt((clang::CaseStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DefaultStmtClass:
             ret_status = VisitDefaultStmt((clang::DefaultStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SwitchStmtClass:
             ret_status = VisitSwitchStmt((clang::SwitchStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::AttributedStmtClass:
             ret_status = VisitAttributedStmt((clang::AttributedStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::BinaryConditionalOperatorClass:
             ret_status = VisitBinaryConditionalOperator((clang::BinaryConditionalOperator *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ConditionalOperatorClass:
             ret_status = VisitConditionalOperator((clang::ConditionalOperator *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::AddrLabelExprClass:
-          ret_status = VisitAddrLabelExpr((clang::AddrLabelExpr *)stmt, &result);
+            ret_status = VisitAddrLabelExpr((clang::AddrLabelExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ArrayInitIndexExprClass:
             ret_status = VisitArrayInitIndexExpr((clang::ArrayInitIndexExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ArrayInitLoopExprClass:
             ret_status = VisitArrayInitLoopExpr((clang::ArrayInitLoopExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ArraySubscriptExprClass:
             ret_status = VisitArraySubscriptExpr((clang::ArraySubscriptExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ArrayTypeTraitExprClass:
             ret_status = VisitArrayTypeTraitExpr((clang::ArrayTypeTraitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::AsTypeExprClass:
             ret_status = VisitAsTypeExpr((clang::AsTypeExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::AtomicExprClass:
             ret_status = VisitAtomicExpr((clang::AtomicExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CompoundAssignOperatorClass:
             ret_status = VisitCompoundAssignOperator((clang::CompoundAssignOperator *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::BlockExprClass:
             ret_status = VisitBlockExpr((clang::BlockExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CUDAKernelCallExprClass:
             ret_status = VisitCUDAKernelCallExpr((clang::CUDAKernelCallExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXMemberCallExprClass:
             ret_status = VisitCXXMemberCallExpr((clang::CXXMemberCallExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXOperatorCallExprClass:
             ret_status = VisitCXXOperatorCallExpr((clang::CXXOperatorCallExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::UserDefinedLiteralClass:
             ret_status = VisitUserDefinedLiteral((clang::UserDefinedLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::BuiltinBitCastExprClass:
             ret_status = VisitBuiltinBitCastExpr((clang::BuiltinBitCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CStyleCastExprClass:
             ret_status = VisitCStyleCastExpr((clang::CStyleCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXFunctionalCastExprClass:
             ret_status = VisitCXXFunctionalCastExpr((clang::CXXFunctionalCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXConstCastExprClass:
             ret_status = VisitCXXConstCastExpr((clang::CXXConstCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXDynamicCastExprClass:
             ret_status = VisitCXXDynamicCastExpr((clang::CXXDynamicCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXReinterpretCastExprClass:
             ret_status = VisitCXXReinterpretCastExpr((clang::CXXReinterpretCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXStaticCastExprClass:
             ret_status = VisitCXXStaticCastExpr((clang::CXXStaticCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ImplicitCastExprClass:
             ret_status = VisitImplicitCastExpr((clang::ImplicitCastExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CharacterLiteralClass:
             ret_status = VisitCharacterLiteral((clang::CharacterLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ChooseExprClass:
             ret_status = VisitChooseExpr((clang::ChooseExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CompoundLiteralExprClass:
             ret_status = VisitCompoundLiteralExpr((clang::CompoundLiteralExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::ConceptSpecializationExprClass:
         //    ret_status = VisitConceptSpecializationExpr((clang::ConceptSpecializationExpr *)stmt, &result);
         //    break;
         case clang::Stmt::ConvertVectorExprClass:
             ret_status = VisitConvertVectorExpr((clang::ConvertVectorExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CoawaitExprClass:
             ret_status = VisitCoawaitExpr((clang::CoawaitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CoyieldExprClass:
             ret_status = VisitCoyieldExpr((clang::CoyieldExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXBindTemporaryExprClass:
             ret_status = VisitCXXBindTemporaryExpr((clang::CXXBindTemporaryExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXBoolLiteralExprClass:
             ret_status = VisitCXXBoolLiteralExpr((clang::CXXBoolLiteralExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXTemporaryObjectExprClass:
             ret_status = VisitCXXTemporaryObjectExpr((clang::CXXTemporaryObjectExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXDefaultArgExprClass:
             ret_status = VisitCXXDefaultArgExpr((clang::CXXDefaultArgExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXDefaultInitExprClass:
             ret_status = VisitCXXDefaultInitExpr((clang::CXXDefaultInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXDeleteExprClass:
             ret_status = VisitCXXDeleteExpr((clang::CXXDeleteExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXDependentScopeMemberExprClass:
             ret_status = VisitCXXDependentScopeMemberExpr((clang::CXXDependentScopeMemberExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXFoldExprClass:
             ret_status = VisitCXXFoldExpr((clang::CXXFoldExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXInheritedCtorInitExprClass:
             ret_status = VisitCXXInheritedCtorInitExpr((clang::CXXInheritedCtorInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXNewExprClass:
             ret_status = VisitCXXNewExpr((clang::CXXNewExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXNoexceptExprClass:
             ret_status = VisitCXXNoexceptExpr((clang::CXXNoexceptExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXNullPtrLiteralExprClass:
             ret_status = VisitCXXNullPtrLiteralExpr((clang::CXXNullPtrLiteralExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXPseudoDestructorExprClass:
             ret_status = VisitCXXPseudoDestructorExpr((clang::CXXPseudoDestructorExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         //case clang::Stmt::CXXRewrittenBinaryOperatorClass:
         //    ret_status = VisitCXXRewrittenBinaryOperator((clang::CXXRewrittenBinaryOperator *)stmt, &result);
         //    break;
         case clang::Stmt::CXXScalarValueInitExprClass:
             ret_status = VisitCXXScalarValueInitExpr((clang::CXXScalarValueInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXStdInitializerListExprClass:
             ret_status = VisitCXXStdInitializerListExpr((clang::CXXStdInitializerListExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXThisExprClass:
             ret_status = VisitCXXThisExpr((clang::CXXThisExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXThrowExprClass:
             ret_status = VisitCXXThrowExpr((clang::CXXThrowExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXTypeidExprClass:
             ret_status = VisitCXXTypeidExpr((clang::CXXTypeidExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXUnresolvedConstructExprClass:
             ret_status = VisitCXXUnresolvedConstructExpr((clang::CXXUnresolvedConstructExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CXXUuidofExprClass:
             ret_status = VisitCXXUuidofExpr((clang::CXXUuidofExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DeclRefExprClass:
             ret_status = VisitDeclRefExpr((clang::DeclRefExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DependentCoawaitExprClass:
             ret_status = VisitDependentCoawaitExpr((clang::DependentCoawaitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DependentScopeDeclRefExprClass:
             ret_status = VisitDependentScopeDeclRefExpr((clang::DependentScopeDeclRefExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DesignatedInitExprClass:
             ret_status = VisitDesignatedInitExpr((clang::DesignatedInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::DesignatedInitUpdateExprClass:
             ret_status = VisitDesignatedInitUpdateExpr((clang::DesignatedInitUpdateExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ExpressionTraitExprClass:
             ret_status = VisitExpressionTraitExpr((clang::ExpressionTraitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ExtVectorElementExprClass:
             ret_status = VisitExtVectorElementExpr((clang::ExtVectorElementExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::FixedPointLiteralClass:
             ret_status = VisitFixedPointLiteral((clang::FixedPointLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::FloatingLiteralClass:
             ret_status = VisitFloatingLiteral((clang::FloatingLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ConstantExprClass:
             ret_status = VisitConstantExpr((clang::ConstantExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ExprWithCleanupsClass:
             ret_status = VisitExprWithCleanups((clang::ExprWithCleanups *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::FunctionParmPackExprClass:
             ret_status = VisitFunctionParmPackExpr((clang::FunctionParmPackExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::GenericSelectionExprClass:
             ret_status = VisitGenericSelectionExpr((clang::GenericSelectionExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::GNUNullExprClass:
             ret_status = VisitGNUNullExpr((clang::GNUNullExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ImaginaryLiteralClass:
             ret_status = VisitImaginaryLiteral((clang::ImaginaryLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ImplicitValueInitExprClass:
             ret_status = VisitImplicitValueInitExpr((clang::ImplicitValueInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::InitListExprClass:
             ret_status = VisitInitListExpr((clang::InitListExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::IntegerLiteralClass:
             ret_status = VisitIntegerLiteral((clang::IntegerLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::LambdaExprClass:
             ret_status = VisitLambdaExpr((clang::LambdaExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MaterializeTemporaryExprClass:
             ret_status = VisitMaterializeTemporaryExpr((clang::MaterializeTemporaryExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MemberExprClass:
             ret_status = VisitMemberExpr((clang::MemberExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MSPropertyRefExprClass:
             ret_status = VisitMSPropertyRefExpr((clang::MSPropertyRefExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::MSPropertySubscriptExprClass:
             ret_status = VisitMSPropertySubscriptExpr((clang::MSPropertySubscriptExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::NoInitExprClass:
             ret_status = VisitNoInitExpr((clang::NoInitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OffsetOfExprClass:
             ret_status = VisitOffsetOfExpr((clang::OffsetOfExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OMPArraySectionExprClass:
             ret_status = VisitOMPArraySectionExpr((clang::OMPArraySectionExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::OpaqueValueExprClass:
             ret_status = VisitOpaqueValueExpr((clang::OpaqueValueExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::UnresolvedLookupExprClass:
             ret_status = VisitUnresolvedLookupExpr((clang::UnresolvedLookupExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::UnresolvedMemberExprClass:
             ret_status = VisitUnresolvedMemberExpr((clang::UnresolvedMemberExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::PackExpansionExprClass:
             ret_status = VisitPackExpansionExpr((clang::PackExpansionExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ParenExprClass:
             ret_status = VisitParenExpr((clang::ParenExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ParenListExprClass:
             ret_status = VisitParenListExpr((clang::ParenListExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::PredefinedExprClass:
             ret_status = VisitPredefinedExpr((clang::PredefinedExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::PseudoObjectExprClass:
             ret_status = VisitPseudoObjectExpr((clang::PseudoObjectExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::ShuffleVectorExprClass:
             ret_status = VisitShuffleVectorExpr((clang::ShuffleVectorExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SizeOfPackExprClass:
             ret_status = VisitSizeOfPackExpr((clang::SizeOfPackExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SourceLocExprClass:
             ret_status = VisitSourceLocExpr((clang::SourceLocExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::StmtExprClass:
             ret_status = VisitStmtExpr((clang::StmtExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::StringLiteralClass:
             ret_status = VisitStringLiteral((clang::StringLiteral *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::SubstNonTypeTemplateParmPackExprClass:
             ret_status = VisitSubstNonTypeTemplateParmPackExpr((clang::SubstNonTypeTemplateParmPackExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::TypeTraitExprClass:
             ret_status = VisitTypeTraitExpr((clang::TypeTraitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::TypoExprClass:
             ret_status = VisitTypoExpr((clang::TypoExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::UnaryExprOrTypeTraitExprClass:
             ret_status = VisitUnaryExprOrTypeTraitExpr((clang::UnaryExprOrTypeTraitExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::VAArgExprClass:
             ret_status = VisitVAArgExpr((clang::VAArgExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::LabelStmtClass:
             ret_status = VisitLabelStmt((clang::LabelStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::WhileStmtClass:
             ret_status = VisitWhileStmt((clang::WhileStmt *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::UnaryOperatorClass:
             ret_status = VisitUnaryOperator((clang::UnaryOperator *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::CallExprClass:
             ret_status = VisitCallExpr((clang::CallExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
         case clang::Stmt::BinaryOperatorClass:
             ret_status = VisitBinaryOperator((clang::BinaryOperator *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
             break;
+
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     ROSE_ASSERT(result != NULL);
@@ -506,30 +657,27 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
 /* Visit Statements */
 /********************/
 
-bool ClangToSageTranslator::VisitStmt(clang::Stmt * stmt, SgNode ** node) {
+bool ClangToSageTranslator::VisitStmt(clang::Stmt * stmt, SgNode ** node)
+   {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitStmt" << std::endl;
+     std::cerr << "ClangToSageTranslator::VisitStmt" << std::endl;
 #endif
 
-    if (*node == NULL) {
-        std::cerr << "Runtime error: No Sage node associated with the Statement..." << std::endl;
-        return false;
-    }
+     if (*node == NULL) 
+        {
+          std::cerr << "Runtime error: No Sage node associated with the Statement..." << std::endl;
+          return false;
+        }
 
-    // TODO Is there anything else todo?
+  // TODO Is there anything else todo?
 
-    if (
-        isSgLocatedNode(*node) != NULL &&
-        (
-            isSgLocatedNode(*node)->get_file_info() == NULL ||
-            !(isSgLocatedNode(*node)->get_file_info()->isCompilerGenerated())
-        )
-    ) {
-        applySourceRange(*node, stmt->getSourceRange());
-    }
+     if (isSgLocatedNode(*node) != NULL && (isSgLocatedNode(*node)->get_file_info() == NULL || !(isSgLocatedNode(*node)->get_file_info()->isCompilerGenerated()) ))
+        {
+          applySourceRange(*node, stmt->getSourceRange());
+        }
 
-    return true;
-}
+     return true;
+   }
 
 bool ClangToSageTranslator::VisitAsmStmt(clang::AsmStmt * asm_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
@@ -703,6 +851,9 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
 
     if (decl_stmt->isSingleDecl()) {
         *node = Traverse(decl_stmt->getSingleDecl());
+#if 1
+        printf ("In VisitDeclStmt(): *node = %p = %s \n",*node,(*node)->class_name().c_str());
+#endif
     }
     else {
         std::vector<SgNode *> tmp_decls;
@@ -736,6 +887,11 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
         }
         *node = decl;
     }
+
+#if 1
+    printf ("In VisitDeclStmt(): identify where the parent is not set: *node = %p = %s \n",*node,(*node)->class_name().c_str());
+    printf (" --- *node parent = %p \n",(*node)->get_parent());
+#endif
 
     return res;
 }
@@ -789,7 +945,23 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
 
     bool res = true;
 
-    SgForStatement * sg_for_stmt = SageBuilder::buildForStatement_nfi((SgForInitStatement *)NULL, NULL, NULL, NULL);
+    printf ("Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
+
+ // DQ (11/28/2020): We have to build the scope first, and then build the rest bottom up.
+ // SgForStatement * sg_for_stmt = SageBuilder::buildForStatement_nfi((SgForInitStatement *)NULL, NULL, NULL, NULL);
+    SgForStatement* sg_for_stmt = new SgForStatement((SgStatement*)NULL,(SgExpression*)NULL,(SgStatement*)NULL);
+
+    printf ("DONE: Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
+
+#if 1
+    printf ("In VisitForStmt(): Setting the parent of the sg_for_stmt \n");
+#endif
+
+ // DQ (11/28/2020): this is required for test2012_127.c.
+    sg_for_stmt->set_parent(SageBuilder::topScopeStack());
+
+ // DQ (11/28/2020): Adding asertion.
+    ROSE_ASSERT(sg_for_stmt->get_parent() != NULL);
 
     SageBuilder::pushScopeStack(sg_for_stmt);
 
@@ -812,7 +984,11 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         }
         if (init_stmt != NULL)
             for_init_stmt_list.push_back(init_stmt);
+
         for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
+
+        printf ("In VisitForStmt(): for_init_stmt = %p  \n");
+
         if (for_stmt->getInit() != NULL)
             applySourceRange(for_init_stmt, for_stmt->getInit()->getSourceRange());
         else
@@ -904,6 +1080,12 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         body->set_parent(sg_for_stmt);
         sg_for_stmt->set_loop_body(body);
     }
+
+ // DQ (11/28/2020): Now we want to use the scope that is already on the stack (instead of adding a new one).
+    SageBuilder::buildForStatement_nfi(sg_for_stmt, for_init_stmt, cond_stmt, inc, body);
+
+ // DQ (11/28/2020): Adding asertion.
+    ROSE_ASSERT(sg_for_stmt->get_parent() != NULL);
 
     *node = sg_for_stmt;
 
@@ -1488,7 +1670,15 @@ bool ClangToSageTranslator::VisitValueStmt(clang::ValueStmt * value_stmt, SgNode
 #endif
     bool res = true;
 
-    //ROSE_ASSERT(FAIL_TODO == 0); // TODO
+ // DQ (11/28/2020): In test2020_45.c: I think this is the enum field.
+ // clang::Expr* expr = value_stmt->getExprStmt();
+ // ROSE_ASSERT(expr != NULL);
+
+ // DQ (11/28/2020): Note that value_stmt->getExprStmt() == value_stmt, but not sure why.
+
+ // DQ (11/28/2020): This was previously commented out, and I think there is nothing to do here.
+ // The actual implementation was done in VisitFullExp
+ // ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitStmt(value_stmt, node) && res;
 }
@@ -2299,55 +2489,85 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
 
     bool res = true;
 
-    //SgNode * tmp_node = Traverse(decl_ref_expr->getDecl());
+    // SgNode * tmp_node = Traverse(decl_ref_expr->getDecl());
     // DONE: Do not use Traverse(...) as the declaration can not be complete (recursive functions)
     //       Instead use SymbolTable from ROSE as the symbol should be ready (cannot have a reference before the declaration)
     // FIXME: This fix will not work for C++ (methods/fields can be use before they are declared...)
     // FIXME: I feel like it could work now, we will see ....
 
-    SgSymbol * sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+     SgSymbol * sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
 
-    if (sym == NULL) {
-        SgNode * tmp_decl = Traverse(decl_ref_expr->getDecl());
+     if (sym == NULL) 
+        {
+          SgNode * tmp_decl = Traverse(decl_ref_expr->getDecl());
 
-        if (tmp_decl != NULL) {
-            sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
-        }
-        // FIXME hack Traverse have added the symbol but we cannot find it (probably: problem with type and function lookup)
-        if (sym == NULL && isSgFunctionDeclaration(tmp_decl) != NULL) {
-            sym = new SgFunctionSymbol(isSgFunctionDeclaration(tmp_decl));
-            sym->set_parent(tmp_decl);
-        }
-        
-    }
+       // DQ (11/29/2020): Added assertion.
+          ROSE_ASSERT(tmp_decl != NULL);
 
-    if (sym != NULL) { // Not else if it was NULL we have try to traverse it....
-        SgVariableSymbol  * var_sym  = isSgVariableSymbol(sym);
-        SgFunctionSymbol  * func_sym = isSgFunctionSymbol(sym);
-        SgEnumFieldSymbol * enum_sym = isSgEnumFieldSymbol(sym);
+          printf ("tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+          SgInitializedName* initializedName = isSgInitializedName(tmp_decl);
+          if (initializedName != NULL)
+             {
+               printf ("Found SgInitializedName: initializedName->get_name() = %s \n",initializedName->get_name().str());
+             }
 
-        if (var_sym != NULL) {
-            *node = SageBuilder::buildVarRefExp(var_sym);
+          if (tmp_decl != NULL)
+             {
+               sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+             }
+
+       // FIXME hack Traverse have added the symbol but we cannot find it (probably: problem with type and function lookup)
+
+          if (sym == NULL && isSgFunctionDeclaration(tmp_decl) != NULL)
+             {
+               sym = new SgFunctionSymbol(isSgFunctionDeclaration(tmp_decl));
+               sym->set_parent(tmp_decl);
+             }
         }
-        else if (func_sym != NULL) {
-            *node = SageBuilder::buildFunctionRefExp(func_sym);
+
+     if (sym != NULL) 
+        {
+       // Not else if it was NULL we have try to traverse it....
+          SgVariableSymbol  * var_sym  = isSgVariableSymbol(sym);
+          SgFunctionSymbol  * func_sym = isSgFunctionSymbol(sym);
+          SgEnumFieldSymbol * enum_sym = isSgEnumFieldSymbol(sym);
+
+          if (var_sym != NULL) 
+             {
+               *node = SageBuilder::buildVarRefExp(var_sym);
+             }
+            else 
+             {
+               if (func_sym != NULL)
+                  {
+                    *node = SageBuilder::buildFunctionRefExp(func_sym);
+                  }
+                 else
+                  {
+                    if (enum_sym != NULL)
+                       {
+                         SgEnumDeclaration * enum_decl = isSgEnumDeclaration(enum_sym->get_declaration()->get_parent());
+                         ROSE_ASSERT(enum_decl != NULL);
+                         SgName name = enum_sym->get_name();
+                         *node = SageBuilder::buildEnumVal_nfi(0, enum_decl, name);
+                       }
+                      else
+                       {
+                         if (sym != NULL)
+                            {
+                              std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
+                              std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
+                              ROSE_ABORT();
+                            }
+                       }
+                  }
+             }
         }
-        else if (enum_sym != NULL) {
-            SgEnumDeclaration * enum_decl = isSgEnumDeclaration(enum_sym->get_declaration()->get_parent());
-            ROSE_ASSERT(enum_decl != NULL);
-            SgName name = enum_sym->get_name();
-            *node = SageBuilder::buildEnumVal_nfi(0, enum_decl, name);
+       else
+        {
+          std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
+          ROSE_ABORT();
         }
-        else if (sym != NULL) {
-            std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
-            std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
-            ROSE_ASSERT(false);
-        }
-    }
-    else {
-         std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
-         ROSE_ASSERT(false);
-    }
 
     return VisitExpr(decl_ref_expr, node) && res;
 }
@@ -2418,7 +2638,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
         else if (D->isArrayRangeDesignator()) {
             ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
         }
-        else ROSE_ASSERT(false);
+        else ROSE_ABORT();
 
         ROSE_ASSERT(expr != NULL);
 
@@ -2532,6 +2752,13 @@ bool ClangToSageTranslator::VisitFullExpr(clang::FullExpr * full_expr, SgNode **
     std::cerr << "ClangToSageTranslator::VisitFullExpr" << std::endl;
 #endif
     bool res = true;
+
+    SgNode * tmp_expr = Traverse(full_expr->getSubExpr());
+    SgExpression * expr = isSgExpression(tmp_expr);
+
+ // printf ("In VisitFullExpr(): built: expr = %p = %s \n",expr,expr->class_name().c_str());
+
+    *node = expr;
 
     // TODO
 
@@ -2893,8 +3120,7 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
             name = "__PRETTY_FUNCTION__";
             break;
         case clang::PredefinedExpr::PrettyFunctionNoVirtual:
-            ROSE_ASSERT(false);
-            break;
+            ROSE_ABORT();
     }
 
   // Retrieve the associate symbol if it exists

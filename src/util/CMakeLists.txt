@@ -12,7 +12,7 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string 
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_TOP_SRCDIR    = \"${ROSE_TOP_SRC_DIR}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_TOP_BUILDDIR  = \"${ROSE_TOP_BINARY_DIR}\";\n")
 #FIXME: may be a different directory at times. Not sure what the semantics are.
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_PREFIX        = \"${ROSE_TOP_BINARY_DIR}\";\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_PREFIX        = \"${CMAKE_INSTALL_PREFIX}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_DATADIR       = \"/*deprecated*/\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_BINDIR        = \"/*deprecated*/\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_INCLUDEDIR    = \"/*deprecated*/\";\n")
@@ -27,7 +27,7 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* Additional inte
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_CONFIGURE_DATE     = \"@configure_date@\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_BUILD_OS  = \"${CMAKE_HOST_SYSTEM_VERSION}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_AUTOMAKE_BUILD_CPU = \"${CMAKE_HOST_SYSTEM_PROCESSOR}\";\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_OFP_VERSION_STRING = \"@enable-ofp-version@\";\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "const std::string ROSE_OFP_VERSION_STRING = \"${enable-ofp-version}\";\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* Numeric form of ROSE version -- assuming ROSE version x.y.zL \(where */\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* x, y, and z are numbers, and L is a single lowercase letter from a to j\), */\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* the numeric value is x * 1000000 + y * 10000 + z * 100 + \(L - 'a'\). */\n")
@@ -80,7 +80,7 @@ target_sources(roseUtil INTERFACE
 ########### install files ###############
 install(FILES
   BitFlags.h BitOps.h Color.h FileSystem.h FormatRestorer.h
-  setup.h processSupport.h RoseAsserts.h rose_paths.h
+  setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
   Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_override.h rose_strtoull.h
   roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h

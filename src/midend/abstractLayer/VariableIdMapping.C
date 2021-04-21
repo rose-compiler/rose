@@ -1,6 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
 
 #include "sage3basic.h"
 #include "CodeThornException.h"
@@ -15,13 +12,21 @@ using namespace std;
 using namespace CodeThorn;
 using namespace Rose::Diagnostics;
 
-int exprToInt(SgExpression* exp) {
+static int exprToInt(SgExpression* exp) {
   if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
     return valExp->get_value();
   else if(SgIntVal* valExpInt = isSgIntVal(exp))
     return valExpInt->get_value();
   else
     return -1;
+}
+
+bool VariableIdMapping::isUnknownSizeValue(TypeSize size) {
+  return size==unknownSizeValue();
+}
+
+TypeSize VariableIdMapping::unknownSizeValue() {
+  return -1;
 }
 
 // Puts sizes of the array dimensions into the vector,
@@ -61,10 +66,14 @@ size_t VariableIdMapping::getArrayDimensionsFromInitializer(SgAggregateInitializ
   return result;
 }
 
-VariableIdMapping::VariableIdMapping() {
+VariableIdMapping::VariableIdMapping():linkAnalysis(false) {
 }
 
 VariableIdMapping::~VariableIdMapping() {
+}
+
+void VariableIdMapping::setLinkAnalysisFlag(bool flag) {
+  linkAnalysis=flag;
 }
 
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
@@ -87,55 +96,58 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return type;
 }
 
-bool VariableIdMapping::hasBoolType(VariableId varId) {
+bool VariableIdMapping::isOfBoolType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeBool(type);
 }
 
-bool VariableIdMapping::hasCharType(VariableId varId) {
+bool VariableIdMapping::isOfCharType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeChar(type)||isSgTypeSignedChar(type)||isSgTypeUnsignedChar(type)||isSgTypeChar16(type)||isSgTypeChar32(type);
 }
 
-bool VariableIdMapping::hasIntegerType(VariableId varId) {
+bool VariableIdMapping::isOfIntegerType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::isStrictIntegerType(type)||isSgTypeSigned128bitInteger(type);
 }
 
-bool VariableIdMapping::hasEnumType(VariableId varId) {
+bool VariableIdMapping::isOfEnumType(VariableId varId) {
   SgType* type=getType(varId);
   return SageInterface::IsEnum(type);
 }
 
-bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
+bool VariableIdMapping::isOfFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type);
 }
 
-bool VariableIdMapping::hasPointerType(VariableId varId) {
+bool VariableIdMapping::isOfPointerType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgPointerType(type)!=0;
 }
 
-bool VariableIdMapping::hasReferenceType(VariableId varId) {
+bool VariableIdMapping::isOfReferenceType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgReferenceType(type);
 }
 
-bool VariableIdMapping::hasClassType(VariableId varId) {
+bool VariableIdMapping::isOfClassType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgClassType(type)!=0;
 }
 
-bool VariableIdMapping::hasArrayType(VariableId varId) {
+bool VariableIdMapping::isOfArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
+std::string VariableIdMapping::mangledName(VariableId varId) {
+  if(SgSymbol* sym=getSymbol(varId))
+    return sym->get_mangled_name();
+  else
+    return "*";
+}
+
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
@@ -143,31 +155,25 @@ void VariableIdMapping::toStream(ostream& os) {
       <<","<<varId.toString(this)
       //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
-      <<","<<getNumberOfElements(varId)
-      <<","<<getElementSize(varId)
-      <<","<<getOffset(varId);
+      <<","<<getVariableIdInfo(varId).variableScopeToString()
+      <<","<<getVariableIdInfo(varId).aggregateTypeToString()
+      <<",elems:"<<getNumberOfElements(varId)
+      <<",elemsize:"<<getElementSize(varId)
+      <<",total:"<<getTotalSize(varId)
+      <<",offset:"<<getOffset(varId);
     if(isStringLiteralAddress(varId)) {
       os<<","<<"<non-symbol-string-literal-id>";
     } else if(isTemporaryVariableId(varId)) {
       os<<","<<"<non-symbol-memory-region-id>";
     } else if(SgSymbol* sym=getSymbol(varId)) {
-      os<<","<<sym->get_mangled_name();
+      os<<","<<variableName(varId);
     } else {
       os<<","<<"<missing-symbol>";
-    }
-    if(isMemberVariable(varId)) {
-      os<<",data-member";
-    } else {
-      os<<",variable";
     }
     os<<endl;
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   VariableIdSet set;
   for(map<SgSymbol*,VariableId>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
@@ -176,20 +182,12 @@ VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
   return set;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableIdFromCode(int i) {
   VariableId id;
   id.setIdCode(i);
   return id;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* node,VariableId id) {
   file<<"_"<<node<<" "
       <<"->"
@@ -197,20 +195,12 @@ void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* n
       << endl;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string VariableIdMapping::generateDotSgSymbol(SgSymbol* sym) {
   stringstream ss;
   ss<<"_"<<sym;
   return ss.str();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2013.
- */
 void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
@@ -276,12 +266,8 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   myfile.close();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
-  assert(sym);
+  ROSE_ASSERT(sym);
   VariableId newId;
   // schroder3 (2016-08-23): Added if-else to make sure that this does not create a
   //  new mapping entry (with id 0) if the given symbol is not in the mapping yet
@@ -297,10 +283,6 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   return newId;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToInfo.size());
@@ -313,40 +295,74 @@ void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) 
   mappingVarIdToInfo[variableId].numberOfElements=size;
 }
 
-size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+TypeSize VariableIdMapping::getNumberOfElements(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].numberOfElements;
 }
 
-void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+void VariableIdMapping::setElementSize(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].elementSize=size;
 }
 
-size_t VariableIdMapping::getElementSize(VariableId variableId) {
+TypeSize VariableIdMapping::getElementSize(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].elementSize;
 }
 
-void VariableIdMapping::setOffset(VariableId variableId, int size) {
+void VariableIdMapping::setNumDimensionElements(VariableId variableId, TypeSize dimNr, TypeSize numElements) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].numDimensionElements[dimNr]=numElements;
+}
+
+TypeSize VariableIdMapping::getNumDimensionElements(VariableId variableId, TypeSize dimNr) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].numDimensionElements[dimNr];
+}
+
+
+void VariableIdMapping::setTotalSize(VariableId variableId, TypeSize size) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].totalSize=size;
+}
+
+TypeSize VariableIdMapping::getTotalSize(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].totalSize;
+}
+
+void VariableIdMapping::setOffset(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   mappingVarIdToInfo[variableId].offset=size;
 }
 
-int VariableIdMapping::getOffset(VariableId variableId) {
+TypeSize VariableIdMapping::getOffset(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].offset;
 }
 
 void VariableIdMapping::setIsMemberVariable(VariableId variableId, bool flag) {
   ROSE_ASSERT(variableId.isValid());
-  mappingVarIdToInfo[variableId].isMemberVariable=flag;
+  if(flag)
+    mappingVarIdToInfo[variableId].variableScope=VS_MEMBER;
+  else
+    mappingVarIdToInfo[variableId].variableScope=VS_UNKNOWN;
 }
 
 bool VariableIdMapping::isMemberVariable(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
-  return mappingVarIdToInfo[variableId].isMemberVariable;
+  return mappingVarIdToInfo[variableId].variableScope==VS_MEMBER;
 }
+
+bool VariableIdMapping::isVolatile(VariableId variableId) {
+  return mappingVarIdToInfo[variableId].isVolatileFlag;
+}
+
+void VariableIdMapping::setVolatileFlag(VariableId variableId, bool flag) {
+  mappingVarIdToInfo[variableId].isVolatileFlag=flag;
+}
+
+
 
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
@@ -364,13 +380,8 @@ bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   return false;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
-void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
   int numWarningsCount=0;
-  int maxWarningsCount=3; // 0 turns off warnings
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -378,6 +389,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
     ast.setWithTemplates(true);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgSymbol* sym = 0;
+      SgInitializedName* initName = NULL;
       // schroder3 (2016-08-18): Added variables that are "declared" in a lambda capture. There is currently no SgInitializedName for
       //  these closure variables.
       if(SgLambdaCapture* lambdaCapture = isSgLambdaCapture(*i)) {
@@ -388,7 +400,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
         //type = closureVar->get_type();
-      } else if(SgInitializedName* initName = isSgInitializedName(*i)) {
+      } else if((initName = isSgInitializedName(*i))) {
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
@@ -405,16 +417,25 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
           // Register new symbol as normal variable symbol:
-          registerNewSymbol(sym);
-          // Remember that this symbol was already registered:
-          symbolSet.insert(sym);
+          // ensure it's a "valid" symbol 
+          if(sym->get_symbol_basis()!=0) {
+            registerNewSymbol(sym);
+            // Remember that this symbol was already registered:
+            symbolSet.insert(sym);
+          }
         }
       } else {
         numWarningsCount++;
-        if(numWarningsCount<maxWarningsCount) {
-          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+        std::string name("UNKNOWN");
+        if(initName) {
+          name = initName->get_qualified_name().getString();
+        }
+        if(numWarningsCount<maxWarningsCount || -1 == maxWarningsCount) {
+          if(initName) {
+            Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName " << name << " at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          }
         } else if(numWarningsCount==maxWarningsCount) {
-          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
+          Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName " << name << " at "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<endl;
           Rose::Diagnostics::mlog[WARN]<<"VariableIdMapping: No symbol available for SgInitializedName: maximum warning count of "<<maxWarningsCount<<" reached."<<endl;
         }
       }
@@ -422,23 +443,44 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   }
   // creates variableid for each string literal in the entire program
   registerStringLiterals(project);
+
+  if(linkAnalysis) {
+    performLinkAnalysisRemapping();
+  }
+
   return;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
+SgSymbol* VariableIdMapping::selectLinkSymbol(std::set<SgSymbol*>& symSet) {
+  ROSE_ASSERT(symSet.size()>0);
+  return *symSet.begin();
+}
+
+void VariableIdMapping::performLinkAnalysisRemapping() {
+  for(VarNameToSymMappingType::iterator i=mappingGlobalVarNameToSymSet.begin();i!=mappingGlobalVarNameToSymSet.end();++i) {
+    std::set<SgSymbol*>& symSet=(*i).second;
+    VariableId v;
+    if(symSet.size()>0) {
+      v=variableId(selectLinkSymbol(symSet)); // choose some symbol
+      ROSE_ASSERT(v.isValid());
+      for (std::set<SgSymbol*>::iterator i=symSet.begin();i!=symSet.end();++i) {
+        SgSymbol* sym=*i;
+        if(sym!=mappingVarIdToInfo[v].sym) {
+          mappingSymToVarId[sym]=v;
+          mappingVarIdToInfo[v].sym=sym;
+          mappingVarIdToInfo[v].relinked=true;
+        }
+      }
+    }
+  }
+}
+
 string VariableIdMapping::variableName(VariableId varId) {
   ROSE_ASSERT(varId.isValid());
   SgSymbol* sym=getSymbol(varId);
   return SgNodeHelper::symbolToString(sym);
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string VariableIdMapping::uniqueVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     if(!varId.isValid())
@@ -450,18 +492,10 @@ string VariableIdMapping::uniqueVariableName(VariableId varId) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
   return variableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
   return variableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
@@ -530,30 +564,22 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
 }
 
 
-/*! 
- * \author Markus Schordan
- * \date 2017.
- */
 bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
   return isTemporaryVariableId(varId);
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
+  return isTemporaryVariableIdSymbol(getSymbol(varId));
+}
+
+bool VariableIdMapping::isTemporaryVariableIdSymbol(SgSymbol* sym) {
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(sym)!=0;
 }
 
 bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   return varId.isValid() && ((size_t)varId._id) < mappingVarIdToInfo.size() && varId._id >= 0;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 // deprecated (use createAndRegisterVariableId instead)
 VariableId  
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
@@ -582,7 +608,7 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 CodeThorn::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setNumberOfElements(varId,0); // MS 3/3/2019: changed default from 1 to 0.
+  setNumberOfElements(varId,unknownSizeValue());
   return varId;
 }
 
@@ -593,25 +619,15 @@ CodeThorn::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::s
   return varId;
 }
 
-void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
-  ROSE_ASSERT(arraySize>0);
+void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize) {
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // map symbol to var-id of array variable symbol
     size_t newVariableIdCode=mappingVarIdToInfo.size();
     mappingSymToVarId[sym]=variableIdFromCode(newVariableIdCode);
     VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
 
-    //if(getModeVariableIdForEachArrayElement()) {
-    //  // assign one var-id for each array element (in addition to the variable id of the array itself!)
-    //  for(int i=0;i<arraySize;i++) {
-    //    size_t newArrayElemVariableIdCode=mappingVarIdToInfo.size();
-    //    VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
-    //    mappingVarIdToInfo[newArrayElemVarId].sym=sym;
-    //  }
-    //} else {
-      // assign one vari-id for entire array
-      mappingVarIdToInfo[tmpVarId].sym=sym;
-      //}
+    // assign one vari-id for entire array
+    mappingVarIdToInfo[tmpVarId].sym=sym;
     // size needs to be set *after* mappingVarIdToInfo[].sym has been updated
     setNumberOfElements(tmpVarId,arraySize);
   } else {
@@ -623,6 +639,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
 
 void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   ROSE_ASSERT(sym);
+  // ensure every symbol is only registered once (symbols of linked global variables can be processed multiple times)
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // Due to arrays there can be multiple ids for one symbol (one id
     //  for each array element but only one symbol for the whole array)
@@ -637,24 +654,28 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     size_t newIdCode = mappingVarIdToInfo.size();
     mappingSymToVarId[sym] = variableIdFromCode(newIdCode);
     mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym=sym;
+
+    ROSE_ASSERT(sym);
+    // exclude temporary variables from link analysis
+    if(!isTemporaryVariableIdSymbol(sym)) {
+      // determine if sym is declared in global scope and store information required for link analysis
+      // this check only succeeds for global variables (it filters member variables)
+      SgScopeStatement* scope=sym->get_scope();
+      if(isSgGlobal(scope)) {
+        SgName name=sym->get_mangled_name();
+        mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
+      }
+    }
+    
+    VariableId newVarId=variableId(sym);
     // set size to 1 (to compute bytes, multiply by size of type)
-    VariableId newVarId;
-    newVarId.setIdCode(newIdCode);
-    setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
+    setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
     ROSE_ASSERT(mappingVarIdToInfo[mappingSymToVarId.at(sym)].sym == sym);
-  } else {
-    stringstream ss;
-    ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-    throw CodeThorn::Exception(ss.str());
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId)) {
@@ -665,44 +686,32 @@ void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(string name) : SgVariableSymbol() {
   _tmpName=name;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
 }
 
 VariableIdMapping::VariableIdInfo::VariableIdInfo():
   sym(0),
-  numberOfElements(0),
-  elementSize(0),
-  offset(-1),
-  isMemberVariable(false)
+  numberOfElements(VariableIdMapping::unknownSizeValue()),
+  elementSize(VariableIdMapping::unknownSizeValue()),
+  totalSize(VariableIdMapping::unknownSizeValue()),
+  offset(VariableIdMapping::unknownSizeValue()),
+  aggregateType(AT_UNKNOWN),
+  variableScope(VS_UNKNOWN),
+  isVolatileFlag(false),
+  relinked(false)
 {
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
-VariableId::VariableId():_id(-1){
+VariableId::VariableId():_id(-1) {
 }
 
 const char * const VariableId::idKindIndicator = "V";
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 string
 VariableId::toString() const {
   stringstream ss;
@@ -753,18 +762,50 @@ VariableIdSet& CodeThorn::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   return s1;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 size_t CodeThorn::hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
+VariableIdMapping::VariableIdInfo VariableIdMapping::getVariableIdInfo(VariableId vid) {
+  return *getVariableIdInfoPtr(vid);
+}
+
+VariableIdMapping::VariableIdInfo* VariableIdMapping::getVariableIdInfoPtr(VariableId vid) {
+  return &mappingVarIdToInfo[vid];
+}
+
+void VariableIdMapping::setVariableIdInfo(VariableId vid, VariableIdInfo vif) {
+  mappingVarIdToInfo[vid]=vif;
+}
+  
+std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
+  switch(aggregateType) {
+  case AT_UNKNOWN:
+    return "unknown";
+  case AT_SINGLE:
+    return "single";
+  case AT_ARRAY:
+    return "array";
+  case AT_STRUCT:
+    return "struct";
+  }
+  return "undefined-aggregate-type-enum";
+}
+
+std::string VariableIdMapping::VariableIdInfo::variableScopeToString() {
+  switch(variableScope) {
+  case VS_UNKNOWN:
+    return "unknown";
+  case VS_LOCAL:
+    return "local";
+  case VS_GLOBAL:
+    return "global";
+  case VS_MEMBER:
+    return "member";
+  }
+  return "undefined-variable-scope-enum";
+}
+
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
   VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
@@ -776,10 +817,6 @@ VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariab
   return resultSet;
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2012.
- */
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
   VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
@@ -874,22 +911,17 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
         // the size of the memory region of a string is its length + 1 (for terminating 0).
         setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
-        setElementSize(newVariableId,1);
+        int elementSize=1; // char
+        setElementSize(newVariableId,elementSize);
+        setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
+        setOffset(newVariableId,unknownSizeValue());
+        getVariableIdInfoPtr(newVariableId)->aggregateType=AT_ARRAY; // string literals are maintained as arrays with known length (includes terminating 0)
+
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
-        //cout<<"registered."<<endl;
       } else {
-        //cout<<"NOT registered."<<endl;
+        // already registered
       }
     }
   }
 }
-
-//void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
-//  ROSE_ASSERT(mappingVarIdToInfo.size()==0); 
-//  modeVariableIdForEachArrayElement=active;
-//}
-
-//bool VariableIdMapping::getModeVariableIdForEachArrayElement() {
-//  return modeVariableIdForEachArrayElement;
-//}

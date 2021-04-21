@@ -28,7 +28,7 @@ class SgType;
 namespace Rose::builder {
 
 // Converts parsed program to ROSE Sage nodes
-void Build(const Fortran::parser::Program &x, Fortran::parser::CookedSource &cooked);
+void Build(const Fortran::parser::Program &x, Fortran::parser::AllCookedSources &cooked);
 
 template<typename T> void Build(const Fortran::parser::           ProgramUnit &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           MainProgram &x, T* scope);
@@ -69,7 +69,6 @@ void Build(const Fortran::parser::                  Name &x, std::string   &name
 void Build(const Fortran::parser::         NamedConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Expr &x, SgExpression* &expr);
 void Build(const Fortran::parser:: Expr::IntrinsicBinary &x, SgExpression* &expr);
-void Build(const Fortran::parser::         ConstantValue &x, SgExpression* &expr);
 void Build(const Fortran::parser::       LiteralConstant &x, SgExpression* &expr);
 
 // LiteralConstant
@@ -259,24 +258,30 @@ void Build(const Fortran::parser::             CaseStmt&x, std::list<SgExpressio
 void Build(const Fortran::parser::         CaseSelector&x, std::list<SgExpression*> &case_list);
 void Build(const Fortran::parser::       CaseValueRange&x, SgExpression* &expr);
 void Build(const Fortran::parser::CaseValueRange::Range&x, SgExpression* &range);
-template<typename T> void Build(const Fortran::parser::  ChangeTeamConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::    CriticalConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::          LabelDoStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::            EndDoStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::          DoConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::          IfConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::  SelectRankConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::  SelectTypeConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::       WhereConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::      ForallConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::    CompilerDirective&x, T* scope);
-template<typename T> void Build(const Fortran::parser::      OpenMPConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::     OpenACCConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::  OmpEndLoopDirective&x, T* scope);
+template<typename T> void Build(const Fortran::parser::    ChangeTeamConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::      CriticalConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::            LabelDoStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::              EndDoStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::            DoConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::            IfConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::    SelectRankConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::    SelectTypeConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::         WhereConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::        ForallConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::      CompilerDirective&x, T* scope);
+template<typename T> void Build(const Fortran::parser::        OpenMPConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::       OpenACCConstruct&x, T* scope);
+template<typename T> void Build(const Fortran::parser::AccEndCombinedDirective&x, T* scope);
+template<typename T> void Build(const Fortran::parser::    OmpEndLoopDirective&x, T* scope);
 
 // DoConstruct
 void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
+
+// IfConstruct
+template<typename T> void Build(const Fortran::parser::              IfThenStmt&x, T* scope);
+template<typename T> void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, T* scope);
+template<typename T> void Build(const Fortran::parser::IfConstruct::ElseIfBlock&x, T* scope);
 
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::             DerivedTypeDef&x, T* scope);

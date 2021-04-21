@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef SAVEDOT_ANALYSIS_H
 #define SAVEDOT_ANALYSIS_H
 
@@ -29,4 +32,5 @@ class SaveDotAnalysis: virtual public IntraProceduralAnalysis
 // Precondition: initAnalysis() has been called
 void saveCFGsToDots();
 
+#endif
 #endif

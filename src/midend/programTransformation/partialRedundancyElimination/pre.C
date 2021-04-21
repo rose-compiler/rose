@@ -532,7 +532,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
                     printf ("Need to figure out what to do here! cfg.edge_insertion_point[*j] = %p \n",&(cfg.edge_insertion_point[*j]));
 
                     failAtEndOfFunction = true;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -674,7 +674,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
      if (failAtEndOfFunction == true)
         {
           printf ("Error: internal error detected \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
    }
 

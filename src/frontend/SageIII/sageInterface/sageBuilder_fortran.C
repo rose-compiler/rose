@@ -85,7 +85,7 @@ SageBuilder::buildAttributeSpecificationStatement(SgAttributeSpecificationStatem
       }
     default:
       cerr<<"SageBuilder::buildAttributeSpecificationStatement(), unhandled attribute specification kind:"<<kind <<endl;
-      ROSE_ASSERT (false);
+      ROSE_ABORT ();
       break;
   }
   setSourcePositionForTransformation(attributeSpecificationStatement); 

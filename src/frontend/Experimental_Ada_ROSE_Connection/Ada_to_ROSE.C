@@ -13,6 +13,9 @@
 #include "AdaStatement.h"
 #include "AdaType.h"
 
+#include "sageInterfaceAda.h"
+
+
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
@@ -26,12 +29,8 @@ namespace Ada_ROSE_Translation
 //
 // logger
 
-Sawyer::Message::Facility adalogger;
+extern Sawyer::Message::Facility mlog;
 
-void logInit()
-{
-  adalogger = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
-}
 
 //
 // declaration store and retrieval
@@ -54,21 +53,45 @@ namespace
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
   /// stores a mapping from string to builtin type nodes
-  map_t<std::string, SgType*> adaTypesMap;
+  map_t<AdaIdentifier, SgType*> adaTypesMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgInitializedName*> adaExcpsMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 } // anonymous namespace
 
-//~ map_t<int, SgDeclarationStatement*>& asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<std::string, SgType*>&         adaTypes()  { return adaTypesMap;  }
+//~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
+map_t<int, SgInitializedName*>&              asisVars()  { return asisVarsMap;  }
+map_t<int, SgInitializedName*>&              asisExcps() { return asisExcpsMap; }
+map_t<int, SgDeclarationStatement*>&         asisDecls() { return asisDeclsMap; }
+map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; }
+map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
+map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
+
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
 
 //
 // auxiliary classes and functions
+
+
+/// returns true of the kind is of interest
+static inline
+bool traceKind(const char* /* kind */)
+{
+  return true;
+}
+
+void logKind(const char* kind, bool /* unused */)
+{
+  if (!traceKind(kind)) return;
+
+  logTrace() << kind << std::endl;
+}
 
 LabelAndLoopManager::~LabelAndLoopManager()
 {
@@ -112,21 +135,83 @@ AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
   return tmp;
 }
 
+AstContext AstContext::sourceFileName(std::string& file) const
+{
+  AstContext tmp{*this};
+
+  tmp.unit_file_name = &file;
+  return tmp;
+}
+
+void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
+{
+  ROSE_ASSERT(n && orig);
+
+  n->unsetCompilerGenerated();
+  n->unsetTransformation();
+  n->set_physical_filename(orig->get_physical_filename());
+  n->set_filenameString(orig->get_filenameString());
+  n->set_line(orig->get_line());
+  n->set_col(orig->get_line());
+
+  n->setOutputInCodeGeneration();
+}
+
+template <class SageNode>
+void setFileInfo( SageNode& n,
+                  void (SageNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SageNode::*getter)() const,
+                  const std::string& filename,
+                  int line,
+                  int col
+                )
+{
+  if (Sg_File_Info* info = (n.*getter)())
+  {
+    info->unsetCompilerGenerated();
+    info->unsetTransformation();
+    info->set_physical_filename(filename);
+    info->set_filenameString(filename);
+    info->set_line(line);
+    info->set_physical_line(line);
+    info->set_col(col);
+
+    info->setOutputInCodeGeneration();
+    return;
+  }
+
+  (n.*setter)(&mkFileInfo(filename, line, col));
+}
+
+
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
-void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem)
+void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx)
+{
+  const std::string&      unit = ctx.sourceFileName();
+  Source_Location_Struct& loc  = elem.Source_Location;
+
+  setFileInfo( n,
+               &SgLocatedNode::set_file_info,        &SgLocatedNode::get_file_info,
+               unit, loc.First_Line, loc.First_Column );
+
+  setFileInfo( n,
+               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+               unit, loc.First_Line, loc.First_Column );
+
+  setFileInfo( n,
+               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+               unit, loc.Last_Line,  loc.Last_Column);
+}
+
+void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
 {
   Source_Location_Struct& loc  = elem.Source_Location;
-  std::string             unit{loc.Unit_Name};
+  const std::string&      unit = ctx.sourceFileName();
 
-  // \todo consider deleting existing source location information
-  //~ delete n.get_file_info();
-  //~ delete n.get_startOfConstruct();
-  //~ delete n.get_endOfConstruct();
-
-  n.set_file_info       (&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_startOfConstruct(&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_endOfConstruct  (&mkFileInfo(unit, loc.Last_Line,  loc.Last_Column));
+  //~ setFileInfo(n, &SgPragma::set_file_info,        &SgPragma::get_file_info,        unit, loc.First_Line, loc.First_Column);
+  setFileInfo(n, &SgPragma::set_startOfConstruct, &SgPragma::get_startOfConstruct, unit, loc.First_Line, loc.First_Column);
+  setFileInfo(n, &SgPragma::set_endOfConstruct,   &SgPragma::get_endOfConstruct,   unit, loc.Last_Line,  loc.Last_Column);
 }
 
 namespace
@@ -143,6 +228,8 @@ namespace
     asisDecls().clear();
     asisTypes().clear();
     adaTypes().clear();
+    adaExcps().clear();
+    adaPkgs().clear();
   }
 
   //
@@ -158,13 +245,14 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
+          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
 
       case A_Clause:                  // Asis.Clauses
         {
-          // currently only handles with clauses
+          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -172,47 +260,39 @@ namespace
       case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
-          ROSE_ASSERT(false);
-          break;
+
+          ROSE_ABORT();
         }
 
       case An_Expression:             // Asis.Expressions
         {
           // handled by getExpr
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Exception_Handler:      // Asis.Statements
         {
           // handled by handleExceptionHandler
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Definition:              // Asis.Definitions
         {
-          // records (one of many definitions) are handled by getRecordBody
-          Definition_Struct& def = elem.The_Union.Definition;
-
-          logWarn() << "Unhandled element " << elem.Element_Kind
-                    << "\n  definition kind: " << def.Definition_Kind
-                    << std::endl;
-
-          ROSE_ASSERT(false && !FAIL_ON_ERROR);
+          logKind("A_Definition");
+          handleDefinition(elem, ctx);
           break;
         }
 
+      case A_Pragma:                  // Asis.Elements
+
       case Not_An_Element: /* break; */ // Nil_Element
       case A_Path:                    // Asis.Statements
-      case A_Pragma:                  // Asis.Elements
       case An_Association:            // Asis.Expressions
       default:
         logWarn() << "Unhandled element " << elem.Element_Kind << std::endl;
@@ -237,7 +317,7 @@ namespace
       UnitCreator(AstContext astctx)
       : ctx(astctx)
       {}
-
+/*
       void operator()(Unit_Struct& adaUnit)
       {
         handleUnit(adaUnit, ctx);
@@ -246,6 +326,12 @@ namespace
       void operator()(Unit_Struct_List_Struct& adaUnit)
       {
         (*this)(adaUnit.Unit);
+      }
+*/
+
+      void operator()(Unit_Struct* adaUnit)
+      {
+        handleUnit(SG_DEREF(adaUnit), ctx);
       }
 
       AstContext ctx;
@@ -277,8 +363,11 @@ namespace
     return os;
   }
 
-  void handleUnit(Unit_Struct& adaUnit, AstContext ctx)
+  void handleUnit(Unit_Struct& adaUnit, AstContext context)
   {
+    std::string unitFile{adaUnit.Text_Name};
+    AstContext  ctx = context.sourceFileName(unitFile);
+
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
@@ -333,8 +422,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -363,8 +452,8 @@ namespace
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
-          ElemIdRange           elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange           unitRange = idRange(adaUnit.Corresponding_Children);
+          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
+          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
 
           if (elemRange.size() || unitRange.size())
           {
@@ -456,7 +545,288 @@ namespace
     res += "_rose";
     return res;
   }
-}
+
+  struct UnitEntry
+  {
+    Unit_Struct*               unit;
+    std::vector<AdaIdentifier> dependencies;
+    bool                       marked;
+  };
+
+  struct UniqueUnitId
+  {
+    bool          isbody;
+    AdaIdentifier name;
+  };
+
+  bool startsWith(const std::string& s, const std::string& sub)
+  {
+    return (s.rfind(sub, 0) == 0);
+  }
+
+  // sort specifications before bodies
+  bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
+  {
+    // System inclusion is implied, even if it is not referenced.
+    //   Ordering it first is semantically consistent.
+    if ((startsWith(lhs.name, "SYSTEM")) && (!startsWith(rhs.name, "SYSTEM")))
+      return true;
+
+    if ((!startsWith(lhs.name, "SYSTEM")) && (startsWith(rhs.name, "SYSTEM")))
+      return false;
+
+    if ((lhs.isbody == false) && (rhs.isbody == true))
+      return true;
+
+    if (lhs.isbody != rhs.isbody)
+      return false;
+
+    return lhs.name < rhs.name;
+  }
+
+  struct DependencyExtractor
+  {
+    explicit
+    DependencyExtractor(std::vector<AdaIdentifier>& vec, AstContext ctx)
+    : deps(vec), astctx(ctx)
+    {}
+
+    void operator()(Element_Struct& elem)
+    {
+      ROSE_ASSERT(elem.Element_Kind == A_Clause);
+
+      Clause_Struct& clause = elem.The_Union.Clause;
+
+      if (clause.Clause_Kind != A_With_Clause)
+        return;
+
+      std::vector<AdaIdentifier>& res = deps;
+      AstContext                  ctx{astctx};
+
+      traverseIDs( idRange(clause.Clause_Names), elemMap(),
+                   [&res, &ctx](Element_Struct& el) -> void
+                   {
+                     ROSE_ASSERT (el.Element_Kind == An_Expression);
+                     NameData imported = getName(el, ctx);
+
+                     res.push_back(imported.fullName);
+                   }
+                 );
+    }
+
+    std::vector<AdaIdentifier>& deps;
+    AstContext                  astctx;
+  };
+
+
+  void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
+  {
+    ElemIdRange              range = idRange(unit.Context_Clause_Elements);
+
+    traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
+  }
+
+
+  void dfs( std::map<UniqueUnitId, UnitEntry>& m,
+            std::map<UniqueUnitId, UnitEntry>::value_type& el,
+            std::vector<Unit_Struct*>& res
+          )
+  {
+    if (el.second.marked) return;
+
+    el.second.marked = true;
+
+    for (const std::string& depname : el.second.dependencies)
+      dfs(m, *m.find(UniqueUnitId{false, depname}), res);
+
+    res.push_back(el.second.unit);
+  }
+
+  UniqueUnitId uniqueUnitName(Unit_Struct& unit)
+  {
+    const bool  isBody = (  (unit.Unit_Kind == A_Package_Body)
+                         || (unit.Unit_Kind == A_Function_Body)
+                         || (unit.Unit_Kind == A_Procedure_Body)
+                         );
+
+    return UniqueUnitId{isBody, AdaIdentifier{unit.Unit_Full_Name}};
+  }
+
+  std::vector<Unit_Struct*>
+  sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
+  {
+    using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
+    using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
+
+    DependencyMap deps;
+    IdEntryMap    idmap;
+
+    // build maps for all units
+    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    {
+      ROSE_ASSERT(unit);
+
+      UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
+
+      auto depres = deps.emplace( uniqueId,
+                                  UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
+                                );
+      ROSE_ASSERT(depres.second);
+
+      // map specifications to their name
+      auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
+      ROSE_ASSERT(idmres.second);
+    }
+
+    // link the units
+    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    {
+      IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
+      ROSE_ASSERT(uit != idmap.end());
+
+      DependencyMap::iterator pos = uit->second;
+      const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
+      IdEntryMap::iterator    idpos    = idmap.find(parentID);
+
+      if (idpos != idmap.end())
+      {
+        pos->second.dependencies.push_back(idpos->second->first.name);
+      }
+      else if (parentID > 0)
+      {
+        // parentID == 1.. is 1 used for the package standard??
+        logWarn() << "unknown unit dependency: "
+                  << pos->first.name << ' '
+                  << (pos->first.isbody ? "[body]" : "[spec]")
+                  << "#" << pos->second.unit->ID
+                  << " -> #" << parentID
+                  << std::endl;
+      }
+
+      addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
+    }
+
+    std::vector<Unit_Struct*> res;
+
+    // topo sort
+    for (DependencyMap::value_type& el : deps)
+      dfs(deps, el, res);
+
+  /*
+    // print all module dependencies
+    for (const DependencyMap::value_type& el : deps)
+    {
+      logWarn() << el.first << "\n  ";
+
+      for (const std::string& n : el.second.dependencies)
+        logWarn() << n << ", ";
+
+      logWarn() << std::endl << std::endl;
+    }
+  */
+
+    logTrace() << "\nTopologically sorted module processing order"
+               << std::endl;
+
+    for (const Unit_Struct* uptr : res)
+      logTrace() << uptr->Unit_Full_Name
+                 << "(" << uptr->ID << "), ";
+
+    logTrace() << std::endl;
+    return res;
+  }
+
+  struct InheritFileInfo : AstSimpleProcessing
+  {
+    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr || !n->isTransformation()) return;
+
+      SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
+      ROSE_ASSERT(parentNode && !parentNode->isTransformation());
+
+      updFileInfo(n->get_file_info(),        parentNode->get_file_info());
+      updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
+      updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
+
+      ROSE_ASSERT(!n->isTransformation());
+    }
+  };
+
+  /// Implements a quick check that the AST is properly constructed.
+  ///   While some issues, such as parent pointers will be fixed at the
+  ///   post processing stage, it may be good to point inconsistencies
+  ///   out anyway.
+  void inheritFileInfo(SgSourceFile* file)
+  {
+    InheritFileInfo fixer;
+
+    fixer.traverse(file, preorder);
+  }
+
+
+  struct AstSanityCheck : AstSimpleProcessing
+  {
+    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr) return;
+
+      const bool hasParent    = (n->get_parent() != nullptr);
+      const bool hasFileInfo  = (n->get_file_info() != nullptr);
+      const bool hasStartInfo = (n->get_startOfConstruct() != nullptr);
+      const bool hasEndInfo   = (n->get_endOfConstruct() != nullptr);
+      const bool hasNoTransf  = (!n->isTransformation());
+      const bool hasNoCompgen = (!n->isCompilerGenerated());
+      const bool printOutput  = (!hasFileInfo || !hasStartInfo || !hasEndInfo || !hasNoTransf || !hasNoCompgen);
+
+      if (!hasParent)
+        logWarn() << typeid(*n).name() << ": get_parent is NULL" << std::endl;
+
+      if (!hasFileInfo)
+        logWarn() << typeid(*n).name() << ": get_file_info is NULL" << std::endl;
+
+      if (!hasStartInfo)
+        logWarn() << typeid(*n).name() << ": get_startOfConstruct is NULL" << std::endl;
+
+      if (!hasEndInfo)
+        logWarn() << typeid(*n).name() << ": get_endOfConstruct is NULL" << std::endl;
+
+      if (!hasNoTransf)
+        logWarn() << typeid(*n).name() << ": isTransformation is set" << std::endl;
+
+      if (!hasNoCompgen)
+        logWarn() << typeid(*n).name() << ": isCompilerGenerated is set" << std::endl;
+
+      if (hasParent && printOutput)
+        logWarn() << "        parent is " << typeid(*n->get_parent()).name()
+                  << std::endl;
+
+      if (!hasParent || printOutput)
+        logWarn() << "        unparsed: " << n->unparseToString()
+                  << std::endl;
+
+      //~ checkType(isSgExpression(n));
+      //~ checkType(isSgInitializedName(n));
+      //~ checkExpr(isSgAdaAttributeExp(n));
+    }
+  };
+
+
+  /// Implements a quick check that the AST is properly constructed.
+  ///   While some issues, such as parent pointers will be fixed at the
+  ///   post processing stage, it may be good to point inconsistencies
+  ///   out anyway.
+  void astSanityCheck(SgSourceFile* file)
+  {
+    AstSanityCheck checker;
+
+    checker.traverse(file, preorder);
+  }
+} // anonymous
 
 
 void ElemCreator::operator()(Element_Struct& elem)
@@ -464,26 +834,27 @@ void ElemCreator::operator()(Element_Struct& elem)
   handleElement(elem, ctx, privateElems);
 }
 
-
-
-void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
+void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
 
-  logInit();
   logInfo() << "Building ROSE AST .." << std::endl;
 
-  Unit_Struct_List_Struct* adaLimit = 0;
-  Unit_Struct_List_Struct* adaUnit  = headNodes.Units;
-  SgGlobal&                astScope = SG_DEREF(file->get_globalScope());
+  Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
+  SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+  std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
   initializeAdaTypes(astScope);
-  traverse(adaUnit, adaLimit, UnitCreator{AstContext{astScope}});
+  std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 
   std::string astDotFile = astDotFileName(*file);
   logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
   generateDOT(&astScope, astDotFile);
+
+  logInfo() << "Checking AST post-production" << std::endl;
+  inheritFileInfo(file);
+  astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;

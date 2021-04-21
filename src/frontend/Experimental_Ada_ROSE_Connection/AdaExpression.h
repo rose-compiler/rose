@@ -8,6 +8,7 @@
 
 
 #include "Ada_to_ROSE.h"
+#include "AdaMaker.h"
 #include "a_nodes.h"
 
 namespace Ada_ROSE_Translation
@@ -24,6 +25,28 @@ namespace Ada_ROSE_Translation
   ///   if el is not a valid exprression, an SgNullExpression is returned
   SgExpression&
   getExprID_opt(Element_ID el, AstContext ctx);
+
+  /// returns a range expression for the element \ref id.
+  /// \pre id identifies a Discrete_Range definition
+  SgExpression&
+  getDiscreteRangeID(Element_ID id, AstContext ctx);
+
+  /// returns an expression from the Asis definition \ref el
+  SgExpression&
+  getDefinitionExpr(Element_Struct& el, AstContext ctx);
+
+  /// returns an expression for the Asis definition
+  /// \pre id identifies a Asis definition
+  SgExpression&
+  getDefinitionExprID(Element_ID id, AstContext ctx);
+
+  /// returns an expression for attribute defined in expr
+  SgAdaAttributeExp&
+  getAttributeExpr(Expression_Struct& expr, AstContext ctx);
+
+  /// returns an expression for an Asis element ID \ref id.
+  SgAdaAttributeExp&
+  getAttributeExprID(Element_ID id, AstContext ctx);
 
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
@@ -80,9 +103,7 @@ namespace Ada_ROSE_Translation
       /// result read-out
       operator SgExprListExp& ()
       {
-        namespace sb = SageBuilder;
-
-        return SG_DEREF(sb::buildExprListExp(args));
+        return mkExprListExp(args);
       }
 
       operator std::vector<SgExpression*> () &&
@@ -95,6 +116,38 @@ namespace Ada_ROSE_Translation
       std::vector<SgExpression*> args;
 
       ArgListCreator() = delete;
+  };
+
+  /// creates a sequence of SgRangeExp objects from a Discrete_Range sequence
+  struct RangeListCreator
+  {
+      explicit
+      RangeListCreator(AstContext astctx)
+      : ctx(astctx), lst()
+      {}
+
+      RangeListCreator(RangeListCreator&&)                 = default;
+      RangeListCreator& operator=(RangeListCreator&&)      = default;
+
+      // \todo the following copying functions should be removed post C++17
+      // @{
+      RangeListCreator(const RangeListCreator&)            = default;
+      RangeListCreator& operator=(const RangeListCreator&) = default;
+      // @}
+
+      void operator()(Element_Struct& elem);
+
+      /// result read-out
+      operator SgExpressionPtrList () &&
+      {
+        return std::move(lst);
+      }
+
+    private:
+      AstContext          ctx;
+      SgExpressionPtrList lst;
+
+      RangeListCreator() = delete;
   };
 }
 

@@ -7,14 +7,9 @@
 #include "unparser.h" //charles4:  I replaced this include:   #include "unparseX10.h"
 
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-//~ #include "rose_config.h"
-
-
-//~ void replaceString (std::string& str, const std::string& from, const std::string& to);
+namespace si = SageInterface;
 
 namespace
 {
@@ -27,7 +22,14 @@ namespace
     void prn(const std::string& s)
     {
       unparser.curprint(s);
-      os << s;
+      //~ os << s;
+    }
+
+    std::string scopeQual(SgDeclarationStatement& remote);
+
+    std::string scopeQual(SgDeclarationStatement* remote)
+    {
+      return scopeQual(SG_DEREF(remote));
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
@@ -38,23 +40,29 @@ namespace
     void handle(SgAdaRangeConstraint& n)
     {
       prn(" range ");
+      expr(n.get_range());
+    }
 
-      SgRangeExp& range = SG_DEREF(n.get_range());
-
-      expr(range.get_start());
-      prn(" .. ");
-      expr(range.get_end());
+    void handle(SgAdaIndexConstraint& n)
+    {
+      prn(" (");
+      rangeList(n.get_indexRanges());
+      prn(")");
     }
 
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)   { prn(" Boolean"); }
-    void handle(SgTypeInt&)    { prn(" Integer"); }
-    void handle(SgTypeChar&)   { prn(" Character"); }
-    void handle(SgTypeFloat&)  { prn(" Float"); }
-    void handle(SgTypeString&) { prn(" String"); }
-    void handle(SgTypeVoid&)   { prn(" -- void\n"); }
+    void handle(SgTypeBool&)       { prn(" Boolean"); }
+    void handle(SgTypeChar&)       { prn(" Character"); }
+    void handle(SgTypeInt&)        { prn(" Integer"); }
+    void handle(SgTypeFloat&)      { prn(" Float"); }
+    void handle(SgTypeDouble&)     { prn(" Long_Float"); }
+    void handle(SgTypeLongDouble&) { prn(" Long_Long_Float"); }
+    void handle(SgTypeString&)     { prn(" String"); }
+    void handle(SgTypeLong&)       { prn(" Long_Integer"); }
+    void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
+    void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
 
     //
     // Ada types
@@ -62,7 +70,18 @@ namespace
     void handle(SgAdaSubtype& n)
     {
       type(n.get_base_type());
-      support(n.get_constraint());
+      support_opt(n.get_constraint());
+    }
+
+    void handle(SgAdaDerivedType& n)
+    {
+      type(n.get_base_type());
+    }
+
+    void handle(SgAdaModularType& n)
+    {
+      prn("mod ");
+      expr(n.get_modexpr());
     }
 
     void handle(SgModifierType& n)
@@ -78,9 +97,16 @@ namespace
       prn(" private");
     }
 
+    void handle(SgAutoType& n)
+    {
+      /* print nothing - used for Integer and Real Number constants */
+    }
+
+
     void handle(SgNamedType& n)
     {
       prn(" ");
+      prn(scopeQual(n.get_declaration()));
       prn(n.get_name());
     }
 
@@ -106,7 +132,9 @@ namespace
     void handle(SgArrayType& n)
     {
       prn(" array");
-      // \todo add range
+      prn("(");
+      arrayDimList(SG_DEREF(n.get_dim_info()), (si::ada::unconstrained(n) ? " range <>" : ""));
+      prn(")");
       prn(" of");
       type(n.get_base_type());
     }
@@ -115,13 +143,56 @@ namespace
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       prn(" ");
+      prn(scopeQual(n.get_decl()));
       prn(SG_DEREF(n.get_decl()).get_name());
     }
 
     void handle(SgAdaFloatType& n)
     {
-      prn(" is ");
+      prn("digits ");
       expr(n.get_digits());
+
+      support_opt(n.get_constraint());
+    }
+
+    void handle(SgAdaAccessType& n)
+    {
+      prn("access");
+      if (n.get_is_object_type()) {
+        if (n.get_is_general_access()) {
+          prn(" all");
+        }
+
+        if (n.get_is_constant()) {
+          prn(" constant");
+        }
+
+        if (n.get_base_type() != NULL) {
+          type(n.get_base_type());
+        }
+
+      } else {
+        // subprogram access type
+        if (n.get_is_protected()) {
+          prn(" protected");
+        }
+
+        if (n.get_return_type() != NULL) {
+          prn(" function");
+        } else {
+          prn(" procedure");
+        }
+
+        // TODO: print parameter profile here if it is specified.
+        //       parameter profiles are not currently implemented for
+        //       AdaAccessType nodes.
+
+        if (n.get_return_type() != NULL) {
+          prn(" return");
+          type(n.get_return_type());
+        }
+      }
+
     }
 
     void type(SgType* ty)
@@ -129,9 +200,9 @@ namespace
       sg::dispatch(*this, ty);
     }
 
-    void support(SgNode* n)
+    void support_opt(SgNode* n)
     {
-      sg::dispatch(*this, n);
+      if (n) sg::dispatch(*this, n);
     }
 
     void expr(SgExpression* e)
@@ -139,11 +210,50 @@ namespace
       unparser.unparseExpression(e, info);
     }
 
+    void arrayDimList(SgExprListExp& dims, const std::string& constraintSuffix)
+    {
+      SgExpressionPtrList& lst = dims.get_expressions();
+      if (lst.empty()) return;
 
-    Unparse_Ada&    unparser;
-    SgUnparse_Info& info;
-    std::ostream&   os;
+      expr(lst[0]);
+      prn(constraintSuffix);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+      {
+        prn(", ");
+        expr(lst[i]);
+        prn(constraintSuffix);
+      }
+    }
+
+    void rangeList(SgExpressionPtrList& lst) // \todo remove
+    {
+      if (lst.empty()) return;
+
+      expr(lst[0]);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+      {
+        prn(", ");
+        expr(lst[i]);
+      }
+    }
+
+    Unparse_Ada&      unparser;
+    SgUnparse_Info&   info;
+    std::ostream&     os;
   };
+
+  std::string
+  AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
+  {
+    if (info.get_current_scope() == NULL)
+      return "<missing-scope>";
+
+    SgScopeStatement& current = SG_DEREF(info.get_current_scope());
+
+    return unparser.computeScopeQual(current, SG_DEREF(remote.get_scope()));
+  }
 }
 
 

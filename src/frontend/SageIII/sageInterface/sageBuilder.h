@@ -806,6 +806,30 @@ ROSE_DLL_API SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprList
 ROSE_DLL_API SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+
+//! Build member function calls
+/*! 
+ *Create a member function call
+ *  This function looks for the function symbol in the given className
+ *  The function should exist in the class
+ *  The class should be #included or present in the source file parsed by frontend
+ *   
+ * Parameters: 
+ *  className: template class name, e.g. vector
+ *  objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1; 
+ *  functionName: member function name: size
+ *  params: function parameter list
+ *  scope: the scope this function call expression will be inserted into.
+ * Credit to Peter's previous work at:  
+ * projects/MatlabTranslation/src/transformations/MatlabSimpleTransformer.cc
+ */
+ROSE_DLL_API SgFunctionCallExp* 
+buildMemberFunctionCall (std::string className, SgExpression *objectExpression, std::string functionName, SgExprListExp *params, SgScopeStatement *scope);
+  
+//! Build member function calls. objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1;
+ROSE_DLL_API SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+                                          SgExprListExp*    params);
+
 SgTypeTraitBuiltinOperator*
 buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
 
@@ -860,7 +884,7 @@ ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 
-//! Build noecept operator expression with an expression parameter
+//! Build noexcept operator expression with an expression parameter
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgNoexceptOp* buildNoexceptOp_nfi(SgExpression* exp);
 
@@ -1075,6 +1099,10 @@ buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return
 // DQ (12/1/2011): Adding support for template declarations into the AST.
 ROSE_DLL_API SgTemplateFunctionDeclaration*
 buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefining_declaration);
+
+// DQ (11/8/2020): Define a function to build a default constructor for a class.
+// ROSE_DLL_API SgMemberFunctionDeclaration* buildConstructor ( const SgName & typeName, SgClassType* initializedName_classType, SgClassDefinition* classDefinition);
+ROSE_DLL_API SgMemberFunctionDeclaration* buildDefaultConstructor ( SgClassType* classType );
 
 //! Build a prototype member function declaration
 // SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
@@ -1573,17 +1601,17 @@ ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str,
 //! Build a SgFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project = NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgFile node and attach it to SgProject
 /*! The file will be build with an empty global scope to support declarations being added.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL, bool clear_globalScopeAcrossFiles = false);
 
 //! Build a SgSourceFile node and attach it to SgProject
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
+ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles = false);
 
 // DQ (11/8/2019): Support function for the new file (to support changing the file names in the source position info objects of each AST subtree node.
 //! Change the source file associated with the source position information in the AST.
@@ -1604,6 +1632,12 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+//! Build a dangling #include "x.h" header,  insertHeader() is needed to actually insert it
+ROSE_DLL_API PreprocessingInfo* buildHeader(const std::string& header_filename, 
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
+               bool isSystemHeader =false);
+
+
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 ROSE_DLL_API AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
@@ -1622,7 +1656,13 @@ ROSE_DLL_API void fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* ins
                                                                 SgNode* node_copy, SgNode* node_original);
 ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
 ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the original function (modified slightly, but mostly I have defined a new function that 
+// will not effect the AST snippet support that is used by this function.
 ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
+
+// DQ (12/6/2020): This is the new function (modified in API and made suitable for the codeSegregation support).
+ROSE_DLL_API SgDeclarationStatement* findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 
 //! Error checking the inserted snippet AST.
 ROSE_DLL_API void errorCheckingTargetAST (SgNode* node_copy, SgNode* node_original, SgFile* targetFile, bool failOnWarning);

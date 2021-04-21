@@ -1,7 +1,7 @@
 // This file includes support for handling Intel Pin data types and and
 // other required code to support Intel Pin within ROSE.
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 // #include "IntelPinSupport.h"
@@ -30,7 +30,7 @@ string output (IMG_TYPE image_type)
           default:
              {
                printf ("Error: default reached in switch image_type = %u \n",image_type);
-               assert(false);
+               ROSE_ABORT();
              }
         }
 
@@ -74,7 +74,7 @@ string output (SEC_TYPE section_type)
           default:
              {
                printf ("Error: default reached in switch section_type = %u \n",section_type);
-               assert(false);
+               ROSE_ABORT();
              }
         }
 

@@ -465,7 +465,7 @@ AbstractInterfaceNodeCollection<T>::markStatementListWithMarkersAsTransformation
                if (SageInterface::get_name(*i) == "TauTimer")
                   {
                     printf ("Exiting internally for case of class name == TauTimer \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 #endif
              }

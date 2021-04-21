@@ -31,9 +31,9 @@ trimSpaces (const string& s)
   {
     if (s.empty ())
       return s;
-    
+
     string s_new (s);
-    
+
     // strip trailing spaces
     string::size_type first_space = s_new.size ();
     ROSE_ASSERT (first_space >= 1);
@@ -45,14 +45,14 @@ trimSpaces (const string& s)
         ROSE_ASSERT (isspace (s_new[first_space]));
         s_new.erase (first_space); // erase to end of string
       }
-    
+
     // strip leading spaces
     string::size_type first_nonspace = 0;
     while (first_nonspace < s_new.size () && isspace (s_new[first_nonspace]))
       first_nonspace++;
     if (first_nonspace)
       s_new.erase (0, first_nonspace);
-    
+
     return s_new;
   }
 
@@ -62,7 +62,7 @@ isValidMangledName (string name)
    {
      if (name.empty () || isdigit (name[0]))
           return false;
-    
+
      for (string::size_type i = 0; i < name.size (); ++i)
         {
           if (!isalnum (name[i]) && name[i] != '_')
@@ -87,8 +87,8 @@ SgName
 joinMangledQualifiers (const SgName& base, const SgName& name)
    {
 #if 0
-  // DQ (8/25/2006): This is debugging code required to find a problem that 
-  // results in a 480,000,000 character string used of a mangled name prefix 
+  // DQ (8/25/2006): This is debugging code required to find a problem that
+  // results in a 480,000,000 character string used of a mangled name prefix
   // within the boost_tests/test_boost_phoenix_v2.C
      printf ("base.getString ().size() = %ld name.getString ().size() = %ld \n",base.getString().size(),name.getString().size());
 
@@ -108,41 +108,35 @@ joinMangledQualifiers (const SgName& base, const SgName& name)
 const SgFunctionDefinition*
 findRootFunc (const SgScopeStatement* scope)
    {
-  // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C (added support for SgTemplateFunctionDefinition).
-
-  // printf ("Inside of findRootFunc(scope = %p) \n",scope);
-
-     if (scope != NULL)
+   // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C
+   // (added support for SgTemplateFunctionDefinition).
+      if (scope != nullptr)
         {
-          if (scope->variantT () == V_SgFunctionDefinition)
-             {
-               return isSgFunctionDefinition (scope);
-             }
-            else
-             {
-               if (scope->variantT () == V_SgTemplateFunctionDefinition)
-                  {
-                    return isSgTemplateFunctionDefinition (scope);
-                  }
-                 else
-                  {
-                 // DQ (12/13/2011): Adding test for improperly set scope.
-                 // printf ("In findRootFunc(): scope = %p = %s \n",scope,scope->class_name().c_str());
+          switch (scope->variantT())
+            {
+              case V_SgFunctionDefinition:
+                return isSgFunctionDefinition (scope);
 
-                    SgScopeStatement* nextOuterScope = scope->get_scope();
-                    ROSE_ASSERT(nextOuterScope != NULL);
-#if 0
-                    printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
-#endif
-                    ROSE_ASSERT(nextOuterScope != scope);
+              case V_SgTemplateFunctionDefinition:
+                return isSgTemplateFunctionDefinition (scope);
 
-                    return findRootFunc(scope->get_scope());
-                  }
-             }
+              case V_SgGlobal:
+                // Rasmussen (3/17/2021): Reached end of the line (of scopes), return nullptr
+                // Note: get_mangled_name() causes havoc for Jovial. See issues RC-227 and RC-765.
+                // Returning nullptr at global scope helps solve Jovial problems.
+                return nullptr;
+
+              default:
+                // DQ (12/13/2011): Adding test for improperly set scope.
+                SgScopeStatement* nextOuterScope = scope->get_scope();
+                ROSE_ASSERT(nextOuterScope != nullptr);
+                ROSE_ASSERT(nextOuterScope != scope);
+                return findRootFunc(nextOuterScope);
+            }
         }
 
   // Not found.
-     return NULL;
+     return nullptr;
    }
 
 
@@ -151,9 +145,9 @@ size_t
 getLocalScopeNum (const SgFunctionDefinition* func_def, const SgScopeStatement* target)
 {
 #if SKIP_BLOCK_NUMBER_CACHING
-  // DQ (10/4/2006): This takes too long and stalls the compilation of 
-  // some large codes (plum hall e.g. cvs06a/conform/ch7_22.c).  It is 
-  // rewritten below to use a cache mechanisk link to a cache invalidation 
+  // DQ (10/4/2006): This takes too long and stalls the compilation of
+  // some large codes (plum hall e.g. cvs06a/conform/ch7_22.c).  It is
+  // rewritten below to use a cache mechanisk link to a cache invalidation
   // mechanism.
 
   // Preorder traversal to count the number of basic blocks preceeding 'target'
@@ -186,7 +180,7 @@ getLocalScopeNum (const SgFunctionDefinition* func_def, const SgScopeStatement* 
   counter.traverse (const_cast<SgFunctionDefinition *> (func_def), preorder);
   return counter.count ();
 #else
-  // DQ (10/6/2006): Implemented caching of computed lables for scopes in 
+  // DQ (10/6/2006): Implemented caching of computed lables for scopes in
   // functions to avoid quadratic behavior of previous implementation.  The model
   // for this is the same a s what will be done to support caching of mangled names.
   // printf ("getLocalScopeNum calling func_def->get_scope_number(target)! \n");
@@ -226,8 +220,6 @@ mangleQualifiersToString (const SgScopeStatement* scope)
   // DQ (3/14/2012): I would like to make this assertion (part of required C++ support).
      ROSE_ASSERT(scope != NULL);
 
-  // DQ (3/19/2011): Make this a valid string.
-  // string mangled_name = "";
      string mangled_name = "";
      if (scope != NULL)
         {
@@ -267,7 +259,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 #endif
 
 #if 1
-                 // DQ (10/31/2015): This is an attempt to break the cycles that would result in infinite 
+                 // DQ (10/31/2015): This is an attempt to break the cycles that would result in infinite
                  // recursive calls to mangle the names of template class instantiations.
 #if 0
                     MangledNameSupport::outputVisitedTemplateDefinitions();
@@ -277,7 +269,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                        {
                       // Skip the call that would result in infinte recursion.
 #if 0
-                         printf ("In manglingSupport.C: mangleQualifiersToString(): skipping the call to process the template class instantiation definition: def = %p = %s \n",def,def->class_name().c_str()); 
+                         printf ("In manglingSupport.C: mangleQualifiersToString(): skipping the call to process the template class instantiation definition: def = %p = %s \n",def,def->class_name().c_str());
 #endif
                        }
                       else
@@ -311,8 +303,8 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                          printf ("DONE: In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
 #endif
 
-                      // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the 
-                      // template instantiation from the list so that other non-nested uses of the template 
+                      // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the
+                      // template instantiation from the list so that other non-nested uses of the template
                       // instantiation will force the manged name to be generated.
                          if (templateInstantiationDefinition != NULL)
                             {
@@ -358,13 +350,21 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 
             // DQ (9/27/2012): Added this case to be the same as that for SgFunctionDefinition (removed case below).
                case V_SgTemplateFunctionDefinition:
-
                case V_SgFunctionDefinition:
                   {
-                 // 'scope' is part of scope for locally defined classes
-                    const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
-                    ROSE_ASSERT(def != NULL);
-                    mangled_name = def->get_mangled_name().getString();
+                    // Rasmussen (3/17/2021): Jovial doesn't need name mangling for functions as
+                    // they can cause infinite recursion because a typedef may be a function argument.
+                    if (SageInterface::is_Jovial_language())
+                      {
+                        mangled_name = "";
+                      }
+                    else
+                      {
+                     // 'scope' is part of scope for locally defined classes
+                        const SgFunctionDefinition* def = isSgFunctionDefinition (scope);
+                        ROSE_ASSERT(def != nullptr);
+                        mangled_name = def->get_mangled_name().getString();
+                      }
                     break;
                   }
 
@@ -378,8 +378,6 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgWhileStmt:
                case V_SgBasicBlock:
                   {
-                 // printf ("In mangleQualifiersToString(scope = %p = %s) \n",scope,scope->class_name().c_str());
-
                     const SgScopeStatement* stmt = isSgScopeStatement(scope);
                     ROSE_ASSERT (stmt != NULL);
                     string stmt_name      = mangleLocalScopeToString (stmt);
@@ -388,40 +386,67 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     mangled_name = joinMangledQualifiersToString (par_scope_name,stmt_name);
                     break;
                   }
-                  
+
                case V_SgAdaPackageSpec:
                   {
                     const SgAdaPackageSpec*     spec   = isSgAdaPackageSpec(scope);
                     const SgNode*               parent = spec->get_parent();
                     ROSE_ASSERT(parent);
-                    
+
                     const SgAdaPackageSpecDecl* dcl    = isSgAdaPackageSpecDecl(parent);
                     // ROSE_ASSERT(dcl);
-                    
+
                     // \todo \revise dcl may not exist for a special, hidden scope
                     mangled_name = dcl ? dcl->get_name().getString() // or get_mangled_name ??
                                        : spec->get_mangled_name().getString();
                     break;
                   }
-                  
+
+               case V_SgAdaPackageBody:
+                 {
+                   const SgAdaPackageBody*     spec   = isSgAdaPackageBody(scope);
+                   const SgNode*               parent = spec->get_parent();
+                   ROSE_ASSERT(parent);
+
+                   const SgAdaPackageBodyDecl* dcl    = isSgAdaPackageBodyDecl(parent);
+                   ROSE_ASSERT(dcl);
+
+                   mangled_name = dcl->get_name().getString();
+                   break;
+                 }
+
                case V_SgAdaTaskSpec:
                   {
                     const SgAdaTaskSpec*     spec   = isSgAdaTaskSpec(scope);
                     const SgNode*            parent = spec->get_parent();
                     ROSE_ASSERT(parent);
-                    
+
                     // or get_mangled_name ??
                     if (const SgAdaTaskSpecDecl* taskspec = isSgAdaTaskSpecDecl(parent))
                       mangled_name = taskspec->get_name().getString();
                     else if (const SgAdaTaskTypeDecl* tasktype = isSgAdaTaskTypeDecl(parent))
                       mangled_name = tasktype->get_name().getString();
                     else
-                      ROSE_ASSERT(false);
-                    
+                      ROSE_ABORT();
+
                     break;
                   }
 
-           
+               case V_SgAdaTaskBody:
+                  {
+                    const SgAdaTaskBody*     body   = isSgAdaTaskBody(scope);
+                    const SgNode*            parent = body->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    const SgAdaTaskBodyDecl* bodydecl = isSgAdaTaskBodyDecl(parent);
+                    ROSE_ASSERT(bodydecl);
+
+                    mangled_name = bodydecl->get_name().getString();
+                    break;
+                  }
+
+
            // PP (06/01/20) - not sure how to handle function parameter scope;
            //                 for now, handle like SgGlobal
                case V_SgFunctionParameterScope:
@@ -544,7 +569,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 SgName
 mangleQualifiers( const SgScopeStatement* scope )
    {
-  // DQ (3/14/2012): I think we have top assert this here, though it appears to have been commented out.
+  // DQ (3/14/2012): I think we have to assert this here, though it appears to have been commented out.
   // This may become a part of a future set of language dependent assertions in the AST Build Interface
   // since it is more relevant for C++ than for other languges.
   // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.
@@ -648,7 +673,7 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
 
        // DQ (2/14/2016): Adding support for VLA types.
        //    1) All vla types are equivalent, so no further name mangling is useful.
-       //    2) If we proceed then we will cause endless recursion in the evaluation 
+       //    2) If we proceed then we will cause endless recursion in the evaluation
        //       of the scope of the array index variable reference expressions.
 #if 1
           SgName mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
@@ -787,7 +812,7 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
             else if (s_op == "[]")  s_op_mangled = "__xi";
             else
               {
-             // DQ (1/8/2006): This is the case of a name that just happends to start with 
+             // DQ (1/8/2006): This is the case of a name that just happends to start with
              // the work "operator" (e.g. operator_takes_lvalue_operand, in test2005_198.C)
              // the mangle form is just the unmodified function name.
              // rtmp = fname;
@@ -796,7 +821,7 @@ mangleFunctionNameToString (const string& s, const string& ret_type_name )
             printf ("In mangleFunctionNameToString(): Before s_mangled.replace(): s_mangled = %s \n",s_mangled.c_str());
 #endif
          // DQ (2/7/2006): Bug fix for case of function such as operator_takes_lvalue_operand()
-         // In the case of operator_takes_lvalue_operand() this should replace 
+         // In the case of operator_takes_lvalue_operand() this should replace
          // "_takes_lvalue_operand" with "_takes_lvalue_operand" (trivial case).
             s_mangled.replace (n_opstr, s_op.size (), s_op_mangled);
 #if 0
@@ -1232,9 +1257,8 @@ mangleValueExp (const SgValueExp* expr)
          }
 
       default:
-        std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
-        ROSE_ASSERT (false); // Unhandled case.
-        break;
+        std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl;
+        ROSE_ABORT (); // Unhandled case.
       }
 
     return replaceNonAlphaNum (mangled_name);
@@ -1387,7 +1411,7 @@ mangleExpression (const SgExpression* expr)
           } else if (e->get_operand_type()) {
             mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
           } else {
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
           mangled_name << "_eSizeOfOp_";
           break;
@@ -1400,7 +1424,7 @@ mangleExpression (const SgExpression* expr)
           } else if (e->get_operand_type()) {
             mangled_name << "_type_" << e->get_operand_type()->get_mangled().getString();
           } else {
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
           }
           mangled_name << "_eAlignOfOp_";
           break;
@@ -1457,7 +1481,7 @@ mangleExpression (const SgExpression* expr)
             } else if (eit != NULL) {
               mangled_name << mangleExpression(eit);
             } else {
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
             }
           }
           mangled_name << "_eNodePtrList_";
@@ -1503,9 +1527,14 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bFunctionParameterRefExp_" << std::hex << e << "_eFunctionParameterRefExp_";
           break;
         }
+        case V_SgAdaAttributeExp: {
+          const SgAdaAttributeExp* e = isSgAdaAttributeExp (expr);
+          mangled_name << "_badaAttributeExp_" << std::hex << e << "_eadaAttributeExp_";
+          break;
+        }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
       }
     }

@@ -15,7 +15,9 @@ class ProcessTemplateHandlingOptions : public AstSimpleProcessing
    {
      private:
       //! current source file
+#if 0 // [Robb Matzke 2021-03-17]: unused
           SgFile* file;
+#endif
           bool buildImplicitTemplates;
           bool buildImplicitInlineTemplates;
 

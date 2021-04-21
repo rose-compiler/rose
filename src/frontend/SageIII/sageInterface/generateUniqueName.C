@@ -157,7 +157,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     if (key.empty() == true)
                        {
                          printf ("Generated empty string from type->get_mangled() type = %p = %s \n",type,type->class_name().c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                     break;
                   }
@@ -434,7 +434,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                               default:
                                  {
                                    printf ("Parent of SgFunctionParameterList = %p = %s is not handled \n",parentNode,parentNode->class_name().c_str());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -598,13 +598,13 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                               default:
                                  {
                                    printf ("Parent of SgEnumDeclaration = %p = %s is not handled \n",parentNode,parentNode->class_name().c_str());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
 #if 0
                       // DQ (7/11/2010): Commented out this assertion since we handle it above for now.
                          printf ("ERROR: detected case of empty key constructed \n");
-                         ROSE_ASSERT (false);
+                         ROSE_ABORT ();
 #endif
                        }
 #endif
@@ -632,7 +632,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = "__template_class_declaration__" + StringUtility::numberToString(statement);
 #if 0
                     printf ("In SageInterface::generateUniqueName(): case V_SgTemplateClassDeclaration: Sorry, not implemented! key = %s \n",key.c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -764,7 +764,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          default:
                             {
                               printf ("Error: default reached \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 
@@ -968,7 +968,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                                    printf ("Parent of SgClassDeclaration = %p = %s is not a handled \n",parentNode,parentNode->class_name().c_str());
                                    classDeclaration->get_file_info()->display("classDeclaration: Parent of SgClassDeclaration is not a handled");
                                    parentNode->get_file_info()->display("parentNode: Parent of SgClassDeclaration is not a handled");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -1094,7 +1094,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                   {
                  // ignore these cases
                     printf ("Default reached in case of SgStatement in generateUniqueName(node = %p = %s) \n",node,node->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -1142,7 +1142,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     default:
                        {
                          printf ("Error: default reached in SageInterface::generateUniqueName (declaration prefix) \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -1362,8 +1362,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                default:
                   {
                     printf ("Error: default reached in generateUniqueName() symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
              }
         }
@@ -1481,7 +1480,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
             // case V_SgFile:
                case V_SgSourceFile:
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
 #endif
                   {
@@ -1639,8 +1638,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          case SgTemplateArgument::argument_undefined:
                             {
                               printf ("Error: SgTemplateArgument::argument_undefined reached in switch \n");
-                              ROSE_ASSERT(false);
-                              break;
+                              ROSE_ABORT();
                             }
                          case SgTemplateArgument::type_argument:
                             {
@@ -1708,7 +1706,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          default:
                             {
                               printf ("Error: default reached \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                     break;
@@ -1809,8 +1807,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                default:
                   {
                     printf ("Error: default reached in generateUniqueName() node = %p = %s \n",node,node->class_name().c_str());
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                   }
              }
         }

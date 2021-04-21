@@ -297,8 +297,8 @@ sub create_2nd_level {
   print "    $fname();\n";
   open $cfile, ">", $cname or die "cannot create $cname: $!";
   emit_warning($cfile);
-  print $cfile "#include <rosePublicConfig.h>\n";
-  print $cfile "##ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT\n";
+  print $cfile "#include <featureTests.h>\n";
+  print $cfile "##ifdef ROSE_ENABLE_BINARY_ANALYSIS\n";
   print $cfile "#include \"sage3basic.h\"\n";
   print $cfile "#include \"AssemblerX86.h\"\n";
   print $cfile "\n";
@@ -389,8 +389,8 @@ sub emit_header {
 #ifndef ROSE_DISASSEMBLER_X86_INIT_H
 #define ROSE_DISASSEMBLER_X86_INIT_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace Rose {
 namespace BinaryAnalysis {

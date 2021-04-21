@@ -30,6 +30,13 @@ static CaseValueRange* getCaseValueRange()
    return caseValueRange_inst;
 }
 
+static moduleNature* getModuleNature()
+{
+   static moduleNature* moduleNature_inst = NULL;
+   if ( moduleNature_inst== NULL) moduleNature_inst = new moduleNature();
+   return moduleNature_inst;
+}
+
 
 // ********************************************************************
 // ********************************************************************
@@ -809,8 +816,7 @@ void c_action_label(Token_t * lbl)
                 {
                     printf("Error: unimplemented type = %s \n",
                             intrinsicType->class_name().c_str());
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                 }
             }
 
@@ -1016,6 +1022,49 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R416 c_action_signed_real_literal_constant()");
 #endif
 
+        // Pei-Hung (03/10/2021) The sign and token is provded by OFP now.
+        // if a sign is present, it value and associated string is updated with
+        // to sign.  It is checking V_SgFloatVal now and might need to add more
+        // supporting types in the future.
+
+        if (sign != NULL)
+        {
+            ROSE_ASSERT(astExpressionStack.empty() == false);
+            SgExpression* expression = astExpressionStack.front();
+            SgValueExp* valueExpression = isSgValueExp(expression);
+            ROSE_ASSERT(valueExpression != NULL);
+
+            string signstring(sign->text);
+            switch (valueExpression->variantT())
+            {
+                case V_SgFloatVal:
+                {
+                    SgFloatVal* floatValue = isSgFloatVal(valueExpression);
+                    string valueString = floatValue->get_valueString();
+                    if(signstring.compare("-") == 0)
+                    {
+                      floatValue->set_value(-floatValue->get_value());
+                      floatValue->set_valueString( "-" + valueString );
+                      ROSE_ASSERT(valueString.empty() == false);
+                    }
+                    else if(signstring.compare("+") == 0)
+                    {
+                      floatValue->set_valueString( "+" + valueString );
+                      ROSE_ASSERT(valueString.empty() == false);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    printf(
+                            "Error, default reached in switch: valueExpression = %p = %s \n",
+                            valueExpression, valueExpression->class_name().c_str());
+                    ROSE_ABORT();
+                }
+            }
+        }
+#if 0
         if (sign == NULL)
         {
             // This is a bug in OFP (I think) See test2007_144.f90.
@@ -1051,7 +1100,7 @@ void c_action_label(Token_t * lbl)
                     printf(
                             "Error, default reached in switch: valueExpression = %p = %s \n",
                             valueExpression, valueExpression->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
         }
@@ -1062,6 +1111,7 @@ void c_action_label(Token_t * lbl)
             // No need to do anything here (unless we want to explicitly preserve the "+".
             // We can do this later by using the SgUnaryPlus operator.
         }
+#endif
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R416 c_action_signed_real_literal_constant()");
@@ -1618,8 +1668,7 @@ void c_action_label(Token_t * lbl)
            default:
            {
               std::cerr << "In c_action_type_attr_spec: found unknown TypeAttrSpec " << specType << std::endl;
-              ROSE_ASSERT(false);
-              break;
+              ROSE_ABORT();
            }
         }
 
@@ -1783,7 +1832,7 @@ void c_action_label(Token_t * lbl)
         if (!varDecl)
         {
             cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         SgInitializedNamePtrList& varList = varDecl->get_variables ();
         SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -1903,6 +1952,8 @@ void c_action_label(Token_t * lbl)
             {
                 if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
                 printf("found a ComponentAttrSpec_contiguous spec \n");
+                DeclAttributes.setIsContiguous(true);
+                DeclAttributes.setContiguousAttr(ComponentAttrSpec_contiguous);
                 break;
             }
 
@@ -1925,7 +1976,7 @@ void c_action_label(Token_t * lbl)
                 printf(
                         "default reached in c_action_component_attr_spec() specType = %d \n",
                         specType);
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
 
@@ -2234,7 +2285,7 @@ void c_action_label(Token_t * lbl)
                 count, hasBindingPrivateStmt ? "true" : "false");
 
         printf("Is this used! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     /** R449
@@ -2445,7 +2496,7 @@ void c_action_label(Token_t * lbl)
 
 #if 0
         printf ("Exiting as a test! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
     }
 
@@ -2965,7 +3016,7 @@ void c_action_label(Token_t * lbl)
 
 #if 0
         printf ("In c_action_ac_implied_do_control(): handling the implied do control support \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
     }
 
@@ -3014,7 +3065,7 @@ void c_action_label(Token_t * lbl)
         if (!varDecl)
         {
             cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         SgInitializedNamePtrList& varList = varDecl->get_variables ();
         SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -3127,8 +3178,7 @@ void c_action_label(Token_t * lbl)
             {
                 printf(
                         "Sorry, not implemented: c_action_declaration_type_spec(DeclarationTypeSpec_unlimited) \n");
-                ROSE_ASSERT(false);
-                break;
+                ROSE_ABORT();
             }
 
             default:
@@ -3138,8 +3188,7 @@ void c_action_label(Token_t * lbl)
                         type);
 
                 // DQ (11/18/2007): Added an assertion here.
-                ROSE_ASSERT(false);
-                break;
+                ROSE_ABORT();
             }
         }
 
@@ -3479,7 +3528,7 @@ void c_action_label(Token_t * lbl)
             default:
             {
                 printf("default reached in c_action_attr_spec() attr = %d \n", attr);
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
 
@@ -3714,7 +3763,7 @@ void c_action_label(Token_t * lbl)
             cerr << "ERROR: line " << id->line << ", col " << id->col
             << " - Expect a SgVariableDeclaration, but get a "
             << DeclAttributes.getDeclaration()->class_name() << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         initializedName->set_declptr(varDecl);
         varDecl->append_variable(initializedName, initializedName->get_initializer());
@@ -3923,7 +3972,7 @@ void c_action_label(Token_t * lbl)
                 {
                     printf(
                             "Could not find an initializer on the stack (either the astInitializerStack nor the astExpressionStack) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
         }
@@ -4094,8 +4143,7 @@ void c_action_label(Token_t * lbl)
                 {
                     printf(
                             "Error: This sort of case ArraySpecElement_expr should have been processed already \n");
-                    ROSE_ASSERT(false);
-                    break;
+                    ROSE_ABORT();
                 }
 
                 case ArraySpecElement_expr_colon:
@@ -4159,7 +4207,7 @@ void c_action_label(Token_t * lbl)
                 default:
                 {
                     printf("Error: default reached type = %d \n", type);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
 
@@ -4989,7 +5037,7 @@ void c_action_label(Token_t * lbl)
         if (astExpressionStack.size() == 0)
         {
             printf("Error: astExpressionStack.size() == 0 \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
         else
         {
@@ -5021,7 +5069,7 @@ void c_action_label(Token_t * lbl)
                     // See test2007_107.f90
                     printf(
                             "This might be an implied do loop (need an example to debug this case!) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
         }
@@ -5056,7 +5104,7 @@ void c_action_label(Token_t * lbl)
                 printf(
                         "Error: default reached dataValue->get_data_initialization_format() = %d \n",
                         dataValue->get_data_initialization_format());
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
 
@@ -5960,7 +6008,7 @@ void c_action_label(Token_t * lbl)
 #endif
 #if 0
         printf ("Exiting after clearing the stack as a move to skip the implementation of more complex implicit statements. \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
     }
 
@@ -8174,7 +8222,7 @@ void c_action_label(Token_t * lbl)
 #endif
 #if 0
             printf ("Exting after test! \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
 #endif
 
             astExpressionStack.push_front(expressionList);
@@ -8246,13 +8294,13 @@ void c_action_label(Token_t * lbl)
         if (counter++ > 0)
         {
             printf ("Exiting as a test! \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 #endif
 
 #if 0
         printf ("Exiting as a test! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
     }
 
@@ -8328,7 +8376,7 @@ void c_action_label(Token_t * lbl)
                         else
                         {
                             printf("Unknown allocate option: %s \n", text.c_str());
-                            ROSE_ASSERT(false);
+                            ROSE_ABORT();
                         }
                     }
                 }
@@ -8673,7 +8721,7 @@ void c_action_label(Token_t * lbl)
                     {
                         // Error
                         printf("Unknown dealloc option: %s \n", text.c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
 
@@ -8949,7 +8997,7 @@ void c_action_label(Token_t * lbl)
             {
                 printf("Error: multOp->text not + or - multOp->text = %s \n",
                         multOp->text);
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
 
@@ -9018,7 +9066,7 @@ void c_action_label(Token_t * lbl)
                 else
                 {
                     printf ("Error: addOp->text not + or - addOp->text = %s \n",addOp->text);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
 
@@ -9082,7 +9130,7 @@ void c_action_label(Token_t * lbl)
                 {
                     printf("Error: addOp->text not + or - addOp->text = %s \n",
                             addOp->text);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
 
@@ -9136,7 +9184,7 @@ void c_action_label(Token_t * lbl)
             else
             {
                 printf("Error: addOp->text not + or - addOp->text = %s \n", addOp->text);
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
 
@@ -9229,7 +9277,7 @@ void c_action_label(Token_t * lbl)
         if (numConcatOps > 0)
         {
             printf ("Exiting as a test! \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 #endif
     }
@@ -12071,7 +12119,7 @@ void c_action_case_value()
                     printf(
                             "Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %" PRIuPTR " \n",
                             astExpressionStack.size());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
 
@@ -12739,7 +12787,7 @@ void c_action_case_value()
                 name != NULL ? name->text : "NULL");
 
         printf("Assign statement not implemented (very old langauge feature) \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     /**
@@ -12765,7 +12813,7 @@ void c_action_case_value()
 
         printf(
                 "Assigned GOTO statement not implemented (very old langauge feature) \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     /**
@@ -13250,8 +13298,8 @@ void c_action_case_value()
         {
             printf(
                     "In c_action_file_unit_number(): Unclear what to do in this case (empty astExpressionStack)! \n");
-            ROSE_ASSERT(false);
-
+            ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreachable
             // If there was nothing pushed to the stack, then push the SgAsteriskShapeExp ???
             // I think we are just borrowing the fact that this expression will output a "*" and
             // perhaps we should have a specialized expression more specific to format semantics.
@@ -13260,6 +13308,7 @@ void c_action_case_value()
             astExpressionStack.push_front(asteriskExpression);
 
             push_token("unit");
+#endif
         }
         else
         {
@@ -13289,7 +13338,7 @@ void c_action_case_value()
                     {
                         printf(
                                 "In c_action_file_unit_number(): Unclear what to do in this case! \n");
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
 
                     break;
@@ -13303,7 +13352,7 @@ void c_action_case_value()
 
                     printf(
                             "In c_action_file_unit_number(): Unclear what to do in this case (default)! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
         }
@@ -13958,7 +14007,7 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
                      {
                         fprintf (stderr, "In c_action_write_stmt(): ERROR processing token = %s with spec_expr of class = %s \n",
                                          spec_name->text, spec_expr->class_name().c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                      }
             }
             else if (strncasecmp(spec_name->text, "nml", 3) == 0)
@@ -14050,7 +14099,7 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
                {
                   fprintf (stderr, "In c_action_write_stmt(): ERROR processing token = %s with spec_expr of class = %s \n",
                                    spec_name->text, spec_expr->class_name().c_str());
-                  ROSE_ASSERT(false);
+                  ROSE_ABORT();
             }
 
             astNameStack.pop_front();
@@ -14360,7 +14409,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
            if ( keyword)
               cout << "At line " << keyword->line << " ";
            cout << "c_action_io_control_spec(): case hasExpression == false and hasAsterisk == false NOT possible from the grammar." << endl;
-           ROSE_ASSERT(false);
+           ROSE_ABORT();
         }
 
 #if 0
@@ -15980,7 +16029,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
                 digitString, digitString != NULL ? digitString->text : "NULL");
 
         printf("Unclear where this c_action is called! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -15993,7 +16042,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_v_list__begin() \n");
 
         printf("Unclear where this c_action is called! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -16006,7 +16055,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_v_list(): count = %d \n", count);
 
         printf("Unclear where this c_action is called! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -16637,7 +16686,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
         // SgRenamePairPtrList nameList;
         // SgUseStatement* useStatement = new SgUseStatement(name,hasOnly,nameList);
-        SgUseStatement* useStatement = new SgUseStatement(name, hasOnly);
+        SgUseStatement* useStatement = new SgUseStatement(name, hasOnly, "");
 
         ROSE_ASSERT(useKeyword != NULL);
         setSourcePosition(useStatement, useKeyword);
@@ -16692,7 +16741,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
                 cout
                 << "Error : cannot find the module (module should have been seen in a previously generated file) : "
                 << modName << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
 
             ROSE_ASSERT (moduleStatement != NULL);
@@ -16735,6 +16784,12 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         // This appears to always be false, and I think it is a bug in OFP.
         // Actually, the c_action_only steals the result, so this does work when not using the "only" option.
         // ROSE_ASSERT(hasRenameList == false);
+
+        // Pei-Hung (03/09/2021) Added module nature info. into AST
+        if(hasModuleNature)
+        {
+           useStatement->set_module_nature(getModuleNature()->nature);
+        }
 
 #define RICE_S3D_WORKAROUND 1  // Rice's workaround the USE module with rename-list bug
         // Only supporting hasOnly == false in initial work.
@@ -17083,6 +17138,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_module_nature(): nature = %p = %s \n", nature,
                 nature != NULL ? nature->text : "NULL");
 
+        getModuleNature()->nature = nature->text;
         // outputState("At BOTTOM of R1110 c_action_module_nature()");
     }
 
@@ -17288,7 +17344,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
             {
                 printf(
                         "Error: rename list with only clause not supported yet, bug in OFP. \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
             ROSE_ASSERT(astNameStack.empty() == true);
         }
@@ -17771,14 +17827,13 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
             {
                 printf(
                         "Operator definition not yet implemented type = GenericSpec_dtio_generic_spec \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
 
             default:
             {
                 printf("Error default reached type = %d \n", type);
-                ROSE_ASSERT(false);
-                break;
+                ROSE_ABORT();
             }
         }
 
@@ -18282,7 +18337,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
             // If the syntax didn't include "()" then we get a SgFunctionRefExp on the stack and we have to build the SgFunctionCallExp.
             ROSE_ASSERT(isSgFunctionRefExp(astExpressionStack.front()) != NULL);
             printf("We got a SgFunctionRefExp instead of a SgFunctionCallExp \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         ROSE_ASSERT(functionCallExp != NULL);
@@ -18511,7 +18566,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 #endif
 #if 0
             printf ("Exiting as a test! \n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
 #endif
         }
 #endif
@@ -18522,7 +18577,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
 #if 0
         printf ("Exiting as a test! \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
     }
 
@@ -19975,7 +20030,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         {
             printf("ERROR(CAF): The team selector:\"%s\" must be declared with \"Team\" statement.\n",
                     team_id->text);
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         SgVarRefExp* teamIdReference = new SgVarRefExp(teamId);
@@ -20100,7 +20155,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         else
         {
             printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         ROSE_ASSERT(eos != NULL);

@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "variables.h"
 #include "cfgUtils.h"
 #include "arrIndexLabeler.h"
@@ -1127,3 +1130,5 @@ set<arrayElt> getArrayRefsInSubtree(SgNode* root)
         ArrayEltCollector c;
         return c.traverse(root);        
 }
+
+#endif

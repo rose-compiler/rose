@@ -89,7 +89,7 @@ size_t loopNode::getNumbering(const abstract_node * another_node) const
   else if (p_loop_node)  
     loops = p_loop_node->getChildren();
   else
-    assert(false);
+    ROSE_ABORT();
  for (vector<MyLoop*>::iterator i=loops.begin();
       i!=loops.end(); i++)
   {
@@ -128,7 +128,7 @@ AbstractHandle::abstract_node* loopNode::findNode(std::string construct_type_str
     else 
     {
       cerr<<"error: unhandled specifier type in loopNode::findNode()"<<endl;
-      assert(false);
+      ROSE_ABORT();
     }
   }//end for
   return result;
@@ -195,7 +195,7 @@ AbstractHandle::abstract_node* fileNode::findNode(std::string construct_type_str
     else 
     {
       cerr<<"error: unhandled specifier type in loopNode::findNode()"<<endl;
-      assert(false);
+      ROSE_ABORT();
     }
   }//end for
   return result;  

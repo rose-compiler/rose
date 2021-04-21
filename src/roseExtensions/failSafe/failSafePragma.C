@@ -50,8 +50,7 @@ string FailSafe::toString(fail_safe_enum fs_type)
   
      default: 
        cerr<<"Error: unhandled failsafe construct within FailSafe::toString()."<<endl;
-       ROSE_ASSERT (false);
-       break;
+       ROSE_ABORT ();
   }
   return result; 
 }
@@ -222,7 +221,7 @@ void FailSafe::Attribute::addClause(fail_safe_enum clause_type)
   else
   {
     cerr<<"FailSafe::Attribute::addClause(): Unrecognized clause type:"<<FailSafe::toString(clause_type)<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -305,7 +304,7 @@ void FailSafe::Attribute::setSpecifierValue (FailSafe::fail_safe_enum valuex)
       break;
     default: 
      cerr<<"FailSafe::setSpecifier() Illegal specifier value:"<<valuex<<endl;
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
   }
 }
 
@@ -319,7 +318,7 @@ void FailSafe::Attribute::setErrorType(FailSafe::fail_safe_enum valuex)
       break;
     default: 
      cerr<<"FailSafe::setErrorType() Illegal value:"<<valuex<<endl;
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
   }
 }
 
@@ -335,7 +334,7 @@ void FailSafe::Attribute::setViolationType(FailSafe::fail_safe_enum valuex)
       break;
     default: 
      cerr<<"FailSafe::setViolationType() Illegal value:"<<valuex<<endl;
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
   }
 }
 
@@ -354,7 +353,7 @@ bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
   else
   {        
     cerr<<"FailSafe::Attribute::hasClause(): Unrecognized clause type as a parameter:"<<fs_type<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
   return result;
 }
@@ -431,7 +430,7 @@ bool FailSafe::Attribute::hasClause(FailSafe::fail_safe_enum fs_type)
      else
      {
        cerr<<"Error. Unhandled enum type in FailSafe::Attribute::toFailSafeString (intype):"<<in_type<<endl;
-       ROSE_ASSERT (false);
+       ROSE_ABORT ();
      }
 
     return result;
@@ -583,13 +582,13 @@ static bool afs_match_assert (SgExpression** e1)
   if (!afs_match_char('('))
   {
     printf ("Error: expecting ( after parsing assert \n");
-    assert (false);
+    ROSE_ABORT ();
   }
   // mandatory expression
   if (!afs_match_assignment_expression())
   {
     printf ("Error: expecting an expression after parsing assert(\n");
-    assert (false);
+    ROSE_ABORT ();
   }
 
   // retrieve the obtained expression AST piece
@@ -600,7 +599,7 @@ static bool afs_match_assert (SgExpression** e1)
   if (!afs_match_char(')'))
   {
     printf ("Error: expecting ) after parsing assert(exp \n");
-    assert (false);
+    ROSE_ABORT ();
   }
   return true;
 }
@@ -614,7 +613,7 @@ static bool afs_match_error(FailSafe::fail_safe_enum* etype)
   if (!afs_match_char('('))
   {
     printf ("Error: expecting ( after parsing error \n");
-    assert (false);
+    ROSE_ABORT ();
   }
 
   //parse error_type
@@ -626,13 +625,13 @@ static bool afs_match_error(FailSafe::fail_safe_enum* etype)
   else
   {
     printf ("Error: expecting error_type after parsing error( \n");
-    assert (false);
+    ROSE_ABORT ();
   }  
 
   if (!afs_match_char(')'))
   {
     printf ("Error: expecting ) after parsing assert(ETYPE \n");
-    assert (false);
+    ROSE_ABORT ();
   }
   return true;
 }
@@ -649,7 +648,7 @@ static bool afs_match_recover(FailSafe::Attribute *result)
   if (!afs_match_char('('))
   {
     printf ("Error: expecting ( after parsing recover \n");
-    assert (false);
+    ROSE_ABORT ();
   }
 
   //parse function name 
@@ -660,7 +659,7 @@ static bool afs_match_recover(FailSafe::Attribute *result)
     if (!afs_match_char(','))
     {
       printf ("Error: expecting ( after parsing recover \n");
-      assert (false);
+      ROSE_ABORT ();
     }
     // actual parameter list
     if (afs_match_argument_expression_list())
@@ -672,13 +671,13 @@ static bool afs_match_recover(FailSafe::Attribute *result)
   else
   {
     printf ("Error: expecting a function name after parsing recover ( \n");
-    assert (false);
+    ROSE_ABORT ();
   }  
 
   if (!afs_match_char(')'))
   {
     printf ("Error: expecting ) after parsing recover (func, .. \n");
-    assert (false);
+    ROSE_ABORT ();
   }
   // save parsed information to result only when completing the whole thing
   result->addClause (FailSafe::e_recover);
@@ -766,7 +765,7 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
        if (!afs_match_predicate_and_more (result))
        {
          cerr<<"Error: FailSafe::parse_fail_safe_directive() expect status assert() etc. but facing:"<< c_char<<endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
        }
      }
      else if (afs_match_substr("data")) 
@@ -775,7 +774,7 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
        if (!afs_match_predicate_and_more (result))
        {
          cerr<<"Error: FailSafe::parse_fail_safe_directive() expect data assert() etc. but facing:"<< c_char<<endl;
-         ROSE_ASSERT (false);
+         ROSE_ABORT ();
        }
      }
      else if (afs_match_substr("tolerance") ) 
@@ -797,14 +796,14 @@ FailSafe::Attribute* FailSafe::parse_fail_safe_directive (SgPragmaDeclaration* p
      else
      {
        cerr<<"Error: FailSafe::parse_fail_safe_directive() expect keyword failsafe but facing:"<< c_char<<endl;
-       ROSE_ASSERT (false);
+       ROSE_ABORT ();
      }
      
   }
   else
   {
     cerr<<"Error: FailSafe::parse_fail_safe_directive() expect keyword failsafe but facing:"<< c_char <<endl;
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   } 
 
   // undo side effects

@@ -72,7 +72,11 @@
 
 /* DQ (8/28/2015): Adding specialized support for Intel compiler. */
 #ifdef __INTEL_COMPILER
-  #define __inline inline
+#   define __inline inline
+#   if (__INTEL_COMPILER <= 1900) && defined(__cplusplus)
+       template<typename _Tp>
+       _Tp* __builtin_addressof(_Tp& __r); 
+#   endif
 #endif
 
 
@@ -6133,9 +6137,12 @@ __m128i __builtin_ia32_pmuludq128_mask (__v4si __X, __v4si __Y, __v2di  __W, __m
 __m128i __builtin_ia32_pmuludq128_mask (__v4si __X, __v4si __Y, __v2di setzero, __mmask8 __M);
 __m256i __builtin_ia32_permvarsi256_mask (__v8si __Y,__v8si __X,__v8si __W,__mmask8 __M);
 
+// Pei-Hung (03/02/2021) these typedef name has been declared when -ansi option is given
+#if !defined(__STRICT_ANSI__)
 typedef short __v32hi ROSE_GNUATTR((__vector_size__ (64)));
 typedef char __v64qi ROSE_GNUATTR((__vector_size__ (64)));
 typedef unsigned long long __mmask64;
+#endif
 
 __m512i __builtin_ia32_movdquhi512_mask (__v32hi  __A,  __v32hi  __W,  __mmask32  __U);
 __m512i __builtin_ia32_movdquhi512_mask (__v32hi  __A,  __v32hi  setzero,  __mmask32  __U);
@@ -7200,7 +7207,8 @@ __m256d __builtin_ia32_vfmaddsubpd256(__m256d __A, __m256d __B, __m256d __C);
 __m256  __builtin_ia32_vfmsubaddps256(__m256 __A, __m256 __B, __m256 __C);
 __m256d __builtin_ia32_vfmsubaddpd256(__m256d __A, __m256d __B, __m256d __C);
 
-
+// Pei-Hung (03/02/2021) these typedef name has been declared when -ansi option is given
+#if !defined(__STRICT_ANSI__)
 typedef double __v8df ROSE_GNUATTR((__vector_size__(64)));
 typedef float __v16sf ROSE_GNUATTR((__vector_size__(64)));
 typedef long long __v8di ROSE_GNUATTR((__vector_size__(64)));
@@ -7212,6 +7220,7 @@ typedef long long __m512i ROSE_GNUATTR((__vector_size__(64)));
 
 typedef unsigned char __mmask8;
 typedef unsigned short __mmask16;
+#endif
 
 __m512 __builtin_ia32_undef512();
 

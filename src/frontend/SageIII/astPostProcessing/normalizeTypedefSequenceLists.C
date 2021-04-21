@@ -135,7 +135,7 @@ normalizeTypedefSequenceLists()
 
 #if 0
      printf ("Exiting after test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -189,7 +189,7 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
                     printf ("Error, endless recursion in evaluation of base type of type in NormalizeTypedefSequenceLists::visit() (killed at loop counter = %d) \n",counter);
 
                     printf ("Exiting after test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -303,20 +303,20 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
 #endif
 #if 0
           printf ("Exiting after test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
 #if 0
      printf ("Exiting after test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 0
      if (counter++ > 2)
         {
           printf ("Exiting after test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      if (listSize > 0)

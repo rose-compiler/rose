@@ -846,7 +846,7 @@ generatePrefixStringGlobalDeclarations()
 
 #if 0
      printf ("Exiting at base of generatePrefixStringGlobalDeclarations() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return globalPrefixString;
@@ -956,7 +956,7 @@ generatePrefixStringLocalDeclarations()
 
 #if 0
      printf ("Exiting at base of generatePrefixStringLocalDeclarations! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return localPrefixString;

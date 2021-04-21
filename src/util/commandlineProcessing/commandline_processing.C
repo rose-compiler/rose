@@ -1,5 +1,6 @@
 #include <rose_config.h>
 #include <rosePublicConfig.h>
+#include <ROSE_ABORT.h>
 
 #include "StringUtility.h"
 #include <string.h>
@@ -371,7 +372,7 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
                            }
 #if 0
                         printf ("Need to handle options taking more than one parameter (e.g. --edg_parameter:): inputPrefix = %s \n",inputPrefix.c_str());
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
 #endif
                       }
 #endif
@@ -1005,11 +1006,13 @@ CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
 
   // Note that the filename extension is not defined as part of the Ada standard,
   // but GNAT (Gnu Ada) is using "ads" (for the spec) and "adb" (for the body).
+  // PP (02/12/21): Other naming schemes exist (GNAT can be customized)
+  //                RC-571 support Rational Apex .ada 
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "ads" || suffix == "adb")
+     if ( suffix == "ads" || suffix == "adb" || suffix == "ada")
 #else //It is a case insensitive system
-     if ( suffix == "ads" || suffix == "adb")
+     if ( suffix == "ads" || suffix == "adb" || suffix == "ada")
 #endif
         {
           returnValue = true;

@@ -426,7 +426,7 @@ void CFG::printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge)
             "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
     }
     else
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 }
 
 

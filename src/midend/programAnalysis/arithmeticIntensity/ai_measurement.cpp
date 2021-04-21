@@ -49,7 +49,7 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
     default:
       {
         cerr<<"warning: calculuate - unhandled operator type:"<<binaryOperator->class_name()<<endl;
-        ROSE_ASSERT(false); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
+        ROSE_ABORT(); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
       }
   }// end switch
   return foldedValue; 
@@ -72,7 +72,7 @@ T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
    default:
       {
         cerr<<"warning: calculuate - unhandled operator type:"<<unaryOperator->class_name()<<endl;
-        ROSE_ASSERT(false); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
+        ROSE_ABORT(); // the expression is very limited form. We try to be restrictive here. //Not every binary operation type can be evaluated
       }
   }
   return foldedValue;
@@ -161,7 +161,7 @@ namespace ArithmeticIntensityMeasurement
     else
     {
       cerr<<"error: wrong value exp type for cf_get_int_value():"<<sg_value_exp->class_name()<<endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
     return rtval;
   }
@@ -283,8 +283,7 @@ namespace ArithmeticIntensityMeasurement
     {
       case e_total: 
         cerr<<"FPCounters::addCount(): adding to total FP count is not allowed. Must add to counters of specific operation (+, -, *, or /)!"<<endl;
-        assert (false);
-        break;
+        ROSE_ABORT ();
       case e_plus:
         addPlusCount(i);
         break;
@@ -302,8 +301,7 @@ namespace ArithmeticIntensityMeasurement
           //TODO : we should ignore some unrecognized op kind
           //Another case list to ignore them one by one
           cerr<< ArithmeticIntensityMeasurement::toString(c_type) <<endl; 
-          assert (false);  
-          break;
+          ROSE_ABORT ();
         }
     }
   }
@@ -321,7 +319,7 @@ namespace ArithmeticIntensityMeasurement
         else
         {
           cerr<<"FPCounters::setCount(): adding total count to a none zero existing value, possibly overwritting it!"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
         break;
       case e_plus:
@@ -332,7 +330,7 @@ namespace ArithmeticIntensityMeasurement
         else
         {
           cerr<<"FPCounters::setCount(): adding plus count to a none zero existing value, possibly overwritting it!"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
         break;
       case e_minus:
@@ -343,7 +341,7 @@ namespace ArithmeticIntensityMeasurement
         else
         {
           cerr<<"FPCounters::setCount(): adding minus count to a none zero existing value, possibly overwritting it!"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
         break;
       case e_multiply:
@@ -354,7 +352,7 @@ namespace ArithmeticIntensityMeasurement
         else
         {
           cerr<<"FPCounters::setCount(): adding multiply count to a none zero existing value, possibly overwritting it!"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
         break;
       case e_divide:
@@ -365,11 +363,11 @@ namespace ArithmeticIntensityMeasurement
         else
         {
           cerr<<"FPCounters::setCount(): adding divide count to a none zero existing value, possibly overwritting it!"<<endl;
-          assert (false);
+          ROSE_ABORT ();
         }
         break;
       default:
-        assert (false);  
+        ROSE_ABORT ();
     }
   }
 
@@ -418,10 +416,9 @@ namespace ArithmeticIntensityMeasurement
         return getDivideCount();
         break;
       default:
-        assert (false);  
+        ROSE_ABORT ();
     }
-    assert (false);  
-    return 0;
+    ROSE_ABORT ();
   }
 
   FPCounters * getFPCounters (SgLocatedNode* n)
@@ -512,7 +509,7 @@ namespace ArithmeticIntensityMeasurement
       else
       {
         cerr<<"Error in getSizeOf(), only SgIntVal type_kind is handled. Unhandled type_kind "<< kind_exp->class_name()<<endl;
-        assert(false);
+        ROSE_ABORT();
       }  
     } 
     else
@@ -533,7 +530,7 @@ namespace ArithmeticIntensityMeasurement
         default:
           {
             cerr<<"Error in getSizeOf() of ai_measurement.cpp . Unhandled type: "<<t->class_name()<<endl;
-            assert (false);
+            ROSE_ABORT ();
           }
       }
     }
@@ -662,7 +659,7 @@ namespace ArithmeticIntensityMeasurement
       else
       {
         cerr<<"Error in calculateBytes(). Unhandled stripped type:"<<stripped_type->class_name()<<endl;
-        assert (false);
+        ROSE_ABORT ();
       }
 
       type_based_counters[base_type] ++; 
@@ -681,7 +678,10 @@ namespace ArithmeticIntensityMeasurement
       assert (t != NULL);
       assert (count>0);
       SgExpression* sizeof_exp = NULL; 
-      if (is_Fortran_language())
+
+   // DQ (11/25/2020): Fixed ambiguity.
+   // if (is_Fortran_language())
+      if (SageInterface::is_Fortran_language())
       {
 #if 0  // this does not work. cannot find func symbol for sizeof()       
         // In Fortran sizeof() is a function call, not  SgSizeOfOp.
@@ -704,14 +704,16 @@ namespace ArithmeticIntensityMeasurement
         sizeof_exp = buildIntVal(getSizeOf(t));
 #endif         
       }
-      else if (is_C_language() || is_C99_language() || is_Cxx_language())
+   // DQ (11/25/2020): Fixed ambiguity.
+   // else if (is_C_language() || is_C99_language() || is_Cxx_language())
+      else if (SageInterface::is_C_language() || SageInterface::is_C99_language() || SageInterface::is_Cxx_language())
       {
         sizeof_exp = buildSizeOfOp(t);
       }
       else
       {
         cerr<<"Error in calculateBytes(). Unsupported programming language other than C/Cxx and Fortran. "<<endl;
-        assert (false);
+        ROSE_ABORT ();
       }
       SgExpression* mop = buildMultiplyOp(buildIntVal(count), sizeof_exp);
       if (result == NULL)
@@ -829,7 +831,7 @@ namespace ArithmeticIntensityMeasurement
     else
     {
       cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< input->class_name()<<endl;
-      assert(false);
+      ROSE_ABORT();
     }
 #endif
     //Plan A: use and extend Qing's side effect analysis
@@ -1026,17 +1028,17 @@ namespace ArithmeticIntensityMeasurement
     if (!afs_match_char('('))
     {
       cerr<<"Error in parse_aitool_pragma(): expected ( is not found! "<<endl;
-      assert (false);
+      ROSE_ABORT ();
     }
     if (!afs_match_integer_const(op_count))
     {
       cerr<<"Error in parse_aitool_pragma(): expected integer value is not found! "<<endl;
-      assert (false);
+      ROSE_ABORT ();
     }
     if (!afs_match_char(')'))
     {
       cerr<<"Error in parse_aitool_pragma(): expected ) is not found! "<<endl;
-      assert (false);
+      ROSE_ABORT ();
     }
 
     if (debug)
@@ -1144,7 +1146,7 @@ namespace ArithmeticIntensityMeasurement
     else
     {
       cerr<<"Error in instrumentLoopForCounting(): Unrecognized loop type:"<< loop->class_name()<<endl;
-      assert(false);
+      ROSE_ABORT();
     }
     ROSE_ASSERT(scope != NULL);
 
@@ -1266,7 +1268,7 @@ namespace ArithmeticIntensityMeasurement
       default:
         {
           cerr<<"getFPOpKind () unrecognized binary op kind: "<< bop->class_name() <<endl;
-          ROSE_ASSERT (false);
+          ROSE_ABORT ();
         }
     } //end switch    
 
@@ -1597,7 +1599,7 @@ namespace ArithmeticIntensityMeasurement
           {
             lnode->get_file_info()->display();
           }
-          ROSE_ASSERT (false);
+          ROSE_ABORT ();
         }
       }  
     }
@@ -1638,7 +1640,7 @@ namespace ArithmeticIntensityMeasurement
               cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
               ref_result->printInfo("Reference counts are ....");
               current_result->printInfo("Calculated counts are ....");
-              assert (false);
+              ROSE_ABORT ();
             }
           }
         } // end if pragma

@@ -492,7 +492,7 @@ std::vector<InterproceduralInfo*> SystemDependenceGraph::getPossibleFuncs(SgFunc
   else
   {
     cerr<<"Error: SystemDependenceGraph::getPossibleFuncs() found a unhandled function call type:"<< funcCall->get_function()->class_name()<<endl;
-    ROSE_ASSERT (false);
+    ROSE_ABORT ();
   }
   ROSE_ASSERT (fsym != NULL);
   SgFunctionDeclaration *fD = fsym->get_declaration();
@@ -603,7 +603,7 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
       if (ii->getActualInCount(i)<calledFunction->getFormalCount())
       {
         cerr <<"expecting "<<calledFunction->getFormalCount()<<"arguments at minimum, "<<ii->getActualInCount(i)<<" received"<<endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
       else if (!calledFunction->getEllipse() && ii->getActualInCount(i)>calledFunction->getFormalCount())
       {

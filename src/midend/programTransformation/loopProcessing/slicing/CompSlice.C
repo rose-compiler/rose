@@ -9,7 +9,7 @@
 #include <CompSliceImpl.h>
 #include <CompSliceObserver.h>
 #include <LoopInfoInterface.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class CompSlice::ObserveImpl
    : public ObserveObject <CompSliceObserver>
@@ -92,8 +92,9 @@ void CompSlice::SetSliceAlign( LoopTreeNode *s, int align)
 
 CompSlice::SliceStmtInfo CompSlice :: QuerySliceStmtInfo( const LoopTreeNode *n) const
 {
-  assert(impl->QuerySliceStmt(n) != NULL);
-  return impl->QuerySliceStmt(n)->GetSliceInfo();
+  CompSliceStmt* stmnt = impl->QuerySliceStmt(n);
+  assert(stmnt != NULL);
+  return stmnt->GetSliceInfo();
 }
 
 CompSlice::SliceLoopInfo CompSlice :: QuerySliceLoopInfo( const LoopTreeNode *n) const

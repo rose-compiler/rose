@@ -1,3 +1,5 @@
+#include <featureTests.h>
+
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
@@ -88,12 +90,6 @@ Grammar::setUpSupport ()
           BaseClassModifier       | StructureModifier      | TypeModifier       |
           DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
-     NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
-
-     NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
-          AdaRangeConstraint,
-          "AdaTypeConstraint", "AdaTypeConstraintTag", false);
-
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
 #if 0
@@ -107,14 +103,14 @@ Grammar::setUpSupport ()
   // can be related to a source file (and many source files).  The mapping is left
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
      BinaryComposite.isBoostSerializable(true);
 #endif
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
 #else
      NEW_NONTERMINAL_MACRO (File, SourceFile |                   UnknownFile , "File", "FileTag", false);
@@ -267,7 +263,7 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory                | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
-          TemplateParameterList | AdaTypeConstraint         | /* RenamePair                | InterfaceBody       |*/
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge                |
           GraphNodeList         | GraphEdgeList             | TypeTable                |
           NameGroup             | DimensionObject           | FormatItem               |
@@ -405,9 +401,6 @@ Grammar::setUpSupport ()
   // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
      StructureModifier.setFunctionPrototype       ( "HEADER_STRUCTURE_MODIFIER"       , "../Grammar/Support.code");
 
-     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
   // Skip building a parse function for this AstNodeClass/nonterminal of the Grammar
@@ -420,7 +413,7 @@ Grammar::setUpSupport ()
      SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
   // SourceFile.setAutomaticGenerationOfConstructor(false);
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      BinaryComposite.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 #endif
 
@@ -690,6 +683,11 @@ Grammar::setUpSupport ()
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     // PP (01/25/21): Add arguments for Ada pragma
+     Pragma.setDataPrototype ( "SgExprListExp*" , "args", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
   // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
@@ -923,6 +921,12 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/11/2021): We need to to support the dynamic library feature (used by the code segregation tool, and likely future tools).
+  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the 
+  // computation of first and last statements of include file.
+     SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1029,6 +1033,14 @@ Grammar::setUpSupport ()
   // DQ (5/26/2020): Allow us to mark the SgIncludeFile as being the root (associated with the input sourde file).
      IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/9/2021): Save the first and last statement associated with the file (required to support the 
+  // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
+     IncludeFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     IncludeFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
   // (though this one is computed from the EDG/ROSE translation instead of from the CPP include directives).
@@ -1493,7 +1505,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
@@ -1632,8 +1644,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // TV (04/11/2018): Whether or not to generate a graphviz representation of EDG internal representation
+  // TV (04/11/2018): Whether or not to generate a graphviz representation of the EDG internal representation
      File.setDataPrototype("bool", "edg_il_to_graphviz", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TV (11/27/2020): Whether or not to generate a graphviz representation of the Clang internal representation
+     File.setDataPrototype("bool", "clang_il_to_graphviz", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TV (10/01/2018): ROSE-1424
@@ -2095,6 +2111,11 @@ Grammar::setUpSupport ()
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
+  // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a
+  // static data member of AstPerformance class.
+  // Project.setDataPrototype         ( "bool", "compilationPerformance", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/29/2006): Support for CSV data file reporting performance of compilation.
   // This file accumulates information (if specified) and permits plots of performance
   // for different parts of the compilation internally within ROSE.
@@ -2541,10 +2562,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BaseClassModifier.setDataPrototype("SgAccessModifier", "accessModifier", "",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgRangeExp*", "range", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // File_Info.setDataPrototype("char*","filename","= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -2954,16 +2971,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // Place declarations of friend output operators after the BaseClassModifier
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");
-     AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-
      File_Info.setFunctionSource       ( "SOURCE_FILE_INFORMATION", "../Grammar/Support.code");
 
      Directory.setFunctionSource       ( "SOURCE_APPLICATION_DIRECTORY", "../Grammar/Support.code");
      DirectoryList.setFunctionSource   ( "SOURCE_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
      File.setFunctionSource            ( "SOURCE_APPLICATION_FILE", "../Grammar/Support.code");
      SourceFile.setFunctionSource      ( "SOURCE_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 #endif
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
