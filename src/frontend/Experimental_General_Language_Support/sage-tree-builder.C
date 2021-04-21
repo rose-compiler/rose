@@ -1552,40 +1552,6 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 }
 
 void SageTreeBuilder::
-Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
-{
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
-
-   BOOST_FOREACH(LanguageTranslation::ExpressionKind modifier_enum, modifier_enum_list) {
-      switch(modifier_enum)
-       {
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_in();
-               break;
-            }
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_out();
-               break;
-            }
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
-               break;
-            }
-         default: break;
-       }
-   }
-}
-
-void SageTreeBuilder::
-Leave(SgVariableDeclaration* var_decl)
-{
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
-}
-
-void SageTreeBuilder::
 Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<std::string, SgType*, SgExpression*>> &init_info)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, std::tuple<...>, ...) \n";
@@ -1619,6 +1585,12 @@ Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<
          SageBuilder::topScopeStack()->insert_symbol(SgName(name), var_sym);
       }
    }
+}
+
+void SageTreeBuilder::
+Leave(SgVariableDeclaration* var_decl)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 }
 
 void SageTreeBuilder::
@@ -2119,6 +2091,7 @@ void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* s
    SgVariableSymbol* result_symbol = new SgVariableSymbol(init_name);
    ROSE_ASSERT(result_symbol);
    scope->insert_symbol(result_name, result_symbol);
+}
 
 SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgScopeStatement* scope)
 {
