@@ -196,7 +196,11 @@ int main( int argc, char * argv[] ) {
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
 
-    ProgramInfo originalProgramInfo(sageProject);
+    VariableIdMappingExtended* vimOrig=new VariableIdMappingExtended(); // only used for program statistics of original non-normalized program
+    //AbstractValue::setVariableIdMapping(vim);
+    vimOrig->computeVariableSymbolMapping(sageProject,0);
+
+    ProgramInfo originalProgramInfo(sageProject,vimOrig);
     originalProgramInfo.compute();
     
     if(ctOpt.programStatsFileName.size()>0) {
@@ -207,11 +211,8 @@ int main( int argc, char * argv[] ) {
       cout<<"Language Feature Usage Overview"<<endl;
       cout<<"=================================="<<endl;
       originalProgramInfo.printDetailed();
-      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
-      //AbstractValue::setVariableIdMapping(vim);
-      vim->computeVariableSymbolMapping(sageProject,0);
       cout<<endl;
-      vim->typeSizeOverviewtoStream(cout);
+      vimOrig->typeSizeOverviewtoStream(cout);
       exit(0);
     }
 
@@ -219,7 +220,7 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
-      ProgramInfo normalizedProgramInfo(sageProject);
+      ProgramInfo normalizedProgramInfo(sageProject,analyzer->getVariableIdMapping());
       normalizedProgramInfo.compute();
       originalProgramInfo.printCompared(&normalizedProgramInfo);
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);

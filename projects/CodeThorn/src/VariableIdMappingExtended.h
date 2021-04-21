@@ -46,6 +46,10 @@ namespace CodeThorn {
     CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
     CodeThorn::TypeSize determineNumberOfArrayElements(SgArrayType* sgType);
     
+    bool symbolExists(SgSymbol* sym);
+    static SgVariableDeclaration* getVariableDeclarationFromSym(SgSymbol* sym);
+    std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
+
   private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);

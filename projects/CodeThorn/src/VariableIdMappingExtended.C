@@ -136,17 +136,44 @@ namespace CodeThorn {
     //typeSizeMapping.computeOffsets(project,this);
   }
 
+  bool VariableIdMappingExtended::symbolExists(SgSymbol* sym) {
+    return mappingSymToVarId.find(sym)!=mappingSymToVarId.end();
+  }
+
+  SgVariableDeclaration* VariableIdMappingExtended::getVariableDeclarationFromSym(SgSymbol* sym) {
+    return dynamic_cast<SgVariableDeclaration*>(SgNodeHelper::findVariableDeclarationWithVariableSymbol(sym));
+  }
+
+  std::list<SgVariableDeclaration*> VariableIdMappingExtended::getListOfGlobalVarDecls() {
+    list<SgVariableDeclaration*> globalVarDecls;
+    for(auto p : mappingSymToVarId) {
+      if(getVariableIdInfoPtr(p.second)->variableScope==VS_GLOBAL) {
+	SgVariableDeclaration* varDecl=getVariableDeclarationFromSym(p.first);
+	globalVarDecls.push_back(varDecl);
+      }
+    }
+    return globalVarDecls;
+  }
+
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
+    int numVarDecls=0;
+    int numSymbolExists=0;
+    int numFunctionParams=0;
     for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
       RoseAst ast(*k);
       ast.setWithTemplates(true);
       for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	CodeThorn::TypeSize totalSize=0;
 	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-	  //cout<<"DEBUG: var decl: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
 	  SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
 	  if(sym->get_symbol_basis()!=0) {
+	    if(symbolExists(sym)) {
+	      //cout<<"VID: found symbol again: "<<sym->unparseToString()<<" (skipping)."<<endl;
+	      numSymbolExists++;
+	      continue;
+	    }
+	    cout<<"DEBUG: var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
 	    registerNewSymbol(sym);
 	    VariableId varId=variableId(sym);
 	    if(SgNodeHelper::isGlobalVariableDeclaration(varDecl)) {
@@ -189,6 +216,7 @@ namespace CodeThorn {
 	    cout<<"DEBUG: no symbol basis."<<endl;
 	  }
 	}
+	
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
 	  //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
 	  std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
@@ -198,6 +226,7 @@ namespace CodeThorn {
 	      registerNewSymbol(sym);
 	      VariableId varId=variableId(sym);
 	      getVariableIdInfoPtr(varId)->variableScope=VS_LOCAL; // formal parameter declaration
+	      numFunctionParams++;
 	    }
 	  }
 	}
@@ -205,6 +234,8 @@ namespace CodeThorn {
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
     }
+    cout<<"VID size: "<<numVarDecls<<" symbol existed: "<<numSymbolExists<<" Num fun-params:"<<numFunctionParams<<endl;
+
   }
 
   void VariableIdMappingExtended::computeVariableSymbolMapping3(SgProject* project, int maxWarningsCount) {
@@ -349,9 +380,11 @@ void VariableIdMappingExtended::typeSizeOverviewtoStream(ostream& os) {
   CodeThorn::TypeSize maxArrayElements=0;
   CodeThorn::TypeSize maxArrayElementSize=0;
   CodeThorn::TypeSize maxArrayTotalSize=0;
-  
+  cout<<"Varible-id mapping size: "<<mappingVarIdToInfo.size()<<endl;
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
+    if(getVariableIdInfo(varId).variableScope==VS_MEMBER)
+      continue;
     switch(getVariableIdInfo(varId).aggregateType) {
       case AT_STRUCT:
 	structNum++;

@@ -699,20 +699,18 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUnu
   return globalVars;
 }
 
-#define DO_NOT_FILTER_VARS
+#define FILTER_VARS
 CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUsedGlobalVariableDeclarationList(SgProject* root) {
   if(SgProject* project=isSgProject(root)) {
     CodeThorn::CTAnalysis::VariableDeclarationList usedGlobalVariableDeclarationList;
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-#ifdef DO_NOT_FILTER_VARS
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-#endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=getVariableIdMapping()->variableId(*i);
       // do not filter
       usedGlobalVariableDeclarationList.push_back(*i);
-#ifdef DO_NOT_FILTER_VARS
+#ifndef FILTER_VARS
       if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
         usedGlobalVariableDeclarationList.push_back(*i);
       } else {
@@ -1966,7 +1964,7 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState
     VariableIdSet setOfUsedVars;
 #else
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+    cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #endif
 
     // START_INIT 6
@@ -2041,10 +2039,10 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
       estate=analyzeVariableDeclaration(*i,estate,estate.label());
       declaredInGlobalState++;
     }
-    SAWYER_MESG(logger[INFO])<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-    SAWYER_MESG(logger[INFO])<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    cout<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
+    cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
   } else {
-    SAWYER_MESG(logger[INFO])<< "INIT: no global scope. Global state remains without entries.";
+    cout<< "STATUS: no global scope. Global state remains without entries.";
   }
 }
 

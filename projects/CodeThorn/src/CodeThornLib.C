@@ -413,11 +413,7 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
 }
 
 void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject) {
-  if(ctOpt.externalFunctionsCSVFileName.size()>0) {
-    ProgramInfo programInfo(sageProject);
-    programInfo.compute();
-    programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
-  }
+  cout<<"Warning: optionallyGenerateExternalFunctionsFile not implemented yet."<<endl;
 }
 
 void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject) {
