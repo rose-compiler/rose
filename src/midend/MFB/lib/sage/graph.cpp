@@ -33,7 +33,7 @@ std::string API::graphviz_node_desc(SgNode * p) {
     return val->unparseToString();
   } else {
     std::cerr << p->class_name() << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -53,7 +53,7 @@ std::string API::graphviz_node_color(SgNode * p) {
     return "red";
   } else {
     std::cerr << p->class_name() << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -86,13 +86,13 @@ std::string API::graphviz_node_shape(SgNode * p) {
       case V_SgNonrealSymbol:
         return "octagon";
 
-      default: std::cerr << p->class_name() << std::endl; ROSE_ASSERT(false);
+      default: std::cerr << p->class_name() << std::endl; ROSE_ABORT();
     }
   } else if (val != NULL) {
     return "plain";
   } else {
     std::cerr << p->class_name() << std::endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 }
 
@@ -105,7 +105,7 @@ std::string API::graphviz_link_color(API::link_kind_e kind) {
     case e_link_kind_param:       return "purple";
     case e_link_kind_arg:         return "orange";
     case e_link_kind_type_base:   return "blue";
-    default: ROSE_ASSERT(false);
+    default: ROSE_ABORT();
   }
 }
 
@@ -118,7 +118,7 @@ std::string API::graphviz_link_style(API::link_kind_e kind) {
     case e_link_kind_param:       return "dotted";
     case e_link_kind_arg:         return "dotted";
     case e_link_kind_type_base:   return "dotted";
-    default: ROSE_ASSERT(false);
+    default: ROSE_ABORT();
   }
 }
 
@@ -131,7 +131,7 @@ std::string API::graphviz_link_head(API::link_kind_e kind) {
     case e_link_kind_param:       return "normal";
     case e_link_kind_arg:         return "normal";
     case e_link_kind_type_base:   return "normal";
-    default: ROSE_ASSERT(false);
+    default: ROSE_ABORT();
   }
 }
 
@@ -144,7 +144,7 @@ std::string API::graphviz_link_tail(API::link_kind_e kind) {
     case e_link_kind_param:       return "odot";
     case e_link_kind_arg:         return "dot";
     case e_link_kind_type_base:   return "none";
-    default: ROSE_ASSERT(false);
+    default: ROSE_ABORT();
   }
 }
 
@@ -197,7 +197,7 @@ void API::collect_symbol_edges(SgExpression * expr, SgSymbol * sym, API::link_ki
     link(sym, expr, kind, cnt);
   } else {
     std::cerr << expr << " (" << expr->class_name() << ")" << std::endl;
-    ROSE_ASSERT(false); // when does that happen?
+    ROSE_ABORT(); // when does that happen?
   }
 }
 
@@ -205,7 +205,7 @@ void API::collect_symbol_edges(SgDeclarationStatement * templ, SgSymbol * sym, A
   if (templ == NULL) return;
 
   std::cerr << templ << " (" << templ->class_name() << ")" << std::endl;
-  ROSE_ASSERT(false); // FIXME NIY
+  ROSE_ABORT(); // FIXME NIY
 }
 
 void API::collect_symbol_edges(SgInitializedName * iname, SgSymbol * sym, API::link_kind_e kind, unsigned short cnt) {
@@ -317,7 +317,7 @@ void API::add(SgNode * n) {
         // NOP
       } else {
         std::cerr << expr->class_name() << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
       }
     }
   }

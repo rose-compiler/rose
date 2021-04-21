@@ -41,10 +41,6 @@ void fixupAstDeclarationScope( SgNode* node )
      while (i != mapOfSets.end())
         {
           SgDeclarationStatement* firstNondefiningDeclaration = i->first;
-          if (isSgNonrealDecl(firstNondefiningDeclaration)) {
-            i++;
-            continue;
-          }
 
        // DQ (3/2/2015): Added assertion.
           ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -64,6 +60,21 @@ void fixupAstDeclarationScope( SgNode* node )
              }
 
           SgScopeStatement* correctScope = firstNondefiningDeclaration->get_scope();
+
+       // DQ (11/24/2020): Debugging code segregation tool.
+          if (correctScope == NULL)
+             {
+               printf ("Error: In fixupAstDeclarationScope(): correctScope == NULL: firstNondefiningDeclaration = %p = %s name = %s \n",
+                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),SageInterface::get_name(firstNondefiningDeclaration).c_str());
+               printf (" --- firstNondefiningDeclaration->hasExplicitScope() = %s \n",firstNondefiningDeclaration->hasExplicitScope() ? "true" : "false");
+               printf (" --- firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
+               if (firstNondefiningDeclaration->get_parent() != NULL)
+                  {
+                    printf ("--- non-null: firstNondefiningDeclaration->get_parent() = %s name = %s \n",
+                         firstNondefiningDeclaration->get_parent()->class_name().c_str(),SageInterface::get_name(firstNondefiningDeclaration->get_parent()).c_str());
+                  }
+             }
+
           ROSE_ASSERT(correctScope != NULL);
 
 #if 0
@@ -96,7 +107,7 @@ void fixupAstDeclarationScope( SgNode* node )
                        }
 #if 0
                     printf ("Make this an error for now! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -141,8 +152,13 @@ FixupAstDeclarationScope::visit ( SgNode* node )
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 
        // Note that these declarations don't follow the same rules (namely the get_firstNondefiningDeclaration() can be NULL).
-          if ( isSgFunctionParameterList(node) != NULL || isSgVariableDefinition(node) != NULL)
-             {
+          if ( isSgFunctionParameterList(node)    ||
+               isSgVariableDefinition(node)       ||
+               isSgNonrealDecl(node)              ||
+               isSgJovialCompoolStatement(node)   ||
+               isSgJovialDirectiveStatement(node) ||
+               isSgJovialDefineDeclaration(node)
+             ) {
 #if 0
                printf ("In FixupAstDeclarationScope::visit(): node = %p = %s firstNondefiningDeclaration = %p (skipping this processing) \n",node,node->class_name().c_str(),firstNondefiningDeclaration);
 #endif
@@ -157,7 +173,7 @@ FixupAstDeclarationScope::visit ( SgNode* node )
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration == NULL)
                   {
-                    printf ("WARNING: In FixupAstDeclarationScope::visit(): firstNondefiningDeclaration == NULL for case of node = %p = %s (allowed for tutorial example transformations only) \n",node,node->class_name().c_str());
+                    mprintf ("WARNING: In FixupAstDeclarationScope::visit(): firstNondefiningDeclaration == NULL for case of node = %p = %s (allowed for tutorial example transformations only) \n",node,node->class_name().c_str());
                   }
                  else
                   {

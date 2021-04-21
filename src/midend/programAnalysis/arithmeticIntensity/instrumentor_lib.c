@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <ROSE_ABORT.h>
 
 void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int* loop_iter_counters, int loop_count)
 {
@@ -7,7 +8,7 @@ void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int
   if (input_file == NULL)
   {
     printf ("Error: cannot open input program information file!");
-    assert (0);
+    ROSE_ABORT ();
   }
 
   // This happens only once for the main() of an instrumented application.
@@ -17,7 +18,7 @@ void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int
   if (output_file == NULL)
   {
     printf ("Error: cannot open input program information file!");
-    assert (0);
+    ROSE_ABORT ();
   }
 
   int __lc_init_i; 

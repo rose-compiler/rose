@@ -259,14 +259,6 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
 
-  if(args.getBool("normalize-compound-stmts")) {
-    logger[TRACE] <<"STATUS: normalization of compound statements started."<<endl;
-    RewriteSystem rewriteSystem;
-    rewriteSystem.resetStatistics();
-    rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: normalization of compound statements finished."<<endl;
-  }
-
   if(args.getBool("eliminate-fi-dead-code")) {
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     DeadCodeElimination dce;

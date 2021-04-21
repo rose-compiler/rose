@@ -75,7 +75,7 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
 
                       // DQ (6/1/2004): Make this test an error!
                          printf ("ERROR: Found cycle between SgInitializedName objects \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
 #endif
                   }
@@ -118,7 +118,7 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                           // DQ (12/5/2003): This case is now an error and should no longer be required.  The
                           // fix was made in the EDG/SAGE interface code so to test that fix we make it an error here.
                              printf ("In AstFixes.C: Eliminated this fix of the AST (now an error, fix is not required) \n");
-                             ROSE_ASSERT (false);
+                             ROSE_ABORT ();
 
                           // DQ (5/18/2005): Removed definition_ref since it is redundant with definingDeclaration and firstNondefiningDeclaration.
                           // DQ This code is not reached but left as documentation about how the problem was previously fixed
@@ -269,7 +269,7 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                if (!dynamic_cast<SgProject*>(locNode) && !dynamic_cast<SgFile*>(locNode) )
                   {
                  // only SgProject and SgFile can be root nodes after EDG->SAGE translation
-                         assert(false);
+                         ROSE_ABORT();
                   }
              }
           ia.parentNode = node;
@@ -299,7 +299,7 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                case V_SgTypedefType:
                   {
                     printf ("In AST Fixup: found a SgTypedefType \n");
-                    ROSE_ASSERT (false);
+                    ROSE_ABORT ();
 
                     SgTypedefType* typedefType = isSgTypedefType(node);
                     ROSE_ASSERT (typedefType != NULL);
@@ -425,7 +425,7 @@ visitWithAstNodePointersList ( SgNode* node, AstNodePointersList l )
                cout << "AST FIX: SgNewExp : 'constructor_args' is null ... we initialize it with a SgConstructorInitializer object." << endl;
 
                printf ("This fix should no longer be required! \n");
-               ROSE_ASSERT (false);
+               ROSE_ABORT ();
              }
         }
 #endif

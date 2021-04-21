@@ -128,8 +128,9 @@ foreach(file_to_test ${TESTCODES})
     COPYONLY)
 
   add_test(
-    NAME statements_${file_to_test}
+    NAME SOURCEPOSITIONTEST_${file_to_test}
     COMMAND statements ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+  set_tests_properties(SOURCEPOSITIONTEST_${file_to_test} PROPERTIES LABELS SOURCEPOSITIONTEST)
 endforeach()

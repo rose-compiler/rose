@@ -21,7 +21,7 @@ separator::separator(int bp, int ep, std::vector<separator> ss ){
         sub_separators = ss;
 #else
         printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
 } 
 
@@ -47,7 +47,7 @@ void separator::outputValues(token_container& tokenStream, int counter ){
         }
 #else
         printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
 }
 // #endif
@@ -76,7 +76,7 @@ void separator::outputValues(std::vector<SgNode*>& linearizedAST, int counter ){
         }
 #else
         printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
 }
 
@@ -150,7 +150,7 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
                                 if( tmp_curlyBraceStackAST.size() == curlyBraceStackAST.size()  )
                                         tmp_curlyBraceStackAST.push_back( vector<separator>() );
                                 else if( tmp_curlyBraceStackAST.size() != ( curlyBraceStackAST.size()+1 ) )
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                 lastScopeStmt = linearizedAST[i];
                         }
                 }
@@ -164,7 +164,7 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
         globalScope->sub_separators =   (tmp_curlyBraceStackAST[0])[0].sub_separators;
 #else
         printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
 
         return globalScope; 
@@ -203,7 +203,7 @@ separator* mapSeparatorsTokenStream(token_container& tokenStream){
                         if( tmp_stackOfSeparators.size() == curlyLeftBraceStackTokenStream.size()  )
                                 tmp_stackOfSeparators.push_back( vector<separator>() );
                         else if( tmp_stackOfSeparators.size() != ( curlyLeftBraceStackTokenStream.size()+1 ) )
-                                ROSE_ASSERT(false);
+                                ROSE_ABORT();
 
                 }else if( boost::wave::token_id(tokenStream[i]) == boost::wave::T_RIGHTBRACE )
                 {
@@ -229,7 +229,7 @@ separator* mapSeparatorsTokenStream(token_container& tokenStream){
         globalScope->sub_separators = tmp_stackOfSeparators[0];
 #else
         printf ("ERROR: This code is disabled when using --enable-advanced-warnings option \n");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #endif
 
         return globalScope; 

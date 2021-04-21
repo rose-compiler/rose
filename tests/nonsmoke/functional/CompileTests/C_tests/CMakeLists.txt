@@ -83,10 +83,10 @@ if(NOT APPLE)
 endif()
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} CTEST)
 endforeach()
 
 list(APPEND ROSE_FLAGS
   -I${CMAKE_SOURCE_DIR}/src/frontend/SageIII/
   -I${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing)
-compile_test(test2005_168.c)
+compile_test(test2005_168.c CTEST)

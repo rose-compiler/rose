@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ANALYSIS_COMMON
 #define ANALYSIS_COMMON
 
@@ -14,4 +17,5 @@ void initAnalysis(SgProject* p);
 // returns the call graph of the current project
 SgIncidenceDirectedGraph* getCallGraph();
 
+#endif
 #endif

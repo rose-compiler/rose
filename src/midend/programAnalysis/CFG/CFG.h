@@ -5,6 +5,7 @@
 #include <PtrMap.h>
 #include <ProcessAstTree.h>
 #include <CommandOptions.h>
+#include <ROSE_ABORT.h>
 
 class CFGConfig {
  public:
@@ -57,8 +58,7 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   case COND_FALSE: return "false";
   case ALWAYS: return "always";
   default:
-     assert(false);
-     return "error";
+     ROSE_ABORT();
   }
 }
 
@@ -123,8 +123,7 @@ class BuildCFGTraverse : public ProcessAstTree
       case START:
         return startMap.Map(s.get_ptr());
       } 
-      assert(false);
-      return 0;
+      ROSE_ABORT();
    }
   void SetStmtNode( const AstNodePtr& s, Node* n, MapType t)
    {
@@ -140,7 +139,7 @@ class BuildCFGTraverse : public ProcessAstTree
          startMap.InsertMapping(s.get_ptr(), n);
          break;
       default:
-         assert(false);
+         ROSE_ABORT();
       };
    }
       // map s to a CFG node: create a new one if not already mapped 
@@ -259,7 +258,7 @@ class BuildCFGTraverse : public ProcessAstTree
      }
        AstNodePtr init, cond, incr;
        if (!fa.IsLoop( s, &init, &cond,&incr))
-            assert(false);
+            ROSE_ABORT();
 
         if (t == AstInterface::PreVisit) {
            if (init != AST_NULL) 

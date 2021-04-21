@@ -51,7 +51,7 @@ operator()( const AstNodePtr& root)
      if (l != AST_NULL) {
         AstNodePtr body;
         if (!fa.IsLoop(l, 0,0,0,&body))
-            assert(false);
+            ROSE_ABORT();
         fa.RemoveStmt(n->get_stmt());
         fa.BlockPrependStmt(body, n->get_stmt()); 
      }

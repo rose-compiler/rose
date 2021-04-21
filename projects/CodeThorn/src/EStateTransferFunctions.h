@@ -6,7 +6,7 @@
 #include "CTIOLabeler.h"
 
 namespace CodeThorn {
-  class Analyzer;
+  class CTAnalysis;
   class ExprAnalyzer;
   
   class EStateTransferFunctions : public DFTransferFunctions {
@@ -14,8 +14,8 @@ namespace CodeThorn {
     EStateTransferFunctions();
     static void initDiagnostics();
     // must be set
-    void setAnalyzer(CodeThorn::Analyzer* analyzer);
-    Analyzer* getAnalyzer();
+    void setAnalyzer(CodeThorn::CTAnalysis* analyzer);
+    CTAnalysis* getAnalyzer();
     // obtained from analyzer
     ExprAnalyzer* getExprAnalyzer();
     // obtained from analyzer
@@ -45,13 +45,17 @@ namespace CodeThorn {
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
+
+    // special case, called from transferFunctionCall
+    std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
+    std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
 #if 0
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 #endif
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
   protected:
-    CodeThorn::Analyzer* _analyzer;
+    CodeThorn::CTAnalysis* _analyzer;
     std::string _rersHybridOutputFunctionName="calculate_output"; // only used if rersmode is active
   };
 }

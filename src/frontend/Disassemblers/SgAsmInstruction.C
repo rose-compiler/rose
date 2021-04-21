@@ -1,7 +1,7 @@
 /* SgAsmInstruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "BinaryNoOperation.h"
@@ -118,9 +118,22 @@ SgAsmInstruction::isLastInBlock()
     return false;
 }
 
+// This would normally be pure virtual, but ROSETTA-generated classes can't handle such basic C++.
+Sawyer::Optional<rose_addr_t>
+SgAsmInstruction::branchTarget() {
+    ASSERT_not_reachable("you forgot to implement this in a subclass"); // runtime error is the best we can do with ROSETTA
+}
+
+// FIXME[Robb Matzke 2021-03-02]: deprecated
 bool
 SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
-    return false;
+    if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+        if (target)
+            *target = *va;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool

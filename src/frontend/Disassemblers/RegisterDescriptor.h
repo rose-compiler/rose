@@ -1,8 +1,8 @@
 #ifndef Rose_BinaryAnalysis_RegisterDescriptor_H
 #define Rose_BinaryAnalysis_RegisterDescriptor_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <boost/serialization/access.hpp>
 
@@ -212,6 +212,9 @@ public:
     void print(std::ostream &o) const {
         o <<"{" <<majorNumber() <<"," <<minorNumber() <<"," <<offset() <<"," <<nBits() <<"}";
     }
+
+    /** Show the properties as a string. */
+    std::string toString() const;
 
     friend std::ostream& operator<<(std::ostream&, RegisterDescriptor);
 

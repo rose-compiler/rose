@@ -30,8 +30,9 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "EquivalenceChecking.h"
+//#include "EquivalenceChecking.h"
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
@@ -56,6 +57,7 @@
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
 
+#include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
@@ -70,12 +72,14 @@ using namespace Sawyer::Message;
 
 // required for createSolver function
 #include "Solver5.h"
+#include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
 
-const std::string versionString="1.12.16";
+
+const std::string versionString="1.12.28";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -97,6 +101,9 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   case 5 :  {  
     solver = new Solver5(); break;
   }
+  case 16 :  {  
+    solver = new Solver16(); break; // variant of solver5
+  }
   case 8 :  {  
     solver = new Solver8(); break;
   }
@@ -117,7 +124,7 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   return solver;
 }
 
-void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,Analyzer* analyzer) {
+void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
 #ifdef HAVE_Z3
   if(ctOpt.z3BasedReachabilityAnalysis)
     {
@@ -133,7 +140,8 @@ void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,Analyzer* analyzer) {
     }
 #endif	
 }
-void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, Analyzer* analyzer) {
+
+void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
   if(ctOpt.ssa) {
     SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
     ssaGen->generateSSAForm();
@@ -149,7 +157,6 @@ int main( int argc, char * argv[] ) {
     CodeThorn::initDiagnosticsLTL();
 
     TimingCollector tc;
-    TimeMeasurement timer;
 
     tc.startTimer();
     CodeThornOptions ctOpt;
@@ -157,6 +164,7 @@ int main( int argc, char * argv[] ) {
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
+
     IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     optionallyRunInternalChecks(ctOpt,argc,argv);
     optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
@@ -168,41 +176,100 @@ int main( int argc, char * argv[] ) {
 
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
-    optionallyRunNormalization(ctOpt,sageProject,tc);
-    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
+
+    if(ctOpt.info.printVariableIdMapping) {
+      cout<<"VariableIdMapping:"<<endl;
+      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      //AbstractValue::setVariableIdMapping(vim);
+
+      vim->computeVariableSymbolMapping(sageProject,0);
+      vim->toStream(cout);
+      exit(0);
+    }
+    
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    analyzer->initializeVariableIdMapping(sageProject);
-    logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
+
+    //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
+
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
-    SgNode* root=sageProject;ROSE_ASSERT(root);
-    setAssertConditionVariablesInAnalyzer(root,analyzer);
-    optionallyEliminateCompoundStatements(ctOpt, analyzer, root);
+
+    ProgramInfo originalProgramInfo(sageProject);
+    originalProgramInfo.compute();
+    
+    if(ctOpt.programStatsFileName.size()>0) {
+      originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
+    }
+    if(ctOpt.programStatsOnly) {
+      cout<<"=================================="<<endl;
+      cout<<"Language Feature Usage Overview"<<endl;
+      cout<<"=================================="<<endl;
+      originalProgramInfo.printDetailed();
+      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      //AbstractValue::setVariableIdMapping(vim);
+      vim->computeVariableSymbolMapping(sageProject,0);
+      cout<<endl;
+      vim->typeSizeOverviewtoStream(cout);
+      exit(0);
+    }
+
+    initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
+
+    if(ctOpt.programStats) {
+      analyzer->printStatusMessageLine("==============================================================");
+      ProgramInfo normalizedProgramInfo(sageProject);
+      normalizedProgramInfo.compute();
+      originalProgramInfo.printCompared(&normalizedProgramInfo);
+      analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
+    }
+
+    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
+    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
+    tc.startTimer();tc.stopTimer();
+
+    setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
     optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
-    initializeSolverWithStartFunction(ctOpt,analyzer,root,tc);
     if(analyzer->getFlow()->getStartLabelSet().size()==0) {
       // exit early
       if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
       exit(0);
     }
+    SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     analyzer->initLabeledAssertNodes(sageProject);
-    optionallyPrintFunctionIdMapping(ctOpt,analyzer);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
+    AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+
+    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
+      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
+    }
     runSolver(ctOpt,analyzer,sageProject,tc);
+
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
     optionallyRunZ3AndExit(ctOpt,analyzer);
+
+    tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::reportGeneration);
+
+    tc.startTimer();
     optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::callGraphDotFile);
+
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
-    optionallyRunVisualizer(ctOpt,analyzer,root);
+
+    tc.startTimer();
+    optionallyRunVisualizer(ctOpt,analyzer,sageProject);
+    tc.stopTimer(TimingCollector::visualization);
+
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
+
+    optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch

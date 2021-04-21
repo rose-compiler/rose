@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 typedef map< memoryDef *, ipConstant > constant_map;
 typedef constant_map::iterator constant_map_p;
@@ -95,3 +97,5 @@ private:
                         pointerValue & pointer,
                         ipConstant & value);
 }
+
+#endif

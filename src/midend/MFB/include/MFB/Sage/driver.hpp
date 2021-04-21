@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
+#include <ROSE_ABORT.h>
 
 #ifndef VERBOSE
 # define VERBOSE 0
@@ -227,7 +228,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
 
 template <typename Object>
 void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, size_t target_file_id) {
-  assert(false);
+  ROSE_ABORT();
 }
 
 Driver<Sage> * SageDriver(bool skip_rose_builtin = true, bool edg_il_to_graphviz = true);

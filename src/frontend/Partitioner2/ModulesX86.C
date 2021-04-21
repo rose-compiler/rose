@@ -1,14 +1,16 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 
+#include <BitOps.h>
 #include <boost/format.hpp>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <stringify.h>
 
 using namespace Rose::Diagnostics;
 
@@ -346,15 +348,19 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
 
 std::vector<rose_addr_t>
 scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
-                     const AddressInterval &targetLimits, size_t tableEntrySize,
-                     Sawyer::Optional<rose_addr_t> probableStartVa, size_t nSkippable) {
-    ASSERT_require(tableEntrySize > 0 && tableEntrySize <= sizeof(rose_addr_t));
+                     const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
+                     size_t tableEntrySizeBytes, Sawyer::Optional<rose_addr_t> probableStartVa, size_t nSkippable) {
+    ASSERT_require(tableEntrySizeBytes > 0 && tableEntrySizeBytes <= sizeof(rose_addr_t));
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    SAWYER_MESG(debug) <<"scanCodeAddressTable: tableLimits = " <<StringUtility::addrToString(tableLimits)
-                       <<", targetLimits = " <<StringUtility::addrToString(targetLimits)
-                       <<", tableEntrySize = " <<StringUtility::plural(tableEntrySize, "bytes")
-                       <<(probableStartVa ? ", probable start = " + StringUtility::addrToString(*probableStartVa) : "")
-                       <<", nSkippable = " <<nSkippable <<"\n";
+    if (debug) {
+        namespace Str = stringify::Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors;
+        debug <<"scanCodeAddressTable: tableLimits = " <<StringUtility::addrToString(tableLimits)
+              <<", targetLimits = " <<StringUtility::addrToString(targetLimits)
+              <<", entry size = " <<StringUtility::plural(tableEntrySizeBytes, "bytes")
+              <<", entry type " <<Str::EntryType(tableEntryType)
+              <<(probableStartVa ? ", probable start = " + StringUtility::addrToString(*probableStartVa) : "")
+              <<", nSkippable = " <<nSkippable <<"\n";
+    }
 
     std::vector<rose_addr_t> tableEntries;              // decoded entries in the table
 
@@ -369,26 +375,37 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
-        rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySize;
-        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize))) {
+        rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
+        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
             break;
         }
-        if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
-                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size())) {
+        if (tableEntrySizeBytes != (map->at(tableEntryVa).limit(tableEntrySizeBytes)
+                                    .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size())) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is not read-only\n";
             break;
         }
         rose_addr_t target = 0;
-        for (size_t i=0; i<tableEntrySize; ++i)
+        for (size_t i=0; i<tableEntrySizeBytes; ++i)
             target |= bytes[i] << (8*i);                // x86 is little endian
+        switch (tableEntryType) {
+            case SwitchSuccessors::ABSOLUTE:
+                break;
+            case SwitchSuccessors::RELATIVE:
+                // target is the table entry plus the table address, careful for overflow
+                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa)
+                                   <<" raw value = " <<StringUtility::addrToString(target) <<"\n";
+                target = (BitOps::signExtend<rose_addr_t>(target, 8*tableEntrySizeBytes) + actualStartVa) &
+                         BitOps::lowMask<rose_addr_t>(partitioner.instructionProvider().instructionPointerRegister().nBits());
+                break;
+        }
 
         // Save or skip the table entry
         if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
             tableEntries.push_back(target);
         } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
             ++nSkippedEntries;
-            actualStartVa += tableEntrySize;
+            actualStartVa += tableEntrySizeBytes;
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is skipped"
                                <<": value is " <<StringUtility::addrToString(target) <<"\n";
         } else {
@@ -402,21 +419,21 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     // any by looking forward from the probable start address. Be careful of over/under flows.
     size_t nBackwardEntries = 0;
     if (0 == nSkippedEntries) {
-        while (actualStartVa >= tableEntrySize &&
-               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySize, tableEntrySize))) {
+        while (actualStartVa >= tableEntrySizeBytes &&
+               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
             uint8_t bytes[sizeof(rose_addr_t)];
-            rose_addr_t tableEntryVa = actualStartVa - tableEntrySize;
-            if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
-                                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
+            rose_addr_t tableEntryVa = actualStartVa - tableEntrySizeBytes;
+            if (tableEntrySizeBytes != (map->at(tableEntryVa).limit(tableEntrySizeBytes)
+                                        .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
                 break;
             rose_addr_t target = 0;
-            for (size_t i=0; i<tableEntrySize; ++i)
+            for (size_t i=0; i<tableEntrySizeBytes; ++i)
                 target |= bytes[i] << (8*i);            // x86 is little endian
 
             // Save entry if valid, otherwise we've reached the beginning of the table
             if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 tableEntries.insert(tableEntries.begin(), target);
-                actualStartVa -= tableEntrySize;
+                actualStartVa -= tableEntrySizeBytes;
                 ++nBackwardEntries;
                 SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" found by backward search\n";
             } else {
@@ -441,7 +458,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
             int idx = -nBackwardEntries;
             BOOST_FOREACH (rose_addr_t target, tableEntries) {
                 debug <<"    entry[" <<boost::format("%4d") % idx <<"]"
-                      <<" at " <<StringUtility::addrToString(actualStartVa + idx * tableEntrySize)
+                      <<" at " <<StringUtility::addrToString(actualStartVa + idx * tableEntrySizeBytes)
                       <<" = " <<StringUtility::addrToString(target) <<"\n";
                 ++idx;
             }
@@ -465,7 +482,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     // Let's hope that the compiler doesn't combine the offset table technique with negative offsets.
     size_t nIndexes = 0;
     if (!tableEntries.empty() && 0 == nBackwardEntries) {
-        rose_addr_t indexArrayStartVa = actualStartVa + tableEntries.size() * tableEntrySize;
+        rose_addr_t indexArrayStartVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
         rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
         if (tableEntries.size() <= 16 /*arbitrarily small tables*/) {
             while (indexArrayCurrentVa <= tableLimits.greatest()) {
@@ -485,7 +502,8 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     }
 
     // Return values
-    AddressInterval actualTableLocation = AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySize + nIndexes);
+    AddressInterval actualTableLocation =
+        AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySizeBytes + nIndexes);
     ASSERT_require(tableLimits.isContaining(actualTableLocation));
     tableLimits = actualTableLocation;
     SAWYER_MESG(debug) <<"  actual table location = " <<StringUtility::addrToString(actualTableLocation) <<"\n";
@@ -539,93 +557,265 @@ findTableBase(SgAsmExpression *expr) {
     return baseVa;
 }
 
+// Matches:
+//   JMP [const1 + ...]  where const1 is the address of the table
+bool
+SwitchSuccessors::matchPattern1(SgAsmExpression *jmpArg) {
+    ASSERT_not_null(jmpArg);
+    if ((tableVa_ = findTableBase(jmpArg))) {
+        entryType_ = ABSOLUTE;
+        entrySizeBytes_ = jmpArg->get_type()->get_nBytes();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Matches:
+//   MOV reg1, [const1 + ...] where const1 is the address of the table
+//   JMP reg1
+bool
+SwitchSuccessors::matchPattern2(const BasicBlock::Ptr &bb, SgAsmInstruction *jmp) {
+    ASSERT_not_null(bb);
+    ASSERT_not_null(jmp);
+    size_t nInsns = bb->nInstructions();
+    if (nInsns < 2)
+        return false;
+
+    // MOV reg, [base + ...]
+    SgAsmX86Instruction *mov = isSgAsmX86Instruction(bb->instructions()[nInsns-2]);
+    if (!mov || mov->get_kind() != x86_mov)
+        return false;
+    const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
+    if (movArgs.size() != 2)
+        return false;
+
+    // First arg of MOV must be the same register as the first arg for JMP
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    SgAsmDirectRegisterExpression *reg1 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
+    SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(movArgs[0]);
+    if (!reg1 || !reg2 || reg1->get_descriptor()!=reg2->get_descriptor())
+        return false;
+
+    // Second argument of move must be [base + ...]
+    if ((tableVa_ = findTableBase(movArgs[1]))) {
+        entryType_ = ABSOLUTE;
+        entrySizeBytes_ = movArgs[1]->get_type()->get_nBytes();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Matches:
+//   LEA reg1, [RIP+const1] where RIP+const1 is the address of the table
+//   MOV EDI, EDI or other optional no-op
+//   MOVSXD reg2, [reg1 + ...]
+//   ADD reg2, reg1
+//   JMP reg2
+//
+// This pattern is used for position independent AMD64 code. The table, starting at base, contains offsets from the start of
+// the table to the target basic block. Representative specimen: wget2 email-20201209 df4ea624fc0d2a890c5cf6d0344ece52
+bool
+SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock::Ptr &bb, SgAsmInstruction *jmp) {
+    ASSERT_not_null(bb);
+    ASSERT_not_null(jmp);
+    size_t nInsns = bb->nInstructions();
+    if (nInsns < 4)
+        return false;
+
+    // ADD reg2, reg1
+    SgAsmX86Instruction *add = isSgAsmX86Instruction(bb->instructions()[nInsns-2]);
+    if (!add || add->get_kind() != x86_add)
+        return false;
+    const SgAsmExpressionPtrList &addArgs = add->get_operandList()->get_operands();
+    if (addArgs.size() != 2)
+        return false;
+    SgAsmDirectRegisterExpression *addDst = isSgAsmDirectRegisterExpression(addArgs[0]);
+    SgAsmDirectRegisterExpression *addSrc = isSgAsmDirectRegisterExpression(addArgs[1]);
+    if (!addDst || !addSrc)
+        return false;
+
+    // MOVSXD reg2, [reg1 + ...]
+    SgAsmX86Instruction *movsxd = isSgAsmX86Instruction(bb->instructions()[nInsns-3]);
+    if (!movsxd || movsxd->get_kind() != x86_movsxd)
+        return false;
+    const SgAsmExpressionPtrList &movsxdArgs = movsxd->get_operandList()->get_operands();
+    if (movsxdArgs.size() != 2)
+        return false;
+    SgAsmDirectRegisterExpression *movsxdDst = isSgAsmDirectRegisterExpression(movsxdArgs[0]);
+    SgAsmMemoryReferenceExpression *movsxdSrc = isSgAsmMemoryReferenceExpression(movsxdArgs[1]);
+    if (!movsxdDst || !movsxdSrc || movsxdDst->get_descriptor() != addDst->get_descriptor())
+        return false;
+    SgAsmBinaryAdd *movsxdAddr = isSgAsmBinaryAdd(movsxdSrc->get_address());
+    if (!movsxdAddr)
+        return false;
+    SgAsmDirectRegisterExpression *movsxdSrcReg = isSgAsmDirectRegisterExpression(movsxdAddr->get_lhs());
+    if (!movsxdSrcReg)
+        movsxdSrcReg = isSgAsmDirectRegisterExpression(movsxdAddr->get_rhs());
+    if (!movsxdSrcReg || movsxdSrcReg->get_descriptor() != addSrc->get_descriptor())
+        return false;
+
+    // MOV EDI EDI (optional)
+    bool foundNop = false;
+    do {
+        SgAsmX86Instruction *mov = isSgAsmX86Instruction(bb->instructions()[nInsns-4]);
+        if (!mov || mov->get_kind() != x86_mov)
+            break;
+        const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
+        if (movArgs.size() != 2)
+            break;
+        SgAsmDirectRegisterExpression *movDst = isSgAsmDirectRegisterExpression(movArgs[0]);
+        SgAsmDirectRegisterExpression *movSrc = isSgAsmDirectRegisterExpression(movArgs[1]);
+        if (!movDst || !movSrc)
+            break;
+        if (movDst->get_descriptor() != movSrc->get_descriptor())
+            break;
+        foundNop = true;
+    } while (false);
+
+    // LEA reg1 [RIP + const1]
+    if (foundNop && nInsns < 5)
+        return false;
+    SgAsmX86Instruction *lea = isSgAsmX86Instruction(bb->instructions()[nInsns - (foundNop ? 5 : 4)]);
+    if (!lea || lea->get_kind() != x86_lea)
+        return false;
+    const SgAsmExpressionPtrList &leaArgs = lea->get_operandList()->get_operands();
+    if (leaArgs.size() != 2)
+        return false;
+    SgAsmDirectRegisterExpression *leaDst = isSgAsmDirectRegisterExpression(leaArgs[0]);
+    if (!leaDst || leaDst->get_descriptor() != addSrc->get_descriptor())
+        return false;
+    SgAsmMemoryReferenceExpression *leaSrc = isSgAsmMemoryReferenceExpression(leaArgs[1]);
+    if (!leaSrc)
+        return false;
+    SgAsmBinaryAdd *leaSrcAdd = isSgAsmBinaryAdd(leaSrc->get_address());
+    SgAsmDirectRegisterExpression *leaSrcRip = isSgAsmDirectRegisterExpression(leaSrcAdd->get_lhs());
+    SgAsmIntegerValueExpression *leaSrcOffset = NULL;
+    if (leaSrcRip && leaSrcRip->get_descriptor() == partitioner.instructionProvider().instructionPointerRegister()) {
+        leaSrcOffset = isSgAsmIntegerValueExpression(leaSrcAdd->get_rhs());
+    } else {
+        leaSrcRip = isSgAsmDirectRegisterExpression(leaSrcAdd->get_rhs());
+        if (!leaSrcRip || leaSrcRip->get_descriptor() != partitioner.instructionProvider().instructionPointerRegister())
+            return false;
+        leaSrcOffset = isSgAsmIntegerValueExpression(leaSrcAdd->get_lhs());
+    }
+    if (!leaSrcOffset)
+        return false;
+
+    tableVa_ = (lea->get_address() + lea->get_size() + leaSrcOffset->get_absoluteValue()) &
+               BitOps::lowMask<rose_addr_t>(partitioner.instructionProvider().instructionPointerRegister().nBits());
+    if (!tableVa_)
+        return false;
+
+    entryType_ = RELATIVE;
+    entrySizeBytes_ = 4;
+    return true;
+}
+
+bool
+SwitchSuccessors::matchPatterns(const Partitioner &partitioner, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(bblock);
+
+    // Block always ends with JMP with one argument.
+    size_t nInsns = bblock->nInstructions();
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(bblock->instructions()[nInsns-1]);
+    if (!jmp || jmp->get_kind() != x86_jmp)
+        return false;
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    if (jmpArgs.size() != 1)
+        return false;
+
+    // JMP [const1 + ...]   where base is assumed to be the table address
+    if (matchPattern1(jmpArgs[0]))
+        return true;
+
+    // MOV reg1, ...
+    // JMP reg1
+    if (matchPattern2(bblock, jmp))
+        return true;
+
+    //   LEA reg1, [RIP+const1] where RIP+const1 is the address of the table
+    //   MOV EDI, EDI or other optional no-op
+    //   MOVSXD reg2, [reg1 + ...]
+    //   ADD reg2, reg1
+    //   JMP reg2
+    if (matchPattern3(partitioner, bblock, jmp))
+        return true;
+
+    // no matching pattern
+    return false;
+}
+
 // A "switch" statement is a computed jump consisting of a base address and a register offset.
 bool
 SwitchSuccessors::operator()(bool chain, const Args &args) {
     ASSERT_not_null(args.bblock);
-    static const rose_addr_t NO_ADDR(-1);
     if (!chain)
         return false;
     size_t nInsns = args.bblock->nInstructions();
     if (nInsns < 1)
         return chain;
-
-    // Block always ends with JMP
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(args.bblock->instructions()[nInsns-1]);
-    if (!jmp || jmp->get_kind()!=x86_jmp)
+    if (!matchPatterns(args.partitioner, args.bblock))
         return chain;
-    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
-    if (jmpArgs.size()!=1)
-        return chain;
-
-    // Try to match a pattern
-    rose_addr_t tableVa = NO_ADDR;
-    do {
-        // Pattern 1: JMP [offset + reg * size]
-        if (findTableBase(jmpArgs[0]).assignTo(tableVa))
-            break;
-
-        // Other patterns are: MOV reg, ...; JMP reg
-        if (nInsns < 2)
-            return chain;
-        SgAsmX86Instruction *mov = isSgAsmX86Instruction(args.bblock->instructions()[nInsns-2]);
-        if (!mov || mov->get_kind()!=x86_mov)
-            return chain;
-        const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
-        if (movArgs.size()!=2)
-            return chain;
-
-        // First arg of MOV must be the same register as the first arg for JMP
-        SgAsmDirectRegisterExpression *reg1 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
-        SgAsmDirectRegisterExpression *reg2 = isSgAsmDirectRegisterExpression(movArgs[0]);
-        if (!reg1 || !reg2 || reg1->get_descriptor()!=reg2->get_descriptor())
-            return chain;
-
-        // Pattern 2: MOV reg2, [offset + reg1 * size]; JMP reg2
-        if (findTableBase(movArgs[1]).assignTo(tableVa))
-            break;
-
-        // No match
-        return chain;
-    } while (0);
-    ASSERT_forbid(tableVa == NO_ADDR);
+    ASSERT_require(tableVa_);
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
     size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
-    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
+    AddressInterval whole = AddressInterval::hull(0, BitOps::lowMask<rose_addr_t>(8*wordSizeBytes));
     AddressInterval tableLimits;
-    if (tableVa > jmp->get_address()) {
+    SgAsmInstruction *lastInsn = args.bblock->instructions().back();
+    if (*tableVa_ > lastInsn->get_address()) {
         // table is after the jmp instruction
-        tableLimits = AddressInterval::hull(std::min(jmp->get_address() + jmp->get_size(), tableVa), whole.greatest());
+        tableLimits = AddressInterval::hull(std::min(lastInsn->get_address() + lastInsn->get_size(), *tableVa_), whole.greatest());
     } else {
         // table is before the jmp instruction
-        tableLimits = AddressInterval::hull(0, jmp->get_address());
+        tableLimits = AddressInterval::hull(0, lastInsn->get_address());
     }
 
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
     // during the table-reading loop (like targets must be mapped with execute permission).
-    AddressInterval targetLimits = AddressInterval::hull(args.bblock->fallthroughVa(), whole.greatest());
-
-    // If there's a function that follows us then the switch targets are almost certainly not after the beginning of that
-    // function.
+    AddressInterval targetLimits = AddressInterval::whole();
+    std::vector<Function::Ptr> functions = args.partitioner.functions();
     {
+        // If there's a function that precedes this basic block (possibly the one that will eventually own this block) then the
+        // switch statement targets are almost certainly not before the beginning of that function.
+        Function::Ptr needle = Function::instance(args.bblock->address());
+        std::vector<Function::Ptr>::iterator prevFunctionIter = std::lower_bound(functions.begin(), functions.end(),
+                                                                                 needle, sortFunctionsByAddress);
+        if (prevFunctionIter != functions.end()) {
+            while (prevFunctionIter != functions.begin() && (*prevFunctionIter)->address() > needle->address())
+                --prevFunctionIter;
+            Function::Ptr prevFunction = *prevFunctionIter;
+            if (prevFunction->address() <= needle->address()) {
+                targetLimits = targetLimits & AddressInterval::hull(prevFunction->address(), targetLimits.greatest());
+            } else {
+                // no prior function, so assume that the "cases" are at higher addresses than the "switch"
+                targetLimits = AddressInterval::hull(args.bblock->fallthroughVa(), AddressInterval::whole().greatest());
+            }
+        }
+    }
+    {
+        // If there's a function that follows this basic block then the switch targets are almost certainly not after the
+        // beginning of that function.
         Function::Ptr needle = Function::instance(args.bblock->fallthroughVa());
-        std::vector<Function::Ptr> functions = args.partitioner.functions();
         std::vector<Function::Ptr>::iterator nextFunctionIter = std::lower_bound(functions.begin(), functions.end(),
                                                                                  needle, sortFunctionsByAddress);
         if (nextFunctionIter != functions.end()) {
             Function::Ptr nextFunction = *nextFunctionIter;
-            if (args.bblock->fallthroughVa() == nextFunction->address())
-                return chain;                           // not even room for one case label
-            targetLimits = AddressInterval::hull(targetLimits.least(), nextFunction->address()-1);
+            targetLimits = targetLimits & AddressInterval::hull(0, nextFunction->address()-1);
         }
     }
+    SAWYER_MESG(mlog[DEBUG]) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
+    if (targetLimits.isEmpty())
+        return chain;                                   // not even room for one case label
 
     // Read the table
     static const size_t maxSkippable = 1;               // max number of invalid table entries to skip; arbitrary
     std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                                 targetLimits, wordSizeBytes, tableVa, maxSkippable);
+                                                                 targetLimits, entryType_, entrySizeBytes_,
+                                                                 *tableVa_, maxSkippable);
     if (tableEntries.empty())
         return chain;
 
@@ -636,8 +826,8 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         args.bblock->insertSuccessor(va, wordSizeBytes*8);
 
     // Create a data block for the offset table and attach it to the basic block
-    size_t nTableEntries = tableLimits.size() / wordSizeBytes;
-    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
+    size_t nTableEntries = tableLimits.size() / entrySizeBytes_;
+    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*entrySizeBytes_);
     SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
     DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
     addressTable->comment("x86 'switch' statement's 'case' address table");

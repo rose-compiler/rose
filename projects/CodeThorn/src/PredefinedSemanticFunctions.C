@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
-#include "Analyzer.h" // dependency on process-functions
+#include "CTAnalysis.h" // dependency on process-functions
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -144,7 +144,7 @@ namespace PredefinedSemanticFunctions {
       int pos=0;
       while(1) {
         AbstractValue AbstractPos=AbstractValue(pos);
-        AbstractValue currentPos=(stringPtr+AbstractPos);
+        AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,AbstractPos);
         //cout<<"DEBUG: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
           exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());

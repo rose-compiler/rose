@@ -1,0 +1,155 @@
+# Steps to build ROSE 0.9.10.XX with intel 16.0.3 or 18.0.1 or gcc 4.9.3:
+
+export ROSE_BASE="/g/g17/charles/code/ROSE"
+cd ${ROSE_BASE}
+
+# Clone rose from the Lab repo:
+git clone rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose
+cd rose
+git submodule init
+git submodule update
+# Find out what version you have, and set ROSE_VERSION, below, accordingly:
+git log
+cd ..
+
+# Compiler and version info:
+export ROSE_VERSION="0.9.10.64"
+export COMPILER="intel"
+export COMPILER_VERSION="18.0.1"
+export MPI_KIND="mvapich2"
+export MPI_VERSION="2.2"
+export BOOST_VERSION="1.66.0"
+
+# Computed directories:
+export ROSE_REPO="${ROSE_BASE}/rose-${ROSE_VERSION}"
+export ROSE_BUILD_DIR="${ROSE_BASE}/rose-${ROSE_VERSION}-${COMPILER}-${COMPILER_VERSION}.mpi"
+export COMPILER_HOME="/usr/tce/packages/${MPI_KIND}/${MPI_KIND}-${MPI_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+export BOOST_HOME="/usr/tce/packages/boost/boost-${BOOST_VERSION}-${MPI_KIND}-${MPI_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+
+mv rose ${ROSE_REPO}
+
+# Below, make sure line 264 looks like:
+# ROSE_INTEL_COMPILER_MATH_LIBS = -L/usr/tce/packages/intel/intel-16.0.3/lib/intel64 -limf -lirng -lintlc -lsvml
+# or
+# ROSE_INTEL_COMPILER_MATH_LIBS = -L/usr/tce/packages/intel/intel-18.0.1/lib/intel64 -limf -lirng -lintlc -lsvml
+gedit "${ROSE_REPO}/config/Makefile.for.ROSE.includes.and.libs"
+
+# These things need to be done in the current shell, and NOT inside the 
+# do_configure script:
+
+export CC=${COMPILER_HOME}/bin/mpicc
+export CXX=${COMPILER_HOME}/bin/mpicxx
+module load gcc/4.9.3
+
+
+mkdir ${ROSE_BUILD_DIR}
+cd ${ROSE_BUILD_DIR}
+
+# Create a file with the following in it:
+cat > do_configure << EOF
+#!/bin/bash
+
+echo "CHECK that gcc is 4.9.x or later below:"
+echo "If not, exit this script and do:"
+echo "module load gcc/4.9.3"
+gcc --version
+read -p "Press Enter when done checking."
+echo ""
+
+echo "CHECK that CC=${COMPILER_HOME}/bin/mpicc"
+echo "If not, exit this script and do:"
+echo "export CC=${COMPILER_HOME}/bin/mpicc"
+echo "CC=${CC}"
+read -p "Press Enter when done checking."
+echo ""
+
+echo "CHECK that CXX=${COMPILER_HOME}/bin/mpicxx"
+echo "If not, exit this script and do:"
+echo "export CXX=${COMPILER_HOME}/bin/mpicxx"
+echo "CXX=${CXX}"
+read -p "Press Enter when done checking."
+echo ""
+
+echo "CHECK that LD_LIBRARY_PATH does not have any non-gcc compiler paths in it."
+echo "If not, exit this script and fix it."
+echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+read -p "Press Enter when done checking."
+echo ""
+
+intel_math_lib_makefile="${ROSE_REPO}/config/Makefile.for.ROSE.includes.and.libs"
+echo "CHECK ${intel_math_lib_makefile} line 264 looks like:"
+echo "ROSE_INTEL_COMPILER_MATH_LIBS = -L${COMPILER_HOME}/lib/intel64 -limf -lirng -lintlc -lsvml"
+echo "If not, exit this script and do:"
+echo "gedit ${intel_math_lib_makefile}"
+read -p "Press Enter when done checking."
+echo ""
+
+echo "DO NOT run multiple configures using ${ROSE_REPO} in parallel if they need different intel versions."
+read -p "Press Enter when ready to go."
+echo ""
+
+echo "DOING build"
+(cd ${ROSE_REPO}; srun_do run_and_log build)
+echo ""
+
+echo "DOING configure"
+srun_do \
+"${ROSE_REPO}/configure" \
+"--without-java" \
+"--with-boost=${BOOST_HOME}" \
+"--disable-boost-version-check" \
+"--enable-edg_version=4.12" \
+"--with-alternate_backend_Cxx_compiler=${COMPILER_HOME}/bin/mpicxx" \
+"--with-alternate_backend_C_compiler=${COMPILER_HOME}/bin/mpicc" \
+"--with-alternate_backend_fortran_compiler=${COMPILER_HOME}/bin/mpif77"
+EOF
+
+chmod +x do_configure
+srun_do run_and_log do_configure
+
+# Below, comment out these lines after line 1820: (Not needed for ROSE 0.9.10.66 and later):
+#   #define _MMINTRIN_H_INCLUDED
+#   #define _XMMINTRIN_H_INCLUDED
+#   #define _EMMINTRIN_H_INCLUDED
+gedit  "${ROSE_BUILD_DIR}/include-staging/gcc_HEADERS/rose_edg_required_macros_and_functions.h"
+#gedit  "${ROSE_BUILD_DIR}/include-staging/gcc_HEADERS/rose_edg_required_macros_and_functions.h"
+
+srun_do -c36 run_and_log --use_first_parm make all -j36
+srun_do -c36 run_and_log --use_first_parm make install -j36
+
+====================
+FOR GCC 4.9.3:
+====================
+
+# First do steps above through "build", then:
+
+export ROSE_VERSION="0.9.10.55"
+export COMPILER="gcc"
+export COMPILER_VERSION="4.9.3"
+export BOOST_VERSION="1.66.0"
+
+export ROSE_BASE="/g/g17/charles/code/ROSE"
+export ROSE_REPO="${ROSE_BASE}/rose-${ROSE_VERSION}"
+export ROSE_BUILD_DIR="${ROSE_BASE}/rose-${ROSE_VERSION}-${COMPILER}-${COMPILER_VERSION}" # WITHOUT .mpi
+export COMPILER_HOME="/usr/tce/packages/${MPI_KIND}/${MPI_KIND}-${MPI_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+export BOOST_HOME="/usr/tce/packages/boost/boost-${BOOST_VERSION}-${MPI_KIND}-${MPI_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+
+module load ${COMPILER}/${COMPILER_VERSION}/${MPI_KIND}/${MPI_VERSION} 
+export CC="${COMPILER_HOME}/bin/gcc"
+export CXX="${COMPILER_HOME}/bin/g++"
+
+cd ..
+mkdir ${ROSE_BUILD_DIR}
+cd ${ROSE_BUILD_DIR}
+
+srun_do \
+run_and_log \
+${ROSE_REPO}/configure \
+--without-java \
+--with-boost=${BOOST_HOME} \
+--disable-boost-version-check \
+--enable-edg_version=4.12 
+
+srun_do -c36 run_and_log --use_first_parm make all -j36
+srun_do -c36 run_and_log --use_first_parm make install -j36
+

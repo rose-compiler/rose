@@ -168,7 +168,7 @@ CallGraph::visit ( SgNode* astNode )
             // edgeMap.insert(pair<string,CallGraphEdgeInfo*>(name,new CallGraphEdgeInfo(from,to)));
 
                printf ("ERROR: Call to function not in node map! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
           CallGraphNodeInfo* to = NULL;
@@ -187,7 +187,7 @@ CallGraph::visit ( SgNode* astNode )
                nodeMap.insert(pair<string,CallGraphNodeInfo*>(to_function_name,to));
 #if 0
                printf ("ERROR: Call to function not in node map! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
 
@@ -275,7 +275,7 @@ NewCallGraph::readCallGraphFile (string binaryFilename)
      if ( binaryStream.bad() == true )
         {
           printf ("Error, some sort of problem with file (not just that it does not exist) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -351,7 +351,7 @@ NewCallGraph::generateCallGraphFile(SgProject* project, CallGraph & cg)
      if ( datafile.good() == false )
         {
           printf ("Text file failed to open \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      string binaryFilename = "binaryCallGraph";
@@ -373,7 +373,7 @@ NewCallGraph::generateCallGraphFile(SgProject* project, CallGraph & cg)
      if ( binaryStream.good() == false )
         {
           printf ("Binary file failed to open \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // datafile << "This is a test!" << std::endl;

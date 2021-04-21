@@ -14,12 +14,12 @@ int main(int argc, char *argv[]) {
 
     NativeSemantics::DispatcherPtr cpu = NativeSemantics::Dispatcher::instance(exe);
     ASSERT_not_null(cpu);
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
 
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
 
     while (true) {
-        rose_addr_t va = ops->peekRegister(IP, ops->undefined_(IP.nBits()))->get_number();
+        rose_addr_t va = ops->peekRegister(IP, ops->undefined_(IP.nBits()))->toUnsigned().get();
         //std::cerr <<Rose::StringUtility::addrToString(va) <<"\n";
         cpu->processInstruction(va);
     }

@@ -39,7 +39,7 @@ inline void read_ch( istream& in, char c)
   char c1 = read_ch(in);
   if (c1 != c) {
      cerr << "read char error: expecting '" << c << "' instead of '" << c1 << "'\n";
-     assert(false);
+     ROSE_ABORT();
   }
 }
 
@@ -61,7 +61,7 @@ inline void read_id( istream& in, const string& id )
   string id1 = read_id(in);
   if (id1 != id) {
      cerr << "read id error: expecting '" << id << "' instead of '" << id1 << "'\n";
-     assert(false);
+     ROSE_ABORT();
   }
 }
 

@@ -1,7 +1,7 @@
 #ifndef Rose_LlvmSemantics2_H
 #define Rose_LlvmSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "SymbolicSemantics2.h"
 #include "CommandLine.h"
@@ -362,7 +362,7 @@ private:
 protected:
     explicit Transcoder(const BaseSemantics::DispatcherPtr &dispatcher)
         : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
-        operators = RiscOperators::promote(dispatcher->get_operators());
+        operators = RiscOperators::promote(dispatcher->operators());
     }
 
 public:

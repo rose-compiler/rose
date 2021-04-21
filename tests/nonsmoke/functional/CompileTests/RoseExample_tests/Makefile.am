@@ -46,7 +46,7 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings -w --edg:restrict 
+ROSE_FLAGS = --edg:no_warnings -w --edg:restrict -std=c++14 
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed}

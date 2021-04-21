@@ -31,7 +31,10 @@ class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
+class SgNamedType;
 class SgNamespaceDeclarationStatement;
+class SgPntrArrRefExp;
+class SgPointerType;
 class SgPrintStatement;
 class SgProcessControlStatement;
 class SgProgramHeaderStatement;
@@ -46,23 +49,10 @@ class SgVariableDeclaration;
 class SgVarRefExp;
 class SgWhileStmt;
 
-// Jovial specific classes
-class SgJovialCompoolStatement;
-class SgJovialDefineDeclaration;
-class SgJovialDirectiveStatement;
-class SgJovialForThenStatement;
-class SgJovialOverlayDeclaration;
-class SgJovialTableStatement;
-
+enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
 
 namespace Rose {
 namespace builder {
-
-// Need std=c++11
-//
-#ifndef nullptr
-#define nullptr NULL
-#endif
 
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
@@ -71,8 +61,10 @@ struct SourcePosition {
 };
 
  struct TraversalContext {
-    TraversalContext() : type(nullptr), actual_function_param_scope(nullptr) {}
+    TraversalContext() : type(nullptr), is_initialization(false),
+                         actual_function_param_scope(nullptr) {}
     SgType* type;
+    bool is_initialization;
     SgScopeStatement* actual_function_param_scope;
  };
 
@@ -97,17 +89,27 @@ public:
 class SageTreeBuilder {
 public:
 
+   // C++11
+   // enum class LanguageEnum{Fortran, Jovial};
+   enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+
+   // C++11
+   // Don't allow default constructor, ...
+   SageTreeBuilder() = delete;
+   SageTreeBuilder(SageTreeBuilder::LanguageEnum language) : language_(language) {}
+
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
 
-   void Leave(SgScopeStatement* &);
+   void Enter(SgScopeStatement* &);
+   void Leave(SgScopeStatement*);
 
    void Enter(SgBasicBlock* &);
    void Leave(SgBasicBlock*);
 
    void Enter(SgProgramHeaderStatement* &,
-              const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
+              const boost::optional<std::string> &, const std::vector<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
 
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
@@ -130,9 +132,9 @@ public:
    void Leave(SgDerivedTypeStatement*);
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
-   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
+   void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
    void Leave(SgVariableDeclaration*);
-
+   void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
@@ -185,21 +187,24 @@ public:
 #endif
    void Leave(SgImplicitStatement*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
+   SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
 // Expressions
 //
    void Enter(SgFunctionCallExp* &, const std::string &name, SgExprListExp* params);
    void Enter(SgReplicationOp* &, const std::string &name, SgExpression* value);
    void Enter(SgCastExp* &, const std::string &name, SgExpression* cast_operand);
+   void Enter(SgPntrArrRefExp* &, const std::string &name, SgExprListExp* subscripts, SgExprListExp* cosubscripts);
    void Enter(SgVarRefExp* &, const std::string &name, bool compiler_generate=false);
 
 // Jovial specific nodes
 //
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialForThenStatement* &, const std::string &);
@@ -216,6 +221,7 @@ public:
 
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
+#endif
 
 // Fortran specific nodes
 //
@@ -223,21 +229,39 @@ public:
    void Leave(SgCommonBlock* common_block);
 
 private:
+
+   LanguageEnum language_;
    TraversalContext context_;
+   std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::map<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
+   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
+
 public:
+   bool is_Fortran_language() {return (language_ == e_language_fortran);}
+   bool is_Jovial_language()  {return (language_ == e_language_jovial);}
+
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+   void setInitializationContext(bool flag) {context_.is_initialization = flag;}
+   bool  isInitializationContext()          {return context_.is_initialization;}
 
 // Helper function
    bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
      {
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
+
+// Builder function manages implicitly declared variable references
+   SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
+
+// Builder function manages pointer references to undeclared types
+   SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
 
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);
@@ -294,6 +318,9 @@ namespace SageBuilderCpp17 {
 
 // Other
    SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
+// This is new and should be added to SageBuilder?
+   SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
+                                                        SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
 
 // Non builder helper functions
    void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);

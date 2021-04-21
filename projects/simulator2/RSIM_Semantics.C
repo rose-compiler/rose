@@ -26,7 +26,7 @@ struct IP_cpuid: public X86::InsnProcessor {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         BaseSemantics::SValuePtr codeExpr = d->readRegister(d->REG_EAX);
-        unsigned code = codeExpr->get_number();
+        unsigned code = codeExpr->toUnsigned().get();
 
         // Return value based on an Intel model "Xeon X5680 @ 3.33GHz"; 3325.017GHz; stepping 2
         uint32_t dwords[4];
@@ -94,8 +94,8 @@ createDispatcher(RSIM_Thread *owningThread) {
     switch (arch) {
         case ARCH_X86:
             dispatcher = DispatcherX86::instance(ops, wordSize, regs);
-            dispatcher->iproc_set(x86_cpuid, new IP_cpuid);
-            dispatcher->iproc_set(x86_sysenter, new IP_sysenter);
+            dispatcher->iprocSet(x86_cpuid, new IP_cpuid);
+            dispatcher->iprocSet(x86_sysenter, new IP_sysenter);
             ops->allocateOnDemand(false);               // OS controls what memory is available
             break;
         case ARCH_M68k:
@@ -152,7 +152,7 @@ RiscOperators::dumpState() {
 
     if (ARCH_X86 == architecture_) {
         out <<"  segments:\n";
-        RegisterNames regNames(currentState()->registerState()->get_register_dictionary());
+        RegisterNames regNames(currentState()->registerState()->registerDictionary());
         BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
             Rose::BinaryAnalysis::RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
             out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)
@@ -189,8 +189,8 @@ void
 RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
     Super::writeRegister(reg, value);
     if (ARCH_X86 == architecture_ && reg.majorNumber() == x86_regclass_segment) {
-        ASSERT_require2(0 == value->get_number() || 3 == (value->get_number() & 7), "GDT and privilege level 3");
-        loadShadowRegister((X86SegmentRegister)reg.minorNumber(), value->get_number() >> 3);
+        ASSERT_require2(0 == value->toUnsigned().get() || 3 == (value->toUnsigned().get() & 7), "GDT and privilege level 3");
+        loadShadowRegister((X86SegmentRegister)reg.minorNumber(), value->toUnsigned().get() >> 3);
     }
 }
 
@@ -199,15 +199,15 @@ RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
-    rose_addr_t offset = address->get_number();
-    rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->get_width());
+    rose_addr_t offset = address->toUnsigned().get();
+    rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->nBits());
     rose_addr_t addr = offset & addrMask;
-    if (!cond->get_number())
+    if (!cond->toUnsigned().get())
         return dflt;
 
     // Check the address against the memory segment information
-    ASSERT_require(dflt->get_width() % 8 == 0);
-    size_t nBytes = dflt->get_width() / 8;
+    ASSERT_require(dflt->nBits() % 8 == 0);
+    size_t nBytes = dflt->nBits() / 8;
     if (ARCH_X86 == architecture_) {
         ASSERT_forbid(segreg.isEmpty());
         ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.minorNumber()));
@@ -254,7 +254,7 @@ RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const
         default:
             ASSERT_not_reachable("invalid architecture");
     }
-    BaseSemantics::SValuePtr retval = svalue_number(bv);
+    BaseSemantics::SValuePtr retval = svalueNumber(bv);
 
     SAWYER_MESG(mesg) <<"-> " <<*retval <<"\n";
     return retval;
@@ -265,16 +265,16 @@ RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, cons
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
-    rose_addr_t offset = address->get_number();
-    rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->get_width());
+    rose_addr_t offset = address->toUnsigned().get();
+    rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->nBits());
     SValuePtr value = SValue::promote(value_);
     rose_addr_t addr = offset & addrMask;
-    if (!cond->get_number())
+    if (!cond->toUnsigned().get())
         return;
 
     // Check the address against the memory segment information
-    ASSERT_require(value->get_width() % 8 == 0);
-    size_t nBytes = value->get_width() / 8;
+    ASSERT_require(value->nBits() % 8 == 0);
+    size_t nBytes = value->nBits() / 8;
     if (ARCH_X86 == architecture_) {
         ASSERT_forbid(segreg.isEmpty());
         ASSERT_require(segmentInfo_.exists((X86SegmentRegister)segreg.minorNumber()));

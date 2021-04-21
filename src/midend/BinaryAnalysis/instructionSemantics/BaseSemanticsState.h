@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_State_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_State_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemanticsTypes.h>
 
@@ -120,11 +120,23 @@ public:
     /** Initialize all registers to zero.
      *
      *  Calls the @ref RegisterState::zero method. Memory is not affected. */
+    void zeroRegisters() /*final*/ {
+        zero_registers();
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated. This will be removed, although it is currently used. Users should be already
+    // using C++11 "override" in order to be notified when we make the switch.
     virtual void zero_registers();
 
     /** Clear all memory locations.
      *
      *  Calls the @ref MemoryState::clear method. Registers are not affected. */
+    void clearMemory() /*final*/ {
+        clear_memory();
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated. This will be removed, although it is currently used. Users should be already
+    // using C++11 "override" in order to be notified when we make the switch.
     virtual void clear_memory();
 
     /** Property: Register state.
@@ -202,6 +214,11 @@ public:
     void print(std::ostream &stream, const std::string &prefix = "") const;
     virtual void print(std::ostream&, Formatter&) const;
     /** @} */
+
+    /** Convert the state to a string for debugging.
+     *
+     *  This is intended mainly for debugging so that you can easily print the state from within a debugger. */
+    std::string toString() const;
 
     /** State with formatter. See with_formatter(). */
     class WithFormatter {

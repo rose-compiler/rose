@@ -1,0 +1,9 @@
+START 
+DEF PROC TEST RENT(XX)F ; 
+   BEGIN 
+   ITEM XX F ; 
+   ITEM TWO'BITS B 2 ; 
+   
+   TWO'BITS=(*B 2*)(BIT(REP(XX),0,2)); 
+   END 
+TERM 

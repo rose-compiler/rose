@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "LanguageRestrictor.h"
 #include <cstdio>
 #include <cstring>
@@ -173,7 +173,7 @@ void checkTypes() {
   }
 
   {
-    cout << "RUNNING CHECKS FOR NUMBER LATTICE TYPE:"<<endl;
+    cout << "RUNNING CHECKS FOR ABSTRACT VALUE LATTICE TYPE:"<<endl;
     AbstractValue a;
     a=true;
     check("a=true => isTrue",a.isTrue());
@@ -205,6 +205,10 @@ void checkTypes() {
     a=0;
     check("a=0; a.isTrue()==false",a.isTrue()==false);
     check("a=0; a.isFalse())==true",a.isFalse()==true);
+
+    AbstractValue np=AbstractValue::createNullPtr();
+    check("null pointer value np=0; np==0",np.isNullPtr()==true);
+
   }
 
   {

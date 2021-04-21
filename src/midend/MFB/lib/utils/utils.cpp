@@ -183,7 +183,7 @@ void collect_symbol_template_info(SgSymbol * sym, SgSymbol * & tpl_sym, SgDeclar
       tpl_sym = tpl_decl->search_for_symbol_from_symbol_table();
       ROSE_ASSERT(tpl_sym != NULL);
     } else {
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 
   } else if (isSgTypedefSymbol(sym)) {
@@ -193,7 +193,7 @@ void collect_symbol_template_info(SgSymbol * sym, SgSymbol * & tpl_sym, SgDeclar
     SgTemplateTypedefDeclaration * tpl_decl = isSgTemplateTypedefDeclaration(decl); // that should not happen as it should be a SgTemplateTypedefSymbol
     SgTemplateInstantiationTypedefDeclaration * tpl_inst = isSgTemplateInstantiationTypedefDeclaration(decl);
     if (tpl_decl != NULL || tpl_inst != NULL) {
-      ROSE_ASSERT(false); // FIXME
+      ROSE_ABORT(); // FIXME
     }
 #endif
     SgTemplateInstantiationTypedefDeclaration * idecl = isSgTemplateInstantiationTypedefDeclaration(decl);

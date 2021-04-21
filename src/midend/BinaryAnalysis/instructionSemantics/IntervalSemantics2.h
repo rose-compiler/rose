@@ -1,7 +1,7 @@
 #ifndef Rose_IntervalSemantics_H
 #define Rose_IntervalSemantics_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <stdint.h>
 
@@ -144,7 +144,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }

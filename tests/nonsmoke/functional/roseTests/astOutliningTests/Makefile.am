@@ -88,17 +88,19 @@ C_TESTS_REQUIRED_TO_PASS =			\
 # This is not ready
 #         variables_in_header.c
 # template_function1.cpp
-
+# name qualification class ::A
+#	test_66_2020.cpp
 CXX_TESTS_REQUIRED_TO_PASS =		\
 	array2.cpp				\
 	moreTest6.cpp				\
 	moreTest7.cpp				\
         charStar.cpp  \
 	const-global.cpp \
-	reference.cpp
+	reference.cpp 
 
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
+#	test_66_2020.cpp
 CXX2_TESTS_REQUIRED_TO_PASS = \
 	print.cpp \
 	test_42_2020.cpp \
@@ -107,9 +109,14 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	charStar.cpp  \
 	test_37_2020.cpp \
 	ft_cfftz.cpp \
+	test_61_2020.cpp \
+	test_119_2021.cpp \
+	test_120_2020.cpp \
+	test_121_2020.cpp \
 	test_52.cpp
 
 #This set of CPP files must contain main() to run
+# DQ (4/6/2021): Failing test (get_nextStatement() returns error).
 CXX4_TESTS_REQUIRED_TO_RUN=	\
 	ft_cfftz_omp.cpp
 
@@ -306,6 +313,7 @@ test_newfile: $(tofile_test_targets)
 # Test outlining to a separate file using dlopen
 
 dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQUIRED_TO_PASS)))
+dlopen_test_targets  += $(addprefix dlopen_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS +=  $(dlopen_test_targets)
 dlopen_test_flags =				\
 	-rose:outline:use_dlopen		\
@@ -516,6 +524,6 @@ test-c-cxx:$(C_CXX_RESULTS)
 check-local: $(TEST_TARGETS) 
 
 clean-local:
-	rm -f $(TEST_TARGETS) 
+	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp
 	rm -f $(TEST_TARGETS:.passed=.failed)
 	rm -rf unparseHeaderRoot_test_20_2019

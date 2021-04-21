@@ -33,15 +33,19 @@ void CFAnalysis::initDiagnostics() {
 CFAnalysis::CFAnalysis(Labeler* l):labeler(l),_createLocalEdge(false){
   initDiagnostics();
 }
+
 CFAnalysis::CFAnalysis(Labeler* l, bool createLocalEdge):labeler(l),_createLocalEdge(createLocalEdge){
   initDiagnostics();
 }
+
 void CFAnalysis::setCreateLocalEdge(bool createLocalEdge) {
   _createLocalEdge=createLocalEdge;
 }
+
 bool CFAnalysis::getCreateLocalEdge() {
   return _createLocalEdge;
 }
+
 size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   cerr<<"Internal error: deleteFunctionCallLocalEdges called."<<endl;
   ROSE_ASSERT(false);
@@ -70,7 +74,7 @@ LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
-// MS: TODO: refactor thse two functions  (2/2)
+// MS: TODO: refactor these two functions  (2/2)
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -145,7 +149,13 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   SgNode* functionDef=getLabeler()->getNode(entryLabel);
   RoseAst ast(functionDef);
   for(auto node : ast) {
-    if(!isSgBasicBlock(node)) {
+    bool labeledNodeNotInCFG=
+      isSgForStatement(node)
+      ||isSgWhileStmt(node)
+      ||isSgDoWhileStmt(node)
+      ||isSgSwitchStatement(node)
+      ||isSgIfStmt(node);
+    if(!isSgBasicBlock(node)&&!labeledNodeNotInCFG) {
       Label lab=getLabeler()->getLabel(node);
       if(lab.isValid()) {
         fLabels.insert(lab);
@@ -160,6 +170,118 @@ SageNode*
 definingDecl(SageNode* decl)
 {
   return sg::assert_sage_type<SageNode>(decl->get_definingDeclaration());
+}
+
+InterFlow CFAnalysis::interFlow(Flow& flow) {
+  if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
+    return interFlow2(flow);
+
+  // 1) for each call use AST information to find its corresponding called function
+  // 2) create a set of <call,entry,exit,callreturn> edges
+  SAWYER_MESG(logger[INFO])<<"establishing inter-flow ..."<<endl;
+  InterFlow interFlow;
+  LabelSet callLabs=functionCallLabels(flow);
+  int callLabsNum=callLabs.size();
+  SAWYER_MESG(logger[INFO])<<"number of function call labels: "<<callLabsNum<<endl;
+  int callLabNr=0;
+  int externalFunCalls=0;
+  int externalFunCallsWithoutDecl=0;
+  int functionsFound=0;
+
+  for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
+    //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
+    SgNode* callNode=getNode(*i);
+    //cout<<"INFO: Functioncall: creating inter-flow for "<<callNode->unparseToString()<<endl;
+    //info: callNode->get_args()
+    SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
+    if(!funCall)
+      throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
+#if 0
+    //SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+    //SgFunctionSymbol* funSym=funCall->getAssociatedFunctionSymbol();
+    //SgType* funCallType=funCall->get_type(); // return type
+    SgExpression* funExp=funDecl->get_function();
+    ROSE_ASSERT(funExp);
+    SgType* funExpType=funExp->get_type();
+    ROSE_ASSERT(funExpType);
+    SgFunctionType* funType=isSgFunctionType(funExpType);
+    if(funType) {
+      SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    }
+#endif
+    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING)
+      SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
+    SgFunctionDefinition* funDef=nullptr;
+    FunctionCallTargetSet funCallTargetSet;
+    switch(functionResolutionMode) {
+    case FRM_FUNCTION_CALL_MAPPING: {
+      funCallTargetSet=determineFunctionDefinition4(funCall);
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      if(funCallTargetSet.size()==0) {
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      } else {
+        for(auto fct : funCallTargetSet) {
+          callLabel=*i;
+          SgFunctionDefinition* funDef=fct.getDefinition();
+          if(funDef) {
+            entryLabel=labeler->functionEntryLabel(funDef);
+            exitLabel=labeler->functionExitLabel(funDef);
+          } else {
+            entryLabel=Labeler::NO_LABEL;
+            exitLabel=Labeler::NO_LABEL;
+          }
+          callReturnLabel=labeler->functionCallReturnLabel(callNode);
+          interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+        }
+      }
+      break;
+    }
+    default:
+      SAWYER_MESG(logger[ERROR])<<endl<<"Unsupported function resolution mode: "<<functionResolutionMode<<endl;
+      exit(1);
+    }
+
+    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING) {
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      if(funDef==0) {
+        //cout<<" [no definition found]"<<endl;
+        // we were not able to find the funDef in the AST
+        //cout << "STATUS: External function ";
+        SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+        if(funDecl) {
+          //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+          externalFunCalls++;
+        } else {
+          //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
+          externalFunCallsWithoutDecl++;
+        }
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
+      } else {
+        //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
+        callLabel=*i;
+        entryLabel=labeler->functionEntryLabel(funDef);
+        exitLabel=labeler->functionExitLabel(funDef);
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        functionsFound++;
+      }
+      interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      callLabNr++;
+      //cout<<"STATUS: inter-flow established."<<endl;
+      //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+      //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+      //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+      //cout<<"INFO: functions found: "<<functionsFound<<endl;
+    }
+  }
+  return interFlow;
 }
 
 InterFlow CFAnalysis::interFlow2(Flow& flow) {
@@ -231,123 +353,6 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
   }
   return interFlow;
 }
-
-
-InterFlow CFAnalysis::interFlow(Flow& flow) {
-  if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
-    return interFlow2(flow);
-
-  // 1) for each call use AST information to find its corresponding called function
-  // 2) create a set of <call,entry,exit,callreturn> edges
-  SAWYER_MESG(logger[INFO])<<"establishing inter-flow ..."<<endl;
-  InterFlow interFlow;
-  LabelSet callLabs=functionCallLabels(flow);
-  int callLabsNum=callLabs.size();
-  SAWYER_MESG(logger[INFO])<<"number of function call labels: "<<callLabsNum<<endl;
-  int callLabNr=0;
-  int externalFunCalls=0;
-  int externalFunCallsWithoutDecl=0;
-  int functionsFound=0;
-
-  for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
-    //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
-    SgNode* callNode=getNode(*i);
-    //cout<<"INFO: Functioncall: creating inter-flow for "<<callNode->unparseToString()<<endl;
-    //info: callNode->get_args()
-    SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
-    if(!funCall)
-      throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
-#if 0
-    //SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
-    //SgFunctionSymbol* funSym=funCall->getAssociatedFunctionSymbol();
-    //SgType* funCallType=funCall->get_type(); // return type
-    SgExpression* funExp=funDecl->get_function();
-    ROSE_ASSERT(funExp);
-    SgType* funExpType=funExp->get_type();
-    ROSE_ASSERT(funExpType);
-    SgFunctionType* funType=isSgFunctionType(funExpType);
-    if(funType) {
-      SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
-    }
-#endif
-    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING)
-      SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
-    SgFunctionDefinition* funDef=nullptr;
-    FunctionCallTargetSet funCallTargetSet;
-    switch(functionResolutionMode) {
-    case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
-    case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
-    case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
-    case FRM_FUNCTION_CALL_MAPPING: {
-      funCallTargetSet=determineFunctionDefinition4(funCall);
-      Label callLabel,entryLabel,exitLabel,callReturnLabel;
-      if(funCallTargetSet.size()==0) {
-        callLabel=*i;
-        entryLabel=Labeler::NO_LABEL;
-        exitLabel=Labeler::NO_LABEL;
-        callReturnLabel=labeler->functionCallReturnLabel(callNode);
-        interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-      } else {
-        for(auto fct : funCallTargetSet) {
-          callLabel=*i;
-          SgFunctionDefinition* funDef=fct.getDefinition();
-          if(funDef) {
-            entryLabel=labeler->functionEntryLabel(funDef);
-            exitLabel=labeler->functionExitLabel(funDef);
-          } else {
-            entryLabel=Labeler::NO_LABEL;
-            exitLabel=Labeler::NO_LABEL;
-          }
-          callReturnLabel=labeler->functionCallReturnLabel(callNode);
-          interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-        }
-      }
-      break;
-    }
-    default:
-      SAWYER_MESG(logger[ERROR])<<endl<<"Unsupported function resolution mode."<<endl;
-      exit(1);
-    }
-
-    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING) {
-      Label callLabel,entryLabel,exitLabel,callReturnLabel;
-      if(funDef==0) {
-        //cout<<" [no definition found]"<<endl;
-        // we were not able to find the funDef in the AST
-        //cout << "STATUS: External function ";
-        SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
-        if(funDecl) {
-          //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-          externalFunCalls++;
-        } else {
-          //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
-          externalFunCallsWithoutDecl++;
-        }
-        callLabel=*i;
-        entryLabel=Labeler::NO_LABEL;
-        exitLabel=Labeler::NO_LABEL;
-        callReturnLabel=labeler->functionCallReturnLabel(callNode);
-        //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
-      } else {
-        //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
-        callLabel=*i;
-        entryLabel=labeler->functionEntryLabel(funDef);
-        exitLabel=labeler->functionExitLabel(funDef);
-        callReturnLabel=labeler->functionCallReturnLabel(callNode);
-        functionsFound++;
-      }
-      interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-      callLabNr++;
-      //cout<<"STATUS: inter-flow established."<<endl;
-      //cout<<"INFO: Call labels: "<<callLabNr<<endl;
-      //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-      //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-      //cout<<"INFO: functions found: "<<functionsFound<<endl;
-    }
-  }
-  return interFlow;
-}
-
 
 Label CFAnalysis::getLabel(SgNode* node) {
   ROSE_ASSERT(labeler);
@@ -1659,36 +1664,18 @@ Flow CFAnalysis::flow(SgNode* n) {
   }
 }
 
-SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
-  //cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
-  SgFunctionDefinition* funDef=nullptr;
-  // TODO (use function id mapping)
-  ROSE_ASSERT(getFunctionIdMapping());
-  SgExpression* node=funCall->get_function();
-  if(node) {
-    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
-      funDef=getFunctionIdMapping()->resolveFunctionRef(funRef);
-      if(funDef) SAWYER_MESG(logger[TRACE])<<"Resolved to "<<funDef;
-      else SAWYER_MESG(logger[TRACE])<<"NOT resolved.";
-    }
-  }
-  SAWYER_MESG(logger[TRACE])<<" FunDef: "<<funDef<<endl;
-  return funDef;
-}
-
-
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
+  SAWYER_MESG(logger[INFO])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
   if(res.size()>0) {
     if(res.size()==1) {
-      SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      SAWYER_MESG(logger[INFO]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
+      SAWYER_MESG(logger[INFO])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[INFO]) << "NOT RESOLVED."<<endl;
   }
   return res;
 }
@@ -1710,69 +1697,6 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition5(Label lbl, SgLoca
   }
 #endif
   return res;
-}
-
-
-SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
-
-  SgExpression* funExp=funCall->get_function();
-  ROSE_ASSERT(funExp);
-  SgType* funExpType=funExp->get_type();
-  ROSE_ASSERT(funExpType);
-  SgFunctionType* callFunType=isSgFunctionType(funExpType);
-  SAWYER_MESG(logger[TRACE])<<"FD2: funExp: "<<funExp->unparseToString()<<" callFunType: "<<callFunType->unparseToString()<<endl;
-
-  SgFunctionSymbol* funCallFunctionSymbol=0;
-  SgName funCallName;
-  if(SgFunctionRefExp* funRef=isSgFunctionRefExp(funExp)) {
-    funCallFunctionSymbol=funRef->get_symbol();
-    funCallName=funCallFunctionSymbol->get_name();
-  }
-  SAWYER_MESG(logger[TRACE])<<"FD2: funCallFunctionSymbol: "<<funCallFunctionSymbol<<endl;
-
-  if(callFunType) {
-    SgNode* rootNode=funCall;
-    while(!isSgProject(rootNode)) {
-      rootNode=rootNode->get_parent();
-    }
-    //SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
-    // search for this function type in the AST.
-    RoseAst ast(rootNode);
-    for(auto node : ast) {
-      // check every function definition
-      if(SgFunctionDefinition* funDef=isSgFunctionDefinition(node)) {
-        SgFunctionDeclaration* funDecl=funDef->get_declaration();
-        // SgName funDecl->get_mangled_name()
-        //const SgInitializedNamePtrList & 	get_args () const
-
-        SgName funName=funDecl->get_name();
-        if(funName.get_length()>0 && funName==funCallName) {
-          SAWYER_MESG(logger[TRACE])<<"Names match: "<<funName<<endl;
-        } else {
-          SAWYER_MESG(logger[TRACE])<<"Names do NOT match: "<<funCallName<<" : "<<funName<<endl;
-        }
-
-        SgFunctionType* funType=funDecl->get_type();
-        if(callFunType==funType) {
-          SAWYER_MESG(logger[TRACE])<<"Found function type: "<<funType->unparseToString()<<endl;
-          SgName qualifiedFunName=funDecl->get_qualified_name();
-          SAWYER_MESG(logger[TRACE])<<"Found (qual) function name: "<<qualifiedFunName<<endl;
-          SgName FunName=funDecl->get_name();
-          SAWYER_MESG(logger[TRACE])<<"Found (bare) function name: "<<qualifiedFunName<<endl;
-          return funDef;
-        }
-      }
-    }
-  }
-  return 0;
-}
-
-void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
-  _functionIdMapping=fim;
-}
-
-FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
-  return _functionIdMapping;
 }
 
 void CFAnalysis::setFunctionCallMapping(FunctionCallMapping* fcm) {
@@ -1900,4 +1824,15 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 2/2" << endl;
 
   return forksEqualJoins;
+}
+
+void CFAnalysis::createICFG(SgProject* project) {
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  setFunctionCallMapping2(functionCallMapping2);
+  _icfgFlow=flow(project);
+  _interFlow=interFlow(_icfgFlow);
+  intraInterFlow(_icfgFlow, _interFlow);
 }

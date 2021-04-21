@@ -6,7 +6,7 @@
 #include <DepGraphBuild.h>
 #include <DomainInfo.h>
 #include <PtrSet.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 class DepGraphEdgeCreate : public CollectObject<DepInfo>
 {
@@ -96,7 +96,7 @@ ProcessLoop( AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
     GraphAccessInterface::Node *n = graph->CreateNodeImpl(l, GetStmtDomain(l));
     AstNodePtr init,cond,incr;
     if (!fa.IsLoop(l, &init, &cond, &incr))
-        assert(false);
+        ROSE_ABORT();
     for (StmtStackType::Iterator p(stmtNodes); !p.ReachEnd(); ++p) {
       if (init != AST_NULL)
          ComputeDataDep(*p, StmtNodeInfo(n,init), DEPTYPE_DATA );

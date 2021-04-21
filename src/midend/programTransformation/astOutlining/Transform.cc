@@ -1012,7 +1012,7 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 
       // par1: input file, par 2: output file name, par 3: the project to attach the new file
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
-      new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
+      new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project)); //TODO: should we pass false as the last parameter?
 
 #if 0
       printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
@@ -1032,7 +1032,7 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
       new_file->get_file_info()->set_filenameString(new_file_name);
 
 #if 1
-   // DQ (3/28/2019): The conversion of functions with definitions to function prrototypes must preserve the 
+   // DQ (3/28/2019): The conversion of functions with definitions to function prototypes must preserve the 
    // associated comments and CPP directives (else the #includes will be missing and types will not be defined.
    // This is an issue with the astOutliner test code jacobi.c.
    // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 

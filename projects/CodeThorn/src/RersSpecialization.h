@@ -21,10 +21,10 @@
 #include "RERS_empty_specialization.h"
 
 namespace RERS_Problem {
-  //void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
-  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  //void rersGlobalVarsCallInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id);
+  void rersGlobalVarsCallReturnInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsArrayInit(int numberOfThreads);
-  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);
+  void createGlobalVarAddressMaps(CodeThorn::CTAnalysis* analyzer);
 
   void calculate_output(int numberOfThreads);
   extern int* output;

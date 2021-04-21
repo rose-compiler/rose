@@ -2,6 +2,7 @@
 #define ROSE_CommandLine_H
 
 #include <Sawyer/CommandLine.h>
+#include <Color.h>
 
 namespace Rose {
 
@@ -139,6 +140,8 @@ struct GenericSwitchArgs {
                                                          *   message and exit with a failure status. When this data member is
                                                          *   false, then the tool will silently exit with success, which is
                                                          *   useful during "make check" or similar testing. */
+    Color::Colorization colorization;                   /**< Controls colorized output. */
+
     GenericSwitchArgs()
         : threads(0), smtSolver("none"), errorIfDisabled(true) {}
 };
@@ -151,6 +154,15 @@ struct GenericSwitchArgs {
  *
  *  See also, @ref genericSwitches. */
 ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
+
+/** Global location for version string.
+ *
+ *  This is the string that's printed by the --version switch. It defaults to the ROSE library version number, but can be
+ *  overridden by tools. When overriding, the tool should change this version string before constructing the command-line
+ *  parser.
+ *
+ *  See also, @ref genericSwitches. */
+ROSE_DLL_API extern std::string versionString;          // intentionally non-const so tools can change it
 
 /** Convenience for for adding Boolean switches.
  *

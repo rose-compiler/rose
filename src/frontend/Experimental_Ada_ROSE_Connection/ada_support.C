@@ -7,10 +7,13 @@
 // #include "rose_config.h"
 
 #include "sage3basic.h"
-
 #include "rose_config.h"
 
-// #include <assert.h>
+#include "CommandLine.h"
+#include "Sawyer/CommandLine.h"
+
+
+#include <boost/filesystem.hpp>
 
 #include "ada_support.h"
 
@@ -23,68 +26,173 @@
 // extern "C" void dot_asisinit (void);
 // extern "C" void dot_asisfinal (void);
 
+namespace boostfs = boost::filesystem;
+namespace scl     = Sawyer::CommandLine;
+
+namespace Ada_ROSE_Translation
+{
+  Sawyer::Message::Facility mlog;
+
+  struct Settings
+  {
+    bool processPredefinedUnits = true;
+    bool processImplementationUnits = true;
+    bool asisDebug = false;
+    bool logTrace  = false;
+    bool logInfo   = false;
+    bool logWarn   = false;
+  };
+
+}
+
+
 #ifdef BUILD_EXECUTABLE
 int main(int argc, char** argv)
-#else
-  int ada_main(int argc, char** argv, SgSourceFile* file)
-#endif
    {
+     const std::vector<std::string> args(argv, argv + argc);
+#else
+  int ada_main(const std::vector<std::string>& args, SgSourceFile* file)
+   {
+#endif
+     using Ada_ROSE_Translation::mlog;
+
+     ROSE_INITIALIZE;
+
      int status = 0;
 
-#if 1
-     printf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
-#endif
+     mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
-     const char *prefix = "call_asis_tool_2.main";
-  // char *target_file = "../test_units/unit_2.adb";
-  // const char *target_file = file->getFileName().c_str();
-     char target_file[1024];
-     size_t size = file->getFileName().length();
-     if (size >= 1024)
-        {
-          printf ("Error in preparing filename for ada support. \n");
-          ROSE_ASSERT(false);
-        }
+     Ada_ROSE_Translation::Settings settings;
 
-     strncpy(target_file,file->getFileName().c_str(),size+1);
-  // target_file[size+1] = '\0';
+     scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
 
-  // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
-     const char *gnat_home   = std::getenv("GNAT_HOME");
+     p.errorStream(mlog[Sawyer::Message::FATAL]);               // print messages and exit rather than throwing exceptions
+     //~ p.with(CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
+     //~ p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
 
-     if (!gnat_home) gnat_home = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
+     // Create a group of switches specific to this tool
+     scl::SwitchGroup ada2Rose("Ada2ROSE (A2R) - specific switches");
 
-  // struct List_Node_Struct *head_node = NULL;
-  // List_Node_Struct *head_node = NULL;
+     ada2Rose.name("asis");  // the optional switch prefix
+
+     ada2Rose.insert(scl::Switch("process_predefined_units")
+           .intrinsicValue(true, settings.processPredefinedUnits)
+           .doc("With Asis's predefined units"));
+
+     ada2Rose.insert(scl::Switch("process_implementation_units")
+           .intrinsicValue(true, settings.processImplementationUnits)
+           .doc("Enables Asis implementation unit processing"));
+
+     ada2Rose.insert(scl::Switch("asis_debug")
+           .intrinsicValue(true, settings.asisDebug)
+           .doc("Sets Asis debug flag"));
+
+     ada2Rose.insert(scl::Switch("warn")
+           .intrinsicValue(true, settings.logWarn)
+           .doc("Enables warning messages"));
+
+     ada2Rose.insert(scl::Switch("trace")
+           .intrinsicValue(true, settings.logTrace)
+           .doc("Enables tracing messages"));
+
+     ada2Rose.insert(scl::Switch("info")
+           .intrinsicValue(true, settings.logInfo)
+           .doc("Enables info messages"));
+
+     p.with(ada2Rose).parse(args).apply();
+
+     std::string warninglevels = "none, error, fatal";
+     Sawyer::Message::Facilities logctrl;
+
+     logctrl.insert(mlog);
+     //~ logctrl.control("none, error, warn, fatal");
+
+     if (settings.logWarn)  warninglevels += ", warn";
+     if (settings.logTrace) warninglevels += ", trace";
+     if (settings.logInfo)  warninglevels += ", info";
+
+     logctrl.control(warninglevels);
+
+     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
+
+     const char* gnat_home = std::getenv("GNAT_HOME");
+
+     if (!gnat_home)
+     {
+       mlog[Sawyer::Message::FATAL] << "Environment variable GNAT_HOME is not set.\n"
+                                    << "  Aborting ROSE.."
+                                    << std::endl;
+
+       return 1;
+     }
+
+     mprintf ("BEGIN.\n");
+
      Nodes_Struct head_nodes;
 
-     printf ("%s:  BEGIN.\n", prefix);
+     {
+       typedef boostfs::path::string_type string_type;
 
-#if 1
-  // DQ (9/15/2017): Updated to include output directory.
-     const char* outputDirectory = "";
+    // DQ (9/15/2017): Updated to include output directory.
+    // PP (10/31/20): Produce Ada temp+obj files in src-file specific directory.
+       boostfs::path currentDir    = boostfs::current_path();
+       string_type   srcFile       = file->getFileName();
+       string_type   gnatOutputDir = currentDir.string<string_type>();
 
-  // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
-     dot_asisinit();
-     head_nodes = tool_2_wrapper (target_file, const_cast<char*>(gnat_home),const_cast<char*>(outputDirectory));
+       gnatOutputDir += boostfs::path::preferred_separator;
+       gnatOutputDir += "gnatOutput";
 
-     if (head_nodes.Elements == NULL) {
-        printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
-     } else {
-        printf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_nodes.Elements->Next_Count + 1);
+       // create a new output directory for every import file to support
+       // parallel compilation (e.g., testing).
+       boostfs::create_directory(gnatOutputDir);
+
+       size_t pos = srcFile.rfind(boostfs::path::preferred_separator);
+
+       if (pos == string_type::npos) pos = 0;
+
+       gnatOutputDir += boostfs::path::preferred_separator;
+       gnatOutputDir += srcFile.substr(pos);
+       gnatOutputDir += "-obj";
+
+       boostfs::create_directory(gnatOutputDir);
+       boostfs::current_path(gnatOutputDir);
+
+       char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
+       char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
+
+    // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
+       dot_asisinit();
+
+    // PP (11/5/20): Use Charles' new tool_2_wrapper_with_flags function
+       mprintf( "calling Asis: src:%s gnat:%s outdir:%s pdunit:%d implunit:%d dbg:%d\n",
+                cstring_SrcFile, gnat_home, cstring_GnatOutputDir,
+                settings.processPredefinedUnits, settings.processImplementationUnits, settings.asisDebug
+              );
+
+       head_nodes = tool_2_wrapper_with_flags( cstring_SrcFile,
+                                               const_cast<char*>(gnat_home),
+                                               cstring_GnatOutputDir,
+                                               settings.processPredefinedUnits,
+                                               settings.processImplementationUnits,
+                                               settings.asisDebug
+                                             );
+
+       if (head_nodes.Elements == NULL) {
+          mprintf ("tool_2_wrapper_with_flags returned NO elements.\n");
+          status = 1;
+       } else {
+          mprintf ("tool_2_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
+       }
+
+       boostfs::current_path(currentDir);
      }
-#endif
 
-     printf ("%s:  END.\n", prefix);
+     mprintf ("END.\n");
 
-     ROSE_ASSERT (status == 0);
-
-     Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes,file);
+     Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
 
      dot_asisfinal();
-
-     printf ("Leaving ada_main(): status = %d \n",status);
-
+     mprintf ("Leaving ada_main(): status = %d \n", status);
      return status;
    }
 

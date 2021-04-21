@@ -2,7 +2,7 @@
 #include "CounterexampleGenerator.h"
 #include "RersCounterexample.h"
 #include "SvcompWitness.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "Diagnostics.h"
 
 #include <unordered_map>
@@ -43,7 +43,7 @@ void CounterexampleGenerator::initDiagnostics() {
 }
 
 list<ExecutionTrace*> CounterexampleGenerator::createExecutionTraces() {
-  Analyzer* analyzer = _stg->getAnalyzer();
+  CTAnalysis* analyzer = _stg->getAnalyzer();
   list<FailedAssertion> assertions = analyzer->getFirstAssertionOccurences();
   list<ExecutionTrace*> traces;
   for (auto i : assertions) {

@@ -137,187 +137,248 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     switch (decl->getKind()) {
         case clang::Decl::AccessSpec:
             ret_status = VisitAccessSpecDecl((clang::AccessSpecDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Block:
             ret_status = VisitBlockDecl((clang::BlockDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Captured:
             ret_status = VisitCapturedDecl((clang::CapturedDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Empty:
             ret_status = VisitEmptyDecl((clang::EmptyDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Export:
             ret_status = VisitExportDecl((clang::ExportDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ExternCContext:
             ret_status = VisitExternCContextDecl((clang::ExternCContextDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::FileScopeAsm:
             ret_status = VisitFileScopeAsmDecl((clang::FileScopeAsmDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Friend:
             ret_status = VisitFriendDecl((clang::FriendDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::FriendTemplate:
             ret_status = VisitFriendTemplateDecl((clang::FriendTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Import:
             ret_status = VisitImportDecl((clang::ImportDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Label:
             ret_status = VisitLabelDecl((clang::LabelDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::NamespaceAlias:
             ret_status = VisitNamespaceAliasDecl((clang::NamespaceAliasDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Namespace:
             ret_status = VisitNamespaceDecl((clang::NamespaceDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::BuiltinTemplate:
             ret_status = VisitBuiltinTemplateDecl((clang::BuiltinTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Concept:
             ret_status = VisitConceptDecl((clang::ConceptDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ClassTemplate:
             ret_status = VisitClassTemplateDecl((clang::ClassTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::FunctionTemplate:
             ret_status = VisitFunctionTemplateDecl((clang::FunctionTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::TypeAliasTemplate:
             ret_status = VisitTypeAliasTemplateDecl((clang::TypeAliasTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::VarTemplate:
             ret_status = VisitVarTemplateDecl((clang::VarTemplateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::TemplateTemplateParm:
             ret_status = VisitTemplateTemplateParmDecl((clang::TemplateTemplateParmDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Record:
             ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::CXXRecord:
             ret_status = VisitCXXRecordDecl((clang::CXXRecordDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ClassTemplateSpecialization:
             ret_status = VisitClassTemplateSpecializationDecl((clang::ClassTemplateSpecializationDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ClassTemplatePartialSpecialization:
             ret_status = VisitClassTemplatePartialSpecializationDecl((clang::ClassTemplatePartialSpecializationDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Enum:
             ret_status = VisitEnumDecl((clang::EnumDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::TemplateTypeParm:
             ret_status = VisitTemplateTypeParmDecl((clang::TemplateTypeParmDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Typedef:
             ret_status = VisitTypedefDecl((clang::TypedefDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::TypeAlias:
             ret_status = VisitTypeAliasDecl((clang::TypeAliasDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::UnresolvedUsingTypename:
             ret_status = VisitUnresolvedUsingTypenameDecl((clang::UnresolvedUsingTypenameDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Using:
             ret_status = VisitUsingDecl((clang::UsingDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::UsingDirective:
             ret_status = VisitUsingDirectiveDecl((clang::UsingDirectiveDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::UsingPack:
             ret_status = VisitUsingPackDecl((clang::UsingPackDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ConstructorUsingShadow:
             ret_status = VisitConstructorUsingShadowDecl((clang::ConstructorUsingShadowDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Binding:
             ret_status = VisitBindingDecl((clang::BindingDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Field:
             ret_status = VisitFieldDecl((clang::FieldDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Function:
             ret_status = VisitFunctionDecl((clang::FunctionDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::CXXDeductionGuide:
             ret_status = VisitCXXDeductionGuideDecl((clang::CXXDeductionGuideDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::CXXConstructor:
             ret_status = VisitCXXConstructorDecl((clang::CXXConstructorDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::CXXConversion:
             ret_status = VisitCXXConversionDecl((clang::CXXConversionDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::CXXDestructor:
             ret_status = VisitCXXDestructorDecl((clang::CXXDestructorDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::MSProperty:
             ret_status = VisitMSPropertyDecl((clang::MSPropertyDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::NonTypeTemplateParm:
             ret_status = VisitNonTypeTemplateParmDecl((clang::NonTypeTemplateParmDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Decomposition:
             ret_status = VisitDecompositionDecl((clang::DecompositionDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ImplicitParam:
             ret_status = VisitImplicitParamDecl((clang::ImplicitParamDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPCapturedExpr:
             ret_status = VisitOMPCaptureExprDecl((clang::OMPCapturedExprDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::ParmVar:
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::VarTemplatePartialSpecialization:
             ret_status = VisitVarTemplatePartialSpecializationDecl((clang::VarTemplatePartialSpecializationDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::EnumConstant:
             ret_status = VisitEnumConstantDecl((clang::EnumConstantDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::IndirectField:
             ret_status = VisitIndirectFieldDecl((clang::IndirectFieldDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPDeclareMapper:
             ret_status = VisitOMPDeclareMapperDecl((clang::OMPDeclareMapperDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPDeclareReduction:
             ret_status = VisitOMPDeclareReductionDecl((clang::OMPDeclareReductionDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::UnresolvedUsingValue:
             ret_status = VisitUnresolvedUsingValueDecl((clang::UnresolvedUsingValueDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPAllocate:
             ret_status = VisitOMPAllocateDecl((clang::OMPAllocateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPRequires:
             ret_status = VisitOMPRequiresDecl((clang::OMPRequiresDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::OMPThreadPrivate:
             ret_status = VisitOMPThreadPrivateDecl((clang::OMPThreadPrivateDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::PragmaComment:
             ret_status = VisitPragmaCommentDecl((clang::PragmaCommentDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::PragmaDetectMismatch:
             ret_status = VisitPragmaDetectMismatchDecl((clang::PragmaDetectMismatchDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::StaticAssert:
             ret_status = VisitStaticAssertDecl((clang::StaticAssertDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::TranslationUnit:
             ret_status = VisitTranslationUnitDecl((clang::TranslationUnitDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
         case clang::Decl::Var:
             ret_status = VisitVarDecl((clang::VarDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
             break;
+
         default:
             std::cerr << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     ROSE_ASSERT(ret_status == false || result != NULL);
@@ -703,6 +764,9 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
     sg_class_decl->set_scope(SageBuilder::topScopeStack());
     sg_class_decl->set_parent(SageBuilder::topScopeStack());
+
+ // DQ (11/28/2020): Adding asertion.
+    ROSE_ASSERT(sg_class_decl->get_parent() != NULL);
 
     SgClassType * type = NULL;
     if (sg_first_class_decl != NULL) {

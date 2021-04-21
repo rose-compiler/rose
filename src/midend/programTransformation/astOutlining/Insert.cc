@@ -18,6 +18,7 @@
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
 #include "Copy.hh"
+#include "RoseAst.h"
 
 // =====================================================================
 
@@ -809,10 +810,10 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 //  has not yet been inserted. So it has no declaration associated with a symbol
 //  cout<<friend_proto->unparseToString()<<endl; 
 
-  if (enable_debug)
+  if (enable_debug) {
     ROSE_ASSERT(friend_proto != NULL);
     printf ("Exiting insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
-
+  }
 
   return friend_proto;
 }
@@ -929,7 +930,10 @@ isProtPrivMember (SgVarRefExp* v)
 /*!
  *  \brief Returns 'true' if the given type was declared as a
  *  'protected' or 'private' class member.
+ *  This function need to be recursive. It may involves a chain of base types and some types in the middle are private class types. 
+ *  The deepest base type may not be a private type.
  */
+#if 0
 static
 SgClassDefinition *
 isProtPrivType (SgType* t)
@@ -948,6 +952,48 @@ isProtPrivType (SgType* t)
           if (isProtPriv (decl))
             return isSgClassDefinition (decl->get_parent ());
         }
+    }
+
+// DQ (11/3/2015): Fixed compiler warning.
+// return false;
+   return NULL;
+}
+#endif 
+static
+SgClassDefinition *
+isProtPrivType (SgType* t)
+{
+  if (t)
+    {
+      // check self 
+      if (t && isSgNamedType (t))
+        {
+          SgNamedType* named = isSgNamedType (t);
+          ROSE_ASSERT (named);
+          SgDeclarationStatement* decl = named->get_declaration ();
+          if (decl)
+            if (decl->get_definingDeclaration ())
+              decl = decl->get_definingDeclaration ();
+          if (isProtPriv (decl))
+          {
+            //if any type in the type chain is private, we return immediately.
+            if (SgClassDefinition* c_d= isSgClassDefinition (decl->get_parent ()))
+              return c_d; 
+            // if c_d is NULL, we go further to check its base type's access control; 
+          }
+        }
+
+      // recursively check base type if any
+      if (SgModifierType* m_type= isSgModifierType(t))
+         return isProtPrivType (m_type->get_base_type());
+      else if (SgPointerType* p_type =  isSgPointerType(t))
+         return isProtPrivType (p_type->get_base_type());
+      else if (SgArrayType* a_type = isSgArrayType(t))
+         return isProtPrivType (a_type->get_base_type());
+      else if (SgReferenceType* r_type = isSgReferenceType(t))
+         return isProtPrivType (r_type->get_base_type());
+      else if (SgTypedefType* t_type = isSgTypedefType(t))
+         return isProtPrivType (t_type->get_base_type());
     }
 
 // DQ (11/3/2015): Fixed compiler warning.
@@ -986,7 +1032,9 @@ isProtPrivMember (SgMemberFunctionRefExp* f)
  */
 // static void insertFriendDecls (SgFunctionDeclaration* func, SgGlobal* scope, FuncDeclList_t& friends)
 static
-Outliner::DeferredTransformation
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
+// Outliner::DeferredTransformation
+SageInterface::DeferredTransformation
 insertFriendDecls (SgFunctionDeclaration* func,
                    SgGlobal* scope,
                    FuncDeclList_t& friends)
@@ -1008,8 +1056,10 @@ insertFriendDecls (SgFunctionDeclaration* func,
     printf ("************************************************************ \n");
   }
 
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
 // DQ (8/13/2019): Adding return value, used when header file unparsing is active.
-  Outliner::DeferredTransformation deferedFriendTransformation;
+// Outliner::DeferredTransformation deferedFriendTransformation;
+  SageInterface::DeferredTransformation deferedFriendTransformation;
 
   if (func && scope)
     {
@@ -1021,13 +1071,16 @@ insertFriendDecls (SgFunctionDeclaration* func,
       typedef set<SgClassDefinition *> ClassDefSet_t;
       ClassDefSet_t classes;
       
-   // First, look for references to private variables.
-      typedef Rose_STL_Container<SgNode *> NodeList_t;
-      NodeList_t var_refs = NodeQuery::querySubTree (func, V_SgVarRefExp);
-      for (NodeList_t::iterator v = var_refs.begin (); v != var_refs.end (); ++v)
+      // better algorithm in one pass to find all types of nodes
+      RoseAst ast (func);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+        SgClassDefinition* cl_def = NULL; 
+        // variable declarations may use some private types.
+        if (SgInitializedName* init_name= isSgInitializedName(*i))
+          cl_def = isProtPrivType (init_name->get_type());
+        else if (SgVarRefExp* v_ref = isSgVarRefExp (*i))
         {
-          SgVarRefExp* v_ref = isSgVarRefExp (*v);
-          SgClassDefinition* cl_def = isProtPrivMember (v_ref);
+          cl_def = isProtPrivMember (v_ref);
 
           if (enable_debug)
           {
@@ -1039,7 +1092,6 @@ insertFriendDecls (SgFunctionDeclaration* func,
             printf ("In insertFriendDecls(): v_ref = %p = %s initializedName name = %s \n",v_ref,v_ref->class_name().c_str(), initializedName->get_name().str());
             printf ("In insertFriendDecls(): cl_def = %p \n",cl_def);
           }
-       // if (!cl_def)
           if (cl_def == NULL)
           {
             if (enable_debug)
@@ -1048,33 +1100,53 @@ insertFriendDecls (SgFunctionDeclaration* func,
               printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
             }
             cl_def = isProtPrivType (v_ref->get_type());
-            if (enable_debug)
-              printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
           }
-
-       // if (cl_def)
-          if (cl_def != NULL)
-          {
-            if (enable_debug)
-              printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-            classes.insert (cl_def);
-          }
-        }
-      
-   // Get a list of all function reference expressions.
-      NodeList_t func_refs = NodeQuery::querySubTree (func,V_SgMemberFunctionRefExp);
-      for (NodeList_t::iterator f = func_refs.begin (); f != func_refs.end ();
-           ++f)
+        } 
+        else if (SgEnumVal* v_ref = isSgEnumVal(*i))
         {
-          SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*f);
-          SgClassDefinition* cl_def = isProtPrivMember (f_ref);
-          if (cl_def)
+          // EnumVal may have a private type: TODO: all expressions should be check against private type
+          if (enable_debug)
           {
-            if (enable_debug)
-              printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-            classes.insert (cl_def);
+            ROSE_ASSERT(v_ref->get_type() != NULL);
+            printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
+          }
+          cl_def = isProtPrivType (v_ref->get_type());
+        } else if (SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*i))
+          cl_def = isProtPrivMember (f_ref);
+        else if (SgConstructorInitializer* ctor = isSgConstructorInitializer(*i))
+        {
+          //C++ constructors are called through SgConstructorInitializer, not SgMemberFunctionRefExp.
+          SgMemberFunctionDeclaration * fuc_decl = ctor->get_declaration();
+          SgClassDeclaration* cls_decl= ctor->get_class_decl();
+          if (!cls_decl)
+          { 
+            printf ("Warning: calling classes.insert() friend decl: constructor has no class declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+            continue;
+          }
+          else
+          { 
+            SgClassDeclaration * def_cls_decl = isSgClassDeclaration(cls_decl->get_definingDeclaration());
+            if (!def_cls_decl)
+            { 
+              printf ("Calling classes.insert(): constructor's class declaration has no defining declaration = %p = %s \n", ctor ,ctor->class_name().c_str());
+              continue;
+            }
+
+            if (isProtPriv(fuc_decl))
+            {
+              if (def_cls_decl->get_definition()) 
+                cl_def = def_cls_decl->get_definition();
+            }
           }
         }
+
+        if (cl_def != NULL)
+        {
+          if (enable_debug)
+            printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+          classes.insert (cl_def);
+        }
+      } // end for RoseAst iterator
 
    // DQ (8/13/2019): Set the target classes.
       if (enable_debug)
@@ -1187,9 +1259,11 @@ insertFriendDecls (SgFunctionDeclaration* func,
 //  and insert necessary declarations into the global scope of
 //  target's original enclosing function). 
 
+// DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
 // DQ (8/15/2019): Adding support to defer the transformations to header files.
 // void Outliner::insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* target_outlined_code )
-Outliner::DeferredTransformation
+// Outliner::DeferredTransformation
+SageInterface::DeferredTransformation
 Outliner::insert (SgFunctionDeclaration* func,
                              SgGlobal* scope,
                              SgBasicBlock* target_outlined_code )
@@ -1354,8 +1428,10 @@ Outliner::insert (SgFunctionDeclaration* func,
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (11/19/2020): DeferredTransformation support was moved to the SageInterface namespace to support more general usage.
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
-     DeferredTransformation headerFileTransformation;
+  // DeferredTransformation headerFileTransformation;
+     SageInterface::DeferredTransformation headerFileTransformation;
 
   // Error checking...
      if (Outliner::useNewFile == false)
@@ -1532,7 +1608,7 @@ Outliner::insert (SgFunctionDeclaration* func,
    }
 
 #if 0
-   printf ("In Outliner::insert(): Outliner::useNewFile = %s \n",Outliner::useNewFile == true ? "true" : "false");
+     printf ("In Outliner::insert(): Outliner::useNewFile = %s \n",Outliner::useNewFile == true ? "true" : "false");
 #endif
 
   // This is the outlined function prototype that is put into the separate file (when outlining is done to a separate file).
@@ -1567,25 +1643,41 @@ Outliner::insert (SgFunctionDeclaration* func,
           printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s \n",isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false");
         }
 #endif
+       // DQ (3/17/2021): Get the first statement of the scope.
+       // SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
+          bool includingCompilerGenerated = false;
+          SgStatement* firstStatement = SageInterface::getFirstStatement(scope,includingCompilerGenerated);
+          ROSE_ASSERT(firstStatement != NULL);
+          if (firstStatement != NULL)
+             {
+               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
 
+            // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
+            // whitespace will be unparsed from the AST, instead of the token stream.
+               firstStatement->set_containsTransformationToSurroundingWhitespace(true);
+             }
+#if 1
        // scope->append_declaration (outlinedFileFunctionPrototype);
           scope->prepend_declaration (outlinedFileFunctionPrototype);
-
+#else
+       // DQ (3/17/2021): Testing the insertion of the function prototype and the unparsing of comments and CPP directives around it.
+          printf ("Skipping the insertion of the outlinedFileFunctionPrototype at the top of the file \n");
+#endif
        // DQ (11/9/2019): When used in conjunction with header file unparsing we need to set the physical file id on entirety of the subtree being inserted.
           SageBuilder::fixupSourcePositionFileSpecification(outlinedFileFunctionPrototype,filenameFromID);
 
+       // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
+       // whitespace will be unparsed from the AST, instead of the token stream.
+          outlinedFileFunctionPrototype->set_containsTransformationToSurroundingWhitespace(true);
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
-
-
        // DQ (9/26/2019): Trying to trace down where there is a SgFunctionParameterList with parent not being set!
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_parameterList()->get_parent() != NULL);
 
        // DQ (9/26/2019): Trying to trace down where there is a SgFunctionParameterList with parent not being set!
           ROSE_ASSERT(func->get_parameterList()->get_parent() != NULL);
-
 #if 0
           printf ("After: Number of symbols in scope = %p symbol table = %d \n",scope,scope->get_symbol_table()->size());
           printf ("In Outliner::insert(): outlinedFileFunctionPrototype = %p name = %s \n",outlinedFileFunctionPrototype,outlinedFileFunctionPrototype->get_name().str());

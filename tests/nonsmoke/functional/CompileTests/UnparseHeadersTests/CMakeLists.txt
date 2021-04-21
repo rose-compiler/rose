@@ -29,6 +29,7 @@ foreach(file_to_test ${TESTCODES})
     NAME prepare_${testName}
     COMMAND ${CMAKE_COMMAND} -E remove_directory
     ${CMAKE_CURRENT_BINARY_DIR}/${TestDir}_unparsedHeaders)
+  set_tests_properties(prepare_${testName} PROPERTIES LABELS UNPARSEHEADERTEST)
 
   add_test(
     NAME ${testName}
@@ -36,7 +37,7 @@ foreach(file_to_test ${TESTCODES})
       -rose:unparseHeaderFilesRootFolder ${TestDir}_unparsedHeaders
       ${ROSE_FLAGS} -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
-  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName})
+  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName} LABELS UNPARSEHEADERTEST)
 
 endforeach()
 
@@ -49,12 +50,13 @@ foreach(file_to_test ${TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER})
     NAME prepare_${testName}
     COMMAND ${CMAKE_COMMAND} -E remove_directory
     ${CMAKE_CURRENT_BINARY_DIR}/${TestDir}_unparsedHeaders)
+  set_tests_properties(prepare_${testName} PROPERTIES LABELS UNPARSEHEADERTEST)
 
   add_test(
     NAME ${testName}
     COMMAND TestUnparseHeaders -rose:unparseHeaderFiles ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
-  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName})
+  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName} LABELS UNPARSEHEADERTEST)
 
 endforeach()

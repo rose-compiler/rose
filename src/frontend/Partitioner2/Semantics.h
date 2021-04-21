@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner_Semantics_H
 #define ROSE_BinaryAnalysis_Partitioner_Semantics_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/BasicTypes.h>
 #include "SymbolicSemantics2.h"
@@ -358,9 +358,9 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics:
         return dflt->copy();
 
     addressesRead_.push_back(SValue::promote(addr));
-    if (map_ && addr->is_number()) {
-        ASSERT_require2(8==dflt->get_width(), "multi-byte reads should have been handled above this call");
-        rose_addr_t va = addr->get_number();
+    if (map_ && addr->toUnsigned()) {
+        ASSERT_require2(8==dflt->nBits(), "multi-byte reads should have been handled above this call");
+        rose_addr_t va = addr->toUnsigned().get();
         bool isModifiable = map_->at(va).require(MemoryMap::WRITABLE).exists();
         bool isInitialized = map_->at(va).require(MemoryMap::INITIALIZED).exists();
         if (!isModifiable || isInitialized) {

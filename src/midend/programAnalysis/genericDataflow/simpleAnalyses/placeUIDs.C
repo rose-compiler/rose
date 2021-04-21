@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "placeUIDs.h"
 #include <string>
 using std::string;
@@ -68,3 +71,4 @@ int getNodeID(const NodeState& state)
         return id->getID();
 }
 
+#endif

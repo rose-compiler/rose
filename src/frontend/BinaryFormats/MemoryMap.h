@@ -1,8 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <ByteOrder.h>
 #include <Combinatorics.h>
@@ -409,6 +409,16 @@ public:
     /** Documentation string for @ref insertData. */
     static std::string insertDataDocumentation();
 
+    /** Adjusts a memory map according to the locator string.
+     *
+     *  See --help output from tools that support this feature, or look at the implementation of @ref adjustMapDocumentation
+     *  for details about the syntax of the @p locatorString. */
+    void adjustMap(const std::string &locatorString);
+
+    /** Documentation string for @ref adjustMap. */
+    static std::string adjustMapDocumentation();
+
+
     /** Information about a process map. */
     struct ProcessMapRecord {
         AddressInterval interval;                       /** Mapped virtual addresses. */
@@ -525,6 +535,7 @@ public:
     void dump(FILE*, const char *prefix="") const;
     void dump(std::ostream&, std::string prefix="") const;
     void print(std::ostream &o, std::string prefix="") const { dump(o, prefix); }
+    void dump() const;                                  // mostly for calling from within GDB or similar
     /** @} */
 
     /** Compute a hash of the entire memory contents.

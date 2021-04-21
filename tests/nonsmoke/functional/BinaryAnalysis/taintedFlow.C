@@ -199,7 +199,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // function argument. We must use the same initial value for the ESP register as we used when discovering the variables.
     // Mark constants (a variable with no location) as not tainted.
     TaintedFlow::StatePtr initialState = taintAnalysis.stateInstance(TaintedFlow::BOTTOM); // provide a default taintedness
-    DataFlow::Variable stack4(symbolicOps->add(esp_0, symbolicOps->number_(esp_0->get_width(), 4)));
+    DataFlow::Variable stack4(symbolicOps->add(esp_0, symbolicOps->number_(esp_0->nBits(), 4)));
     if (initialState->setIfExists(stack4, TaintedFlow::TAINTED)) { // taint source
         ::mlog[TRACE] <<"Taint source: " <<stack4 <<"\n";
     } else {

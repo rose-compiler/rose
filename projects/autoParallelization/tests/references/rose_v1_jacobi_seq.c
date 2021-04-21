@@ -163,8 +163,8 @@ void jacobi()
 /* Error check */
 //  k = k + 1;
     error = sqrt(error) / (n * m);
-  }
 /*  End iteration loop */
+  }
   printf("Total Number of Iterations:%d\n",k);
   printf("Residual:%E\n",error);
 }

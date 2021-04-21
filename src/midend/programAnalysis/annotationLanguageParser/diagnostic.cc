@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "diagnostic.h"
 
@@ -416,3 +418,4 @@ void Diagnostic::find_shortest(Segment *cur, Segments path, Segments &shortest){
     find_shortest(*s, path, shortest);
 } // find_shortest
 
+#endif

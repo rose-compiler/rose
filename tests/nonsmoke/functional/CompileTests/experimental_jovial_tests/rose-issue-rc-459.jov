@@ -1,0 +1,14 @@
+START
+  TYPE a'cell TABLE;
+    BEGIN
+      ITEM val U;
+    END
+
+  DEF PROC build'gaussian (arr);
+    BEGIN
+      TABLE arr (*,*) a'cell;
+      ITEM ptr P a'cell;
+      ptr = LOC(arr(0,0));
+      val @ ptr = (* U *) (0.);
+    END
+TERM

@@ -14,20 +14,20 @@ class IncludedFilesUnparser : public AstSimpleProcessing
           static const std::string defaultUnparseFolderName;
 
        // Keeps track of including paths that include files to unparse into files that would not be unparsed. This is needed to determine where to store the unparsed included files.
-          std::map<std::string, std::set<std::string> > includingPathsMap;
+       // std::map<std::string, std::set<std::string> > includingPathsMap;
 
        // Keeps track of all #include directives that include a *not* unparsed file into a *not* unparsed file.
           std::set<PreprocessingInfo*> notUnparsedPreprocessingInfos;
 
        // maps each file that needs to be unparsed to the destination file
-          std::map<std::string, std::string> unparseMap;
+       // std::map<std::string, std::string> unparseMap;
 
        // Keeps all paths to which files are unparsed. This is needed to avoid name collisions.
           std::set<std::string> unparsePaths;
 
        // Keeps all paths that should be used with -I command line option for the compiler. Note that the order of -I paths matters. We should avoid situations when includes that have
        // "up folder" jumps look outside the created folder hierarchy. Therefore, the -I paths are sorted from the deepest "up folder" hierarchy to the least deep.
-          std::list<std::pair<int, std::string> > includeCompilerPaths;
+       // std::list<std::pair<int, std::string> > includeCompilerPaths;
 
        // Keeps scopes that have to be unparsed to produce the included file (i.e. this scope contains the included file).
        // But note that not all of the scopes in this map might require unparsing.
@@ -38,14 +38,13 @@ class IncludedFilesUnparser : public AstSimpleProcessing
        // which requires that the mapping of the token stream be done on the AST before any modifications (transformations).
        // This refactoring of work to support the unparsing of headers using the token based unparsing has the the cause of
        // the recent work asociated with the header file unparsing.
-          std::map<std::string, SgSourceFile*> unparseSourceFileMap;
+       // std::map<std::string, SgSourceFile*> unparseSourceFileMap;
 
-          std::set<std::string> modifiedFiles;
-          std::set<std::string> allFiles;
-          std::set<std::string> filesToUnparse;
-          std::set<std::string> newFilesToUnparse; //this is a temporary storage that needs to be accessible across several methods    
+       // std::set<std::string> modifiedFiles;
+       // std::set<std::string> allFiles;
+       // std::set<std::string> filesToUnparse;
+          std::set<std::string> newFilesToUnparse; // this is a temporary storage that needs to be accessible across several methods    
 
-          void printDiagnosticOutput();
           void prepareForNewIteration();
           void initializeFilesToUnparse();
           void collectAdditionalFilesToUnparse();
@@ -64,7 +63,7 @@ class IncludedFilesUnparser : public AstSimpleProcessing
        // DQ (11/19/2018): We need to copy some unmodified files to the new unparseHeadersDirectory, so that they will 
        // be picked up where we can't explicitly list the original header file location). This list must be constructed 
        // when we are using the token based unparsing, because we cannot modify the include paths.
-          std::set<std::string> filesToCopy;
+       // std::set<std::string> filesToCopy;
 
        // DQ (11/19/2018): This function initializes the data member: filesToCopy.
           void collectAdditionalListOfHeaderFilesToCopy();
@@ -90,4 +89,21 @@ class IncludedFilesUnparser : public AstSimpleProcessing
           std::map<std::string, SgSourceFile*> getUnparseSourceFileMap();
 
           std::set<std::string> getFilesToCopy();
+
+       // DQ (2/22/2021): Make these static so that we can refer to them within tools to support diffs.
+          static std::set<std::string> modifiedFiles;
+          static std::set<std::string> allFiles;
+          static std::set<std::string> filesToUnparse;
+          static std::list<std::pair<int, std::string> > includeCompilerPaths;
+          static std::map<std::string, std::string> unparseMap;
+          static std::map<std::string, std::set<std::string> > includingPathsMap;
+          static std::set<std::string> filesToCopy;
+
+       // DQ (2/23/2021): Make these static so that we can refer to them within tools to support diffs.
+          static std::map<std::string, SgSourceFile*> unparseSourceFileMap;
+
+       // DQ (2/22/2021): Moved tis to be public.
+       // void printDiagnosticOutput();
+          static void printDiagnosticOutput();
+
    };

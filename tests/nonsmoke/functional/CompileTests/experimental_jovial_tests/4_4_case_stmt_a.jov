@@ -2,6 +2,8 @@ START
 PROGRAM testcase;
 BEGIN
   ITEM ii S;
+  ITEM test U;
+
   CASE test;
   BEGIN
     (DEFAULT): ii=0;

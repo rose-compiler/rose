@@ -2,7 +2,7 @@
 #define DATA_RACE_DETECTION_H
 
 #include <string>
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 #include "CommandLineOptions.h"
 
 #include "Labeler.h"
@@ -27,8 +27,8 @@ class DataRaceDetection {
  public:
   DataRaceDetection();
   void setCsvFileName(std::string fileName);
-  void handleCommandLineOptions(CodeThorn::Analyzer& analyzer);
-  bool run(CodeThorn::Analyzer& analyzer);
+  void handleCommandLineOptions(CodeThorn::CTAnalysis& analyzer);
+  bool run(CodeThorn::CTAnalysis& analyzer);
 
   void setCheckAllLoops(bool val);
   void setCheckAllDataRaces(bool val);

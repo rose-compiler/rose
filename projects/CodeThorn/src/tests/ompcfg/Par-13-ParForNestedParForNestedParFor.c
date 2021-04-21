@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     a[i] = 3*a[i];
 #pragma omp parallel for
     for(int j = 0; j < 4; ++j) {
-      b[j] += a[i];
+      b[j] = b[j] + a[i];
 #pragma omp parallel for
       for(int k = 0; k < 4; ++k) {
         c[k] = a[i] * b[k] + c[k];

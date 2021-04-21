@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExpr_H
 #define ROSE_BinaryAnalysis_SymbolicExpr_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -1602,7 +1602,7 @@ Ptr makeZerop(const Ptr &a,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::ostream& operator<<(std::ostream &o, Node&);
+std::ostream& operator<<(std::ostream &o, const Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */

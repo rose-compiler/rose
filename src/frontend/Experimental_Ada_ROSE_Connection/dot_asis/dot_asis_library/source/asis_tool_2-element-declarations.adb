@@ -1,7 +1,7 @@
 with Asis.Declarations;
-with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
+with Asis.Set_Get;
 
 package body Asis_Tool_2.Element.Declarations is
 
@@ -76,6 +76,22 @@ package body Asis_Tool_2.Element.Declarations is
          Result.Corresponding_Body := ID;
       end;
 
+      --You can only call Add_Corresponding_Body on An_Entry_Declaration if it's
+      --a protected definition.  Weird, but I don't know how else to do this-Jim
+
+      procedure Add_Corresponding_Body_If_A_Protected_Definition is
+         use A4G.Int_Knds;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
+      begin
+            if Asis.Set_Get.Int_Kind (Asis.Elements.Enclosing_Element (Element)) =
+                 A_Protected_Definition
+            then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Body (Element));
+               State.Add_To_Dot_Label ("Corresponding_Body", ID);
+            end if;
+            Result.Corresponding_Body := ID;
+      end;
+
       procedure Add_Corresponding_Body_Stub is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Declarations.Corresponding_Body_Stub (Element));
@@ -132,14 +148,6 @@ package body Asis_Tool_2.Element.Declarations is
          Result.Corresponding_Last_Subtype := ID;
       end;
 
-      procedure Add_Corresponding_Parent_Subtype is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Parent_Subtype (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", ID);
-         Result.Corresponding_Last_Subtype := ID;
-      end;
-
       procedure Add_Corresponding_Pragmas is begin
          Add_Element_List
            (This           => State,
@@ -157,16 +165,6 @@ package body Asis_Tool_2.Element.Declarations is
             List_Out       => Result.Corresponding_Representation_Clauses);
       end;
 
-      procedure Add_Corresponding_Root_Type is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Root_Type (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Root_Type", ID);
-         -- Not in a_nodes?
-         --            Result.Corresponding_Root_Type := ID;
-         State.Add_Not_Implemented;
-      end;
-
       procedure Add_Corresponding_Subunit is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Declarations.Corresponding_Subunit (Element));
@@ -175,21 +173,34 @@ package body Asis_Tool_2.Element.Declarations is
          Result.Corresponding_Subprogram_Derivation := ID;
       end;
 
+      --Asis will only accept this call on subprograms that have been derived.
+      --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Subprogram_Derivation is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+         use Asis.Set_Get;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
-         State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
+         if(Is_From_Inherited (Element))
+         then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+               State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
+            end if;
          Result.Corresponding_Subprogram_Derivation := ID;
-      end;
+         end;
 
+      --Asis will only accept this call on subprograms that are implicit?
+      --So we need to check that before we call into ASIS
       procedure Add_Corresponding_Type is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Declarations.Corresponding_Type (Element));
+         use Asis.Set_Get;
+         ID : a_nodes_h.Element_ID := a_nodes_h.Support.Empty_ID;
       begin
-         State.Add_To_Dot_Label ("Corresponding_Type", ID);
+         if(Is_From_Implicit (Element))
+         then
+               ID := Get_Element_ID (Asis.Declarations.Corresponding_Type (Element));
+               State.Add_To_Dot_Label ("Corresponding_Type", ID);
+            end if;
          Result.Corresponding_Type := ID;
-      end;
+         end;
+
 
       procedure Add_Corresponding_Type_Completion is
          ID : constant a_nodes_h.Element_ID :=
@@ -225,16 +236,6 @@ package body Asis_Tool_2.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Corresponding_Type_Partial_View", ID);
          Result.Corresponding_Type_Partial_View := ID;
-      end;
-
-      procedure Add_Corresponding_Type_Structure is
-         ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Definitions.Corresponding_Type_Structure (Element));
-      begin
-         State.Add_To_Dot_Label ("Corresponding_Type_Structure", ID);
-         -- No Corresponding_Type_Operators in Declaration_Struct:
-         --              Result.Corresponding_Type_Structure := ID;
-         State.Add_Not_Implemented;
       end;
 
       procedure Add_Declaration_Interface_List is begin
@@ -485,7 +486,7 @@ package body Asis_Tool_2.Element.Declarations is
          -- No Iterator_Specification in a_nodes yet:
          -- TODO: Add:
          -- Result.Iterator_Specification := ID;
-         State.Add_Not_Implemented;
+         State.Add_Not_Implemented (Ada_2012);
       end;
 
       procedure Add_Mode_Kind is
@@ -654,12 +655,9 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Declaration_Interface_List;
 
       when An_Incomplete_Type_Declaration =>
-         Add_Corresponding_End_Name;
-         Add_Initialization_Expression;
          Add_Discriminant_Part;
          Add_Corresponding_Type_Declaration;
          Add_Corresponding_Type_Completion;
-         Add_Corresponding_Type_Partial_View;
          -- TODO: (2005)
          -- asis.limited_withs.ads (2005)
          --   Is_From_Limited_View
@@ -754,13 +752,13 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Specification_Subtype_Definition;
          Add_Has_Reverse;
 
-      when A_Generalized_Iterator_Specification =>
-         Add_Iterator_Specification;
+      when A_Generalized_Iterator_Specification => -- A2012
+         Add_Iterator_Specification; -- Has Add_Not_Implemented
          Add_Has_Reverse;
 
-      when An_Element_Iterator_Specification =>
+      when An_Element_Iterator_Specification => -- A2012
          Add_Iteration_Scheme_Name;
-         Add_Iterator_Specification;
+         Add_Iterator_Specification; -- Has Add_Not_Implemented
          Add_Has_Reverse;
 
       when A_Procedure_Declaration =>
@@ -827,17 +825,17 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Is_Subunit;
          Add_Is_Dispatching_Operation;
 
-      when A_Return_Variable_Specification =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Return_Variable_Specification => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when A_Return_Constant_Specification =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Return_Constant_Specification => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when A_Null_Procedure_Declaration =>
-         State.Add_Not_Implemented; -- A2005
+      when A_Null_Procedure_Declaration => -- A2005
+         State.Add_Not_Implemented (Ada_2005);
 
-      when An_Expression_Function_Declaration =>
-         State.Add_Not_Implemented; -- A2012
+      when An_Expression_Function_Declaration =>  -- A2012
+         State.Add_Not_Implemented (Ada_2012);
 
       when A_Package_Declaration =>
          Add_Pragmas;
@@ -946,7 +944,8 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Parameter_Profile;
          Add_Is_Overriding_Declaration;
          Add_Is_Not_Overriding_Declaration;
-         Add_Corresponding_Body;
+         Add_Corresponding_Declaration;
+         Add_Corresponding_Body_If_A_Protected_Definition;
          Add_Entry_Family_Definition;
 
       when An_Entry_Body_Declaration =>
@@ -962,7 +961,6 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Is_Name_Repeated;
          Add_Parameter_Profile;
          Add_Pragmas;
-         Add_Protected_Operation_Items;
 
       when An_Entry_Index_Specification =>
          Add_Specification_Subtype_Definition;
@@ -1070,15 +1068,12 @@ package body Asis_Tool_2.Element.Declarations is
          Add_Corresponding_First_Subtype;
          Add_Corresponding_Last_Constraint;
          Add_Corresponding_Last_Subtype;
-         Add_Corresponding_Parent_Subtype;
-         Add_Corresponding_Root_Type;
-         Add_Corresponding_Type_Operators;
-         Add_Corresponding_Type_Structure;
+         Add_Corresponding_Type_Operators; -- Has Add_Not_Implemented
          Add_Discriminant_Part;
          Add_Type_Declaration_View;
 
       when A_Formal_Incomplete_Type_Declaration => -- A2012
-         State.Add_Not_Implemented;
+         State.Add_Not_Implemented (Ada_2012);
 
       when A_Formal_Procedure_Declaration =>
          Add_Default_Kind;

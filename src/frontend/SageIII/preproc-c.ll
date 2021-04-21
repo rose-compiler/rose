@@ -1460,20 +1460,26 @@ int num_of_newlines(char* s)
      return num;
    }
 
+
+// DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
 // DQ (3/30/2006): Modified to use C++ style string instead of C style char* string
 // ROSEAttributesList *getPreprocessorDirectives( char *fileName)
 //! This function extracts the comments and CPP preprocessor control directives from the input file.
 // ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 // ROSEAttributesList *getPreprocessorDirectives( std::string fileName, LexTokenStreamTypePointer & input_token_stream_pointer )
-ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
+// ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
+ROSEAttributesList *getPreprocessorDirectives( std::string fileName, std::string new_filename )
    {
+  // DQ (11/9/2020): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST collect comments and CPP directives():");
+
      FILE *fp = NULL;
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
 #if 0
   // DQ (8/18/2019): Debugging the performance overhead of the header file unparsing support.
-     printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives(): fileName = %s \n",fileName.c_str());
+     printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives(): fileName = %s new_filename = %s \n",fileName.c_str(),new_filename.c_str());
 #endif
 
 #if 0
@@ -1519,7 +1525,22 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      preprocessorInfoList->set_rawTokenStream(ROSE_token_stream_pointer);
 
   // Set the global filename to be used in the PreprocessingInfo constructor.
-     globalFileName = fileName;
+  // globalFileName = fileName;
+     if (new_filename != "")
+        {
+          globalFileName = new_filename;
+#if 0
+          printf ("Using non-physical new_filename: globalFileName = %s \n",globalFileName.c_str());
+#endif
+        }
+       else
+        {
+          globalFileName = fileName;
+#if 0
+          printf ("Using physical filename: globalFileName = %s \n",globalFileName.c_str());
+#endif
+        }
+
 
      if ( fileName.empty() == false )
         {
@@ -1578,7 +1599,9 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
              }
         }
 
-     preprocessorInfoList->setFileName(fileName);
+  // DQ (1/4/2021): We need to use the globalFileName and the logic which sets it above.
+  // preprocessorInfoList->setFileName(fileName);
+     preprocessorInfoList->setFileName(globalFileName);
 
   // DQ (11/3/2019): Make sure that the filename is filled in.
      ROSE_ASSERT(preprocessorInfoList->getFileName() != "");
@@ -1595,6 +1618,14 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 #if DEBUG_LEX_PASS || 0
      printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
      printf ("Leaving getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
+#endif
+
+#if 0
+     if (preprocessorInfoList->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
+        {
+          printf ("Found specific file: tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
 #if 0

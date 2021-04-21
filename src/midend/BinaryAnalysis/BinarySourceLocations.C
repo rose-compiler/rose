@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BinarySourceLocations.h>
 
@@ -236,7 +236,8 @@ SourceLocations::printSrcToAddr(std::ostream &out, const std::string &prefix) co
     BOOST_FOREACH (const SourceToAddress::Node &node, srcToAddr_.nodes()) {
         out <<prefix <<node.key() <<":";
         BOOST_FOREACH (rose_addr_t va, node.value().scalars())
-            out <<" " <<StringUtility::addrToString(va) <<"\n";
+            out <<" " <<StringUtility::addrToString(va);
+        out <<"\n";
     }
 }
 

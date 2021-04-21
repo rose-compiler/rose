@@ -2,16 +2,26 @@
 #ifndef ROSE_BinaryAnalysis_Unparser_H
 #define ROSE_BinaryAnalysis_Unparser_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Sawyer/CommandLine.h>
+#include <Color.h>
 #include <BaseSemantics2.h>
 #include <BinaryEdgeArrows.h>
+#include <Sawyer/CommandLine.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
+
+/** Style of text. */
+struct Style {
+    Sawyer::Optional<Color::HSV> foreground;            /**< Optional foreground color. */
+    Sawyer::Optional<Color::HSV> background;            /**< Optional background color. */
+
+    /** Generate the ANSI escape for the style. */
+    std::string ansiStyle() const;
+};
 
 /** Settings that control unparsing.
  *
@@ -21,7 +31,20 @@ namespace Unparser {
 struct Settings {
     virtual ~Settings() {}
 
+    Color::Colorization colorization;                   /**< Overrides for global color settings. */
+
     struct {
+        struct {
+            Style style;
+        } line;                                         /**< Comment occupying an entire line. */
+        struct {
+            Style style;
+        } trailing;                                     /**< Comment extending to the end of the line. */
+    } comment;
+
+    struct {
+        Style separatorStyle;                           /**< Style of the line separating functions. */
+        Style titleStyle;                               /**< Style for title line of function. */
         bool showingSourceLocation;                     /**< Show source file name and line number when available. */
         bool showingReasons;                            /**< Show reasons for function existing. */
         bool showingDemangled;                          /**< Show demangled name in preference to mangled name. */
@@ -50,6 +73,7 @@ struct Settings {
             bool showingSuccessors;                     /**< Show basic block successors? */
             bool showingSharing;                        /**< Show functions when block is shared? */
             bool showingArrows;                         /**< Draw arrows from one block to another. */
+            Style arrowStyle;                           /**< Arrow style. */
         } cfg;                                          /**< Settings for control flow graphs. */
         struct {
             bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
@@ -62,30 +86,37 @@ struct Settings {
 
     struct {
         struct {
-            bool showing;                               /**< Show instruction addresses? */
+            bool showing;                               /**< Show instruction addresses or labels? */
+            bool useLabels;                             /**< Generate labels and use them instead of addresses? */
             size_t fieldWidth;                          /**< Min characters to use per insn address. */
+            Style style;                                /**< Style for printing the address. */
         } address;                                      /**< Settings for instruction starting addresses. */
 
         struct {
             bool showing;                               /**< Show instruction bytes? */
             size_t perLine;                             /**< Max number of bytes to show per line of output. */
             size_t fieldWidth;                          /**< Min characters to use for the bytes field. */
+            Style style;                                /**< Style for printing the insn bytes. */
         } bytes;                                        /**< Settings for the bytes that make up an instruction. */
 
         struct {
             bool showing;                               /**< Show stack deltas? */
             size_t fieldWidth;                          /**< Min characters to use for the stack delta field. */
+            Style style;                                /**< Style for the stack delta. */
         } stackDelta;                                   /**< Settings for stack deltas. */
 
         struct {
             size_t fieldWidth;                          /**< Min characters to use for the instruction mnemonic. */
             std::string semanticFailureMarker;          /**< Mark instruction if it had semantic failures. */
+            Style semanticFailureStyle;                 /**< Style for the semantic failure indicator. */
+            Style style;                                /**< Style for mnemonic. */
         } mnemonic;                                     /**< Settings for instruction mnemonics. */
 
         struct {
             std::string separator;                      /**< How to separate one operand from another. */
             size_t fieldWidth;                          /**< Min characters to use for the operand list. */
             bool showingWidth;                          /**< Show width of all expression terms in square brackets. */
+            Style style;                                /**< Output style for instruction operands. */
         } operands;                                     /**< Settings for the operand list. */
 
         struct {
@@ -100,6 +131,7 @@ struct Settings {
             bool showing;                               /**< Show instruction semantics? */
             InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
             bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
+            Style style;                                /**< Style for showing instruction semantics. */
         } semantics;
     } insn;                                             /**< Settings for instructions. */
     

@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_Partitioner_H
 #define ROSE_Partitioner2_Partitioner_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
@@ -43,7 +43,8 @@
 // Derived classes needed for serialization
 #include <BinaryYicesSolver.h>
 #include <BinaryZ3Solver.h>
-#include <DispatcherA64.h>
+#include <DispatcherAarch32.h>
+#include <DispatcherAarch64.h>
 #include <DispatcherM68k.h>
 #include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
@@ -339,7 +340,7 @@ public:
 
     /** Map address to name. */
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
-    
+
 private:
     BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
@@ -358,6 +359,7 @@ private:
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
+    Unparser::BasePtr insnPlainUnparser_;               // For unparsing just instruction mnemonic and operands
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -380,6 +382,7 @@ private:
     mutable size_t cfgProgressTotal_;                   // Expected total for the CFG progress bar; initialized at first report
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -395,8 +398,11 @@ private:
     void serializeCommon(S &s, const unsigned version) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
-#ifdef ROSE_ENABLE_ASM_A64
-        s.template register_type<InstructionSemantics2::DispatcherA64>();
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        s.template register_type<InstructionSemantics2::DispatcherAarch64>();
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH32
+        s.template register_type<InstructionSemantics2::DispatcherAarch32>();
 #endif
         s.template register_type<InstructionSemantics2::DispatcherX86>();
         s.template register_type<InstructionSemantics2::DispatcherM68k>();
@@ -456,6 +462,7 @@ private:
 #endif
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -511,7 +518,7 @@ public:
     Configuration& configuration() { return config_; }
     const Configuration& configuration() const { return config_; }
     /** @} */
-        
+
     /** Returns the instruction provider.
      *
      *  Thread safety: Not thread safe.
@@ -577,6 +584,11 @@ public:
     /** Configure the single-instruction unparser. */
     void configureInsnUnparser(const Unparser::BasePtr&) const /*final*/;
 
+    /** Configure plain single-instruction unparser.
+     *
+     *  This configures an unparser for showing just the instruction mnemonic and operands. */
+    void configureInsnPlainUnparser(const Unparser::BasePtr&) const /*final*/;
+
     /** Unparse some entity.
      *
      *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
@@ -592,6 +604,11 @@ public:
     void unparse(std::ostream&, const Function::Ptr&) const;
     void unparse(std::ostream&) const;
     /** @} */
+
+    /** Unparse an instruction in a plain way.
+     *
+     *  This generates a string for the instruction that shows only the mnemonic and arguments. */
+    std::string unparsePlain(SgAsmInstruction*) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -871,6 +888,7 @@ public:
     CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -901,7 +919,7 @@ public:
     bool placeholderExists(rose_addr_t startVa) const /*final*/;
 
     /** Find the CFG vertex for a basic block placeholder.
-     *  
+     *
      *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the
      *  end vertex (<code>partitioner.cfg().vertices().end()</code>) is returned.
      *
@@ -1360,9 +1378,10 @@ public:
      *  @li Error is indicated by a cached null expression. Errors are usually due to a reachable basic block that contains an
      *      instruction for which semantics are not known.
      *
-     *  @li Constant offset, for which the @c is_number predicate applied to the return value is true.
+     *  @li Constant offset, for which the @c toInteger predicate applied to the return value is true. I.e., the delta is a
+     *      concrete value fits in a 64-bit signed integer.
      *
-     *  @li Top, indicated by a non-null return value for which @c is_number is false.  This results when two or more paths
+     *  @li Top, indicated by a non-null return value for which @c toInteger is false.  This results when two or more paths
      *      through the control flow graph result in different constant offsets. It can also occur when the algebraic
      *      simplifications that are built into ROSE fail to simplify a constant expression.
      *
@@ -2118,7 +2137,7 @@ public:
     std::set<rose_addr_t> functionDataFlowConstants(const Function::Ptr&) const /*final*/;
 
 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2367,8 +2386,13 @@ public:
     Sawyer::Optional<rose_addr_t> elfGotVa() const;
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Settings
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //                                  Settings
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
@@ -2475,6 +2499,7 @@ public:
     /** @} */
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2541,7 +2566,7 @@ public:
 #endif
 
 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2559,7 +2584,7 @@ private:
     // and destination CFGs are identical.
     ControlFlowGraph::VertexIterator convertFrom(const Partitioner &other,
                                                  ControlFlowGraph::ConstVertexIterator otherIter);
-    
+
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
     ControlFlowGraph::EdgeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexIterator &placeholder);

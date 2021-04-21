@@ -1,7 +1,7 @@
 #ifndef Rose_NullSemantics2_H
 #define Rose_NullSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "BaseSemantics2.h"
 
@@ -71,7 +71,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }
@@ -119,7 +119,7 @@ public:
     }
 
     virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
-        stream <<"VOID[" <<get_width() <<"]";
+        stream <<"VOID[" <<nBits() <<"]";
     }
 };
 

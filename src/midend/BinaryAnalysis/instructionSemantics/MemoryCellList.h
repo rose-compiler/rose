@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <MemoryCellState.h>
@@ -216,9 +216,9 @@ public:
         CellList retval;
         MemoryCellPtr tempCell = protocell->create(addr, valOps->undefined_(nBits));
         for (/*void*/; cursor!=cells.end(); ++cursor) {
-            if (tempCell->may_alias(*cursor, addrOps)) {
+            if (tempCell->mayAlias(*cursor, addrOps)) {
                 retval.push_back(*cursor);
-                if (tempCell->must_alias(*cursor, addrOps))
+                if (tempCell->mustAlias(*cursor, addrOps))
                     break;
             }
         }

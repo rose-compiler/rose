@@ -4,8 +4,9 @@ set(ROSE_FLAGS --edg:no_warnings -w)
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME ELSATEST_${file_to_test}
     COMMAND testTranslator
       ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR} -c
       ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(ELSATEST_${file_to_test} PROPERTIES LABELS ELSATEST)
 endforeach()

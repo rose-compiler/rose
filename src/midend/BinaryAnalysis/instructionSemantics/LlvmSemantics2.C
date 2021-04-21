@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -21,23 +21,44 @@ BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return dflt;
-    size_t nbits = dflt->get_width();
-    SValuePtr addr = SValue::promote(addr_);
-    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->get_width(), nbits), addr->get_expression(),
-                                              solver()));
+    size_t nbits = dflt->nBits();
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
+    }
+
+
+    SValuePtr addr = SValue::promote(adjustedVa);
+    return svalueExpr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
+                                             solver()));
 }
 
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond)
 {
-    if (cond->is_number() && !cond->get_number())
+    if (cond->isFalse())
         return;
-    SValuePtr addr = SValue::promote(addr_);
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = addr_;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
+    }
+
+    SValuePtr addr = SValue::promote(adjustedVa);
     SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->get_width(), data->get_width()),
+    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->nBits(), data->nBits()),
                                                  addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
 }
@@ -49,7 +70,7 @@ RiscOperators::reset()
     BaseSemantics::RegisterStatePtr regs = state->registerState();
     BaseSemantics::MemoryStatePtr mem = state->memoryState();
 
-    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->get_register_dictionary()));
+    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
     BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 
@@ -65,7 +86,7 @@ RiscOperators::reset()
 void
 RiscOperators::emit_changed_state(std::ostream &o)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     RegisterDescriptors modified_registers = get_modified_registers();
     emit_prerequisites(o, modified_registers, dictionary);
     emit_register_definitions(o, modified_registers);
@@ -88,7 +109,7 @@ RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
         ASSERT_not_null(currentState());
-        const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+        const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
 
         // General-purpose registers
         important_registers.push_back(dictionary->findOrThrow("eax"));
@@ -157,7 +178,7 @@ RiscOperators::get_stored_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
@@ -183,7 +204,7 @@ RiscOperators::get_modified_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr cur_regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = cur_regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = cur_regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
@@ -191,13 +212,13 @@ RiscOperators::get_modified_registers()
             ASSERT_require(!name.empty());
             BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
-            if (0==cur_value->get_comment().compare(name + "_0")) {
+            if (0==cur_value->comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
                 // written won't even get this far in the loop due to the is_partly_stored() check above.
                 continue;
             } else if (prev_regstate!=NULL && prev_regstate->is_partly_stored(regs[i])) {
                 SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
-                if (cur_value->must_equal(prev_value))
+                if (cur_value->mustEqual(prev_value))
                     continue;
             }
             retval.push_back(regs[i]);
@@ -210,7 +231,7 @@ RiscOperators::get_modified_registers()
 RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     return dictionary->findOrThrow("eip");
 }
 
@@ -281,7 +302,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 void
 RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescriptors &regs)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->get_register_dictionary();
+    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -293,7 +314,7 @@ void
 RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescriptors &regs)
 {
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->get_register_dictionary();
+    const RegisterDictionary *dictionary = regstate->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -326,8 +347,8 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     //    2. It is an unconditional intra-function branch which can be translated to an LLVM unconditional "br" instruction.
     //    3. It is the fall-through address added by transcodeBasicBlock for an instruction for which semantics failed when
     //       quiet-errors mode is enabled, and therefore might be completely invalid.
-    if (eip->is_number()) {
-        SgAsmInstruction *dst_insn = insns.get_value_or(eip->get_number(), NULL);
+    if (auto eipVal = eip->toUnsigned()) {
+        SgAsmInstruction *dst_insn = insns.get_value_or(*eipVal, NULL);
         SgAsmFunction *dst_func = getEnclosingNode<SgAsmFunction>(dst_insn);
         if (!dst_func) {
             o <<prefix() <<"unreachable\n";
@@ -343,7 +364,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
                 o <<prefix() <<"br label %" <<addr_label(ret_addr) <<"\n";
             }
         } else {
-            o <<prefix() <<"br label %" <<addr_label(eip->get_number()) <<"\n";
+            o <<prefix() <<"br label %" <<addr_label(*eipVal) <<"\n";
         }
         return;
     }

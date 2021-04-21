@@ -19,14 +19,16 @@ set(ROSE_FLAGS -rose:verbose 0 -rose:skip_syntax_check
 
 foreach(file_to_test ${F90_TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME GFORTRANSUITE_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} -rose:f90 -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(GFORTRANSUITE_${file_to_test} PROPERTIES LABELS GFORTRANSUITE)
 endforeach()
 
 foreach(file_to_test ${F77_FIXED_FORMAT_TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME GFORTRANSUITE_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} -rose:f77 -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(GFORTRANSUITE_${file_to_test} PROPERTIES LABELS GFORTRANSUITE)
 endforeach()

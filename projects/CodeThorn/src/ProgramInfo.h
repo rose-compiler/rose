@@ -4,6 +4,9 @@
 #include "ProgramAbstractionLayer.h"
 #include <cstdint>
 #include "Labeler.h"
+#include <string>
+#include <map>
+#include "VariableIdMappingExtended.h"
 
 class SgFunctionCall;
 
@@ -12,26 +15,45 @@ class ProgramInfo {
   ProgramInfo(SgProject* root);
   ProgramInfo(CodeThorn::ProgramAbstractionLayer* pal);
   void compute();
-  std::string toStringDetailed();
   void printDetailed();
+  void printCompared(ProgramInfo* other);
+  std::string toStringDetailed();
+  std::string toCsvStringDetailed();
+  std::string toCsvStringDetailed(CodeThorn::VariableIdMappingExtended* vid);
+  bool toCsvFileDetailed(std::string fileName, std::string mode);
+  std::string toStringCompared(ProgramInfo* other);
   void writeFunctionCallNodesToFile(std::string fileName, CodeThorn::Labeler* labeler=0);
+
+private:
+  std::string toCsvStringCodeStats();  
+  std::string toCsvStringTypeStats(CodeThorn::VariableIdMappingExtended* vim);
   
- private:
+  enum Element {
+    numFunDefs,
+    numFunCall,
+    numFunPtrCall,
+    numForLoop,
+    numWhileLoop,
+    numDoWhileLoop,
+    numLogicOrOp,
+    numLogicAndOp,
+    numConditionalExp,
+    numGlobalVars,
+    numLocalVars,
+    numArrowOp,
+    numDerefOp,
+    numStructAccess,
+    numArrayAccess,
+    NUM
+  };
+  void initCount();
   bool _validData=false;
-  CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   SgNode* root;
-  uint32_t numFunCall=0;
-  uint32_t numWhileLoop=0;
-  uint32_t numDoWhileLoop=0;
-  uint32_t numForLoop=0;
-  uint32_t numLogicOrOp=0;
-  uint32_t numLogicAndOp=0;
-  uint32_t numConditionalExp=0;
-  uint32_t numArrowOp=0;
-  uint32_t numDerefOp=0;
-  uint32_t numStructAccess=0;
-  uint32_t numArrayAccess=0;
+  CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
   std::list<SgFunctionCallExp*> _functionCallNodes;
+  std::list<SgFunctionCallExp*> _functionPtrCallNodes;
+  uint32_t count[NUM+1];
+  std::map<Element,std::string> countNameMap;
 };
 
 #endif

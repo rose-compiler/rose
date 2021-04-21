@@ -13,6 +13,8 @@ JOVIAL_TESTCODES = \
  item_desc_conversion.jov               \
  parens.jov                             \
  typename_conv.jov                      \
+ status_enumval.jov                     \
+ use_table_types.jov                    \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
  1_2_2_procedure-module_a.jov           \
@@ -23,7 +25,11 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_b.jov        \
  1_2_3_main-program-module_c.jov        \
  1_2_3_main-program-module_d.jov        \
+ 1_2_3_program-body_a.jov               \
+ 1_2_3_program-body_b.jov               \
+ 1_2_3_program-body_c.jov               \
  2_1_1_4_bit_type.jov                   \
+ 2_1_1_6_status_item_b.jov              \
  2_1_1_7_pointer_type.jov               \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
@@ -110,19 +116,109 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-189.jov                  \
  rose-issue-rc-190.jov                  \
  rose-issue-rc-191.jov                  \
+ rose-issue-rc-192.jov                  \
  rose-issue-rc-193.jov                  \
  rose-issue-rc-201.jov                  \
+ rose-issue-rc-201.pre.jov              \
  rose-issue-rc-203.jov                  \
+ rose-issue-rc-203.pre.jov              \
  rose-issue-rc-204.jov                  \
  rose-issue-rc-225.jov                  \
+ rose-issue-rc-225.pre.jov              \
+ rose-issue-rc-227.jov                  \
  rose-issue-rc-240.jov                  \
  rose-issue-rc-241.jov                  \
- rose-issue-rc-260.jov
-
-# status_enumval.jov                     \
-# 1_2_3_program-body_a.jov               \
-# 1_2_3_program-body_b.jov               \
-# 1_2_3_program-body_c.jov
+ rose-issue-rc-260.jov                  \
+ rose-issue-rc-271.jov                  \
+ rose-issue-rc-271.pre.jov              \
+ rose-issue-rc-290.jov                  \
+ rose-issue-rc-290.pre.jov              \
+ rose-issue-rc-291.jov                  \
+ rose-issue-rc-333.jov                  \
+ rose-issue-rc-333.pre.jov              \
+ rose-issue-rc-334.jov                  \
+ rose-issue-rc-334.pre.jov              \
+ rose-issue-rc-336.jov                  \
+ rose-issue-rc-336.pre.jov              \
+ rose-issue-rc-337.jov                  \
+ rose-issue-rc-337.pre.jov              \
+ rose-issue-rc-338.jov                  \
+ rose-issue-rc-338.pre.jov              \
+ rose-issue-rc-339.jov                  \
+ rose-issue-rc-341.jov                  \
+ rose-issue-rc-341.pre.jov              \
+ rose-issue-rc-360.jov                  \
+ rose-issue-rc-360.pre.jov              \
+ rose-issue-rc-365.jov                  \
+ rose-issue-rc-383.jov                  \
+ rose-issue-rc-390.jov                  \
+ rose-issue-rc-390.pre.jov              \
+ rose-issue-rc-391.jov                  \
+ rose-issue-rc-391.pre.jov              \
+ rose-issue-rc-392.jov                  \
+ rose-issue-rc-392.pre.jov              \
+ rose-issue-rc-394.jov                  \
+ rose-issue-rc-394.pre.jov              \
+ rose-issue-rc-400.jov                  \
+ rose-issue-rc-400.pre.jov              \
+ rose-issue-rc-410.jov                  \
+ rose-issue-rc-410.pre.jov              \
+ rose-issue-rc-413.jov                  \
+ rose-issue-rc-413.pre.jov              \
+ rose-issue-rc-416.jov                  \
+ rose-issue-rc-416.pre.jov              \
+ rose-issue-rc-429.jov                  \
+ rose-issue-rc-429.pre.jov              \
+ rose-issue-rc-448.jov                  \
+ rose-issue-rc-448.pre.jov              \
+ rose-issue-rc-449.jov                  \
+ rose-issue-rc-449.pre.jov              \
+ rose-issue-rc-457.jov                  \
+ rose-issue-rc-457.pre.jov              \
+ rose-issue-rc-459.jov                  \
+ rose-issue-rc-461a.jov                 \
+ rose-issue-rc-461b.jov                 \
+ rose-issue-rc-470.jov                  \
+ rose-issue-rc-472.jov                  \
+ rose-issue-rc-473.jov                  \
+ rose-issue-rc-503.jov                  \
+ rose-issue-rc-523.jov                  \
+ rose-issue-rc-575.jov                  \
+ rose-issue-rc-578.jov                  \
+ rose-issue-rc-581.jov                  \
+ rose-issue-rc-638a.jov                 \
+ rose-issue-rc-642.jov                  \
+ rose-issue-rc-646.jov                  \
+ rose-issue-rc-647.jov                  \
+ rose-issue-rc-651.jov                  \
+ rose-issue-rc-670.jov                  \
+ rose-issue-rc-687.jov                  \
+ rose-issue-rc-692.jov                  \
+ rose-issue-rc-693.jov                  \
+ rose-issue-rc-715.jov                  \
+ rose-issue-rc-753a.jov                 \
+ rose-issue-rc-753b.jov                 \
+ rose-issue-rc-754.jov                  \
+ rose-issue-rc-755.jov                  \
+ rose-issue-rc-763.jov                  \
+ rose-issue-rc-765.jov                  \
+ rose-issue-rc-786.cpl                  \
+ rose-issue-rc-787.jov                  \
+ rose-issue-rc-789.jov                  \
+ rose-issue-rc-793.jov                  \
+ rose-issue-rc-797.jov                  \
+ rose-issue-rc-802.jov                  \
+ rose-issue-rc-813.jov                  \
+ rose-issue-rc-818.jov                  \
+ rose-issue-rc-819.jov                  \
+ rose-issue-rc-820.jov                  \
+ rose-issue-rc-821.jov                  \
+ rose-issue-rc-822.jov                  \
+ rose-issue-rc-823.jov                  \
+ rose-issue-rc-824.jov                  \
+ rose-issue-rc-825.jov                  \
+ rose-issue-rc-826.jov                  \
+ charlie.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -138,16 +234,28 @@ JOVIAL_PARSER_TESTCODES = \
  6_3_2_next_function_pointer.jov        \
  6_3_2_next_function_status.jov
 
-## List of compool modules that need to be compiled first:
+## List compool modules that need to be compiled first:
 #     rc161b.pre.cpl before rc161a.pre.cpl before rc161.jov
 #
 COMPOOL_TESTCODES = \
+ alpha.cpl                              \
  define_dollar.cpl                      \
+ multi.cpl                              \
+ rectype.cpl                            \
  simple_compool.cpl                     \
  status_type.cpl                        \
+ table_inheritance.cpl                  \
+ table_names.cpl                        \
+ table_types.cpl                        \
+ tighttable.cpl                         \
  2_4_define.cpl                         \
  3_0_rent_and_rec.cpl                   \
  rc161b.pre.cpl                         \
+ rc600a.cpl                             \
+ rc616b.cpl                             \
+ rc687a.cpl                             \
+ rc715a.cpl                             \
+ rc833.cpl                              \
  rose-issue-2143.cpl                    \
  rose-issue-2267.cpl                    \
  rose-issue-2654.cpl                    \
@@ -189,14 +297,46 @@ COMPOOL_TESTCODES = \
  rose-issue-rc-128.cpl                  \
  rose-issue-rc-129.cpl                  \
  rose-issue-rc-160a.cpl                 \
- rc161a.pre.cpl
-
+ rose-issue-rc-461.cpl                  \
+ rose-issue-rc-512.cpl                  \
+ rose-issue-rc-531.cpl                  \
+ rose-issue-rc-587.cpl                  \
+ rose-issue-rc-600.cpl                  \
+ rose-issue-rc-642.cpl                  \
+ rose-issue-rc-645.cpl                  \
+ rose-issue-rc-676.cpl                  \
+ rose-issue-rc-677.cpl                  \
+ rose-issue-rc-737.cpl                  \
+ rose-issue-rc-741.cpl                  \
+ rose-issue-rc-742.cpl                  \
+ rose-issue-rc-745.cpl                  \
+ rose-issue-rc-746.cpl                  \
+ rose-issue-rc-766.cpl                  \
+ rose-issue-rc-833.cpl                  \
+ rose-issue-rc-839.cpl                  \
+ rc161a.pre.cpl                         \
+ rc410.cpl                              \
+ rc410.pre.cpl                          \
+ rc503.cpl                              \
+ rc515.cpl                              \
+ rc616a.cpl                             \
+ rc687b.cpl                             \
+ rc715b.cpl                             \
+ rc754.cpl                              \
+ rc802.cpl                              \
+ rc820.cpl                              \
+ rc821.cpl                              \
+ rc825.cpl                              \
+ beta.cpl                               \
+ parttype.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \
  rose-issue-rc-79b.cpl                  \
  rose-issue-rc-92b.cpl                  \
- rose-issue-rc-119b.cpl
+ rose-issue-rc-119b.cpl                 \
+ rose-issue-rc-515.cpl                  \
+ rose-issue-rc-616.cpl
 
 # proc_refs.cpl                          
 

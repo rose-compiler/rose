@@ -70,6 +70,26 @@ elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     COMMAND cut -d. -f2
     OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
   string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+  if(NOT BACKEND_C_COMPILER)
+    set(BACKEND_C_COMPILER  ${CMAKE_C_COMPILER})
+  endif()
+  execute_process(
+    COMMAND basename ${BACKEND_C_COMPILER}
+    OUTPUT_VARIABLE BACKEND_C_COMPILER_NAME_WITHOUT_PATH)
+  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_C_COMPILER_NAME_WITHOUT_PATH ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH})
+  if(VERBOSE)
+    message("BACKEND_C_COMPILER_NAME_WITHOUT_PATH=${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}^")
+  endif()
+
+  execute_process(
+    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMajorVersionNumber.sh
+    OUTPUT_VARIABLE BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER)
+  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER})
+  execute_process(
+    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMinorVersionNumber.sh
+    OUTPUT_VARIABLE BACKEND_C_COMPILER_MINOR_VERSION_NUMBER)
+  string(REGEX MATCH "[0-9]+" BACKEND_C_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER})
 endif()
 
 # --------check CXX compiler -----------------------
@@ -126,14 +146,37 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     COMMAND cut -d. -f2
     OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
   string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+  if(NOT BACKEND_CXX_COMPILER)
+    set(BACKEND_CXX_COMPILER  ${CMAKE_CXX_COMPILER})
+  endif()
+  execute_process(
+    COMMAND basename ${BACKEND_CXX_COMPILER}  
+    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
+  if(VERBOSE)
+    message("BACKEND_CXX_COMPILER= ${BACKEND_CXX_COMPILER}")
+  endif()
+  string(REGEX MATCH "[a-zA-Z0-9/.+-]+" BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
+  if(VERBOSE)
+    message("BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH= ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
+  endif()
+  execute_process(
+    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMajorVersionNumber.sh
+    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER)
+  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER})
+  execute_process(
+    COMMAND ${CMAKE_SOURCE_DIR}/config/getAppleClangMinorVersionNumber.sh
+    OUTPUT_VARIABLE BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER)
+  string(REGEX MATCH "[0-9]+" BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER  ${BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER})
 endif()
 
 if(enable-fortran)
   # --------check Fortran compiler -----------------------
   # CMakeDetermineFortranCompiler does not recognize gfortran first
   # we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority
+  # Pei-Hung (04/08/21) allowed gfortran* for homebrew gfortran with suffix name
   include(roseCMakeDetermineFortranCompiler)
-  if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran$")
+  if("${CMAKE_Fortran_COMPILER}"  MATCHES ".*gfortran.*$")
     if(VERBOSE)
       message("find gfortran compiler ${CMAKE_Fortran_COMPILER}")
     endif()

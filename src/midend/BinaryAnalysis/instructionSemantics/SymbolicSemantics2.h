@@ -1,7 +1,7 @@
 #ifndef Rose_SymbolicSemantics2_H
 #define Rose_SymbolicSemantics2_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -283,7 +283,7 @@ public:
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
-        if (new_width!=0 && new_width!=retval->get_width())
+        if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         return retval;
     }
@@ -312,7 +312,7 @@ public:
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
-        ASSERT_require(nbits==get_width());
+        ASSERT_require(nbits==nBits());
     }
 
     virtual bool isBottom() const ROSE_OVERRIDE;
@@ -934,31 +934,61 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
+    SValuePtr svalueExpr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
         SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;
     }
 
-    SValuePtr svalue_undefined(size_t nbits) {
+    SValuePtr svalueUndefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
     }
 
-    SValuePtr svalue_bottom(size_t nbits) {
+    SValuePtr svalueBottom(size_t nbits) {
         return SValue::promote(bottom_(nbits));
     }
 
-    SValuePtr svalue_unspecified(size_t nbits) {
+    SValuePtr svalueUnspecified(size_t nbits) {
         return SValue::promote(unspecified_(nbits));
     }
 
-    SValuePtr svalue_number(size_t nbits, uint64_t value) {
+    SValuePtr svalueNumber(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
 
-    SValuePtr svalue_boolean(bool b) {
+    SValuePtr svalueBoolean(bool b) {
         return SValue::promote(boolean_(b));
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_number(size_t nbits, uint64_t value) ROSE_DEPRECATED("use svalueNumber instead") {
+        return svalueNumber(nbits, value);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_boolean(bool b) ROSE_DEPRECATED("use svalueBoolean instead") {
+        return svalueBoolean(b);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_unspecified(size_t nbits) ROSE_DEPRECATED("use svalueUnspecified instead") {
+        return svalueUnspecified(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_bottom(size_t nbits) ROSE_DEPRECATED("use svalueBottom instead") {
+        return svalueBottom(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_undefined(size_t nbits) ROSE_DEPRECATED("use svalueUndefined instead") {
+        return svalueUndefined(nbits);
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) ROSE_DEPRECATED("use svalueExpr instead") {
+        return svalueExpr(expr, defs);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1113,7 +1143,7 @@ public:
      *  SymbolicSemantics::RiscOperatorsPtr operators = ...;
      *  SymbolicSemantics::SValuePtr original_esp = ...; //probably read from the initial state
      *  BaseSemantics::SValuePtr stack_frame = operators->undefined_(32);
-     *  stack_frame->set_comment("stack_frame"); //just so output looks nice
+     *  stack_frame->comment("stack_frame"); //just so output looks nice
      *  SymbolicSemantics::SValuePtr rhs = SymbolicSemantics::SValue::promote(
      *      operators->add(stack_frame, operators->number_(32, 4))
      *  );

@@ -34,7 +34,7 @@ cp "$SAWYER_ROOT/LICENSE" LICENSE
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in                                                                                                                                \
-    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached                   \
+    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitFlags BitVector BitVectorSupport Buffer Cached          \
     Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator DenseIntegerSet           \
     DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm       \
     GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \

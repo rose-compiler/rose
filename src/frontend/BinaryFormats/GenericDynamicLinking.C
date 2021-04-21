@@ -1,6 +1,6 @@
 /* Generic Dynamic Linking */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "stringify.h"
@@ -87,8 +87,7 @@ SgAsmGenericSymbol::stringifyDefState() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolDefState(p_def_state);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 }
 
@@ -98,8 +97,7 @@ SgAsmGenericSymbol::stringifyType() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolType(p_type);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 }
 
@@ -109,8 +107,7 @@ SgAsmGenericSymbol::stringifyBinding() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolBinding(p_binding);
 #else
-        ROSE_ASSERT(false);
-        return "";
+        ROSE_ABORT();
 #endif
 }
 

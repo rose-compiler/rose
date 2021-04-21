@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "DisassemblerM68k.h"
 
@@ -4860,7 +4860,7 @@ DisassemblerM68k::init()
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);
-    p_proto_dispatcher->set_register_dictionary(regdict);
+    p_proto_dispatcher->registerDictionary(regdict);
 
     wordSizeBytes(2);
     instructionAlignment_ = 2;

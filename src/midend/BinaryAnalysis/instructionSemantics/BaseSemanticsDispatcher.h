@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Dispatcher_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Dispatcher_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemanticsTypes.h>
 #include <Registers.h>
@@ -40,14 +40,15 @@ public:
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
+    RiscOperatorsPtr operators_;
+
 protected:
-    RiscOperatorsPtr operators;
-    const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
+    const RegisterDictionary *regdict;                  /**< See @ref registerDictionary property. */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
-    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
+    // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iprocKey() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
@@ -57,7 +58,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(operators);
+        s & boost::serialization::make_nvp("operators", operators_); // for backward compatibility
         s & BOOST_SERIALIZATION_NVP(regdict);
         s & BOOST_SERIALIZATION_NVP(addrWidth_);
         s & BOOST_SERIALIZATION_NVP(autoResetInstructionPointer_);
@@ -76,8 +77,8 @@ protected:
         : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
 
     Dispatcher(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : operators(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
-        ASSERT_not_null(operators);
+        : operators_(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
+        ASSERT_not_null(operators_);
         ASSERT_not_null(regs);
     }
 
@@ -113,29 +114,38 @@ public:
     /** Lookup the processor for an instruction.  Looks up the functor that has been registered to process the given
      *  instruction. Returns the null pointer if the instruction cannot be processed. Instruction processor objects are
      *  managed by the caller; the instruction itself is only used for the duration of this call. */
-    virtual InsnProcessor *iproc_lookup(SgAsmInstruction *insn);
+    virtual InsnProcessor *iprocLookup(SgAsmInstruction *insn);
 
     /** Replace an instruction processor with another.  The processor for the specified instruction is replaced with the
      *  specified processor, which may be the null pointer.  Instruction processor objects are managed by the caller; the
      *  instruction itself is only used for the duration of this call. */
-    virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
+    virtual void iprocReplace(SgAsmInstruction *insn, InsnProcessor *iproc);
 
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
-    virtual int iproc_key(SgAsmInstruction*) const = 0;
+    virtual int iprocKey(SgAsmInstruction*) const = 0;
 
     /** Set an iproc table entry to the specified value.
      *
      *  The @p iproc object will become owned by this dispatcher and deleted when this dispatcher is destroyed. */
-    virtual void iproc_set(int key, InsnProcessor *iproc);
+    virtual void iprocSet(int key, InsnProcessor *iproc);
 
     /** Obtain an iproc table entry for the specified key. */
-    virtual InsnProcessor *iproc_get(int key);
+    virtual InsnProcessor *iprocGet(int key);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
 public:
-    /** Get a pointer to the RISC operators object. */
-    virtual RiscOperatorsPtr get_operators() const { return operators; }
+    // Deprecated [Robb Matzke 2020-11-19]
+    virtual RiscOperatorsPtr get_operators() const ROSE_DEPRECATED("use \"operators\" instead") { return operators_; }
+
+    /** Property: RISC operators.
+     *
+     *  The RISC operators also contain the current and initial state on which they operate.
+     *
+     * @{ */
+    virtual RiscOperatorsPtr operators() const { return operators_; }
+    virtual void operators(const RiscOperatorsPtr &ops);
+    /** @} */
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
      *  convenience. */
@@ -163,24 +173,39 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods related to registers
 public:
-    /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).  This
-     *  dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to read
-     *  from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to
-     *  the @ref RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the
-     *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
-     *  superset thereof.
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary defines the set of registers over which the RISC operators may operate. This should be same
+     *  registers (or superset thereof) whose values are stored in the machine state(s).  This dictionary is used by the
+     *  Dispatcher class to translate register names to register descriptors.  For instance, to read from the "eax" register,
+     *  the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to the @ref
+     *  RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the instruction is
+     *  disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a superset thereof.
      *
      *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
      *  may query the dictionary and cache the resultant register descriptors.
+     *
+     *  This function should not be redefined in subclasses. Instead, override @ref get_register_dictionary or @ref
+     *  set_register_dictionary.
+     *
      * @{ */
+    const RegisterDictionary* registerDictionary() const /*final*/ {
+        return get_register_dictionary();
+    }
+    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
+        set_register_dictionary(rd);
+    }
+    /** @} */
+
+
+    // Old names, the ones which are overridden in subclasses if necessary. These are deprecated and might go away someday, so
+    // it's in your best interrest to use C++11 "override" in your declarations.
     virtual const RegisterDictionary *get_register_dictionary() const {
         return regdict;
     }
     virtual void set_register_dictionary(const RegisterDictionary *regdict) {
         this->regdict = regdict;
     }
-    /** @} */
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
@@ -221,6 +246,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
 public:
+    /** Initialize the state.
+     *
+     *  Some architectures benefit from having their initial state initialized in a certain way. For instance, on x86/amd64 the
+     *  segment registers CS, DS, and SS typically refer to the entire machine memory and can be initialized to have a zero
+     *  base address. */
+    virtual void initializeState(const StatePtr&);
 
     /** Update the instruction pointer register.
      *
@@ -251,13 +282,13 @@ public:
      *
      *  For each SgAsmBinaryAddPreupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
      *  reference expression. */
-    virtual void preUpdate(SgAsmExpression*);
+    virtual void preUpdate(SgAsmExpression*, const BaseSemantics::SValuePtr &enabled);
 
     /** Update registers for post-add expressions.
      *
      *  For each SgAsmBinaryAddPostupdate, add the lhs and rhs operands and assign the sum to the lhs, which must be a register
      *  reference expression. */
-    virtual void postUpdate(SgAsmExpression*);
+    virtual void postUpdate(SgAsmExpression*, const BaseSemantics::SValuePtr &enabled);
 
     /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
      *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated

@@ -593,7 +593,7 @@ print_infos(Dwarf_Debug dbg)
           fprintf(stderr, "attempting to continue.\n");
 
           printf ("Error: nres = %d \n",nres);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // printf ("Exiting print_infos() \n");
@@ -7112,7 +7112,7 @@ print_frame_inst_bytes(Dwarf_Debug dbg,
                     if(verbose) {
 #if 1
                       printf ("Use C++ string instead, not implemented! \n");
-                      ROSE_ASSERT(false);
+                      ROSE_ABORT();
 #else
                       struct esb_s exprstring;
                       esb_constructor(&exprstring);
@@ -7154,7 +7154,7 @@ print_frame_inst_bytes(Dwarf_Debug dbg,
                     if(verbose) {
 #if 1
                       printf ("Use C++ string instead, not implemented! \n");
-                      ROSE_ASSERT(false);
+                      ROSE_ABORT();
 #else
                       struct esb_s exprstring;
                       esb_constructor(&exprstring);
@@ -7322,7 +7322,7 @@ print_frame_inst_bytes(Dwarf_Debug dbg,
                     if(verbose) {
 #if 1
                       printf ("Use C++ string instead, not implemented! \n");
-                      ROSE_ASSERT(false);
+                      ROSE_ABORT();
 #else
                       struct esb_s exprstring;
                       esb_constructor(&exprstring);
@@ -7464,7 +7464,7 @@ print_one_frame_reg_col(Dwarf_Debug dbg,
             if(verbose) {
 #if 1
                       printf ("This should use the C++ string class, not implemented yet! \n");
-                      ROSE_ASSERT(false);
+                      ROSE_ABORT();
 #else
                       struct esb_s exprstring;
                       esb_constructor(&exprstring);
@@ -9575,7 +9575,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
           fprintf(stderr, "attempting to continue.\n");
 
           printf ("Error: nres = %d \n",nres);
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // printf ("Exiting print_infos() \n");

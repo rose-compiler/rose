@@ -9,6 +9,8 @@
 #include "rose_config.h"
 
 #include "Ada_to_ROSE_translation.h"
+
+#include "Ada_to_ROSE.h"
 //~ #include "untypedBuilder.h"
 
 using namespace std;
@@ -31,10 +33,6 @@ Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asis
 SgUntypedFile* Ada_ROSE_Translation::globalUntypedFile = NULL;
 #endif
 
-namespace Ada_ROSE_Translation
-{
-  void secondConversion(Nodes_Struct& head_nodes, SgSourceFile* file);
-}
 
 // Attribute constructor.
 Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id)
@@ -137,12 +135,12 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
             // This code treats duplicate entries as a warning and skips the redundant entry.
                if (asisMap.find(element_id) == asisMap.end())
                   {
-                    std::cerr << "***** adding element " << element_id << std::endl;
+                    //~ logTrace() << "***** adding element " << element_id << std::endl;
                     asisMap[element_id] = &element;
                   }
                  else
                   {
-                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",element_id);
+                    logError() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
                   }
                ROSE_ASSERT(asisMap.find(element_id) != asisMap.end());
 #else
@@ -158,6 +156,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           current_element = current_element->Next;
         }
 
+
+#if FIRST_CONVERSION
      Unit_Struct_List_Struct *current_unit = NULL;
 
      current_unit = head_nodes.Units;
@@ -165,7 +165,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
      printf ("current_unit = %p \n",current_unit);
 #endif
-     std::cerr << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
+     logTrace() << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
 
      while (current_unit != NULL)
         {
@@ -175,9 +175,9 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
           //~ if (current_node->Node.Node_Kind == A_Unit_Node)
           {
             Unit_Struct & unit = current_unit->Unit;
-        
-            std::cerr << "Initialize Unit: filename = " << unit.Text_Name;
-            
+
+            logTrace() << "Initialize Unit: filename = " << unit.Text_Name;
+
           // This code treats duplicate entries as a warning and skips the redundant entry.
             int unit_id = unit.ID;
 
@@ -187,24 +187,24 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
             if (asisMap.find(unit_id) == asisMap.end())
             {
-              std::cerr << "***** adding unit (element) " << unit_id << std::endl;
+              //~ logTrace() << "***** adding unit (element) " << unit_id << std::endl;
               asisMap[unit_id] = (Element_Struct*) (&unit);
             }
             else
             {
-              std::cerr << "ERROR: element_id = " << unit_id
-                        << " already processed (skipping additional instance) "
-                        << std::endl;
+              logError() << "ERROR: element_id = " << unit_id
+                         << " already processed (skipping additional instance) "
+                         << std::endl;
             }
 
             ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
           }
-          
-          std::cerr << "current_unit->Next = " << current_unit->Next << std::endl;
+
+          logTrace() << "current_unit->Next = " << current_unit->Next << std::endl;
           current_unit = current_unit->Next;
         }
 
-#if FIRST_CONVERSION
+
 
 
 #if 1
@@ -213,7 +213,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      printf ("Start of translation traversal of Ada IR node data structure \n");
@@ -256,7 +256,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
 #if 1
@@ -272,7 +272,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
      printf ("Need to divide up map into seperate maps for units and elements \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // Connect up the SgUntypedNodes for form an AST.
@@ -384,7 +384,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedFile not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     SgUntypedFunctionDeclaration* functionDeclaration = isSgUntypedFunctionDeclaration(untypedNode);
                     if (functionDeclaration != NULL)
@@ -434,7 +434,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedFile not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -446,7 +446,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedInitializedName \n");
 #if 0
                     printf ("case of SgUntypedInitializedName not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -512,7 +512,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedFunctionDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -525,7 +525,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedName \n");
 #if 0
                     printf ("case of SgUntypedName not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -540,7 +540,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("ERROR: The data members are not yet in the AST, should be fixed in the upstream Ada support shortly \n");
 #if 0
                     printf ("case of SgUntypedStructureDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -553,7 +553,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedVariableDeclaration \n");
 #if 0
                     printf ("case of SgUntypedVariableDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -625,7 +625,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                          if (untypedNodeMap.find(statement_id) == untypedNodeMap.end())
                          {
-                           printf ("unhandled\n"); 
+                           printf ("unhandled\n");
                            continue;
                          }
 
@@ -646,7 +646,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                        }
 #if 0
                     printf ("case of SgUntypedPackageDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -688,7 +688,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedScope not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -701,7 +701,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedTaskDeclaration \n");
 #if 0
                     printf ("case of SgUntypedTaskDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -714,7 +714,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedLoopStatement \n");
 #if 0
                     printf ("case of SgUntypedLoopStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -727,7 +727,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedAcceptStatement \n");
 #if 0
                     printf ("case of SgUntypedAcceptStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -740,7 +740,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedAssignmentStatement \n");
 #if 0
                     printf ("case of SgUntypedAssignmentStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -753,7 +753,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedRaiseStatement \n");
 #if 0
                     printf ("case of SgUntypedRaiseStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -766,7 +766,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedEntryCallStatement \n");
 #if 0
                     printf ("case of SgUntypedEntryCallStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -779,7 +779,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedProcedureCallStatement \n");
 #if 0
                     printf ("case of SgUntypedProcedureCallStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -792,7 +792,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedNullStatement \n");
 #if 0
                     printf ("case of SgUntypedNullStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -861,7 +861,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedFunctionScope not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -961,7 +961,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #endif
 #if 0
                     printf ("case of SgUntypedUnitDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -974,7 +974,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedReturnStatement \n");
 #if 0
                     printf ("case of SgUntypedReturnStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -987,7 +987,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedExpression \n");
 #if 0
                     printf ("case of SgUntypedExpression not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -1000,7 +1000,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedExceptionHandlerDeclaration \n");
 #if 0
                     printf ("case of SgUntypedExceptionHandlerDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -1013,7 +1013,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                     printf ("Found a SgUntypedExceptionDeclaration \n");
 #if 0
                     printf ("case of SgUntypedExceptionDeclaration not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -1120,7 +1120,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
 #if 0
                     printf ("case of SgUntypedIfStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                     break;
                   }
@@ -1179,7 +1179,10 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 #endif /* FIRST_CONVERSION */
-     secondConversion(head_nodes, file);
+
+
+
+     convertAsisToROSE(head_nodes, file);
    }
 
 
@@ -1244,7 +1247,7 @@ Ada_ROSE_Translation::populateChildrenFromDeclaration(SgUntypedStatementList* st
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1295,7 +1298,7 @@ Ada_ROSE_Translation::populateChildrenFromDeclaration(SgUntypedStatementList* st
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1303,13 +1306,13 @@ Ada_ROSE_Translation::populateChildrenFromDeclaration(SgUntypedStatementList* st
           default:
              {
                printf ("Default reached in populateChildrenFromDeclaration(): declarationKind = %d declarationKind = %s \n",declarationKind,declarationKindName(declarationKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1330,7 +1333,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
           case Not_A_Definition:
              {
                printf ("Error: switch has case Not_A_Definition \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
                break;
              }
 
@@ -1341,7 +1344,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processTypeDefinition(definition.The_Union.The_Type_Definition);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1353,7 +1356,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processSubtypeIndication(definition.The_Union.The_Subtype_Indication);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1363,7 +1366,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processConstraint(definition.The_Union.The_Constraint);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1375,7 +1378,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processComponentDefinition(definition.The_Union.The_Component_Definition);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1405,7 +1408,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processUnknownDiscriminantPart(definition.The_Union.The_Unknown_Discriminant_Part);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1415,7 +1418,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processKnownDiscriminantPart(definition.The_Union.The_Known_Discriminant_Part);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1427,7 +1430,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processRecordDefinition(definition.The_Union.The_Record_Definition);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1437,7 +1440,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processNullRecordDefinition(definition.The_Union.The_Null_Record_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1447,7 +1450,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processNullComponent(definition.The_Union.The_Null_Component);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1457,7 +1460,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processVariantPart(definition.The_Union.The_Variant_Part);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1467,7 +1470,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processVariant(definition.The_Union.The_Variant);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1489,7 +1492,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processAccessDefinition(definition.The_Union.The_Access_Definition);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1499,7 +1502,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processPrivateTypeDefinition(definition.The_Union.The_Private_Type_Definition);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1509,7 +1512,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processTaggedPrivateTypeDefinition(definition.The_Union.The_Tagged_Private_Type_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1519,7 +1522,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processPrivateExtensionDefinition(definition.The_Union.The_Private_Extension_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1551,7 +1554,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
 #endif
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1561,7 +1564,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processProtectedDefinition(definition.The_Union.The_Protected_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1571,7 +1574,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processFormalTypeDefinition(definition.The_Union.The_Formal_Type_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1581,7 +1584,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processAspectSpecification(definition.The_Union.The_Aspect_Specification);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1589,13 +1592,13 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
           default:
              {
                printf ("Default reached in populateChildrenFromDefinition(): definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1843,7 +1846,7 @@ Ada_ROSE_Translation::processUnit (Unit_Structs_Ptr unitList)
           printf ("SgUntypedFile node has previously been built! \n");
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -1907,7 +1910,7 @@ Ada_ROSE_Translation::processUnit (Unit_Structs_Ptr unitList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -1963,15 +1966,13 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
           case Not_An_Element:
              {
                printf ("   In Ada_ROSE_Translation::processElement(): case Not_An_Element: not implemented \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case A_Pragma:
              {
                printf ("   In Ada_ROSE_Translation::processElement(): case A_Pragma: not implemented \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case A_Defining_Name:
@@ -1982,7 +1983,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processDefiningName( definingName,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -1995,7 +1996,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processDeclaration( declaration,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2008,7 +2009,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processDefinition(definition,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2021,7 +2022,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processExpression( expression, element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2034,7 +2035,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processAssociation( association, element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2047,7 +2048,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processStatement(statement,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2065,7 +2066,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                     skipProcessing = true;
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
@@ -2076,7 +2077,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2089,7 +2090,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processClause(clause);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2102,7 +2103,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
                processExceptionHandler(exceptionHandler, element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2110,7 +2111,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::elementKindName(): element_kind = %d \n",element_kind);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -2120,7 +2121,7 @@ Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
           printf ("Found target element_id = %d \n",element_id);
 
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
    }
@@ -2251,7 +2252,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2309,7 +2310,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                     default:
                        {
                          printf ("default reached in processStatement(): collected cases: \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -2325,14 +2326,14 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                     printf ("Skipping redundent processing of element_id = %d \n",element_id);
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2394,7 +2395,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                     default:
                        {
                          printf ("default reached in processStatement(): collected cases: \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -2410,12 +2411,12 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                     printf ("Skipping redundent processing of element_id = %d \n",element_id);
 #if 1
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2447,7 +2448,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2471,7 +2472,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2512,7 +2513,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2530,7 +2531,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2563,7 +2564,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -2581,14 +2582,14 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
           default:
              {
                printf ("In processStatement(): default reached in switch \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -2664,7 +2665,7 @@ struct Defining_Name_Struct {
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -3084,7 +3085,7 @@ void
                     default:
                        {
                          printf ("Error: default called in switch for Ada_ROSE_Translation::modeKindName(): x = %d \n",x);
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 #endif
@@ -3106,7 +3107,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3151,7 +3152,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3191,7 +3192,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3228,7 +3229,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3268,7 +3269,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3290,7 +3291,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3326,7 +3327,7 @@ void
 
 #if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3357,7 +3358,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3420,7 +3421,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3503,7 +3504,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3530,7 +3531,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3568,7 +3569,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3594,7 +3595,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3635,13 +3636,13 @@ void
                  else
                   {
                     printf ("Case of A_Return_Variable_Specification not handled! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3799,7 +3800,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3913,7 +3914,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3942,7 +3943,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3969,7 +3970,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -3998,7 +3999,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4026,7 +4027,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4067,7 +4068,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4099,7 +4100,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4131,7 +4132,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4165,7 +4166,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4232,7 +4233,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4328,7 +4329,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4399,7 +4400,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4433,7 +4434,7 @@ void
 
 #if 0 /* DEBUG_UNTYPED_NODE_GENERATION */
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4479,7 +4480,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4526,7 +4527,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4598,7 +4599,7 @@ void
 // #if DEBUG_UNTYPED_NODE_GENERATION
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4631,7 +4632,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4718,7 +4719,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4735,7 +4736,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4754,7 +4755,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4772,7 +4773,7 @@ void
 
 #if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4796,7 +4797,7 @@ void
 
 #if 0 /*DEBUG_UNTYPED_NODE_GENERATION*/
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4811,7 +4812,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4947,7 +4948,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5155,7 +5156,7 @@ void
                setAsisAttribute (untypedFunctionDeclaration,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5256,7 +5257,7 @@ void
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5273,7 +5274,7 @@ void
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5357,7 +5358,7 @@ void
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -5505,7 +5506,7 @@ void
                     default:
                        {
                          printf ("default reached in processStatement(): collected cases: \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -5516,7 +5517,7 @@ void
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5572,7 +5573,7 @@ void
                     default:
                        {
                          printf ("default reached in processStatement(): collected cases: \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -5588,13 +5589,13 @@ void
                     printf ("Skipping redundent processing of element_id = %d \n",element_id);
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5649,7 +5650,7 @@ void
                     default:
                        {
                          printf ("Error: default called in switch for Ada_ROSE_Translation::processExpression(): operatorKind = %d = %s \n",operatorKind,operatorKindName(operatorKind).c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
 
@@ -5661,7 +5662,7 @@ void
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5683,7 +5684,7 @@ void
                printf ("     prefix = %d \n",prefix);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5704,7 +5705,7 @@ void
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5728,7 +5729,7 @@ void
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5761,13 +5762,13 @@ void
                     printf ("Skipping redundent processing (case A_Function_Call) of element_id = %d \n",element_id);
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5781,7 +5782,7 @@ void
                printf ("     sliceRange = %d \n",sliceRange);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5803,7 +5804,7 @@ void
                processExpressionList(attributeDesignatorExpressions);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5818,7 +5819,7 @@ void
                processAssociationList(recordComponentAssociations);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5834,7 +5835,7 @@ void
                printf ("     extensionAggregateExpression = %d \n",extensionAggregateExpression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5849,7 +5850,7 @@ void
                processAssociationList(arrayComponentAssociations);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5882,7 +5883,7 @@ void
                processExpressionList(membershipTestChoices);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5929,7 +5930,7 @@ void
                processUntypedNode(untypedExpression,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5956,7 +5957,7 @@ void
                printf ("     allocatorSubtypeIndication = %d \n",allocatorSubtypeIndication);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5971,7 +5972,7 @@ void
                printf ("     allocatorQualifiedExpression = %d \n",allocatorQualifiedExpression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -5986,7 +5987,7 @@ void
                processPathList(expressionPaths);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6000,7 +6001,7 @@ void
                printf ("     iteratorSpecification = %d \n",iteratorSpecification);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6008,7 +6009,7 @@ void
           default:
              {
                printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",expressionKind,expressionKindName(expressionKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
    }
@@ -6099,8 +6100,7 @@ typedef union _Definition_Union {
           case Not_A_Definition:
              {
                printf ("Error: switch has case Not_A_Definition \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case A_Type_Definition:
@@ -6241,7 +6241,7 @@ typedef union _Definition_Union {
           default:
              {
                printf ("Default reached in processDefinition(): definitionKind = %d definitionKind = %s element_id = %d \n",definitionKind,definitionKindName(definitionKind).c_str(),element_id);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -6394,8 +6394,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
           case Not_A_Type_Definition:
              {
                printf ("ERROR: case Not_A_Type_Definition \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 #if 0
        // DQ (10/12/2017): I think this is not a valid enum value.
@@ -6405,7 +6404,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   hasTask = %s \n",hasTask ? "true" : "false");
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6425,7 +6424,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   hasNullExclusion = %s \n",hasNullExclusion ? "true" : "false");
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6451,7 +6450,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
 
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6479,7 +6478,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                processExpressionList(definitionInterfaceList);
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6490,7 +6489,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                processDeclarationList(enumerationLiteralDeclarations);
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6501,7 +6500,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   integerConstraint = %d \n",integerConstraint);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6510,7 +6509,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
              {
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6522,7 +6521,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("rootTypeKind (name)  = %s \n",rootTypeKindName(rootTypeKind).c_str());
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6550,7 +6549,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   realRangeConstraint = %d \n",realRangeConstraint);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6567,7 +6566,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   realRangeConstraint = %d \n",realRangeConstraint);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6581,7 +6580,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6595,7 +6594,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6613,7 +6612,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                buildDefaultUntypedNode = false;
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6627,7 +6626,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("hasTagged = %s \n",hasTagged ? "true" : "false");
 #if 0
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6647,7 +6646,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                processExpressionList(definitionInterfaceList);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6658,7 +6657,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                processAccessType(accessType);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -6666,13 +6665,13 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
           default:
              {
                printf ("Default reached in processTypeDefinition(): typeKind = %d typeKind = %s \n",typeKind,typeKindName(typeKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
           }
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6767,13 +6766,13 @@ Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
           default:
              {
                printf ("Default reached in processAccessType(): accessTypeKind = %d accessTypeKind = %s \n",accessTypeKind,accessTypeKindName(accessTypeKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
           }
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6798,7 +6797,7 @@ Ada_ROSE_Translation::processSubtypeIndication ( Subtype_Indication_Struct & x, 
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6892,13 +6891,13 @@ Ada_ROSE_Translation::processConstraint ( Constraint_Struct & x, int element_id)
           default:
              {
                printf ("Default reached in processConstraint(): constraintKind = %d constraintKind = %s \n",constraintKind,constraintKindName(constraintKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6915,7 +6914,7 @@ Ada_ROSE_Translation::processComponentDefinition ( Component_Definition_Struct &
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6954,7 +6953,7 @@ Ada_ROSE_Translation::processUnknownDiscriminantPart ( Unknown_Discriminant_Part
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6967,7 +6966,7 @@ Ada_ROSE_Translation::processKnownDiscriminantPart ( Known_Discriminant_Part_Str
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -6990,7 +6989,7 @@ Ada_ROSE_Translation::processRecordDefinition ( Record_Definition_Struct & x, in
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7003,7 +7002,7 @@ Ada_ROSE_Translation::processNullRecordDefinition ( Null_Record_Definition_Struc
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7016,7 +7015,7 @@ Ada_ROSE_Translation::processNullComponent ( Null_Component_Struct & x, int elem
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7029,7 +7028,7 @@ Ada_ROSE_Translation::processVariantPart ( Variant_Part_Struct & x, int element_
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7042,7 +7041,7 @@ Ada_ROSE_Translation::processVariant ( Variant_Struct & x, int element_id)
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7068,7 +7067,7 @@ Ada_ROSE_Translation::processAccessDefinition ( Access_Definition_Struct & x, in
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7081,7 +7080,7 @@ Ada_ROSE_Translation::processPrivateTypeDefinition ( Private_Type_Definition_Str
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7094,7 +7093,7 @@ Ada_ROSE_Translation::processTaggedPrivateTypeDefinition ( Tagged_Private_Type_D
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7107,7 +7106,7 @@ Ada_ROSE_Translation::processPrivateExtensionDefinition ( Private_Extension_Defi
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7138,7 +7137,7 @@ Ada_ROSE_Translation::processTaskDefinition ( Task_Definition_Struct & x, int el
 
 #if 0
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7151,7 +7150,7 @@ Ada_ROSE_Translation::processProtectedDefinition ( Protected_Definition_Struct &
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7164,7 +7163,7 @@ Ada_ROSE_Translation::processFormalTypeDefinition ( Formal_Type_Definition_Struc
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7177,7 +7176,7 @@ Ada_ROSE_Translation::processAspectSpecification ( Aspect_Specification_Struct &
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -7323,7 +7322,7 @@ enum Definition_Kinds {
             // printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7339,7 +7338,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7417,7 +7416,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7449,7 +7448,7 @@ enum Definition_Kinds {
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7469,7 +7468,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7490,7 +7489,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7519,7 +7518,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7534,7 +7533,7 @@ enum Definition_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7544,7 +7543,7 @@ enum Definition_Kinds {
           default:
              {
                printf ("Default reached in processDefinition(): definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -7661,7 +7660,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7683,7 +7682,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     isDefaultedAssociation = %s \n",isDefaultedAssociation ? "true" : "false");
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7698,7 +7697,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     componentExpression = %d \n",componentExpression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7716,7 +7715,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     actualParameter = %d \n",actualParameter);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7757,13 +7756,13 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                     printf ("ERROR: redundant use of element_id = %d \n",element_id);
 #if 0
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
 #endif
                   }
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7781,7 +7780,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7800,7 +7799,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7817,7 +7816,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
                printf ("     isDefaultedAssociation = %s \n",isDefaultedAssociation ? "true" : "false");
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -7825,7 +7824,7 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association, int 
           default:
              {
                printf ("Default reached in processAssociation(): associationKind = %d associationKind = %s \n",associationKind,associationKindName(associationKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -7987,7 +7986,7 @@ enum Path_Kinds {
                setAsisAttribute (untypedScope,element_id);
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -8018,7 +8017,7 @@ enum Path_Kinds {
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -8050,7 +8049,7 @@ enum Path_Kinds {
 
 #if 0
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -8071,7 +8070,7 @@ enum Path_Kinds {
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -8079,7 +8078,7 @@ enum Path_Kinds {
           default:
              {
                printf ("Default reached in processPath(): pathKind = %d pathKind = %s \n",pathKind,pathKindName(pathKind).c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8097,7 +8096,7 @@ Ada_ROSE_Translation::processDefiningNameList( Defining_Name_List & labelNames)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8113,7 +8112,7 @@ Ada_ROSE_Translation::processPathList( Path_List & pathList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8129,7 +8128,7 @@ Ada_ROSE_Translation::processAssociationList( Association_List & associationList
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8145,7 +8144,7 @@ Ada_ROSE_Translation::processStatementList( Statement_List & statementList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8161,7 +8160,7 @@ Ada_ROSE_Translation::processParameterSpecificationList( Parameter_Specification
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8177,7 +8176,7 @@ Ada_ROSE_Translation::processElementList( Element_ID_List & elementList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8194,7 +8193,7 @@ Ada_ROSE_Translation::processRepresentationClauseList( Representation_Clause_Lis
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8210,7 +8209,7 @@ Ada_ROSE_Translation::processDeclarativeItemList( Declarative_Item_List & declar
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8226,7 +8225,7 @@ Ada_ROSE_Translation::processExceptionHandlerList( Exception_Handler_List & exce
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8242,7 +8241,7 @@ Ada_ROSE_Translation::processExpressionList( Expression_List & expressionList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8258,7 +8257,7 @@ Ada_ROSE_Translation::processDiscreteRangeList( Discrete_Range_List & discreteRa
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8273,7 +8272,7 @@ Ada_ROSE_Translation::processDiscriminantAssociationList ( Discriminant_Associat
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8288,7 +8287,7 @@ Ada_ROSE_Translation::processDeclarationList           ( Declaration_List & decl
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8305,7 +8304,7 @@ Ada_ROSE_Translation::processUnitList           ( Unit_List & unitList)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8320,7 +8319,7 @@ Ada_ROSE_Translation::processContentClauseList ( Context_Clause_List & contentCl
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8335,7 +8334,7 @@ Ada_ROSE_Translation::processPragmaElementList ( Pragma_Element_ID_List & pragma
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8350,7 +8349,7 @@ Ada_ROSE_Translation::processRecordComponentList       ( Record_Component_List &
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 
@@ -8366,7 +8365,7 @@ Ada_ROSE_Translation::processDeclarativeItemIdList     ( Declarative_Item_ID_Lis
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
    }
 #endif
@@ -8430,7 +8429,7 @@ Ada_ROSE_Translation::elementKindName (Element_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::elementKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8459,7 +8458,7 @@ Ada_ROSE_Translation::enclosingKindName (Enclosing_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::enclosingKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8549,7 +8548,7 @@ Ada_ROSE_Translation::statementKindName (Statement_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::statementKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8584,7 +8583,7 @@ Ada_ROSE_Translation::definingNameKindName (Defining_Name_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::definingNameKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8776,7 +8775,7 @@ Ada_ROSE_Translation::declarationKindName (Declaration_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::declarationKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8878,7 +8877,7 @@ Ada_ROSE_Translation::expressionKindName (Expression_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::expressionKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -8962,7 +8961,7 @@ Ada_ROSE_Translation::definitionKindName (Definition_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::definitionKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9001,7 +9000,7 @@ Ada_ROSE_Translation::clauseKindName (Clause_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::clauseKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9040,7 +9039,7 @@ Ada_ROSE_Translation::associationKindName (Association_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::associationKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9135,7 +9134,7 @@ Ada_ROSE_Translation::pathKindName (Path_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::pathKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9203,7 +9202,7 @@ Ada_ROSE_Translation::operatorKindName (Operator_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::operatorKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9262,7 +9261,7 @@ Ada_ROSE_Translation::typeKindName (Type_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::typeKindName(): x = %d \n",x);
-               //~ ROSE_ASSERT(false);
+               //~ ROSE_ABORT();
              }
         }
 
@@ -9292,7 +9291,7 @@ Ada_ROSE_Translation::declarationOriginName (Declaration_Origins x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::declarationOriginName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9325,7 +9324,7 @@ Ada_ROSE_Translation::modeKindName (Mode_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::modeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9360,7 +9359,7 @@ Ada_ROSE_Translation::subprogramDefaultKindName (Subprogram_Default_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::subprogramDefaultKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9438,7 +9437,7 @@ Ada_ROSE_Translation::traitKindName (Trait_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::traitKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9669,7 +9668,7 @@ Ada_ROSE_Translation::attributeKindName (Attribute_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::attributeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9784,7 +9783,7 @@ Ada_ROSE_Translation::unitKindName (Unit_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::unitKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9831,7 +9830,7 @@ Ada_ROSE_Translation::unitClassName (Unit_Classes x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::unitClassName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9872,7 +9871,7 @@ Ada_ROSE_Translation::unitOriginName (Unit_Origins x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::unitOriginName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9897,7 +9896,7 @@ Ada_ROSE_Translation::rootTypeKindName (Root_Type_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::rootTypeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9930,7 +9929,7 @@ Ada_ROSE_Translation::interfaceKindName (Interface_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::interfaceKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -9967,7 +9966,7 @@ Ada_ROSE_Translation::accessTypeKindName (Access_Type_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::accessTypeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10004,7 +10003,7 @@ typedef enum _Access_Definition_Kinds {
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::accessDefinitionKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10061,7 +10060,7 @@ typedef enum _Formal_Type_Kinds {
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::formalTypeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10092,7 +10091,7 @@ typedef enum _Discrete_Range_Kinds {
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::discreteRangeKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10129,7 +10128,7 @@ typedef enum _Constraint_Kinds {
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::constraintKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10162,7 +10161,7 @@ typedef enum _Representation_Clause_Kinds {
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::representationClauseKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -10198,7 +10197,7 @@ Ada_ROSE_Translation::xKindName (X_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::xKindName(): x = %d \n",x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 

@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Formatter_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Formatter_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemanticsTypes.h>
 
@@ -19,11 +19,28 @@ public:
                  show_properties(true) {}
     virtual ~Formatter() {}
 
-    /** The register dictionary which is used for printing register names.
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary which is used for printing register names.
+     *
      * @{ */
-    const RegisterDictionary *get_register_dictionary() const { return regdict; }
-    void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
+    const RegisterDictionary* registerDictionary() const {
+        return regdict;
+    }
+    void registerDictionary(const RegisterDictionary *rd) {
+        regdict = rd;
+    }
     /** @} */
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    const RegisterDictionary *get_register_dictionary() const ROSE_DEPRECATED("use registerDictionary property") {
+        return registerDictionary();
+    }
+
+    // [Robb Matzke 2021-03-18]: deprecated
+    void set_register_dictionary(const RegisterDictionary *rd) ROSE_DEPRECATED("use registerDictionary property") {
+        registerDictionary(rd);
+    }
 
     /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
      * register name with "_0" appended, then that value is assumed to be the register's initial value.

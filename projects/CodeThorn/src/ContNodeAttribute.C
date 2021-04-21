@@ -4,7 +4,7 @@
 #include"sage3basic.h"
 
 #include"ContNodeAttribute.h"
-#include"Analyzer.h"
+#include"CTAnalysis.h"
 #include"Flow.h"
 #include<sstream>
 

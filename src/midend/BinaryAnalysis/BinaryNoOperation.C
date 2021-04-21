@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
@@ -43,8 +43,10 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     if (rstate)
         rstate->initialize_large();
 
+    cpu->initializeState(state);
+
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->get_operators().get());
+    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->operators().get());
 
     return state;
 }
@@ -59,7 +61,7 @@ public:
     CellErasurePredicate(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &stackCurVa,
                          rose_addr_t closeness)
         : ignorePoppedMemory(closeness!=0), ops(ops), stackCurVa(stackCurVa) {
-        stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->get_width(), closeness));
+        stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->nBits(), closeness));
     }
 
     virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) const ROSE_OVERRIDE {
@@ -69,9 +71,9 @@ public:
         // Erase memory that is above (lower address) and near the current stack pointer.
         if (ignorePoppedMemory) {
             BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
-                ops->and_(ops->isUnsignedLessThan(cell->get_address(), stackCurVa),
-                          ops->isUnsignedGreaterThanOrEqual(cell->get_address(), stackMinVa));
-            return isPopped->is_number() && isPopped->get_number();
+                ops->and_(ops->isUnsignedLessThan(cell->address(), stackCurVa),
+                          ops->isUnsignedGreaterThanOrEqual(cell->address(), stackMinVa));
+            return isPopped->isTrue();
         }
 
         return false;
@@ -81,7 +83,7 @@ public:
 std::string
 NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, const BaseSemantics::StatePtr &state_) {
     BaseSemantics::StatePtr state = state_;
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
     if (!state)
         return "";
     bool isCloned = false;                              // do we have our own copy of the state?
@@ -91,7 +93,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
     BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
         BaseSemantics::SValuePtr ip = ops->peekRegister(cpu->instructionPointerRegister());
-        if (ip->is_number()) {
+        if (ip->isConcrete()) {
             state = state->clone();
             isCloned = true;
             rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
@@ -167,13 +169,13 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
         state = cpu_->currentState()->clone();
         state->clear();
         RegisterDescriptor IP = cpu_->instructionPointerRegister();
-        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->get_operators().get());
+        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->operators().get());
     }
 
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
-        BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+        BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
         state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 
@@ -196,7 +198,7 @@ NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
     if (insns.empty())
         return true;
 
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->currentState());
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
@@ -233,11 +235,11 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // for now. FIXME[Robb P. Matzke 2015-05-11]
     std::vector<std::string> states;
     bool hadError = false;
-    cpu_->get_operators()->currentState(initialState(insns.front()));
+    cpu_->operators()->currentState(initialState(insns.front()));
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.nBits(), insn->get_address()));
+            cpu_->operators()->writeRegister(regIP, cpu_->operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");

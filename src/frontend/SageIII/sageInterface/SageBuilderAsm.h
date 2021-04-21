@@ -1,7 +1,7 @@
 #ifndef ROSE_SageBuilderAsm_H
 #define ROSE_SageBuilderAsm_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace Rose {
 
@@ -105,11 +105,9 @@ SgAsmFloatValueExpression* buildValueX86Float80(double);
 // Operators
 SgAsmBinaryAdd* buildAddExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinarySubtract* buildSubtractExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinaryAddPreupdate* buildAddPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinarySubtractPreupdate* buildSubtractPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinaryAddPostupdate* buildAddPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
-SgAsmBinarySubtractPostupdate* buildSubtractPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryMultiply* buildMultiplyExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
+SgAsmBinaryPreupdate* buildPreupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
+SgAsmBinaryPostupdate* buildPostupdateExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryMsl* buildMslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryLsl* buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmBinaryLsr* buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
@@ -117,6 +115,7 @@ SgAsmBinaryAsr* buildAsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, S
 SgAsmBinaryRor* buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type=NULL);
 SgAsmUnaryRrx* buildRrxExpression(SgAsmExpression *lhs, SgAsmType *type=NULL);
 SgAsmUnaryTruncate* buildTruncateExpression(SgAsmExpression*, SgAsmType*);
+SgAsmBinaryConcat* buildConcatExpression(SgAsmExpression *moreSignificant, SgAsmExpression *lessSignificant);
 SgAsmUnarySignedExtend* buildSignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmUnaryUnsignedExtend* buildUnsignedExtendExpression(SgAsmExpression*, SgAsmType*);
 SgAsmExprListExp* buildExprListExpression();

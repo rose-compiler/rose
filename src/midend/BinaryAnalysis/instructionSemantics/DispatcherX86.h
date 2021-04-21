@@ -1,7 +1,7 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <Registers.h>
@@ -32,7 +32,7 @@ protected:
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
-     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     *  register descriptor is updated only when the @ref registerDictionary property is changed.
      *
      *  Register names like REG_anyAX have sizes that depend on the architecture: 16 bits for 16-bit architectures, 32 bits for
      *  32-bit architectures, etc.  The other register names have specific sizes--such as REG_EAX being 32 bits--and are
@@ -102,16 +102,19 @@ protected:
         regcache_init();
         iproc_init();
         memory_init();
+        initializeState(ops->currentState());
     }
 
 public:
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
-    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    /** Load the cached register descriptors.
+     *
+     *  This happens at construction and when the @ref registerDictionary property is changed. */
     void regcache_init();
 
-    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    /** Make sure memory properties are set up correctly. For instance, byte order should be little endian. */
     void memory_init();
 
 public:
@@ -139,7 +142,7 @@ public:
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (NULL==regs)
-            regs = get_register_dictionary();
+            regs = registerDictionary();
         return instance(ops, addrWidth, regs);
     }
 
@@ -167,13 +170,15 @@ public:
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
     virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
     }
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
+
+    virtual void initializeState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
 
     enum AccessMode { READ_REGISTER, PEEK_REGISTER };
 

@@ -1,0 +1,10 @@
+START
+!COMPOOL ('RC715B');
+!COMPOOL ('RC715A');
+DEF PROC PROC715;
+  BEGIN
+    ITEM Jx U;
+    Jx = Ax;  % Ax only accessible by loading RC715A, %
+    Jx = Bx;  % .. even though RC715B loads RC715A %
+  END
+TERM

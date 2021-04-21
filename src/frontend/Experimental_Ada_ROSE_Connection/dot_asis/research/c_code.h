@@ -1,1 +1,0 @@
-int c_func ();

@@ -159,7 +159,7 @@ void instrumentRead(SgVarRefExp *varRef) {
             //SgDeleteExp
             //go on implementing other cases
             cerr<<"unexpected parent expression: "<<parent->class_name()<<endl;
-            assert (false);
+            ROSE_ABORT ();
          }
       }
    }

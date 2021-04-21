@@ -50,7 +50,7 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
 
 #if 0
      printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // build the class hierarchy

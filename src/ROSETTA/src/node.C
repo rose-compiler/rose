@@ -1,4 +1,4 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "AstNodeClass.h"
@@ -34,7 +34,7 @@ Grammar::setUpNodes ()
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      NEW_TERMINAL_MACRO (JavaMemberValuePair, "JavaMemberValuePair", "JavaMemberValuePairTag" );
 
-#if USE_OMP_IR_NODES  // Liao, 5/30/2009 add nodes for OpenMP Clauses, 
+#if USE_OMP_IR_NODES  // Liao, 5/30/2009 add nodes for OpenMP Clauses,
  // they have source position info and should be traversed
      // add all terminals first, then bottom-up traverse class hierarchy to define non-terminals
      /*
@@ -108,7 +108,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpAlignedClause, "OmpAlignedClause", "OmpAlignedClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
-         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | 
+         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause |
          OmpUniformClause | OmpAlignedClause | OmpLinearClause | OmpDependClause ,
          "OmpVariablesClause", "OmpVariablesClauseTag", false);
 
@@ -119,7 +119,7 @@ Grammar::setUpNodes ()
          OmpVariablesClause | OmpScheduleClause | OmpMergeableClause ,
          "OmpClause", "OmpClauseTag", false);
 #endif
-     
+
   // DQ (10/3/2008): Support for the Fortran "USE" statement and its rename list option.
      NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
 
@@ -130,6 +130,15 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (HeaderFileBody,  "HeaderFileBody",  "TEMP_Header_File_Body" );
 
 
+  // PP (3/5/21) make ada type constraint extend SgLocatedNodeSupport instead SgSupport
+     NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
+     NEW_TERMINAL_MACRO (AdaIndexConstraint, "AdaIndexConstraint", "AdaIndexConstraintTag");
+
+     NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
+          AdaRangeConstraint | AdaIndexConstraint,
+          "AdaTypeConstraint", "AdaTypeConstraintTag", false);
+
+
   // DQ (11/26/2013): Moved SgToken to be before the UntypedNode IR nodes.
   // NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
 
@@ -138,8 +147,8 @@ Grammar::setUpNodes ()
   //                                 Untyped IR Node Support
   // ***************************************************************************************
   // ***************************************************************************************
-  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
-  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
 
   // Additional IR nodes that we expect to require for expressions:
@@ -158,8 +167,8 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedReferenceExpression, "UntypedReferenceExpression", "TEMP_UntypedReferenceExpression" );
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
-  // NEW_NONTERMINAL_MACRO (UntypedExpression, UntypedUnaryOperator | UntypedBinaryOperator | UntypedValueExpression | 
-  //     UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
+  // NEW_NONTERMINAL_MACRO (UntypedExpression, UntypedUnaryOperator | UntypedBinaryOperator | UntypedValueExpression |
+  //     UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression |
   //     UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", false);
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression and SgUntypedNullExpression
   // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
@@ -248,7 +257,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedEnumDeclaration,             "UntypedEnumDeclaration",             "TEMP_UntypedEnumDeclaration");
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
-  // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
+  // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration |
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
   // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
@@ -337,31 +346,33 @@ Grammar::setUpNodes ()
           UntypedNameList | UntypedTokenList | UntypedTokenPairList,
          "UntypedNode", "UntypedNodeTag", false);
 
+
   // ***************************************************************************************
   //                              END of Untyped IR Node Support
   // ***************************************************************************************
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
   // DQ (11/26/2013): Added UntypedNode to be derived from LocatedNodeSupport.
-  // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
-  // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
-  // are forced to have an interface for the source position interface information (already present in 
+  // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the
+  // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus
+  // are forced to have an interface for the source position interface information (already present in
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
-  // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
+  // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and
   // a number of the new Fortran specific IRnodes, etc.).
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | 
-                            HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode | 
-                            LambdaCapture | LambdaCaptureList, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody |
+                            HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode |
+                            LambdaCapture  | LambdaCaptureList | AdaTypeConstraint,
+                            "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
-  // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
+  // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
   // NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement, "LocatedNode", "LocatedNodeTag" );
 
      NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
 
-  // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement  
+  // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement
   // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
      NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression, "LocatedNode", "LocatedNodeTag", false );
 
@@ -369,7 +380,7 @@ Grammar::setUpNodes ()
      AstNodeClass & Symbol  = *lookupTerminal(terminalList, "Symbol");
      AstNodeClass & Support = *lookupTerminal(terminalList, "Support");
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (3/14/2007): Added IR support for binaries
      AstNodeClass & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 #endif
@@ -385,7 +396,7 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
   // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
 #else
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol          , "Node", "NodeTag", false );
@@ -400,7 +411,7 @@ Grammar::setUpNodes ()
   // Header declarations for Node
      Node.setPredeclarationString     ("HEADER_NODE_PREDECLARATION" , "../Grammar/Node.code");
 
-  // DQ (3/25/2006): Put it back since we can't control the ordering of generated 
+  // DQ (3/25/2006): Put it back since we can't control the ordering of generated
   // functions sufficently to have this be a means to document ROSE.
   // DQ (3/24/2006): Move to before common code to better organize documentation
   // Node.setFunctionPrototype        ( "HEADER", "../Grammar/Node.code");
@@ -409,7 +420,7 @@ Grammar::setUpNodes ()
      Node.setFunctionPrototype        ( "HEADER", "../Grammar/Common.code");
      Node.setSubTreeFunctionPrototype ( "HEADER", "../Grammar/Common.code");
 
-  // DQ (3/25/2006): Put it back since we can't control the ordering of generated 
+  // DQ (3/25/2006): Put it back since we can't control the ordering of generated
   // functions sufficently to have this be a means to document ROSE.
   // DQ (3/24/2006): Move to before common code
      Node.setFunctionPrototype        ( "HEADER", "../Grammar/Node.code");
@@ -427,7 +438,7 @@ Grammar::setUpNodes ()
      Node.setSubTreeFunctionPrototype    ( "HEADER_PARSER", "../Grammar/Node.code");
 
 #if 0
-  // DQ (8/18/2004): This is not used so remove it! 
+  // DQ (8/18/2004): This is not used so remove it!
   // Node.excludeFunctionPrototype( "HEADER_IS_CLASSNAME", "../Grammar/Node.code");
      Node.setDataPrototype               ( "SgAttribute*","singleAttribute","= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -439,7 +450,7 @@ Grammar::setUpNodes ()
 #endif
 
 #if 0
-  // DQ (8/18/2004): This is not used so remove it! 
+  // DQ (8/18/2004): This is not used so remove it!
   // (Consider using a smart pointer to provide a better implementation)
   // Added (2/24/2001) to start support for reference counting
      Node.setDataPrototype               ( "int","referenceCount","= 1",
@@ -454,7 +465,7 @@ Grammar::setUpNodes ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (7/23/2005): Let these be automatically generated by ROSETTA!
-  // Opps, these can't be generated by ROSETTA, since it would result 
+  // Opps, these can't be generated by ROSETTA, since it would result
   // in the recursive call to set_isModified (endless recursion).
   // QY: we need a boolean flag for tracking the updates to an ast node
      Node.setDataPrototype("bool","isModified","= false",
@@ -463,16 +474,16 @@ Grammar::setUpNodes ()
   // DQ (12/3/2014): We need a concept of contains modified code so that we can support the unparsing from the token stream.
      Node.setDataPrototype("bool","containsTransformation","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
- 
+
 #if 0
-  // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store 
-  // the state associated with the traversal within the AST. Some state is required to avoid retraversal 
+  // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store
+  // the state associated with the traversal within the AST. Some state is required to avoid retraversal
   // of IR nodes, but that state should be stored in the traversal directly.
 
   // MK: we need a boolean flag for the tree traversal
      Node.setDataPrototype("bool","isVisited","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     // MS: make file_info accessible in every AST node. Only set in SgLocatedNode(s) 
+     // MS: make file_info accessible in every AST node. Only set in SgLocatedNode(s)
      //Node.setDataPrototype("Sg_File_Info*","file_info","= NULL",
      //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 #endif
@@ -492,9 +503,9 @@ Grammar::setUpNodes ()
 #endif
 
   // DQ (1/31/2006): We can introduce this here since it will be set in each constructor call.
-  // but the trick is to set the initializer to an empty string so that the initialization in 
+  // but the trick is to set the initializer to an empty string so that the initialization in
   // the constructor will not be output by ROSETTA.
-  // DQ (1/31/2006): This is support for the single global function type table 
+  // DQ (1/31/2006): This is support for the single global function type table
   // (stores all function types using mangled names).  To support this static data member
   // we have to build special version of the access functions (so that the access member functions
   // will be static as well).
@@ -519,8 +530,8 @@ Grammar::setUpNodes ()
 
   // DQ (5/28/2011): Added central location for qualified name maps (for names and types).
   // these maps store the required qualified name for where an IR node is referenced (not
-  // at the IR node which has the qlocal qualifier).  Thus we can support multiple references 
-  // to an IR node which might have different qualified names.  This is critical to the 
+  // at the IR node which has the qlocal qualifier).  Thus we can support multiple references
+  // to an IR node which might have different qualified names.  This is critical to the
   // qualified name support.
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -531,23 +542,23 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-  // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
+  // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent
   // upon the location where they are referenced.  This map stored the generated names of such types
-  // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 
+  // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name
   // qualification support in the unparser.
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-  // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps 
-  // to the generated name qualification substrings for each type, all associted with a single reference 
+  // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
+  // to the generated name qualification substrings for each type, all associted with a single reference
   // node to the statement refering to the type.
      Node.setDataPrototype("static std::map<SgNode*,std::map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 #if 0
-  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
+  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will
   // implement this in a way that does not require such support.
-  // DQ (6/21/2011): Added support for global handling of list of seen declarations to be used to 
+  // DQ (6/21/2011): Added support for global handling of list of seen declarations to be used to
   // support the name qualification.  Name qualification is used at different locations defferently
   // depending upon if the declaration has been seen and what  sort of scope it was declared in and
   // if it was a defining declaration, etc.
@@ -573,9 +584,9 @@ Grammar::setUpNodes ()
      LocatedNode.setDataPrototype     ( "Sg_File_Info*", "endOfConstruct", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
-  // DQ (7/26/2008): Any comments need to be copied to a new container (deep copy), else comments added 
+  // DQ (7/26/2008): Any comments need to be copied to a new container (deep copy), else comments added
   // to the copy will showup in the comments for the original AST.  Fixed as part of support for bug seeding.
-  // LocatedNode.setDataPrototype     ( "AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL", 
+  // LocatedNode.setDataPrototype     ( "AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
      LocatedNode.setDataPrototype     ( "AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
@@ -625,6 +636,10 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
+     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/LocatedNode.code");
+     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaIndexConstraint.setFunctionPrototype      ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+
 
   // ***************************************************************************************
   // ***************************************************************************************
@@ -638,7 +653,7 @@ Grammar::setUpNodes ()
   // ROSE IR nodes.  This work is in contrast to the Aterm API for the ROSE AST which has
   // become problematic to support beyond a specific level.  Current level of support for
   // the ATerm API in ROSE is limited to the demonstration using ATerm specific tools that
-  // generate DOT graph files from any Aterm and can be make to work on the ROSE AST as 
+  // generate DOT graph files from any Aterm and can be make to work on the ROSE AST as
   // well though the use of the ATerm API in ROSE (all this is demonstrated in the examples
   // in the projects/AtermTranslation directory).
 
@@ -652,8 +667,8 @@ Grammar::setUpNodes ()
   //                                 Untyped IR Node Support
   // ***************************************************************************************
   // ***************************************************************************************
-  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
-  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
 
      UntypedNode.setFunctionPrototype       ( "HEADER_UNTYPED_NODE", "../Grammar/LocatedNode.code");
@@ -1221,15 +1236,15 @@ Grammar::setUpNodes ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
-  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information 
+  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information
   // used to specify function declaration ro function names in interface statements.
      InterfaceBody.setFunctionPrototype ( "HEADER_INTERFACE_BODY", "../Grammar/LocatedNode.code");
 
   // Record whether the function declaration or the function name was used in the interface body (F90 permits either one).
      InterfaceBody.setDataPrototype     ( "SgName", "function_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // We can't traverse this since it may be the same as a declaration in a contains statement. 
-  // However, if we can properly support the defining vs. non defining declaration then maybe 
+  // We can't traverse this since it may be the same as a declaration in a contains statement.
+  // However, if we can properly support the defining vs. non defining declaration then maybe
   // we can.  Work on this later.
      InterfaceBody.setDataPrototype     ( "SgFunctionDeclaration*", "functionDeclaration", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1245,11 +1260,11 @@ Grammar::setUpNodes ()
   // negara1 (08/10/2011): Added to SgLocatedNodeSupport, no need for additional functions.
      HeaderFileBody.setFunctionPrototype ( "HEADER_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");
 
-  // DQ (8/23/2018): Adding support for pointer to the SgSourceFile that will record a SgSourceFile 
-  // IR node for the include file (so that we can save information about comments, CPP directives, 
+  // DQ (8/23/2018): Adding support for pointer to the SgSourceFile that will record a SgSourceFile
+  // IR node for the include file (so that we can save information about comments, CPP directives,
   // and the token stream).  This allows us to build the associated file information in the frontend
-  // instead of building it in the backend (when it is too late to generate the token stream and it's 
-  // mapping to what might be an already modified AST).  It might be that this IR node (SgSourceFile) 
+  // instead of building it in the backend (when it is too late to generate the token stream and it's
+  // mapping to what might be an already modified AST).  It might be that this IR node (SgSourceFile)
   // could replace the SgHeaderFileBody IR node (but let's hold of on that idea for now).
      HeaderFileBody.setDataPrototype ("SgSourceFile*", "include_file" , "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1259,14 +1274,14 @@ Grammar::setUpNodes ()
      CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CommonBlockObject.setDataPrototype     ( "SgExprListExp*", "variable_reference_list", "= NULL",
-// Liao 12/9/2010, it should be traversable to reach varRefExp     
+// Liao 12/9/2010, it should be traversable to reach varRefExp
 //                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME_DATA", "../Grammar/Support.code");
 
      InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME", "../Grammar/Support.code");
-  
+
   // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to
   // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of
   // SgInitializedName::get_fileInfo() where it is used.
@@ -1315,7 +1330,7 @@ Grammar::setUpNodes ()
 
      InitializedName.setDataPrototype("SgInitializedName*","crayPointee", "= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif 
+#endif
 #endif
 
 #if 0
@@ -1470,20 +1485,20 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
-  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
   // to function.
      InitializedName.setDataPrototype ( "int", "name_qualification_length", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
-  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
   // to function.
      InitializedName.setDataPrototype("bool","type_elaboration_required","= false",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the 
-  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed 
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
   // to function.
      InitializedName.setDataPrototype("bool","global_qualification_required","= false",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1551,7 +1566,7 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates. 
+  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates.
      InitializedName.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype     ( "bool", "is_pack_element", "= false",
@@ -1592,6 +1607,22 @@ Grammar::setUpNodes ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
+  // PP: Ada Constraints
+     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+/*
+     AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
+     AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
+     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
+     AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
+*/
+     AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -1611,7 +1642,7 @@ Grammar::setUpNodes ()
      Node.editSubstitute("CONSTRUCTOR_BODY"," ");
 
   // Parse functions are only built for the higher level grammars since they parse
-  // from a lower level grammar into a higher level grammer (thus they are not defined 
+  // from a lower level grammar into a higher level grammer (thus they are not defined
   // within the root grammar (the C+ grammar)).
      if (isRootGrammar() == false)
           Node.setSubTreeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
@@ -1631,6 +1662,12 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
+     AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/LocatedNode.code");
+     AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaIndexConstraint.setFunctionSource      ( "SOURCE_ADA_INDEX_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+
+
+
   // ***************************************************************************************
   // ***************************************************************************************
   //                                 ATerm IR Node Support
@@ -1646,8 +1683,8 @@ Grammar::setUpNodes ()
   //                                 Untyped IR Node Support
   // ***************************************************************************************
   // ***************************************************************************************
-  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm 
-  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied 
+  // DQ (11/26/2013): Adding support for untyped AST IR nodes to support translation of ATterm
+  // based untyped ASTs into ROSE so that we will have tools (inherited attribute and synthizied
   // attribute traversals) from which to build the ROSE AST (typed AST) and define a proper frontend.
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
   // Rasmussen (01/22/2018): Added SgUntypedSubscriptExpression
@@ -1775,7 +1812,7 @@ Grammar::setUpNodes ()
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/LocatedNode.code");
 
   // negara1 (08/10/2011): Added to SgLocatedNodeSupport.
-     HeaderFileBody.setFunctionSource ( "SOURCE_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
+     HeaderFileBody.setFunctionSource ( "SOURCE_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");
 
   // DQ (11/21/2007): support for common block statements
      CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
@@ -1816,22 +1853,22 @@ Grammar::setUpNodes ()
   // ***********************************************************************
 
 
-#if USE_OMP_IR_NODES     
+#if USE_OMP_IR_NODES
      // supporting clause nodes
      // declared enum types within SgOmpClause
      OmpClause.setFunctionPrototype("HEADER_OMP_CLAUSE", "../Grammar/Support.code");
-    
+
      // clauses with expressions
      OmpExpressionClause.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     
+
      // schedule (kind[, chunksize_exp])
      OmpScheduleClause.setDataPrototype("SgOmpClause::omp_schedule_kind_enum", "kind", "=e_omp_schedule_unknown",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      OmpScheduleClause.setDataPrototype ( "SgExpression*", "chunk_size", "= NULL",
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
- 
-     // clauses with variable lists 
+
+     // clauses with variable lists
      // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
      //OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
      //OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
@@ -1842,7 +1879,7 @@ Grammar::setUpNodes ()
      // linear (varlist[:step])
      OmpLinearClause.setDataPrototype ( "SgExpression*", "step", "= NULL",
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     
+
      // aligned (varlist[:alignment])
      OmpAlignedClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
@@ -1854,16 +1891,16 @@ Grammar::setUpNodes ()
       // atomic clause is one of : read, write, update, or capture
      OmpAtomicClause.setDataPrototype("SgOmpClause::omp_atomic_clause_enum", "atomicity", "=e_omp_atomic_clause_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
- 
-     // proc_bind(master | close | spread) 
+
+     // proc_bind(master | close | spread)
      OmpProcBindClause.setDataPrototype("SgOmpClause::omp_proc_bind_policy_enum", "policy", "=e_omp_proc_bind_policy_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     // reduction(op:variables) 
+     // reduction(op:variables)
      OmpReductionClause.setDataPrototype("SgOmpClause::omp_reduction_operator_enum", "operation", "=e_omp_reduction_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
-     // depend(type:variables) 
+
+     // depend(type:variables)
      OmpDependClause.setDataPrototype("SgOmpClause::omp_dependence_type_enum", "dependence_type", "=e_omp_depend_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      OmpDependClause.setDataPrototype("std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >", "array_dimensions", "",

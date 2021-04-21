@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "Diagnostics.h"
+#include "sageGeneric.h"
 
 #include "a_nodes.h"
 
@@ -21,10 +22,17 @@ static constexpr bool FAIL_ON_ERROR = false;
 //
 // logging
 
-extern Sawyer::Message::Facility adalogger;
+extern Sawyer::Message::Facility mlog;
 
-/// initializes the logger facilities
-void logInit();
+
+//
+// entry point to conversion routine
+
+/// converts all nodes reachable through the units in \ref head_nodes to ROSE
+/// \param head_nodes  entry point to ASIS
+/// \param file        the ROSE root for the translation unit
+void convertAsisToROSE(Nodes_Struct& head_nodes, SgSourceFile* file);
+
 
 
 //
@@ -40,8 +48,31 @@ std::map<int, Element_Struct*>& elemMap();
 /// \note seems not needed
 // std::map<int, Element_Struct*>& unitMap();
 
-template <class KeyNode, class SageNode>
-using map_t = std::map<KeyNode, SageNode>;
+template <class KeyType, class SageNode>
+using map_t = std::map<KeyType, SageNode>;
+
+
+/// Ada identifier that can be used in maps/lookup tables
+/// \brief
+///   converts each identifier to a common representation (i.e., upper case)
+struct AdaIdentifier : std::string
+{
+  typedef std::string base;
+
+  AdaIdentifier()                                = default;
+  AdaIdentifier(const AdaIdentifier&)            = default;
+  AdaIdentifier(AdaIdentifier&&)                 = default;
+  AdaIdentifier& operator=(const AdaIdentifier&) = default;
+  AdaIdentifier& operator=(AdaIdentifier&&)      = default;
+
+  AdaIdentifier(const std::string& rep)
+  : std::string(boost::to_upper_copy(rep))
+  {}
+
+  AdaIdentifier(const char* rep)
+  : AdaIdentifier(std::string(rep))
+  {}
+};
 
 /// returns a mapping from Unit_ID to constructed root node in AST
 //~ map_t<int, SgDeclarationStatement*>& asisUnits();
@@ -59,16 +90,24 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
-/// returns a mapping from string to builtin type nodes
-map_t<std::string, SgType*>& adaTypes();
+//
+// the following functions provide access to elements that are
+// defined with the standard package, which is currently not
+// provided by Asis.
+
+/// returns a mapping from string to standard type nodes
+map_t<AdaIdentifier, SgType*>& adaTypes();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
 
 //
 // auxiliary functions and types
 
-/// attaches the source location information from \ref elem to
-///   the AST node \ref n.
-void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem);
 
 /// \brief resolves all goto statements to labels
 ///        at the end of procedures or functions.
@@ -111,11 +150,6 @@ struct LabelAndLoopManager
 ///   containts context that is passed top-down
 struct AstContext
 {
-    explicit
-    AstContext(SgScopeStatement& s)
-    : the_scope(&s), all_labels_loops(nullptr)
-    {}
-
     AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
     AstContext& operator=(AstContext&&)      = default;
@@ -123,27 +157,52 @@ struct AstContext
     AstContext& operator=(const AstContext&) = default;
 
     /// returns the current scope
-    SgScopeStatement& scope()  const { return *the_scope; }
+    SgScopeStatement& scope()  const { return SG_DEREF(the_scope); }
 
     /// returns the current label manager
     LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
 
-    // sets scope without parent check (no-parent-check)
-    //   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
+    /// returns the source file name
+    /// \note the Asis source names do not always match the true source file name
+    ///       e.g., loop_exit.adb contains a top level function Compute, and the Asis
+    ///             nodes under Compute report Compute.adb as the source file.
+    const std::string& sourceFileName() const { return SG_DEREF(unit_file_name); }
+
+    /// sets scope without parent check (no-parent-check)
+    ///   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext scope_npc(SgScopeStatement& s) const;
 
-    // sets scope and checks that the parent of \ref s is set properly
+    /// sets scope and checks that the parent of \ref s is set properly
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext scope(SgScopeStatement& s) const;
 
-    // sets a new label manager
+    /// sets a new label manager
+    /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
+
+    /// unit file name
+    /// \note the passed object needs to survive the lifetime of the return AstContext
+    AstContext sourceFileName(std::string& file) const;
+
+/**
+    /// returns a new context with the element
+    AstContext element(Element_struct& el) const;
+
+    /// returns the current element and returns a new context
+    Element_struct& element() const;
+**/
 
   private:
     SgScopeStatement*    the_scope;
     LabelAndLoopManager* all_labels_loops;
+    const std::string*   unit_file_name;
+    Element_Struct*      elem;
+
 };
 
-// functor to create elements
+
+/// functor to create elements that are added to the current scope
 struct ElemCreator
 {
     explicit
@@ -160,27 +219,59 @@ struct ElemCreator
     ElemCreator() = delete;
 };
 
+/// attaches the source location information from \ref elem to
+///   the AST node \ref n.
+/// @{
+void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
+/// @}
+
+/// logs that an asis element kind \ref kind has been explored
+/// \param kind a C-string naming the Asis kind
+/// \param primaryHandler true if this is the primary handler
+void logKind(const char* kind, bool primaryHandler = true);
+
+
+/// A range abstraction for a contiguous sequence
+template <class T>
+struct Range : std::pair<T, T>
+{
+  Range(T lhs, T rhs)
+  : std::pair<T, T>(lhs, rhs)
+  {}
+
+  bool empty() const { return this->first == this->second; }
+  int  size()  const { return this->second - this->first; }
+};
+
+/// A range of Asis Units
+struct UnitIdRange : Range<Unit_ID_Ptr>
+{
+  typedef Unit_Struct value_type;
+
+  UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
+  : Range<Unit_ID_Ptr>(lhs, rhs)
+  {}
+};
+
+/// A range of Asis Elements
+struct ElemIdRange : Range<Element_ID_Ptr>
+{
+  typedef Element_Struct value_type;
+
+  ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
+  : Range<Element_ID_Ptr>(lhs, rhs)
+  {}
+};
+
+
+/// non-tracing alternative
+//~ static inline
+//~ void logKind(const char*, bool = false) {}
+
 /// anonymous namespace for auxiliary templates and functions
 namespace
 {
-  /// converts a value of type V to a value of type U via streaming
-  /// \tparam  V input value type
-  /// \tparam  U return value type
-  /// \param   val the value to be converted
-  /// \returns \ref val converted to type \ref U
-  template <class U, class V>
-  inline
-  U conv(const V& val)
-  {
-    U                 res;
-    std::stringstream buf;
-
-    buf << val;
-    buf >> res;
-
-    return res;
-  }
-
   /// upcasts an object of type Derived to an object of type Base
   /// \note useful mainly in the context of overloaded functions
   template <class Base, class Derived>
@@ -198,35 +289,34 @@ namespace
 #ifndef USE_SIMPLE_STD_LOGGER
 
   inline
-  auto logTrace() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE])
+  auto logTrace() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::TRACE];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::TRACE];
   }
 
   inline
-  auto logInfo() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO])
+  auto logInfo() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::INFO])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::INFO];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::INFO];
   }
 
   inline
-  auto logWarn() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN])
+  auto logWarn() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::WARN])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::WARN];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::WARN];
   }
 
   inline
-  auto logError() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR])
+  auto logError() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::ERROR];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR];
   }
 
   inline
-  auto logFatal() -> decltype(Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL])
+  auto logFatal() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL])
   {
-    return Ada_ROSE_Translation::adalogger[Sawyer::Message::FATAL];
+    return Ada_ROSE_Translation::mlog[Sawyer::Message::FATAL];
   }
-
 
 #else /* USE_SIMPLE_STD_LOGGER */
 
@@ -263,18 +353,29 @@ namespace
   void logInit() {}
 #endif /* USE_SIMPLE_STD_LOGGER */
 
-
   /// records a node (value) \ref val with key \ref key in map \ref m.
+  /// \param m       the map
+  /// \param key     the record key
+  /// \param val     the new value
+  /// \param replace true, if the key is already in the map, false otherwise
+  ///        (this is used for consistency checks).
   /// \pre key is not in the map yet
   template <class KeyT, class DclT, class ValT>
   inline
   void
-  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    ROSE_ASSERT(m.find(key) == m.end());
+    //~ ROSE_ASSERT(replace || m.find(key) == m.end());
+    if (!(replace || m.find(key) == m.end()))
+    {
+      logError() << "replace node " << typeid(*m[key]).name()
+                 << " with " << typeid(val).name()
+                 << std::endl;
+    }
 
     m[key] = &val;
   }
+
 
   /// records the first mapping that appears in the translation
   /// secondary mappings are ignored, but do not trigger an error.
@@ -339,7 +440,7 @@ namespace
     return nullptr;
   }
 
-  /// tries a number of keys to find a declaration from map \ref m
+  /// tries one or more keys to find a declaration from map \ref m
   /// returns nullptr if none of the keys can be found.
   template <class KeyT, class DclT, class Key0T, class... KeysT>
   inline
@@ -379,38 +480,6 @@ namespace
   {
     return SG_DEREF(retrieveAsOpt<ElemT>(map, key));
   }
-
-  /// A range abstraction for a contiguous sequence
-  template <class T>
-  struct Range : std::pair<T, T>
-  {
-    Range(T lhs, T rhs)
-    : std::pair<T, T>(lhs, rhs)
-    {}
-
-    bool empty() const { return this->first == this->second; }
-    int  size()  const { return this->second - this->first; }
-  };
-
-  /// A range of Asis Units
-  struct UnitIdRange : Range<Unit_ID_Ptr>
-  {
-    typedef Unit_Struct value_type;
-
-    UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
-    : Range<Unit_ID_Ptr>(lhs, rhs)
-    {}
-  };
-
-  /// A range of Asis Elements
-  struct ElemIdRange : Range<Element_ID_Ptr>
-  {
-    typedef Element_Struct value_type;
-
-    ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
-    : Range<Element_ID_Ptr>(lhs, rhs)
-    {}
-  };
 
   /// Type mapping for range element types
   template <class T>
@@ -512,7 +581,10 @@ namespace
   ///        or incomplete.
   /// \note  function should become obsolete eventually.
   inline
-  bool isInvaldId(int id) { return id == -1; }
+  bool isInvalidId(int id) { return id == -1; }
+
+  inline
+  bool isValidId(int id) { return !isInvalidId(id); }
 
 } // anonymous
 

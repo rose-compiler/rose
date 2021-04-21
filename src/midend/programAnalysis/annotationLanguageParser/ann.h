@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_ANN_H
 #define BDWY_ANN_H
@@ -71,3 +73,4 @@ typedef parserid_list::iterator parserid_list_p;
 
 
 #endif /*  */
+#endif

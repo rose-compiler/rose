@@ -4,7 +4,7 @@ add_library(util_sawyer OBJECT
   Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C)
 
 install(FILES
-  Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitVector.h BitVectorSupport.h Buffer.h
+  Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitFlags.h BitVector.h BitVectorSupport.h Buffer.h
   Cached.h Callbacks.h Clexer.h CommandLine.h CommandLineBoost.h Database.h DatabasePostgresql.h DatabaseSqlite.h
   DefaultAllocator.h DenseIntegerSet.h DistinctList.h DocumentBaseMarkup.h DocumentMarkup.h DocumentPodMarkup.h
   DocumentTextMarkup.h Exception.h FileSystem.h Graph.h GraphAlgorithm.h GraphBoost.h GraphIteratorBiMap.h GraphIteratorMap.h

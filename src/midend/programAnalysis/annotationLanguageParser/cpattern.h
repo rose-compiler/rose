@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_CPATTERN_H
 #define BDWY_CPATTERN_H
@@ -257,4 +259,4 @@ public:
 };
 
 #endif /* BDWY_CPATTERN_H */
-
+#endif

@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
 #include <rose_isnan.h>
@@ -359,10 +359,10 @@ struct ComparisonMonitor {
                                Sawyer::Message::Stream &stream)
         : analyzer(analyzer), rowFunctions(rowFunctions), colFunctions(colFunctions), stream(stream) {}
     
-    void operator()(const ComparisonTasks &tasks, size_t nThreads, const std::set<size_t> &running) {
+    void operator()(const ComparisonTasks &tasks, size_t /*nFinished*/, const std::set<size_t> &running) {
         if (stream) {
             stream <<StringUtility::plural(running.size(), "tasks")
-                   <<" running on " <<StringUtility::plural(nThreads, "workers") <<"\n";
+                   <<" running on " <<StringUtility::plural(running.size(), "workers") <<"\n";
             BOOST_FOREACH (size_t vertexId, running) {
                 ComparisonTasks::ConstVertexIterator vertex = tasks.findVertex(vertexId);
                 const ComparisonTask &task = vertex->value();

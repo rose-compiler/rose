@@ -79,7 +79,7 @@ UnparseFormat::UnparseFormat(const UnparseFormat & X)
 #endif
 
      printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
@@ -107,10 +107,7 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
      formatHelpInfo = NULL;
 
      printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
-     ROSE_ASSERT(false);
-
-  // return UnparseFormat(X);
-     return *this;
+     ROSE_ABORT();
    }
 
 
@@ -615,7 +612,7 @@ UnparseFormat::formatOptionToString(FormatOpt opt)
           default:
              {
                printf ("Error: default reached in switch for UnparseFormat::formatOptionToString ... \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -724,7 +721,7 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
                default:
                   {
                     printf ("Error: default reached in switch for formatting within unparsing ... \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }

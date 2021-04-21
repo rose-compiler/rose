@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Partitioner2/Function.h>
 
@@ -103,9 +103,11 @@ Function::stackDelta() const {
 int64_t
 Function::stackDeltaConcrete() const {
     BaseSemantics::SValuePtr v = stackDelta();
-    if (v && v->is_number() && v->get_width() <= 64)
-        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-    return SgAsmInstruction::INVALID_STACK_DELTA;
+    if (v && v->toSigned()) {
+        return v->toSigned().get();
+    } else {
+        return SgAsmInstruction::INVALID_STACK_DELTA;
+    }
 }
 
 } // namespace

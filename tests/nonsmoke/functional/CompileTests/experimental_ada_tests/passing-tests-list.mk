@@ -1,5 +1,4 @@
-
-# defines that are fully supported by ROSE
+# defines tests that are fully supported
 PASSING_TESTS :=                       \
   block_statement.adb                  \
   case_statement.adb                   \
@@ -7,9 +6,10 @@ PASSING_TESTS :=                       \
   constant_declaration.ads             \
   constants.ads                        \
   delay_relative.adb                   \
-  derived_record.ads                   \
   empty_package.ads                    \
+  entry_declaration.ads                \
   exception_declaration.ads            \
+  exception_rename.ads                 \
   exit_statement.adb                   \
   fib.adb                              \
   goto_loop.adb                        \
@@ -19,11 +19,7 @@ PASSING_TESTS :=                       \
   loop_statement.adb                   \
   minimal.adb                          \
   named.ads                            \
-  opaque.ads                           \
   operator.adb                         \
-  ordinary_type_declaration.ads        \
-  parent-child.ads                     \
-  pkgrename.ads                        \
   procedure_call.adb                   \
   raise_statement.adb                  \
   recursive_call.adb                   \
@@ -32,11 +28,71 @@ PASSING_TESTS :=                       \
   subtypes.ads                         \
   tagged_definition.ads                \
   task_type_declaration.ads            \
-  task_with_body.adb                   \
-  task_with_body.ads                   \
   type_conversion.adb                  \
   unit_1.adb                           \
   variable_declaration.ads             \
+  week_string_literal.ads              \
   while_loop_statement.adb             \
+  accept_statement.adb                 \
+  derived_record.ads                   \
+  entry_call.adb                       \
+  opaque.ads                           \
+  ordinary_type_declaration.ads        \
+  parent.ads                           \
+  parent-child.ads                     \
+  task_with_body.adb                   \
+  task_with_body.ads                   \
+  task_with_abort.adb                  \
+  function_declaration.ads             \
+  function_declaration.adb             \
+  gototest.ads                         \
+  gototest.adb                         \
+  package_with_body.ads                \
+  package_with_body.adb                \
+  parameter_declaration.ads            \
+  procedure_declaration.ads            \
+  procedure_declaration.adb            \
+  some_modes.ads                       \
+  unit_3.ads                           \
+  simpleada.ads                        \
+  simpleada-io.ads                     \
+  simple_hello_world.adb               \
+  nullrecord.ads                       \
+  simple_hello_world_with_use.adb      \
+  simple_use_type.ads                  \
+  representation_clause.ads            \
+  unconstrained_array_definition.ads   \
+  multidimensional_array.ads           \
+  multidimensional_array.adb           \
+  simple_array_expressions.adb         \
+  array_declare_2.ads                  \
+  for_loop_statement.adb               \
+  for_loop.adb                         \
+  floating_point_definition.ads        \
+  based_numbers.ads                    \
+  task_with_abort_v2.adb               \
+  short_circuit.adb                    \
+  short_circuit_v2.adb                 \
+  complex.ads                          \
+  async_transfer_select.adb            \
+  simple_select_accept.adb             \
+  simple_select_accept_guarded.adb     \
+  scopequal.adb                        \
+  defining_character_literal.adb       \
+  defining_enumeration_literal.adb     \
+  defining_operator_symbol.ads         \
+  private_extension_declaration.ads    \
+  function_body_stub.ads               \
+  package_renaming_declaration.ads     \
+  procedure_body_stub.ads              \
+  representation_clause_2.ads          \
+  pragmas.adb                          \
+  procedure_pragma.adb                 \
+  package_pragma.ads                   \
+  myarray.ads                          \
+  myarray.adb                          \
+  sub_derived_types.ads                \
+  io_test.adb                          \
+  hello_world.adb                      \
+  array_declare.adb                    \
   EndOfList
-

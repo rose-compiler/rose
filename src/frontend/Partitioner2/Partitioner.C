@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
@@ -14,6 +14,7 @@
 #include <BinaryUnparserBase.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
+#include <DisassemblerNull.h>
 #include <RecursionCounter.h>
 #include <SymbolicSemantics2.h>
 
@@ -123,6 +124,8 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
 
     insnUnparser_ = other.insnUnparser_;
     other.insnUnparser_ = Unparser::BasePtr();
+    insnPlainUnparser_ = other.insnPlainUnparser_;
+    other.insnPlainUnparser_ = Unparser::BasePtr();
 
     {
         SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
@@ -196,6 +199,7 @@ Partitioner::operator=(const Partitioner &other) {
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
     unparser_ = other.unparser_;
     insnUnparser_ = other.insnUnparser_;
+    insnPlainUnparser_ = other.insnPlainUnparser_;
 
     {
         SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
@@ -230,6 +234,10 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         unparser_ = disassembler->unparser()->copy();
         insnUnparser_ = disassembler->unparser()->copy();
         configureInsnUnparser(insnUnparser_);
+        insnPlainUnparser_ = disassembler->unparser()->copy();
+        configureInsnPlainUnparser(insnPlainUnparser_);
+    } else {
+        instructionProvider_ = InstructionProvider::instance(new DisassemblerNull, map);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -283,9 +291,21 @@ Partitioner::configureInsnUnparser(const Unparser::Base::Ptr &unparser) const {
     ASSERT_not_null(unparser);
     unparser->settings() = Unparser::Settings::minimal();
     unparser->settings().insn.address.showing = true;
+    unparser->settings().insn.address.useLabels = false;
     unparser->settings().insn.address.fieldWidth = 1;
     unparser->settings().insn.mnemonic.fieldWidth = 1;
     unparser->settings().insn.operands.fieldWidth = 1;
+}
+
+void
+Partitioner::configureInsnPlainUnparser(const Unparser::Base::Ptr &unparser) const {
+    configureInsnUnparser(unparser);
+    unparser->settings().insn.address.showing = false;
+    unparser->settings().insn.bytes.showing = false;
+    unparser->settings().insn.stackDelta.showing = false;
+    unparser->settings().insn.mnemonic.fieldWidth = 1;
+    unparser->settings().insn.comment.showing = false;
+    unparser->settings().insn.semantics.showing = false;
 }
 
 Unparser::BasePtr
@@ -322,6 +342,21 @@ Partitioner::unparse(std::ostream &out, SgAsmInstruction *insn) const {
     } else {
         ASSERT_not_null(insnUnparser());
         (*insnUnparser())(out, *this, insn);
+    }
+}
+
+std::string
+Partitioner::unparsePlain(SgAsmInstruction *insn) const {
+    if (!insn) {
+        return "null instruction";
+    } else {
+        // We don't allow the user to modify the plain unparser but there are certain settings we want to copy from the main
+        // instruction unparser. Since the user can modify the main instruction unparser any time, we need to always copy those
+        // important settings the the plain unparser.
+        ASSERT_not_null(insnUnparser_);
+        ASSERT_not_null(insnPlainUnparser_);
+        insnPlainUnparser_->settings().colorization = insnUnparser_->settings().colorization;
+        return (*insnPlainUnparser_)(*this, insn);
     }
 }
 
@@ -729,9 +764,9 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
             goto done;
         SValuePtr successorExpr = successors.front().expr();
 
-        if (!successorExpr->is_number())                                // case: successor is indeterminate
+        if (!successorExpr->isConcrete())                               // case: successor is indeterminate
             goto done;
-        rose_addr_t successorVa = successorExpr->get_number();
+        rose_addr_t successorVa = successorExpr->toUnsigned().get();
 
         if (successorVa == startVa)                                     // case: successor is our own basic block
             goto done;
@@ -883,8 +918,8 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         }
 
         CfgEdge edge(edgeType, successor.confidence());
-        if (successor.expr()->is_number()) {
-            successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
+        if (auto sucval = successor.expr()->toUnsigned()) {
+            successors.push_back(VertexEdgePair(insertPlaceholder(*sucval), edge));
         } else if (!hadIndeterminate) {
             successors.push_back(VertexEdgePair(indeterminateVertex_, edge));
             hadIndeterminate = true;
@@ -1058,7 +1093,7 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
                 // Is naiveSuccessor also a basic block successor?
                 bool found = false;
                 BOOST_FOREACH (const BasicBlock::Successor &bblockSuccessor, bblockSuccessors) {
-                    if (bblockSuccessor.expr()->is_number() && bblockSuccessor.expr()->get_number()==naiveSuccessor) {
+                    if (bblockSuccessor.expr()->toUnsigned().isEqual(naiveSuccessor)) {
                         found = true;
                         break;
                     }
@@ -1079,8 +1114,8 @@ Partitioner::basicBlockConcreteSuccessors(const BasicBlock::Ptr &bb, bool *isCom
     if (isComplete)
         *isComplete = true;
     BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bb)) {
-        if (successor.expr()->is_number()) {
-            retval.push_back(successor.expr()->get_number());
+        if (auto sucval = successor.expr()->toUnsigned()) {
+            retval.push_back(*sucval);
         } else if (isComplete) {
             *isComplete = false;
         }
@@ -1189,7 +1224,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                 BaseSemantics::SValuePtr z =
                     sem.operators->equalToZero(sem.operators->add(returnExpr,
                                                                   sem.operators->negate(topOfStack)));
-                isSemanticCall = z->is_number() ? (z->get_number() != 0) : false;
+                isSemanticCall = z->isTrue();
             }
 
             // Defintely not a function call if it neither has semantics or a call or looks like a call.
@@ -1202,7 +1237,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             // that obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and
             // B are consecutive instruction addresses.
             BasicBlock::Successors successors = basicBlockSuccessors(bb);
-            if (1==successors.size() && successors[0].expr()->is_number() && successors[0].expr()->get_number()==returnVa) {
+            if (1 == successors.size() && successors[0].expr()->toUnsigned().isEqual(returnVa)) {
                 bb->isFunctionCall() = false;
                 return false;
             }
@@ -1213,11 +1248,11 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                 bool allCalleesPopWithoutReturning = true;   // all callees pop return address but don't return?
                 BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
                     // Find callee basic block
-                    if (!successor.expr() || !successor.expr()->is_number() || successor.expr()->get_width() > 64) {
+                    if (!successor.expr() || !successor.expr()->toUnsigned()) {
                         allCalleesPopWithoutReturning = false;
                         break;
                     }
-                    rose_addr_t calleeVa = successor.expr()->get_number();
+                    rose_addr_t calleeVa = successor.expr()->toUnsigned().get();
                     BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
                     if (!calleeBb)
                         calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
@@ -1242,7 +1277,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                     if (BaseSemantics::StatePtr calleeStateN = calleeBb->semantics().finalState()) {
                         BaseSemantics::SValuePtr ipN =
                             calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.nBits()), sem.operators.get());
-                        if (ipN->is_number() && ipN->get_width() <= 64 && ipN->get_number() == returnVa) {
+                        if (ipN->toUnsigned().isEqual(returnVa)) {
                             allCalleesPopWithoutReturning = false;
                             break;
                         }
@@ -1682,9 +1717,8 @@ Partitioner::functionBasicBlockExtent(const Function::Ptr &function, AddressInte
         if (placeholder != cfg_.vertices().end()) {
             if (BasicBlock::Ptr bblock = placeholder->value().bblock()) {
                 retval.insertMultiple(basicBlockInstructionExtent(bblock));
-                retval.insertMultiple(basicBlockDataExtent(bblock));
             } else {
-                retval.insert(AddressInterval(bblockVa));// all we know is the placeholder address
+                retval.insert(AddressInterval(bblockVa)); // all we know is the placeholder address
             }
         }
     }
@@ -2292,8 +2326,8 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
             BaseSemantics::RegisterStateGenericPtr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-                if (kv.value->is_number() && kv.value->get_width() <= SP.nBits())
-                    retval.insert(kv.value->get_number());
+                if (kv.value->isConcrete() && kv.value->nBits() <= SP.nBits())
+                    retval.insert(kv.value->toUnsigned().get());
             }
 
             BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
@@ -2726,9 +2760,8 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             if (computeProperties) {
                 out <<"    " <<function->printableName() <<" stack delta: ";
                 if (BaseSemantics::SValuePtr delta = functionStackDelta(function)) {
-                    if (delta->is_number() && delta->get_width()<=64) {
-                        int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-                        out <<n <<"\n";
+                    if (auto n = delta->toSigned()) {
+                        out <<*n <<"\n";
                     } else {
                         out <<*delta <<"\n";
                     }
@@ -2758,9 +2791,8 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
                     out <<"    incoming stack delta w.r.t. " <<function->printableName() <<": ";
                     if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaIn(bb, function)) {
-                        if (delta->is_number() && delta->get_width()<=64) {
-                            int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-                            out <<n <<"\n";
+                        if (auto n = delta->toSigned()) {
+                            out <<*n <<"\n";
                         } else {
                             out <<*delta <<"\n";
                         }
@@ -2813,9 +2845,8 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
                     out <<"    outgoing stack delta w.r.t. " <<function->printableName() <<": ";
                     if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaOut(bb, function)) {
-                        if (delta->is_number() && delta->get_width()<=64) {
-                            int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-                            out <<n <<"\n";
+                        if (auto n = delta->toSigned()) {
+                            out <<*n <<"\n";
                         } else {
                             out <<*delta <<"\n";
                         }
@@ -3034,9 +3065,12 @@ Partitioner::rebuildVertexIndices() {
     if (!isDefaultConstructed() && instructionProvider().disassembler()) {
         unparser_ = instructionProvider().disassembler()->unparser()->copy();
         insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
+        insnPlainUnparser_ = instructionProvider().disassembler()->unparser()->copy();
     }
     if (insnUnparser_)
         configureInsnUnparser(insnUnparser_);
+    if (insnPlainUnparser_)
+        configureInsnPlainUnparser(insnPlainUnparser_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -59,8 +59,8 @@ basicReadTest(const P2::Partitioner &partitioner) {
     std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
               <<"and " <<*read1r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
-    ASSERT_always_require(read1m->must_equal(dflt1m));
-    ASSERT_always_require(read1r->must_equal(dflt1r));
+    ASSERT_always_require(read1m->mustEqual(dflt1m));
+    ASSERT_always_require(read1r->mustEqual(dflt1r));
 
     // Create a new current state and read again. We should get the same value even though the current state is empty.
     BaseSemantics::StatePtr curState = ops->currentState()->clone();
@@ -74,8 +74,8 @@ basicReadTest(const P2::Partitioner &partitioner) {
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
               <<"and " <<*read2r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
-    ASSERT_always_require(read1m->must_equal(read2m));
-    ASSERT_always_require(read1r->must_equal(read2r));
+    ASSERT_always_require(read1m->mustEqual(read2m));
+    ASSERT_always_require(read1r->mustEqual(read2r));
 
     // Disable the initial state. If we re-read the same address we'll still get the same result because it's now present in
     // the current state also.
@@ -84,8 +84,8 @@ basicReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr1, dflt3m, ops->boolean_(true));
     BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read3r = ops->readRegister(REG, dflt3r);
-    ASSERT_always_require(read1m->must_equal(read3m));
-    ASSERT_always_require(read1r->must_equal(read3r));
+    ASSERT_always_require(read1m->mustEqual(read3m));
+    ASSERT_always_require(read1r->mustEqual(read3r));
 }
 //! [basicReadTest]
 
@@ -231,8 +231,8 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
               <<"and reading " <<*read2r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
-    ASSERT_always_require(read1m->must_equal(read2m));
-    ASSERT_always_require(read1r->must_equal(read2r));
+    ASSERT_always_require(read1m->mustEqual(read2m));
+    ASSERT_always_require(read1r->mustEqual(read2r));
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read2m)->get_expression()->flags() & MY_FLAG) != 0);
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read2r)->get_expression()->flags() & MY_FLAG) != 0);
 
@@ -245,8 +245,8 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG2.nBits());
     BaseSemantics::SValuePtr read3r = ops->readRegister(REG2, dflt3r);
 
-    ASSERT_always_forbid(read1m->must_equal(read3m));
-    ASSERT_always_forbid(read1r->must_equal(read3r));
+    ASSERT_always_forbid(read1m->mustEqual(read3m));
+    ASSERT_always_forbid(read1r->mustEqual(read3r));
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read3m)->get_expression()->flags() & MY_FLAG) == 0);
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read3r)->get_expression()->flags() & MY_FLAG) == 0);
 }
@@ -290,7 +290,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
     // Build the initial state. This will serve as the state whose values are lazily instantiated by the symbolic RiscOperators.
     SymbolicSemantics::StatePtr initialState = xfer.initialState();
 #if 1 // [Robb Matzke 2016-01-28]
-    cpu->get_operators()->initialState(initialState);
+    cpu->operators()->initialState(initialState);
 #endif
 
     // Run the data-flow

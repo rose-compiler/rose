@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "VariableValueMonitor.h"
-#include "Analyzer.h"
+#include "CTAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -45,7 +45,7 @@ AbstractValueSet VariableValueMonitor::getVariables() {
   return vset;
 }
 
-bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, AbstractValue varId) {
+bool VariableValueMonitor::isHotVariable(CTAnalysis* analyzer, AbstractValue varId) {
   // TODO: provide set of variables to ignore
   string name=varId.toLhsString(analyzer->getVariableIdMapping());
   switch(_variablesModeMap[varId]) {

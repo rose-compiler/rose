@@ -66,10 +66,11 @@ set(ROSE_FLAGS_SKIP_FINAL_COMPILATION
 function(java_test input_file)
   get_filename_component(test_name ${input_file} NAME_WE)
   add_test(
-    NAME ${test_name}
+    NAME JAVATEST_${test_name}
     COMMAND ${translator}
       ${ROSE_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
   )
+  set_tests_properties(JAVATEST_${test_name} PROPERTIES LABELS JAVATEST)
 endfunction()
 
 
@@ -89,14 +90,15 @@ endforeach()
 foreach(file_to_test
         ${TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE})
   add_test(
-    NAME ${file_to_test}_step1
+    NAME JAVATEST_${file_to_test}_step1
     COMMAND testTranslator ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(JAVATEST_${file_to_test}_step1 PROPERTIES LABELS JAVATEST)
   add_test(
-    NAME ${file_to_test}_step2
+    NAME JAVATEST_${file_to_test}_step2
     COMMAND testTranslator -rose:java:source 1.4 -rose:java:target 1.4
             ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
-  set_tests_properties(${file_to_test}_step2
-    PROPERTIES DEPENDS ${file_to_test}_step1)
+  set_tests_properties(JAVATEST_${file_to_test}_step2
+    PROPERTIES DEPENDS JAVATEST_${file_to_test}_step1 LABELS JAVATEST)
 endforeach()

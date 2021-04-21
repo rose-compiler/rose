@@ -10,7 +10,8 @@
 #include "assert.h"
 #endif
 
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
+#include <ROSE_ABORT.h>
 
 using namespace std;
 
@@ -167,7 +168,7 @@ void read_id( istream& in, const string& s)
 #ifdef _MSC_VER
           printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
           // tps: todo Windows. Not reached yet.
-          assert(false);
+          ROSE_ABORT();
 #else
           throw ReadError("read identifier error: expecting '" + s + "' instead of '" + r + "'");
 #endif
@@ -195,7 +196,7 @@ string read_num( istream& in )
 #ifdef _MSC_VER
           printf ("MSVC specific code comments out the use of throw expression... (exiting) \n");
           // tps: todo Windows. Not reached yet.
-          assert(false);
+          ROSE_ABORT();
 #else
     throw ReadError("read number error: expecting numerics instead of " + string(1,c) );
 #endif

@@ -44,25 +44,31 @@ package body Asis_Tool_2.Element.Paths is
 
       procedure Add_Sequence_Of_Statements is
       begin
-         Add_Element_List
-           (This           => State,
-            Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
-            Dot_Label_Name => "Sequence_Of_Statements",
-            List_Out       => Result.Sequence_Of_Statements,
-            Add_Edges      => True);
+         if Path_Kind in Asis.A_Statement_Path then
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
+               Dot_Label_Name => "Sequence_Of_Statements",
+               List_Out       => Result.Sequence_Of_Statements,
+               Add_Edges      => True);
+         else
+            -- Asis.Statements.Sequence_Of_Statements doesn't like paths outside
+            -- A_Statement_Path:
+            State.Add_Not_Implemented;
+         end if;
       end;
 
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Path_Kind", Path_Kind'Image);
          Result.Path_Kind := anhS.To_Path_Kinds (Path_Kind);
-         Add_Sequence_Of_Statements;
+         Add_Sequence_Of_Statements; -- Has Add_Not_Implemented
       end Add_Common_Items;
 
       use all type Asis.Path_Kinds;
    begin
       If Path_Kind /= Not_A_Path then
-         Add_Common_Items;
+         Add_Common_Items; -- Has Add_Not_Implemented
       end if;
 
       case Path_Kind is
@@ -83,13 +89,13 @@ package body Asis_Tool_2.Element.Paths is
             Add_Guard;
          when A_Then_Abort_Path =>
             null; -- No more info
-         when A_Case_Expression_Path =>
+         when A_Case_Expression_Path => -- A2012
             Add_Case_Path_Alternative_Choices;
-         when An_If_Expression_Path =>
+         when An_If_Expression_Path => -- A2012
             Add_Condition_Expression;
-         when An_Elsif_Expression_Path =>
+         when An_Elsif_Expression_Path => -- A2012
             Add_Condition_Expression;
-         when An_Else_Expression_Path =>
+         when An_Else_Expression_Path => -- A2012
             null; -- No more info
       end case;
 

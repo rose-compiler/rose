@@ -4285,7 +4285,7 @@ SgGlobal* SgGlobal::build_node_from_nonlist_children ( Sg_File_Info* startOfCons
           printf ("In SgGlobal::build_node_from_nonlist_children(): id = %s in translationScopeMap: returnNode = %p = %s \n",id.c_str(),returnNode,returnNode->class_name().c_str());
 #endif
           printf ("Error: The global scope should not already exist in the map. \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
        else
         {
@@ -4298,7 +4298,7 @@ SgGlobal* SgGlobal::build_node_from_nonlist_children ( Sg_File_Info* startOfCons
 
 #if 0
      printf ("Exiting as a test in SgGlobal::build_node_from_nonlist_children() \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
      return returnNode;
@@ -5461,9 +5461,7 @@ SgImportStatement* SgImportStatement::build_node_from_nonlist_children ( Sg_File
 SgFunctionDeclaration* SgFunctionDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct,  SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
    {
      printf ("In SgFunctionDeclaration::build_node_from_nonlist_children(): default function not used \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
+     ROSE_ABORT();
    }
 
 // DQ (10/11/2014): Adding special case support for aterm translation to ROSE AST.
@@ -5496,7 +5494,7 @@ SgFunctionDeclaration* SgFunctionDeclaration::build_node_from_nonlist_children(S
        else
         {
           printf ("In SgFunctionDeclaration::build_node_from_nonlist_children(): definition != NULL (not implemented yet) \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return returnNode;

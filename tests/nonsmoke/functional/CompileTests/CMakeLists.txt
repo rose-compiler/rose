@@ -11,24 +11,25 @@ set(ROSE_FLAGS --edg:no_warnings -w -rose:verbose 0)
 set(translator testTranslator)
 
 # define compile_test CMake function
-function(compile_test input_file)
+function(compile_test input_file label)
   get_filename_component(test_name ${input_file} NAME_WE)
 
   # optional argument to omit include directories
-  if(ARGV1)
+  if(ARGV2)
     add_test(
-      NAME ${test_name}
+      NAME ${label}_${test_name}
       COMMAND ${translator}
         ${ROSE_FLAGS} -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
     )
   else()
     add_test(
-      NAME ${test_name}
+      NAME ${label}_${test_name}
       COMMAND ${translator}
         ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR} -c
         ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
     )
   endif()
+  set_tests_properties(${label}_${test_name} PROPERTIES LABELS ${label})
 endfunction()
 
 # determine what subdirectories to enter based on our configuration settings.

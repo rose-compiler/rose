@@ -399,7 +399,7 @@ void toDotLabelNode<Model::e_model_type>(std::ostream & out, Model::type_t eleme
       out << "element_" << element << " [label=\"" << element->node->type->unparseToString() << "\", shape=oval]" << std::endl;
       break;
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -428,7 +428,7 @@ void toTextNode<Model::e_model_type>(std::ostream & out, Model::element_t<Model:
       out << "type:" << element << " => \"" << element->node->type->unparseToString() << "\"" << std::endl;
       break;
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 
@@ -474,7 +474,7 @@ void toDotNode<Model::e_model_type>(std::ostream & out, Model::type_t element, s
     case Model::node_t<Model::e_model_type>::e_native_type:
       break;
     default:
-      assert(false);
+      ROSE_ABORT();
   }
 }
 

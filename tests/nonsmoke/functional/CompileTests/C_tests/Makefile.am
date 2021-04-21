@@ -601,7 +601,25 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2020_37.c \
      test2020_38.c \
      test2020_39.c \
-     test2020_40.c 
+     test2020_40.c \
+     test2020_41.c \
+     test2020_42.c \
+     test2020_43.c \
+     test2020_44.c \
+     test2020_45.c \
+     test2020_46.c \
+     test2020_47.c \
+     test2020_48.c \
+     test2020_49.c \
+     test2021_01.c \
+     test2021_02.c \
+     test2021_03.c \
+     test2021_04.c \
+     test2021_05.c \
+     test2021_06.c \
+     test2021_07.c \
+     test2021_08.c \
+     test2021_09.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \

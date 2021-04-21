@@ -17,7 +17,7 @@ stmt_pos findPosition(SgNode *n)
                return stmt_pos(&stmts, i, bb);
              }
         }
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   /* Avoid MSVC warning */
      return stmt_pos(&stmts, stmts.end(), bb);

@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Partitioner2/Utility.h>
 
@@ -63,10 +63,12 @@ sortFunctionNodesByAddress(const SgAsmFunction *a, const SgAsmFunction *b) {
 // when comparing.
 bool
 sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b) {
-    if (a.expr()->is_number() && b.expr()->is_number())
-        return a.expr()->get_number() < b.expr()->get_number();
-    if (a.expr()->is_number() || b.expr()->is_number())
-        return a.expr()->is_number();                   // concrete values are less than abstract expressions
+    auto aval = a.expr()->toUnsigned();
+    auto bval = b.expr()->toUnsigned();
+    if (aval && bval)
+        return *aval < *bval;
+    if (aval || bval)
+        return aval ? true : false;                     // concrete values are less than abstract expressions
     return a.expr()->get_expression()->compareStructure(b.expr()->get_expression()) < 0;
 }
 
@@ -104,9 +106,9 @@ std::string
 AddressIntervalParser::docString() {
     return ("An address interval can be specified as a single address, or a first and inclusive last address separated by a "
             "comma, or a begin and exclusive end address separated by a hyphen, or a begin address and size in bytes "
-            "separated by a plus sign, or an empty string to indicate an empty interval.  The upper address must always be "
-            "greater than or equal to the lower address. Addresses and sizes can be specified in decimal, hexadecimal "
-            "(leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
+            "separated by a plus sign, or the word \"all\" for all addresses, or an empty string to indicate an empty interval. "
+            "The upper address must always be greater than or equal to the lower address. Addresses and sizes can be specified "
+            "in decimal, hexadecimal (leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
 }
 
 Sawyer::CommandLine::ParsedValue
@@ -122,6 +124,11 @@ AddressIntervalParser::parse(const char *input, const char **rest) {
     char *r = NULL;
     bool hadRangeError = false, isEmpty = false;
     while (isspace(*s)) ++s;
+
+    if (!strcmp(s, "all")) {
+        *rest = s + 3;
+        return AddressInterval::whole();
+    }
 
     // Minimum
     errno = 0;
@@ -208,6 +215,11 @@ addressIntervalParser(AddressInterval &storage) {
 AddressIntervalParser::Ptr
 addressIntervalParser(std::vector<AddressInterval> &storage) {
     return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<AddressInterval> >::instance(storage));
+}
+
+AddressIntervalParser::Ptr
+addressIntervalParser(AddressIntervalSet &storage) {
+    return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<AddressIntervalSet>::instance(storage));
 }
 
 AddressIntervalParser::Ptr

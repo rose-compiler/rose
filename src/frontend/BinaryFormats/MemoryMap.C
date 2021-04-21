@@ -1,12 +1,13 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "MemoryMap.h"
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+#include <MemoryMap.h>
 
-#include "Diagnostics.h"
-#include "FileSystem.h"
-#include "rose_getline.h"
-#include "rose_strtoull.h"
+#include <Diagnostics.h>
+#include <FileSystem.h>
+#include <rose_getline.h>
+#include <rose_strtoull.h>
+#include <SRecord.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -396,6 +397,211 @@ MemoryMap::insertFile(const std::string &locatorString) {
     size_t nCopied = at(interval.least()).limit(nRead).write(r.data).size();
     ASSERT_always_require(nRead==nCopied);              // better work since we just created the segment!
     return interval;
+}
+
+std::string
+MemoryMap::adjustMapDocumentation() {
+    return ("Beginning with the first colon, a meta resource string has the form "
+            "\":@v{region}:@v{command}\" The @v{region} describes the region of the virtual address space on "
+            "which the @v{command} applies, and is of the form \"@v{address}[+@v{size}]\". If the @v{size} is "
+            "absent then the region extends to the maximum address. The following @v{command} forms are recognized:"
+
+            "@named{Print meta information}{The \"print\" command prints meta information about the mapping to standard output. "
+            "This command ignores the @v{region}, always printing the entire map.}"
+
+            "@named{Change permissions}{The \"perm @v{op} @v{value}\" command changes the permissions of mapped memory "
+            "that falls within the @v{region} (white space is optional). The operation, @v{op} is one of \"=\" to set "
+            "the permissions as specified, \"-\" to remove the specified permissions, or \"+\" to add the specified "
+            "permissions. The permissions are any combination of the letters \"r\" (read), \"w\" (write), and \"x\" (execute) "
+            "in any order.}"
+
+            "@named{Remove mapping}{The \"unmap\" command unmaps the specified region of memory.}"
+
+            "@named{Hexdump output}{The \"hexdump[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using a format similar to the \"hexdump -Cv\" command.}"
+
+            "@named{S-Record output}{The \"srec[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using Motorola S-Record format.}"
+
+            "@named{Intel HEX output}{The \"hex[=@v{filename}]\" prints the region data to either standard output "
+            "or the specified file (creating or truncating it first) using Intel HEX format.}");
+}
+
+static std::runtime_error
+adjustMapError(const std::string &locatorString, const std::string &mesg) {
+    throw std::runtime_error("MemoryMap::adjust: " + mesg + " in \"" + StringUtility::cEscape(locatorString) + "\"");
+}
+
+void
+MemoryMap::adjustMap(const std::string &locatorString) {
+    const char *s = locatorString.c_str();
+    if (':' != *s++)
+        throw adjustMapError(locatorString, "not a locator string");
+
+    // Virtual address
+    while (isspace(*s)) ++s;
+    Sawyer::Optional<rose_addr_t> va = parseInteger<rose_addr_t>(s /*in,out*/);
+    if (!va)
+        throw adjustMapError(locatorString, "virtual address expected");
+
+    // Size of region
+    AddressInterval region;
+    while (isspace(*s)) ++s;
+    if ('+' == *s) {
+        ++s;
+        Sawyer::Optional<rose_addr_t> size = parseInteger<rose_addr_t>(s /*in,out*/);
+        if (!size)
+            throw adjustMapError(locatorString, "region size expected after '+'");
+        if (!*size)
+            throw adjustMapError(locatorString, "region cannot be empty");
+        region = AddressInterval::baseSize(*va, *size);
+    } else {
+        region = AddressInterval::hull(*va, AddressInterval::whole().greatest());
+    }
+
+    // Commands
+    while (isspace(*s)) ++s;
+    if (':' != *s++)
+        throw adjustMapError(locatorString, "expected colon after region specification");
+    while (isspace(*s)) ++s;
+    if (!strncmp(s, "perm", 4)) {
+        // match /perm[-+=][rwx]+/
+        s += 4;
+        while (isspace(*s)) ++s;
+        if ('+' != *s && '-' != *s && '=' != *s)
+            throw adjustMapError(locatorString, "invalid perm operator");
+        char op = *s++;
+        unsigned perm = 0;
+        while ('r' == *s || 'w' == *s || 'x' == *s) {
+            switch (*s++) {
+                case 'r':
+                    perm |= READABLE;
+                    break;
+                case 'w':
+                    perm |= WRITABLE;
+                    break;
+                case 'x':
+                    perm |= EXECUTABLE;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid permission operator");
+            }
+        }
+        switch (op) {
+            case '-':
+                within(region).changeAccess(0, perm);
+                break;
+            case '+':
+                within(region).changeAccess(perm, 0);
+                break;
+            case '=':
+                within(region).changeAccess(perm, ~perm);
+                break;
+        }
+
+    } else if (!strncmp(s, "hexdump", 7)) {
+        s += 7;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        HexdumpFormat fmt;
+        while (AddressInterval selected = atOrAfter(region.least()).singleSegment().available()) {
+            selected = selected & region;
+            rose_addr_t va = selected.least();
+            const ConstNodeIterator inode = at(va).nodes().begin();
+            const MemoryMap::Segment &segment = inode->value();
+            rose_addr_t bufferOffset = segment.offset() + selected.least() - inode->key().least();
+            const uint8_t *data = segment.buffer()->data() + bufferOffset;
+            out <<"# segment " <<segmentTitle(segment) <<"\n";
+
+            // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print out some
+            // stuff to get the rest aligned if necessary.
+            rose_addr_t nRemain = selected.size();
+            rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
+            if (nLeader != 16) {
+                SgAsmExecutableFileFormat::hexdump(out, va, data, nLeader, fmt);
+                va += nLeader;
+                data += nLeader;
+                nRemain -= nLeader;
+                out <<"\n";
+            }
+            if (nRemain > 0) {
+                SgAsmExecutableFileFormat::hexdump(out, va, data, nRemain, fmt);
+                out <<"\n";
+            }
+            if (selected.greatest() == region.greatest())
+                break;
+            region = AddressInterval::hull(selected.greatest()+1, region.greatest());
+        }
+
+    } else if (!strncmp(s, "srec", 4)) {
+        s += 4;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        MemoryMap::Ptr tmpMap = shallowCopy();
+        tmpMap->at(region).keep();
+        if (!tmpMap->isEmpty()) {
+            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_MOTOROLA);
+            BOOST_FOREACH (const SRecord &srec, srecs)
+                out <<srec.toString() <<"\n";
+        }
+
+    } else if (!strncmp(s, "hex", 3)) {
+        s += 3;
+
+        // Open the output stream, or use standard output
+        std::ofstream fout;
+        if ('=' == *s) {
+            s++;
+            fout.open(s);
+            if (!fout)
+                throw adjustMapError(locatorString, "failed to write to \"" + StringUtility::cEscape(s) + "\"");
+            s = "";
+        }
+        std::ostream &out = fout.is_open() ? fout : std::cout;
+
+        MemoryMap::Ptr tmpMap = shallowCopy();
+        tmpMap->at(region).keep();
+        if (!tmpMap->isEmpty()) {
+            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_INTEL);
+            BOOST_FOREACH (const SRecord &srec, srecs)
+                out <<srec.toString() <<"\n";
+        }
+
+    } else if (!strncmp(s, "print", 5)) {
+        s += 5;
+        dump();
+
+    } else if (!strncmp(s, "unmap", 5)) {
+        s += 5;
+        within(region).prune();
+
+    } else {
+        throw adjustMapError(locatorString, "unrecognized command");
+    }
+
+    while (isspace(*s)) ++s;
+    if (*s)
+        throw adjustMapError(locatorString, "unexpected extra text after command");
 }
 
 std::string
@@ -930,6 +1136,11 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
             <<segmentTitle(segment)
             <<"\n";
     }
+}
+
+void
+MemoryMap::dump() const {
+    dump(std::cout, "");
 }
 
 } // namespace

@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
@@ -40,16 +40,16 @@ SValue::nextName() {
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
                             const SmtSolverPtr &solver) const {
-    if (must_equal(other_, solver))
+    if (mustEqual(other_, solver))
         return Sawyer::Nothing();
-    return bottom_(get_width());
+    return bottom_(nBits());
 }
 
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
 {
     SValuePtr other = promote(other_);
-    if (must_equal(other, solver))
+    if (mustEqual(other, solver))
         return true;
     return this->name!=0 || other->name!=0;
 }
@@ -67,10 +67,10 @@ void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
     FormatRestorer restorer(stream); // restore format flags when we leave this scope
-    uint64_t sign_bit = (uint64_t)1 << (get_width()-1); /* e.g., 80000000 */
+    uint64_t sign_bit = (uint64_t)1 << (nBits()-1); /* e.g., 80000000 */
     uint64_t val_mask = sign_bit - 1;             /* e.g., 7fffffff */
     /*magnitude of negative value*/
-    uint64_t negative = get_width()>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0;
+    uint64_t negative = nBits()>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0;
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
 
     if (name!=0) {
@@ -91,7 +91,7 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
             stream <<" (-0x" <<std::hex <<negative <<")";
     }
 
-    stream <<"[" <<std::dec <<get_width() <<"]";
+    stream <<"[" <<std::dec <<nBits() <<"]";
 }
 
 
@@ -157,12 +157,12 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if ((!a->name && 0==a->offset) || (!b->name && 0==b->offset))
-        return number_(a->get_width(), 0);
+        return number_(a->nBits(), 0);
     if (a->name || b->name)
-        return undefined_(a->get_width());
-    return number_(a->get_width(), a->offset & b->offset);
+        return undefined_(a->nBits());
+    return number_(a->nBits(), a->offset & b->offset);
 }
 
 BaseSemantics::SValuePtr
@@ -170,16 +170,16 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
-    if (a->must_equal(b))
+    ASSERT_require(a->nBits()==b->nBits());
+    if (a->mustEqual(b))
         return a->copy();
     if (!a->name && !b->name)
-        return number_(a->get_width(), a->offset | b->offset);
-    if (!a->name && a->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
+        return number_(a->nBits(), a->offset | b->offset);
+    if (!a->name && a->offset==IntegerOps::genMask<uint64_t>(a->nBits()))
         return a->copy();
-    if (!b->name && b->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
+    if (!b->name && b->offset==IntegerOps::genMask<uint64_t>(a->nBits()))
         return b->copy();
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -187,24 +187,24 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (!a->name && !b->name)
-        return number_(a->get_width(), a->offset ^ b->offset);
-    if (a->must_equal(b))
-        return number_(a->get_width(), 0);
+        return number_(a->nBits(), a->offset ^ b->offset);
+    if (a->mustEqual(b))
+        return number_(a->nBits(), 0);
     if (!b->name) {
         if (0==b->offset)
             return a->copy();
-        if (b->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
+        if (b->offset==IntegerOps::genMask<uint64_t>(a->nBits()))
             return invert(a);
     }
     if (!a->name) {
         if (0==a->offset)
             return b->copy();
-        if (a->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
+        if (a->offset==IntegerOps::genMask<uint64_t>(a->nBits()))
             return invert(b);
     }
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -212,18 +212,18 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->name)
-        return a->create(a->get_width(), a->name, ~a->offset, !a->negate);
-    return number_(a->get_width(), ~a->offset);
+        return a->create(a->nBits(), a->name, ~a->offset, !a->negate);
+    return number_(a->nBits(), ~a->offset);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
     if (0==begin_bit) {
-        if (end_bit==a->get_width())
+        if (end_bit==a->nBits())
             return a->copy();
         return a->copy(end_bit);
     }
@@ -238,10 +238,10 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->name || b->name)
-        return undefined_(a->get_width() + b->get_width());
-    if (a->get_width() + b->get_width() > 64)
-        return undefined_(a->get_width() + b->get_width());
-    return number_(a->get_width()+b->get_width(), a->offset | (b->offset << a->get_width()));
+        return undefined_(a->nBits() + b->nBits());
+    if (a->nBits() + b->nBits() > 64)
+        return undefined_(a->nBits() + b->nBits());
+    return number_(a->nBits()+b->nBits(), a->offset | (b->offset << a->nBits()));
 }
 
 BaseSemantics::SValuePtr
@@ -260,12 +260,12 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(1==sel->get_width());
-    ASSERT_require(a->get_width()==b->get_width());
-    if (a->must_equal(b))
+    ASSERT_require(1==sel->nBits());
+    ASSERT_require(a->nBits()==b->nBits());
+    if (a->mustEqual(b))
         return a->copy();
     if (sel->name)
-        return undefined_(a->get_width());
+        return undefined_(a->nBits());
     return sel->offset ? a->copy() : b->copy();
 }
 
@@ -274,12 +274,12 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->name)
-        return undefined_(a->get_width());
-    for (size_t i=0; i<a->get_width(); ++i) {
+        return undefined_(a->nBits());
+    for (size_t i=0; i<a->nBits(); ++i) {
         if (a->offset & ((uint64_t)1 << i))
-            return number_(a->get_width(), i);
+            return number_(a->nBits(), i);
     }
-    return number_(a->get_width(), 0);
+    return number_(a->nBits(), 0);
 }
 
 BaseSemantics::SValuePtr
@@ -287,12 +287,12 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->name)
-        return undefined_(a->get_width());
-    for (size_t i=a->get_width(); i>0; --i) {
+        return undefined_(a->nBits());
+    for (size_t i=a->nBits(); i>0; --i) {
         if (a->offset & ((uint64_t)1 << (i-1)))
-            return number_(a->get_width(), i-1);
+            return number_(a->nBits(), i-1);
     }
-    return number_(a->get_width(), 0);
+    return number_(a->nBits(), 0);
 }
 
 BaseSemantics::SValuePtr
@@ -301,10 +301,10 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (!a->name && !sa->name)
-        return number_(a->get_width(), IntegerOps::rotateLeft2(a->offset, sa->offset, a->get_width()));
-    if (!sa->name && 0==sa->offset % a->get_width())
+        return number_(a->nBits(), IntegerOps::rotateLeft2(a->offset, sa->offset, a->nBits()));
+    if (!sa->name && 0==sa->offset % a->nBits())
         return a->copy();
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -313,14 +313,14 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (!a->name && !sa->name) {
-        return number_(a->get_width(), IntegerOps::rotateRight2(a->offset, sa->offset, a->get_width()));
-        size_t count = sa->offset % a->get_width();
-        uint64_t n = (a->offset >> count) | (a->offset << (a->get_width()-count));
-        return number_(a->get_width(), n);
+        return number_(a->nBits(), IntegerOps::rotateRight2(a->offset, sa->offset, a->nBits()));
+        size_t count = sa->offset % a->nBits();
+        uint64_t n = (a->offset >> count) | (a->offset << (a->nBits()-count));
+        return number_(a->nBits(), n);
     }
-    if (!sa->name && 0==sa->offset % a->get_width())
+    if (!sa->name && 0==sa->offset % a->nBits())
         return a->copy();
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -329,14 +329,14 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (!a->name && !sa->name)
-        return number_(a->get_width(), IntegerOps::shiftLeft2(a->offset, sa->offset, a->get_width()));
+        return number_(a->nBits(), IntegerOps::shiftLeft2(a->offset, sa->offset, a->nBits()));
     if (!sa->name) {
         if (0==sa->offset)
             return a->copy();
-        if (sa->offset>=a->get_width())
-            return number_(a->get_width(), 0);
+        if (sa->offset>=a->nBits())
+            return number_(a->nBits(), 0);
     }
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -345,14 +345,14 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (!sa->name) {
-        if (sa->offset>a->get_width())
-            return number_(a->get_width(), 0);
+        if (sa->offset>a->nBits())
+            return number_(a->nBits(), 0);
         if (0==sa->offset)
             return a->copy();
     }
     if (!a->name && !sa->name)
-        return number_(a->get_width(), IntegerOps::shiftRightLogical2(a->offset, sa->offset, a->get_width()));
-    return undefined_(a->get_width());
+        return number_(a->nBits(), IntegerOps::shiftRightLogical2(a->offset, sa->offset, a->nBits()));
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -363,8 +363,8 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     if (!sa->name && 0==sa->offset)
         return a->copy();
     if (!a->name && !sa->name)
-        return number_(a->get_width(), IntegerOps::shiftRightArithmetic2(a->offset, sa->offset, a->get_width()));
-    return undefined_(a->get_width());
+        return number_(a->nBits(), IntegerOps::shiftRightArithmetic2(a->offset, sa->offset, a->nBits()));
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -372,19 +372,19 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->get_width()==b->get_width());
+    ASSERT_require(a->nBits()==b->nBits());
     if (a->name==b->name && (!a->name || a->negate!=b->negate)) {
         /* [V1+x] + [-V1+y] = [x+y]  or
          * [x] + [y] = [x+y] */
-        return number_(a->get_width(), a->offset + b->offset);
+        return number_(a->nBits(), a->offset + b->offset);
     } else if (!a->name || !b->name) {
         /* [V1+x] + [y] = [V1+x+y]   or
          * [x] + [V2+y] = [V2+x+y]   or
          * [-V1+x] + [y] = [-V1+x+y] or
          * [x] + [-V2+y] = [-V2+x+y] */
-        return a->create(a->get_width(), a->name+b->name, a->offset+b->offset, a->negate || b->negate);
+        return a->create(a->nBits(), a->name+b->name, a->offset+b->offset, a->negate || b->negate);
     } else {
-        return undefined_(a->get_width());
+        return undefined_(a->nBits());
     }
 }
 
@@ -395,25 +395,25 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
-    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
+    ASSERT_require(a->nBits()==b->nBits() && c->nBits()==1);
     int n_unknown = (a->name?1:0) + (b->name?1:0) + (c->name?1:0);
     if (n_unknown <= 1) {
         /* At most, one of the operands is an unknown value. See add() for more details. */
         uint64_t sum = a->offset + b->offset + c->offset;
         if (0==n_unknown) {
-            carry_out = number_(a->get_width(), (a->offset ^ b->offset ^ sum)>>1);
+            carry_out = number_(a->nBits(), (a->offset ^ b->offset ^ sum)>>1);
         } else {
-            carry_out = undefined_(a->get_width());
+            carry_out = undefined_(a->nBits());
         }
-        return a->create(a->get_width(), a->name+b->name+c->name, sum, a->negate||b->negate||c->negate);
+        return a->create(a->nBits(), a->name+b->name+c->name, sum, a->negate||b->negate||c->negate);
     } else if (a->name==b->name && !c->name && a->negate!=b->negate) {
         /* A and B are known or have bases that cancel out, and C is known */
         uint64_t sum = a->offset + b->offset + c->offset;
-        carry_out = number_(a->get_width(), (a->offset ^ b->offset ^ sum)>>1);
-        return number_(a->get_width(), sum);
+        carry_out = number_(a->nBits(), (a->offset ^ b->offset ^ sum)>>1);
+        return number_(a->nBits(), sum);
     } else {
-        carry_out = undefined_(a->get_width());
-        return undefined_(a->get_width());
+        carry_out = undefined_(a->nBits());
+        return undefined_(a->nBits());
     }
 }
 
@@ -422,8 +422,8 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->name)
-        return a->create(a->get_width(), a->name, -a->offset, !a->negate);
-    return number_(a->get_width(), -a->offset);
+        return a->create(a->nBits(), a->name, -a->offset, !a->negate);
+    return number_(a->nBits(), -a->offset);
 }
 
 BaseSemantics::SValuePtr
@@ -435,16 +435,16 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
         if (0==b->offset)
             throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
-            return number_(a->get_width(),
-                           (IntegerOps::signExtend2(a->offset, a->get_width(), 64) /
-                            IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+            return number_(a->nBits(),
+                           (IntegerOps::signExtend2(a->offset, a->nBits(), 64) /
+                            IntegerOps::signExtend2(b->offset, b->nBits(), 64)));
         if (1==b->offset)
             return a->copy();
-        if (b->offset==IntegerOps::genMask<uint64_t>(b->get_width()))
+        if (b->offset==IntegerOps::genMask<uint64_t>(b->nBits()))
             return negate(a);
         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
     }
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -453,12 +453,12 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->name || b->name)
-        return undefined_(b->get_width());
+        return undefined_(b->nBits());
     if (0==b->offset)
         throw BaseSemantics::Exception("division by zero", currentInstruction());
-    return number_(b->get_width(),
-                   (IntegerOps::signExtend2(a->offset, a->get_width(), 64) %
-                    IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+    return number_(b->nBits(),
+                   (IntegerOps::signExtend2(a->offset, a->nBits(), 64) %
+                    IntegerOps::signExtend2(b->offset, b->nBits(), 64)));
     /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
 }
 
@@ -467,21 +467,21 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     if (retwidth > 64)
         return undefined_(retwidth);
 
     if (!a->name && !b->name) {
         return number_(retwidth,
-                       (IntegerOps::signExtend2(a->offset, a->get_width(), 64) *
-                        IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
+                       (IntegerOps::signExtend2(a->offset, a->nBits(), 64) *
+                        IntegerOps::signExtend2(b->offset, b->nBits(), 64)));
     }
     if (!b->name) {
         if (0==b->offset)
             return number_(retwidth, 0);
         if (1==b->offset)
             return signExtend(a, retwidth);
-        if (b->offset==IntegerOps::genMask<uint64_t>(b->get_width()))
+        if (b->offset==IntegerOps::genMask<uint64_t>(b->nBits()))
             return signExtend(negate(a), retwidth);
     }
     if (!a->name) {
@@ -489,7 +489,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
             return number_(retwidth, 0);
         if (1==a->offset)
             return signExtend(b, retwidth);
-        if (a->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
+        if (a->offset==IntegerOps::genMask<uint64_t>(a->nBits()))
             return signExtend(negate(b), retwidth);
     }
     return undefined_(retwidth);
@@ -504,12 +504,12 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
         if (0==b->offset)
             throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
-            return number_(a->get_width(), a->offset / b->offset);
+            return number_(a->nBits(), a->offset / b->offset);
         if (1==b->offset)
             return a->copy();
         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
     }
-    return undefined_(a->get_width());
+    return undefined_(a->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -521,15 +521,15 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
         if (0==b->offset)
             throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
-            return number_(b->get_width(), a->offset % b->offset);
+            return number_(b->nBits(), a->offset % b->offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the
          * bitsize of 'b'. */
     }
     SValuePtr a2 = SValue::promote(unsignedExtend(a, 64));
     SValuePtr b2 = SValue::promote(unsignedExtend(b, 64));
-    if (a2->must_equal(b2))
+    if (a2->mustEqual(b2))
         return b->copy();
-    return undefined_(b->get_width());
+    return undefined_(b->nBits());
 }
 
 BaseSemantics::SValuePtr
@@ -537,7 +537,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    size_t retwidth = a->get_width() + b->get_width();
+    size_t retwidth = a->nBits() + b->nBits();
     if (retwidth > 64)
         return undefined_(retwidth);
     if (!a->name && !b->name)
@@ -563,11 +563,11 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     SValuePtr a = SValue::promote(a_);
     if (new_width > 64)
         return undefined_(new_width);
-    if (new_width==a->get_width())
+    if (new_width==a->nBits())
         return a->copy();
     if (a->name)
         return undefined_(new_width);
-    return number_(new_width, IntegerOps::signExtend2(a->offset, a->get_width(), new_width));
+    return number_(new_width, IntegerOps::signExtend2(a->offset, a->nBits(), new_width));
 }
 
 void
@@ -577,15 +577,25 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &condition)
 {
 #ifndef NDEBUG
-    size_t nbits = value->get_width();
+    size_t nbits = value->nBits();
     ASSERT_require2(nbits % 8 == 0, "write to memory must be in byte units");
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
 #endif
-    if (condition->is_number() && !condition->get_number())
+    if (condition->isFalse())
         return;
 
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        adjustedVa = add(address, signExtend(segregValue, address->nBits()));
+    }
+
+
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    currentState()->writeMemory(address, value, this, this);
+    currentState()->writeMemory(adjustedVa, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -594,24 +604,38 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
                                 const BaseSemantics::SValuePtr &dflt_,
                                 bool allowSideEffects) {
     BaseSemantics::SValuePtr dflt = dflt_;
-    size_t nbits = dflt->get_width();
+    size_t nbits = dflt->nBits();
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
+
+    // Offset the address by the value of the segment register.
+    BaseSemantics::SValuePtr adjustedVa;
+    if (segreg.isEmpty()) {
+        adjustedVa = address;
+    } else {
+        BaseSemantics::SValuePtr segregValue;
+        if (allowSideEffects) {
+            segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        } else {
+            segregValue = peekRegister(segreg, undefined_(segreg.nBits()));
+        }
+        adjustedVa = add(address, signExtend(segregValue, address->nBits()));
+    }
 
     // Use the initial memory state if there is one.
     if (initialState()) {
         if (allowSideEffects) {
-            dflt = initialState()->readMemory(address, dflt, this, this);
+            dflt = initialState()->readMemory(adjustedVa, dflt, this, this);
         } else {
-            dflt = initialState()->peekMemory(address, dflt, this, this);
+            dflt = initialState()->peekMemory(adjustedVa, dflt, this, this);
         }
     }
     
     // Use the concrete MemoryMap if there is one.  Only those areas of the map that are readable and not writable are used.
-    if (map && address->is_number()) {
+    if (map && adjustedVa->isConcrete()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
         size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
-                       .at(address->get_number()).limit(nbytes).read(buf).size();
+                       .at(adjustedVa->toUnsigned().get()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
             if (nbytes > 1 && map->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
                 throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
@@ -625,7 +649,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(adjustedVa, dflt, this, this));
     return retval;
 }
 
@@ -635,8 +659,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition)
 {
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    if (condition->is_number() && !condition->get_number())
+    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
+    if (condition->isFalse())
         return dflt;
     return readOrPeekMemory(segreg, address, dflt, true /*allow side effects*/);
 }

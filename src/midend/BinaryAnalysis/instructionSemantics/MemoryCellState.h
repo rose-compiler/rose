@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellState_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellState_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <BaseSemantics2.h>
 #include <MemoryCell.h>
@@ -42,7 +42,7 @@ protected:
     MemoryCellState() {}                                // for serialization
 
     explicit MemoryCellState(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->get_address(), protocell->get_value()), protocell(protocell) {}
+        : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
 
     MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {}

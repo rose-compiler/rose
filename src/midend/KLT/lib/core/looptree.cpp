@@ -121,7 +121,7 @@ node_t * node_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
     case e_unknown:
     default: 
       std::cerr << "[Error] (KLT::LoopTrees::node_t::extract) Uknown statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
-      assert(false);
+      ROSE_ABORT();
   }
 
   if (res == NULL) {
@@ -223,7 +223,7 @@ stmt_t * stmt_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
 
     return new stmt_t(stmt);
   }
-  else assert(false);
+  else ROSE_ABORT();
 }
 
 std::string node_t::getGraphVizLabel() const {
@@ -466,7 +466,7 @@ node_t * tile_t::finalize() {
     assert(node->kind == e_tile);
     next_tile = (tile_t *)node;
   }
-  else assert(false);
+  else ROSE_ABORT();
 
   if (next_tile != NULL) { // in a chain of tiles and 'next_tile' should be the first of a **ordered-linked-list** of tile_t
     tile_t * curr = this;

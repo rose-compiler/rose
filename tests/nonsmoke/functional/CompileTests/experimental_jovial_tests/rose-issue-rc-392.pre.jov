@@ -1,0 +1,17 @@
+START 
+constant item scons S=-13 ; 
+REF PROC PROC1 U 7 ; 
+   BEGIN 
+   END 
+DEF PROC PROC2 ; 
+   BEGIN 
+   ITEM ITEM1 U 7 ; 
+   ITEM1=PROC1 ; 
+   ITEM1=PROC3 ; 
+   ITEM1=scons ; 
+   END 
+DEF PROC PROC3 S ; 
+   BEGIN 
+   PROC3=-13 ; 
+   END 
+TERM 

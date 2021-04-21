@@ -8,11 +8,11 @@ Solver::Solver() {
   _analyzer = nullptr;
 }
 
-Solver::Solver(Analyzer* analyzer) {
+Solver::Solver(CTAnalysis* analyzer) {
   setAnalyzer(analyzer);
 }
 
-void Solver::setAnalyzer(Analyzer* analyzer) {
+void Solver::setAnalyzer(CTAnalysis* analyzer) {
   _analyzer = analyzer;
 }
 

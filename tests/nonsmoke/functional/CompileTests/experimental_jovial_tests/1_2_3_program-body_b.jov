@@ -1,6 +1,7 @@
 START
 PROGRAM testbody ;
 BEGIN
+  ITEM ivar U ;
   ivar = 13 ;
 END
 TERM

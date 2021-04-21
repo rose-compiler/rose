@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BinaryPointerDetection.h>
 
@@ -37,7 +37,7 @@ initDiagnostics() {
 }
 
 bool
-PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) {
+PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) const {
     if (a.lvalue == NULL || b.lvalue == NULL)
         return a.lvalue == NULL && b.lvalue != NULL;
     return a.lvalue->hash() < b.lvalue->hash();
@@ -206,9 +206,18 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        // Offset the address by the value of the segment register.
+        BaseSemantics::SValuePtr adjustedVa;
+        if (segreg.isEmpty()) {
+            adjustedVa = addr;
+        } else {
+            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
+        }
+
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
         StatePtr state = State::promote(currentState());
-        state->saveRead(addr, retval);
+        state->saveRead(adjustedVa, retval);
         return retval;
     }
 };
@@ -314,6 +323,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BaseSemantics::RegisterStateGenericPtr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState());
     initialRegState->initialize_large();
+    cpu->initializeState(initialState_);
 
     // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
     SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
@@ -355,7 +365,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
         BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())
-            conditionallySavePointer(cell->get_address(), addrSeen, dataWordSize, dataPointers_);
+            conditionallySavePointer(cell->address(), addrSeen, dataWordSize, dataPointers_);
     }
 
     // Find code pointers

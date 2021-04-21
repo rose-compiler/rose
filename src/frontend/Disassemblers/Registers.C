@@ -1,7 +1,14 @@
 #include <featureTests.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "Registers.h"
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+#include <Registers.h>
+
+#include <InstructionEnumsAarch64.h>
+#include <InstructionEnumsAarch32.h>
+#include <InstructionEnumsM68k.h>
+#include <InstructionEnumsMips.h>
+#include <InstructionEnumsPowerpc.h>
+#include <InstructionEnumsX86.h>
 
 // These are here temporarily until the classes in this file can be moved into Rose::BinaryAnalysis
 using namespace Rose;
@@ -267,9 +274,9 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         case EFF::ISA_MIPS_Family:
             return dictionary_mips32_altnames(); // disassembler assumes only dictionary_mips32()
 
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
         case EFF::ISA_ARM_Family:
-            return dictionary_a64();
+            return dictionary_aarch64();
 #endif
 
         case EFF::ISA_PowerPC:
@@ -291,6 +298,20 @@ const RegisterDictionary *
 RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp) {
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
+}
+
+const RegisterDictionary*
+RegisterDictionary::dictionary_null() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("null");
+        regs->insert("pc", 0, 0, 0, 8);                 // program counter
+        regs->insert("sp", 0, 1, 0, 8);                 // stack pointer
+    }
+    return regs;
 }
 
 const RegisterDictionary *
@@ -670,9 +691,9 @@ RegisterDictionary::dictionary_amd64() {
     return regs;
 }
 
-#ifdef ROSE_ENABLE_ASM_A64
+#ifdef ROSE_ENABLE_ASM_AARCH64
 const RegisterDictionary*
-RegisterDictionary::dictionary_a64() {
+RegisterDictionary::dictionary_aarch64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
     static RegisterDictionary *regs = NULL;
@@ -680,41 +701,41 @@ RegisterDictionary::dictionary_a64() {
         // References:
         //   [1] "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited.
         //   [2] "ARM Cortex-A Series Version 1.0 Programmer's Guide for ARMv8-A" copyright 2015 ARM.
-        regs = new RegisterDictionary("A64");
+        regs = new RegisterDictionary("AArch64");
 
         // 31 64-bit general-purpose registers "x0" through "x30". The names "w0" through "w30" refer to the low-order 32 bits
         // of the corresponding "x" register in that read operations read only the low-order 32 bits and write operations write
         // to all 64 bits (always clearing the high-order 32 bits). [1, p. A3-72]
         //
         for (unsigned i = 0; i < 31; ++i) {
-            regs->insert("x" + boost::lexical_cast<std::string>(i), arm_regclass_gpr, i, 0, 64);
-            regs->insert("w" + boost::lexical_cast<std::string>(i), arm_regclass_gpr, i, 0, 32);
+            regs->insert("x" + boost::lexical_cast<std::string>(i), aarch64_regclass_gpr, i, 0, 64);
+            regs->insert("w" + boost::lexical_cast<std::string>(i), aarch64_regclass_gpr, i, 0, 32);
         }
 
         // Zero register. Also called "register 31" in the documentation ("sp", though distinct from the zero register, is also
         // called "register 31" in the documentation. [1, pp. A3-72, A3-76]
-        regs->insert("xzr", arm_regclass_gpr, 31, 0, 64);
-        regs->insert("wzr", arm_regclass_gpr, 31, 0, 32);
+        regs->insert("xzr", aarch64_regclass_gpr, 31, 0, 64);
+        regs->insert("wzr", aarch64_regclass_gpr, 31, 0, 32);
 
         // Another name for "x30" is "lr", the "procedure link register". [1. pp. A3-74, A3-76]
-        regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
+        regs->insert("lr", aarch64_regclass_gpr, 30, 0, 64);
 
         // Another name for "x29" is "fp", the frame pointer. [2, p 4-2]
-        regs->insert("fp", arm_regclass_gpr, 29, 0, 64);
+        regs->insert("fp", aarch64_regclass_gpr, 29, 0, 64);
 
         // One program counter. Not a general purpose register. [1. p. A3-78]
-        regs->insert("pc", arm_regclass_pc, 0, 0, 64);
+        regs->insert("pc", aarch64_regclass_pc, 0, 0, 64);
 
         // Four stack pointer registers. [1. p. A3-72] These store the exception return address per exception level. The
         // "sp_el0" is an alias for the stack pointer "sp". [1. p. A3-75] The "sp" register is also referred to as "register 31"
         // in the documentation [1. p. A3-72] (along with "xzr" and "wzr", which is clearly a distinct register) although this
         // register is also claimed to be not general-purpose like all the other "x" and "w" registers. [1. p. A3-75].
-        regs->insert("sp_el0", arm_regclass_sp, 0, 0, 64); // "sp_el0" is an alias for "sp" [1. p. A3-75]
-        regs->insert("sp_el1", arm_regclass_sp, 1, 0, 64);
-        regs->insert("sp_el2", arm_regclass_sp, 2, 0, 64);
-        regs->insert("sp_el3", arm_regclass_sp, 3, 0, 64);
-        regs->insert("sp",     arm_regclass_sp, 0, 0, 64);
-        regs->insert("wsp",    arm_regclass_sp, 0, 0, 32); // [2, p. 4-3]
+        regs->insert("sp_el0", aarch64_regclass_sp, 0, 0, 64); // "sp_el0" is an alias for "sp" [1. p. A3-75]
+        regs->insert("sp_el1", aarch64_regclass_sp, 1, 0, 64);
+        regs->insert("sp_el2", aarch64_regclass_sp, 2, 0, 64);
+        regs->insert("sp_el3", aarch64_regclass_sp, 3, 0, 64);
+        regs->insert("sp",     aarch64_regclass_sp, 0, 0, 64);
+        regs->insert("wsp",    aarch64_regclass_sp, 0, 0, 32); // [2, p. 4-3]
 
         // Three saved program status registers. [1. p. A3-72, A3-82]. These store the processor state fields per exception
         // level so they can be restored when the exception handler returns. The processor state registers have various fields
@@ -723,18 +744,18 @@ RegisterDictionary::dictionary_a64() {
         // the base name "cpsr" (the same name as from AArch32).
         for (unsigned i = 0; i < 4; ++i) {
             std::string base = 0==i ? "cpsr" : "spsr_el" + boost::lexical_cast<std::string>(i);
-            regs->insert(base, arm_regclass_system, arm_system_spsr+i, 0, 32);
-            regs->insert(base+".n",  arm_regclass_system, arm_system_spsr+i, 31, 1);     // negative condition flag
-            regs->insert(base+".z",  arm_regclass_system, arm_system_spsr+i, 30, 1);     // zero condition flag
-            regs->insert(base+".c",  arm_regclass_system, arm_system_spsr+i, 29, 1);     // carry condition flag
-            regs->insert(base+".v",  arm_regclass_system, arm_system_spsr+i, 28, 1);     // overflow condition flag
-            regs->insert(base+".ss", arm_regclass_system, arm_system_spsr+i, 21, 1);     // software step bit
-            regs->insert(base+".il", arm_regclass_system, arm_system_spsr+i, 20, 1);     // illegal excecution bit
-            regs->insert(base+".d",  arm_regclass_system, arm_system_spsr+i, 9, 1);      // debug mask bit
-            regs->insert(base+".a",  arm_regclass_system, arm_system_spsr+i, 8, 1);      // "SError" mask bit
-            regs->insert(base+".i",  arm_regclass_system, arm_system_spsr+i, 7, 1);      // IRQ mask bit
-            regs->insert(base+".f",  arm_regclass_system, arm_system_spsr+i, 6, 1);      // FIQ mask bit
-            regs->insert(base+".m",  arm_regclass_system, arm_system_spsr+i, 0, 4);      // source of exception
+            regs->insert(base, aarch64_regclass_system, aarch64_system_spsr+i, 0, 32);
+            regs->insert(base+".n",  aarch64_regclass_system, aarch64_system_spsr+i, 31, 1);     // negative condition flag
+            regs->insert(base+".z",  aarch64_regclass_system, aarch64_system_spsr+i, 30, 1);     // zero condition flag
+            regs->insert(base+".c",  aarch64_regclass_system, aarch64_system_spsr+i, 29, 1);     // carry condition flag
+            regs->insert(base+".v",  aarch64_regclass_system, aarch64_system_spsr+i, 28, 1);     // overflow condition flag
+            regs->insert(base+".ss", aarch64_regclass_system, aarch64_system_spsr+i, 21, 1);     // software step bit
+            regs->insert(base+".il", aarch64_regclass_system, aarch64_system_spsr+i, 20, 1);     // illegal excecution bit
+            regs->insert(base+".d",  aarch64_regclass_system, aarch64_system_spsr+i, 9, 1);      // debug mask bit
+            regs->insert(base+".a",  aarch64_regclass_system, aarch64_system_spsr+i, 8, 1);      // "SError" mask bit
+            regs->insert(base+".i",  aarch64_regclass_system, aarch64_system_spsr+i, 7, 1);      // IRQ mask bit
+            regs->insert(base+".f",  aarch64_regclass_system, aarch64_system_spsr+i, 6, 1);      // FIQ mask bit
+            regs->insert(base+".m",  aarch64_regclass_system, aarch64_system_spsr+i, 0, 4);      // source of exception
         }
 
         // System registers [2, p. 4-7]
@@ -743,70 +764,70 @@ RegisterDictionary::dictionary_a64() {
             // FPCR?
             // FPSR?
             if (i == 0) {
-                regs->insert("cntfrq_el"+n,    arm_regclass_system, arm_system_cntfrq+i,    0, 64); // ctr-timer frequency reg
-                regs->insert("cntpct_el"+n,    arm_regclass_system, arm_system_cntpct+i,    0, 64); // ctr-timer phys count reg
-                regs->insert("cntp_cval_el"+n, arm_regclass_system, arm_system_cntp_cval+i, 0, 64); // ctr-timer phys timer cmp
-                regs->insert("cntp_ctl_el"+n,  arm_regclass_system, arm_system_cntp_ctl+i,  0, 64); // ctr-timer phys control reg
-                regs->insert("ctr_el"+n,       arm_regclass_system, arm_system_ctr+i,       0, 64); // cache type register
-                regs->insert("dczid_el"+n,     arm_regclass_system, arm_system_dczid+i,     0, 64); // data cache zero ID reg
-                regs->insert("tpidrr0_el"+n,   arm_regclass_system, arm_system_tpidrr0+i,   0, 64); // user read-only thread ID reg
+                regs->insert("cntfrq_el"+n,    aarch64_regclass_system, aarch64_system_cntfrq+i,    0, 64); // ctr-timer frequency reg
+                regs->insert("cntpct_el"+n,    aarch64_regclass_system, aarch64_system_cntpct+i,    0, 64); // ctr-timer phys count reg
+                regs->insert("cntp_cval_el"+n, aarch64_regclass_system, aarch64_system_cntp_cval+i, 0, 64); // ctr-timer phys timer cmp
+                regs->insert("cntp_ctl_el"+n,  aarch64_regclass_system, aarch64_system_cntp_ctl+i,  0, 64); // ctr-timer phys control reg
+                regs->insert("ctr_el"+n,       aarch64_regclass_system, aarch64_system_ctr+i,       0, 64); // cache type register
+                regs->insert("dczid_el"+n,     aarch64_regclass_system, aarch64_system_dczid+i,     0, 64); // data cache zero ID reg
+                regs->insert("tpidrr0_el"+n,   aarch64_regclass_system, aarch64_system_tpidrr0+i,   0, 64); // user read-only thread ID reg
             }
             if (i == 1) {
-                regs->insert("ccsidr_el"+n,  arm_regclass_system, arm_system_ccsidr+i,  0, 64); // current cache size ID register
-                regs->insert("cntkctl_el"+n, arm_regclass_system, arm_system_cntkctl+i, 0, 64); // counter-timer kernel control reg
-                regs->insert("cpacr_el"+n,   arm_regclass_system, arm_system_cpacr+i,   0, 64); // coprocessor access control reg
-                regs->insert("csselr_el"+n,  arm_regclass_system, arm_system_csselr+i,  0, 64); // cache size selection register
-                regs->insert("midr_el"+n,    arm_regclass_system, arm_system_midr+i,    0, 64); // main ID register
-                regs->insert("mpidr_el"+n,   arm_regclass_system, arm_system_mpidr+i,   0, 64); // multiprocessor affinity reg
-                regs->insert("ttbr1_el"+n,   arm_regclass_system, arm_system_ttbr1+i,   0, 64); // translation table base reg 1
+                regs->insert("ccsidr_el"+n,  aarch64_regclass_system, aarch64_system_ccsidr+i,  0, 64); // current cache size ID register
+                regs->insert("cntkctl_el"+n, aarch64_regclass_system, aarch64_system_cntkctl+i, 0, 64); // counter-timer kernel control reg
+                regs->insert("cpacr_el"+n,   aarch64_regclass_system, aarch64_system_cpacr+i,   0, 64); // coprocessor access control reg
+                regs->insert("csselr_el"+n,  aarch64_regclass_system, aarch64_system_csselr+i,  0, 64); // cache size selection register
+                regs->insert("midr_el"+n,    aarch64_regclass_system, aarch64_system_midr+i,    0, 64); // main ID register
+                regs->insert("mpidr_el"+n,   aarch64_regclass_system, aarch64_system_mpidr+i,   0, 64); // multiprocessor affinity reg
+                regs->insert("ttbr1_el"+n,   aarch64_regclass_system, aarch64_system_ttbr1+i,   0, 64); // translation table base reg 1
             }
             if (i == 2) {
-                regs->insert("hcr_el"+n,   arm_regclass_system, arm_system_hcr+i,   0, 64); // hypervisor configuration register
-                regs->insert("vtcr_el"+n,  arm_regclass_system, arm_system_vtcr+i,  0, 64); // virtualization translation ctr reg
-                regs->insert("vttbr_el"+n, arm_regclass_system, arm_system_vttbr+i, 0, 64); // virt translation table base reg
+                regs->insert("hcr_el"+n,   aarch64_regclass_system, aarch64_system_hcr+i,   0, 64); // hypervisor configuration register
+                regs->insert("vtcr_el"+n,  aarch64_regclass_system, aarch64_system_vtcr+i,  0, 64); // virtualization translation ctr reg
+                regs->insert("vttbr_el"+n, aarch64_regclass_system, aarch64_system_vttbr+i, 0, 64); // virt translation table base reg
             }
             if (i == 3) {
-                regs->insert("scr_el"+n,   arm_regclass_system, arm_system_scr+i,   0, 64); // secure configuration register
+                regs->insert("scr_el"+n,   aarch64_regclass_system, aarch64_system_scr+i,   0, 64); // secure configuration register
 
             }
             if (true) {
-                regs->insert("sctlr_el"+n, arm_regclass_system, arm_system_sctlr+i, 0, 32); // system control register [2, p. 4-10]
+                regs->insert("sctlr_el"+n, aarch64_regclass_system, aarch64_system_sctlr+i, 0, 32); // system control register [2, p. 4-10]
                 {
                     // Not all bits are available above EL1, but ROSE defines them across the board anyway. Also the
                     // documentation is confusing: it says in one place [2, p. 4-9] that this register is defined for EL0
                     // through EL3, but then in another place [2, p. 4-10] that the bit fields are only defined for EL1 through
                     // EL3.
-                    regs->insert("sctlr_el"+n+".uci",     arm_regclass_system, arm_system_sctlr+i, 26, 1); // enable EL0 access
-                    regs->insert("sctlr_el"+n+".ee",      arm_regclass_system, arm_system_sctlr+i, 25, 1); // exception endianness
-                    regs->insert("sctlr_el"+n+".eoe",     arm_regclass_system, arm_system_sctlr+i, 24, 1); // endianness of explicit data accesses at EL0
-                    regs->insert("sctlr_el"+n+".wxn",     arm_regclass_system, arm_system_sctlr+i, 19, 1); // write permission implies execute never
-                    regs->insert("sctlr_el"+n+".ntwe",    arm_regclass_system, arm_system_sctlr+i, 18, 1); // not trap WFE
-                    regs->insert("sctlr_el"+n+".ntwi",    arm_regclass_system, arm_system_sctlr+i, 16, 1); // not trap WFI
-                    regs->insert("sctlr_el"+n+".uct",     arm_regclass_system, arm_system_sctlr+i, 15, 1); // enable EL0 access to CTR_EL0 register
-                    regs->insert("sctlr_el"+n+".dze",     arm_regclass_system, arm_system_sctlr+i, 14, 1); // access to DC ZVA instruction at EL0
-                    regs->insert("sctlr_el"+n+".uma",     arm_regclass_system, arm_system_sctlr+i,  9, 1); // user mask access
-                    regs->insert("sctlr_el"+n+".sed",     arm_regclass_system, arm_system_sctlr+i,  8, 1); // SETEND disable
-                    regs->insert("sctlr_el"+n+".itd",     arm_regclass_system, arm_system_sctlr+i,  7, 1); // IT disable
-                    regs->insert("sctlr_el"+n+".cp15ben", arm_regclass_system, arm_system_sctlr+i,  5, 1); // CP15 barrier enable
-                    regs->insert("sctlr_el"+n+".sa0",     arm_regclass_system, arm_system_sctlr+i,  4, 1); // stack alignment check enable for EL0
-                    regs->insert("sctlr_el"+n+".sa",      arm_regclass_system, arm_system_sctlr+i,  3, 1); // stack alignment check enable
-                    regs->insert("sctlr_el"+n+".c",       arm_regclass_system, arm_system_sctlr+i,  2, 1); // data enable cache
-                    regs->insert("sctlr_el"+n+".a",       arm_regclass_system, arm_system_sctlr+i,  1, 1); // alignment check enable bit
-                    regs->insert("sctlr_el"+n+".m",       arm_regclass_system, arm_system_sctlr+i,  0, 1); // enable the MMU
+                    regs->insert("sctlr_el"+n+".uci",     aarch64_regclass_system, aarch64_system_sctlr+i, 26, 1); // enable EL0 access
+                    regs->insert("sctlr_el"+n+".ee",      aarch64_regclass_system, aarch64_system_sctlr+i, 25, 1); // exception endianness
+                    regs->insert("sctlr_el"+n+".eoe",     aarch64_regclass_system, aarch64_system_sctlr+i, 24, 1); // endianness of explicit data accesses at EL0
+                    regs->insert("sctlr_el"+n+".wxn",     aarch64_regclass_system, aarch64_system_sctlr+i, 19, 1); // write permission implies execute never
+                    regs->insert("sctlr_el"+n+".ntwe",    aarch64_regclass_system, aarch64_system_sctlr+i, 18, 1); // not trap WFE
+                    regs->insert("sctlr_el"+n+".ntwi",    aarch64_regclass_system, aarch64_system_sctlr+i, 16, 1); // not trap WFI
+                    regs->insert("sctlr_el"+n+".uct",     aarch64_regclass_system, aarch64_system_sctlr+i, 15, 1); // enable EL0 access to CTR_EL0 register
+                    regs->insert("sctlr_el"+n+".dze",     aarch64_regclass_system, aarch64_system_sctlr+i, 14, 1); // access to DC ZVA instruction at EL0
+                    regs->insert("sctlr_el"+n+".uma",     aarch64_regclass_system, aarch64_system_sctlr+i,  9, 1); // user mask access
+                    regs->insert("sctlr_el"+n+".sed",     aarch64_regclass_system, aarch64_system_sctlr+i,  8, 1); // SETEND disable
+                    regs->insert("sctlr_el"+n+".itd",     aarch64_regclass_system, aarch64_system_sctlr+i,  7, 1); // IT disable
+                    regs->insert("sctlr_el"+n+".cp15ben", aarch64_regclass_system, aarch64_system_sctlr+i,  5, 1); // CP15 barrier enable
+                    regs->insert("sctlr_el"+n+".sa0",     aarch64_regclass_system, aarch64_system_sctlr+i,  4, 1); // stack alignment check enable for EL0
+                    regs->insert("sctlr_el"+n+".sa",      aarch64_regclass_system, aarch64_system_sctlr+i,  3, 1); // stack alignment check enable
+                    regs->insert("sctlr_el"+n+".c",       aarch64_regclass_system, aarch64_system_sctlr+i,  2, 1); // data enable cache
+                    regs->insert("sctlr_el"+n+".a",       aarch64_regclass_system, aarch64_system_sctlr+i,  1, 1); // alignment check enable bit
+                    regs->insert("sctlr_el"+n+".m",       aarch64_regclass_system, aarch64_system_sctlr+i,  0, 1); // enable the MMU
                 }
-                regs->insert("tpidr_el"+n, arm_regclass_system, arm_system_tpidr+i, 0, 64); // user read/write thread ID register
+                regs->insert("tpidr_el"+n, aarch64_regclass_system, aarch64_system_tpidr+i, 0, 64); // user read/write thread ID register
             }
             if (i >= 1) {
-                regs->insert("actlr_el"+n, arm_regclass_system, arm_system_actlr+i, 0, 64); // auxiliary control registers
-                regs->insert("clidr_el"+n, arm_regclass_system, arm_system_clidr+i, 0, 64); // cache level ID registers
-                regs->insert("elr_el"+n,   arm_regclass_system, arm_system_elr+i,   0, 64); // exception link registers
-                regs->insert("esr_el"+n,   arm_regclass_system, arm_system_esr+i,   0, 64); // exception syndrome registers
-                regs->insert("far_el"+n,   arm_regclass_system, arm_system_far+i,   0, 64); // fault address register
-                regs->insert("mair_el"+n,  arm_regclass_system, arm_system_mair+i,  0, 64); // memory attribute indirection register
-                //gs->insert("spsr_el"+n,  arm_regclass_system, arm_system_spsr+i,  0, 64); // saved program status register (see above)
-                regs->insert("tcr_el"+n,   arm_regclass_system, arm_system_tcr+i,   0, 64); // translation control register
-                regs->insert("ttbr0_el"+n, arm_regclass_system, arm_system_ttbr0+i, 0, 64); // translation table base register 0
-                regs->insert("vbar_el"+n,  arm_regclass_system, arm_system_vbar+i,  0, 64); // vector based address register
+                regs->insert("actlr_el"+n, aarch64_regclass_system, aarch64_system_actlr+i, 0, 64); // auxiliary control registers
+                regs->insert("clidr_el"+n, aarch64_regclass_system, aarch64_system_clidr+i, 0, 64); // cache level ID registers
+                regs->insert("elr_el"+n,   aarch64_regclass_system, aarch64_system_elr+i,   0, 64); // exception link registers
+                regs->insert("esr_el"+n,   aarch64_regclass_system, aarch64_system_esr+i,   0, 64); // exception syndrome registers
+                regs->insert("far_el"+n,   aarch64_regclass_system, aarch64_system_far+i,   0, 64); // fault address register
+                regs->insert("mair_el"+n,  aarch64_regclass_system, aarch64_system_mair+i,  0, 64); // memory attribute indirection register
+                //gs->insert("spsr_el"+n,  aarch64_regclass_system, aarch64_system_spsr+i,  0, 64); // saved program status register (see above)
+                regs->insert("tcr_el"+n,   aarch64_regclass_system, aarch64_system_tcr+i,   0, 64); // translation control register
+                regs->insert("ttbr0_el"+n, aarch64_regclass_system, aarch64_system_ttbr0+i, 0, 64); // translation table base register 0
+                regs->insert("vbar_el"+n,  aarch64_regclass_system, aarch64_system_vbar+i,  0, 64); // vector based address register
             }
         }
             
@@ -817,37 +838,288 @@ RegisterDictionary::dictionary_a64() {
             // Parts of vector registers
             for (size_t j = 0; j < 16; ++j) {
                 regs->insert("v" + boost::lexical_cast<std::string>(i) + ".b[" + boost::lexical_cast<std::string>(j) + "]",
-                             arm_regclass_ext, i, 8 * j, 8);
+                             aarch64_regclass_ext, i, 8 * j, 8);
             }
             for (size_t j = 0; j < 8; ++j) {
                 regs->insert("v" + boost::lexical_cast<std::string>(i) + ".h[" + boost::lexical_cast<std::string>(j) + "]",
-                             arm_regclass_ext, i, 16 * j, 16);
+                             aarch64_regclass_ext, i, 16 * j, 16);
             }
             for (size_t j = 0; j < 4; ++j) {
                 regs->insert("v" + boost::lexical_cast<std::string>(i) + ".s[" + boost::lexical_cast<std::string>(j) + "]",
-                             arm_regclass_ext, i, 32 * j, 32);
+                             aarch64_regclass_ext, i, 32 * j, 32);
             }
             for (size_t j = 0; j < 2; ++j) {
                 regs->insert("v" + boost::lexical_cast<std::string>(i) + ".d[" + boost::lexical_cast<std::string>(j) + "]",
-                             arm_regclass_ext, i, 64 * j, 64);
+                             aarch64_regclass_ext, i, 64 * j, 64);
             }
 
             // Floating-point registers. 32 registers having names that access various parts of each register.
-            regs->insert("v" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 128); // "quadword"
-            regs->insert("d" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 64); // "doubleword"
-            regs->insert("s" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 32); // "word"
-            regs->insert("h" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 16); // "halfword"
+            regs->insert("v" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 128); // "quadword"
+            regs->insert("d" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 64); // "doubleword"
+            regs->insert("s" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 32); // "word"
+            regs->insert("h" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 16); // "halfword"
 
             // Scalar registers are the same as the floating-point registers but use the name "q" to refer to the whole
             // register. It also uses "b" to refer to the least significant bit. Since the "q" and "v" registers are actually
             // the same register, and since ROSE identifies registers internally by their locations (RegisterDescriptor) rather
             // than their names, various parts of ROSE will report "q" instead of "v".
-            regs->insert("q" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 128); // SIMD
-            regs->insert("b" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 8); // SIMD
+            regs->insert("q" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 128); // SIMD
+            regs->insert("b" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 8); // SIMD
         }
         
         // Conditional execution registers. [1. p. A3-79]
-        regs->insert("nzcv", arm_regclass_cc, 0, 0, 4);
+        regs->insert("nzcv", aarch64_regclass_cc, 0, 0, 4);
+    }
+    return regs;
+}
+#endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+const RegisterDictionary*
+RegisterDictionary::dictionary_aarch32() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    static RegisterDictionary *regs = nullptr;
+    if (!regs) {
+        regs = new RegisterDictionary("AArch32");
+
+        // Pseudo register that returns a new free variable every time it's read.
+        regs->insert("unknown", aarch32_regclass_sys, aarch32_sys_unknown, 0, 32);
+
+        // 16 general purpose registers R0-R12, "sp" (stack pointer), "lr" (link register), and "pc" (program counter). The
+        // stack pointer and link register are banked; that is, there are more than one stack register and link register but
+        // only one is visible at a time depending on the current "system level view".
+        for (unsigned i = 0; i < 13; ++i)
+            regs->insert("r" + boost::lexical_cast<std::string>(i), aarch32_regclass_gpr, i, 0, 32);
+        regs->insert("sb", aarch32_regclass_gpr, aarch32_gpr_sb, 0, 32); // alias for r9
+        regs->insert("sl", aarch32_regclass_gpr, aarch32_gpr_sl, 0, 32); // alias for r10
+        regs->insert("fp", aarch32_regclass_gpr, aarch32_gpr_fp, 0, 32); // alias for r11
+        regs->insert("ip", aarch32_regclass_gpr, aarch32_gpr_ip, 0, 32); // alias for r12, not the instruction pointer (see PC)
+        regs->insert("sp", aarch32_regclass_gpr, aarch32_gpr_sp, 0, 32); // the normal user stack pointer
+        regs->insert("lr", aarch32_regclass_gpr, aarch32_gpr_lr, 0, 32); // the normal user link register
+        regs->insert("pc", aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32); // program counter, aka. insn pointer
+
+        // Banked R8-R12
+        regs->insert("r8_usr",  aarch32_regclass_sys, aarch32_sys_r8_usr,  0, 32);
+        regs->insert("r8_fiq",  aarch32_regclass_sys, aarch32_sys_r8_fiq,  0, 32);
+        regs->insert("r9_usr",  aarch32_regclass_sys, aarch32_sys_r9_usr,  0, 32);
+        regs->insert("r9_fiq",  aarch32_regclass_sys, aarch32_sys_r9_fiq,  0, 32);
+        regs->insert("r10_usr", aarch32_regclass_sys, aarch32_sys_r10_usr, 0, 32);
+        regs->insert("r10_fiq", aarch32_regclass_sys, aarch32_sys_r10_fiq, 0, 32);
+        regs->insert("r11_usr", aarch32_regclass_sys, aarch32_sys_r11_usr, 0, 32);
+        regs->insert("r11_fiq", aarch32_regclass_sys, aarch32_sys_r11_fiq, 0, 32);
+        regs->insert("r12_usr", aarch32_regclass_sys, aarch32_sys_r12_usr, 0, 32);
+        regs->insert("r12_fiq", aarch32_regclass_sys, aarch32_sys_r12_fiq, 0, 32);
+
+        // Banked stack pointers
+        regs->insert("sp_usr", aarch32_regclass_sys, aarch32_sys_sp_usr, 0, 32);
+        regs->insert("sp_hyp", aarch32_regclass_sys, aarch32_sys_sp_hyp, 0, 32);
+        regs->insert("sp_svc", aarch32_regclass_sys, aarch32_sys_sp_svc, 0, 32);
+        regs->insert("sp_abt", aarch32_regclass_sys, aarch32_sys_sp_abt, 0, 32);
+        regs->insert("sp_und", aarch32_regclass_sys, aarch32_sys_sp_und, 0, 32);
+        regs->insert("sp_mon", aarch32_regclass_sys, aarch32_sys_sp_mon, 0, 32);
+        regs->insert("sp_irq", aarch32_regclass_sys, aarch32_sys_sp_irq, 0, 32);
+        regs->insert("sp_fiq", aarch32_regclass_sys, aarch32_sys_sp_fiq, 0, 32);
+
+        // Banked link pointers
+        regs->insert("lr_usr", aarch32_regclass_sys, aarch32_sys_lr_usr, 0, 32);
+        regs->insert("lr_svc", aarch32_regclass_sys, aarch32_sys_lr_svc, 0, 32);
+        regs->insert("lr_abt", aarch32_regclass_sys, aarch32_sys_lr_abt, 0, 32);
+        regs->insert("lr_und", aarch32_regclass_sys, aarch32_sys_lr_und, 0, 32);
+        regs->insert("lr_mon", aarch32_regclass_sys, aarch32_sys_lr_mon, 0, 32);
+        regs->insert("lr_irq", aarch32_regclass_sys, aarch32_sys_lr_irq, 0, 32);
+        regs->insert("lr_fiq", aarch32_regclass_sys, aarch32_sys_lr_fiq, 0, 32);
+
+        // One "cpsr" or "current program status register", which holds condition code flags, interrupt disable bits, current
+        // processor mode, and other status and control information.
+        regs->insert("cpsr",       aarch32_regclass_sys, aarch32_sys_cpsr, 0, 32);
+        regs->insert("cpsr_nzcv",  aarch32_regclass_sys, aarch32_sys_cpsr, 28, 4); // n, z, c, and v bits
+        regs->insert("cpsr_nzcvq", aarch32_regclass_sys, aarch32_sys_cpsr, 27, 5); // n, z, c, v, and q bits
+        regs->insert("cpsr_n",     aarch32_regclass_sys, aarch32_sys_cpsr, 31, 1); // negative condition flag
+        regs->insert("cpsr_z",     aarch32_regclass_sys, aarch32_sys_cpsr, 30, 1); // zero condition flag
+        regs->insert("cpsr_c",     aarch32_regclass_sys, aarch32_sys_cpsr, 29, 1); // carry condition flag
+        regs->insert("cpsr_v",     aarch32_regclass_sys, aarch32_sys_cpsr, 28, 1); // overflow condition flag
+        regs->insert("cpsr_q",     aarch32_regclass_sys, aarch32_sys_cpsr, 27, 1); // cumulative saturation bit
+        regs->insert("cpsr_j",     aarch32_regclass_sys, aarch32_sys_cpsr, 24, 1); // Java state
+        regs->insert("cpsr_ssbs",  aarch32_regclass_sys, aarch32_sys_cpsr, 23, 1); // speculative store bypass safe (ARMv8.0-SSBS)
+        regs->insert("cpsr_pan",   aarch32_regclass_sys, aarch32_sys_cpsr, 22, 1); // privileged access never (ARMv8.1-PAN)
+        regs->insert("cpsr_dit",   aarch32_regclass_sys, aarch32_sys_cpsr, 21, 1); // data independent timing (ARMv8.4-DIT)
+        regs->insert("cpsr_ge",    aarch32_regclass_sys, aarch32_sys_cpsr, 16, 4); // greater than or equal flags for || add sub
+        regs->insert("cpsr_e",     aarch32_regclass_sys, aarch32_sys_cpsr, 9, 1);  // endianness state bit
+        regs->insert("cpsr_a",     aarch32_regclass_sys, aarch32_sys_cpsr, 8, 1);  // SError interrupt mask bit
+        regs->insert("cpsr_i",     aarch32_regclass_sys, aarch32_sys_cpsr, 7, 1);  // IRQ mask bit
+        regs->insert("cpsr_f",     aarch32_regclass_sys, aarch32_sys_cpsr, 6, 1);  // FIQ mask bit
+        regs->insert("cpsr_t",     aarch32_regclass_sys, aarch32_sys_cpsr, 5, 1);  // Thumb
+        regs->insert("cpsr_m",     aarch32_regclass_sys, aarch32_sys_cpsr, 0, 4);  // current PE mode
+
+        // These CPSR parts have special names in ARM assembly that conflict with the fields listed above. ROSE names the fields
+        // using underscores for all architectures and tries to produce a consistent assembly style across all architectures. This
+        // means that the names used by the ARM assembler, which conflict with the names above, need to be changed. We'll choose
+        // something more descriptive than single letters.
+        regs->insert("cpsr_control",   aarch32_regclass_sys, aarch32_sys_cpsr,  0, 8); // control bits, called "CPSR_c" in ARM assembly,
+        regs->insert("cpsr_extension", aarch32_regclass_sys, aarch32_sys_cpsr,  8, 8); // extension bits, called "CPSR_x" in ARM assembly.
+        regs->insert("cpsr_status",    aarch32_regclass_sys, aarch32_sys_cpsr, 16, 8); // status bits, called "CPSR_s" in ARM assembly.
+        regs->insert("cpsr_flags",     aarch32_regclass_sys, aarch32_sys_cpsr, 24, 8); // flag bits N, Z, C, and V, called "CPSR_f" in ARM
+
+        // Holds program status and control information, a subset of the CPSR.
+        regs->insert("apsr",        aarch32_regclass_sys, aarch32_sys_apsr, 0, 32);
+        regs->insert("apsr_nzcv",   aarch32_regclass_sys, aarch32_sys_apsr, 28, 4); // n, z, c, and v bits
+        regs->insert("apsr_nzcvq",  aarch32_regclass_sys, aarch32_sys_apsr, 27, 5); // n, z, c, v, and q bits
+        regs->insert("apsr_n",      aarch32_regclass_sys, aarch32_sys_apsr, 31, 1);
+        regs->insert("apsr_z",      aarch32_regclass_sys, aarch32_sys_apsr, 30, 1);
+        regs->insert("apsr_c",      aarch32_regclass_sys, aarch32_sys_apsr, 29, 1);
+        regs->insert("apsr_v",      aarch32_regclass_sys, aarch32_sys_apsr, 28, 1);
+        regs->insert("apsr_q",      aarch32_regclass_sys, aarch32_sys_apsr, 27, 1);
+        regs->insert("apsr_ge",     aarch32_regclass_sys, aarch32_sys_apsr, 16, 4);
+
+        // banked SPSR "saved program status register". The SPSR stores the value of the CPSR "current program status register"
+        // when an exception is taken so that it can be restored after handling the exception.  Each exception handling mode
+        // can access its own SPSR. User mode and System mode do not have an SPSR because they are not exception handling
+        // states.
+        regs->insert("spsr_hyp", aarch32_regclass_sys, aarch32_sys_spsr_hyp, 0, 32);
+        regs->insert("spsr_svc", aarch32_regclass_sys, aarch32_sys_spsr_svc, 0, 32);
+        regs->insert("spsr_abt", aarch32_regclass_sys, aarch32_sys_spsr_abt, 0, 32);
+        regs->insert("spsr_und", aarch32_regclass_sys, aarch32_sys_spsr_und, 0, 32);
+        regs->insert("spsr_mon", aarch32_regclass_sys, aarch32_sys_spsr_mon, 0, 32);
+        regs->insert("spsr_irq", aarch32_regclass_sys, aarch32_sys_spsr_irq, 0, 32);
+        regs->insert("spsr_fiq", aarch32_regclass_sys, aarch32_sys_spsr_fiq, 0, 32);
+
+        // When an instruction is being decoded and the AST is being produced, we don't know what exception handling mode the
+        // processor will be in when the instruction is executed. Therefore, ROSE creates a special "spsr" register whose read
+        // and write operations will require translation to the correct SPSR hardware register later.
+        regs->insert("spsr",           aarch32_regclass_sys, aarch32_sys_spsr,  0, 32);
+        regs->insert("spsr_control",   aarch32_regclass_sys, aarch32_sys_spsr,  0,  8); // control bits, called "SPSR_c" in ARM assembly,
+        regs->insert("spsr_extension", aarch32_regclass_sys, aarch32_sys_spsr,  8,  8); // extension bits, called "SPSR_x" in ARM assembly.
+        regs->insert("spsr_status",    aarch32_regclass_sys, aarch32_sys_spsr, 16,  8); // status bits, called "SPSR_s" in ARM assembly.
+        regs->insert("spsr_flags",     aarch32_regclass_sys, aarch32_sys_spsr, 24,  8); // flag bits N, Z, C, and V, called "SPSR_f" in ARM
+
+        // I don't know what these are, but they're vaguely documented for the MSR instruction.
+        regs->insert("ipsr",    aarch32_regclass_sys, aarch32_sys_ipsr,    0, 32);
+        regs->insert("iepsr",   aarch32_regclass_sys, aarch32_sys_iepsr,   0, 32);
+        regs->insert("iapsr",   aarch32_regclass_sys, aarch32_sys_iapsr,   0, 32);
+        regs->insert("eapsr",   aarch32_regclass_sys, aarch32_sys_eapsr,   0, 32);
+        regs->insert("psr",     aarch32_regclass_sys, aarch32_sys_psr,     0, 32);
+        regs->insert("msp",     aarch32_regclass_sys, aarch32_sys_msp,     0, 32);
+        regs->insert("psp",     aarch32_regclass_sys, aarch32_sys_psp,     0, 32);
+        regs->insert("primask", aarch32_regclass_sys, aarch32_sys_primask, 0, 32);
+        regs->insert("control", aarch32_regclass_sys, aarch32_sys_control, 0, 32);
+
+        // VFP11 system registers. The VFPv2 architecture describes the following three system registers that must be present
+        // in a VFP system.
+        regs->insert("fpsid",   aarch32_regclass_sys, aarch32_sys_fpsid, 0, 32); // floating-point system ID register
+        regs->insert("fpscr",   aarch32_regclass_sys, aarch32_sys_fpscr, 0, 32); // floating-point status and control register
+        regs->insert("fpexc",   aarch32_regclass_sys, aarch32_sys_fpexc, 0, 32); // floating-point exception register
+
+        // Various fields of SPSCR
+        regs->insert("fpscr_n",      aarch32_regclass_sys, aarch32_sys_fpscr, 31, 1); // set if less than
+        regs->insert("fpscr_z",      aarch32_regclass_sys, aarch32_sys_fpscr, 30, 1); // set if equal
+        regs->insert("fpscr_c",      aarch32_regclass_sys, aarch32_sys_fpscr, 29, 1); // set if equal, greater than, or unordered
+        regs->insert("fpscr_v",      aarch32_regclass_sys, aarch32_sys_fpscr, 28, 1); // set if unordered
+        regs->insert("fpscr_nzcv",   aarch32_regclass_sys, aarch32_sys_fpscr, 28, 4); // N, Z, C, and V bits
+        regs->insert("fpscr_dn",     aarch32_regclass_sys, aarch32_sys_fpscr, 25, 1); // default NaN mode enable bit
+        regs->insert("fpscr_fz",     aarch32_regclass_sys, aarch32_sys_fpscr, 24, 1); // flush-to-zero mode enable bit
+        regs->insert("fpscr_rmode",  aarch32_regclass_sys, aarch32_sys_fpscr, 22, 2); // rounding mode control
+        regs->insert("fpscr_stride", aarch32_regclass_sys, aarch32_sys_fpscr, 20, 2); // vector length and stride control
+        regs->insert("fpscr_len",    aarch32_regclass_sys, aarch32_sys_fpscr, 16, 3); // vector length and stride control
+        regs->insert("fpscr_ide",    aarch32_regclass_sys, aarch32_sys_fpscr, 15, 1); // input subnormal exception enable
+        regs->insert("fpscr_ixe",    aarch32_regclass_sys, aarch32_sys_fpscr, 12, 1); // inexact exception enable
+        regs->insert("fpscr_ufe",    aarch32_regclass_sys, aarch32_sys_fpscr, 11, 1); // underflow exception enable
+        regs->insert("fpscr_ofe",    aarch32_regclass_sys, aarch32_sys_fpscr, 10, 1); // overflow exception enable
+        regs->insert("fpscr_dze",    aarch32_regclass_sys, aarch32_sys_fpscr,  9, 1); // division by zero exception enable
+        regs->insert("fpscr_ioe",    aarch32_regclass_sys, aarch32_sys_fpscr,  8, 1); // invalid operation exception enable
+        regs->insert("fpscr_idc",    aarch32_regclass_sys, aarch32_sys_fpscr,  7, 1); // input subnormal cumulative flag
+        regs->insert("fpscr_ixc",    aarch32_regclass_sys, aarch32_sys_fpscr,  4, 1); // inexact cumulative flag
+        regs->insert("fpscr_ufc",    aarch32_regclass_sys, aarch32_sys_fpscr,  3, 1); // underflow cumulative flag
+        regs->insert("fpscr_ofc",    aarch32_regclass_sys, aarch32_sys_fpscr,  2, 1); // overflow cumulative flag
+        regs->insert("fpscr_dzc",    aarch32_regclass_sys, aarch32_sys_fpscr,  1, 1); // division by zero cumulative flag
+        regs->insert("fpscr_ioc",    aarch32_regclass_sys, aarch32_sys_fpscr,  0, 1); // invalid operation cumulative flag
+
+        // To support exceptional conditions, the VFP11 coprocessor provides two additional registers. These registers
+        // are designed to be used with the support code software available from ARM Limited. As a result, this
+        // documentation [from ARM] does not fully specify exception handling in all cases.
+        regs->insert("fpinst",  aarch32_regclass_sys, aarch32_sys_fpinst,  0, 32); // floating-point instruction register
+        regs->insert("fpinst2", aarch32_regclass_sys, aarch32_sys_fpinst2, 0, 32); // floatinglcpoint instruction register two
+
+        // The VFP11 coprocessor also provides two feature registers.
+        regs->insert("mvfr0",   aarch32_regclass_sys, aarch32_sys_mvfr0, 0, 32); // media and VFP feature register 0
+        regs->insert("mvfr1",   aarch32_regclass_sys, aarch32_sys_mvfr1, 0, 32); // media and VFP feature register 1
+
+        // MVFR2, mediao, and VFP feature register 2. Describes the features provided by the AArch32 Advanced SIMD and
+        // Floating-point implementation. Must be interpreted with MVFR0 and MVFR1. This register is present only when
+        // AArch32 is supported at any exception level. Otherwise, direct accesses to MVFR2 are undefined. Implemented
+        // only if the implementation includes Advanced SIMD and floating-point instructions.
+        regs->insert("mvfr2",   aarch32_regclass_sys, aarch32_sys_mvfr2, 0, 32);
+
+        // Thumb IT instructions
+        regs->insert("itstate", aarch32_regclass_sys, aarch32_sys_itstate, 0, 32);
+
+        // NEON and VFP use the same extension register bank. This is distinct from the ARM register bank. The extension
+        // register bank is a colleciton of registers which can be accesed as either 32-bit, 64-bit, or 128-bit registers,
+        // depending on whether the instruction is NEON or VFP.
+        //
+        // VFP views of the extension register bank. In VFPv3 and VFPv3-FP16 you can view the extension register bank as:
+        //   * Thirty-two 64-bit registers, D0-D31
+        //   * Thirty-two 32-bit registers, S0-S31. Only half of the register bank is accessible in this view.
+        //   * A combination of registers from teh above views.
+        //
+        // In VFPv2, VFPv3-D16, and VFPv3-D16-FP16, you can view the extension reigster bank as:
+        //   * Sixteen 64-bit registers, D0-D15
+        //   * Thirty-two 32-bit registers, S0-S31
+        //   A A combination of registers from the above views
+        //
+        // In VFP, 64-bit registers are called double-precison registers and can contain double-precision floating-point
+        // values. 32-bit registers are called single-precision registers and can contain either a single-precision or two
+        // half-precision floating-point values.
+        //
+        for (size_t i = 0; i < 32; ++i) {
+            regs->insert("q" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 128);
+            regs->insert("d" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 64);
+            regs->insert("s" + boost::lexical_cast<std::string>(i), aarch32_regclass_ext, i, 0, 32);
+        }
+
+        // Coprocessor registers named "cr0" through "cr15", although these names don't actually appear in the documentation.
+        for (unsigned i = 0; i < 16; ++i)
+            regs->insert("cr" + boost::lexical_cast<std::string>(i), aarch32_regclass_coproc, i, 0, 32);
+
+        // Debug registers. There are actually up to 1024 of these registers, but I'm not clear on how they're named.
+        regs->insert("didr",  aarch32_regclass_debug, aarch32_debug_didr,  0, 32);
+        regs->insert("wfar",  aarch32_regclass_debug, aarch32_debug_wfar,  0, 32);
+        regs->insert("vcr",   aarch32_regclass_debug, aarch32_debug_vcr,   0, 32);
+        regs->insert("ecr",   aarch32_regclass_debug, aarch32_debug_ecr,   0, 32);
+        regs->insert("dsccr", aarch32_regclass_debug, aarch32_debug_dsccr, 0, 32);
+        regs->insert("dsmcr", aarch32_regclass_debug, aarch32_debug_dsmcr, 0, 32);
+        regs->insert("dtrrx", aarch32_regclass_debug, aarch32_debug_dtrrx, 0, 32);
+        regs->insert("itr",   aarch32_regclass_debug, aarch32_debug_itr,   0, 32);
+        regs->insert("dscr",  aarch32_regclass_debug, aarch32_debug_dscr,  0, 32);
+        regs->insert("dtrtx", aarch32_regclass_debug, aarch32_debug_dtrtx, 0, 32);
+        regs->insert("drcr",  aarch32_regclass_debug, aarch32_debug_drcr,  0, 32);
+        for (unsigned i = 0; i < 16; ++i) {
+            regs->insert("bvr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_bvr0+i, 0, 32);
+            regs->insert("bcr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_bcr0+i, 0, 32);
+            regs->insert("wvr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_wvr0+i, 0, 32);
+            regs->insert("wcr" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug, aarch32_debug_wcr0+i, 0, 32);
+        }
+        regs->insert("oslar", aarch32_regclass_debug, aarch32_debug_oslar, 0, 32);
+        regs->insert("oslsr", aarch32_regclass_debug, aarch32_debug_oslsr, 0, 32);
+        regs->insert("ossrr", aarch32_regclass_debug, aarch32_debug_ossrr, 0, 32);
+        regs->insert("prcr",  aarch32_regclass_debug, aarch32_debug_prcr,  0, 32);
+        regs->insert("prsr",  aarch32_regclass_debug, aarch32_debug_prsr,  0, 32);
+        regs->insert("itctrl", aarch32_regclass_debug, aarch32_debug_itctrl, 0, 32);
+        regs->insert("claimset", aarch32_regclass_debug, aarch32_debug_claimset, 0, 32);
+        regs->insert("claimclr", aarch32_regclass_debug, aarch32_debug_claimclr, 0, 32);
+        regs->insert("lar",   aarch32_regclass_debug, aarch32_debug_lar,   0, 32);
+        regs->insert("lsr",   aarch32_regclass_debug, aarch32_debug_lsr,   0, 32);
+        regs->insert("authstatus", aarch32_regclass_debug, aarch32_debug_authstatus, 0, 32);
+        regs->insert("devid", aarch32_regclass_debug, aarch32_debug_devid, 0, 32);
+        regs->insert("devtype", aarch32_regclass_debug, aarch32_debug_devtype, 0, 32);
+        for (unsigned i = 0; i < 8; ++i) {
+            regs->insert("peripheralid" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug,
+                         aarch32_debug_peripheralid0+i, 0, 32);
+        }
+        for (unsigned i = 0; i < 4; ++i) {
+            regs->insert("componentid" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug,
+                         aarch32_debug_componentid0+i, 0, 32);
+        }
     }
     return regs;
 }

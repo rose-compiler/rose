@@ -16,14 +16,20 @@ procedure Run_Asis_Tool_2 is
       File_Name  : aliased GNAT.Strings.String_Access; -- Initialized
       GNAT_Home  : aliased GNAT.Strings.String_Access; -- Initialized
       Output_Dir : aliased GNAT.Strings.String_Access; -- Initialized
+      Process_Predefined_Units
+                 : aliased Boolean := False;
+      Process_Implementation_Units
+                 : aliased Boolean := False;
    end record;
 
    Options : aliased Options_Record; -- Initialized
    Tool    : Asis_Tool_2.Tool.Class; -- Initialized
 
-   procedure Log (Message : in String) is
+   procedure Log (Message : in String; Debug : in Boolean) is
    begin
-      Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+      if Debug then
+        Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+      end if;
    end;
 
    procedure Get_Options is
@@ -40,10 +46,16 @@ procedure Run_Asis_Tool_2 is
       GCL.Define_Switch (Options.Config, Options.Output_Dir'Access,
                          "-o:", Long_Switch => "--output_dir=",
                          Help => "Output directory");
+      GCL.Define_Switch (Options.Config, Options.Process_Predefined_Units'Access,
+                         "-p", Long_Switch => "--process_predefined_units",
+                         Help =>"Process Ada predefined language environment units");
+      GCL.Define_Switch (Options.Config, Options.Process_Implementation_Units'Access,
+                         "-i", Long_Switch => "--process_implementation_units",
+                         Help =>"Process implementation specific library units");
       GCL.Getopt (Options.Config);
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         Log ("*** GCL raised Exit_From_Command_Line.  Program will exit now.");
+         Log ("*** GNAT.Command_Line raised Exit_From_Command_Line.  Program will exit now.",  Options.Debug);
          raise;
    end Get_Options;
 
@@ -55,13 +67,15 @@ procedure Run_Asis_Tool_2 is
 
 begin
    Get_Options;
-   Log ("BEGIN");
+   Log ("BEGIN", Options.Debug);
    dot_asisinit;
    Tool.Process
-     (File_Name  => Options.File_Name.all,
-      Output_Dir => Options.Output_Dir.all,
-      GNAT_Home  => Options.GNAT_Home.all,
-      Debug      => Options.Debug);
+     (File_Name                    => Options.File_Name.all,
+      Output_Dir                   => Options.Output_Dir.all,
+      GNAT_Home                    => Options.GNAT_Home.all,
+      Process_Predefined_Units     => Options.Process_Predefined_Units,
+      Process_Implementation_Units => Options.Process_Implementation_Units,
+      Debug                        => Options.Debug);
    dot_asisfinal;
-   Log ("END");
+   Log ("END", Options.Debug);
 end Run_Asis_Tool_2;

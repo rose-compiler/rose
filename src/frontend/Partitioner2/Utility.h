@@ -1,8 +1,8 @@
 #ifndef ROSE_Partitioner2_Utility_H
 #define ROSE_Partitioner2_Utility_H
 
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
@@ -199,6 +199,7 @@ private:
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
 AddressIntervalParser::Ptr addressIntervalParser(std::vector<AddressInterval> &storage);
+AddressIntervalParser::Ptr addressIntervalParser(AddressIntervalSet &storage);
 AddressIntervalParser::Ptr addressIntervalParser();
 
 /** Trigger based on number of times called. */

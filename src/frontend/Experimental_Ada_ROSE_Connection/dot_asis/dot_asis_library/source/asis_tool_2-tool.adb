@@ -5,18 +5,26 @@ with Asis.Implementation;
 with Asis.Extensions;
 with Gnat.OS_Lib;
 
+with Asis_Tool_2.Unit;
+
 package body Asis_Tool_2.Tool is
 
    ------------
    -- EXPORTED:
    ------------
    procedure Process
-     (This       : in out Class;
-      File_Name  : in     String;
-      Output_Dir : in     String := "";
-      GNAT_Home  : in     String;
-      Debug      : in     Boolean)
+     (This                         : in out Class;
+      File_Name                    : in     String;
+      Output_Dir                   : in     String := "";
+      GNAT_Home                    : in     String;
+      Process_Predefined_Units     : in     Boolean;
+      Process_Implementation_Units : in     Boolean;
+      Debug                        : in     Boolean)
    is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+
       package AD renames Ada.Directories;
       Full_File_Name   : constant String := AD.Full_Name (File_Name);
       Source_File_Dir  : constant String :=
@@ -30,17 +38,17 @@ package body Asis_Tool_2.Tool is
       Real_Output_Dir  : constant String :=
         (if Output_Dir = "" then AD.Current_Directory else Output_Dir);
 
-      procedure Log (Message : in String) is
-      begin
-         Put_Line ("Asis_Tool_2.Tool.Process:  " & message);
-      end;
-
       -- LEAKS (only intended to be called once per program execution):
       procedure Init_And_Process_Context is
+         Unit_Options : Unit.Options_Record; -- Initialized
       begin
          -- -dall - All the ASIS-for-GNAT debug flags are set ON
          -- Asis.Implementation.Initialize (Parameters => "-dall");
          Asis.Implementation.Initialize;
+         Unit_Options.Process_If_Origin_Is (Asis.A_Predefined_Unit) :=
+           Process_Predefined_Units;
+         Unit_Options.Process_If_Origin_Is (Asis.An_Implementation_Unit) :=
+           Process_Implementation_Units;
          This.Outputs.Output_Dir := ASU.To_Unbounded_String (Real_Output_Dir);
          This.Outputs.Text := new Indented_Text.Class;
          This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
@@ -48,10 +56,13 @@ package body Asis_Tool_2.Tool is
          This.Outputs.A_Nodes := new A_Nodes.Class;
          -- TODO: use File_Name:
          This.My_Context.Process (Tree_File_Name => Tree_File_Name,
+                                  Unit_Options   => Unit_Options,
                                   Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
            (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
-         This.Outputs.A_Nodes.Print_Stats;
+         if Asis_Tool_2.Log_On then
+           This.Outputs.A_Nodes.Print_Stats;
+         end if;
          Asis.Implementation.Finalize;
       end Init_And_Process_Context;
 
@@ -79,6 +90,7 @@ package body Asis_Tool_2.Tool is
          3 => Relocate_build_tree'Unchecked_Access);
    begin
       Asis_Tool_2.Trace_On := Debug;
+      Asis_Tool_2.Log_On := Debug;
       Log ("BEGIN");
       Log ("File_Name  => """ & File_Name & """");
       Log ("Output_Dir => """ & Output_Dir & """");
@@ -113,6 +125,15 @@ package body Asis_Tool_2.Tool is
          raise External_Error with "*** Asis.Extensions.Compile FAILED. Exiting.";
       end if;
       Log ("END");
+   exception
+      when X : External_Error =>
+         Log_Exception (X);
+         Log ("Reraising");
+         raise;
+      when X: others =>
+         Log_Exception (X);
+         Log ("Raising Internal_Error");
+         raise Internal_Error;
    end Process;
 
    ------------
@@ -120,9 +141,17 @@ package body Asis_Tool_2.Tool is
    ------------
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Nodes_Struct is
+      return a_nodes_h.Nodes_Struct
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Get_Nodes";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
    begin
       return This.Outputs.A_Nodes.Get_Nodes;
+   exception
+      when X : others =>
+         Log_Exception (X);
+         raise Internal_Error;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

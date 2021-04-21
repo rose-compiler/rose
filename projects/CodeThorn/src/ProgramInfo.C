@@ -3,6 +3,9 @@
 #include "ProgramInfo.h"
 #include <iostream>
 #include <sstream>
+#include <iomanip>
+#include "FunctionCallMapping.h"
+#include "CppStdUtilities.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -10,10 +13,33 @@ using namespace std;
 ProgramInfo::ProgramInfo(ProgramAbstractionLayer* pal) {
   root=pal->getRoot();
   _programAbstractionLayer=pal;
+  initCount();
 }
 
 ProgramInfo::ProgramInfo(SgProject* root) {
   this->root=root;
+  initCount();
+}
+
+void ProgramInfo::initCount() {
+  for(int i=0;i<Element::NUM;i++) {
+    count[i]=0;
+  }
+  countNameMap[Element::numGlobalVars]      ="Global var decls  ";
+  countNameMap[Element::numLocalVars]       ="Local var decls   ";
+  countNameMap[Element::numFunDefs]         ="Function defs     ";
+  countNameMap[Element::numFunCall]         ="Function calls    ";
+  countNameMap[Element::numFunPtrCall]      ="Function ptr calls";
+  countNameMap[Element::numForLoop]         ="For loops         ";
+  countNameMap[Element::numWhileLoop]       ="While loops       ";
+  countNameMap[Element::numDoWhileLoop]     ="Do-While loops    ";
+  countNameMap[Element::numConditionalExp]  ="Conditional ops   ";
+  countNameMap[Element::numLogicOrOp]       ="Logic-or ops      ";
+  countNameMap[Element::numLogicAndOp]      ="Logic-and ops     ";
+  countNameMap[Element::numArrayAccess]     ="Array access ops  ";
+  countNameMap[Element::numArrowOp]         ="Arrow ops         ";
+  countNameMap[Element::numDerefOp]         ="Deref ops         ";
+  countNameMap[Element::numStructAccess]    ="Dot ops           ";
 }
 
 void ProgramInfo::compute() {
@@ -21,30 +47,43 @@ void ProgramInfo::compute() {
   RoseAst ast(root);
   _validData=true;
   for (auto node : ast) {
-    if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
-      numFunCall++;
-      _functionCallNodes.push_back(fc);
+    if(auto funDef=isSgFunctionDefinition(node)) {
+      count[numFunDefs]++;
+      std::set<SgVariableDeclaration*> localVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
+      count[numLocalVars]+=localVarDecls.size();
+    } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
+      if(FunctionCallMapping::isFunctionPointerCall(fc)) {
+	count[numFunPtrCall]++;
+	_functionPtrCallNodes.push_back(fc);
+      } else {
+	count[numFunCall]++;
+	_functionCallNodes.push_back(fc);
+      }
     } else if(isSgWhileStmt(node)) {
-      numWhileLoop++;
+      count[numWhileLoop]++;
     } else if(isSgDoWhileStmt(node)) {
-      numDoWhileLoop++;
+      count[numDoWhileLoop]++;
     } else if(isSgForStatement(node)) {
-      numForLoop++;
+      count[numForLoop]++;
     } else if(isSgOrOp(node)) {
-      numLogicOrOp++;
+      count[numLogicOrOp]++;
     } else if(isSgAndOp(node)) {
-      numLogicAndOp++;
+      count[numLogicAndOp]++;
     } else if(isSgConditionalExp(node)) {
-      numConditionalExp++;
+      count[numConditionalExp]++;
     } else if(isSgArrowExp(node)) {
-      numArrowOp++;
+      count[numArrowOp]++;
     } else if(isSgPointerDerefExp(node)) {
-      numDerefOp++;
+      count[numDerefOp]++;
     } else if(isSgDotExp(node)) {
-      numStructAccess++;
+      count[numStructAccess]++;
     } else if(SgNodeHelper::isArrayAccess(node)) {
-      numArrayAccess++;
+      count[numArrayAccess]++;
     }
+  }
+  if(SgProject* proj=isSgProject(root)) {
+    std::list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(proj);
+    count[numGlobalVars]=globalVars.size();
   }
 }
 
@@ -53,20 +92,61 @@ void ProgramInfo::printDetailed() {
   cout<<toStringDetailed();
 }
 
+void ProgramInfo::printCompared(ProgramInfo* other) {
+  ROSE_ASSERT(_validData);
+  cout<<toStringCompared(other);
+}
+
 std::string ProgramInfo::toStringDetailed() {
+  return toStringCompared(0);
+}
+
+std::string ProgramInfo::toCsvStringDetailed() {
+  return toCsvStringDetailed(0);
+}
+
+std::string ProgramInfo::toCsvStringDetailed(VariableIdMappingExtended* vid) {
+  ROSE_ASSERT(_validData);
+  return toCsvStringCodeStats()+toCsvStringTypeStats(vid)+'\n';
+}
+
+std::string ProgramInfo::toCsvStringCodeStats() {
   ROSE_ASSERT(_validData);
   stringstream ss;
-  ss<<"Function calls  : "<<numFunCall<<endl;
-  ss<<"While loops     : "<<numWhileLoop<<endl;
-  ss<<"Do-While loops  : "<<numDoWhileLoop<<endl;
-  ss<<"For loops       : "<<numForLoop<<endl;
-  ss<<"Logic-or ops    : "<<numLogicOrOp<<endl;
-  ss<<"Logic-and ops   : "<<numLogicAndOp<<endl;
-  ss<<"Conditional ops : "<<numConditionalExp<<endl;
-  ss<<"Arrow ops       : "<<numArrowOp<<endl;
-  ss<<"Dereference ops : "<<numDerefOp<<endl;
-  ss<<"Array access ops: "<<numArrayAccess<<endl;
-  ss<<"Dot ops         : "<<numStructAccess<<endl;
+  for(int i=0;i<Element::NUM;i++) {
+    if(i!=0)
+      ss<<",";
+    ss<<std::right<<std::setw(5)<<count[i];
+  }
+  return ss.str();
+}
+
+std::string ProgramInfo::toCsvStringTypeStats(VariableIdMappingExtended* vid) {
+  if(vid) {
+    // global + local:
+    // * max total variables + struct members + array elements
+    // * max array size (elements*element size)
+    // * max struct size (struct elements)
+    return "";
+  } else {
+    return "";
+  }
+}
+
+bool ProgramInfo::toCsvFileDetailed(std::string fileName, std::string mode) {
+  return CppStdUtilities::writeFile(mode, fileName, toCsvStringDetailed());
+}
+
+std::string ProgramInfo::toStringCompared(ProgramInfo* other) {
+  ROSE_ASSERT(_validData);
+  stringstream ss;
+  for(int i=0;i<Element::NUM;i++) {
+    ss<<countNameMap[static_cast<Element>(i)]<<": "<<std::right<<std::setw(8)<<count[i];
+    if(other) {
+      ss<<" : "<<std::right<<std::setw(8)<<other->count[i];
+    }
+    ss<<endl;
+  }
   return ss.str();
 }
 

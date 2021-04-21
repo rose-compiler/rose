@@ -1,7 +1,9 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #include "broadway.h"
 #include <assert.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -79,3 +81,4 @@ void pointerRuleAnn::lookup(procedureAnn * procedure,
   // -- Looking up the effects is handled by procedureAnn
 }
 
+#endif

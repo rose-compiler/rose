@@ -13,6 +13,7 @@ package Asis_Tool_2.Element is
    type Class is tagged private; -- Initialized
 
    -- Process an element and all of its components:
+   -- Raises Internal_Error for unhandled internal exceptions.
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
@@ -77,7 +78,9 @@ package Asis_Tool_2.Element is
 
 private
 
-   Module_Name : constant String := "Asis_Tool_2.Element";
+   -- For debuggng:
+   Parent_Name : constant String := Module_Name;
+   Module_Name : constant String := Parent_Name & ".Element";
 
    package Element_ID_Lists is new
      Ada.Containers.Doubly_Linked_Lists
@@ -142,9 +145,26 @@ private
      (This  : in out Class;
       Value : in     String);
 
-   -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
+   type Ada_Versions is
+     (Ada_83,
+      Ada_95,
+      Ada_2005,
+      Ada_2012,
+      Ada_2020);
+   pragma Ordered (Ada_Versions);
+
+   Supported_Ada_Version : constant Ada_Versions := Ada_95;
+
+   -- If Ada_Version <= Supported_Ada_Version then:
+   --    Add to dot label: ASIS_PROCESSING =>
+   --      "NOT_IMPLEMENTED_COMPLETELY"
+   --    and increment the Not_Implemented count
+   -- Otherwise:
+   --    Add to dot label: ASIS_PROCESSING =>
+   --      Ada_Version & "_FEATURE_NOT_IMPLEMENTED_IN_" & Supported_Ada_Version
    procedure Add_Not_Implemented
-     (This : in out Class);
+     (This        : in out Class;
+      Ada_Version : in     Ada_Versions := Supported_Ada_Version);
 
    procedure Add_Dot_Edge
      (This  : in out Class;

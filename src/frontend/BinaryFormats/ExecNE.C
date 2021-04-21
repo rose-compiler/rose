@@ -1,6 +1,6 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -15,9 +15,7 @@ using namespace Rose::Diagnostics;
 std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)
    {
      printf("Error: operator<< not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return os;
+     ROSE_ABORT();
    }
    
 std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iord_type & x)

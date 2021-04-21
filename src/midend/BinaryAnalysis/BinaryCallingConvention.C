@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BinaryCallingConvention.h>
 
@@ -39,7 +39,14 @@ initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Dictionary&
-dictionaryArm64() {
+dictionaryAarch32() {
+    static Dictionary dict;
+    // FIXME[Robb Matzke 2020-12-23]: none defined yet
+    return dict;
+}
+
+const Dictionary&
+dictionaryAarch64() {
     static Dictionary dict;
     // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
     return dict;
@@ -769,7 +776,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
-    regDict_ = cpu_->get_register_dictionary();
+    regDict_ = cpu_->registerDictionary();
 
     // Build the initial state
     StatePtr initialState = xfer.initialState();
@@ -777,8 +784,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     initialRegState->initialize_large();
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
-    initialRegState->writeRegister(SP, cpu_->get_operators()->number_(SP.nBits(), initialStackPointer),
-                                   cpu_->get_operators().get());
+    initialRegState->writeRegister(SP, cpu_->operators()->number_(SP.nBits(), initialStackPointer),
+                                   cpu_->operators().get());
 
     // Run data flow analysis
     bool converged = true;
@@ -835,7 +842,7 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     RegisterStateGenericPtr initialRegs = RegisterStateGeneric::promote(initialState->registerState());
     RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
 
     InputOutputPropertySet props;
     props.insert(IO_READ_BEFORE_WRITE);
@@ -874,7 +881,7 @@ Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePt
     outputStackParameters_.clear();
 
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
     SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
@@ -891,16 +898,12 @@ Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePt
 void
 Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->get_operators();
+    RiscOperatorsPtr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
     SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
-    if (stackDelta->is_number() && stackDelta->get_width()<=64) {
-        stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);
-    } else {
-        stackDelta_ = Sawyer::Nothing();
-    }
+    stackDelta_ = stackDelta->toSigned();
 }
 
 void

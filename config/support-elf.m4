@@ -20,7 +20,7 @@ AC_DEFUN([ROSE_SUPPORT_ELF],
         LIBELF_PREFIX=
         AC_CHECK_LIB(elf, elf_begin,
                      [AC_DEFINE(ROSE_HAVE_LIBELF, [], [Defined when libelf is available.])
-                      ROSE_HAVE_LIBELF=yes
+                      ROSE_HAVE_LIBELF=system
                       LIBELF_CPPFLAGS=
                       LIBELF_LDFLAGS="-lelf"])
     elif test -n "$with_elf" -a "$with_elf" != no; then
@@ -28,7 +28,7 @@ AC_DEFUN([ROSE_SUPPORT_ELF],
         # ROSE requires the use of a shared library for libelf
         AC_CHECK_FILE(["$LIBELF_PREFIX/lib/libelf.so"],
                       [AC_DEFINE(ROSE_HAVE_LIBELF, [], [Defined when libelf is available.])
-                       ROSE_HAVE_LIBELF=yes
+                       ROSE_HAVE_LIBELF="$LIBELF_PREFIX"
                        LIBELF_CPPFLAGS="-I$LIBELF_PREFIX/include"
                        LIBELF_LDFLAGS="-L$LIBELF_PREFIX/lib -lelf"
                        ])

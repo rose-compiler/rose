@@ -1,22 +1,13 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/LinuxExecutor.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
-#if 0 /* __cplusplus >= 201103L */
-#include <boost/process.hpp>
-#elif defined(__linux__)
-#include <sys/wait.h>
+#include <boost/lexical_cast.hpp>
+#include <fcntl.h>
 #include <sys/personality.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/wait.h>
 #include <unistd.h>
-#else
-// nothing
-#endif
-
-
-#include <boost/lexical_cast.hpp>
 
 #if BOOST_VERSION >= 105300
 #include <boost/atomic.hpp>
@@ -24,19 +15,9 @@
 
 #include "io-utility.h"
 
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::ConcreteExecutor::Result)
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result)
-#endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
-
-const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
-const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
-
-#if defined(__linux__)
 
 /*****
  **  LinuxExecutors work best on Linux
@@ -74,7 +55,7 @@ std::string nameCompletionStatus(int processDisposition)
 }
 
 LinuxExecutor::Result::Result(double rank, int exitStatus)
-: ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
+: ConcreteExecutorResult(rank), exitStatus_(exitStatus)
 {
   exitKind_ = nameCompletionStatus(exitStatus_);
 }
@@ -259,12 +240,14 @@ createLinuxResult(int errcode, std::string outstr, std::string errstr, double ra
 LinuxExecutor::LinuxExecutor(const Database::Ptr &db)
     : ConcreteExecutor(db), useAddressRandomization_(false) {}
 
+LinuxExecutor::~LinuxExecutor() {}
+
 LinuxExecutor::Ptr
 LinuxExecutor::instance(const Database::Ptr &db) {
     return Ptr(new LinuxExecutor(db));
 }
 
-LinuxExecutor::Result*
+ConcreteExecutorResult*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   namespace bstfs = boost::filesystem;
@@ -333,32 +316,10 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   return createLinuxResult(errcode, outstr, errstr, rank);
 }
 
-#else // !defined (__linux__)
-
-LinuxExecutor::Result::Result(double rank, int exitStatus)
-: ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
-{
-  ROSE_ASSERT(!"NOT_LINUX");
-}
-
-LinuxExecutor::Result*
-LinuxExecutor::execute(const TestCase::Ptr& tc)
-{
-  ROSE_ASSERT(!"NOT_LINUX");
-}
-
-LinuxExecutor::LinuxExecutor(const Database::Ptr &db)
-    : ConcreteExecutor(db), useAddressRandomization_(false) {}
-
-LinuxExecutor::Ptr
-LinuxExecutor::instance(const Database::Ptr &db) {
-    return Ptr(new LinuxExecutor(db));
-}
-
-#endif
-
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result);
 
 #endif

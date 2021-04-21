@@ -28,7 +28,7 @@ int main() {
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
         auto executor = LinuxExecutor::instance(db);
-        auto result = executor->execute(testCase);      // leaked?
+        auto result = dynamic_cast<LinuxExecutor::Result*>(executor->execute(testCase)); // leaked?
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status));
         db->saveConcreteResult(testCase, result);

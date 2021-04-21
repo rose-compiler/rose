@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include <AsmUnparser_compat.h>
@@ -395,8 +395,8 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
-    ASSERT_require2(initialStackPointer->get_width() % 8 == 0, "stack pointer width is not an integral number of bytes");
-    int64_t wordNBytes = initialStackPointer->get_width() / 8;
+    ASSERT_require2(initialStackPointer->nBits() % 8 == 0, "stack pointer width is not an integral number of bytes");
+    int64_t wordNBytes = initialStackPointer->nBits() / 8;
     ASSERT_require2(wordNBytes>0, "overflow");
 
     // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
@@ -407,16 +407,16 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     OffsetAddress offsetAddresses;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
-        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
-        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->get_width() / 8;
+        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->address());
+        ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
         if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
             Variables::OffsetInterval location = Variables::OffsetInterval::baseSize(*stackOffset, nBytes);
             StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
             cellCoalescer.insert(location, meta);
             for (size_t i=0; i<nBytes; ++i) {
-                BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
+                BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->nBits(), i));
                 offsetAddresses.insert(*stackOffset+i, byteAddr);
             }
         }
@@ -498,20 +498,18 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
     SymbolicAddresses symbolicAddrs;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
-        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->get_width() / 8;
+        ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
-        if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
-            rose_addr_t va = cell->get_address()->get_number();
-
+        if (auto va = cell->address()->toUnsigned()) {
             // There may have been many writers for an address. Rather than write an algorithm to find the largest sets of
             // addresses written by the same writer, we'll just arbitrarily choose the least address.
             const BaseSemantics::MemoryCell::AddressSet &allWriters = cell->getWriters();
             rose_addr_t leastWriter = 0;
             if (!allWriters.isEmpty())
                 leastWriter = allWriters.least();
-            stackWriters.insert(AddressInterval::baseSize(va, nBytes), leastWriter);
-            symbolicAddrs.insert(va, cell->get_address());
+            stackWriters.insert(AddressInterval::baseSize(*va, nBytes), leastWriter);
+            symbolicAddrs.insert(*va, cell->address());
         }
     }
 
@@ -535,9 +533,11 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 // Construct a new state from scratch
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
+    ASSERT_not_null(cpu_);
+    cpu_->initializeState(newState);
 
     BaseSemantics::RegisterStateGenericPtr regState =
         BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
@@ -545,20 +545,17 @@ TransferFunction::initialState() const {
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
     // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
-#if 0 // [Robb Matzke 2015-01-14]
-    regState->initialize_large();
-#else
     regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
-#endif
+
     return newState;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
 BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
-    const RegisterDictionary *regDict = cpu_->get_register_dictionary();
+    const RegisterDictionary *regDict = cpu_->registerDictionary();
     ops->currentState(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
@@ -608,9 +605,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 
             // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
             // stack delta analysis, and only if the default CC is caller-cleanup.
-            if (!stackDelta || !stackDelta->is_number() || stackDelta->get_width() > 64) {
+            if (!stackDelta || !stackDelta->toUnsigned()) {
                 if (ccDefn->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
-                    stackDelta = ops->number_(origStackPtr->get_width(), ccDefn->nonParameterStackSize());
+                    stackDelta = ops->number_(origStackPtr->nBits(), ccDefn->nonParameterStackSize());
                     if (ccDefn->stackDirection() == CallingConvention::GROWS_UP)
                         stackDelta = ops->negate(stackDelta);
                 }
@@ -622,7 +619,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         }
 
         BaseSemantics::SValuePtr newStack;
-        if (stackDelta && stackDelta->is_number() && stackDelta->get_width() <= 64) {
+        if (stackDelta && stackDelta->toUnsigned()) {
             newStack = ops->add(origStackPtr, stackDelta);
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.

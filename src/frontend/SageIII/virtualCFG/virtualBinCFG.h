@@ -1,7 +1,7 @@
 #ifndef VIRTUAL_BIN_CFG_H
 #define VIRTUAL_BIN_CFG_H
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <stdint.h>
 #include "rosedll.h"
@@ -62,10 +62,16 @@ namespace VirtualBinCFG {
 
     class CFGNode {
         SgAsmInstruction *node;
+#if 0 // [Robb Matzke 2021-03-17]: unused
         const AuxiliaryInformation *info;
+#endif
     public:
         explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation *info = NULL)
-            : node(node), info(info) {
+            : node(node)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+              , info(info)
+#endif
+            {
 #ifdef _MSC_VER
 //#define __builtin_constant_p(exp) (0)
 #endif
@@ -96,10 +102,15 @@ namespace VirtualBinCFG {
 
     class CFGEdge {
         CFGNode src, tgt;
+#if 0 // [Robb Matzke 2021-03-17]: unused
         const AuxiliaryInformation *info;
+#endif
     public:
         CFGEdge(CFGNode src, CFGNode tgt, const AuxiliaryInformation *info = NULL)
-            : src(src), tgt(tgt), info(info)
+            : src(src), tgt(tgt)
+#if 0 // [Robb Matzke 2021-03-17]: unused
+              , info(info)
+#endif
             {}
         std::string toString() const;                   // Pretty string for Dot node labels, etc.
         std::string toStringForDebugging() const;       // String for debugging graphs

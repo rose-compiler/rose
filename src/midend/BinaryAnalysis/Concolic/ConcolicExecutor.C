@@ -1,9 +1,13 @@
 #include <sage3basic.h>
-#include <BinaryConcolic.h>
+#include <Concolic/ConcolicExecutor.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
 #include <CommandLine.h>
+#include <Concolic/Database.h>
+#include <Concolic/Specimen.h>
+#include <Concolic/SystemCall.h>
+#include <Concolic/TestCase.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
@@ -257,13 +261,26 @@ RiscOperators::systemCallReturnValue() {
     }
 }
 
+IS::BaseSemantics::SValuePtr
+RiscOperators::systemCallReturnValue(const IS::BaseSemantics::SValuePtr &retval) {
+    // FIXME[Robb Matzke 2020-10-07]: Assumes x86
+    if (32 == partitioner_.instructionProvider().wordSize()) {
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
+        writeRegister(AX, retval);
+    } else {
+        ASSERT_require(64 == partitioner_.instructionProvider().wordSize());
+        const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("rax");
+        writeRegister(AX, retval);
+    }
+    return retval;
+}
+
 void
 RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet.
     systemCalls().back().arguments.resize(1);
-    if (status->is_number()) {
-        int exitValue = status->get_number();
-        mlog[INFO] <<"specimen exiting with " <<exitValue <<"\n";
+    if (auto exitValue = status->toSigned()) {
+        mlog[INFO] <<"specimen exiting with " <<*exitValue <<"\n";
         throw Exit(SValue::promote(status));
     } else {
         mlog[INFO] <<"specimen exiting with unknown value\n";
@@ -276,7 +293,7 @@ RiscOperators::doGetuid() {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet, so we can't get a return value.
     // However, if the return value is intended to be an input, we can do that now.
     systemCalls().back().arguments.resize(0);
-    systemCalls().back().returnValue = undefined_(partitioner_.instructionProvider().wordSize());
+    systemCalls().back().returnValue = systemCallReturnValue(undefined_(partitioner_.instructionProvider().wordSize()));
     inputVariables_.insertSystemCallReturn(systemCalls().size() - 1, SValue::promote(systemCalls().back().returnValue)->get_expression());
 }
 
@@ -289,6 +306,7 @@ RiscOperators::systemCall() {
     // registers are always present, and there's a maximum number of arguments possible, we'll just save all possible arguments
     // even if the syscall uses only some.  Linux system calls have at most six arguments.
     SystemCall sc;
+    sc.callSite = currentInstruction()->get_address();
     sc.functionNumber = systemCallFunctionNumber();
     for (size_t i = 0; i < 6; ++i)
         sc.arguments.push_back(systemCallArgument(i));
@@ -296,9 +314,9 @@ RiscOperators::systemCall() {
     mlog[DEBUG] <<"encountered " <<sc;
 
     // A few system calls are handled directly.
-    if (sc.functionNumber->is_number()) {
+    if (auto fn = sc.functionNumber->toUnsigned()) {
         if (32 == partitioner_.instructionProvider().wordSize()) {
-            switch (sc.functionNumber->get_number()) {
+            switch (*fn) {
                 case 1:                                 // exit
                 case 252:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -307,7 +325,7 @@ RiscOperators::systemCall() {
             }
         } else {
             ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
-            switch (sc.functionNumber->get_number()) {
+            switch (*fn) {
                 case 60:                                // exit
                 case 231:                               // exit_group
                     return doExit(systemCallArgument(0));
@@ -323,7 +341,7 @@ IS::BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Read the register's value symbolically, and if we don't have a value then read it concretely and use the concrete value
     // to update the symbolic state.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
     SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::readRegister(reg, dflt);
@@ -332,7 +350,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SVa
 IS::BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Return the register's symbolic value if it exists, else the concrete value.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
     SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::peekRegister(reg, dflt);
@@ -343,11 +361,10 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dfltUnused, const IS::BaseSemantics::SValuePtr &cond) {
     // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
     // update the symbolic state. However, we can only read it concretely if the address is a constant.
-    if (addr->is_number()) {
-        rose_addr_t va = addr->get_number();
-        size_t nBytes = dfltUnused->get_width() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(va, nBytes, ByteOrder::ORDER_LSB));
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    if (auto va = addr->toUnsigned()) {
+        size_t nBytes = dfltUnused->nBits() / 8;
+        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(*va, nBytes, ByteOrder::ORDER_LSB));
+        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
     } else {
@@ -360,11 +377,10 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dfltUnused) {
     // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
     // symbolic.
-    if (addr->is_number()) {
-        rose_addr_t va = addr->get_number();
-        size_t nBytes = dfltUnused->get_width() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(va, nBytes, ByteOrder::ORDER_LSB));
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    if (auto va = addr->toUnsigned()) {
+        size_t nBytes = dfltUnused->nBits() / 8;
+        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(*va, nBytes, ByteOrder::ORDER_LSB));
+        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::peekMemory(segreg, addr, dflt);
     } else {
@@ -406,7 +422,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
     size_t argc = process_->readMemory(argcVa, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
 
     SValuePtr symbolicArgc = SValue::promote(undefined_(SP.nBits()));
-    symbolicArgc->set_comment("argc");
+    symbolicArgc->comment("argc");
     writeMemory(RegisterDescriptor(), number_(SP.nBits(), argcVa), symbolicArgc, boolean_(true));
     inputVariables_.insertProgramArgumentCount(symbolicArgc->get_expression());
 
@@ -435,7 +451,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
         if (settings_.markingArgvAsInput) {
             for (size_t j = 0; j <= s.size(); ++j) {
                 SValuePtr symbolicChar = SValue::promote(undefined_(8));
-                symbolicChar->set_comment((boost::format("argv_%d_%d") % i % j).str());
+                symbolicChar->comment((boost::format("argv_%d_%d") % i % j).str());
                 SValuePtr charVa = SValue::promote(number_(SP.nBits(), strVa + j));
                 writeMemory(RegisterDescriptor(), charVa, symbolicChar, boolean_(true));
                 inputVariables_.insertProgramArgument(i, j, symbolicChar->get_expression());
@@ -467,7 +483,7 @@ RiscOperators::markProgramArguments(const SmtSolver::Ptr &solver) {
             if (settings_.markingEnvpAsInput) {
                 for (size_t i = 0; i <= s.size(); ++i) {
                     SValuePtr symbolicChar = SValue::promote(undefined_(8));
-                    symbolicChar->set_comment((boost::format("envp_%d_%d") % nEnvVars % i).str());
+                    symbolicChar->comment((boost::format("envp_%d_%d") % nEnvVars % i).str());
                     SValuePtr charVa = SValue::promote(number_(SP.nBits(), strVa + i));
                     writeMemory(RegisterDescriptor(), charVa, symbolicChar, boolean_(true));
                     inputVariables_.insertEnvironmentVariable(nEnvVars, i, symbolicChar->get_expression());
@@ -516,7 +532,7 @@ Dispatcher::unwrapEmulationOperators(const IS::BaseSemantics::RiscOperatorsPtr &
 
 RiscOperatorsPtr
 Dispatcher::emulationOperators() const {
-    return unwrapEmulationOperators(get_operators());
+    return unwrapEmulationOperators(operators());
 }
 
 rose_addr_t
@@ -582,10 +598,17 @@ ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
     sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
 
     SwitchGroup ce("Concolic executor switches");
-    Rose::CommandLine::insertBooleanSwitch(ce, "show-states", settings.traceState,
-                                           "Show the virtual machine state after each instruction is processed.");
+
     Rose::CommandLine::insertBooleanSwitch(ce, "show-semantics", settings.traceSemantics,
                                            "Show the semantic operations that are performed for each instruction.");
+
+    ce.insert(Switch("show-state")
+              .argument("address", P2::addressIntervalParser(settings.showingStates), "all")
+              .doc("Addresses of instructions after which to show instruction states. This is intended for debugging, and the "
+                   "state will only be shown if the Rose::BinaryAnalysis::FeasiblePath(debug) diagnostic stream is enabled. "
+                   "This switch may occur multiple times to specify multiple addresses or address ranges. " +
+                   P2::AddressIntervalParser::docString() + " The default, if no argument is specified, is all addresses."));
+
     sgroups.push_back(ce);
 
     return sgroups;
@@ -595,7 +618,7 @@ P2::Partitioner
 ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specimen) {
     ASSERT_not_null(db);
     ASSERT_not_null(specimen);
-    Database::SpecimenId specimenId = db->id(specimen, Update::NO);
+    SpecimenId specimenId = db->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
     P2::Engine engine;
@@ -675,6 +698,10 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     ASSERT_not_null(testCase);
     Sawyer::FileSystem::TemporaryDirectory tempDir;     // working files for this execution
 
+    // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
+    testCase->concolicResult(0);
+    db->eraseSystemCalls(db->id(testCase, Update::NO));
+
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
     SmtSolver::Ptr solver = SmtSolver::instance("best");
@@ -683,7 +710,6 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, partitioner, process, inputVariables_,
                                            Emulation::SValue::instance(), solver);
-
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
@@ -847,6 +873,23 @@ ConcolicExecutor::updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr 
 }
 
 void
+ConcolicExecutor::saveSystemCall(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::SystemCall &sc) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+    auto systemCall = SystemCall::instance();
+    systemCall->testCase(testCase);
+    ASSERT_not_null(sc.functionNumber);
+    ASSERT_require2(sc.functionNumber->isConcrete(), "non-concrete system calls not implemented yet");
+    systemCall->functionId(sc.functionNumber->toUnsigned().get());
+    systemCall->callSite(sc.callSite);
+
+    // We don't have a concrete return value yet because we're treating the return value as a program input.
+    //systemCall->returnValue(...);
+
+    db->save(systemCall);
+}
+
+void
 ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::DispatcherPtr &cpu) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
@@ -911,9 +954,10 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         if (ops->systemCalls().size() != oldNSysCalls) {
             ASSERT_require(oldNSysCalls + 1 == ops->systemCalls().size());
             updateSystemCallSideEffects(ops, ops->systemCalls().back());
+            saveSystemCall(db, testCase, ops->systemCalls().back());
         }
 
-        if (settings_.traceState)
+        if (settings_.showingStates.exists(executionVa))
             SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
         executionVa = cpu->concreteInstructionPointer();
         if (updateCallStack(cpu, insn) && where) {
@@ -934,13 +978,20 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     Sawyer::Message::Stream error(mlog[ERROR]);
     SAWYER_MESG(debug) <<"generating new test case...\n";
 
-    std::vector<std::string> args = oldTestCase->args();   // like argv, but excluding argv[argc]
+    // Get the initial argc, argv, envp for the new test case, to be modified below.
+    std::vector<std::string> args = oldTestCase->args(); // like argv, but excluding argv[argc]
     args.insert(args.begin(), oldTestCase->specimen()->name());
     Sawyer::Optional<size_t> maxArgvAdjusted;           // max index of any adjusted argument
-    Sawyer::Optional<size_t> adjustedArgc;                 // whether we have a new argc value from the solver
+    Sawyer::Optional<size_t> adjustedArgc;              // whether we have a new argc value from the solver
     std::vector<EnvValue> env = oldTestCase->env();
-    bool hadError = false;
 
+    // Get the initial system call information for the new test case by copying the system calls from the old test case.
+    std::vector<SystemCall::Ptr> oldSyscalls = db->objects(db->systemCalls(db->id(oldTestCase, Update::NO)));
+    std::vector<SystemCall::Ptr> newSyscalls;
+    for (SystemCall::Ptr oldSyscall: oldSyscalls)
+        newSyscalls.push_back(SystemCall::instance(oldSyscall));
+
+    bool hadError = false;
     BOOST_FOREACH (const std::string &solverVar, solver->evidenceNames()) {
         InputVariables::Variable inputVar = inputVariables_.get(solverVar);
         SymbolicExpr::Ptr value = solver->evidenceForName(solverVar);
@@ -1014,8 +1065,26 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 // argv.
                 ASSERT_not_implemented("[Robb Matzke 2019-12-18]");
 
-            case InputVariables::Variable::SYSTEM_CALL_RETVAL:
-                ASSERT_not_implemented("[Robb Matzke 2020-08-28]");
+            case InputVariables::Variable::SYSTEM_CALL_RETVAL: {
+                if (!value->isIntegerConstant()) {
+                    error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
+                          <<"not an integer\n";
+                    hadError = true;
+                } else {
+                    size_t idx = inputVar.serialNumber();
+                    if (idx >= newSyscalls.size()) {
+                        error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<inputVar <<"\": "
+                              <<"syscall index " <<idx <<" is out of range "
+                              <<"(only " <<StringUtility::plural(newSyscalls.size(), "system calls") <<" encountered so far\n";
+                        hadError = true;
+                    } else {
+                        // Modify the system call return value
+                        newSyscalls[idx]->returnValue(value->toUnsigned().get());
+                        SAWYER_MESG(debug) <<"adjusting \"" <<inputVar <<"\" to " <<newSyscalls[idx]->returnValue() <<"\n";
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -1044,29 +1113,28 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         args.erase(args.begin()); // argv[0] is not to be included
         newTestCase->args(args);
         newTestCase->env(env);
-    }
 
-    // Save the test case if the database doesn't already have one that's the same.
-    // FIXME[Robb Matzke 2020-01-16]: This could be much improved.
-    if (newTestCase) {
-        TestCase::Ptr similarTestCase;
-        BOOST_FOREACH (TestCaseId tid, db->testCases()) {
-            TestCase::Ptr otherTestCase = db->object(tid);
-            if (areSimilar(newTestCase, otherTestCase)) {
-                similarTestCase = otherTestCase;
-                break;
+        if (newTestCase) {
+            TestCase::Ptr similarTestCase;
+            BOOST_FOREACH (TestCaseId tid, db->testCases()) {
+                TestCase::Ptr otherTestCase = db->object(tid);
+                if (areSimilar(newTestCase, otherTestCase)) {
+                    similarTestCase = otherTestCase;
+                    break;
+                }
             }
-        }
 
-        if (similarTestCase) {
-            debug <<"new test case not saved to DB because similar " <<similarTestCase->printableName(db) <<" already exists\n";
-        } else {
-            db->save(newTestCase);
-            if (debug) {
-                debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
-                debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
-                for (size_t i = 0; i < args.size(); ++i)
-                    debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+            if (similarTestCase) {
+                debug <<"new test case not saved to DB because similar " <<similarTestCase->printableName(db) <<" already exists\n";
+            } else {
+                TestCaseId newTestCaseId = db->id(newTestCase);
+                db->systemCalls(newTestCaseId, newSyscalls);
+                if (debug) {
+                    debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
+                    debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
+                    for (size_t i = 0; i < args.size(); ++i)
+                        debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+                }
             }
         }
     }

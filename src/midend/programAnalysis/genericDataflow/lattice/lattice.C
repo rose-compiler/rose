@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "latticeFull.h"
 
 #include <sstream>
@@ -781,3 +784,5 @@ string VariablesProductLattice::str(string indent)
         outs << indent << "]\n";fflush(stdout);
         return outs.str();
 }
+
+#endif

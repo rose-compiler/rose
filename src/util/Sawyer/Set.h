@@ -11,6 +11,12 @@
 #include <Sawyer/Interval.h>
 #include <Sawyer/Sawyer.h>
 
+// Work around a bug in boost::serialization for 1.74.0
+#include <boost/version.hpp>
+#if BOOST_VERSION == 107400
+     #include <boost/serialization/library_version_type.hpp>
+#endif
+
 #include <boost/foreach.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/serialization/serialization.hpp>        // needed by <boost/serialization/set.hpp> in boost 1.58 - 1.60

@@ -33,7 +33,12 @@ namespace Outliner {
   bool copy_origFile=false; // when generating the new file to store outlined function, copy entire original file to it.
   bool temp_variable=false; // use temporary variables to reduce pointer dereferencing
   bool enable_liveness =false;
+#if 1
   bool enable_debug=false; // 
+#else
+  // DQ (11/25/2020): Trying to turn on debugging of outliner.
+  bool enable_debug=true; // 
+#endif
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
   bool enable_template=false; // Outlining code blocks inside C++ templates
@@ -510,12 +515,23 @@ Outliner::Result::Result (SgFunctionDeclaration* decl,
 {
 }
 #else
+#if 0
+  // DQ (11/19/2020): Original code before moving the DeferredTransformation support to SageInterface.
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
 Outliner::Result::Result (SgFunctionDeclaration* decl,
                           SgStatement* call, SgFile* file/*=NULL*/, DeferredTransformation input_deferredTransformation)
   : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferredTransformation(input_deferredTransformation)
 {
 }
+#else
+  // DQ (11/19/2020): New code after moving the DeferredTransformation support to SageInterface.
+Outliner::Result::Result (SgFunctionDeclaration* decl,
+                          SgStatement* call, SgFile* file/*=NULL*/,
+                          SageInterface::DeferredTransformation input_deferredTransformation)
+   : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferredTransformation(input_deferredTransformation)
+{
+}
+#endif
 #endif
 
 #if 0
@@ -544,6 +560,10 @@ Outliner::Result::isValid (void) const
 /* =====================================================================
  *  Container to store the support for defering the transformations to later (on header files that we will want to unparse).
  */
+
+#if 0
+// DQ (11/19/2020): We need to expand the use of this to cover deffered transformations of common SageInterface transformations (e.g. replaceStatement).
+// So I need to move this out of being specific to the outliner and make it more generally data structure in the SageInterface.
 
 Outliner::DeferredTransformation::DeferredTransformation()
    : class_definition(NULL),
@@ -584,5 +604,6 @@ Outliner::DeferredTransformation & Outliner::DeferredTransformation::operator= (
 
 
 Outliner::DeferredTransformation::~DeferredTransformation (void) {}; //! Shallow; does not delete fields.
+#endif
 
 // eof

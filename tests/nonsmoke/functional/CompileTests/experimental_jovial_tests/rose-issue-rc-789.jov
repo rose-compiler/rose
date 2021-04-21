@@ -1,0 +1,11 @@
+START
+!COMPOOL ('RECTYPE') ;
+%!COMPOOL ('PARTTYPE');%   %Would pass%
+!COMPOOL 'PARTTYPE' TEST1, TABLEPTR, TEST2;
+DEF PROC main;
+BEGIN
+   TEST1 = V(AA); 
+   ITEM1@TABLEPTR = V(AA); %Recursively bring in types%
+   TEST2 = V(CC); %Type across compool files%
+END
+TERM

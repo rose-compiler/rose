@@ -1,5 +1,5 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <BinarySystemCall.h>
 
@@ -130,8 +130,8 @@ SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitio
 
     // Convert the value to a syscall identification number
     ASSERT_not_null(baseVal);
-    if (baseVal->is_number() && baseVal->get_width() <= 64)
-        return lookup(baseVal->get_number());
+    if (auto bvu = baseVal->toUnsigned())
+        return lookup(*bvu);
 
     return Sawyer::Nothing();
 }

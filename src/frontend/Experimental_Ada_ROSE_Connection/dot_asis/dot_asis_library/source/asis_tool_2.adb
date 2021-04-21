@@ -35,13 +35,39 @@ package body Asis_Tool_2 is
    -----------
    -- PRIVATE:
    -----------
-   procedure Print_Exception_Info (X : in Ada.Exceptions.Exception_Occurrence) is
-   begin
-      Awti.Put_Line ("EXCEPTION: " & To_Wide_String (Aex.Exception_Name (X)) &
-                       " (" & To_Wide_String (Aex.Exception_Information (X)) & ")");
-      Awti.Put_Line ("TRACEBACK: ");
-      Awti.Put_Line (To_Wide_String (GNAT.Traceback.Symbolic.Symbolic_Traceback (X)));
-   end Print_Exception_Info;
+   package body Generic_Logging is
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Log (Message : in String) is
+      begin
+         if Log_On then 
+           Put_Line (Module_Name & ":  " & Message);
+         end if; 
+      end Log;
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Log_Wide (Message : in Wide_String) is
+      begin
+         if Log_On then 
+           Put_Line_Wide (To_Wide_String (Module_Name) & ":  " & Message);
+         end if; 
+      end Log_Wide;
+
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Log_Exception (X : in Ada.Exceptions.Exception_Occurrence) is
+      begin
+         Log ("EXCEPTION: " & Aex.Exception_Name (X));
+         Log (Aex.Exception_Information (X));
+         Log ("TRACEBACK: ");
+         Log (GNAT.Traceback.Symbolic.Symbolic_Traceback (X));
+      end Log_Exception;
+
+   end Generic_Logging;
+
 
    -----------
    -- PRIVATE:

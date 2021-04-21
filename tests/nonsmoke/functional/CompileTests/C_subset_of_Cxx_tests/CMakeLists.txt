@@ -107,7 +107,7 @@ endif()
 
 set(ROSE_FLAGS -rose:C --edg:no_warnings -w)
 
-function(compile_test_in_binary_dir input_file)
+function(compile_test_in_binary_dir input_file label)
   get_filename_component(test_name ${input_file} NAME_WE)
 
   configure_file(
@@ -116,15 +116,16 @@ function(compile_test_in_binary_dir input_file)
     COPYONLY)
 
   add_test(
-    NAME ${test_name}
+    NAME ${label}_${test_name}
     COMMAND ${translator}
       ${ROSE_FLAGS} ${ROSE_INCLUDE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests
       -c ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.c)
+    set_tests_properties(${label}_${test_name} PROPERTIES LABELS ${label})
 endfunction()
 
 foreach(file_to_test ${files_to_test})
-  compile_test_in_binary_dir(${file_to_test})
+  compile_test_in_binary_dir(${file_to_test} CSUBSETOFCXXTEST)
 endforeach()
 
 # This requires a special rule
@@ -136,7 +137,8 @@ configure_file(
   COPYONLY)
 
 add_test(
-  NAME test2005_56
+  NAME CSUBSETOFCXXTEST_test2005_56
   COMMAND testTranslator ${ROSE_FLAGS}
           -DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
           -c ${CMAKE_CURRENT_BINARY_DIR}/test2005_56.c)
+set_tests_properties(CSUBSETOFCXXTEST_test2005_56 PROPERTIES LABELS CSUBSETOFCXXTEST)

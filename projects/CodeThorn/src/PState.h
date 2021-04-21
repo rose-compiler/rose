@@ -25,7 +25,7 @@ using CodeThorn::Edge;
 namespace CodeThorn {
 
   class VariableValueMonitor;
-  class Analyzer;
+  class CTAnalysis;
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -68,8 +68,11 @@ namespace CodeThorn {
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void combineAtMemoryLocation(AbstractValue abstractMemLoc,
                                  AbstractValue abstractValue);  
+    // strong update overwrites (destructive), if false then it is a weak update and combines with existing values
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
-                               AbstractValue abstractValue);
+                               AbstractValue abstractValue,
+                               bool strongUpdate=true);
+    // number of elements in state
     size_t stateSize() const;
     PState::iterator begin();
     PState::iterator end();
@@ -78,7 +81,18 @@ namespace CodeThorn {
     bool isApproximatedBy(CodeThorn::PState& other) const;
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;
+
+    // additional information required for abstraction of memory regions
+    void registerApproximateMemRegion(VariableId memId);
+    void unregisterApproximateMemRegion(VariableId memId);
+    bool isApproximateMemRegion(VariableId memId) const;
+    int32_t numApproximateMemRegions() const;
+    // this operation can be expensive
+    bool hasEqualMemRegionApproximation(const PState& other) const;
   private:
+    VariableIdSet _approximationVarIdSet;
+    void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);
+    void rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue);
     static bool combineConsistencyCheck;
   };
   
@@ -93,6 +107,7 @@ class PStateHashFun {
       for(PState::iterator i=s->begin();i!=s->end();++i) {
         hash=((hash<<8)+((long)(*i).second.hash()))^hash;
       }
+      // does not include approximationinfo because in most cases it corresponds to above data (but will be taken into account in equality-check if different)
       return long(hash);
     }
    private:
