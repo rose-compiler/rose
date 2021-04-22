@@ -1369,6 +1369,10 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
 
     const arm_insn id = (arm_insn)csInsn.id;
     switch (id) {
+        case ARM_INS_FLDMDBX:
+        case ARM_INS_FLDMIAX:
+        case ARM_INS_FSTMDBX:
+        case ARM_INS_FSTMIAX:
         case ARM_INS_LDM:
         case ARM_INS_LDMDA:
         case ARM_INS_LDMDB:
@@ -1376,20 +1380,25 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
         case ARM_INS_STM:
         case ARM_INS_STMDA:
         case ARM_INS_STMDB:
-        case ARM_INS_STMIB: {
+        case ARM_INS_STMIB:
+        case ARM_INS_VLDMDB:
+        case ARM_INS_VLDMIA:
+        case ARM_INS_VSTMDB:
+        case ARM_INS_VSTMIA: {
             // First argument is the register that will be updated. The remaining variable number of arguments are the
             // registers read/written to memory. The first register is decremented according to how many other registers are
             // specified.
             ASSERT_require(arm.op_count > 1);
 
             // Does the first argument register also appear again in the rest of the arguments?
+            size_t nBytesTransferred = 0;
             bool readWriteSame = false;
             const RegisterDescriptor firstReg = isSgAsmDirectRegisterExpression(operands->get_operands()[0])->get_descriptor();
             for (size_t i = 1; i < operands->get_operands().size(); ++i) {
-                if (firstReg == isSgAsmDirectRegisterExpression(operands->get_operands()[i])->get_descriptor()) {
+                const RegisterDescriptor otherReg = isSgAsmDirectRegisterExpression(operands->get_operands()[i])->get_descriptor();
+                nBytesTransferred += (otherReg.nBits() + 7) / 8;
+                if (firstReg == otherReg)
                     readWriteSame = true;
-                    break;
-                }
             }
 
             // Unlink the register (eventual lhs of the postupdate) from the AST.
@@ -1402,31 +1411,43 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
             // Calculate the expression to be assigned to the first argument register.
             SgAsmExpression *newValue = nullptr;
             if (readWriteSame &&
-                (id == ARM_INS_LDM ||
+                (id == ARM_INS_FLDMDBX ||
+                 id == ARM_INS_FLDMIAX ||
+                 id == ARM_INS_LDM ||
                  id == ARM_INS_LDMDA ||
                  id == ARM_INS_LDMDB ||
-                 id == ARM_INS_LDMIB)) {
+                 id == ARM_INS_LDMIB ||
+                 id == ARM_INS_VLDMDB ||
+                 id == ARM_INS_VLDMIA)) {
                 // If the same register is being loaded from memory and updated, then its final value is unknown.
                 const RegisterDescriptor unknown = registerDictionary()->findOrThrow("unknown");
                 newValue = new SgAsmDirectRegisterExpression(unknown);
                 newValue->set_type(SageBuilderAsm::buildTypeU32());
-            } else if (id == ARM_INS_LDMDA ||
+            } else if (id == ARM_INS_FLDMDBX ||
+                       id == ARM_INS_FSTMDBX ||
+                       id == ARM_INS_LDMDA ||
                        id == ARM_INS_LDMDB ||
                        id == ARM_INS_STMDA ||
-                       id == ARM_INS_STMDB) {
+                       id == ARM_INS_STMDB ||
+                       id == ARM_INS_VLDMDB ||
+                       id == ARM_INS_VSTMDB) {
                 // The new value will be the register's old value minus the number of bytes transferred to/from memory.
                 auto oldValue = new SgAsmDirectRegisterExpression(lhs->get_descriptor());
                 oldValue->set_type(lhs->get_type());
-                auto inc = new  SgAsmIntegerValueExpression(-4 * (arm.op_count-1), oldValue->get_type());
+                auto inc = new  SgAsmIntegerValueExpression(-nBytesTransferred, oldValue->get_type());
                 newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
-            } else if (id == ARM_INS_LDM ||
+            } else if (id == ARM_INS_FLDMIAX ||
+                       id == ARM_INS_FSTMIAX ||
+                       id == ARM_INS_LDM ||
                        id == ARM_INS_LDMIB ||
                        id == ARM_INS_STM ||
-                       id == ARM_INS_STMIB) {
+                       id == ARM_INS_STMIB ||
+                       id == ARM_INS_VLDMIA ||
+                       id == ARM_INS_VSTMIA) {
                 // The new value will be the register's old value plus the number of bytes transferred to/from memory.
                 auto oldValue = new SgAsmDirectRegisterExpression(lhs->get_descriptor());
                 oldValue->set_type(lhs->get_type());
-                auto inc = new SgAsmIntegerValueExpression(4 * (arm.op_count-1), oldValue->get_type());
+                auto inc = new SgAsmIntegerValueExpression(nBytesTransferred, oldValue->get_type());
                 newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
             } else {
                 ASSERT_not_reachable("instruction not handled: id = " + boost::lexical_cast<std::string>(id));
@@ -1482,31 +1503,6 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
 
             // Link new expression into AST
             operands->get_operands().back() = postUpdate; postUpdate->set_parent(operands);
-            return;
-        }
-
-        case ARM_INS_FLDMDBX:
-        case ARM_INS_FLDMIAX: {
-            // Adjust first argument by the imm8 value, which must be decoded from the instruction.
-            ASSERT_require(operands->get_operands().size() >= 1);
-            auto rre = isSgAsmDirectRegisterExpression(operands->get_operands()[0]);
-            ASSERT_not_null(rre);
-            operands->get_operands()[0] = nullptr; rre->set_parent(nullptr);
-
-            uint32_t imm32 = BitOps::bits(word, 0, 7) << 2;
-            SgAsmExpression *reg = new SgAsmDirectRegisterExpression(rre->get_descriptor());
-            reg->set_type(rre->get_type());
-            SgAsmExpression *offset = SageBuilderAsm::buildValueU32(imm32);
-            SgAsmExpression *update = nullptr;
-            if (ARM_INS_FLDMDBX == id) {
-                SgAsmExpression *sum = SageBuilderAsm::buildSubtractExpression(reg, offset);
-                update = SageBuilderAsm::buildPreupdateExpression(rre, sum);
-            } else {
-                SgAsmExpression *sum = SageBuilderAsm::buildAddExpression(reg, offset);
-                update = SageBuilderAsm::buildPostupdateExpression(rre, sum);
-            }
-
-            operands->get_operands()[0] = update; update->set_parent(operands);
             return;
         }
 
@@ -1586,7 +1582,7 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
 
             break;
     }
-    ASSERT_not_reachable("no pre/post update replacement performed");
+    ASSERT_not_reachable("no pre/post update replacement performed for " + StringUtility::addrToString(word));
 }
 
 } // namespace

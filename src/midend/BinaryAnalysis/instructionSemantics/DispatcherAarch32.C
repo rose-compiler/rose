@@ -716,7 +716,7 @@ struct IP_mrc: P {
 
         // System registers belong to coprocessors and we don't know what they are or how they behave. Therefore, every read
         // from a coprocessor must return a new variable.
-        SValuePtr value = ops->undefined_(32);
+        SValuePtr value = ops->undefined_(args[2]->get_type()->get_nBits());
         d->maybeWrite(enabled, args[2], value);
     }
 };
