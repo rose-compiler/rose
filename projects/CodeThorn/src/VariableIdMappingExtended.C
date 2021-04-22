@@ -144,6 +144,34 @@ namespace CodeThorn {
     return dynamic_cast<SgVariableDeclaration*>(SgNodeHelper::findVariableDeclarationWithVariableSymbol(sym));
   }
 
+  CodeThorn::VariableIdSet VariableIdMappingExtended::getSetOfLocalVarIds() {
+    CodeThorn::VariableIdSet globalVarIds;
+    for(auto p : mappingSymToVarId) {
+      if(getVariableIdInfoPtr(p.second)->variableScope==VS_LOCAL) {
+	globalVarIds.insert(p.second);
+      }
+    }
+    return globalVarIds;
+  }
+
+  std::list<SgVariableDeclaration*> VariableIdMappingExtended::getVariableDeclarationsOfVariableIdSet(VariableIdSet& vidSet) {
+    std::list<SgVariableDeclaration*> decls;
+    for(auto vid : vidSet) {
+      decls.push_back(getVariableDeclaration(vid));
+    }
+    return decls;
+  }
+
+  CodeThorn::VariableIdSet VariableIdMappingExtended::getSetOfGlobalVarIds() {
+    CodeThorn::VariableIdSet globalVarIds;
+    for(auto p : mappingSymToVarId) {
+      if(getVariableIdInfoPtr(p.second)->variableScope==VS_GLOBAL) {
+	globalVarIds.insert(p.second);
+      }
+    }
+    return globalVarIds;
+  }
+
   std::list<SgVariableDeclaration*> VariableIdMappingExtended::getListOfGlobalVarDecls() {
     list<SgVariableDeclaration*> globalVarDecls;
     for(auto p : mappingSymToVarId) {
@@ -173,7 +201,7 @@ namespace CodeThorn {
 	      numSymbolExists++;
 	      continue;
 	    }
-	    cout<<"DEBUG: var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
+	    //cout<<"DEBUG: var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
 	    registerNewSymbol(sym);
 	    VariableId varId=variableId(sym);
 	    if(SgNodeHelper::isGlobalVariableDeclaration(varDecl)) {
@@ -234,8 +262,7 @@ namespace CodeThorn {
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
     }
-    cout<<"VID size: "<<numVarDecls<<" symbol existed: "<<numSymbolExists<<" Num fun-params:"<<numFunctionParams<<endl;
-
+    //cout<<"DEBUG VID size: "<<numVarDecls<<" symbol existed: "<<numSymbolExists<<" Num fun-params:"<<numFunctionParams<<endl;
   }
 
   void VariableIdMappingExtended::computeVariableSymbolMapping3(SgProject* project, int maxWarningsCount) {
@@ -247,7 +274,6 @@ namespace CodeThorn {
   }
 
   void VariableIdMappingExtended::registerAllVariableSymbols(SgProject* project, int maxWarningsCount) {
-    _globalVarDecls=SgNodeHelper::listOfGlobalVars(project);
     std::list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(project);
     for(auto funDef : funDefs) {
       std::set<SgVariableDeclaration*> funLocalVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);

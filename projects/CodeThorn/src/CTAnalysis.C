@@ -24,6 +24,7 @@
 #include "RERS_empty_specialization.h"
 #include "CodeThornLib.h"
 #include "TopologicalSort.h"
+#include "Miscellaneous2.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -690,6 +691,7 @@ set<string> CodeThorn::CTAnalysis::variableIdsToVariableNames(CodeThorn::Variabl
   return res;
 }
 
+// deprecated
 CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUnusedGlobalVariableDeclarationList(SgProject* root) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(root);
   CodeThorn::CTAnalysis::VariableDeclarationList usedGlobalVars=computeUsedGlobalVariableDeclarationList(root);
@@ -699,7 +701,7 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUnu
   return globalVars;
 }
 
-#define FILTER_VARS
+// deprecated
 CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUsedGlobalVariableDeclarationList(SgProject* root) {
   if(SgProject* project=isSgProject(root)) {
     CodeThorn::CTAnalysis::VariableDeclarationList usedGlobalVariableDeclarationList;
@@ -708,21 +710,11 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUse
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      // do not filter
-      usedGlobalVariableDeclarationList.push_back(*i);
-#ifndef FILTER_VARS
-      if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
-        usedGlobalVariableDeclarationList.push_back(*i);
-      } else {
-        filteredVars++;
-      }
-#else
       if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
         usedGlobalVariableDeclarationList.push_back(*i);
       } else {
         filteredVars++;
       }
-#endif
     }
     return usedGlobalVariableDeclarationList;
   } else {
@@ -1951,69 +1943,42 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   // TODO
 }
 
-void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState& estate) {
-  if(SgProject* project=isSgProject(root)) {
-    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
-
-#if 1
-    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
-    // this will not filter any variables
-    VariableIdSet setOfUsedVars;
-#else
-    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-#endif
-
-    // START_INIT 6
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      if(!globalVarId.isValid()) {
-        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
-        continue;
-      }
-      ROSE_ASSERT(globalVarId.isValid());
-      // TODO: investigate why array variables get filtered (but should not)
-      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
-        if(_ctOpt.getInterProceduralFlag()) {
-          // only initialize global variable in inter-procedural mode
-          estate=analyzeVariableDeclaration(*i,estate,estate.label());
-        } else {
-          // initialize global variable to arbitrary value
-	  estate=analyzeVariableDeclaration(*i,estate,estate.label()); // currently the same
-        }
-      } else {
-        filteredVars++;
-      }
-    }
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-    if(_variablesToIgnore.size()>0)
-      SAWYER_MESG(logger[TRACE])<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
-  } else {
-    SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
-  }
-}
-
 void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
   if(SgProject* project=isSgProject(root)) {
+#if 1
+    ROSE_ASSERT(getVariableIdMapping());
+    CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
+    CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    std::set<VariableId> setOfFilteredGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
+    uint32_t numFilteredVars=setOfGlobalVars.size()-setOfFilteredGlobalVars.size();
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
+      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+    }
+    std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(_ctOpt.initialStateFilterUnusedVariables)?
+      getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfFilteredGlobalVars)
+      : getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
+      ;
+    uint32_t declaredInGlobalState=0;
+    for(auto decl : relevantGlobalVariableDecls) {
+      estate=analyzeVariableDeclaration(decl,estate,estate.label());
+      declaredInGlobalState++;
+      // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
+      globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+    }
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
+      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    }
+#else
     SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
 
-#if 1
-    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
-    // this will not filter any variables
-    VariableIdSet setOfUsedVars;
-#else
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-#endif
-
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+    }
     // START_INIT 6
     uint32_t filteredVars=0;
     uint32_t declaredInGlobalState=0;
@@ -2028,7 +1993,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
       // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
       globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
       
-      // TODO: investigate why array variables get filtered (but should not)
       if(_ctOpt.initialStateFilterUnusedVariables) {
 	if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
 	  filteredVars++;
@@ -2039,8 +2003,11 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
       estate=analyzeVariableDeclaration(*i,estate,estate.label());
       declaredInGlobalState++;
     }
-    cout<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-    cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
+      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    }
+#endif
   } else {
     cout<< "STATUS: no global scope. Global state remains without entries.";
   }

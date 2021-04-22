@@ -201,7 +201,9 @@ namespace CodeThorn {
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
 
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
+    // deprecated
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
+    // deprecated
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
 
     void insertInputVarValue(int i);
@@ -264,7 +266,6 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
-    void initializeGlobalVariablesOld(SgProject* root, EState& estate);
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     
     /* command line options provided to analyzed application
