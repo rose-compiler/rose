@@ -140,6 +140,8 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
     // Note the postfix increment in the following two lines
     std::string astfile_ = *(astfile++);
 
+    if (astfile_.empty()) continue;
+
     AST_FILE_IO::readASTFromFile(astfile_);
     AstData * ast = AST_FILE_IO::getAst(cnt++);
 

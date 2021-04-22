@@ -1,7 +1,6 @@
 
-
-#include "memory-pool-snapshot.h"
 #include "sage3basic.h"
+#include "memory-pool-snapshot.h"
 
 namespace Rose {
 
