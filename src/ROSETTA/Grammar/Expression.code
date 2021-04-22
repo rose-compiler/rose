@@ -7818,8 +7818,9 @@ SgConstructorInitializer::post_construction_initialization()
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
 
+       // PP (4/17/21) : Added exception for typedef types to support
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
-          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
              {
                printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
                if (p_expression_type != NULL)
@@ -7828,7 +7829,7 @@ SgConstructorInitializer::post_construction_initialization()
                   }
              }
 
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
