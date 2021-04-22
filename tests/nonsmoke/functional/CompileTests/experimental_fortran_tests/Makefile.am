@@ -12,7 +12,11 @@ FORTRAN_TESTCODES =       \
   common_1.f90            \
   common_2.f90            \
   dowhile.f90             \
+  function_2.f90          \
+  function_3.f90          \
+  function_4.f90          \
   print1.f90              \
+  subroutine_1.f90        \
   tiny.f90                \
   type_decls_1.f90        \
   type_decls_2.f90

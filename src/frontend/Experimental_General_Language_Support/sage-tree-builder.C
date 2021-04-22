@@ -1722,6 +1722,7 @@ Leave(SgCommonBlock* common_block)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgCommonBlock*) \n";
 
+   ROSE_ASSERT(common_block);
    SageInterface::appendStatement(common_block, SageBuilder::topScopeStack());
 }
 
