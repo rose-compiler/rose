@@ -1527,43 +1527,6 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    SgInitializedName* var_defn = var_def->get_vardefn();
    ROSE_ASSERT(var_defn);
    ROSE_ASSERT(var_defn == init_name);
-}
-
-void SageTreeBuilder::
-Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<std::string, SgType*, SgExpression*>> &init_info)
-{
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, std::tuple<...>, ...) \n";
-
-   // Step through list of tuples to create the multi variable declaration
-   for (std::list<std::tuple<std::string, SgType*, SgExpression*>>::iterator it = init_info.begin(); it != init_info.end(); ++it) {
-      std::string name;
-      SgType* type;
-      SgExpression* init_expr;
-      std::tie(name, type, init_expr) = *it;
-
-      if (!type) {
-         type = base_type;
-      }
-
-      if (it == init_info.begin()) {   // On first pass, call Enter() to create variable declaration
-         Enter(var_decl, name, type, init_expr);
-      } else {                         // On later passes, create new initialized name and append to the var decl
-         SgAssignInitializer* init = nullptr;
-         if (init_expr) {
-            init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
-         }
-
-         SgInitializedName* init_name = SageBuilder::buildInitializedName(name, type, init);
-         var_decl->append_variable(init_name, init);
-         init_name->set_declptr(var_decl);
-      }
-   }
-}
-
-void SageTreeBuilder::
-Leave(SgVariableDeclaration* var_decl)
-{
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 
    SageInterface::appendStatement(var_decl, SageBuilder::topScopeStack());
 
