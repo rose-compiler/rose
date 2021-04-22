@@ -104,6 +104,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   array_expressions.adb                \
+  array_pointer_type.ads               \
   asm_machine_code.adb                 \
   async_transfer_select.adb            \
   based_numbers.ads                    \
