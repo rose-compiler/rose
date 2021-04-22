@@ -808,6 +808,31 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
 }
 
 void
+RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) const {
+    // This register state automatically concatenates and splits register parts as needed. For instance, it might store x86 EAX
+    // as a single 32-bit value, or two 16-bit values, or four 8-bit values, or any other combination. Some parts might even be
+    // missing, such as the high 32 bits of RAX if we ony ever wrote to the low 32 bits. This complicates hashing. We could
+    // simply hash exactly the parts that are stored, but a more useful hasher would return the same value whether a register
+    // was stored as a single piece or broken into multiple smaller pieces.
+    ASSERT_not_null(ops);
+    ASSERT_not_null(regdict);
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    for (RegisterDescriptor reg: regs) {
+        ExtentMap parts = stored_parts(reg);
+        for (const auto &node: parts) {
+            RegisterDescriptor part(reg.majorNumber(), reg.minorNumber(), node.first.first(), node.first.size());
+            BaseSemantics::SValuePtr dflt = ops->undefined_(node.first.size());
+            BaseSemantics::SValuePtr value = const_cast<RegisterStateGeneric*>(this)->peekRegister(part, dflt, ops); // FIXME[Robb Matzke 2021-03-26]
+            hasher.insert(part.majorNumber());
+            hasher.insert(part.minorNumber());
+            hasher.insert(part.offset());
+            hasher.insert(part.nBits());
+            value->hash(hasher);
+        }
+    }
+}
+
+void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
     const RegisterDictionary *regdict = fmt.registerDictionary();

@@ -1490,14 +1490,14 @@ public:
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
      * @endcode
      *
-     * The SAWYER_MESG_OR macro is similar in that it short circuits, but it prints to either the first stream (if enabled)
-     * or the second stream (if enabled) but not both. For example, these two are equivalent:
+     * The SAWYER_MESG_FIRST macro is similar in that it short circuits, but it prints to the first stream that's enabled
+     * For example, these two are equivalent:
      *
      * @code
      *  if (mlog[TRACE] || mlog[DEBUG])
      *      (mlog[TRACE] ? mlog[TRACE] : mlog[DEBUG]) <<"got here\n";
      *     
-     *  SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"got here\n";
+     *  SAWYER_MESG_FIRST(mlog[TRACE], mlog[DEBUG]) <<"got here\n";
      * @endcode
      *
      * Thread safety: This method is thread-safe.
@@ -1524,9 +1524,10 @@ public:
     // See Stream::bool()
     #define SAWYER_MESG(message_stream) (message_stream) && (message_stream)
     #define SAWYER_MSG(message_stream)  (message_stream) && (message_stream)
-    #define SAWYER_MESG_OR(s1, s2) ((s1) || (s2)) && ((s1) ? (s1) : (s2))
-    #define SAWYER_MSG_OR(s1, s2)  ((s1) || (s2)) && ((s1) ? (s1) : (s2))
 
+    #define SAWYER_MESG_FIRST(...) Sawyer::Message::firstEnabled(__VA_ARGS__) && Sawyer::Message::firstEnabled(__VA_ARGS__)
+    #define SAWYER_MESG_OR(s1, s2) SAWYER_MESG_FIRST(s1, s2)
+    #define SAWYER_MSG_OR(s1, s2)  SAWYER_MESG_FIRST(s1, s2)
 
     /** Enable or disable a stream.
      *
@@ -1574,6 +1575,12 @@ public:
      *  Thread safety: This method is thread-safe. */
     MesgProps properties() const;
 };
+
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1);
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2);
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3);
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3, Stream &s4);
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3, Stream &s4, Stream &s5);
 
 /** Collection of streams.
  *

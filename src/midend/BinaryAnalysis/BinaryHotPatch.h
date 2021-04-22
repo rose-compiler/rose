@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BaseSemanticsTypes.h>
+#include <BaseSemanticsSValue.h>
 #include <BinaryHotPatch.h>
 #include <BinarySmtSolver.h>
 #include <Sawyer/Message.h>

@@ -34,6 +34,17 @@ SValue::bits(const Sawyer::Container::BitVector &newBits) {
     bits_ = newBits;
 }
 
+void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    hasher.insert(nBits()); // so 0x00ff is not the same as 0xff, for instance (think signed interpretation)
+    for (size_t i = 0; i < bits_.size(); i += 64) {
+        size_t n = std::min(bits_.size() - i, size_t(64));
+        auto where = Sawyer::Container::BitVector::BitRange::baseSize(i, n);
+        uint64_t value = bits_.toInteger(where);
+        hasher.insert(value);
+    }
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr&) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
@@ -168,6 +179,12 @@ bool
 MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
                    BaseSemantics::RiscOperators *valOps) {
     throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
+}
+
+void
+MemoryState::hash(Combinatorics::Hasher &hasher, BaseSemantics::RiscOperators*/*addrOps*/,
+                  BaseSemantics::RiscOperators*/*valOps*/) const {
+    map_->hash(hasher);
 }
 
 void

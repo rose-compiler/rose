@@ -495,7 +495,7 @@ SmtSolver::checkExe() {
     status = pclose(r.output); r.output = NULL;
     stats.output_size += nread;
     stats.solveTime += solveTimer.stop();
-    mlog[DEBUG] <<"solver took " <<solveTimer <<" seconds\n";
+    mlog[DEBUG] <<"solver took " <<solveTimer <<"\n";
     mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
     parsedOutput_ = parseSExpressions(outputText_);
 

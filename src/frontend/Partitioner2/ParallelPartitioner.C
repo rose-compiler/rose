@@ -1197,7 +1197,7 @@ Partitioner::assignFunctions() {
         }
     }
 
-    debug <<"assigning blocks to functions; took " <<timer <<" seconds\n";
+    debug <<"assigning blocks to functions; took " <<timer <<"\n";
     return retval;
 }
 

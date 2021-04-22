@@ -257,7 +257,7 @@ public:
             }
             isOutOfDate_ = false;
             layoutChanged().emit();
-            info <<"; took " <<timer <<" seconds\n";
+            info <<"; took " <<timer <<"\n";
         }
     }
 

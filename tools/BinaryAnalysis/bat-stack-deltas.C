@@ -176,7 +176,7 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"; took " <<timer <<"\n";
     
     // Print results
     BOOST_FOREACH (const StackDeltaMap::Node &node, sdmap.nodes()) {

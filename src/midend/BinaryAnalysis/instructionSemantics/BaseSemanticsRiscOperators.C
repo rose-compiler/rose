@@ -44,6 +44,12 @@ RiscOperators::RiscOperators(const StatePtr &state, const SmtSolverPtr &solver)
 
 RiscOperators::~RiscOperators() {}
 
+void
+RiscOperators::hash(Combinatorics::Hasher &hasher) {
+    if (currentState_)
+        currentState_->hash(hasher, this, this);
+}
+
 SValuePtr
 RiscOperators::undefined_(size_t nbits) {
     return protoval_->undefined_(nbits);

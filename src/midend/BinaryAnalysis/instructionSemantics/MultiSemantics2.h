@@ -149,6 +149,15 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods
 public:
+    virtual bool isBottom() const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+    virtual void hash(Combinatorics::Hasher&) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Override legacy methods. Override these for now, but always call the camelCase names from the base class. Eventually
+    // these snake_case names will go away and the camelCase will become the virtual functions, so be sure to specify
+    // "override" in your own code so you get notified when that change occurs.
+public:
     /** Determines if two multidomain values might be equal.  Two multidomain values are equal if, for any subdomain for which
      *  both values are valid, they are equal in the subdomain. */
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
@@ -162,8 +171,6 @@ public:
 
     virtual void set_width(size_t nbits) ROSE_OVERRIDE;
 
-    virtual bool isBottom() const ROSE_OVERRIDE;
-
     /** Determines if the value is a concrete number.  In the MultiSemantics domain, a value is a concrete number if and only
      *  if it has at least one valid subdomain value and all valid subdomain values are concrete numbers, and all are the same
      *  concrete number. */
@@ -171,7 +178,6 @@ public:
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared at this level of the class hierarchy

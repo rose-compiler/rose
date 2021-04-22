@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <BaseSemanticsMemoryState.h>
 
+#include <BaseSemanticsException.h>
 #include <BaseSemanticsFormatter.h>
 #include <BaseSemanticsMerger.h>
 #include <BaseSemanticsSValue.h>

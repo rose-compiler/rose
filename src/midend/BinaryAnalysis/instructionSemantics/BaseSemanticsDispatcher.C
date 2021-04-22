@@ -5,6 +5,7 @@
 
 #include <BaseSemanticsRiscOperators.h>
 #include <BaseSemanticsState.h>
+#include <boost/scope_exit.hpp>
 #include <RegisterStateGeneric.h>
 
 namespace Rose {
@@ -78,6 +79,10 @@ void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
     operators()->startInstruction(insn);
+    BOOST_SCOPE_EXIT(this_) {
+        this_->operators()->currentInstruction(nullptr);
+    } BOOST_SCOPE_EXIT_END;
+
     InsnProcessor *iproc = iprocLookup(insn);
     try {
         if (!iproc)

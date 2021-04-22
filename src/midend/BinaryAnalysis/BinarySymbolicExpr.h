@@ -36,7 +36,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 class SmtSolver;
-typedef Sawyer::SharedPointer<SmtSolver> SmtSolverPtr;
+using SmtSolverPtr = std::shared_ptr<SmtSolver>;
 
 /** Namespace supplying types and functions for symbolic expressions.
  *

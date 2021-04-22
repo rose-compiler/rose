@@ -116,24 +116,36 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-
-    virtual void set_width(size_t nbits) ROSE_OVERRIDE;
+    virtual void hash(Combinatorics::Hasher&) const override;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
         return false;
     }
 
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Override legacy virtual methods. These snake_case names may eventually go away, but for now they're the ones you should
+    // override. Be sure to use "override" in your own code in order to be notified when we finally remove these.
+public:
+    // See mayEqual
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+
+    // See mustEqual
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+
+    // See nBits
+    virtual void set_width(size_t nbits) ROSE_OVERRIDE;
+
+    // See isConcrete
     virtual bool is_number() const ROSE_OVERRIDE {
         return true;
     }
 
+    // See toUnsigned and toSigned
     virtual uint64_t get_number() const ROSE_OVERRIDE;
-
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
@@ -243,6 +255,9 @@ public:
     virtual void clear() ROSE_OVERRIDE {
         map_ = MemoryMap::Ptr();
     }
+
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
+                      BaseSemantics::RiscOperators *valOps) const override;
 
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 

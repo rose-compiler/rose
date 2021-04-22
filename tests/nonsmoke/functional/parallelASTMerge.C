@@ -236,7 +236,7 @@ int main ( int argc, char * argv[] )
         string output = "output" + lexical_cast<string>(i);
         output = "output" + lexical_cast<string>(i) + ".txt";
         MergeAstFiles(fileNames, output, i);
-        cout << i << " : " << t <<" seconds" << endl;
+        cout << i << " : " << t << endl;
     }
 
     return 0;

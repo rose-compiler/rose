@@ -178,25 +178,36 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+    virtual void hash(Combinatorics::Hasher&) const override;
 
     virtual bool isBottom() const ROSE_OVERRIDE {
         return isBottom_;
     }
 
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Override legacy methods. Override these, but always call the camelCase versions from BaseSemantics::SValue. These
+    // snake_case names may eventually go away, so be sure to make good use of "override" in your own code.
+public:
+    // See mayEqual
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+
+    // See mustEqual
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+
+    // See isConcrete
     virtual bool is_number() const ROSE_OVERRIDE {
         return 1==intervals_.size();
     }
-    
+
+    // See toUnsigned and toSigned
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_require(1==intervals_.size());
         return intervals_.least();
     }
-
-    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods introduced at this level of the class hierarchy

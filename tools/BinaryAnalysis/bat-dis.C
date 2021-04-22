@@ -16,6 +16,7 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -32,6 +33,7 @@ struct Settings {
     BinaryAnalysis::Unparser::Settings unparser;
     bool discardNops;
     SerialIo::Format stateFormat;
+    std::string fileNamePrefix;
 
     Settings()
         : discardNops(false), stateFormat(SerialIo::BINARY) {}
@@ -68,6 +70,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     SwitchGroup out = BinaryAnalysis::Unparser::commandLineSwitches(settings.unparser);
     Rose::CommandLine::insertBooleanSwitch(out, "discard-nops", settings.discardNops,
                                                "Omit instructions that are part of a sequence that has no effect.");
+    out.insert(Switch("prefix")
+               .argument("name", anyParser(settings.fileNamePrefix))
+               .doc("Instead of sending all listings to standard output, create a separate file for each function. "
+                    "The file names will be constructed from the string specified here, followed by the hexadecimal "
+                    "function entry address, followed by the extension \".lst\"."));
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
@@ -144,6 +151,13 @@ public:
     }
 };
 
+boost::filesystem::path
+functionFileName(const Settings &settings, const P2::Function::Ptr &function) {
+    ASSERT_forbid(settings.fileNamePrefix.empty());
+    ASSERT_not_null(function);
+    return settings.fileNamePrefix + StringUtility::addrToString(function->address()).substr(2) + ".lst";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 } // namespace
 
@@ -162,13 +176,21 @@ main(int argc, char *argv[]) {
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
     P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
 
-    // Show selected functions or all functions
+    // Make sure output directories exit
+    boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();
+    if (!dir.empty()) {
+        boost::system::error_code ec; // because create_directories(".") and probably others doesn't work
+        boost::filesystem::create_directories(dir, ec);
+    }
+
+    // Obtain an unparser
     BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
     unparser->settings() = settings.unparser;
     if (settings.discardNops)
         unparser = MyUnparser::instance(unparser);
 
     if (!settings.functionNames.empty() || !settings.addresses.empty()) {
+        // Output only selected functions (all to stdout or each to its own file)
         unparser->settings().function.cg.showing = false; // slow
         std::vector<P2::Function::Ptr> selectedFunctions =
             Bat::selectFunctionsByNameOrAddress(partitioner.functions(), settings.functionNames, mlog[WARN]);
@@ -180,11 +202,24 @@ main(int argc, char *argv[]) {
         Sawyer::ProgressBar<size_t> progress(selectedFunctions.size(), mlog[MARCH], "unparsing");
         progress.suffix(" functions");
         BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
-            unparser->unparse(std::cout, partitioner, function);
+            if (settings.fileNamePrefix.empty()) {
+                unparser->unparse(std::cout, partitioner, function);
+            } else {
+                std::ofstream file(functionFileName(settings, function).c_str());
+                unparser->unparse(file, partitioner, function);
+            }
             ++progress;
         }
 
+    } else if (!settings.fileNamePrefix.empty()) {
+        // Output all functions, each to its own file
+        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            std::ofstream file(functionFileName(settings, function).c_str());
+            unparser->unparse(file, partitioner, Progress::instance());
+        }
+
     } else {
+        // Output all functions to standard output
         unparser->unparse(std::cout, partitioner, Progress::instance());
     }
 }
