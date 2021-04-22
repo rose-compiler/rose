@@ -25,8 +25,6 @@ class SgType;
 
 #define PRINT_FLANG_TRAVERSAL 0
 
-typedef std::tuple<std::string, SgType*, SgExpression*> EntityDeclTuple;
-
 namespace Rose::builder {
 
 // Converts parsed program to ROSE Sage nodes
@@ -107,7 +105,7 @@ void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
 void Build(const Fortran::parser::       DerivedTypeSpec &x,                      SgType* &);
 void Build(const Fortran::parser::            EntityDecl &x, std::string &, SgExpression* &, SgType* &, SgType *);
-void Build(const std::list<Fortran::parser::EntityDecl>  &x, std::list<EntityDeclTuple> &entity_decls, SgType* base_type);
+void Build(const std::list<Fortran::parser:: EntityDecl> &x, std::string &, SgExpression* &, SgType* &, SgType *);
 void Build(const Fortran::parser::              AttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum);
 void Build(const Fortran::parser::             ArraySpec &x, SgType* &type, SgType* base_type);
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
