@@ -13,7 +13,7 @@ libdot_asis.so:
 	--relocate-build-tree
 
 install-data-local: libdot_asis.so
-	$(INSTALL_DATA) -D $(builddir)/lib/asis_adapter.so $(libdir)/asis_adapter.so
+	$(INSTALL_DATA) -D $(builddir)/lib/asis_adapter.so $(libdir)/libasis_adapter.so
 
 clean:
 	rm -rf lib obj
