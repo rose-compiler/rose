@@ -88,13 +88,13 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
                   {
                     // Pei-Hung (03/01/2021): using only gcc_HEADERS and g++_HEADERS to check the header file directories is not sufficient.
                     // The directory names change according the the executable names of gcc and g++.
-                    
-                    const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH; 
+
+                    const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH;
                     const char* CXX_Basename = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                    string CC_Headername(CC_Basename); 
+                    string CC_Headername(CC_Basename);
                     string CXX_Headername(CXX_Basename);
-                    CC_Headername += "_HEADERS"; 
-                    CXX_Headername += "_HEADERS"; 
+                    CC_Headername += "_HEADERS";
+                    CXX_Headername += "_HEADERS";
                     if (*i == CC_Headername || *i == CXX_Headername)
                        {
 #if 0
@@ -1888,7 +1888,7 @@ GetRoseClasspath ()
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
 
-  // Pei-Hung (4/3/2022): Only one antlr jar file, antlr-3.5.2-complete.jar, is kept in ROSE. 
+  // Pei-Hung (4/3/2022): Only one antlr jar file, antlr-3.5.2-complete.jar, is kept in ROSE.
   classpath +=
       findRoseSupportPathFromSource(
           "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
