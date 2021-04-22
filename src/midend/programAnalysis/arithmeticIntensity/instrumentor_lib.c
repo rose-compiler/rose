@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <ROSE_ABORT.h>
 
 void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int* loop_iter_counters, int loop_count)
 {

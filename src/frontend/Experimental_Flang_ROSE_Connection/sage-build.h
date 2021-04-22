@@ -12,12 +12,14 @@
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
+class SgCommonBlockObject;
 class SgExpression;
 class SgExprListExp;
 class SgScopeStatement;
 class SgStatement;
 class SgType;
 
+#define PRINT_FLANG_TRAVERSAL 0
 
 namespace Rose::builder {
 
@@ -26,6 +28,7 @@ void Build(const Fortran::parser::Program &x, Fortran::parser::AllCookedSources 
 
 template<typename T> void Build(const Fortran::parser::ProgramUnit &x, T* scope);
 template<typename T> void Build(const Fortran::parser::MainProgram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::     Module &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
@@ -46,6 +49,7 @@ void Build(const Fortran::parser::         ActualArgSpec &x, SgExpression* &expr
 void Build(const Fortran::parser::             ActualArg &x, SgExpression* &expr);
 void Build(const Fortran::parser::               Keyword &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Name &x, SgExpression* &expr);
+void Build(const Fortran::parser::                  Name &x, std::string   &name);
 void Build(const Fortran::parser::         NamedConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::                  Expr &x, SgExpression* &expr);
 void Build(const Fortran::parser:: Expr::IntrinsicBinary &x, SgExpression* &expr);
@@ -91,6 +95,7 @@ void Build(const Fortran::parser::             ArraySpec &x, SgType* &type, SgTy
 template<typename T> void Build(const Fortran::parser::           CoarraySpec &x, T* scope);
 void Build(const Fortran::parser::            CharLength &x, SgExpression* &);
 void Build(const Fortran::parser::        Initialization &x, SgExpression* &);
+void Build(const Fortran::parser::          KindSelector &x, SgExpression* &);
 void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
 void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
 
@@ -153,11 +158,11 @@ template<typename T> void Build(const Fortran::parser::             OpenStmt &x,
 template<typename T> void Build(const Fortran::parser::PointerAssignmentStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::            PrintStmt &x, T* scope);
 
-template<typename T> void Build(const Fortran::parser::               Format &x, T* scope);
-template<typename T> void Build(const Fortran::parser::      DefaultCharExpr &x, T* scope);
-template<typename T> void Build(const Fortran::parser::                Label &x, T* scope);
-template<typename T> void Build(const Fortran::parser::                 Star &x, T* scope);
-template<typename T> void Build(const Fortran::parser::           OutputItem &x, T* scope);
+void Build(const Fortran::parser::               Format &x, SgExpression* &expr);
+void Build(const Fortran::parser::      DefaultCharExpr &x, SgExpression* &expr);
+void Build(const Fortran::parser::                Label &x, SgExpression* &expr);
+void Build(const Fortran::parser::                 Star &x, SgExpression* &expr);
+void Build(const Fortran::parser::           OutputItem &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::      OutputImpliedDo &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::             ReadStmt &x, T* scope);
@@ -181,6 +186,10 @@ template<typename T> void Build(const Fortran::parser::            PauseStmt &x,
 template<typename T> void Build(const Fortran::parser::         NamelistStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        ParameterStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
+
+template<typename T> void Build(const Fortran::parser::           CommonStmt &x, T* scope);
+void Build(const Fortran::parser::    CommonStmt::Block &x, SgCommonBlockObject* &);
+void Build(const Fortran::parser::    CommonBlockObject &x, SgExpression*        &);
 
 // Expr
 template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
@@ -291,27 +300,33 @@ template<typename T> void Build(const Fortran::parser::                 Volatile
 // Traversal of needed STL template classes (optional, list, tuple, variant)                                                                
 template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope)
 {
-   std::cout << "Rose::builder::Build(std::list) for T* node \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for T* node\n";
+#endif
 
    for (const auto &elem : x) {
       Build(elem, scope);
    }
 }
 
-template<typename T> void Build(const std::list<T> &x, std::list<SgExpression*> &expr_list)
+template<typename LT, typename T> void Build(const std::list<LT> &x, std::list<T*> &rose_node_list)
 {
-   std::cout << "Rose::builder::Build(std::list) for T* node building a list of SgExpression*\n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for LT* node building a list of T*\n";
+#endif
 
    for (const auto &elem : x) {
-      SgExpression* expr = nullptr;
-      Build(elem, expr);
-      expr_list.push_back(expr);
+      T* rose_node = nullptr;
+      Build(elem, rose_node);
+      rose_node_list.push_back(rose_node);
    }
 }
 
 template<typename LT, typename T> void Build(const std::list<LT> &x, T* &node)
 {
-   std::cout << "Rose::builder::Build(std::list) for T* &node \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for T* &node\n";
+#endif
 
    for (const auto &elem : x) {
       Build(elem, node);
@@ -322,13 +337,17 @@ template<typename... A>
 void Build(const std::variant<A...> &x, SgScopeStatement* scope) {
    try {
       auto & indirection = std::get<Fortran::common::Indirection<Fortran::parser::MainProgram, false>>(x);
-      std::cout << "Rose::builder::Build(const std::variant<A...>): MainProgram \n";
+#if PRINT_FLANG_TRAVERSAL
+      std::cout << "Rose::builder::Build(const std::variant<A...>): MainProgram\n";
+#endif
       Build(indirection.value(), scope);
    }
    catch (const std::bad_variant_access&)
       {
+#if PRINT_FLANG_TRAVERSAL
          std::cout << "Rose::builder::Build(const std::variant<A...>) WARNING ProgramUnit variant not found type: "
                    << typeid(x).name() << "\n";
+#endif
       }
 }
 

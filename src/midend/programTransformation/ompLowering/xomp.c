@@ -1,5 +1,6 @@
 #include "rose_config.h"
 #include "libxomp.h"
+#include <ROSE_ABORT.h>
 
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
 

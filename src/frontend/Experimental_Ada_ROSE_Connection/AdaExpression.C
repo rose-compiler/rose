@@ -464,6 +464,34 @@ namespace
     return sgnode;
   }
 
+  SgExprListExp&
+  getArrayAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
+  {
+    ROSE_ASSERT(  expr.Expression_Kind == A_Named_Array_Aggregate
+               || expr.Expression_Kind == A_Positional_Array_Aggregate
+               );
+
+    const bool namedAggregate = expr.Expression_Kind == A_Named_Array_Aggregate;
+
+    logKind(namedAggregate ? "A_Named_Array_Aggregate" : "A_Positional_Array_Aggregate");
+
+    ElemIdRange                range  = idRange(expr.Array_Component_Associations);
+    std::vector<SgExpression*> components = traverseIDs(range, elemMap(), ArrayAggregateCreator{namedAggregate, ctx});
+    SgExprListExp&             sgnode = mkExprListExp(components);
+    attachSourceLocation(sgnode, elem, ctx);
+
+    return sgnode;
+  }
+
+  SgExprListExp&
+  getAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
+  {
+    if (expr.Expression_Kind == A_Record_Aggregate)
+      return getRecordAggregate(elem, expr, ctx);
+
+    return getArrayAggregate(elem, expr, ctx);
+  }
+
 } // anonymous
 
 
@@ -857,15 +885,8 @@ getExpr(Element_Struct& elem, AstContext ctx)
     case A_Positional_Array_Aggregate:              // 4.3
     case A_Named_Array_Aggregate:                   // 4.3
       {
-        const bool namedAggregate = expr.Expression_Kind == A_Named_Array_Aggregate;
+        SgExprListExp& explst = getArrayAggregate(elem, expr, ctx);
 
-        logKind(namedAggregate ? "A_Named_Array_Aggregate" : "A_Positional_Array_Aggregate");
-
-        ElemIdRange                range  = idRange(expr.Array_Component_Associations);
-        std::vector<SgExpression*> components = traverseIDs(range, elemMap(), ArrayAggregateCreator{namedAggregate, ctx});
-        SgExprListExp&             explst = mkExprListExp(components);
-
-        attachSourceLocation(explst, elem, ctx);
         res = sb::buildAggregateInitializer(&explst);
         ROSE_ASSERT(explst.get_parent());
         break;
@@ -994,9 +1015,9 @@ getExpr(Element_Struct& elem, AstContext ctx)
         ROSE_ASSERT(initElem.Element_Kind == An_Expression);
         Expression_Struct& initExpr = initElem.The_Union.Expression;
 
-        SgExprListExp&     recinit = getRecordAggregate(initElem, initExpr, ctx);
+        SgExprListExp&     tyinit  = getAggregate(initElem, initExpr, ctx);
 
-        res = &mkNewExp(ty, &recinit);
+        res = &mkNewExp(ty, &tyinit);
 
         /* unused fields
           Expression_ID         Subpool_Name
@@ -1140,54 +1161,20 @@ namespace
 
     Constraint_Struct& constraint = def.The_Union.The_Constraint;
 
+    if (constraint.Constraint_Kind == A_Range_Attribute_Reference)  // 3.5(2)
+    {
+      logKind("A_Range_Attribute_Reference");
+
+      return getExprID(constraint.Range_Attribute, ctx);
+    }
+
+
     ROSE_ASSERT (constraint.Constraint_Kind == A_Simple_Expression_Range);
     logKind("A_Simple_Expression_Range");
 
     SgExpression& lb = getExprID(constraint.Lower_Bound, ctx);
     SgExpression& ub = getExprID(constraint.Upper_Bound, ctx);
     return mkRangeExp(lb, ub);
-  }
-
-  /// \private
-  /// returns an expression from the Asis definition \ref def
-  SgExpression&
-  getDefinitionExpr(Element_Struct& el, AstContext ctx)
-  {
-    ROSE_ASSERT(el.Element_Kind == A_Definition);
-
-    Definition_Struct& def = el.The_Union.Definition;
-    SgExpression*      res = nullptr;
-
-    switch (def.Definition_Kind)
-    {
-      case A_Discrete_Range:
-        logKind("A_Discrete_Range");
-        res = &getDiscreteRange(el, def, ctx);
-        break;
-
-      case A_Discrete_Subtype_Definition:
-        logKind("A_Discrete_Subtype_Definition");
-        res = &getDiscreteSubtype(el, def, ctx);
-        break;
-
-      case An_Others_Choice:
-        logKind("An_Others_Choice");
-        res = &mkOthersExp();
-        break;
-
-      case A_Constraint:
-        logKind("A_Constraint");
-        res = &getConstraintExpr(def, ctx);
-        break;
-
-      default:
-        logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
-        res = sb::buildNullExpression();
-        ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
-
-    attachSourceLocation(SG_DEREF(res), el, ctx);
-    return *res;
   }
 }
 
@@ -1215,6 +1202,47 @@ void RangeListCreator::operator()(Element_Struct& elem)
   lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
+
+/// returns an expression from the Asis definition \ref def
+SgExpression&
+getDefinitionExpr(Element_Struct& el, AstContext ctx)
+{
+  ROSE_ASSERT(el.Element_Kind == A_Definition);
+
+  Definition_Struct& def = el.The_Union.Definition;
+  SgExpression*      res = nullptr;
+
+  switch (def.Definition_Kind)
+  {
+    case A_Discrete_Range:
+      logKind("A_Discrete_Range");
+      res = &getDiscreteRange(el, def, ctx);
+      break;
+
+    case A_Discrete_Subtype_Definition:
+      logKind("A_Discrete_Subtype_Definition");
+      res = &getDiscreteSubtype(el, def, ctx);
+      break;
+
+    case An_Others_Choice:
+      logKind("An_Others_Choice");
+      res = &mkOthersExp();
+      break;
+
+    case A_Constraint:
+      logKind("A_Constraint");
+      res = &getConstraintExpr(def, ctx);
+      break;
+
+    default:
+      logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
+      res = sb::buildNullExpression();
+      ROSE_ASSERT(!FAIL_ON_ERROR);
+  }
+
+  attachSourceLocation(SG_DEREF(res), el, ctx);
+  return *res;
+}
 
 SgExpression&
 getDiscreteRangeID(Element_ID id, AstContext ctx)

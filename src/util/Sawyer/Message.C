@@ -1375,6 +1375,26 @@ Stream::properties() const {
     return streambuf_->dflt_props_;
 }
 
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1) {
+    return s1;
+}
+
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2) {
+    return s1 ? s1 : s2;
+}
+
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3) {
+    return s1 ? s1 : (s2 ? s2 : s3);
+}
+
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3, Stream &s4) {
+    return s1 ? s1 : (s2 ? s2 : (s3 ? s3 : s4));
+}
+
+SAWYER_EXPORT Stream& firstEnabled(Stream &s1, Stream &s2, Stream &s3, Stream &s4, Stream &s5) {
+    return s1 ? s1 : (s2 ? s2 : (s3 ? s3 : (s4 ? s4 : s5)));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SAWYER_EXPORT
