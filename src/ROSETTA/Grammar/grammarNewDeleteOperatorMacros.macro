@@ -25,9 +25,13 @@
 #    endif
 #endif
 
+#ifndef ROSE_ALLOC_TRACE
+#  define ROSE_ALLOC_TRACE 0
+#endif
 
 #if ROSE_ALLOC_TRACE && !defined(ROSE_ALLOC_TRACE_CNT)
 #define ROSE_ALLOC_TRACE_CNT
+#include "memory-pool-snapshot.h"
 unsigned long alloc_trace_cnt = 0;
 #endif
 
@@ -35,6 +39,18 @@ unsigned long alloc_trace_cnt = 0;
 const unsigned $CLASSNAME::pool_size = 5;
 #else
 const unsigned $CLASSNAME::pool_size = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
+#endif
+
+#ifndef ROSE_ALLOC_MEMSET
+#  define ROSE_ALLOC_MEMSET 0
+#endif
+
+#ifndef ROSE_PEDANTIC_ALLOC
+#  define ROSE_PEDANTIC_ALLOC 0
+#endif
+
+#ifndef ROSE_ALLOC_MEMSET_OFFSET
+#  define ROSE_ALLOC_MEMSET_OFFSET 1 // prevents erasing the vtable pointer when ROSE_ALLOC_MEMSET is set, cause to many issues when investigating bugs
 #endif
 
 $CLASSNAME* $CLASSNAME::next_node = nullptr;
@@ -77,7 +93,7 @@ void *$CLASSNAME::operator new ( size_t Size )
      * returning or throwing an exception. */
     ALLOC_MUTEX($CLASSNAME, lock);
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
 //    printf("$CLASSNAME::new[%zi] (IN)\n  current_link = %p\n", alloc_trace_cnt, $CLASSNAME::next_node);
 #endif
 
@@ -86,27 +102,28 @@ void *$CLASSNAME::operator new ( size_t Size )
     ALLOC_MUTEX($CLASSNAME, unlock);
     return mem;
 #else /* !USE_CPP_NEW_DELETE_OPERATORS... */
-#if ROSE_ALLOC_AUTH_ALT_SIZE
+#if ROSE_PEDANTIC_ALLOC
+    ROSE_ASSERT(Size == sizeof($CLASSNAME));
+#else
     if (Size != sizeof($CLASSNAME)) {
       void * object = ROSE_MALLOC(Size);
       ALLOC_MUTEX($CLASSNAME, unlock);
       return object;
     }
-#else
-    ROSE_ASSERT(Size == sizeof($CLASSNAME));
 #endif
 
     if ($CLASSNAME::next_node == nullptr) {
         $CLASSNAME * alloc = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME::pool_size * sizeof($CLASSNAME) );
         ROSE_ASSERT(alloc != nullptr);
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
 //        printf("$CLASSNAME::alloc\n  block[%zi] = [ %p , %p [\n", $CLASSNAME::pools.size(), alloc, alloc + $CLASSNAME::pool_size);
 #endif
 
 #if ROSE_ALLOC_MEMSET == 1
-        memset(alloc, 0x00, $CLASSNAME::pool_size * sizeof($CLASSNAME));
 #elif ROSE_ALLOC_MEMSET == 2
+        memset(alloc, 0x00, $CLASSNAME::pool_size * sizeof($CLASSNAME));
+#elif ROSE_ALLOC_MEMSET == 3
         memset(alloc, 0xAA, $CLASSNAME::pool_size * sizeof($CLASSNAME));
 #endif
         for (unsigned i=0; i < $CLASSNAME::pool_size-1; i++) {
@@ -122,19 +139,20 @@ void *$CLASSNAME::operator new ( size_t Size )
     $CLASSNAME * object = $CLASSNAME::next_node;
     $CLASSNAME::next_node = ($CLASSNAME*)(object->p_freepointer);
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
     printf("$CLASSNAME::new[%zi] %p %p %p %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
 #endif
 
     SgNode * fp = object->p_freepointer;
 #if ROSE_ALLOC_MEMSET == 1
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xBB, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+#elif ROSE_ALLOC_MEMSET == 3
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xBB, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #endif
     object->p_freepointer = fp;
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
 //    printf("$CLASSNAME::new[%zi] (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
     std::ostringstream oss; oss << "mempool-" << alloc_trace_cnt << ".csv";
     Rose::MemPool::snapshot(oss.str());
@@ -172,32 +190,33 @@ void $CLASSNAME::operator delete(void *Pointer, size_t Size)
 #if USE_CPP_NEW_DELETE_OPERATORS
     ROSE_FREE(Pointer);
 #else
-#if ROSE_ALLOC_AUTH_ALT_SIZE
+#if ROSE_PEDANTIC_ALLOC
+    ROSE_ASSERT(Size == sizeof($CLASSNAME));
+#else
     if (Size != sizeof($CLASSNAME)) {
       ROSE_FREE(Pointer);
       ALLOC_MUTEX($CLASSNAME, unlock);
       return;
     }
-#else
-    ROSE_ASSERT(Size == sizeof($CLASSNAME));
 #endif
 
     $CLASSNAME * object = ($CLASSNAME*) Pointer;
     ROSE_ASSERT(object != nullptr);
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
 //  printf("$CLASSNAME::delete[%zi] (IN)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
     printf("$CLASSNAME::delete[%zi] %p %p %p %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
 #endif
 
-#if ROSE_DEALLOC_ASSERT
+#if ROSE_PEDANTIC_ALLOC
     ROSE_ASSERT(object->p_freepointer == AST_FileIO::IS_VALID_POINTER());
 #endif
 
 #if ROSE_ALLOC_MEMSET == 1
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xDD, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(void*));
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+#elif ROSE_ALLOC_MEMSET == 3
+    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xDD, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #endif
 
 // Liao, 8/11/2014, to support IR mapping, we need unique IDs for AST nodes.
@@ -209,7 +228,7 @@ void $CLASSNAME::operator delete(void *Pointer, size_t Size)
     $CLASSNAME::next_node = object;
 #endif
 
-#if ROSE_ALLOC_TRACE
+#if ROSE_ALLOC_TRACE == 2
 //  printf("$CLASSNAME::delete[%zi] (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", alloc_trace_cnt, object, object->p_freepointer, object->p_parent, $CLASSNAME::next_node);
     std::ostringstream oss; oss << "mempool-" << alloc_trace_cnt << ".csv";
     Rose::MemPool::snapshot(oss.str());
