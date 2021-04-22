@@ -1,4 +1,4 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = dot_asis_library \
+SUBDIRS = asis_adapter \
 	ada_main

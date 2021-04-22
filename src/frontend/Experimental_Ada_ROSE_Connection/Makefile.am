@@ -9,7 +9,7 @@ noinst_LTLIBRARIES := libexperimentalRoseAda.la
 # DQ (8/23/2017): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-SUBDIRS := dot_asis
+SUBDIRS := parser
 
   libexperimentalRoseAda_la_SOURCES := \
     ada_support.C \

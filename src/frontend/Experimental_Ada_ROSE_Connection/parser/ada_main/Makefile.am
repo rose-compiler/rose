@@ -1,15 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-noinst_PROGRAMS := obj/run_asis_tool_2
+noinst_PROGRAMS := obj/run_parser_adapter
 
 obj/run_asis_tool_2$(EXEEXT):
 	gprbuild \
 	-p \
-	-aP $(srcdir)/../dot_asis_library \
-	-P$(srcdir)/dot_asis.gpr \
+	-aP $(srcdir)/../asis_adapter \
+	-P$(srcdir)/ada_main.gpr \
 	-v \
 	--relocate-build-tree=.  \
-	run_asis_tool_2
+	run_parser_adapter
 
 clean:
 	rm -rf obj
