@@ -486,7 +486,7 @@ main(int argc, char *argv[]) {
             break;
         }
     }
-    info <<"; completed in " <<matrixInitTime <<" seconds\n";
+    info <<"; completed in " <<matrixInitTime <<"\n";
 
     // Use the Kuhn-Munkres algorithm to find a minimum weight perfect matching for the bipartite graph (represented by the
     // matrix) in O(n^3) time.  Also called the "Hungarian method".
@@ -495,7 +495,7 @@ main(int argc, char *argv[]) {
     dlib::matrix<unsigned long> cost(distance.nr(), distance.nc());
     munkresCost(distance, 1000000ul, cost /*out*/);
     std::vector<long> assignments = dlib::max_cost_assignment(cost);
-    info <<"; completed in " <<munkresTime <<" seconds\n";
+    info <<"; completed in " <<munkresTime <<"\n";
 
     double totalDistance = 0.0;
     for (size_t i=0; i<assignments.size(); ++i)

@@ -975,7 +975,7 @@ RSIM_Linux::syscall_execve_body(RSIM_Thread *t, int callno)
 
     /* The real system call */
     int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
-    ROSE_ASSERT(-1==result);
+    ASSERT_always_require(-1==result);
     t->syscall_return(-errno);
 }
 
@@ -993,9 +993,9 @@ RSIM_Linux::syscall_exit_body(RSIM_Thread *t, int callno)
     if (t->clearChildTidVa()) {
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
         size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
+        ASSERT_always_require(n==sizeof zero);
         int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
+        ASSERT_always_require(nwoke>=0);
     }
 
     // Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as well). The
@@ -1029,9 +1029,9 @@ RSIM_Linux::syscall_exit_group_body(RSIM_Thread *t, int callno)
         //   done. (That is, wake a single process waiting on this futex.) Errors are ignored.
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
         size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
+        ASSERT_always_require(n==sizeof zero);
         int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
+        ASSERT_always_require(nwoke>=0);
     }
 
     t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";

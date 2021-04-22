@@ -323,17 +323,19 @@ public:
         }
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Inherited non-constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) ROSE_OVERRIDE;
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor, const SValuePtr &value, RiscOperators*) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators*) ROSE_OVERRIDE;
+    virtual void hash(Combinatorics::Hasher&, RiscOperators*) const override;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

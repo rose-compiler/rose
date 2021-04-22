@@ -256,6 +256,13 @@ public:
     // when we switch to just "mustAlias".
     virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
     
+    /** Hash the address and value.
+     *
+     *  This hashes the address and value for the cell, but not any other properties. The goal is that an analysis that
+     *  encounters the same state twice might be able to eliminate some work, and comparing hashes is a fast first test of
+     *  equality: different hashes mean the states are different. */
+    virtual void hash(Combinatorics::Hasher&) const;
+
     /** Print the memory cell on a single line.
      * @{ */
     void print(std::ostream &stream) const {

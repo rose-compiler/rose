@@ -223,7 +223,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
             mapAnalyzer.analyze();
         }
         std::vector<rose_addr_t> deltas = mapAnalyzer.bestDeltas();
-        info <<"; took " <<remapTime <<" seconds\n";
+        info <<"; took " <<remapTime <<"\n";
         mlog[INFO] <<"found " <<StringUtility::plural(deltas.size(), "deltas") <<" with match ratio "
                     <<(100.0*mapAnalyzer.bestDeltaRatio()) <<"%\n";
 

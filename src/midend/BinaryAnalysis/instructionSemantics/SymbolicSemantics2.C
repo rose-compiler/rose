@@ -174,6 +174,15 @@ SValue::set_comment(const std::string &s) const
 }
 
 void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    if (expr) {
+        // SymbolicExpr doesn't allow a hasher to be specified because of the way it caches hashes for performance for very
+        // large expressions with a high degree of sharing and parallelism.
+        hasher.insert(expr->hash());
+    }
+}
+
+void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);

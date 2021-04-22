@@ -1535,7 +1535,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     delete[] threads;
     ASSERT_require(ctx.nWorking == BfsContext::EXIT_NOW || ctx.bfsFrontier.empty());
     ASSERT_require(ctx.nWorking == BfsContext::EXIT_NOW || ctx.bfsForest.isEmpty());
-    searching <<"; took " <<searchTime <<" seconds\n";
+    searching <<"; took " <<searchTime <<"\n";
 }
 
 #if 0 // [Robb Matzke 2018-04-10]

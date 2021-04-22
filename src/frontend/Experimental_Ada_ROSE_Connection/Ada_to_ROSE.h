@@ -90,11 +90,19 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
-/// returns a mapping from string to builtin type nodes
+//
+// the following functions provide access to elements that are
+// defined with the standard package, which is currently not
+// provided by Asis.
+
+/// returns a mapping from string to standard type nodes
 map_t<AdaIdentifier, SgType*>& adaTypes();
 
 /// returns a mapping from string to builtin exception types
 map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
 
 //
@@ -177,10 +185,20 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
+/**
+    /// returns a new context with the element
+    AstContext element(Element_struct& el) const;
+
+    /// returns the current element and returns a new context
+    Element_struct& element() const;
+**/
+
   private:
     SgScopeStatement*    the_scope;
     LabelAndLoopManager* all_labels_loops;
     const std::string*   unit_file_name;
+    Element_Struct*      elem;
+
 };
 
 

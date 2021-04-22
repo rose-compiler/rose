@@ -152,6 +152,7 @@ protected:
     int iprocKey(SgAsmInstruction*) const override;
     RegisterDescriptor instructionPointerRegister() const override;
     RegisterDescriptor stackPointerRegister() const override;
+    RegisterDescriptor stackFrameRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
     void set_register_dictionary(const RegisterDictionary*) override;
 };

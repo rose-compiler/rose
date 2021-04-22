@@ -181,6 +181,11 @@ public:
      *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
+    /** Hash the register state.
+     *
+     *  Hashes the register state by appending its data to the specified hasher. */
+    virtual void hash(Combinatorics::Hasher&, RiscOperators*) const = 0;
+
     /** Print the register contents. This emits one line per register and contains the register name and its value.
      *  @{ */
     void print(std::ostream &stream, const std::string prefix = "") const;

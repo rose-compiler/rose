@@ -1,15 +1,15 @@
 ########################################################################################3#
-#                              STRUCTURE OF ADA TESTS 
-#                  
+#                              STRUCTURE OF ADA TESTS
+#
 #                                                               ADA_TESTS
 #                                                               /      \
 #                                             ASIS_PASSING_TESTS        ASIS_FAILING_TESTS
 #                                             /       |        \
 #                                            /        |         \
-#                       ROSE_PASSING_ADA_TESTS        |         ROSE_FAILING_ADA_TESTS 
+#                       ROSE_PASSING_ADA_TESTS        |         ROSE_FAILING_ADA_TESTS
 #                      /           |          \	     ROSE_PASSING_IMCOMPLETE_ADA_TESTS
 #                     /            |           \
-#   ADA_TRANSLATOR_PASSING_TESTS   |     ADA_TRANSLATOR_FAILING_TESTS 
+#   ADA_TRANSLATOR_PASSING_TESTS   |     ADA_TRANSLATOR_FAILING_TESTS
 #                  ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS
 ########################################################################################3#
 
@@ -65,7 +65,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
-  while_loop_statement.adb 
+  while_loop_statement.adb
 
 ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   case_function.adb                    \
@@ -75,6 +75,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_operator_symbol.ads         \
   enumeration.adb                      \
   exception_declaration.ads            \
+  exhandler.adb                        \
   function_renaming.adb                \
   myarray.ads                          \
   myarray.adb                          \
@@ -94,7 +95,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   tagged_definition.ads                \
   type_conversion.adb                  \
   unconstrained_array_definition.ads   \
-  week_string_literal.ads              
+  week_string_literal.ads
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   allocators.adb                       \
@@ -103,11 +104,13 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   array_expressions.adb                \
+  array_pointer_type.ads               \
   asm_machine_code.adb                 \
   async_transfer_select.adb            \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
+  empty_private.ads                    \
   entry_call.adb                       \
   entry_declaration.ads                \
   enumeration_with_text_io.adb         \
@@ -127,6 +130,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_with_body.adb                \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  ranges.adb                           \
   real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
@@ -136,6 +140,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
+  std_ascii_user.adb                   \
   sub_derived_types.ads                \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
@@ -143,16 +148,17 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   task_with_body.adb                   \
   task_with_body.ads                   \
   test.ads                             \
-  test_unit.ads                        
+  test_unit.ads                        \
+  type_in_local_pkg.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=        
+ADA_TRANSLATOR_PENDING_TESTS :=
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
   $(ADA_TRANSLATOR_PASSING_TESTS)                   \
   $(ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS)        \
   $(ADA_TRANSLATOR_PENDING_TESTS)                   \
-  $(ADA_TRANSLATOR_FAILING_TESTS)                   
+  $(ADA_TRANSLATOR_FAILING_TESTS)
 
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
@@ -186,11 +192,11 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   procedure_body_stub.adb                           \
   unknown_discriminant.ads                          \
   variable_variant_record.adb                       \
-  variant_record.ads                                
+  variant_record.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
-  complex.adb                                       \ 
+  complex.adb                                       \
   delay_until.adb                                   \
   iterate_range.adb                                 \
   mpiuse.ads                                        \
@@ -198,19 +204,19 @@ ROSE_FAILING_ADA_TESTS :=                           \
   requeue_statements.adb                            \
   test_unit.adb                                     \
   unit_2.adb                                        \
-  unit_2.ads                                        
+  unit_2.ads
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
   $(ROSE_PASSING_ADA_TESTS)                         \
   $(ROSE_PASSING_IMCOMPLETE_ADA_TESTS)              \
-  $(ROSE_FAILING_ADA_TESTS)                         
+  $(ROSE_FAILING_ADA_TESTS)
 
 ASIS_FAILING_TESTS :=                               \
   entry_index_specification.adb                     \
-  mpi.ads                                           
+  mpi.ads
 
-#defining all Ada test files                         
+#defining all Ada test files
 ADA_TESTS :=                                        \
   $(ASIS_PASSING_TESTS)                             \
-  $(ASIS_FAILING_TESTS)                             
+  $(ASIS_FAILING_TESTS)

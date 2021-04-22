@@ -30,7 +30,6 @@ initializeParallelPartitioner(PP::Partitioner &pp) {
 // Initialize the parallel partitioner from a serial partitioner.
 void
 initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
-    Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     initializeParallelPartitioner(pp);
@@ -96,7 +95,7 @@ runPartitioner(PP::Partitioner &pp) {
     info <<"disassembling with " <<StringUtility::plural(nThreads, "threads");
     Sawyer::Stopwatch timer;
     pp.run(nThreads);
-    info <<"; took " <<timer <<" seconds\n";
+    info <<"; took " <<timer <<"\n";
     info <<"CFG now has " <<StringUtility::plural(pp.insnCfg().nVertices(), "instructions") <<"\n";
 }
 
@@ -319,7 +318,7 @@ int main(int argc, char *argv[]) {
     boost::thread(asyncProgressReporting, pp.progress(), &bar).detach();
     timer.restart();
     runPartitioner(pp);
-    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"; took " <<timer <<"\n";
     //pp.dumpInsnCfg(std::cerr, p);
 
 #if 0 // [Robb Matzke 2020-07-30]
@@ -342,7 +341,7 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"transfering results to serial partitioner";
     timer.restart();
     pp.transferResults(p);
-    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"; took " <<timer <<"\n";
     mlog[INFO] <<"generating output\n";
     //printInsnsFromBoth(pp, p);
     engine.savePartitioner(p, "x.rba");
@@ -352,7 +351,7 @@ int main(int argc, char *argv[]) {
     timer.restart();
     engine.doingPostAnalysis(false);
     P2::Partitioner p2 = engine.partition(specimenName);
-    mlog[INFO] <<"; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"; took " <<timer <<"\n";
 
     mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);

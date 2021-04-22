@@ -1860,6 +1860,7 @@ HEADER_JOVIAL_TABLE_PRESET_EXP_END
 
 // Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
 HEADER_JOVIAL_PRESET_POSITION_EXP_START
+int replace_expression (SgExpression *o, SgExpression *n);
 HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
@@ -7817,8 +7818,9 @@ SgConstructorInitializer::post_construction_initialization()
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
 
+       // PP (4/17/21) : Added exception for typedef types to support
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
-          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
              {
                printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
                if (p_expression_type != NULL)
@@ -7827,7 +7829,7 @@ SgConstructorInitializer::post_construction_initialization()
                   }
              }
 
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
@@ -9482,6 +9484,24 @@ SgJovialPresetPositionExp::get_type() const
   ROSE_ASSERT(p_value);
   return p_value->get_type();
 }
+
+int
+SgJovialPresetPositionExp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (p_indices == o) {
+       p_indices = isSgExprListExp(n);
+       return p_indices != nullptr;
+     } else if (p_value) {
+       p_value = n;
+       return 1;
+     } else {
+       printf ("Warning: inside of SgUnaryOp::replace_expression original SgExpression unidentified \n");
+       return 0;
+     }
+   }
 SOURCE_JOVIAL_PRESET_POSITION_EXP_END
 
 

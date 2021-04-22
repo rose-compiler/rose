@@ -319,7 +319,7 @@ Reachability::markStartingPoints(const P2::Partitioner &partitioner, MemoryMap::
                                                 settings_.markingExplicitMemoryReferents);
     }
 
-    SAWYER_MESG(trace) <<"; took " <<timer <<" seconds\n";
+    SAWYER_MESG(trace) <<"; took " <<timer <<"\n";
     return nChanges;
 }
 
@@ -344,7 +344,7 @@ Reachability::markEntryFunctions(const P2::Partitioner &partitioner, ReasonFlags
         }
     }
 
-    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<"\n";
     return nChanges;
 }
 
@@ -368,7 +368,7 @@ Reachability::markExportFunctions(const P2::Partitioner &partitioner, ReasonFlag
             }
         }
     }
-    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<"\n";
     return nChanges;
 }
 
@@ -394,7 +394,7 @@ Reachability::markExplicitMemoryReferents(const P2::Partitioner &partitioner, co
     resize(partitioner);
     std::set<size_t> vertexIds = findExplicitMemoryReferents(partitioner, map, bytesPerWord, alignment, sex);
     size_t nChanges = intrinsicallyReachable(vertexIds.begin(), vertexIds.end(), how);
-    SAWYER_MESG(debug) <<"; took " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; took " <<timer <<"\n";
     return nChanges;
 }
 
@@ -408,7 +408,7 @@ Reachability::markImplicitFunctionReferents(const P2::Partitioner &partitioner, 
     resize(partitioner);
     std::set<size_t> vertexIds = findImplicitFunctionReferents(partitioner, function);
     size_t nChanges = intrinsicallyReachable(vertexIds.begin(), vertexIds.end(), how);
-    SAWYER_MESG(debug) <<"; took " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; took " <<timer <<"\n";
     return nChanges;
 }
 
@@ -429,7 +429,7 @@ Reachability::markSpecifiedVas(const P2::Partitioner &partitioner, const std::ve
                 ++nChanges;
         }
     }
-    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<"\n";
     return nChanges;
 }
 
@@ -663,7 +663,7 @@ Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
     }
     size_t nThreads = settings_.nThreads.orElse(Rose::CommandLine::genericSwitchArgs.threads);
     Sawyer::workInParallel(depgraph, nThreads, analyzer);
-    debug <<"; took " <<timer <<" seconds\n";
+    debug <<"; took " <<timer <<"\n";
 }
 
 
@@ -726,7 +726,7 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
         }
     }
 
-    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<" seconds\n";
+    SAWYER_MESG(debug) <<"; " <<StringUtility::plural(nChanges, "changes") <<" in " <<timer <<"\n";
     return nChanges;
 }
 

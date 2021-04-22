@@ -194,6 +194,10 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
 
+    virtual void hash(Combinatorics::Hasher&) const override {
+        ASSERT_not_reachable("no implementation necessary");
+    }
+
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
 public:

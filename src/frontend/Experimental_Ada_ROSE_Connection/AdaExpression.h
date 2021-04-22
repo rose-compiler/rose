@@ -31,6 +31,10 @@ namespace Ada_ROSE_Translation
   SgExpression&
   getDiscreteRangeID(Element_ID id, AstContext ctx);
 
+  /// returns an expression from the Asis definition \ref el
+  SgExpression&
+  getDefinitionExpr(Element_Struct& el, AstContext ctx);
+
   /// returns an expression for the Asis definition
   /// \pre id identifies a Asis definition
   SgExpression&

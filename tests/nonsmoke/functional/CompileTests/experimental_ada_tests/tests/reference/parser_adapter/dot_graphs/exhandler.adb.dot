@@ -1,0 +1,123 @@
+digraph "exhandler.adt" {
+  Unit_3 -> Element_2301106
+      [ label=Unit_Declaration ];
+  Unit_3
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Unit_3</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_BODY</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Class   </TD><TD> = </TD><TD ALIGN="LEFT">A_PUBLIC_DECLARATION_AND_BODY</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Origin   </TD><TD> = </TD><TD ALIGN="LEFT">AN_APPLICATION_UNIT</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Full_Name    </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler</TD></TR>
+          <TR><TD ALIGN="LEFT">Unique_Name   </TD><TD> = </TD><TD ALIGN="LEFT">ASIS Context 1: ExHandler (body)</TD></TR>
+          <TR><TD ALIGN="LEFT">Exists  </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Can_Be_Main_Program     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Body_Required     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Name   </TD><TD> = </TD><TD ALIGN="LEFT">exhandler.adb</TD></TR>
+          <TR><TD ALIGN="LEFT">Text_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
+          <TR><TD ALIGN="LEFT">Compilation_Command_Line_Options         </TD><TD> = </TD><TD ALIGN="LEFT">-gnatA -gnatc -gnatt -gnatws -gnatyN -mtune=generic -march=x86-64</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Parent_Declaration         </TD><TD> = </TD><TD ALIGN="LEFT">Unit_1</TD></TR>
+          </TABLE>> ];
+  Element_2301106 -> Element_2293057
+      [ label="Names ( 1)" ];
+  Element_2301106 -> Element_2303394
+      [ label="Body_Statements ( 1)" ];
+  Element_2301106 -> Element_2311387
+      [ label="Body_Statements ( 2)" ];
+  Element_2301106
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1064484590</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 2:1 .. 13:14</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_BODY_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2293057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2313237</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Statements ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303394</TD></TR>
+          <TR><TD ALIGN="LEFT">Body_Statements ( 2)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2311387</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Name_Repeated     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          </TABLE>> ];
+  Element_2293057
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2293057</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1064883438</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 2:11 .. 2:19</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"ExHandler"</TD></TR>
+          </TABLE>> ];
+  Element_2303394 -> Element_2306387
+      [ label="Block_Statements ( 1)" ];
+  Element_2303394 -> Element_2307434
+      [ label="Block_Exception_Handlers ( 1)" ];
+  Element_2303394
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2303394</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1479157954</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 5:6 .. 10:9</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_BLOCK_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Identifier      </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Block_Statements ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2306387</TD></TR>
+          <TR><TD ALIGN="LEFT">Block_Exception_Handlers ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2307434</TD></TR>
+          </TABLE>> ];
+  Element_2306387
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2306387</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 739837617</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303394</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 6:11 .. 6:15</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NULL_STATEMENT</TD></TR>
+          </TABLE>> ];
+  Element_2307434 -> Element_2308197
+      [ label="Exception_Choices ( 1)" ];
+  Element_2307434 -> Element_2309387
+      [ label="Handler_Statements ( 1)" ];
+  Element_2307434
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2307434</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXCEPTION_HANDLER</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1258838316</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303394</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 8:11 .. 9:20</TD></TR>
+          <TR><TD ALIGN="LEFT">Choice_Parameter_Specification        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Exception_Choices ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2308197</TD></TR>
+          <TR><TD ALIGN="LEFT">Handler_Statements ( 1)      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309387</TD></TR>
+          </TABLE>> ];
+  Element_2308197
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2308197</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINITION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1258840704</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2307434</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 8:16 .. 8:21</TD></TR>
+          <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_OTHERS_CHOICE</TD></TR>
+          </TABLE>> ];
+  Element_2309387
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2309387</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 629448896</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2307434</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 9:16 .. 9:20</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NULL_STATEMENT</TD></TR>
+          </TABLE>> ];
+  Element_2311387
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2311387</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_STATEMENT</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2068790247</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301106</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">ExHandler.adb - 12:6 .. 12:10</TD></TR>
+          <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_NULL_STATEMENT</TD></TR>
+          </TABLE>> ]
+}

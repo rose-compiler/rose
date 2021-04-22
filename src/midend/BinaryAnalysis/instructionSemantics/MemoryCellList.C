@@ -414,6 +414,21 @@ MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, Risc
 }
 
 void
+MemoryCellList::hash(Combinatorics::Hasher &hasher, RiscOperators*/*addrOps*/, RiscOperators*/*valOps*/) const {
+    // This could be improved substantially. For instance, the list
+    //   {(0,x), (0,y)}
+    // could be given the same hash as
+    //   {(0,x)},
+    //   {(0,x), (0,z)},
+    //   {(0,x), (0,y), (0,z)},
+    //   etc.
+    // because a more recent concrete address (zero in this case) occludes the older cells with the same address. But in
+    // order to do this properly, we have to do a better comparison than just checking concrete addresses for equality.
+    for (const MemoryCellPtr &cell: cells)
+        cell->hash(hasher);
+}
+
+void
 MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 {
     for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)

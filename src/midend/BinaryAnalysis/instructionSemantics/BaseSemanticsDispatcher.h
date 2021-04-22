@@ -229,6 +229,9 @@ public:
     /** Returns the stack pointer register. */
     virtual RegisterDescriptor stackPointerRegister() const = 0;
 
+    /** Returns the stack call frame register. */
+    virtual RegisterDescriptor stackFrameRegister() const = 0;
+
     /** Returns the function call return address register. */
     virtual RegisterDescriptor callReturnRegister() const = 0;
 

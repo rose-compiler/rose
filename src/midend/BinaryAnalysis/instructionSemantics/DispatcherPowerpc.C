@@ -2769,6 +2769,11 @@ DispatcherPowerpc::stackPointerRegister() const {
 }
 
 RegisterDescriptor
+DispatcherPowerpc::stackFrameRegister() const {
+    return RegisterDescriptor();
+}
+
+RegisterDescriptor
 DispatcherPowerpc::callReturnRegister() const {
     return REG_LR;
 }
