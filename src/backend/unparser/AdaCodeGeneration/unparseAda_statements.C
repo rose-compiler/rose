@@ -647,7 +647,9 @@ namespace
       prn(" ");
       prn(n.get_name());
 
-      const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+
+      const bool isDefinition    = &n == n.get_definingDeclaration();
+      const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
       const bool requiresIs      = (  requiresPrivate
                                    || hasModifiers(n)
                                    || declwords.second.size() != 0
