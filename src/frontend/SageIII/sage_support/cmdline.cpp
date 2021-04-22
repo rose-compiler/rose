@@ -7784,6 +7784,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
             // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.
                compilerNameString.push_back("compile");
+
+            // PP (04/17/21): add -I. to override -I- added by gnat compile
+            //                RC-637
+               compilerNameString.push_back("-I.");
 #else
                printf ("Error: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                ROSE_ABORT();
