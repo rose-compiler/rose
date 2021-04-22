@@ -4,7 +4,7 @@ int main() {
   // arithmetic with array elements
   printf("a[0]:%d\n",a[0]);
   printf("a[1]:%d\n",a[1]);
-  a[0]=a[0]+1;
+  a[0]=a[0]+10;
   printf("a[0]:%d\n",a[0]);
   int* p;
   p=a;
@@ -28,7 +28,7 @@ int main() {
   printf("**r:%d\n",**r);
   // compution on array elements referred by array index expressions
   int i=0;
-  a[i+1]=a[i+1]+1;
+  a[i+1]=a[i+1]+100;
   int* s;
   s=&a[1];
   int* b[2];

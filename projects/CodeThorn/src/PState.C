@@ -80,7 +80,7 @@ std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const 
 std::string PState::memoryValueToDotString(AbstractValue av,VariableIdMapping* variableIdMapping) const {
   return ":"+av.toString(variableIdMapping);
 }
-			  
+
 string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   for(PState::const_iterator j=begin();j!=end();++j) {
@@ -90,7 +90,14 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
     if(v2.isPtr()) {
       // nodes
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<v2.toString(variableIdMapping);
+      if(memLocExists(v2)) {
+	AbstractValue memVal=readFromMemoryLocation(v2);
+	ss<<memoryValueToDotString(memVal,variableIdMapping);
+      } else {
+	ss<<":???";
+      }
+      ss<<"\"];"<<endl;
       //endl; // target label intentionally not generated
       // edge
       ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
@@ -108,7 +115,7 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
 	  memVal=readFromMemoryLocation(av);
 	  ss<<memoryValueToDotString(memVal,variableIdMapping);
 	} else {
-	  ss<<"???";
+	  ss<<":???";
 	}
 	ss<<"\"];"<<endl;
       }
