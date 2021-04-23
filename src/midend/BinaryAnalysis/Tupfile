@@ -16,3 +16,5 @@ run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h Bi
     BinarySmtCommandLine.h BinarySmtSolver.h BinarySmtlibSolver.h BinarySourceLocations.h BinaryStackDelta.h BinaryStackVariable.h \
     BinaryString.h BinarySymbolicExpr.h BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h \
     BinaryVariables.h BinaryYicesSolver.h BinaryZ3Solver.h ether.h
+
+run $(public_header) -o include/rose/BinaryAnalysis ModelChecker.h

@@ -412,6 +412,12 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         size_t nbits = std::max(lhs->get_nBits(), rhs->get_nBits());
         retval = operators()->add(operators()->signExtend(read(lhs, lhs->get_nBits(), addr_nbits), nbits),
                                   operators()->signExtend(read(rhs, rhs->get_nBits(), addr_nbits), nbits));
+    } else if (SgAsmBinarySubtract *diff = isSgAsmBinarySubtract(e)) {
+        SgAsmExpression *lhs = diff->get_lhs();
+        SgAsmExpression *rhs = diff->get_rhs();
+        size_t nbits = std::max(lhs->get_nBits(), rhs->get_nBits());
+        retval = operators()->subtract(operators()->signExtend(read(lhs, lhs->get_nBits(), addr_nbits), nbits),
+                                       operators()->signExtend(read(rhs, rhs->get_nBits(), addr_nbits), nbits));
     } else if (SgAsmBinaryMultiply *product = isSgAsmBinaryMultiply(e)) {
         SgAsmExpression *lhs = product->get_lhs();
         SgAsmExpression *rhs = product->get_rhs();
