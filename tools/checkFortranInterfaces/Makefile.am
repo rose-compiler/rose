@@ -46,7 +46,7 @@ BIN_EXECUTABLES = \
 
 checkFortranInterfaces_SOURCES = checkFortranInterfaces.C checkFortranInterfaces.h main.C
 checkFortranInterfaces.test: checkFortranInterfaces
-	./checkFortranInterfaces $(top_srcdir)/tools/checkFortranInterfaces_test_01.c checkFortranInterfaces_test_01.f90
+	./checkFortranInterfaces $(top_srcdir)/tools/checkFortranInterfaces/tests/test_1.f90 $(top_srcdir)/tools/checkFortranInterfaces/tests/test_1.c
 
 #------------------------------------------------------------------------------
 TEST_TARGETS = ${BIN_EXECUTABLES:=.test}

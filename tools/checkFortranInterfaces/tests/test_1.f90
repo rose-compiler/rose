@@ -1,10 +1,5 @@
-subroutine foobar (i) bind(C, name = "fubar")
+subroutine trials_f (i,j,x) bind(C, name = "trials")
   integer, value :: i
-end subroutine foobar
-
-subroutine bar_f (ch, i, x, y) bind(C, name = "bar")
-  integer, value :: ch
-  integer :: i
+  integer :: j
   real, value :: x
-  character, value :: y
 end subroutine
