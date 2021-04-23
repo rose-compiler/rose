@@ -413,16 +413,7 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
 }
 
 void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject) {
-  bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
-  bool showProgramStats=ctOpt.programStats;
-  bool showProgramStatsOnly=ctOpt.programStatsOnly;
-  if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
-    ProgramInfo programInfo(sageProject);
-    programInfo.compute();
-    if(unknownFunctionsFile) {
-      programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
-    }
-  }
+  //cout<<"Warning: TODO optionallyGenerateExternalFunctionsFile not implemented yet."<<endl;
 }
 
 void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject) {
