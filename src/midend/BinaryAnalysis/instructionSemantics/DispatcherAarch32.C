@@ -98,7 +98,6 @@ struct IP_add: P {
         SValuePtr b = d->read(args[2], 32);
         auto [result, nzcv] = d->addWithCarry(a, b, ops->boolean_(false));
         if (d->isIpRegister(args[0])) {
-            ASSERT_require(d->mustBeSet(d->isA32Mode()));
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
             } else {
