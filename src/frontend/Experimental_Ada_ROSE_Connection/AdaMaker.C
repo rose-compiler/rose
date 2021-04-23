@@ -935,12 +935,44 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
   return sgnode;
 }
 
+namespace
+{
+  struct InitMaker : sg::DispatchHandler<SgInitializer*>
+  {
+      using base = sg::DispatchHandler<SgInitializer*>;
+
+      explicit
+      InitMaker(SgType& varty)
+      : base(), vartype(&varty)
+      {}
+
+      void handle(SgNode& n)        { SG_UNEXPECTED_NODE(n); }
+      void handle(SgExpression& n)  { res = &mkLocatedNode<SgAssignInitializer>(&n, vartype); }
+      void handle(SgInitializer& n) { res = &n; /* can this happen? */ }
+      void handle(SgExprListExp& n) { res = sb::buildAggregateInitializer(&n); }
+
+    private:
+      SgType* vartype;
+  };
+
+  SgInitializer* mkInitializerAsNeeded(SgType& vartype, SgExpression* n)
+  {
+    if (n == nullptr)
+      return nullptr;
+
+    SgInitializer* res = sg::dispatch(InitMaker(vartype), n);
+
+    ROSE_ASSERT(res);
+    return res;
+  }
+}
+
 SgInitializedName&
 mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val)
 {
   ROSE_ASSERT(! (val && val->isTransformation()));
-  SgAssignInitializer* varinit = val ? &mkLocatedNode<SgAssignInitializer>(val, &vartype) : nullptr;
-  SgInitializedName&   sgnode = SG_DEREF( sb::buildInitializedName_nfi(varname, &vartype, varinit) );
+  SgInitializer*     varinit = mkInitializerAsNeeded(vartype, val);
+  SgInitializedName& sgnode  = SG_DEREF( sb::buildInitializedName_nfi(varname, &vartype, varinit) );
 
   //~ sgnode.set_type(&vartype);
   //~ if (varinit)

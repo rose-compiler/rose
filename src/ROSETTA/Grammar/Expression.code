@@ -6721,10 +6721,11 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
          case e_dynamic_cast: s = "e_dynamic_cast"; break;
          case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
          case e_safe_cast: s = "e_safe_cast"; break;
+         case e_ada_type_qualification: s = "e_ada_type_qualification"; break;
          case e_last_cast: s = "e_last_cast"; break;
 
          default:
-              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+              printf ("ERROR: default reached in switch: cast_type = %d \n",cast_type);
        }
 
      return s;

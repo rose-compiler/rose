@@ -1088,7 +1088,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Ada_language:
              {
-               printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
+               // PP (04/21/15) rm output since there is another one mentioning that
+               //               Ada unparsing is experimental.
+               //~ printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
 
                Unparse_Ada unparser(this, file->getFileName());
 
