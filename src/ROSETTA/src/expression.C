@@ -231,6 +231,10 @@ Grammar::setUpExpressions ()
   // DQ (12/13/2005): Added support for empty expression (and empty statement).
      NEW_TERMINAL_MACRO (NullExpression,         "NullExpression",             "NULL_EXPR" );
 
+  // PP (04/24/21): Adding explicit support for Ada others expressions
+     NEW_TERMINAL_MACRO (AdaOthersExp,           "AdaOthersExp",               "ADA_OTHERS_EXPR" );
+
+
   // DQ (12/13/2005): Added variant expression to support future patterns
   // specifications (contains RegEx string specifier for SgStatement IR node).
      NEW_TERMINAL_MACRO (VariantExpression,      "VariantExpression",          "VARIANT_EXPR" );
@@ -471,7 +475,7 @@ Grammar::setUpExpressions ()
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
           AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
-          JovialTablePresetExp| JovialPresetPositionExp, "Expression", "ExpressionTag", false);
+          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -892,6 +896,7 @@ Grammar::setUpExpressions ()
 
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     AdaOthersExp.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      StatementExpression.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1095,6 +1100,7 @@ Grammar::setUpExpressions ()
      VarArgCopyOp.editSubstitute    ( "PRECEDENCE_VALUE", "16" );
 
      NullExpression.editSubstitute    ( "PRECEDENCE_VALUE", "16" );
+     AdaOthersExp.editSubstitute      ( "PRECEDENCE_VALUE", "16" );
      VariantExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (7/21/2006): Added support for GNU statement expression extension.
@@ -2655,6 +2661,9 @@ Grammar::setUpExpressions ()
      NullExpression.setFunctionPrototype    ( "HEADER_NULL_EXPRESSION", "../Grammar/Expression.code" );
   // NullExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
   //                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaOthersExp.setFunctionPrototype    ( "HEADER_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
+
      VariantExpression.setFunctionPrototype ( "HEADER_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
   // VariantExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
   //                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3457,6 +3466,10 @@ Grammar::setUpExpressions ()
   // NullExpression.setFunctionSource    ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
      NullExpression.setFunctionSource    ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
      NullExpression.editSubstitute       ( "GENERIC_TYPE", "SgTypeDefault" );
+
+     AdaOthersExp.setFunctionSource      ( "SOURCE_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
+     AdaOthersExp.setFunctionSource      ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
+     AdaOthersExp.editSubstitute         ( "GENERIC_TYPE", "SgTypeDefault" );
 
      VariantExpression.setFunctionSource ( "SOURCE_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
   // VariantExpression.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE", "../Grammar/Expression.code" );

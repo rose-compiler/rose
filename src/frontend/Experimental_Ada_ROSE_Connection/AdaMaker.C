@@ -1209,10 +1209,10 @@ mkNewExp(SgType& ty, SgExprListExp* args_opt)
 }
 
 
-SgExpression&
-mkOthersExp()
+SgAdaOthersExp&
+mkAdaOthersExp()
 {
-  return SG_DEREF(sb::buildVoidVal());
+  return mkLocatedNode<SgAdaOthersExp>();
 }
 
 SgExpression&

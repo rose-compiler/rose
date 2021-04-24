@@ -1286,7 +1286,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 
     case An_Others_Choice:
       logKind("An_Others_Choice");
-      res = &mkOthersExp();
+      res = &mkAdaOthersExp();
       break;
 
     case A_Constraint:
