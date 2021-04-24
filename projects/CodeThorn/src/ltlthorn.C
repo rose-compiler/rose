@@ -139,7 +139,6 @@ int main( int argc, char * argv[] ) {
     SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
     optionallyRunNormalization(ctOpt,sageProject,tc);
-    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);

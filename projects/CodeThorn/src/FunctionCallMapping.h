@@ -21,38 +21,47 @@ namespace CodeThorn {
     std::string getFunctionName() {
       return funCallName;
     }
-    SgFunctionType* funCallType=nullptr; // type of function to be called
-    SgName mangledFunCallTypeName;
-    std::string funCallName; // name of function to be called.
     bool isFunctionPointerCall();
     void print();
+    SgFunctionType* funCallType=nullptr; // type of function to be called
+    std::string funCallName; // name of function to be called.
+    SgName mangledFunCallName;
     SgFunctionSymbol* functionSymbol=0;
-    bool functionResolved = true;
-    bool problematic=false;
+    bool infoAvailable=false;
   };
 
   class FunctionCallMapping {
   public:
     FunctionCallMapping();
-    void computeFunctionCallMapping(SgNode* root);
-    FunctionCallTargetSet resolveFunctionCall(SgFunctionCallExp* funCall);
-    std::string toString();
+    void virtual computeFunctionCallMapping(SgNode* root);
+    FunctionCallTargetSet virtual resolveFunctionCall(SgFunctionCallExp* funCall);
+    std::string virtual toString();
     static void initDiagnostics();
-    FunctionCallInfo determineFunctionCallInfo(SgFunctionCallExp* fc);
+    FunctionCallInfo virtual determineFunctionCallInfo(SgFunctionCallExp* fc);
     static bool isFunctionPointerCall(SgFunctionCallExp* fc);
     
     /** access the class hierarchy for analyzing member function calls.
      *  @{
      */
-    void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
-    ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
+    virtual void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
+    virtual ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
     /** @} */
+    virtual void dumpFunctionCallInfo();
+    virtual void dumpFunctionCallTargetInfo();
+
+    typedef std::unordered_set< std::string> ExternalFunctionNameContainerType;
+    virtual ExternalFunctionNameContainerType getExternalFunctionNames();
+
   protected:
+    virtual void collectRelevantNodes(SgNode* root);
     static Sawyer::Message::Facility logger;
+    std::vector<SgFunctionCallExp*> funCallList;
+    std::vector<SgFunctionDefinition*> funDefList;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
+
   private:
-    unsigned int _matchMode; // init in constructor
-    ClassHierarchyWrapper* classHierarchy; // init in constructor
+    unsigned int _matchMode=5;
+    ClassHierarchyWrapper* classHierarchy=nullptr;
   };
 
 } // end of namespace CodeThorn

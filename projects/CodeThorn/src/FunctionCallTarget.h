@@ -26,7 +26,7 @@ class FunctionCallTarget {
   bool operator!=(const FunctionCallTarget& other) const;
   std::string getFunctionName();
   SgFunctionType* getFunctionType();
-  SgName getMangledFunctionTypeName();
+  SgName getMangledFunctionName();
   void print();
  private:
   SgFunctionDeclaration* _funDecl=nullptr;

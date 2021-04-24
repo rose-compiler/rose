@@ -96,4 +96,15 @@ namespace CppStdUtilities {
     std::sregex_token_iterator first{input.begin(), input.end(), re, -1},last;
     return {first, last};
   }
+
+  bool compareCaseInsensitively (const std::string& first, const std::string& second) {
+    unsigned int i=0;
+    while ( (i<first.length()) && (i<second.length()) ) {
+      if (tolower(first[i])<tolower(second[i])) return true;
+      else if (tolower(first[i])>tolower(second[i])) return false;
+      ++i;
+    }
+    return ( first.length() < second.length() );
+  }
+
 }

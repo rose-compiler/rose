@@ -412,8 +412,25 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
   }
 }
 
-void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject) {
-  //cout<<"Warning: TODO optionallyGenerateExternalFunctionsFile not implemented yet."<<endl;
+void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, FunctionCallMapping* funCallMapping) {
+  std::string fileName=ctOpt.externalFunctionsCSVFileName;
+  if(fileName.size()>0) {
+    if(!ctOpt.quiet)
+      cout<<"Writing list of external functions to file "<<fileName<<endl;
+    FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
+    std::list<string> sList;
+    for(auto fn : fnList)
+      sList.push_back(fn);
+    sList.sort(CppStdUtilities::compareCaseInsensitively);
+    stringstream csvList;
+    for(auto fn : sList) {
+      csvList<<fn<<endl;
+    }
+    if(!CppStdUtilities::writeFile(fileName, csvList.str())) {
+      cerr<<"Error: cannot write list of external functions to CSV file "<<fileName<<endl;
+      exit(1);
+    }
+  }
 }
 
 void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject) {

@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.29";
+const std::string versionString="1.12.30";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -226,7 +226,7 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
 
-    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
+    optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 
@@ -245,7 +245,11 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
     }
-    runSolver(ctOpt,analyzer,sageProject,tc);
+    if(ctOpt.runSolver) {
+      runSolver(ctOpt,analyzer,sageProject,tc);
+    } else {
+      cout<<"STATUS: skipping solver run."<<endl;
+    }
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
