@@ -177,7 +177,7 @@ namespace
     }
     */
 
-    void handle(SgVoidVal&)
+    void handle(SgAdaOthersExp&)
     {
       prn("others");
     }
@@ -471,10 +471,8 @@ namespace
   {
     SgScopeStatement* current = info.get_current_scope();
 
-    if (!current) std::cerr << "NULL CURRENT SCOPE" << std::endl;
-
     return current ? unparser.computeScopeQual(*current, remote)
-                   : ""; // <-- this should only be here if invoked from unparseToString..
+                   : "<missing-scope>"; // <-- this should only be here if invoked from unparseToString..
   }
 
 }
