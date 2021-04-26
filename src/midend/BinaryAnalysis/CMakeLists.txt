@@ -76,7 +76,27 @@ set(midend_binary_sources
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics2.C
-  instructionSemantics/TraceSemantics2.C)
+  instructionSemantics/TraceSemantics2.C
+  ModelChecker/BasicBlockUnit.C
+  ModelChecker/Engine.C
+  ModelChecker/ErrorTag.C
+  ModelChecker/ExecutionUnit.C
+  ModelChecker/ExternalFunctionUnit.C
+  ModelChecker/FailureUnit.C
+  ModelChecker/InstructionUnit.C
+  ModelChecker/NullDerefTag.C
+  ModelChecker/P2Model.C
+  ModelChecker/Path.C
+  ModelChecker/PathNode.C
+  ModelChecker/PathPredicate.C
+  ModelChecker/PathPrioritizer.C
+  ModelChecker/PathQueue.C
+  ModelChecker/Periodic.C
+  ModelChecker/Settings.C
+  ModelChecker/Semantics.C
+  ModelChecker/SourceLister.C
+  ModelChecker/Tag.C)
+
 
 if(SQLITE3_FOUND_LIB)
   list(APPEND midend_binary_sources
@@ -191,3 +211,32 @@ install(
   Concolic/TestCase.h
   Concolic/TestSuite.h
   DESTINATION ${INCLUDE_INSTALL_DIR}/Concolic)
+
+install(
+  FILES ModelChecker.h
+  DESTINATION ${INCLUDE_INSTALL_DIR}/BinaryAnalysis)
+
+install(
+  FILES
+  ModelChecker/BasicBlockUnit.h
+  ModelChecker/Engine.h
+  ModelChecker/ErrorTag.h
+  ModelChecker/ExecutionUnit.h
+  ModelChecker/ExternalFunctionUnit.h
+  ModelChecker/FailureUnit.h
+  ModelChecker/InstructionUnit.h
+  ModelChecker/NullDerefTag.h
+  ModelChecker/P2Model.h
+  ModelChecker/Path.h
+  ModelChecker/PathNode.h
+  ModelChecker/PathPredicate.h
+  ModelChecker/PathPrioritizer.h
+  ModelChecker/PathQueue.h
+  ModelChecker/Periodic.h
+  ModelChecker/Settings.h
+  ModelChecker/Semantics.h
+  ModelChecker/SourceLister.h
+  ModelChecker/Tag.h
+
+  DESTINATION ${INCLUDE_INSTALL_DIR}/BinaryAnalysis/ModelChecker)
+

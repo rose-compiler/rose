@@ -7,6 +7,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Stopwatch.h>
+#include <boost/format.hpp>
 #include <iostream>
 
 #if defined(SAWYER_HAVE_BOOST_CHRONO)
@@ -100,9 +101,33 @@ Stopwatch::clear(double value) {
     return retval;
 }
 
+SAWYER_EXPORT std::string
+Stopwatch::toString() const {
+    double seconds = report();
+    if (seconds < 0.0) {
+        return "negative-duration";
+    } else if (seconds < 59.9999995) {
+        return (boost::format("%1.6f seconds") % seconds).str();
+    } else {
+        unsigned ts = ::round(seconds);
+        unsigned long days = ts / 86400;
+        unsigned long hours = (ts % 86400) / 3600;
+        unsigned long minutes = (ts % 3600) / 60;
+        unsigned long s = ts % 60;
+
+        if (days > 0) {
+            return (boost::format("%dd%02dh%02dm%02ds") % days % hours % minutes % s).str();
+        } else if (hours > 0) {
+            return (boost::format("%dh%02dm%02ds") % hours % minutes % s).str();
+        } else {
+            return (boost::format("%dm%02ds") % minutes % s).str();
+        }
+    }
+}
+
 SAWYER_EXPORT std::ostream&
 operator<<(std::ostream &out, const Stopwatch &x) {
-    out <<x.report();
+    out <<x.toString();
     return out;
 }
 

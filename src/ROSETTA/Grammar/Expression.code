@@ -1684,6 +1684,10 @@ HEADER_NULL_EXPRESSION_START
 
 HEADER_NULL_EXPRESSION_END
 
+HEADER_ADA_OTHERS_EXPRESSION_START
+HEADER_ADA_OTHERS_EXPRESSION_END
+
+
 HEADER_VARIANT_EXPRESSION_START
 HEADER_VARIANT_EXPRESSION_END
 
@@ -6725,10 +6729,11 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
          case e_dynamic_cast: s = "e_dynamic_cast"; break;
          case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
          case e_safe_cast: s = "e_safe_cast"; break;
+         case e_ada_type_qualification: s = "e_ada_type_qualification"; break;
          case e_last_cast: s = "e_last_cast"; break;
 
          default:
-              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+              printf ("ERROR: default reached in switch: cast_type = %d \n",cast_type);
        }
 
      return s;
@@ -7822,8 +7827,9 @@ SgConstructorInitializer::post_construction_initialization()
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
 
+       // PP (4/17/21) : Added exception for typedef types to support
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
-          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
              {
                printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
                if (p_expression_type != NULL)
@@ -7832,7 +7838,7 @@ SgConstructorInitializer::post_construction_initialization()
                   }
              }
 
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
@@ -8792,6 +8798,9 @@ SOURCE_GET_TYPE_CLASS_EXPRESSION_END
 
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END
+
+SOURCE_ADA_OTHERS_EXPRESSION_START
+SOURCE_ADA_OTHERS_EXPRESSION_END
 
 SOURCE_VARIANT_EXPRESSION_START
 SOURCE_VARIANT_EXPRESSION_END

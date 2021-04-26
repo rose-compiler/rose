@@ -132,37 +132,6 @@ namespace
   }
 
 
-  /// returns the NameData object for a name that is represented
-  /// as expression in Asis (e.g., identifier or selected)
-  NameData
-  getQualName(Element_Struct& elem, AstContext ctx)
-  {
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
-
-    Expression_Struct& idex  = elem.The_Union.Expression;
-
-    if (idex.Expression_Kind == An_Identifier)
-    {
-      logKind("An_Identifier");
-
-      std::string        ident{idex.Name_Image};
-
-      return NameData{ ident, ident, ctx.scope(), elem };
-    }
-
-    ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
-
-    NameData compound = getNameID(idex.Prefix, ctx);
-    NameData selected = getNameID(idex.Selector, ctx);
-
-    return NameData{ selected.ident,
-                     compound.fullName + "." + selected.fullName,
-                     ctx.scope(),
-                     selected.elem()
-                   };
-  }
-
-
   /// if \ref isPrivate \ref dcl's accessibility is set to private;
   /// otherwise nothing.
   void
@@ -1338,15 +1307,21 @@ namespace
     return !decl.Has_Reverse;
   }
 
-
+  // handles elements that can appear in a statement context (from a ROSE point of view)
+  //   besides statements this also includes declarations and clauses
   void handleStmt(Element_Struct& elem, AstContext ctx)
   {
-    logTrace() << "a statement (in progress) " << elem.Element_Kind << std::endl;
+    logTrace() << "a statement/decl/clause " << elem.Element_Kind << std::endl;
 
-    // declarations are statements too
     if (elem.Element_Kind == A_Declaration)
     {
       handleDeclaration(elem, ctx);
+      return;
+    }
+
+    if (elem.Element_Kind == A_Clause)
+    {
+      handleClause(elem, ctx);
       return;
     }
 
@@ -1372,6 +1347,7 @@ namespace
 
           SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
           SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
+
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
           SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
 
@@ -1516,7 +1492,7 @@ namespace
 
           if (tryblk)
           {
-            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope_npc(sgnode), SG_DEREF(tryblk)});
+            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
 
             placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
           }
@@ -1792,6 +1768,7 @@ namespace
 
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
+    sgnode.set_parent(tryStmt.get_catch_statement_seq_root());
 
     traverseIDs(range, elemMap(), StmtCreator{ctx.scope(body)});
 
@@ -2265,6 +2242,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 void handleClause(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Clause);
+  logKind("A_Clause");
 
   Clause_Struct& clause = elem.The_Union.Clause;
 
@@ -2319,6 +2297,7 @@ void handleClause(Element_Struct& elem, AstContext ctx)
 void handleDefinition(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  logKind("A_Definition");
 
   // many definitions are handled else where
   // here we want to convert the rest that can appear in declarative context
@@ -2398,6 +2377,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Declaration);
+  logKind("A_Declaration");
 
   Declaration_Struct& decl = elem.The_Union.Declaration;
 
@@ -3295,6 +3275,34 @@ getName(Element_Struct& elem, AstContext ctx)
   }
 
   return NameData{ ident, name, SG_DEREF(parent), elem };
+}
+
+NameData
+getQualName(Element_Struct& elem, AstContext ctx)
+{
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+
+  Expression_Struct& idex  = elem.The_Union.Expression;
+
+  if (idex.Expression_Kind == An_Identifier)
+  {
+    logKind("An_Identifier");
+
+    std::string        ident{idex.Name_Image};
+
+    return NameData{ ident, ident, ctx.scope(), elem };
+  }
+
+  ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
+
+  NameData compound = getNameID(idex.Prefix, ctx);
+  NameData selected = getNameID(idex.Selector, ctx);
+
+  return NameData{ selected.ident,
+                   compound.fullName + "." + selected.fullName,
+                   ctx.scope(),
+                   selected.elem()
+                 };
 }
 
 

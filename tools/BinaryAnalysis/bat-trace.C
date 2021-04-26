@@ -270,7 +270,7 @@ main(int argc, char *argv[]) {
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"tracing process...\n";
     auto trace = process->trace(filter);
-    mlog[INFO] <<"tracing process; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"tracing process; took " <<timer <<"\n";
     mlog[INFO] <<"process " <<process->howTerminated() <<"\n";
     filter.finalCheck();
 
