@@ -2040,7 +2040,7 @@ struct CallingConventionWorker {
             static boost::mutex mutex;
             boost::lock_guard<boost::mutex> lock(mutex);
             Sawyer::Message::Stream trace(CallingConvention::mlog[TRACE]);
-            trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
+            trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<"\n";
         }
 
         // Update progress reports

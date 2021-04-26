@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <BaseSemanticsRegisterState.h>
 
+#include <BaseSemanticsException.h>
 #include <BaseSemanticsFormatter.h>
 
 namespace Rose {

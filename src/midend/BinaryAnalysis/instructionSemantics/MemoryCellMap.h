@@ -103,6 +103,7 @@ public:
     virtual bool isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps) const;
 
 public:
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
     virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,

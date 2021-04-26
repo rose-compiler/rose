@@ -1437,7 +1437,7 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
+testRandomInput_ISAs = a32 t32 a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32-be ppc32-le ppc64-be ppc64-le
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
 TEST_TARGETS += $(testRandomInput_Targets) tri_a64.passed
 

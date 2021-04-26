@@ -646,12 +646,27 @@ namespace
       prn(declwords.first);
       prn(" ");
       prn(n.get_name());
-      prn(" is");
+
+
+      const bool isDefinition    = &n == n.get_definingDeclaration();
+      const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
+      const bool requiresIs      = (  requiresPrivate
+                                   || hasModifiers(n)
+                                   || declwords.second.size() != 0
+                                   || !isSgTypeDefault(n.get_base_type())
+                                   );
+
+      if (requiresIs)
+        prn(" is");
 
       modifiers(n);
       prn(declwords.second);
       prn(" ");
       type(n.get_base_type());
+
+      if (requiresPrivate)
+        prn(" private");
+
       prn(STMT_SEP);
     }
 
@@ -1061,7 +1076,7 @@ namespace
         const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
         const bool requiresIs = requiresPrivate || hasModifiers(n);
 
-        std::cerr << "private type: " << requiresPrivate << std::endl;
+        //~ std::cerr << "private type: " << requiresPrivate << std::endl;
 
         if (requiresIs)
         {

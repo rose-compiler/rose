@@ -175,6 +175,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other stuff we inherited from the super class
 public:
+    virtual void hash(Combinatorics::Hasher&) const override;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Override legacy members. These have similar non-virtual camelCase names in the base class, and eventually we'll remoe
+    // these snake_case names and change the camelCase names to be the virtual functions. Therefore, be sure to use "override"
+    // in your own code so you know when we make this change.
+public:
+    // See nBits
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         if (nbits > 64 && name == 0) {
             *this = SValue(nbits);
@@ -185,21 +198,20 @@ public:
         }
     }
 
+    // See mayEqual
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+
+    // See mustEqual
     virtual bool must_equal(const BaseSemantics::SValuePtr &other,
                             const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
-
-    virtual bool isBottom() const ROSE_OVERRIDE {
-        return false;
-    }
-    
+    // See isConcrete
     virtual bool is_number() const ROSE_OVERRIDE {
         return 0==name;
     }
 
+    // See toUnsigned and toSigned.
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_require(is_number());
         return offset;

@@ -51,6 +51,7 @@ namespace CodeThorn {
     bool varIsTop(AbstractValue varId) const;
     CodeThorn::AbstractValue varValue(AbstractValue varId) const;
     string varValueToString(AbstractValue varId) const;
+    string memoryValueToDotString(AbstractValue varId, VariableIdMapping* vim) const;
     void deleteVar(AbstractValue varname);
     long memorySize() const;
     void toStream(std::ostream& os) const;

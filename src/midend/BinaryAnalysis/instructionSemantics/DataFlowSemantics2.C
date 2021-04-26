@@ -107,6 +107,10 @@ public:
 #endif
     }
 
+    virtual void hash(Combinatorics::Hasher &hasher) const override {
+        ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
+    }
+
     virtual void print(std::ostream &out, BaseSemantics::Formatter &fmt) const ROSE_OVERRIDE {
         out <<"{";
         for (size_t i=0; i<sources_.size(); ++i)

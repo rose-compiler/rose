@@ -1407,7 +1407,7 @@ Enter(SgJovialTableStatement* &table_decl,
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
 
 // Fix forward type references
-   reset_forward_type_ref(name, table_type);
+   reset_forward_type_refs(name, table_type);
 
 // Append now (before Leave is called) so that symbol lookup will work
    SageInterface::appendStatement(table_decl, SageBuilder::topScopeStack());
@@ -1441,8 +1441,8 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 // Reset pointer base-type name so the base type can be replaced when it has been declared
    if (SgPointerType* pointer = isSgPointerType(type)) {
       if (SgTypeUnknown* unknown = isSgTypeUnknown(pointer->get_base_type())) {
-         // This allows the variable symbol for name to be found from the
-         // forward_type_refs_ map of pointers.
+         // Reset the type name to the variable name. This allows the variable symbol
+         // for name to be found from the forward_type_refs_ map of pointers.
          unknown->set_type_name(name);
       }
    }
@@ -1631,7 +1631,7 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
    ROSE_ASSERT(typedef_type->get_parent_scope());
 
 // Fix forward type references
-   reset_forward_type_ref(name, type_def->get_type());
+   reset_forward_type_refs(name, type_def->get_type());
 
    SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
@@ -1695,14 +1695,14 @@ buildPointerType(const std::string& base_type_name, SgType* base_type)
   if (base_type == nullptr) {
     // Constructors are used here rather than SageBuilder functions because these
     // types will be replaced (and deleted) once the actual base type is declared.
-    SgTypeUnknown* base_type = new SgTypeUnknown();
-    ROSE_ASSERT(base_type);
-    base_type->set_type_name(base_type_name);
+    SgTypeUnknown* unknown = new SgTypeUnknown();
+    ROSE_ASSERT(unknown);
+    unknown->set_type_name(base_type_name);
 
-    type = new SgPointerType(base_type);
+    type = new SgPointerType(unknown);
     ROSE_ASSERT(type);
 
-    forward_type_refs_[base_type_name] = type;
+    forward_type_refs_.insert(std::make_pair(base_type_name,type));
   }
   else {
     type = SageBuilder::buildPointerType(base_type);
@@ -1713,17 +1713,22 @@ buildPointerType(const std::string& base_type_name, SgType* base_type)
 }
 
 void SageTreeBuilder::
-reset_forward_type_ref(const std::string &type_name, SgNamedType* type)
+reset_forward_type_refs(const std::string &type_name, SgNamedType* type)
 {
-  if (forward_type_refs_.find(type_name) != forward_type_refs_.end()) {
-    SgPointerType* ptr = forward_type_refs_[type_name];
+  auto range = forward_type_refs_.equal_range(type_name);
+
+  bool present = false;
+  for (auto pair = range.first; pair != range.second; pair++) {
+    present = true;
+    SgPointerType* ptr = pair->second;
     ROSE_ASSERT(ptr);
 
     // The placeholder
     SgTypeUnknown* unknown = isSgTypeUnknown(ptr->get_base_type());
     ROSE_ASSERT(unknown);
-    const std::string & var_name = unknown->get_type_name();
 
+    // The type name have been replaced by the variable name by this point
+    const std::string & var_name = unknown->get_type_name();
     SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name);
     ROSE_ASSERT(var_sym);
 
@@ -1736,9 +1741,13 @@ reset_forward_type_ref(const std::string &type_name, SgNamedType* type)
     // Delete the placeholder type and its base type
     if (ptr->get_base_type()) delete ptr->get_base_type();
     delete ptr;
-
-    forward_type_refs_.erase(type_name); // The dangling pointer reference has been fixed
   }
+
+  // Remove the type name from the multimap
+  if (present) {
+    forward_type_refs_.erase(type_name);
+  }
+
 }
 
 // Jovial TableItem and Block data members have visibility outside of their declarative class.

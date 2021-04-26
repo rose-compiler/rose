@@ -12,7 +12,8 @@ class SgFunctionCall;
 
 class ProgramInfo {
  public:
-  ProgramInfo(SgProject* root);
+  //ProgramInfo(SgProject* root);
+  ProgramInfo(SgProject* root, CodeThorn::VariableIdMappingExtended*);
   ProgramInfo(CodeThorn::ProgramAbstractionLayer* pal);
   void compute();
   void printDetailed();
@@ -48,8 +49,9 @@ private:
   };
   void initCount();
   bool _validData=false;
-  SgNode* root;
+  SgNode* _root;
   CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
+  CodeThorn::VariableIdMapping* _variableIdMapping=nullptr;
   std::list<SgFunctionCallExp*> _functionCallNodes;
   std::list<SgFunctionCallExp*> _functionPtrCallNodes;
   uint32_t count[NUM+1];

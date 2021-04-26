@@ -67,10 +67,14 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
 }
 
 bool
-SymbolicMemory::merge(const BaseSemantics::MemoryStatePtr &other_, BaseSemantics::RiscOperators *addrOps,
-                      BaseSemantics::RiscOperators *valOps) {
+SymbolicMemory::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicMemoryPtr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
+}
+
+void
+SymbolicMemory::hash(Combinatorics::Hasher &hasher, RiscOperators*, RiscOperators*) const {
+    hasher.insert(mem_->hash());
 }
 
 void

@@ -93,7 +93,7 @@ main(int argc, char *argv[]) {
         mlog[INFO] <<"Computing edit distance using old method... (watch out -- lots of output coming!)\n";
         Sawyer::Stopwatch oldTime;
         tree_edit_distance(gblock1, gblock2);
-        mlog[INFO] <<"Old method took " <<oldTime <<" seconds\n";
+        mlog[INFO] <<"Old method took " <<oldTime <<"\n";
     }
 
     // Edit distance
@@ -103,7 +103,7 @@ main(int argc, char *argv[]) {
     editDistance.substitutionCost(0);
     editDistance.substitutionPredicate(&isSameType);
     editDistance.compute(gblock1, gblock2);
-    mlog[INFO] <<"Edit distance computed in " <<editDistanceTime <<" seconds\n";
+    mlog[INFO] <<"Edit distance computed in " <<editDistanceTime <<"\n";
     EditDistance::TreeEditDistance::Edits edits = editDistance.edits();
     std::cout <<"  Nodes in source tree: " <<editDistance.sourceTreeNodes().size() <<"\n"
               <<"  Nodes in target tree: " <<editDistance.targetTreeNodes().size() <<"\n"

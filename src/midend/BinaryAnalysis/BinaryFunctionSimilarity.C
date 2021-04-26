@@ -452,7 +452,7 @@ FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std:
     std::vector<P2::Function::Ptr> needleVector(1, needle);
     Sawyer::Stopwatch stopwatch;
     std::vector<double> distances = computeDistances(needleVector, others, nThreads);
-    SAWYER_MESG(where) <<"; took " <<stopwatch <<" seconds\n";
+    SAWYER_MESG(where) <<"; took " <<stopwatch <<"\n";
     return Combinatorics::zip(others, distances);
 }
 
@@ -470,7 +470,7 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
     // Compute the distances between all pairs of functions in parallel
     Sawyer::Stopwatch stopwatch;
     std::vector<double> distances = computeDistances(list1, list2, nThreads);
-    SAWYER_MESG(where) <<"; took " <<stopwatch <<" seconds\n";
+    SAWYER_MESG(where) <<"; took " <<stopwatch <<"\n";
 
     // Convert the distances to the return type.
     std::vector<std::vector<double> > retval;
@@ -505,7 +505,7 @@ FunctionSimilarity::compareManyToManyMatrix(std::vector<P2::Function::Ptr> list1
     // Compute the distances between all pairs of functions in parallel
     Sawyer::Stopwatch stopwatch;
     std::vector<double> distances = computeDistances(list1, list2, nThreads);
-    SAWYER_MESG(where) <<"; took " <<stopwatch <<" seconds\n";
+    SAWYER_MESG(where) <<"; took " <<stopwatch <<"\n";
 
     // Convert the distances to the return type
     DistanceMatrix dm(list1.size());
@@ -544,7 +544,7 @@ FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> 
                                       j < list2.size() ? list2[j] : P2::Function::Ptr()));
     }
 
-    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
+    SAWYER_MESG(where) <<"; completed in " <<stopwatch <<"\n";
     return retval;
 }
 

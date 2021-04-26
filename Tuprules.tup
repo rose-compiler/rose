@@ -600,7 +600,7 @@ support_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sageInterface \
- @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/binaryAnalyses \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalyses \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseSupport \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/commandlineProcessing \
@@ -718,6 +718,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/includeDirectivesProcessing \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sage_support \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/virtualCFG \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractHandle \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractLayer \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/abstractMemoryObject \

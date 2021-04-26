@@ -31,6 +31,11 @@ RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 void
+RegisterState::hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const {
+    ASSERT_not_implemented("[Robb Matzke 2021-03-26]: would require reading all registers");
+}
+
+void
 RegisterState::print(std::ostream&, Formatter&) const {
     ASSERT_not_implemented("[Robb Matzke 2019-09-05]: would require reading all registers");
 }
@@ -113,6 +118,12 @@ RegisterDescriptor
 Dispatcher::stackPointerRegister() const {
     ASSERT_not_null(process_);
     return process_->disassembler()->stackPointerRegister();
+}
+
+RegisterDescriptor
+Dispatcher::stackFrameRegister() const {
+    ASSERT_not_null(process_);
+    return process_->disassembler()->stackFrameRegister();
 }
 
 RegisterDescriptor

@@ -99,7 +99,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   int abstractionMode=0;
   int interpreterMode=0;
 
-  bool initialStateFilterUnusedVariables=false;
+  bool initialStateFilterUnusedVariables=true;
   int initialStateGlobalVarsAbstractionLevel=1;
   
   std::string interpreterModeOuputFileName;

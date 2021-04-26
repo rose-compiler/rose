@@ -304,6 +304,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
+    virtual bool isBottom() const ROSE_OVERRIDE;
+
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    virtual void hash(Combinatorics::Hasher&) const override;
+
+protected: // when implementing use these names; but when calling, use the camelCase names
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other,
@@ -315,15 +322,11 @@ public:
         ASSERT_require(nbits==nBits());
     }
 
-    virtual bool isBottom() const ROSE_OVERRIDE;
-
     virtual bool is_number() const ROSE_OVERRIDE {
         return expr->isIntegerConstant();
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;
-
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
     virtual std::string get_comment() const ROSE_OVERRIDE;
     virtual void set_comment(const std::string&) const ROSE_OVERRIDE;

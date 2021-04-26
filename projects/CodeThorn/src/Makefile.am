@@ -862,9 +862,11 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
-check-vis:
+check-vis0:
 	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM200_pointers_merge.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort --tg1-estate-memory-subgraphs --pointer-sets && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf transitiongraph2.dot -otg2.pdf && dot -Tpdf cfg.dot -ocfg.pdf
 
+check-vis:
+	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
 
 # MS: 1-6 is reasonable for V1.2

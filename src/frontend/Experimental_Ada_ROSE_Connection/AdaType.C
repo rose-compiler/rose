@@ -58,11 +58,15 @@ namespace
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
   SgInitializedName&
-  getException(Expression_Struct& ex, AstContext ctx)
+  getException(Element_Struct& el, AstContext ctx)
   {
-    ROSE_ASSERT(ex.Expression_Kind == An_Identifier);
+    ROSE_ASSERT(el.Element_Kind == An_Expression);
 
-    logKind("An_Identifier");
+    NameData        name = getQualName(el, ctx);
+    Element_Struct& elem = name.elem();
+
+    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+    Expression_Struct& ex  = elem.The_Union.Expression;
 
     SgInitializedName* res = findFirst(asisExcps(), ex.Corresponding_Name_Definition);
 
@@ -868,8 +872,7 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 
   if (elem.Element_Kind == An_Expression)
   {
-    Expression_Struct& asisexpr  = elem.The_Union.Expression;
-    SgInitializedName& exception = getException(asisexpr, ctx);
+    SgInitializedName& exception = getException(elem, ctx);
 
     exceptExpr = &mkExceptionRef(exception, ctx.scope());
   }

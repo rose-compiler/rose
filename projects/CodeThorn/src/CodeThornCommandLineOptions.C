@@ -214,7 +214,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking), 2: approximating merge (separate solver)")
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
-    ("filter-unused-vars", po::value< bool > (&ctOpt.initialStateFilterUnusedVariables),"Filter unused variables when creating initial state.")
+    ("filter-initial-state", po::value< bool > (&ctOpt.initialStateFilterUnusedVariables)->implicit_value(true),"Filter unused variables when creating initial state.")
     ("global-vars-abstraction-level", po::value< int > (&ctOpt.initialStateGlobalVarsAbstractionLevel),"Override abstraction level for global variables in initial state.")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     //("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")

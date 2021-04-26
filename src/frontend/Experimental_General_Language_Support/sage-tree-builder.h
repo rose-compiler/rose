@@ -232,12 +232,12 @@ private:
    LanguageEnum language_;
    TraversalContext context_;
    std::map<const std::string, SgVarRefExp*> forward_var_refs_;
-   std::map<const std::string, SgPointerType*> forward_type_refs_;
+   std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
-   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
+   void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
 public:
    bool is_Fortran_language() {return (language_ == e_language_fortran);}

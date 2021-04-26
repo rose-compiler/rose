@@ -829,7 +829,7 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
             }
         }
     }
-    info <<"; took " <<timer <<" seconds\n";
+    info <<"; took " <<timer <<"\n";
     return retval;
 }
 

@@ -245,14 +245,12 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
-          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
 
       case A_Clause:                  // Asis.Clauses
         {
-          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -284,7 +282,6 @@ namespace
 
       case A_Definition:              // Asis.Definitions
         {
-          logKind("A_Definition");
           handleDefinition(elem, ctx);
           break;
         }

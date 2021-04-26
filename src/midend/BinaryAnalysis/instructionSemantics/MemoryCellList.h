@@ -28,7 +28,7 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
  *  values.
  *
  *  MemoryCellList also provides a scan() method that returns a list of memory cells that alias a specified address. This
- *  method can be used by a higher-level readMemory() operation in preference to the usuall MemoryState::readMemory().
+ *  method can be used by a higher-level readMemory() operation in preference to the usual MemoryState::readMemory().
  *
  *  There is no requirement that a State use a MemoryCellList as its memory state; it can use any subclass of MemoryState.
  *  Since MemoryCellList is derived from MemoryState it must provide virtual allocating constructors, which makes it possible
@@ -135,6 +135,7 @@ public:
     virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
 
     /** Read a value from memory.
      *
