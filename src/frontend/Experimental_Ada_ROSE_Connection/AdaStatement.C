@@ -344,10 +344,12 @@ namespace
 
     for (int i = 0; i < num; ++i)
     {
-      ROSE_ASSERT(names.at(i).fullName == names.at(i).ident);
+      const NameCreator::result_container::value_type obj = names.at(i);
 
-      const std::string& name = names.at(i).fullName;
-      Element_ID         id   = names.at(i).id();
+      ROSE_ASSERT(obj.fullName == obj.ident);
+
+      const std::string& name = obj.fullName;
+      Element_ID         id   = obj.id();
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
 
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
@@ -725,27 +727,23 @@ namespace
     return SG_DEREF(the_name);
   }
 
-  SgAdaTaskBody&
-  getTaskBody(Declaration_Struct& decl, AstContext ctx)
+  void
+  fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
   {
     ROSE_ASSERT(decl.Declaration_Kind == A_Task_Body_Declaration);
-
-    SgAdaTaskBody& sgnode = mkAdaTaskBody();
 
     {
       ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
 
-      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope_npc(sgnode)});
+      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
     }
 
     {
       ElemIdRange         stmts = idRange(decl.Body_Statements);
       LabelAndLoopManager lblmgr;
 
-      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope_npc(sgnode).labelsAndLoops(lblmgr)});
+      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
     }
-
-    return sgnode;
   }
 
   SgAdaTaskSpec&
@@ -2491,10 +2489,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
           if (range.size())
           {
-            SgBasicBlock& pkgblock = mkBasicBlock();
+            LabelAndLoopManager lblmgr;
+            SgBasicBlock&       pkgblock = mkBasicBlock();
 
             pkgbody.append_statement(&pkgblock);
-            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock)});
+            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock).labelsAndLoops(lblmgr)});
             placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
           }
           else
@@ -2709,7 +2708,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx);
         SgScopeStatement&       scope = ctx.scope();
-        ROSE_ASSERT(scope.get_parent());
+        //~ ROSE_ASSERT(scope.get_parent());
 
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
@@ -2909,7 +2908,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Body_Declaration");
 
-        SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
+        SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
         SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
@@ -2927,6 +2926,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
+
+        fillTaskBody(decl, tskbody, ctx);
 
         /* unused fields:
              bool                           Has_Task;
