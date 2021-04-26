@@ -261,6 +261,7 @@ HEADER_EXPRESSION_LIST_EXPRESSION_START
 
           SgExpressionPtrList& get_expressions();
           const SgExpressionPtrList& get_expressions() const;
+          void set_expressions(SgExpressionPtrList e_list);
 
 HEADER_LIST_DECLARATIONS
 
@@ -3251,6 +3252,9 @@ SgExprListExp::get_expressions()
 const SgExpressionPtrList&
 SgExprListExp::get_expressions() const
    { return p_expressions; }
+
+void SgExprListExp::set_expressions(SgExpressionPtrList e_list) 
+   { p_expressions= e_list; }
 
 void
 SgExprListExp::append_expression(SgExpression *what)
