@@ -169,6 +169,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
+    ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ("normalize-level", po::value< int >(&ctOpt.normalizeLevel)->default_value(0),"Normalize all expressions (2), only fcalls (1), turn off (0).")
     ("normalize-extended", po::value<bool >(&ctOpt.extendedNormalizedCppFunctionCalls)->default_value(false)->implicit_value(true),"Normalize CPP function calls.")
@@ -284,7 +285,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
     ("start-function", po::value< string >(&ctOpt.startFunctionName), "Name of function to start the analysis from.")
-    ("external-function-calls-file",po::value< string >(&ctOpt.externalFunctionCallsFileName), "write a list of all function calls to external functions (functions for which no implementation exists) to a CSV file.")
     ("status", po::value< bool >(&ctOpt.status)->default_value(false)->implicit_value(true), "Show status messages.")
     ("null-pointer-dereference-keep-going", po::value< bool >(&ctOpt.nullPointerDereferenceKeepGoing)->implicit_value(true), "Keep going even when null pointer dereference is detected.")
     ("reduce-cfg", po::value< bool >(&ctOpt.reduceCfg)->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
@@ -307,7 +307,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(false)->implicit_value(true), "Run ROSE AST tests.")
     ("analyzed-functions-csv",po::value<std::string>(&ctOpt.analyzedFunctionsCSVFileName),"Write list of analyzed functions to CSV file [arg].")
     ("analyzed-files-csv",po::value<std::string>(&ctOpt.analyzedFilesCSVFileName),"Write list of analyzed files (with analyzed functions) to CSV file [arg].")
-    ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions to CSV file [arg].")
+    ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions (functions for which no implementation is provided) to CSV file [arg].")
+    ("external-function-calls-csv",po::value< string >(&ctOpt.externalFunctionCallsCSVFileName), "write a list of all function calls to external functions encountered during the program analysis to a CSV file.")
     ("threads",po::value< int >(&ctOpt.threads)->default_value(1),"(experimental) Run analyzer in parallel using <arg> threads.")
     ("unparse",po::value< bool >(&ctOpt.unparse)->default_value(false)->implicit_value(true),"unpare code (only relevant for inlining, normalization, and lowering)")
     ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the version of CodeThorn.")

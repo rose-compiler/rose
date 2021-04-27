@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.30";
+const std::string versionString="0.9.0";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -167,7 +167,6 @@ int main( int argc, char * argv[] ) {
 
     IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     optionallyRunInternalChecks(ctOpt,argc,argv);
-    optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
@@ -188,7 +187,6 @@ int main( int argc, char * argv[] ) {
     }
     
     optionallyGenerateAstStatistics(ctOpt, sageProject);
-    optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
     //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
@@ -227,54 +225,8 @@ int main( int argc, char * argv[] ) {
     }
 
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 
-    setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
-    optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
-    if(analyzer->getFlow()->getStartLabelSet().size()==0) {
-      // exit early
-      if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
-      exit(0);
-    }
-    SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-    analyzer->initLabeledAssertNodes(sageProject);
-    optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
-    AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
-
-    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
-      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
-    }
-    if(ctOpt.runSolver) {
-      runSolver(ctOpt,analyzer,sageProject,tc);
-    } else {
-      cout<<"STATUS: skipping solver run."<<endl;
-    }
-
-    analyzer->printStatusMessageLine("==============================================================");
-    optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
-    optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
-    optionallyRunZ3AndExit(ctOpt,analyzer);
-
-    tc.startTimer();
-    optionallyGenerateVerificationReports(ctOpt,analyzer);
-    tc.stopTimer(TimingCollector::reportGeneration);
-
-    tc.startTimer();
-    optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
-    tc.stopTimer(TimingCollector::callGraphDotFile);
-
-    runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
-    processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
-
-    tc.startTimer();
-    optionallyRunVisualizer(ctOpt,analyzer,sageProject);
-    tc.stopTimer(TimingCollector::visualization);
-
-    optionallyRunIOSequenceGenerator(ctOpt, analyzer);
-    optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
-
-    optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch

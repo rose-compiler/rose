@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn memthorn thorn1 parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -558,6 +558,43 @@ memthorn_SOURCES = \
   LTLParser.y++ \
   MemThornCommandLineOptions.C \
   memthorn.C
+
+
+##############################################################
+# TOOL: THORN1
+##############################################################
+
+# yacc flags for LTL parser
+thorn1_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+thorn1_CXXFLAGS = -fopenmp -Wall -O3 
+
+# thorn1 has most of its code organized in two separate libraries
+thorn1_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+thorn1_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+thorn1dir=.
+
+# only informative
+thorn1_xHEADERS = \
+  CommandLineOptions.h \
+  Thorn1CommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+thorn1_SOURCES = \
+  LTLParser.y++ \
+  Thorn1CommandLineOptions.C \
+  thorn1.C
 
 ##############################################################
 # TOOL: WOODPECKER

@@ -259,10 +259,10 @@ namespace CodeThorn {
       }
     }
 
-    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
+    if(ctOpt.externalFunctionCallsCSVFileName.size()>0) {
       string fileName=ctOpt.externalFunctionsCSVFileName;
       if(!ctOpt.quiet)
-        cout<<"Writing list of external functions to file "<<fileName<<endl;
+        cout<<"Writing list of external function calls to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         cerr<<"Cannot create file "<<fileName<<endl;
