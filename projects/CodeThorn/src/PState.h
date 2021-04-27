@@ -49,17 +49,23 @@ namespace CodeThorn {
     bool varExists(AbstractValue varId) const;
     bool memLocExists(AbstractValue memLoc) const;
     bool varIsTop(AbstractValue varId) const;
+
+    // depreacted, to be replaced with readFromMemoryLocation
     CodeThorn::AbstractValue varValue(AbstractValue varId) const;
+    // depreacted, to be replaced by functio using readFromMemoryLocation
     string varValueToString(AbstractValue varId) const;
-    string memoryValueToDotString(AbstractValue varId, VariableIdMapping* vim) const;
+
     void deleteVar(AbstractValue varname);
     long memorySize() const;
+
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     string toDotString(std::string prefix, CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
     std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
+    string memoryValueToDotString(AbstractValue varId, VariableIdMapping* vim) const;
+
     void writeTopToAllMemoryLocations();
     void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  

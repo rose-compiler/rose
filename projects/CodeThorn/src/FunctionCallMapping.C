@@ -31,20 +31,96 @@ void FunctionCallInfo::print() {
   }
 }
 
+SgFunctionDeclaration* FunctionCallInfo::getFunctionDeclaration() {
+  if(functionSymbol)
+    return functionSymbol->get_declaration ();
+  else
+    return nullptr;
+}
+
 bool FunctionCallInfo::isFunctionPointerCall() {
-  return funCallName=="*";
+  return _functionPointerCallFlag;
+}
+
+void FunctionCallInfo::setFunctionPointerCallFlag(bool flag) {
+  _functionPointerCallFlag=flag;
+}
+
+FunctionCallInfo* FunctionCallMapping::getFunctionCallInfoPtr(SgFunctionCallExp* fc) {
+  ROSE_ASSERT(isValidMapping());
+  return getFunctionCallInfoPtrUnsafe(fc);
+}
+
+FunctionCallInfo* FunctionCallMapping::getFunctionCallInfoPtrUnsafe(SgFunctionCallExp* fc) {
+  if(fc) {
+    auto iter=mapping.find(fc);
+    if(iter!=mapping.end()) {
+      return &mapping[fc].first;
+    }
+  }
+  return nullptr;
+}
+
+FunctionCallTargetSet* FunctionCallMapping::getFunctionCallTargetSetPtr(SgFunctionCallExp* fc) {
+  ROSE_ASSERT(isValidMapping());
+  return getFunctionCallTargetSetPtrUnsafe(fc);
+}
+
+FunctionCallTargetSet* FunctionCallMapping::getFunctionCallTargetSetPtrUnsafe(SgFunctionCallExp* fc) {
+  if(fc) {
+    auto iter=mapping.find(fc);
+    if(iter!=mapping.end()) {
+      return &mapping[fc].second;
+    }
+  }
+  return nullptr;
+}
+
+FunctionCallTargetSet FunctionCallMapping::getFunctionCallTargetSet(SgFunctionCallExp* fc) {
+  if(auto targetSetPtr=getFunctionCallTargetSetPtr(fc)) {
+    return *targetSetPtr;
+  } else {
+    FunctionCallTargetSet emptySet;
+    return emptySet;
+  }
+}
+
+
+bool FunctionCallMapping::isFunctionPointerCall(SgFunctionCallExp* fc) {
+  ROSE_ASSERT(isValidMapping());
+  if(auto p=getFunctionCallInfoPtr(fc))
+    return p->isFunctionPointerCall();
+  else
+    return false;
+}
+
+bool FunctionCallMapping::isValidMapping() {
+  return _mappingValidFlag;
 }
 
 FunctionCallMapping::ExternalFunctionNameContainerType FunctionCallMapping::getExternalFunctionNames() {
+  ROSE_ASSERT(isValidMapping());
   FunctionCallMapping::ExternalFunctionNameContainerType efnSet;
   for(auto p:mapping) {
-    if(p.second.size()==0)
-      efnSet.insert(determineFunctionCallInfo(p.first).funCallName);
+    auto functionCallInfo=p.second.first;
+    if(p.second.second.size()==0 && functionCallInfo.infoAvailable && !functionCallInfo.isFunctionPointerCall()) {
+      string fName=functionCallInfo.funCallName;
+      string fDecl;
+      string fFile;
+      if(auto funDecl=functionCallInfo.getFunctionDeclaration()) {
+	fDecl=funDecl->unparseToString();
+	fFile=SgNodeHelper::sourceFilenameToString(funDecl);
+      } else {
+	fFile="?";
+	fDecl="?";
+      }
+      efnSet.insert(fFile+";"+fName+";"+fDecl);
+    }
   }
   return efnSet;
 }
 
-bool FunctionCallMapping::isFunctionPointerCall(SgFunctionCallExp* fc) {
+bool FunctionCallMapping::isAstFunctionPointerCall(SgFunctionCallExp* fc) {
   SgExpression*    exp=fc->get_function();
   if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
     SgType* type=varRefExp->get_type();
@@ -65,10 +141,10 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       // direct function call
       //cout<<"DIRECT"<<endl;
       SgFunctionSymbol* funSym=functionRef->get_symbol();
-      assert(funSym);
-      SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(funSym);
+      ROSE_ASSERT(funSym);
+      SgFunctionSymbol* functionSymbol=isSgFunctionSymbol(funSym);
       fcInfo.functionSymbol=functionSymbol;
-      fcInfo.funCallType = isSgFunctionType(functionSymbol->get_type());
+      fcInfo.funCallType=isSgFunctionType(functionSymbol->get_type());
       fcInfo.funCallName=functionSymbol->get_name();
       fcInfo.mangledFunCallName=fcInfo.funCallType->get_mangled();
       fcInfo.infoAvailable = true;
@@ -85,6 +161,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
         fcInfo.funCallType=funCallType;
         fcInfo.mangledFunCallName=funCallType->get_mangled();
         fcInfo.infoAvailable = true;
+	fcInfo.setFunctionPointerCallFlag(true);
       } 
     } else if(SgPointerDerefExp* derefOp=isSgPointerDerefExp(exp)) {
       SgExpression* exp=derefOp->get_operand();
@@ -104,6 +181,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
           fcInfo.funCallType=funCallType;
           fcInfo.mangledFunCallName=funCallType->get_mangled();
           fcInfo.infoAvailable = true;
+	  fcInfo.setFunctionPointerCallFlag(true);
           //cout<<"DEBUG: FP : correct functin pointer:"<<fcInfo.mangledFunCallName<<endl;
         } else {
           // should not happen
@@ -113,33 +191,20 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       logger[WARN]<<"Function pointer dereference on non-normalized expression: "<<fc->unparseToString()<<endl;
     }
     if (!fcInfo.infoAvailable) {
-      cout<<"UNKNOWN"<<endl;
+      cout<<"UNKNOWN: "<<fc->unparseToString()<<endl;
       // provide information for error reporting
-      fcInfo.funCallName=fc->unparseToString();
+      fcInfo.funCallName="unknown:"+fc->unparseToString();
       fcInfo.funCallType=nullptr; // indicates unknown type
     }
     
     return fcInfo;
 }
 
-std::string nameOfType(SgFunctionDefinition* fn)
+std::string FunctionCallMapping::funDefTypeToString(SgFunctionDefinition* fn)
 {
   return fn->get_declaration()->get_type()->unparseToString();
 }
 
-void FunctionCallMapping::dumpFunctionCallInfo() {
-  for (auto fc : funCallList) {
-    FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
-    fcInfo.print();
-  }
-}
-
-void FunctionCallMapping::dumpFunctionCallTargetInfo() {
-  for (auto fd : funDefList) {
-    FunctionCallTarget fcTarget(fd);
-    fcTarget.print();
-  }
-}
 void FunctionCallMapping::collectRelevantNodes(SgNode* root) {
   RoseAst ast(root);
   for(auto node:ast) {
@@ -151,6 +216,22 @@ void FunctionCallMapping::collectRelevantNodes(SgNode* root) {
   }
 }
 
+void FunctionCallMapping::dumpFunctionCallInfo() {
+  ROSE_ASSERT(isValidMapping());
+  for (auto fc : funCallList) {
+    FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    fcInfo.print();
+  }
+}
+
+void FunctionCallMapping::dumpFunctionCallTargetInfo() {
+  ROSE_ASSERT(isValidMapping());
+  for (auto fd : funDefList) {
+    FunctionCallTarget fcTarget(fd);
+    fcTarget.print();
+  }
+}
+
 void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   logger[INFO]<<"Computing FunctionCallMapping1"<<endl;
   collectRelevantNodes(root);
@@ -158,16 +239,19 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   SAWYER_MESG(logger[INFO])<< "Number of "<<" function definitions:" <<funDefList.size()<<endl;
   // ensure that an entry exists for every function call (even if it cannot be resolved)
   for (auto fc : funCallList) {
-    mapping[fc]=FunctionCallTargetSet();
+    mapping[fc]=make_pair(determineFunctionCallInfo(fc),FunctionCallTargetSet());
   }
+  // resolve all function calls
   for (auto fc : funCallList) {
-    FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    auto fcInfoPtr=getFunctionCallInfoPtrUnsafe(fc);
+    ROSE_ASSERT(fcInfoPtr);
+    auto fcInfo=*fcInfoPtr;
     if(fcInfo.infoAvailable) {
       SgFunctionDefinition* funDef1=SgNodeHelper::determineFunctionDefinition(fc);
       if(funDef1) {
 	// if it can be resolved with the info in the AST, this is the only target
         FunctionCallTarget fcTarget(funDef1);
-	mapping[fc].insert(fcTarget);
+	getFunctionCallTargetSetPtrUnsafe(fc)->insert(fcTarget);
 	continue;
       }
       for (auto fd : funDefList) {
@@ -207,9 +291,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         }
         if(matching) {
           if(fcInfo.isFunctionPointerCall()) {
-            mapping[fc].insert(fcTarget);
+            mapping[fc].second.insert(fcTarget);
           } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
-            mapping[fc].insert(fcTarget);
+            mapping[fc].second.insert(fcTarget);
           }
         }
       }
@@ -217,16 +301,17 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       SAWYER_MESG(logger[WARN])<<"No function call site info available: "<<fc->unparseToString()<<endl;
     }
   }
+  _mappingValidFlag=true;
 }
 
 std::string FunctionCallMapping::toString() {
   stringstream ss;
-  for(auto fcall : mapping) {
-    ss<<SgNodeHelper::sourceFilenameLineColumnToString(fcall.first)<<" : "<<fcall.first->unparseToString()<<" RESOLVED TO ";
-    for(auto target : fcall.second) {
+  for(auto fcEntry : mapping) {
+    ss<<SgNodeHelper::sourceFilenameLineColumnToString(fcEntry.first)<<" : "<<fcEntry.first->unparseToString()<<" RESOLVED TO {";
+    for(auto target : getFunctionCallTargetSet(fcEntry.first)) {
       ss<<target.toString()<<" ";
     }
-    ss<<endl;
+    ss<<"}"<<endl;
   }
   return ss.str();
 }
@@ -241,13 +326,7 @@ void FunctionCallMapping::initDiagnostics() {
 }
 
 FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp* funCall) {
-  if(funCall) {
-    //SAWYER_MESG(logger[TRACE]) << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
-    auto iter=mapping.find(funCall);
-    if(iter!=mapping.end()) {
-      return (*iter).second;
-    }
-  }
-  FunctionCallTargetSet emptySet;
-  return emptySet;
+  ROSE_ASSERT(isValidMapping());
+  return getFunctionCallTargetSet(funCall);
 }
+

@@ -62,7 +62,7 @@ void ProgramInfo::compute() {
       std::set<SgVariableDeclaration*> localVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       count[numLocalVars]+=localVarDecls.size();
     } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
-      if(FunctionCallMapping::isFunctionPointerCall(fc)) {
+      if(FunctionCallMapping::isAstFunctionPointerCall(fc)) {
 	count[numFunPtrCall]++;
 	_functionPtrCallNodes.push_back(fc);
       } else {
