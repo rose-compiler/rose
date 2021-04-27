@@ -146,7 +146,7 @@ endif
 
 # Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
 if ROSE_HAVE_DLIB
-  ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@
+  ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@/include
   ROSE_DLIB_LIBS =
   ROSE_DLIB_LIBS_WITH_PATH =
 endif

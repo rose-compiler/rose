@@ -290,7 +290,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_BOOST="$(value_or_no "$(config_switch --with-boost "$@")")" \
     WITH_BZIP2="$(value_or_else "$LIBBZ2_ROOT" "$(value_or_no "$BZIP2_ROOT")")"  \
     WITH_CAPSTONE="$(value_or_no "$(config_switch --with-capstone "$@")")" \
-    WITH_DLIB="$(value_or_no "$(prefix "$(config_switch --with-dlib "$@")")")" \
+    WITH_DLIB="$(value_or_no "$(config_switch --with-dlib "$@")")" \
     WITH_DOXYGEN="$(value_or_no "$(makefile_value DOXYGEN Makefile)")" \
     WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
     WITH_ELF="$(value_or_no "$(config_switch --with-elf "$@")")" \
