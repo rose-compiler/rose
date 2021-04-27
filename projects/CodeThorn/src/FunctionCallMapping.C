@@ -191,7 +191,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       logger[WARN]<<"Function pointer dereference on non-normalized expression: "<<fc->unparseToString()<<endl;
     }
     if (!fcInfo.infoAvailable) {
-      cout<<"UNKNOWN: "<<fc->unparseToString()<<endl;
+      //cout<<"UNKNOWN: "<<fc->unparseToString()<<endl;
       // provide information for error reporting
       fcInfo.funCallName="unknown:"+fc->unparseToString();
       fcInfo.funCallType=nullptr; // indicates unknown type
