@@ -7,8 +7,8 @@ static const char *description =
 #include <rose.h>
 #include <CommandLine.h>                                // rose
 #include <Diagnostics.h>                                // rose
-#include <Partitioner2/Engine.h>                        // rose
-#include <Partitioner2/Partitioner.h>                   // rose
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>

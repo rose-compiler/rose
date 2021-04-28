@@ -2221,11 +2221,17 @@ src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
+src/Rose/Makefile
+src/Rose/BinaryAnalysis/Makefile
+src/Rose/BinaryAnalysis/Concolic/Makefile
+src/Rose/BinaryAnalysis/InstructionSemantics2/Makefile
+src/Rose/BinaryAnalysis/ModelChecker/Makefile
+src/Rose/BinaryAnalysis/Partitioner2/Makefile
+src/Rose/BinaryAnalysis/Unparser/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
 src/frontend/BinaryFormats/Makefile
-src/frontend/BinaryLoader/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/DLX/Makefile
@@ -2248,7 +2254,6 @@ src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
-src/frontend/Partitioner2/Makefile
 src/frontend/PythonFrontend/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/Makefile

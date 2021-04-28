@@ -3,7 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "MemoryMap.h"
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include "Diagnostics.h"
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we

@@ -779,7 +779,7 @@ lcov:
 -d src/frontend/BinaryLoader/.libs \
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
--d src/frontend/Partitioner2/.libs \
+-d src/Rose/BinaryAnalysis/Partitioner2/.libs \
 -d src/midend/BinaryAnalysis/.libs \
 -d src/midend/programAnalysis/.libs \
 -d src/midend/programAnalysis/staticSingleAssignment/.libs \

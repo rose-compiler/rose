@@ -15,23 +15,14 @@ libroseDisassemblers_la_SOURCES = SgAsmBlock.C SgAsmFunction.C					\
 	SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
 	SgAsmInterpretation.C SgAsmIntegerValueExpression.C					\
 	SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C				\
-	Registers.C RegisterDescriptor.C Disassembler.C						\
-	DisassemblerAarch32.C DisassemblerAarch64.C DisassemblerMips.C DisassemblerM68k.C	\
-	DisassemblerPowerpc.C DisassemblerX86.C DisassemblerNull.C				\
-	Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C				\
+	Assembler.C AssemblerX86.C AssemblerX86Init.C			\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C				\
 	AssemblerX86Init4.C AssemblerX86Init5.C AssemblerX86Init6.C				\
-	AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C				\
-	BinaryInstructionCache.C
+	AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
 
-pkginclude_HEADERS = Registers.h RegisterDescriptor.h BitPattern.h			\
-	Disassembler.h DisassemblerAarch32.h DisassemblerAarch64.h DisassemblerMips.h	\
-	DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h			\
-	DisassemblerNull.h Assembler.h AssemblerX86.h					\
-	AssemblerX86Init.h InstructionEnumsX86.h					\
-	InstructionEnumsMips.h InstructionEnumsM68k.h					\
-	x86InstructionProperties.h InstructionEnumsAarch64.h				\
-	InstructionEnumsPowerpc.h RegisterParts.h					\
-	BinaryInstructionCache.h InstructionEnumsAarch32.h
+pkginclude_HEADERS = BitPattern.h			\
+	Assembler.h AssemblerX86.h					\
+	AssemblerX86Init.h 					\
+	x86InstructionProperties.h
 
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C

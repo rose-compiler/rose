@@ -15956,7 +15956,7 @@ SgFile::SgFile ( const SgFile & X )
      ROSE_ASSERT(false);
    }
 
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 void
 SgFile::initialization()
