@@ -5,7 +5,7 @@
 
 #include <boost/scope_exit.hpp>
 #include <BinaryAnalysis/ModelChecker/ExecutionUnit.h>
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
 #include <BinaryAnalysis/ModelChecker/Tag.h>
 #include <BaseSemanticsState.h>
@@ -102,7 +102,7 @@ PathNode::assertions() const {
 }
 
 void
-PathNode::execute(const Settings::Ptr &settings, const SemanticsPtr &semantics, const BS::RiscOperatorsPtr &ops,
+PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &semantics, const BS::RiscOperatorsPtr &ops,
                   const SmtSolver::Ptr &solver) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);

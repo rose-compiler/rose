@@ -21,7 +21,7 @@
 #include <BinaryAnalysis/ModelChecker/PathPrioritizer.h>
 #include <BinaryAnalysis/ModelChecker/PathQueue.h>
 #include <BinaryAnalysis/ModelChecker/Periodic.h>
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
 #include <BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <BinaryAnalysis/ModelChecker/Tag.h>

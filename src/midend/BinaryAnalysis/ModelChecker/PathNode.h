@@ -156,7 +156,7 @@ public:
      *  used by the model checker itself.
      *
      *  Thread safety: This method is thread safe, but the RISC operators must be thread local. */
-    void execute(const SettingsPtr&, const SemanticsPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    void execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                  const SmtSolver::Ptr&);
 
     /** Property: Whether execution has failed.

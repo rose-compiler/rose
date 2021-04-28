@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 
 #include <BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
@@ -18,46 +18,46 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-Semantics::Semantics(const Settings::Ptr &settings)
+SemanticCallbacks::SemanticCallbacks(const Settings::Ptr &settings)
     : mcSettings_(settings) {
     ASSERT_not_null(settings);
 }
 
-Semantics::~Semantics() {}
+SemanticCallbacks::~SemanticCallbacks() {}
 
 Settings::Ptr
-Semantics::mcSettings() const {
+SemanticCallbacks::mcSettings() const {
     // no lock necessary since the pointer is const
     return mcSettings_;
 }
 
 BS::SValuePtr
-Semantics::protoval() {
+SemanticCallbacks::protoval() {
     return IS::SymbolicSemantics::SValue::instance();
 }
 
 BS::StatePtr
-Semantics::createInitialState() {
+SemanticCallbacks::createInitialState() {
     BS::RegisterStatePtr registers = createInitialRegisters();
     BS::MemoryStatePtr memory = createInitialMemory();
     return BS::State::instance(registers, memory);
 }
 
 void
-Semantics::initializeState(const BS::RiscOperatorsPtr&) {}
+SemanticCallbacks::initializeState(const BS::RiscOperatorsPtr&) {}
 
 std::vector<Tag::Ptr>
-Semantics::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
+SemanticCallbacks::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
     return {};
 }
 
 std::vector<Tag::Ptr>
-Semantics::postExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
+SemanticCallbacks::postExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
     return {};
 }
 
-Semantics::CodeAddresses
-Semantics::nextCodeAddresses(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::CodeAddresses
+SemanticCallbacks::nextCodeAddresses(const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(ops);
     CodeAddresses retval;
     retval.ip = instructionPointer(ops);

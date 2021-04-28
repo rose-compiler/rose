@@ -16,7 +16,7 @@ run $(public_header) -o include/rose/BinaryAnalysis/ModelChecker \
     PathPrioritizer.h \
     PathQueue.h \
     Periodic.h \
-    Semantics.h \
+    SemanticCallbacks.h \
     Settings.h \
     SourceLister.h \
     Tag.h \
@@ -39,6 +39,6 @@ run $(librose_compile) -I$(ROSE)/src/midend \
     PathQueue.C \
     Periodic.C \
     Settings.C \
-    Semantics.C \
+    SemanticCallbacks.C \
     SourceLister.C \
     Tag.C

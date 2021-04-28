@@ -73,8 +73,8 @@ using PeriodicPtr = std::shared_ptr<Periodic>;
 class RandomPathFirst;
 using RandomPathFirstPtr = std::shared_ptr<RandomPathFirst>;
 
-class Semantics;
-using SemanticsPtr = std::shared_ptr<Semantics>;
+class SemanticCallbacks;
+using SemanticCallbacksPtr = std::shared_ptr<SemanticCallbacks>;
 
 class Settings;
 using SettingsPtr = std::shared_ptr<Settings>;
@@ -98,8 +98,8 @@ namespace P2Model {
     class RiscOperators;
     using RiscOperatorsPtr = boost::shared_ptr<RiscOperators>;
 
-    class Semantics;
-    using SemanticsPtr = std::shared_ptr<Semantics>;
+    class SemanticCallbacks;
+    using SemanticCallbacksPtr = std::shared_ptr<SemanticCallbacks>;
 }
 
 /** Mode by which comparisons are made. */

@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_Semantics_H
-#define ROSE_BinaryAnalysis_ModelChecker_Semantics_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_SemanticCallbacks_H
+#define ROSE_BinaryAnalysis_ModelChecker_SemanticCallbacks_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -12,19 +12,23 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-/** Factory for creating semantic states. */
-class Semantics {
+/** User-defined functions for model checking semantics.
+ *
+ *  This class contains functions that are called by the model checker engine and which are meant to be overridden by
+ *  users. This base class provides some reasonable defaults for some of the functions, but some of the others are
+ *  pure virtual. */
+class SemanticCallbacks {
 public:
-    using Ptr = SemanticsPtr;
+    using Ptr = SemanticCallbacksPtr;
 
 private:
     const SettingsPtr mcSettings_;                      // model checker settings
 
 protected:
-    Semantics() = delete;
-    explicit Semantics(const SettingsPtr&);
+    SemanticCallbacks() = delete;
+    explicit SemanticCallbacks(const SettingsPtr&);
 public:
-    virtual ~Semantics();
+    virtual ~SemanticCallbacks();
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

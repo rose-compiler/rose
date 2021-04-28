@@ -49,7 +49,7 @@ public:
 private:
     PathQueue frontier_;                                // paths with work remaining
     PathQueue interesting_;                             // paths that are interesting, placed here by workers
-    SemanticsPtr semantics_;                            // various configurable semantic operations
+    SemanticCallbacksPtr semantics_;                    // various configurable semantic operations
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
     SAWYER_THREAD_TRAITS::ConditionVariable newWork_;   // signaled when work arrives or thread finishes
@@ -105,7 +105,7 @@ public:
     void settings(const SettingsPtr&);
     /** @} */
 
-    /** Property: Semantic operations.
+    /** Property: Adjustments to semantic operations.
      *
      *  All configurable semantic operations are encapsulated in this property. This should be set before running the engine,
      *  and not changed once the engine is running.
@@ -113,8 +113,8 @@ public:
      *  Thread safety: This property accessor is thread safe.
      *
      *  @{ */
-    SemanticsPtr semantics() const;
-    void semantics(const SemanticsPtr&);
+    SemanticCallbacksPtr semantics() const;
+    void semantics(const SemanticCallbacksPtr&);
     /** @} */
 
     /** Property: Path exploration prioritizer.

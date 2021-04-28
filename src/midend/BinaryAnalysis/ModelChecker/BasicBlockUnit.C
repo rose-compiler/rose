@@ -4,7 +4,7 @@
 #include <BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 
 #include <BinaryAnalysis/ModelChecker/ErrorTag.h>
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
 #include <BinaryAnalysis/ModelChecker/Tag.h>
 #include <BinaryAnalysis/ModelChecker/SourceLister.h>
@@ -103,7 +103,7 @@ BasicBlockUnit::containsUnknownInsn() const {
 }
 
 std::vector<Tag::Ptr>
-BasicBlockUnit::execute(const Settings::Ptr &settings, const Semantics::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);

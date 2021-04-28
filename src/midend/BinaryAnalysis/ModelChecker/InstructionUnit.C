@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <BinaryAnalysis/ModelChecker/InstructionUnit.h>
 
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
 #include <BinaryAnalysis/ModelChecker/Tag.h>
 #include <boost/format.hpp>
@@ -67,7 +67,7 @@ InstructionUnit::address() const {
 }
 
 std::vector<Tag::Ptr>
-InstructionUnit::execute(const Settings::Ptr &settings, const Semantics::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);

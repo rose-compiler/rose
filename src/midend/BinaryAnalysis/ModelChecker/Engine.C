@@ -9,7 +9,7 @@
 #include <BinaryAnalysis/ModelChecker/PathNode.h>
 #include <BinaryAnalysis/ModelChecker/PathPredicate.h>
 #include <BinaryAnalysis/ModelChecker/PathPrioritizer.h>
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <BinaryAnalysis/ModelChecker/Settings.h>
 #include <BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <BaseSemanticsTypes.h>
@@ -80,14 +80,14 @@ Engine::settings(const Settings::Ptr &s) {
         settings_->sourceLister = SourceLister::instance();
 }
 
-Semantics::Ptr
+SemanticCallbacks::Ptr
 Engine::semantics() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return semantics_;
 }
 
 void
-Engine::semantics(const Semantics::Ptr &sem) {
+Engine::semantics(const SemanticCallbacks::Ptr &sem) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     semantics_ = sem;
 }
@@ -513,7 +513,7 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const Smt
     } else {
         // Get the list execution units that would be executed after this path
         PathNode::Ptr current = path->lastNode();
-        std::vector<Semantics::NextUnit> nextUnits;
+        std::vector<SemanticCallbacks::NextUnit> nextUnits;
         BS::StatePtr parentOutgoingState;
         {
             auto borrowed = current->borrowOutgoingState();
@@ -531,7 +531,7 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const Smt
 
         // For each execution unit, extend the current path by that one unit and add it as new work.
         ASSERT_not_null(parentOutgoingState);
-        for (const Semantics::NextUnit &next: nextUnits) {
+        for (const SemanticCallbacks::NextUnit &next: nextUnits) {
             auto newPath = Path::instance(path, next.unit, next.assertion, parentOutgoingState);
             if (insertWork(newPath))
                 ++nChildren;
@@ -683,7 +683,7 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         out <<prefix <<"paths terminated due to K limit:        " <<p->kLimitReached() <<"\n";
         out <<prefix <<"paths terminated due to time limit:     " <<p->timeLimitReached() <<"\n";
     }
-    if (auto s = std::dynamic_pointer_cast<P2Model::Semantics>(semantics())) {
+    if (auto s = std::dynamic_pointer_cast<P2Model::SemanticCallbacks>(semantics())) {
         out <<prefix <<"paths terminated for duplicate state:   " <<s->nDuplicateStates() <<"\n";
         out <<prefix <<"paths terminated for solver failure:    " <<s->nSolverFailures() <<" (usually timeouts)\n";
     }

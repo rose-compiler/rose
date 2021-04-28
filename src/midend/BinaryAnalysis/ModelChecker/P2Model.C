@@ -120,7 +120,7 @@ commandLineSwitches(Settings &settings) {
 // Instruction semantics domain
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner, Semantics *semantics,
+RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
                              const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner), semantics_(semantics) {
     ASSERT_not_null(semantics);
@@ -130,7 +130,7 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, Semantics *semantics,
+RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
                         const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(protoval);
     return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver));
@@ -318,8 +318,9 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
 // High-level semantic operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Semantics::Semantics(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings, const P2::Partitioner &partitioner)
-    : ModelChecker::Semantics(mcSettings), settings_(settings), partitioner_(partitioner) {
+SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings,
+                                     const P2::Partitioner &partitioner)
+    : ModelChecker::SemanticCallbacks(mcSettings), settings_(settings), partitioner_(partitioner) {
     if (!settings_.initialStackVa) {
         // Choose an initial stack pointer that's unlikely to interfere with instructions or data.
         static const size_t RESERVE_BELOW  = 15*1024*1024;          // memory to reserve below the initial stack inter
@@ -340,15 +341,16 @@ Semantics::Semantics(const ModelChecker::Settings::Ptr &mcSettings, const Settin
     }
 }
 
-Semantics::~Semantics() {}
+SemanticCallbacks::~SemanticCallbacks() {}
 
-Semantics::Ptr
-Semantics::instance(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings, const P2::Partitioner &partitioner) {
-    return Ptr(new Semantics(mcSettings, settings, partitioner));
+SemanticCallbacks::Ptr
+SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings,
+                            const P2::Partitioner &partitioner) {
+    return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
 void
-Semantics::reset() {
+SemanticCallbacks::reset() {
     seenStates_.clear();
     nDuplicateStates_ = 0;
     nSolverFailures_ = 0;
@@ -357,29 +359,29 @@ Semantics::reset() {
 }
 
 size_t
-Semantics::nDuplicateStates() const {
+SemanticCallbacks::nDuplicateStates() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return nDuplicateStates_;
 }
 
 size_t
-Semantics::nSolverFailures() const {
+SemanticCallbacks::nSolverFailures() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return nSolverFailures_;
 }
 
 const P2::Partitioner&
-Semantics::partitioner() const {
+SemanticCallbacks::partitioner() const {
     return partitioner_;
 }
 
 BS::RegisterStatePtr
-Semantics::createInitialRegisters() {
+SemanticCallbacks::createInitialRegisters() {
     return BS::RegisterStateGeneric::instance(protoval(), partitioner_.instructionProvider().registerDictionary());
 }
 
 BS::MemoryStatePtr
-Semantics::createInitialMemory() {
+SemanticCallbacks::createInitialMemory() {
     BS::MemoryStatePtr mem;
     switch (settings_.memoryType) {
         case Settings::MemoryType::LIST:
@@ -394,7 +396,7 @@ Semantics::createInitialMemory() {
 }
 
 BS::RiscOperatorsPtr
-Semantics::createRiscOperators() {
+SemanticCallbacks::createRiscOperators() {
     auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr());
     ops->initialState(nullptr);
     ops->currentState(nullptr);
@@ -402,7 +404,7 @@ Semantics::createRiscOperators() {
 }
 
 void
-Semantics::initializeState(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::initializeState(const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
     if (settings_.initialStackVa) {
@@ -412,14 +414,14 @@ Semantics::initializeState(const BS::RiscOperatorsPtr &ops) {
 }
 
 BS::DispatcherPtr
-Semantics::createDispatcher(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::createDispatcher(const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null2(partitioner_.instructionProvider().dispatcher(), "no semantics for this ISA");
     return partitioner_.instructionProvider().dispatcher()->create(ops);
 }
 
 SmtSolver::Ptr
-Semantics::createSolver() {
+SemanticCallbacks::createSolver() {
     auto solver = SmtSolver::instance("best");
     solver->memoization(settings_.solverMemoization);
     if (!rose_isnan(mcSettings()->solverTimeout))
@@ -428,13 +430,13 @@ Semantics::createSolver() {
 }
 
 void
-Semantics::attachModelCheckerSolver(const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+SemanticCallbacks::attachModelCheckerSolver(const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     RiscOperators::promote(ops)->modelCheckerSolver(solver);
 }
 
 std::vector<Tag::Ptr>
-Semantics::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperatorsPtr &ops) {
     RiscOperators::promote(ops)->nInstructions(0);
 
     // Track which basic blocks (or instructions) were reached
@@ -447,26 +449,26 @@ Semantics::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperatorsPtr
 }
 
 size_t
-Semantics::nUnitsReached() const {
+SemanticCallbacks::nUnitsReached() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return unitsReached_.size();
 }
 
-Semantics::UnitCounts
-Semantics::unitsReached() const {
+SemanticCallbacks::UnitCounts
+SemanticCallbacks::unitsReached() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return unitsReached_;
 }
 
 BS::SValuePtr
-Semantics::instructionPointer(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::instructionPointer(const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
     return ops->peekRegister(IP);
 }
 
 bool
-Semantics::seenState(const BS::RiscOperators::Ptr &ops) {
+SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
     Combinatorics::HasherSha256Builtin hasher;          // we could use a faster one as long as we don't get false matches
@@ -486,7 +488,7 @@ Semantics::seenState(const BS::RiscOperators::Ptr &ops) {
 }
 
 ExecutionUnit::Ptr
-Semantics::findUnit(rose_addr_t va) {
+SemanticCallbacks::findUnit(rose_addr_t va) {
     // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
     // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
     // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
@@ -546,9 +548,9 @@ Semantics::findUnit(rose_addr_t va) {
     return unit;
 }
 
-std::vector<Semantics::NextUnit>
-Semantics::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
-    std::vector<Semantics::NextUnit> units;
+std::vector<SemanticCallbacks::NextUnit>
+SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+    std::vector<SemanticCallbacks::NextUnit> units;
 
     // If we've seen this state before, then there's nothing new for us to do.
     if (seenState(ops)) {
@@ -604,7 +606,7 @@ Semantics::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, con
 }
 
 bool
-Semantics::filterNullDeref(const BS::SValuePtr &addr, TestMode testMode, IoMode ioMode) {
+SemanticCallbacks::filterNullDeref(const BS::SValuePtr &addr, TestMode testMode, IoMode ioMode) {
     return true;
 }
 

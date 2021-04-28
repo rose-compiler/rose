@@ -53,7 +53,8 @@ public:
     virtual bool containsUnknownInsn() const override;
 
     virtual std::vector<TagPtr>
-    execute(const SettingsPtr&, const SemanticsPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    execute(const SettingsPtr&, const SemanticCallbacksPtr&,
+            const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
 };
 
 

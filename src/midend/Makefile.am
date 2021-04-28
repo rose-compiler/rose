@@ -87,7 +87,7 @@ nobase_pkginclude_HEADERS=					\
 	BinaryAnalysis/ModelChecker/PathQueue.C			\
 	BinaryAnalysis/ModelChecker/Periodic.C			\
 	BinaryAnalysis/ModelChecker/Settings.C			\
-	BinaryAnalysis/ModelChecker/Semantics.C			\
+	BinaryAnalysis/ModelChecker/SemanticCallbacks.C		\
 	BinaryAnalysis/ModelChecker/SourceLister.C		\
 	BinaryAnalysis/ModelChecker/Tag.C
 

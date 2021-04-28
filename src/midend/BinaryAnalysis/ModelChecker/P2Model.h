@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BinaryAnalysis/ModelChecker/Semantics.h>
+#include <BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/CommandLine.h>
 #include <SymbolicSemantics2.h>
@@ -43,7 +43,7 @@ struct Settings {
     bool solverMemoization = true;                      /**< Whether the SMT solver should use memoization. */
 };
 
-class Semantics;
+class SemanticCallbacks;
 
 /** Command-line switches for settings.
  *
@@ -66,16 +66,16 @@ private:
     const Partitioner2::Partitioner &partitioner_;
     SmtSolver::Ptr modelCheckerSolver_;
     size_t nInstructions_ = 0;
-    Semantics *semantics_ = nullptr;
+    SemanticCallbacks *semantics_ = nullptr;
 
 protected:
-    RiscOperators(const Settings&, const Partitioner2::Partitioner&, Semantics*,
+    RiscOperators(const Settings&, const Partitioner2::Partitioner&, SemanticCallbacks*,
                   const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
-    static Ptr instance(const Settings&, const Partitioner2::Partitioner&, Semantics*,
+    static Ptr instance(const Settings&, const Partitioner2::Partitioner&, SemanticCallbacks*,
                         const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
@@ -134,9 +134,9 @@ public: // Override RISC operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Virtual definition of semantic operations for model checking. */
-class Semantics: public Rose::BinaryAnalysis::ModelChecker::Semantics {
+class SemanticCallbacks: public Rose::BinaryAnalysis::ModelChecker::SemanticCallbacks {
 public:
-    using Ptr = SemanticsPtr;
+    using Ptr = SemanticCallbacksPtr;
     using UnitCounts = Sawyer::Container::Map<rose_addr_t, size_t>;
 
 private:
@@ -153,9 +153,9 @@ private:
     UnitCounts unitsReached_;                           // number of times basic blocks were reached
 
 protected:
-    Semantics(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
+    SemanticCallbacks(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
 public:
-    ~Semantics();
+    ~SemanticCallbacks();
 
 public:
     static Ptr instance(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);

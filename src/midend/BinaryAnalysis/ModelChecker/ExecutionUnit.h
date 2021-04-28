@@ -105,7 +105,7 @@ public:
      *
      *  Thread safety: The implementation need not be thread safe. */
     virtual std::vector<TagPtr>
-    execute(const SettingsPtr&, const SemanticsPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) = 0;
+    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     /** Execute a single instruction semantically.
      *
