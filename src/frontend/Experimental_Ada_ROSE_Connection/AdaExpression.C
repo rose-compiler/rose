@@ -418,6 +418,7 @@ namespace
     // void handle(SgImportStatement& n)
 
     void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
+    void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
     void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
   };
 

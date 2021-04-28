@@ -70,6 +70,10 @@ getParentRecordDeclID(Element_ID defid, AstContext ctx);
 TypeData
 getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
 
+/// returns the base of a referenced exception
+/// \result either an SgInitializedName or an SgAdaRenamingDecl
+std::pair<SgInitializedName*, SgAdaRenamingDecl*>
+getExceptionBase(Element_Struct& el, AstContext ctx);
 
 }
 

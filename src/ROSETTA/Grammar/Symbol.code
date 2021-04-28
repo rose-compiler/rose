@@ -17,8 +17,8 @@ HEADER_START
 
        // DQ (8/21/2013): Added function so that templated lower-level symbol table support will compile.
        // Note that this function can not be called and returns an appropriate error message.
-       // Note also that we have to return a declaration for which get_type exists as well 
-       // (selected SgFunctionDeclaration).  The return value of this function is always NULL 
+       // Note also that we have to return a declaration for which get_type exists as well
+       // (selected SgFunctionDeclaration).  The return value of this function is always NULL
        // plus it is a runtime error to call this function.
        // SgFunctionDeclaration* get_declaration() const;
           SgDeclarationStatement* get_declaration() const;
@@ -109,7 +109,7 @@ HEADER_ALIAS_SYMBOL_END
 
 HEADER_RENAME_SYMBOL_START
 
-      //! For a chain of aliased symbols the last link may be a SgRenameSymbol, this 
+      //! For a chain of aliased symbols the last link may be a SgRenameSymbol, this
       //! function returns the declaration in the last (non-aliased and not renamed) symbol.
       //  SgSymbol* get_base() const;
 
@@ -155,8 +155,8 @@ SgSymbol::get_declaration() const
    }
 
 
-// This function has been implement to support testing of the scope of 
-// the declartion with the scope of where the symbols are placed 
+// This function has been implement to support testing of the scope of
+// the declartion with the scope of where the symbols are placed
 // (within the inserion and checking og symbol tables).
 SgScopeStatement*
 SgSymbol::get_scope() const
@@ -444,7 +444,7 @@ SgSymbol::get_mangled_name() const
 
                mangledName = typedefDeclaration->get_mangled_name();
 #else
-            // DQ (2/28/2018): We need to handle the association of the symbol with either a 
+            // DQ (2/28/2018): We need to handle the association of the symbol with either a
             // SgTemplateTypedefDeclaration or a SgTemplateInstantiationTypedefDeclaration IR node.
 
                SgTemplateTypedefDeclaration* typedefDeclaration = isSgTemplateTypedefDeclaration(symbol->get_declaration());
@@ -492,7 +492,7 @@ SOURCE_X_SYMBOL_END
 SOURCE_NON_X_SYMBOL_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      return NULL;
    }
@@ -512,7 +512,7 @@ SOURCE_NON_X_SYMBOL_END
 
 
 SOURCE_LONG_GET_NAME_START
-SgName 
+SgName
 $CLASSNAME::get_name() const
    {
 #if 0
@@ -523,12 +523,12 @@ $CLASSNAME::get_name() const
 
       SgName theName;
 
-      if (get_declaration() != NULL) 
+      if (get_declaration() != NULL)
          {
            printf ("Debugging long form of get_name(): get_declaration() != NULL: get_declaration() = %p = %s \n",this->get_declaration(),this->get_declaration()->class_name().c_str());
            theName = get_declaration()->get_name();
-         } 
-        else 
+         }
+        else
          {
            printf ("Debugging long form of get_name(): get_declaration() == NULL \n");
            theName = SgName("undefined");
@@ -574,7 +574,7 @@ SOURCE_GET_TYPE_END
 
 SOURCE_EMPTY_GET_TYPE_START
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      return NULL;
    }
@@ -592,7 +592,7 @@ SOURCE_EMPTY_GET_TYPE_END
 
 SOURCE_SHORT_GET_NAME_START
 SgName
-$CLASSNAME::get_name() const 
+$CLASSNAME::get_name() const
    {
      return (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
    }
@@ -608,7 +608,7 @@ SOURCE_SHORT_GET_NAME_END
 
 SOURCE_SHORT_EMPTY_GET_NAME_START
 SgName
-$CLASSNAME::get_name() const 
+$CLASSNAME::get_name() const
    {
      return NULL;
    }
@@ -625,7 +625,7 @@ SOURCE_SHORT_EMPTY_GET_NAME_END
 
 SOURCE_SHORT_DEFAULT_GET_NAME_START
 SgName
-$CLASSNAME::get_name() const 
+$CLASSNAME::get_name() const
    {
      return "Default_Symbol_Name";
    }
@@ -643,16 +643,16 @@ SOURCE_LABEL_SYMBOL_START
 SgName
 SgLabelSymbol::get_name() const
    {
-  // DQ (12/9/2007): This IR node has been modified to hold a SgStatement in addition 
+  // DQ (12/9/2007): This IR node has been modified to hold a SgStatement in addition
   // to a SgLabelStatement. by leaving the pointer to a SgLabelStatement I don't change
   // anything about how the C/C++ case works, but I have added a pointer to a SgStatement
   // so that the Fortran support can reference any statement (to support numeric labels
   // and non-numeric labels as well, though this is not yet implemented).  I plan to
-  // merge the support for C/C++ and fortran a bit later after I am sure that this 
+  // merge the support for C/C++ and fortran a bit later after I am sure that this
   // approach will work.
 
-  // This handles the general case where for C/C++ the declaration statement is not set, 
-  // but I think this should be an error.  Except that we have to handle the case of a 
+  // This handles the general case where for C/C++ the declaration statement is not set,
+  // but I think this should be an error.  Except that we have to handle the case of a
   // label with unassociated statement in C.  So maybe we need to handle this case!
 
   // Previous implementation.
@@ -706,10 +706,10 @@ SgLabelSymbol::get_symbol_basis() const
 #if 0
   // DQ (2/2/2011): This is OK since this is the C/C++ semantics.
   // DQ (2/1/2011): This function has the wrong semantics for the case of labels.
-  // I am not clear how to handle this function, but I think it is required to support 
+  // I am not clear how to handle this function, but I think it is required to support
   // internal testing of the symbol tables.  If we supported a pointer to the
   // SgInitializedName object used in the function declaration's parameter list,
-  // then we could use that as a concept of declaration (similar to the semantics of 
+  // then we could use that as a concept of declaration (similar to the semantics of
   // a SgVariableSymbol).
 
      printf ("Error: This function has the wrong semantics for the case of labels. \n");
@@ -744,7 +744,7 @@ SgLabelSymbol::get_symbol_basis() const
    }
 
 SgType*
-SgLabelSymbol::get_type() const 
+SgLabelSymbol::get_type() const
    {
   // DQ (2/1/2011): Label symbols can only have a label type.
      return SgTypeLabel::createType();
@@ -797,7 +797,7 @@ SgJavaLabelSymbol::get_symbol_basis() const
    }
 
 SgType*
-SgJavaLabelSymbol::get_type() const 
+SgJavaLabelSymbol::get_type() const
    {
   // DQ (9/9/2011): Use the common SgLabelType for both SgLableStatment and SgJavaLabelStatment.
   // At least until we can reason about why this is a bad idea.
@@ -817,12 +817,12 @@ SgMemberFunctionSymbol::get_declaration() const
           return NULL;
      SgMemberFunctionDeclaration* memberFuncionDeclaration = isSgMemberFunctionDeclaration(funcionDeclaration);
      ROSE_ASSERT(memberFuncionDeclaration != NULL);
-     return memberFuncionDeclaration; 
+     return memberFuncionDeclaration;
    }
 
 #if 1
 // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
-// This is used in the hidden list intersection code: 
+// This is used in the hidden list intersection code:
 //      astHiddenTypeAndDeclarationLists/HiddenList_Intersection.C
 // and maybe else where as well.
 SgClassDefinition*
@@ -877,18 +877,18 @@ $CLASSNAME::get_declaration() const
 SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_END
 
 SOURCE_MODULE_GET_NAME_START
-SgName 
+SgName
 SgModuleSymbol::get_name() const
    {
-#if 1 
+#if 1
    // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
       $GRAMMAR_PREFIX_Name theName;
 
-      if (get_declaration()) 
+      if (get_declaration())
          {
            theName = get_declaration()->get_name();
-         } 
-        else 
+         }
+        else
          {
            theName = $GRAMMAR_PREFIX_Name("undefined");
          }
@@ -909,18 +909,18 @@ SgModuleSymbol::get_symbol_basis() const
 SOURCE_MODULE_GET_NAME_END
 
 SOURCE_COMMON_GET_NAME_START
-SgName 
+SgName
 SgCommonSymbol::get_name() const
    {
-#if 1 
+#if 1
    // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
       $GRAMMAR_PREFIX_Name theName;
 
-      if (get_declaration()) 
+      if (get_declaration())
          {
            theName = get_declaration()->get_name();
-         } 
-        else 
+         }
+        else
          {
            theName = $GRAMMAR_PREFIX_Name("undefined");
          }
@@ -940,18 +940,18 @@ SgCommonSymbol::get_symbol_basis() const
 SOURCE_COMMON_GET_NAME_END
 
 SOURCE_INTRIN_GET_NAME_START
-SgName 
+SgName
 SgIntrinsicSymbol::get_name() const
    {
-#if 1 
+#if 1
    // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
       $GRAMMAR_PREFIX_Name theName;
 
-      if (get_declaration()) 
+      if (get_declaration())
          {
            theName = get_declaration()->get_name();
-         } 
-        else 
+         }
+        else
          {
            theName = $GRAMMAR_PREFIX_Name("undefined");
          }
@@ -974,15 +974,15 @@ SOURCE_INTERFACE_GET_NAME_START
 SgName
 SgInterfaceSymbol::get_name() const
    {
-#if 1 
+#if 1
    // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
       $GRAMMAR_PREFIX_Name theName;
 
-      if (get_declaration()) 
+      if (get_declaration())
          {
            theName = get_declaration()->get_name();
-         } 
-        else 
+         }
+        else
          {
            theName = $GRAMMAR_PREFIX_Name("undefined");
          }
@@ -1035,7 +1035,7 @@ SgAliasSymbol::get_symbol_basis() const
    }
 
 SgType*
-SgAliasSymbol::get_type() const 
+SgAliasSymbol::get_type() const
    {
      ROSE_ASSERT(p_alias != NULL);
      return get_alias()->get_type();
@@ -1121,7 +1121,7 @@ SgAliasSymbol::get_declaration() const
                ROSE_ASSERT(returnValue != NULL);
                break;
              }
-             
+
            case V_SgAdaPackageSymbol:
              {
                SgAdaPackageSymbol* symbol = isSgAdaPackageSymbol(get_alias());
@@ -1294,7 +1294,7 @@ SgRenameSymbol::get_symbol_basis() const
    }
 
 SgType*
-SgRenameSymbol::get_type() const 
+SgRenameSymbol::get_type() const
    {
      ROSE_ASSERT(p_original_symbol != NULL);
      return get_original_symbol()->get_type();
@@ -1354,7 +1354,7 @@ SOURCE_RENAME_SYMBOL_END
 SOURCE_NAMESPACE_SYMBOL_START
 
 SgName
-SgNamespaceSymbol::get_name() const 
+SgNamespaceSymbol::get_name() const
    {
   // DQ (8/30/2009): Added support for SgNamespaceAliasDeclarationStatement
      SgName n;
@@ -1407,14 +1407,14 @@ SOURCE_NAMESPACE_SYMBOL_END
 
 SOURCE_ADA_PACKAGE_SYMBOL_START
 SgName
-SgAdaPackageSymbol::get_name() const 
+SgAdaPackageSymbol::get_name() const
 {
   if (SgAdaPackageSpecDecl* dcl = isSgAdaPackageSpecDecl(get_declaration()))
     return dcl->get_name();
 
   if (SgAdaPackageBodyDecl* dcl = isSgAdaPackageBodyDecl(get_declaration()))
     return dcl->get_name();
-    
+
   return SgName("undefined");
 }
 
@@ -1427,7 +1427,7 @@ SOURCE_ADA_PACKAGE_SYMBOL_END
 
 SOURCE_ADA_TASK_SYMBOL_START
 SgName
-SgAdaTaskSymbol::get_name() const 
+SgAdaTaskSymbol::get_name() const
 {
   if (SgAdaTaskSpecDecl* dcl = isSgAdaTaskSpecDecl(get_declaration()))
     return dcl->get_name();
@@ -1437,7 +1437,7 @@ SgAdaTaskSymbol::get_name() const
 
   if (SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(get_declaration()))
     return dcl->get_name();
-    
+
   return SgName("undefined");
 }
 
@@ -1448,12 +1448,29 @@ SgAdaTaskSymbol::get_symbol_basis() const
 }
 SOURCE_ADA_TASK_SYMBOL_END
 
+SOURCE_ADA_RENAMING_SYMBOL_START
+SgName
+SgAdaRenamingSymbol::get_name() const
+{
+  SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(get_declaration());
+  ROSE_ASSERT(dcl);
+
+  return dcl->get_name();
+}
+
+SgNode*
+SgAdaRenamingSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+SOURCE_ADA_RENAMING_SYMBOL_END
+
 
 
 SOURCE_ASM_BINARY_ADDRESS_SYMBOL_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      return NULL;
    }
@@ -1475,7 +1492,7 @@ SOURCE_ASM_BINARY_ADDRESS_SYMBOL_END
 SOURCE_ASM_BINARY_DATA_SYMBOL_START
 
 SgType*
-$CLASSNAME::get_type() const 
+$CLASSNAME::get_type() const
    {
      return NULL;
    }

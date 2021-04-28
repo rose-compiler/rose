@@ -381,7 +381,7 @@ namespace
 
     static
     RenamingSyntax
-    renamingDeclSyntax(SgDeclarationStatement* n, size_t idx);
+    renamingDeclSyntax(SgSymbol* n);
 
     static
     std::pair<std::string, std::string>
@@ -611,8 +611,8 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgDeclarationStatement* orig    = n.get_renamedDecl();
-      RenamingSyntax          renamed = renamingDeclSyntax(orig, n.get_renamedIndex());
+      SgSymbol*      orig    = n.get_renamed();
+      RenamingSyntax renamed = renamingDeclSyntax(orig);
 
       prn(renamed.prefixSyntax);
       prn(n.get_name());
@@ -1416,13 +1416,19 @@ namespace
   {
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)           { res = ReturnType("subtype", ""); }
-    void handle(SgAdaAccessType&)  { res = ReturnType("type",    ""); }
-    void handle(SgAdaDerivedType&) { res = ReturnType("type",    " new"); }
-    void handle(SgAdaModularType&) { res = ReturnType("type",    ""); }
-    void handle(SgTypeDefault&)    { res = ReturnType("type",    ""); }
-    void handle(SgArrayType&)      { res = ReturnType("type",    ""); }
-    void handle(SgAdaFloatType&)   { res = ReturnType("type",    ""); }
+    void handle(SgType&)           { res = ReturnType{"subtype", ""    }; }
+    void handle(SgAdaAccessType&)  { res = ReturnType{"type",    ""    }; }
+    void handle(SgAdaDerivedType&) { res = ReturnType{"type",    " new"}; }
+    void handle(SgAdaModularType&) { res = ReturnType{"type",    ""    }; }
+    void handle(SgTypeDefault&)    { res = ReturnType{"type",    ""    }; }
+    void handle(SgArrayType&)      { res = ReturnType{"type",    ""    }; }
+    void handle(SgAdaFloatType&)   { res = ReturnType{"type",    ""    }; }
+
+    void handle(SgAdaSubtype& n)
+    {
+      res = n.get_fromRootType() ? ReturnType{"type",    ""}
+                                 : ReturnType{"subtype", ""};
+    }
   };
 
   std::pair<std::string, std::string>
@@ -1433,13 +1439,6 @@ namespace
 
   struct RenamingDeclSyntax : sg::DispatchHandler<RenamingSyntax>
   {
-    typedef sg::DispatchHandler<RenamingSyntax> base;
-
-    explicit
-    RenamingDeclSyntax(size_t i)
-    : base(), idx(i)
-    {}
-
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 /*
     void handle(SgDeclarationStatement& n)
@@ -1448,7 +1447,6 @@ namespace
 
       res = RenamingSyntax(unknown, unknown, unknown);
     }
-*/
 
     // band-aid until generic packages are supported
     void handle(SgImportStatement& n)
@@ -1457,42 +1455,39 @@ namespace
 
       res = RenamingSyntax("package ", "", nameOf(n));
     }
-
-    void handle(SgAdaPackageSpecDecl& n)
+*/
+    void handle(SgAdaRenamingSymbol& n)
     {
-      ROSE_ASSERT(idx == 0);
+      SgAdaRenamingDecl& dcl = SG_DEREF(n.get_declaration());
 
-      res = RenamingSyntax("package ", "", n.get_name());
+      res = AdaStatementUnparser::renamingDeclSyntax(dcl.get_renamed());
+      res.renamedName = n.get_name();
     }
 
-    void handle(SgAdaPackageBodyDecl& n)
+    void handle(SgAdaPackageSymbol& n)
     {
-      ROSE_ASSERT(idx == 0);
-
-      res = RenamingSyntax("package ", "", n.get_name());
+      res = RenamingSyntax{"package ", "", n.get_name()};
     }
 
-    void handle(SgVariableDeclaration& n)
+    void handle(SgVariableSymbol& n)
     {
-      SgInitializedName& el = SG_DEREF(n.get_variables().at(idx));
+      SgInitializedName& el = SG_DEREF(n.get_declaration());
 
-      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string("Exception"));
-      res = RenamingSyntax("", ": exception", el.get_name());
+      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string{"Exception"});
+      res = RenamingSyntax{"", ": exception", el.get_name()};
     }
-
-    const size_t idx;
   };
 
   RenamingSyntax
-  AdaStatementUnparser::renamingDeclSyntax(SgDeclarationStatement* n, size_t idx)
+  AdaStatementUnparser::renamingDeclSyntax(SgSymbol* n)
   {
-    return sg::dispatch(RenamingDeclSyntax(idx), n);
+    return sg::dispatch(RenamingDeclSyntax{}, n);
   }
 
   struct UseClauseSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
   {
-    void usepkg(const std::string& s)     { res = ReturnType("", s); }
-    void usetype(const std::string& s)    { res = ReturnType("type ", s); }
+    void usepkg(const std::string& s)     { res = ReturnType{"", s}; }
+    void usetype(const std::string& s)    { res = ReturnType{"type ", s}; }
 
     void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
     void handle(SgAdaPackageSpecDecl& n)  { usepkg(n.get_name()); }
@@ -1509,7 +1504,7 @@ namespace
   std::pair<std::string, std::string>
   AdaStatementUnparser::useClauseSyntax(SgDeclarationStatement* n)
   {
-    return sg::dispatch(UseClauseSyntax(), n);
+    return sg::dispatch(UseClauseSyntax{}, n);
   }
 
   bool isPrivate(SgDeclarationStatement& dcl)
