@@ -54,6 +54,14 @@ public:
     TokenType type() const {
         return type_;
     }
+
+    size_t begin() const {
+        return begin_;
+    }
+
+    size_t end() const {
+        return end_;
+    }
 };
 
 class TokenStream {
@@ -93,7 +101,11 @@ public:
               const std::string &message) const;
 
     std::pair<size_t, size_t> location(const Token &token) const;
-    
+
+    const Sawyer::Container::LineVector& content() const {
+        return content_;
+    }
+
 private:
     void scanString();
     void makeNextToken();
