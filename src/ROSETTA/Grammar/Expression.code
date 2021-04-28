@@ -570,6 +570,13 @@ HEADER_STRING_VALUE_EXPRESSION_START
           virtual bool isLValue() const $ROSE_OVERRIDE;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
+       // PP (4/25/21) implement usesSingleQuote and usesDoubleQuote based on
+       //              stringDelimiter for backward compatibility.
+          bool get_usesSingleQuotes() const    { return get_stringDelimiter() == '\''; }
+          bool get_usesDoubleQuotes() const    { return get_stringDelimiter() == '"'; }
+
+          void set_usesSingleQuotes(bool usesSingleQuotes);
+          void set_usesDoubleQuotes(bool usesDoubleQuotes);
 HEADER_STRING_VALUE_EXPRESSION_END
 
 
@@ -687,6 +694,10 @@ HEADER_JOVIAL_BIT_VALUE_EXPRESSION_END
 HEADER_ADA_TASK_REF_EXPRESSION_START
 //~ SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_ADA_TASK_REF_EXPRESSION_END
+
+HEADER_ADA_RENAMING_REF_EXPRESSION_START
+//~ SgType* get_type() const $ROSE_OVERRIDE;
+HEADER_ADA_RENAMING_REF_EXPRESSION_END
 
 HEADER_ADA_ATTRIBUTE_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
@@ -4142,6 +4153,32 @@ $CLASSNAME::~$CLASSNAME()
    }
 #endif
 
+void $CLASSNAME::set_usesSingleQuotes(bool usesSingleQuotes)
+{
+  if (usesSingleQuotes)
+  {
+    set_stringDelimiter('\'');
+  }
+  else if (get_usesSingleQuotes())
+  {
+    // unset only if the current delimiter uses single quotes
+    set_stringDelimiter(0);
+  }
+}
+
+void $CLASSNAME::set_usesDoubleQuotes(bool usesDoubleQuotes)
+{
+  if (usesDoubleQuotes)
+  {
+    set_stringDelimiter('"');
+  }
+  else if (get_usesDoubleQuotes())
+  {
+    // unset only if the current delimiter uses double quotes
+    set_stringDelimiter(0);
+  }
+}
+
 SOURCE_STRING_VALUE_EXPRESSION_END
 
 
@@ -4362,6 +4399,40 @@ SgType* SgAdaTaskRefExp::get_type() const
   return SgAdaTaskType::createType(get_decl(), NULL);
 }
 SOURCE_ADA_TASK_REF_EXPRESSION_END
+
+SOURCE_ADA_RENAMING_REF_EXPRESSION_START
+SgType* SgAdaRenamingRefExp::get_type() const
+{
+  SgAdaRenamingDecl* decl = get_decl();
+  ROSE_ASSERT(decl);
+
+  SgSymbol* sy = decl->get_renamed();
+  ROSE_ASSERT(sy);
+
+  while (SgAdaRenamingSymbol* rensy = isSgAdaRenamingSymbol(sy))
+  {
+    decl = rensy->get_declaration();
+    ROSE_ASSERT(decl);
+
+    sy = decl->get_renamed();
+  }
+
+  if (SgVariableSymbol* varsy = isSgVariableSymbol(sy))
+  {
+    SgInitializedName* var = varsy->get_declaration();
+
+    ROSE_ASSERT(var);
+    return var->get_type();
+  }
+
+
+  // not sure what to do for packages
+  //   renamed functions are handled else where
+  ROSE_ASSERT(isSgAdaPackageSymbol(sy));
+  return SgTypeVoid::createType();
+}
+
+SOURCE_ADA_RENAMING_REF_EXPRESSION_END
 
 
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_START

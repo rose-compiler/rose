@@ -3469,21 +3469,25 @@ TestAstSymbolTables::visit ( SgNode* node )
 
                     case V_SgAdaPackageSymbol:
                        {
-                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
-                      // (or perhaps eventually a C++ using declaration or using directive).
                          SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
-                         ROSE_ASSERT(sy != NULL);
-                         ROSE_ASSERT(sy->get_declaration() != NULL);
+
+                         ROSE_ASSERT(sy && sy->get_declaration());
                          break;
                        }
 
                     case V_SgAdaTaskSymbol:
                        {
-                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
-                      // (or perhaps eventually a C++ using declaration or using directive).
                          SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
-                         ROSE_ASSERT(sy != NULL);
-                         ROSE_ASSERT(sy->get_declaration() != NULL);
+
+                         ROSE_ASSERT(sy && sy->get_declaration());
+                         break;
+                       }
+
+                    case V_SgAdaRenamingSymbol:
+                       {
+                         SgAdaRenamingSymbol* sy = isSgAdaRenamingSymbol(symbol);
+
+                         ROSE_ASSERT(sy && sy->get_declaration());
                          break;
                        }
 
@@ -6307,6 +6311,17 @@ TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const Test
      caseInsensitive = X.caseInsensitive;
    }
 
+namespace
+{
+  bool isCaseInsensitive(SgSourceFile* sourceFile)
+  {
+    return (  sourceFile->get_Fortran_only()
+           || sourceFile->get_Jovial_only()
+           || sourceFile->get_Ada_only()
+           );
+  }
+}
+
 TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute
 TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(SgNode* node, TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute inheritedAttribute)
    {
@@ -6320,7 +6335,7 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
        // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
 
           return_inheritedAttribute.sourceFile = sourceFile;
-          if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
+          if (isCaseInsensitive(sourceFile))
              {
                return_inheritedAttribute.caseInsensitive = true;
              }
@@ -6335,12 +6350,14 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
           if (scope->isCaseInsensitive() != return_inheritedAttribute.caseInsensitive)
              {
                printf ("Error: scope->isCaseInsensitive() = %s inheritedAttribute.caseInsensitive = %s \n",scope->isCaseInsensitive() ? "true" : "false",return_inheritedAttribute.caseInsensitive ? "true" : "false");
+               printf ("       type of scope = %s\n", scope->class_name().c_str());
                scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
                ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
                SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
-               if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
+
+               if (isCaseInsensitive(sourceFile))
                   {
-                    printf ("Fortran (or Jovial) file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                    printf ("Fortran, Jovial, or Ada file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
                   }
                  else
                   {

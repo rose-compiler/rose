@@ -983,3 +983,5 @@ SgAdaEnumRepresentationClause
 SgAsmBinaryPreupdate
 SgAsmBinaryPostupdate
 SgAdaOthersExp
+SgAdaRenamingSymbol
+SgAdaRenamingRefExp
