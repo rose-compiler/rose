@@ -2,7 +2,7 @@
 #define bROwSE_WSemantics_H
 
 #include <bROwSE/bROwSE.h>
-#include <Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Wt/WContainerWidget>
 
 namespace bROwSE {

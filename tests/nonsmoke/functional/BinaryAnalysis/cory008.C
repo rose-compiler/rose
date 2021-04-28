@@ -12,7 +12,7 @@ static const char *description = "Parses the specimen given on the command line 
 
 #include <rose.h>
 #include <AsmUnparser_compat.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Map.h>
 
 using namespace Rose;

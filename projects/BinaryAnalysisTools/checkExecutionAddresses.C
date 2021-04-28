@@ -3,8 +3,8 @@
 #include <boost/foreach.hpp>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
-#include <BinaryDebugger.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>

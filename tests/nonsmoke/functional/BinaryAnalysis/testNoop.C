@@ -6,8 +6,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <BinaryNoOperation.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose;

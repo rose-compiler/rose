@@ -2,7 +2,7 @@
 #define bROwSE_WFunctiionNavigation_H
 
 #include <bROwSE/bROwSE.h>
-#include <Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Wt/WContainerWidget>
 #include <vector>
 

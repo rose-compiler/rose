@@ -1,10 +1,10 @@
 #include <rose.h>
 
 #include <CommandLine.h>
-#include <Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <SqlDatabase.h>
 
 #include <boost/thread/locks.hpp>

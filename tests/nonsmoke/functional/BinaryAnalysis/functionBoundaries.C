@@ -10,7 +10,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <AsmFunctionIndex.h>
+#include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
 
 using namespace Rose::BinaryAnalysis;
 

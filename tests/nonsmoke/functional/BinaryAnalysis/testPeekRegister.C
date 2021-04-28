@@ -1,6 +1,6 @@
 #include <rose.h>
-#include <RegisterStateGeneric.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <sstream>
 
 using namespace Rose;

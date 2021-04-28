@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <BinarySymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <cstdlib>
 
 using namespace Rose::BinaryAnalysis::SymbolicExpr;

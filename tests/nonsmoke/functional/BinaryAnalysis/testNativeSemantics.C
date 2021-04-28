@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <NativeSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;

@@ -5,7 +5,7 @@
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WHexValueEdit.h>
 #include <rose_strtoull.h>
-#include <SRecord.h>
+#include <Rose/BinaryAnalysis/SRecord.h>
 #include <Wt/WAnchor>
 #include <Wt/WBreak>
 #include <Wt/WButtonGroup>

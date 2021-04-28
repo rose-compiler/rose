@@ -95,6 +95,7 @@ add_subdirectory(roseExtensions)
 add_subdirectory(frontend)
 add_subdirectory(midend)
 add_subdirectory(backend)
+add_subdirectory(Rose)
 
 ########################################################################################################################
 # The ROSE library
@@ -114,10 +115,8 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:virtualCFG>
   $<TARGET_OBJECTS:astFromString>
   $<TARGET_OBJECTS:roseSupport>
-  $<TARGET_OBJECTS:rosePartitioner2>
   $<TARGET_OBJECTS:roseDisassemblers>
   $<TARGET_OBJECTS:roseBinaryFormats>
-  $<TARGET_OBJECTS:roseBinaryLoader>
   $<TARGET_OBJECTS:roseAsmUnparser>
   $<TARGET_OBJECTS:astMerge>
   $<TARGET_OBJECTS:astFixup>
@@ -139,6 +138,12 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:failsafe>
   $<TARGET_OBJECTS:trans_tracking>
   $<TARGET_OBJECTS:astRewriteMechanism>
+  $<TARGET_OBJECTS:roseBinaryAnalysis>
+  $<TARGET_OBJECTS:roseBinaryAnalysisConcolic>
+  $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2>
+  $<TARGET_OBJECTS:roseBinaryAnalysisModelChecker>
+  $<TARGET_OBJECTS:roseBinaryAnalysisPartitioner2>
+  $<TARGET_OBJECTS:roseBinaryAnalysisUnparser>
   $<TARGET_OBJECTS:mstl>)
 
 if(enable-java)

@@ -1,6 +1,6 @@
 // Unit tests for register descriptors
 #include <rose.h>
-#include <RegisterDescriptor.h>
+#include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 
 #include <boost/lexical_cast.hpp>
 

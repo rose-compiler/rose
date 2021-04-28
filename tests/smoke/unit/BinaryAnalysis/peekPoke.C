@@ -4,10 +4,10 @@ static const char *description =
     "the state hasn't changed.";
 
 #include <rose.h>
-#include <BinarySmtSolver.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <CommandLine.h>
-#include <Registers.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <sstream>
 #include <string>
 

@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux.h"
-#include "BinaryLoaderElf.h"
+#include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 
 #include <sys/mman.h>
 #include <sys/syscall.h>                                // SYS_xxx definitions

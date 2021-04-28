@@ -8,8 +8,8 @@
 /* These are necessary for any binary Traversal */
 
 #include "graphProcessing.h"
-#include "BinaryControlFlow.h"
-#include "BinaryLoader.h"
+#include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 /* Testing the graph traversal mechanism now implementing in graphProcessing.h (inside src/midend/astProcessing/)*/
 
 using namespace std;

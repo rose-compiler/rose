@@ -28,8 +28,8 @@
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#   include <Partitioner2/Engine.h>
-#   include <Partitioner2/ModulesElf.h>
+#   include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#   include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #endif
 
 #include <algorithm>

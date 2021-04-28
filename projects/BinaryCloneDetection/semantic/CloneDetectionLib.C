@@ -2,7 +2,7 @@
 #include "AST_FILE_IO.h"
 #include "CloneDetectionLib.h"
 #include "Combinatorics.h"
-#include "BinaryLoaderElf.h"
+#include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include "Partitioner.h"
 #include "rose.h"
 

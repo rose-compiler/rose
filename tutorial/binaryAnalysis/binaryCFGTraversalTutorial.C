@@ -4,7 +4,7 @@
 #include <string>
 #include <err.h>
 #include "graphProcessing.h"
-#include "BinaryControlFlow.h"
+#include <Rose/BinaryAnalysis/ControlFlow.h>
 
 
 using namespace std;

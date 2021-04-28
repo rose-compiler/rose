@@ -1,13 +1,13 @@
 #include <rose.h>
 #include <Diagnostics.h>
-#include <DisassemblerX86.h>
-#include <DisassemblerM68k.h>
+#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
 
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-06-01]
-#include "TraceSemantics2.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #endif
 
 using namespace Rose;

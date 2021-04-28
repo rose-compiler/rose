@@ -5,10 +5,10 @@ pkgdata_DATA =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-SUBDIRS = util ROSETTA roseSupport frontend midend backend \
+SUBDIRS = util ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport
 else
-SUBDIRS = util ROSETTA roseSupport frontend midend backend \
+SUBDIRS = util ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 endif
 
@@ -145,17 +145,13 @@ endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries =							\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
-	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
-	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la		\
 	$(top_builddir)/src/midend/BinaryAnalysis/libbinaryMidend.la
 else
    libroseBinaryLibraries =							\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
-	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
 	$(top_builddir)/src/midend/BinaryAnalysis/libbinaryMidend.la		\
-	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
-	$(top_builddir)/src/frontend/Partitioner2/libPartitioner.la
+	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
 libroseX10Libraries = frontend/X10_ROSE_Connection/libroseX10.la
@@ -231,6 +227,12 @@ libroseLibraries = \
    $(top_builddir)/src/util/libroseutil.la \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/librose_partial.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/Concolic/librose_partial.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/librose_partial.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/ModelChecker/librose_partial.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/Partitioner2/librose_partial.la \
+   $(top_builddir)/src/Rose/BinaryAnalysis/Unparser/librose_partial.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -277,6 +279,182 @@ pkginclude_HEADERS = \
      frontend/SageIII/sage3basic.hhh \
      midend/astDiagnostics/AstConsistencyTests.h \
      backend/asmUnparser/AsmUnparser_compat.h
+
+nobase_pkginclude_HEADERS=							\
+    Rose/BinaryAnalysis.h							\
+    Rose/BinaryAnalysis/AbstractLocation.h					\
+    Rose/BinaryAnalysis/AsmFunctionIndex.h					\
+    Rose/BinaryAnalysis/AstHash.h						\
+    Rose/BinaryAnalysis/BestMapAddress.h					\
+    Rose/BinaryAnalysis/BinaryLoader.C						\
+    Rose/BinaryAnalysis/BinaryLoaderElf.C					\
+    Rose/BinaryAnalysis/BinaryLoaderElfObj.C					\
+    Rose/BinaryAnalysis/BinaryLoaderPe.C					\
+    Rose/BinaryAnalysis/CallingConvention.h					\
+    Rose/BinaryAnalysis/CodeInserter.h						\
+    Rose/BinaryAnalysis/Concolic.h						\
+    Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
+    Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h				\
+    Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h				\
+    Rose/BinaryAnalysis/Concolic/Database.h					\
+    Rose/BinaryAnalysis/Concolic/ExecutionManager.h				\
+    Rose/BinaryAnalysis/Concolic/LinuxExecutor.h				\
+    Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h				\
+    Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
+    Rose/BinaryAnalysis/Concolic/Specimen.h					\
+    Rose/BinaryAnalysis/Concolic/SystemCall.h					\
+    Rose/BinaryAnalysis/Concolic/TestCase.h					\
+    Rose/BinaryAnalysis/Concolic/TestSuite.h					\
+    Rose/BinaryAnalysis/Concolic/io-utility.h					\
+    Rose/BinaryAnalysis/ControlFlow.h						\
+    Rose/BinaryAnalysis/DataFlow.h						\
+    Rose/BinaryAnalysis/Debugger.h						\
+    Rose/BinaryAnalysis/Demangler.h						\
+    Rose/BinaryAnalysis/Disassembler.h						\
+    Rose/BinaryAnalysis/DisassemblerAarch32.h					\
+    Rose/BinaryAnalysis/DisassemblerAarch64.h					\
+    Rose/BinaryAnalysis/DisassemblerM68k.h					\
+    Rose/BinaryAnalysis/DisassemblerMips.h					\
+    Rose/BinaryAnalysis/DisassemblerNull.h					\
+    Rose/BinaryAnalysis/DisassemblerPowerpc.h					\
+    Rose/BinaryAnalysis/DisassemblerX86.h					\
+    Rose/BinaryAnalysis/Dominance.h						\
+    Rose/BinaryAnalysis/FeasiblePath.h						\
+    Rose/BinaryAnalysis/FunctionCall.h						\
+    Rose/BinaryAnalysis/FunctionSimilarity.h					\
+    Rose/BinaryAnalysis/HotPatch.h						\
+    Rose/BinaryAnalysis/InstructionCache.h					\
+    Rose/BinaryAnalysis/InstructionEnumsAarch32.h				\
+    Rose/BinaryAnalysis/InstructionEnumsAarch64.h				\
+    Rose/BinaryAnalysis/InstructionEnumsM68k.h					\
+    Rose/BinaryAnalysis/InstructionEnumsMips.h					\
+    Rose/BinaryAnalysis/InstructionEnumsPowerpc.h				\
+    Rose/BinaryAnalysis/InstructionEnumsX86.h					\
+    Rose/BinaryAnalysis/InstructionSemantics2.h					\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h	\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h	\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h	\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/LlvmSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h	\
+    Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h		\
+    Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h			\
+    Rose/BinaryAnalysis/InstructionSemantics2/Util.h				\
+    Rose/BinaryAnalysis/MagicNumber.h						\
+    Rose/BinaryAnalysis/Matrix.h						\
+    Rose/BinaryAnalysis/MemoryMap.h						\
+    Rose/BinaryAnalysis/ModelChecker.h						\
+    Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.C				\
+    Rose/BinaryAnalysis/ModelChecker/Engine.C					\
+    Rose/BinaryAnalysis/ModelChecker/ErrorTag.C					\
+    Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.C				\
+    Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.C			\
+    Rose/BinaryAnalysis/ModelChecker/FailureUnit.C				\
+    Rose/BinaryAnalysis/ModelChecker/InstructionUnit.C				\
+    Rose/BinaryAnalysis/ModelChecker/NullDerefTag.C				\
+    Rose/BinaryAnalysis/ModelChecker/P2Model.C					\
+    Rose/BinaryAnalysis/ModelChecker/Path.C					\
+    Rose/BinaryAnalysis/ModelChecker/PathNode.C					\
+    Rose/BinaryAnalysis/ModelChecker/PathPredicate.C				\
+    Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.C				\
+    Rose/BinaryAnalysis/ModelChecker/PathQueue.C				\
+    Rose/BinaryAnalysis/ModelChecker/Periodic.C					\
+    Rose/BinaryAnalysis/ModelChecker/Settings.C					\
+    Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.C			\
+    Rose/BinaryAnalysis/ModelChecker/SourceLister.C				\
+    Rose/BinaryAnalysis/ModelChecker/Tag.C					\
+    Rose/BinaryAnalysis/NoOperation.h						\
+    Rose/BinaryAnalysis/Partitioner2.h						\
+    Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h				\
+    Rose/BinaryAnalysis/Partitioner2/BasicBlock.h				\
+    Rose/BinaryAnalysis/Partitioner2/BasicTypes.h				\
+    Rose/BinaryAnalysis/Partitioner2/CfgPath.h					\
+    Rose/BinaryAnalysis/Partitioner2/Config.h					\
+    Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h				\
+    Rose/BinaryAnalysis/Partitioner2/DataBlock.h				\
+    Rose/BinaryAnalysis/Partitioner2/DataFlow.h					\
+    Rose/BinaryAnalysis/Partitioner2/Engine.h					\
+    Rose/BinaryAnalysis/Partitioner2/Exception.h				\
+    Rose/BinaryAnalysis/Partitioner2/Function.h					\
+    Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h			\
+    Rose/BinaryAnalysis/Partitioner2/GraphViz.h					\
+    Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h			\
+    Rose/BinaryAnalysis/Partitioner2/Modules.h					\
+    Rose/BinaryAnalysis/Partitioner2/ModulesElf.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesMips.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesPe.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h				\
+    Rose/BinaryAnalysis/Partitioner2/ModulesX86.h				\
+    Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h			\
+    Rose/BinaryAnalysis/Partitioner2/Partitioner.h				\
+    Rose/BinaryAnalysis/Partitioner2/Reference.h				\
+    Rose/BinaryAnalysis/Partitioner2/Semantics.h				\
+    Rose/BinaryAnalysis/Partitioner2/Thunk.h					\
+    Rose/BinaryAnalysis/Partitioner2/Utility.h					\
+    Rose/BinaryAnalysis/PointerDetection.h					\
+    Rose/BinaryAnalysis/Reachability.h						\
+    Rose/BinaryAnalysis/RegisterDescriptor.h					\
+    Rose/BinaryAnalysis/RegisterParts.h						\
+    Rose/BinaryAnalysis/Registers.h						\
+    Rose/BinaryAnalysis/ReturnValueUsed.h					\
+    Rose/BinaryAnalysis/SerialIo.h						\
+    Rose/BinaryAnalysis/SmtCommandLine.h					\
+    Rose/BinaryAnalysis/SmtlibSolver.h						\
+    Rose/BinaryAnalysis/SmtSolver.h						\
+    Rose/BinaryAnalysis/SourceLocations.h					\
+    Rose/BinaryAnalysis/SRecord.h						\
+    Rose/BinaryAnalysis/StackDelta.h						\
+    Rose/BinaryAnalysis/String.h						\
+    Rose/BinaryAnalysis/SymbolicExpr.h						\
+    Rose/BinaryAnalysis/SymbolicExprParser.h					\
+    Rose/BinaryAnalysis/SystemCall.h						\
+    Rose/BinaryAnalysis/TaintedFlow.h						\
+    Rose/BinaryAnalysis/ToSource.h						\
+    Rose/BinaryAnalysis/Unparser.h						\
+    Rose/BinaryAnalysis/Unparser/EdgeArrows.h					\
+    Rose/BinaryAnalysis/Unparser/Aarch32.h					\
+    Rose/BinaryAnalysis/Unparser/Aarch64.h					\
+    Rose/BinaryAnalysis/Unparser/Base.h						\
+    Rose/BinaryAnalysis/Unparser/M68k.h						\
+    Rose/BinaryAnalysis/Unparser/Mips.h						\
+    Rose/BinaryAnalysis/Unparser/Null.h						\
+    Rose/BinaryAnalysis/Unparser/Powerpc.h					\
+    Rose/BinaryAnalysis/Unparser/Settings.h					\
+    Rose/BinaryAnalysis/Unparser/X86.h						\
+    Rose/BinaryAnalysis/Utils.h							\
+    Rose/BinaryAnalysis/Variables.h						\
+    Rose/BinaryAnalysis/YicesSolver.h						\
+    Rose/BinaryAnalysis/Z3Solver.h
+
 
 ########################################################################################################################
 

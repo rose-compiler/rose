@@ -1,6 +1,6 @@
 #include <rose.h>
-#include <BinaryLoader.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <Sawyer/Stopwatch.h>
 

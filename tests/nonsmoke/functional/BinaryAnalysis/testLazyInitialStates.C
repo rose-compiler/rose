@@ -11,9 +11,9 @@ static const char *description =
 
 #include <rose.h>
 #include <Diagnostics.h>
-#include <Partitioner2/DataFlow.h>
-#include <Partitioner2/Engine.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;

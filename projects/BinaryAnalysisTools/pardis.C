@@ -9,8 +9,8 @@ static const char *description =
 #include <rose.h>                                       // must be first ROSE header
 #include <Color.h>
 #include <CommandLine.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/ParallelPartitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <rose_strtoull.h>
 
 using namespace Rose;

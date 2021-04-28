@@ -3,9 +3,9 @@ static const char *description =
     "Runs various unit tests of the ROSE interface to SMT solvers.  If no solver is specified, then all solvers are tested.";
 
 #include <rose.h>
-#include <BinarySmtlibSolver.h>
-#include <BinaryYicesSolver.h>
-#include <BinaryZ3Solver.h>
+#include <Rose/BinaryAnalysis/SmtlibSolver.h>
+#include <Rose/BinaryAnalysis/YicesSolver.h>
+#include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
 

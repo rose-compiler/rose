@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 
 #include "stringify.h"
-#include "MemoryMap.h"
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include "Diagnostics.h"
 
 using namespace Rose;

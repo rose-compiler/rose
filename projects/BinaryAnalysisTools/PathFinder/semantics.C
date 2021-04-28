@@ -1,8 +1,8 @@
 #include <rose.h>
 
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <PathFinder/semantics.h>
-#include <SymbolicMemory2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;

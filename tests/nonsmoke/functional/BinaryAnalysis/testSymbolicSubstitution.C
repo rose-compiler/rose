@@ -1,6 +1,6 @@
 #include <rose.h>
-#include <BinarySymbolicExpr.h>
-#include <BinaryZ3Solver.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Sawyer/Stopwatch.h>
 
 using namespace Rose::BinaryAnalysis;

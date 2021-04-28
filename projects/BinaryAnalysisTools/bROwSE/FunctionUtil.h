@@ -3,9 +3,9 @@
 
 #include <bROwSE/bROwSE.h>
 
-#include <BinaryDataFlow.h>                             // ROSE
-#include <BinaryCallingConvention.h>                    // ROSE
-#include <Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/DataFlow.h>
+#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 
 namespace bROwSE {
 
