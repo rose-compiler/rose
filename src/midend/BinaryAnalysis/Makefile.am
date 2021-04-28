@@ -102,7 +102,7 @@ libbinaryMidend_la_SOURCES =				\
     ModelChecker/PathQueue.C				\
     ModelChecker/Periodic.C				\
     ModelChecker/Settings.C				\
-    ModelChecker/Semantics.C				\
+    ModelChecker/SemanticCallbacks.C			\
     ModelChecker/SourceLister.C				\
     ModelChecker/Tag.C
 

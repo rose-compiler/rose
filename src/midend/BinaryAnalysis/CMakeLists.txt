@@ -93,7 +93,7 @@ set(midend_binary_sources
   ModelChecker/PathQueue.C
   ModelChecker/Periodic.C
   ModelChecker/Settings.C
-  ModelChecker/Semantics.C
+  ModelChecker/SemanticCallbacks.C
   ModelChecker/SourceLister.C
   ModelChecker/Tag.C)
 
@@ -234,7 +234,7 @@ install(
   ModelChecker/PathQueue.h
   ModelChecker/Periodic.h
   ModelChecker/Settings.h
-  ModelChecker/Semantics.h
+  ModelChecker/SemanticCallbacks.h
   ModelChecker/SourceLister.h
   ModelChecker/Tag.h
 
