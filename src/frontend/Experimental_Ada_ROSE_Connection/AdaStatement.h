@@ -83,6 +83,11 @@ namespace Ada_ROSE_Translation
   SgDeclarationStatement*
   getDecl_opt(Expression_Struct& expr, AstContext ctx);
 
+  /// returns the NameData object for a name that is represented
+  /// as expression in Asis (e.g., identifier or selected)
+  NameData
+  getQualName(Element_Struct& elem, AstContext ctx);
+
   /// returns a NameData object for the element \ref el
   NameData
   getNameID(Element_ID el, AstContext ctx);

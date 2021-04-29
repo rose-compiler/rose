@@ -261,6 +261,7 @@ HEADER_EXPRESSION_LIST_EXPRESSION_START
 
           SgExpressionPtrList& get_expressions();
           const SgExpressionPtrList& get_expressions() const;
+          void set_expressions(SgExpressionPtrList e_list);
 
 HEADER_LIST_DECLARATIONS
 
@@ -1683,6 +1684,10 @@ HEADER_NULL_EXPRESSION_START
 
 HEADER_NULL_EXPRESSION_END
 
+HEADER_ADA_OTHERS_EXPRESSION_START
+HEADER_ADA_OTHERS_EXPRESSION_END
+
+
 HEADER_VARIANT_EXPRESSION_START
 HEADER_VARIANT_EXPRESSION_END
 
@@ -1854,9 +1859,14 @@ HEADER_DESIGNATED_INITIALIZER_START
 
 HEADER_DESIGNATED_INITIALIZER_END
 
-// CR (6/25/2020): Added SgJovialTablePreset to support initializers for Jovial tables
+// Rasmussen (6/25/2020): Added SgJovialTablePresetExp to support initializers for Jovial tables
 HEADER_JOVIAL_TABLE_PRESET_EXP_START
 HEADER_JOVIAL_TABLE_PRESET_EXP_END
+
+// Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
+HEADER_JOVIAL_PRESET_POSITION_EXP_START
+int replace_expression (SgExpression *o, SgExpression *n);
+HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
 //        virtual unsigned int cfgIndexForEnd() const;
@@ -3247,6 +3257,9 @@ SgExprListExp::get_expressions()
 const SgExpressionPtrList&
 SgExprListExp::get_expressions() const
    { return p_expressions; }
+
+void SgExprListExp::set_expressions(SgExpressionPtrList e_list) 
+   { p_expressions= e_list; }
 
 void
 SgExprListExp::append_expression(SgExpression *what)
@@ -6716,10 +6729,11 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
          case e_dynamic_cast: s = "e_dynamic_cast"; break;
          case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
          case e_safe_cast: s = "e_safe_cast"; break;
+         case e_ada_type_qualification: s = "e_ada_type_qualification"; break;
          case e_last_cast: s = "e_last_cast"; break;
 
          default:
-              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+              printf ("ERROR: default reached in switch: cast_type = %d \n",cast_type);
        }
 
      return s;
@@ -7813,8 +7827,9 @@ SgConstructorInitializer::post_construction_initialization()
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
 
+       // PP (4/17/21) : Added exception for typedef types to support
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
-          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
              {
                printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
                if (p_expression_type != NULL)
@@ -7823,7 +7838,7 @@ SgConstructorInitializer::post_construction_initialization()
                   }
              }
 
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
@@ -8784,6 +8799,9 @@ SOURCE_GET_TYPE_CLASS_EXPRESSION_END
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END
 
+SOURCE_ADA_OTHERS_EXPRESSION_START
+SOURCE_ADA_OTHERS_EXPRESSION_END
+
 SOURCE_VARIANT_EXPRESSION_START
 SOURCE_VARIANT_EXPRESSION_END
 
@@ -9444,19 +9462,12 @@ SOURCE_DESIGNATED_INITIALIZER_END
 
 
 SOURCE_JOVIAL_TABLE_PRESET_EXP_START
-
 void
 SgJovialTablePresetExp::post_construction_initialization()
-   {
-     if (p_default_sublist)
-       {
-          p_default_sublist->set_parent(this);
-       }
-     if (p_specified_sublist)
-       {
-          p_specified_sublist->set_parent(this);
-       }
-   }
+{
+  ROSE_ASSERT(p_preset_list);
+  p_preset_list->set_parent(this);
+}
 
 SgType*
 SgJovialTablePresetExp::get_type() const
@@ -9466,9 +9477,44 @@ SgJovialTablePresetExp::get_type() const
 
   return parent->get_type();
 }
-
 SOURCE_JOVIAL_TABLE_PRESET_EXP_END
 
+
+SOURCE_JOVIAL_PRESET_POSITION_EXP_START
+void
+SgJovialPresetPositionExp::post_construction_initialization()
+{
+  ROSE_ASSERT(p_indices);
+  ROSE_ASSERT(p_value);
+  p_indices->set_parent(this);
+  p_value->set_parent(this);
+}
+
+SgType*
+SgJovialPresetPositionExp::get_type() const
+{
+  ROSE_ASSERT(p_value);
+  return p_value->get_type();
+}
+
+int
+SgJovialPresetPositionExp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (p_indices == o) {
+       p_indices = isSgExprListExp(n);
+       return p_indices != nullptr;
+     } else if (p_value) {
+       p_value = n;
+       return 1;
+     } else {
+       printf ("Warning: inside of SgUnaryOp::replace_expression original SgExpression unidentified \n");
+       return 0;
+     }
+   }
+SOURCE_JOVIAL_PRESET_POSITION_EXP_END
 
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_START

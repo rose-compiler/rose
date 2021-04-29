@@ -52,6 +52,44 @@ namespace ada
   SgRangeExp* range(const SgAdaAttributeExp* rangeAttribute);
   SgRangeExp* range(const SgAdaAttributeExp& rangeAttribute);
   /// @}
+
+  /// returns the declaration node for the package specification
+  /// @{
+  SgAdaPackageSpecDecl& getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl);
+  SgAdaPackageSpecDecl* getSpecificationDeclaration(const SgAdaPackageBodyDecl* bodyDecl);
+  /// @}
+
+  /// returns the declaration node for the package body, if available
+  /// @{
+  SgAdaPackageBodyDecl& getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl);
+  SgAdaPackageBodyDecl* getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
+  /// @}
+
+  /// returns the iterator to one past the last declaration (the limit)
+  /// in the statement sequence.
+  /// @{
+  SgStatementPtrList::iterator declarationLimit(SgStatementPtrList& list);
+  SgStatementPtrList::iterator declarationLimit(SgBasicBlock& block);
+  SgStatementPtrList::iterator declarationLimit(SgBasicBlock* block);
+  SgStatementPtrList::const_iterator declarationLimit(const SgStatementPtrList& list);
+  SgStatementPtrList::const_iterator declarationLimit(const SgBasicBlock& block);
+  SgStatementPtrList::const_iterator declarationLimit(const SgBasicBlock* block);
+  /// @}
+
+  /// returns true iff \ref n is an Ada try block
+  /// \note an ada try block is a function block, whose non-declarative
+  ///       range includes exactly one try stmt. In this case, the begin
+  ///       and end block-syntax can be omitted.
+  /// @{
+  bool isFunctionTryBlock(const SgTryStmt& n);
+  bool isFunctionTryBlock(const SgTryStmt* n);
+  /// @}
+
+  /// converts all Ada style comments to C++ comments
+  // \todo mv into Ada to C++ converter
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
+
+
 } // Ada
 } // SageInterface
 

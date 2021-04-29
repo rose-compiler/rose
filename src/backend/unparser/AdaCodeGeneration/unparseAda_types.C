@@ -94,7 +94,7 @@ namespace
 
     void handle(SgTypeDefault& n)
     {
-      prn(" private");
+      /* print nothing - used for forward declarations of unknown type */
     }
 
     void handle(SgAutoType& n)

@@ -39,6 +39,9 @@
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
 
+namespace si = SageInterface;
+
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -1149,9 +1152,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Ada_language:
              {
-               printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
+               // PP (04/21/15) rm output since there is another one mentioning that
+               //               Ada unparsing is experimental.
+               //~ printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
 
                Unparse_Ada unparser(this, file->getFileName());
+
                unparser.unparseAdaFile(file, info);
                break;
              }
@@ -2579,7 +2585,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
      SgUnparse_Info & inheritedAttributeInfo = *inheritedAttributeInfoPointer;
 
   // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-  // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+  // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
   // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
      inheritedAttributeInfoPointer->set_usedInUparseToStringFunction();
 
@@ -4574,7 +4580,7 @@ void outputFirstAndLastIncludeFileInfo()
 #endif
 
   // while (i != statementBoundsMap.end())
-     for (std::map<std::string, SgIncludeFile*>::iterator i = EDG_ROSE_Translation::edg_include_file_map.begin(); 
+     for (std::map<std::string, SgIncludeFile*>::iterator i = EDG_ROSE_Translation::edg_include_file_map.begin();
           i != EDG_ROSE_Translation::edg_include_file_map.end(); i++)
         {
        // SgIncludeFile* includeFile = i->first;
@@ -4683,10 +4689,10 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 // void buildFirstAndLastStatementsForIncludeFiles ( SgSourceFile* sourceFile )
    {
   // This function build the mapping of the first and last statements associated with each SgIncludeFile.
-  // It is required to support the token-based unparsing so that we can know when the last statement in 
+  // It is required to support the token-based unparsing so that we can know when the last statement in
   // the SgIncludeFile has been reached, so that we can output the trailing whitespace tokens properly.
-  // The function uses the source sequence limits for the file, and computes which statements in the AST 
-  // are associated with these limits.  It uses a traversal to evaluate the statements (and the associated 
+  // The function uses the source sequence limits for the file, and computes which statements in the AST
+  // are associated with these limits.  It uses a traversal to evaluate the statements (and the associated
   // source sequence number for each statement) against the limits for each file.
 
   // DQ (3/10/2021): Add performance analysis support.
@@ -4714,8 +4720,8 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
             // IncludeFileStatementTraversal(SgSourceFile* sourceFile);
 
             // We need to recorde the first and last statement that are in the same scope.
-            // We want to record the first and last in the same scope.  However, an arbitrary 
-            // include file could has a last statement in a different scope.  Now clear how 
+            // We want to record the first and last in the same scope.  However, an arbitrary
+            // include file could has a last statement in a different scope.  Now clear how
             // to handle this pathological case.
                SgScopeStatement* target_scope = NULL;
 
@@ -4763,10 +4769,10 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                  // SgTemplateTypedefDeclaration*              templateTypedefDeclaration              = isSgTemplateTypedefDeclaration(node);
 
                  // IR nodes for which we don't want to identify as the first or last statement of a file (header file).
-                 // bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && 
-                 //                         templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL && 
+                 // bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL &&
+                 //                         templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL &&
                  //                         templateTypedefDeclaration == NULL;
-                    bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && 
+                    bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL &&
                                             templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL;
 #if DEBUG_FIRST_LAST_STMTS
                     printf ("processStatement = %s \n",processStatement ? "true" : "false");
@@ -4793,7 +4799,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                               printf (" --- statement: (physical) line = %d column = %d filename = %s \n",file_info->get_physical_line(),file_info->get_col(),file_info->get_physical_filename().c_str());
                             }
 #endif
-                      // DQ (3/23/2021): The physical_filename of a transformation needs to be derived directly 
+                      // DQ (3/23/2021): The physical_filename of a transformation needs to be derived directly
                       // from the physical file id, instead of computed by the get_physical_filename() function.
                       // This could be using the file_id instead of the filename as a string.
                          string filename = file_info->get_physical_filename();
@@ -4836,7 +4842,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 #if DEBUG_FIRST_LAST_STMTS
                                              printf ("Previously NULL: first time seeing a statement for includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
-                                          // DQ (3/13/2021): We need to make sure that the first and last statements that we select correspond 
+                                          // DQ (3/13/2021): We need to make sure that the first and last statements that we select correspond
                                           // to a collected token subsequence. In codeSegregation test_141_1.h, demonstrates such a case.
                                           // includeFile->set_firstStatement(statement);
                                           // target_scope = isSgScopeStatement(statement->get_parent());
@@ -4856,7 +4862,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                                      // includeFile->set_lastStatement(statement);
                                         if (statement->get_parent() == target_scope)
                                            {
-                                          // DQ (3/13/2021): We need to make sure that the first and last statements that we select correspond 
+                                          // DQ (3/13/2021): We need to make sure that the first and last statements that we select correspond
                                           // to a collected token subsequence. In codeSegregation test_141_1.h, demonstrates such a case.
                                           // includeFile->set_lastStatement(statement);
                                              if (tokenStreamSequenceMap.find(statement) != tokenStreamSequenceMap.end())
@@ -4869,8 +4875,8 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                                                // printf ("We can't record this as a last statement because it does not correspond to a token subsequence \n");
                                                   printf ("This can be a last statement even if it does not have an associated token subsequence (e.g. it may be a transforamtion) \n");
 #endif
-                                               // DQ (23/2021): I think we should because it might be that a transformation is a last statement of a 
-                                               // header file and in which case it is still the last statement independent of if it is unparsed via 
+                                               // DQ (23/2021): I think we should because it might be that a transformation is a last statement of a
+                                               // header file and in which case it is still the last statement independent of if it is unparsed via
                                                // the token stream or from the AST.
                                                   includeFile->set_lastStatement(statement);
                                                 }
@@ -4904,9 +4910,9 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
      printf ("Before call to traversal \n");
 #endif
 
-  // DQ (3/11/2021): Need to call this on a specific source file (the one on the original command line, 
-  // not the dynamic library file, so that we will avoid marking SgIncludeFiles twice (since two files 
-  // will include the same header files).  An altrnative implementation could define a header file list 
+  // DQ (3/11/2021): Need to call this on a specific source file (the one on the original command line,
+  // not the dynamic library file, so that we will avoid marking SgIncludeFiles twice (since two files
+  // will include the same header files).  An altrnative implementation could define a header file list
   // for each source file, but this would be more complex and error prone, and hard to debug)).
   // traversal.traverse(project,preorder);
   // SgFilePtrList & fileList = project->get_files();

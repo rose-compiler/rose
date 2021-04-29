@@ -120,8 +120,12 @@ namespace
       operator_symbols[V_SgNotOp] =            "not";
       operator_symbols[V_SgAbsOp] =            "abs";
       operator_symbols[V_SgRemOp] =            "rem";
-      // not really in Ada (when clause separator)
-      operator_symbols[V_SgCommaOpExp] =       "|";
+
+      // not really in Ada
+      operator_symbols[V_SgCommaOpExp] =       "|";    // clause separator
+      operator_symbols[V_SgPlusPlusOp] =       "loop"; // loop direction indicator
+      operator_symbols[V_SgMinusMinusOp] =     "reverse loop"; // loop direction indicator
+
       // not an operator in Ada
       operator_symbols[V_SgMembershipOp] =     "in";
       operator_symbols[V_SgNonMembershipOp] =  "not in";
@@ -131,9 +135,8 @@ namespace
 
     if (pos == operator_symbols.end())
     {
-      std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
-
-      return "<OP>";
+      //~ std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
+      return typeid(n).name();
     }
 
     return pos->second;
@@ -174,7 +177,7 @@ namespace
     }
     */
 
-    void handle(SgVoidVal&)
+    void handle(SgAdaOthersExp&)
     {
       prn("others");
     }
@@ -469,7 +472,7 @@ namespace
     SgScopeStatement* current = info.get_current_scope();
 
     return current ? unparser.computeScopeQual(*current, remote)
-                   : ""; // <-- this should only be here if invoked from unparseToString..
+                   : "<missing-scope>"; // <-- this should only be here if invoked from unparseToString..
   }
 
 }
