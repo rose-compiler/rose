@@ -101,9 +101,13 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // DQ (4/6/2020): Added assertion.
      ROSE_ASSERT(projectNode != NULL);
 
-#if 0
+#define DEBUG_FIGURE_OUT 0
+
+#if DEBUG_FIGURE_OUT
+     printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
      printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printf (" --- projectNode->usingDeferredTransformations = %s \n",projectNode->get_usingDeferredTransformations() ? "true" : "false");
+     printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
 #endif
 
 #if 0
@@ -515,7 +519,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
         }
 #endif
 
-#if 1
+#if DEBUG_FIGURE_OUT
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
@@ -685,11 +689,13 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
      SageInterface::reportModifiedStatements("Leaving figureOutWhichFilesToUnparse()",projectNode);
 #endif
 
-#if 1
+#if DEBUG_FIGURE_OUT
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 0)
         {
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
           printf ("Leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
         }
 #endif
 
@@ -1196,7 +1202,9 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
      if (file->get_header_file_unparsing_optimization() == true)
         {
-          file->set_header_file_unparsing_optimization_header_file(true);
+       // DQ (4/24/2021): Debugging header file optimization.
+       // file->set_header_file_unparsing_optimization_header_file(true);
+
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
           printf ("Perform collection of comments and CPP directives only on the header files \n");
           printf ("####################################################### \n");
@@ -1424,6 +1432,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
 #endif
+                 // DQ (4/24/2021): Debugging header file optimization.
                     sourceFile->set_header_file_unparsing_optimization_header_file(true);
 
 #if 0
@@ -1492,6 +1501,8 @@ IncludedFilesUnparser::initializeFilesToUnparse()
          // But it might be clearer to just always process the files independent of get_usingDeferredTransformations() being true or false.
             else
              {
+#error "DEAD CODE!"
+
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): Skipping attachment of CPP directives and comments because deferred transformations are being used \n");
 #endif
@@ -1501,6 +1512,8 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     SgIncludeFile* includeFile = *includeFileIterator;
                     ASSERT_not_null(includeFile);
 
+#error "DEAD CODE!"
+
                     string filename = includeFile->get_filename();
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
                     printf ("########## Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
@@ -1509,6 +1522,8 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     ASSERT_not_null(sourceFile);
 
                     printf ("########## Calling sourceFile->get_preprocessorDirectivesAndCommentsList(): sourceFile filename = %s \n",filename.c_str());
+
+#error "DEAD CODE!"
 
                  // ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
                     if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
@@ -1522,14 +1537,21 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                        }
                  // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#error "DEAD CODE!"
+
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                     printf ("########## In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
 #if 0
                     printf ("Test 2: sourceFile->get_unparse_tokens() = %s \n",sourceFile->get_unparse_tokens() ? "true" : "false");
 #endif
+
+#error "DEAD CODE!"
+
                  // DQ (4/22/2020): Location of call to insert redundant comments and CPP directives.
                     sourceFile->secondaryPassOverSourceFile();
+
+#error "DEAD CODE!"
 
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE || 0
                     printf ("########## DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
@@ -1537,12 +1559,19 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
                     includeFileIterator++;
                   }
+
+#error "DEAD CODE!"
+
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ABORT();
 #endif
              }
+
+#error "DEAD CODE!"
+
 #endif
+
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ABORT();
@@ -1559,6 +1588,8 @@ IncludedFilesUnparser::initializeFilesToUnparse()
        // printf ("Commented out specific header file collection of comments and CPP directives \n");
           file->secondaryPassOverSourceFile();
 
+#error "DEAD CODE!"
+
 #if 0
              {
                SgSourceFile* sourceFile = isSgSourceFile(file);
@@ -1568,6 +1599,8 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                printf ("sourceFile->get_isHeaderFile() = %s \n",sourceFile->get_isHeaderFile() ? "true" : "false");
              }
 #endif
+
+#error "DEAD CODE!"
 
        // DQ (10/9/2019): Debugging redundant attachement of comments and CPP directives.
 #if 0
@@ -1584,8 +1617,9 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
           printf ("In initializeFilesToUnparse(): file = %p = %s name = %s Calling file->set_header_file_unparsing_optimization_header_file(false) \n",file,file->class_name().c_str(),file->getFileName().c_str());
 #endif
+       // DQ (4/24/2021): Debugging header file optimization.
        // DQ (9/19/2019): Unclear to me why we want to set this to false, or if we are doing so for the correct file.
-          file->set_header_file_unparsing_optimization_header_file(false);
+       // file->set_header_file_unparsing_optimization_header_file(false);
 #else
 
 #error "DEAD CODE!"

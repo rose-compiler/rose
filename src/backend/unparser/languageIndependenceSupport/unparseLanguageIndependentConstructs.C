@@ -689,7 +689,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #if DEBUG_STATEMENT_FROM_FILE
                               printf ("This is a statement for which we have a token subsequence \n");
 #endif
-
+#if DEBUG_USING_CURPRINT
+                              curprint ("\n/* This is a statement for which we have a token subsequence */ \n");
+#endif
 #if DEBUG_STATEMENT_FROM_FILE && 1
                               printf ("Output the list of files with computed token subsequence lists: \n");
                               std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >::iterator i = Rose::tokenSubsequenceMapOfMapsBySourceFile.begin();
@@ -704,6 +706,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                               std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = header_file_asssociated_source_file->get_tokenSubsequenceMap();
 #if DEBUG_STATEMENT_FROM_FILE
                               printf (" --- tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+#endif
+#if DEBUG_USING_CURPRINT
+                              curprint ( string("\n/* --- tokenStreamSequenceMap.size() = " ) + StringUtility::numberToString(tokenStreamSequenceMap.size()) + " */ \n");
 #endif
 #if DEBUG_STATEMENT_FROM_FILE && 1
                            // Printout the token stream so that we know it is the correct one.
@@ -1254,8 +1259,11 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
      static std::set<SgStatement*> previouslySeenStatement;
 
+  // DQ (4/18/2021): This needs to be able to support token sequences from different files, currently it does 
+  // not distinquish between different files and they detects previously unparsed token sequences by mistake.
   // DQ (1/13/2015): Adding another mechanism to support supression of previously unparsed token subsequences (required to support macros that map to multiple statements).
-     static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
+  // static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
+     static std::set<std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> > previouslyUnparsedTokenSubsequences;
 
      bool redundantStatement = false;
 
@@ -1283,7 +1291,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
   // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
      if (info.usedInUparseToStringFunction() == true)
         {
-#if 0
+#if DEBUG_REDUNDANT_STATEMENT_MAPPING
           printf ("Note: In redundantStatementMappingToTokenSequence(): info.usedInUparseToStringFunction() == true: returning false \n");
 #endif
           return false;
@@ -1298,12 +1306,36 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
      printf ("In redundantStatementMappingToTokenSequence(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
      printf (" --- previouslyUnparsedTokenSubsequences.size() = %zu \n",previouslyUnparsedTokenSubsequences.size());
      int counter_j = 0;
+#if 0
      for (std::set<TokenStreamSequenceToNodeMapping*>::iterator i = previouslyUnparsedTokenSubsequences.begin(); i != previouslyUnparsedTokenSubsequences.end(); i++)
         {
           TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = *i;
           printf(" --- --- previouslyUnparsedTokenSubsequences[%d] = %p \n",counter_j,tokenStreamSequenceToNodeMapping);
+
+       // DQ (4/17/2021): Output the token sequence so that we can unsderstand why the second forward 
+       // class declaration is being considered in the previouslyUnparsedTokenSubsequences set.
+#if 1
+          tokenStreamSequenceToNodeMapping->display("In redundantStatementMappingToTokenSequence(): token sequence");
+#endif
           counter_j++;
         }
+#else
+  // Need to support new for new version of previouslyUnparsedTokenSubsequences.
+     for (std::set< std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> >::iterator i = previouslyUnparsedTokenSubsequences.begin(); i != previouslyUnparsedTokenSubsequences.end(); i++)
+        {
+          SgSourceFile* sourceFile = i->first;
+          TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = i->second;
+          printf(" --- --- source file = %s previouslyUnparsedTokenSubsequences[%d] = %p \n",sourceFile->getFileName().c_str(),counter_j,tokenStreamSequenceToNodeMapping);
+#if 0
+          tokenStreamSequenceToNodeMapping->display("In redundantStatementMappingToTokenSequence(): token sequence");
+#endif
+          counter_j++;
+        }
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
      printf (" --- tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end() = %s \n",
           (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end()) ? "true" : "false");
 #endif
@@ -1400,13 +1432,26 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
              }
             else
              {
+#if 1
+            // DQ (4/18/2021): This needs to only be declared with the new form of the static previouslyUnparsedTokenSubsequences data structure.
+               std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> sourceFile_tokenSubsequence(sourceFile,tokenSubsequence);
+#endif
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                printf ("Not found in redundantTokenEndings: lastTokenIndex = %d \n",lastTokenIndex);
+#if 0
                printf ("previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end() = %s \n",
                     (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end()) ? "true" : "false");
+#else
+               printf ("previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end() = %s \n",
+                    (previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end()) ? "true" : "false");
+#endif
 #endif
             // DQ (1/13/2015): We might need to output the last statement that has a replicated token sequence, and not the first (I think).
+#if 0
                if (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
+#else
+               if (previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
+#endif
                   {
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                     printf ("Return TRUE from redundantStatementMappingToTokenSequence(): tokenSubsequence = %p stmt = %p = %s \n",tokenSubsequence,stmt,stmt->class_name().c_str());
@@ -1418,7 +1463,11 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                     printf ("Record that this TokenStreamSequenceToNodeMapping data has been processed: tokenSubsequence = %p \n",tokenSubsequence);
 #endif
+#if 0
                     previouslyUnparsedTokenSubsequences.insert(tokenSubsequence);
+#else
+                    previouslyUnparsedTokenSubsequences.insert(sourceFile_tokenSubsequence);
+#endif
                   }
              }
         }
@@ -1716,6 +1765,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
      printf ("In unparseStatementFromTokenStream(): stmt = %p = %s unparseStatus = %s \n",stmt,stmt->class_name().c_str(),unparseStatus ? "true" : "false");
      printf (" --- lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
+     printf (" --- unparseStatus = %s \n",unparseStatus ? "true" : "false");
 #endif
 
 #if 0
@@ -1739,7 +1789,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
        // bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
           bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt,info);
-
+#if 0
+       // DQ (4/17/2021): This is the different betwen when the second forward class declaration is unparsed and when it is not unparsed.
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+          printf ("FFFFFFFFFFFF redundantStatement = %s FFFFFFFFFFFF \n",redundantStatement ? "true" : "false");
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+#endif
        // DQ (9/24/2018): These are always going to be redundant, since these are inserted after the token stream mapping,
        // and redundantly represent the same tokens in the token stream.
           if (isSgIncludeDirectiveStatement(stmt) != NULL)
@@ -3550,6 +3605,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
           curprint("/* In unparseStatement(): logic to set: info.unset_unparsedPartiallyUsingTokenStream() */");
 #endif
+#if 0
+          printf ("In unparseStatement(): logic to set: info.unset_unparsedPartiallyUsingTokenStream() \n");
+#endif
 
        // DQ (12/12/2014): If we are truely unparsing from the AST, then this should be valid.
           if (global_unparsed_as == e_unparsed_as_AST)
@@ -3680,6 +3738,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if DEBUG_USING_CURPRINT
                curprint("\n/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */");
 #endif
+#if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %s \n",stmt->class_name().c_str());
+#endif
                switch (stmt->variantT())
                   {
                     case V_SgGlobal:                        unparseGlobalStmt                    (stmt, info); break;
@@ -3767,10 +3828,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
      SgSourceFile* sourceFile = info.get_current_source_file();
   // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
      if (sourceFile == NULL)
         {
           printf ("NOTE: In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens = %s sourceFile == NULL \n",outputStatementAsTokens ? "true" : "false");
         }
+#endif
 #if 0
      printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
@@ -3808,6 +3872,26 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
             else
              {
+            // DQ (4/28/2021): Added debugging information.
+               if (firstStatement != NULL)
+                  {
+                    Sg_File_Info* first_file_info = firstStatement->get_file_info();
+                    ROSE_ASSERT(first_file_info != NULL);
+                    printf (" --- firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+                    printf (" --- firstStatement = %p: (physical) line = %d column = %d filename = %s \n",firstStatement,
+                         first_file_info->get_physical_line(),first_file_info->get_col(),first_file_info->get_physical_filename().c_str());
+                  }
+
+            // DQ (4/28/2021): Added debugging information.
+               if (lastStatement != NULL)
+                  {
+                    Sg_File_Info* last_file_info = lastStatement->get_file_info();
+                    ROSE_ASSERT(last_file_info != NULL);
+                    printf (" --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+                    printf (" --- lastStatement = %p: (physical) line = %d column = %d filename = %s \n",lastStatement,
+                         last_file_info->get_physical_line(),last_file_info->get_col(),last_file_info->get_physical_filename().c_str());
+                  }
+
                ROSE_ASSERT(firstStatement == NULL);
                ROSE_ASSERT(lastStatement  == NULL);
              }
@@ -3920,13 +4004,23 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                skipOutputOfPreprocessingInfo = true;
              }
 #else
+#if 0
           printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
           printf ("Skipped processing of last statement in token-based unparsing of last statement \n");
           printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
 
-          printf ("outputStatementAsTokens == true: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("outputStatementAsTokens == true: stmt          = %p = %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+          if (lastStatement != NULL)
+             {
+               printf ("outputStatementAsTokens == true: lastStatement = %p = %s name = %s \n",lastStatement,lastStatement->class_name().c_str(),SageInterface::get_name(lastStatement).c_str());
+             }
+            else
+             {
+               printf ("lastStatement == NULL \n");
+             }
           ROSE_ASSERT(info.get_current_source_file() != NULL);
           printf ("outputStatementAsTokens == true: info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
+#endif
 #if 0
        // DQ (4/16/2021): I think we need to skip the output of the tailing whitespace, is this is a statement from a header file and the current file is
        // if (stmt == lastStatement)
@@ -4163,7 +4257,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): DONE: e_trailing_whitespace_start, e_trailing_whitespace_end */ \n ");
 #endif
 
-#if 1
+#if 0
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Unparse the last token explicitly: Calling unparseStatementFromTokenStream() \n");
 #endif
                  // Unparse the last token explicitly.

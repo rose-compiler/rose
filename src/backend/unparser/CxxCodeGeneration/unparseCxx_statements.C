@@ -120,11 +120,13 @@ void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
      SgGlobal* globalScope = isSgGlobal(stmt);
      if (globalScope != NULL)
         {
+#if 0
+       // DQ (4/18/2021): I think that we can comment this out.
           printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
           printf ("Skipping call to unparseStatementFromTokenStream() for globalScope = %p \n",globalScope);
           printf (" --- globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
           printf ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD \n");
-
+#endif
        // DQ (4/15/2021): Testing that the number of declarations is zero will not be enough, so maybe we should test the first and last statements are NULL?
         }
        else
@@ -186,9 +188,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
 #if DEBUG_USING_CURPRINT
      curprint("\n/* In unparseStatementFromTokenStream(stmt,stmt,start,end,info,bool): */");
-     string s1 = string("\n/* --- stmt_1 = ") + stmt_1->class_name().c_str() + " */";
+     string s1 = string("\n/* --- stmt_1 = ") + stmt_1->class_name().c_str() + " " + Rose::StringUtility::numberToString(stmt_1) + " */";
      curprint (s1);
-     string s2 = string("\n/* --- stmt_2 = ") + stmt_2->class_name().c_str() + " */";
+     string s2 = string("\n/* --- stmt_2 = ") + stmt_2->class_name().c_str() + " " + Rose::StringUtility::numberToString(stmt_2) + " */";
      curprint (s2);
      curprint( string("\n/* --- stmt_1: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_1->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
      curprint( string("\n/* --- stmt_2: get_containsTransformationToSurroundingWhitespace = ") + string(stmt_2->get_containsTransformationToSurroundingWhitespace() ? "true" : "false") + " */");
