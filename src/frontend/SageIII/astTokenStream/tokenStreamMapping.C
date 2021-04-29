@@ -6479,13 +6479,14 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
                            // DQ (4/21/2021): We should be able to assert this.
                            // ROSE_ASSERT(element->node == n);
+#if 0
                               if (element->node != n)
                                  {
                                    printf ("Found a case of mapping of tokens to multiple IR nodes: \n");
                                    printf (" --- n             = %p = %s name = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
                                    printf (" --- element->node = %p = %s name = %s \n",element->node,element->node->class_name().c_str(),SageInterface::get_name(element->node).c_str());
                                  }
-
+#endif
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("EVALUATE_INHERITED_ATTRIBUTE: test 2: Calling push_back on tokenStreamSequenceVector: size = %zu \n",tokenStreamSequenceVector.size());
 #endif
