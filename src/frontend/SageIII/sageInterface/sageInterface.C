@@ -1119,7 +1119,12 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // with the old name and add a symbol with the new name.
      ROSE_ASSERT(initializedNameNode != NULL);
 
+#define DEBUG_SET_NAME 0
+
   // SgNode * node = this;
+#if DEBUG_SET_NAME
+     printf ("In SageInterface::set_name(): initializedNameNode = %p name = %s new_name = %s \n",initializedNameNode,initializedNameNode->get_name().str(),new_name.str());
+#endif
 
 #if 0
   // DQ (12/9/2004): This should likely call the get_scope function (which is more robust than traversing
@@ -1161,7 +1166,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
      for (SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
         {
-#if 1
+#if DEBUG_SET_NAME
           printf ("Looking for symbol in scope = %p = %s \n",scope_stmt,scope_stmt->class_name().c_str());
           printf (" --- *it = %p = %s \n",(*it).second,(*it).second->class_name().c_str());
 #endif
@@ -1219,7 +1224,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         }
        else
         {
-#if 0
+#if DEBUG_SET_NAME
           printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
 #endif
 
@@ -1256,9 +1261,9 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
           return 0;
         }
 
-#if 0
+#if DEBUG_SET_NAME
   // Set the p_name to the new_name
-     printf ("Reset initializedNameNode->get_name() = %s to new_name = %s \n",new_name.str(),initializedNameNode->get_name().str(),new_name.str());
+     printf ("Reset initializedNameNode->get_name() = %s to new_name = %s \n",initializedNameNode->get_name().str(),new_name.str());
 #endif
 
   // p_name = new_name;
@@ -1293,7 +1298,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 0
+#if DEBUG_SET_NAME
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1302,6 +1307,11 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 #endif
                          varRefExp->set_isModified(true);
                          varRefExp->setTransformation();
+
+                      // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we know how to handle it with the token-based unparsing.
+                         SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
+                         ROSE_ASSERT(associatedStatement != NULL);
+                         associatedStatement->setTransformation();
 
 #if 0
                       // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
@@ -1329,6 +1339,12 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      SgVarRefExp::traverseMemoryPoolNodes(t1);
 #endif
 
+#if DEBUG_SET_NAME
+     printf ("Leaving SageInterface::set_name(): initializedNameNode = %p name = %s new_name = %s (return 1) \n",initializedNameNode,initializedNameNode->get_name().str(),new_name.str());
+#endif
+
+  // DQ (4/23/2021): I think that we should be returning zero for no error
+  // and one for an error, this function appears to have this detail reversed.
      return 1;
    }
 

@@ -6345,9 +6345,15 @@ public:
 
        // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
        // as a static member variable instead of non-static member variable.  See test2015_141.c
-       // for whare this is required.
+       // for where this is required.
           static void set_skip_unparse_asm_commands( bool b );
           static bool get_skip_unparse_asm_commands();
+
+       // DQ (4/24/2021): Added support for p_header_file_unparsing_optimization to be implemented
+       // as a static member variable instead of non-static member variable.  Part of header file 
+       // optimization support.
+          static void set_header_file_unparsing_optimization( bool b );
+          static bool get_header_file_unparsing_optimization();
 
 HEADER_APPLICATION_FILE_END
 
@@ -15809,6 +15815,9 @@ SOURCE_APPLICATION_FILE_START
 // DQ (5/23/2015): Add static data member declaration.
 bool SgFile::p_skip_unparse_asm_commands = false;
 
+// DQ (4/24/2021): Add static data member declaration.
+bool SgFile::p_header_file_unparsing_optimization = false;
+
 // std::string SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
 std::string
 SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
@@ -16289,9 +16298,10 @@ SgFile::initialization()
      p_no_optimize_flag_for_frontend           = false;
      p_unparse_edg_normalized_method_ROSE_1392 = false;
 
+  // DQ (4/24/2021): Made p_header_file_unparsing_optimization a static data member.
   // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting
   // the number of header files for which we collect comments and CPP directives).
-     p_header_file_unparsing_optimization             = false;
+  // p_header_file_unparsing_optimization             = false;
      p_header_file_unparsing_optimization_source_file = false;
      p_header_file_unparsing_optimization_header_file = false;
 
@@ -17088,7 +17098,7 @@ X aggressive
 
 // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
 // as a static member variable instead of non-static member variable.  See test2015_141.c
-// for whare this is required.
+// for where this is required.
 bool
 SgFile::get_skip_unparse_asm_commands()
    {
@@ -17097,11 +17107,43 @@ SgFile::get_skip_unparse_asm_commands()
 
 // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
 // as a static member variable instead of non-static member variable. See test2015_141.c
-// for whare this is required.
+// for where this is required.
 void
 SgFile::set_skip_unparse_asm_commands( bool b )
    {
      p_skip_unparse_asm_commands = b;
+   }
+
+
+// DQ (5/23/2015): Added support for p_header_file_unparsing_optimization to be implemented
+// as a static member variable instead of non-static member variable.
+bool
+SgFile::get_header_file_unparsing_optimization()
+   {
+#if 0
+     printf ("In SgFile::get_header_file_unparsing_optimization(): returning %s \n",p_header_file_unparsing_optimization ? "true" : "false");
+#endif
+     return p_header_file_unparsing_optimization;
+   }
+
+// DQ (5/23/2015): Added support for p_header_file_unparsing_optimization to be implemented
+// as a static member variable instead of non-static member variable.
+void
+SgFile::set_header_file_unparsing_optimization( bool b )
+   {
+#if 0
+     printf ("In SgFile::set_header_file_unparsing_optimization(): setting to %s \n",b ? "true" : "false");
+#endif
+#if 0
+  // DQ (4/28/2021): This is for debugging.
+     if (b == false)
+        {
+          printf ("In SgFile::set_header_file_unparsing_optimization(): exiting when setting to false \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     p_header_file_unparsing_optimization = b;
    }
 
 
@@ -17151,6 +17193,9 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
         {
 #if 0
           printf ("Adding a new object to the Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+          printf (" --- associated source file  = %p \n",this);
+          printf (" --- associated filename     = %s \n",this->getFileName().c_str());
+          printf (" --- associated global scope = %p \n",this->get_globalScope());
 #endif
           Rose::tokenSubsequenceMapOfMapsBySourceFile.insert(std::pair<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >(this,tokenStreamSequenceMap));
 #if 0
