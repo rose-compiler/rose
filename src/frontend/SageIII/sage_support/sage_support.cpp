@@ -2603,12 +2603,16 @@ SgProject::parse()
           ROSE_ASSERT(file != NULL);
 
           SgSourceFile* sourceFile = isSgSourceFile(file);
-          ROSE_ASSERT(sourceFile != NULL);
 
-       // DQ (4/25/2021): I think this should be a static bool data member.
-          if (unparse_using_tokens == false)
+       // We can't assert this when supporting binary analysis.
+       // ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile != NULL)
              {
-               unparse_using_tokens = sourceFile->get_unparse_tokens();
+            // DQ (4/25/2021): I think this should be a static bool data member.
+               if (unparse_using_tokens == false)
+                  {
+                    unparse_using_tokens = sourceFile->get_unparse_tokens();
+                  }
              }
 #if 0
           printf ("unparse_using_tokens = %s \n",unparse_using_tokens ? "true" : "false");
