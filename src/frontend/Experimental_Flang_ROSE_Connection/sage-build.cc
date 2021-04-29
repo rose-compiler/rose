@@ -2892,20 +2892,37 @@ void Build(const parser::DerivedTypeDef&x, T* scope)
    //     std::list<Statement<PrivateOrSequence>>, std::list<Statement<ComponentDefStmt>>,
    //     std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>> t;
 
-   const auto & stmt    {std::get<0>(x.t)};
-   const auto & end_stmt{std::get<5>(x.t)};
+   std::string type_name{};
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, type_name, modifier_enum_list);
 
-   std::string type_name{std::get<1>(stmt.statement.t).ToString()};
-
+   // Begin SageTreeBuilder for SgDerivedTypeStatement
    SgDerivedTypeStatement* derived_type_stmt{nullptr};
-
    builder.Enter(derived_type_stmt, type_name);
 
-   //traverse list of ComponentDefStmt
+   // Traverse body of type-def
    std::list<SgStatement*> stmt_list;
    Build(std::get<3>(x.t), stmt_list);
 
+   // EndTypeStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+   if (auto & opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgDerivedTypeStatement
    builder.Leave(derived_type_stmt);
+}
+
+void Build(const parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DerivedTypeStmt)\n";
+#endif
+   // std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
+
+   Build(std::get<0>(x.t), modifier_enum_list);  // std::list<TypeAttrSpec>
+   name = std::get<1>(x.t).ToString();           // Name
 }
 
 void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &stmt)
@@ -2940,6 +2957,22 @@ void Build(const parser::DataComponentDefStmt&x, SgStatement* &stmt)
 
    builder.Enter(var_decl, base_type, init_info);
    builder.Leave(var_decl, modifier_enum_list);
+}
+
+void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(TypeAttrSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Abstract              &y) { ; },
+         [&] (const parser::AccessSpec            &y) { Build(y, modifier_enum); },
+         [&] (const parser::TypeAttrSpec::BindC   &y) { ; },
+         [&] (const parser::TypeAttrSpec::Extends &y) { ; },
+      },
+      x.u);
 }
 
 void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
