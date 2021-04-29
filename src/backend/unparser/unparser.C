@@ -465,6 +465,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("In unparseFile(): file = %p filename = %s unparseScope = %p \n",file,file->getFileName().c_str(),unparseScope);
+     printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
+     printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+     printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
      if (unparseScope != NULL)
         {
           printf ("   --- unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
@@ -472,6 +475,14 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
 #endif
+
+  // DQ (4/24/2021): Sorting out the header file optimization, so that we can correctly handle when both ON or OFF.
+  // This data member appears to always be false.
+  // ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
+     if (file->get_header_file_unparsing_optimization_header_file() == true)
+        {
+          printf ("Found case of file->get_header_file_unparsing_optimization_header_file() == true \n");
+        }
 
 #if 0
   // DQ (11/20/2019): Added assertion, if we are unparsing this file, then it should have had comments and CPP directives already added.
@@ -4683,7 +4694,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 
 #define DEBUG_FIRST_LAST_STMTS 0
 
-#if 0
+#if DEBUG_FIRST_LAST_STMTS
      printf ("###################################################### \n");
      printf ("###################################################### \n");
      printf ("####  buildFirstAndLastStatementsForIncludeFiles  #### \n");
@@ -4713,7 +4724,9 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                void visit (SgNode* node)
                   {
 #if DEBUG_FIRST_LAST_STMTS
-                    printf ("In IncludeFileStatementTraversal::visit(): node = %p = %s \n",node,node->class_name().c_str());
+                 // printf ("In IncludeFileStatementTraversal::visit(): node = %p = %s \n",node,node->class_name().c_str());
+                    printf ("In IncludeFileStatementTraversal::visit(): node = %p = %s name = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+                    printf (" --- filename = %s \n",node->get_file_info()->get_filenameString().c_str());
 #endif
 #if 0
                     SgSourceFile* tmp_sourceFile = isSgSourceFile(node);
@@ -4724,8 +4737,23 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 #endif
                  // ROSE_ASSERT(sourceFile != NULL);
 
+                 // DQ (4/25/2021): I forget why this is a SgDeclarationStatement instead of a SgStatement.
                  // SgStatement*             statement             = isSgStatement(node);
+                 // SgStatement*             statement             = isSgDeclarationStatement(node);
+#if 1
+                 // DQ (4/28/2021): I think this is the better solution, since we make sure that the last statement is in the same scope (asI recall) below.
+                    SgStatement*             statement             = isSgStatement(node);
+#else
                     SgStatement*             statement             = isSgDeclarationStatement(node);
+                 // DQ (4/25/2021): Handle case of a simple expression statement.
+                    if (statement == NULL)
+                       {
+#if DEBUG_FIRST_LAST_STMTS
+                         printf ("Handle the case of an SgExprStatement \n");
+#endif
+                         statement = isSgExprStatement(node);
+                       }
+#endif
                     SgGlobal*                globalScope           = isSgGlobal(statement);
                     SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(node);
                     SgCtorInitializerList*   ctorInitializerList   = isSgCtorInitializerList(node);
@@ -4740,7 +4768,9 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                  //                         templateTypedefDeclaration == NULL;
                     bool processStatement = globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && 
                                             templateInstantiationDecl == NULL && templateInstantiationMemberFunctionDecl == NULL;
-
+#if DEBUG_FIRST_LAST_STMTS
+                    printf ("processStatement = %s \n",processStatement ? "true" : "false");
+#endif
                  // if (statement != NULL && globalScope == NULL && functionParameterList == NULL && ctorInitializerList == NULL && templateInstantiationDecl == NULL)
                     if (statement != NULL && processStatement == true)
                        {
@@ -4781,11 +4811,18 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                               ROSE_ASSERT(includeFile != NULL);
 
                               SgSourceFile* header_file_asssociated_source_file = includeFile->get_source_file();
-
+#if DEBUG_FIRST_LAST_STMTS
+                              printf ("Found an SgIncludeFile: includeFile = %p header_file_asssociated_source_file = %p \n",includeFile,header_file_asssociated_source_file);
+#endif
                            // DQ (3/14/2021): This is null for rose_edg_required_macros_and_functions.h (pre-included for all ROSE processed code).
                            // ROSE_ASSERT(header_file_asssociated_source_file != NULL);
                               if (header_file_asssociated_source_file != NULL)
                                  {
+#if DEBUG_FIRST_LAST_STMTS
+                                   printf ("header_file_asssociated_source_file = %s \n",header_file_asssociated_source_file->getFileName().c_str());
+                                   printf ("Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end() = %s \n",
+                                        Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end() ? "true" : "false");
+#endif
                                    if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
                                       {
                                      // DQ (3/13/2021): Adding support to filter out collecting references to statements that don't have a corresponding token subsequence.
@@ -4880,6 +4917,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
           SgSourceFile* sourceFile = isSgSourceFile(fileList[i]);
           ROSE_ASSERT(sourceFile != NULL);
 #if DEBUG_FIRST_LAST_STMTS
+          printf ("\nLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL \n");
           printf ("Testing for isDynamicLibrary before calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
 #endif
 #if DEBUG_FIRST_LAST_STMTS
@@ -4892,11 +4930,18 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 #endif
                traversal.traverse(sourceFile,preorder);
              }
+
+#if DEBUG_FIRST_LAST_STMTS
+          printf ("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL \n\n");
+#endif
         }
 #else
 #if DEBUG_FIRST_LAST_STMTS
      printf ("sourceFile->get_isDynamicLibrary() = %s \n",sourceFile->get_isDynamicLibrary() ? "true" : "false");
 #endif
+
+#error "DEAD CODE!"
+
      if (sourceFile->get_isDynamicLibrary() == false)
         {
 #if DEBUG_FIRST_LAST_STMTS
@@ -6216,7 +6261,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              {
             // #if 1
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                   {
                     printf ("In unparseProject(): loop over all files: calling computeNameQualification() for sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
                   }

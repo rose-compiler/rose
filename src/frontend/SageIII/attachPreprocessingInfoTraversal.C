@@ -797,6 +797,7 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
   // Supports assertions at end of function
      SgLocatedNode* previousLocNodePtr = NULL;
 
+#if 0
   // DQ (12/12/2008): Newer implementation to support multiple files.
   // int currentFileId = currentLocNodePtr->get_startOfConstruct()->get_file_id();
      Sg_File_Info* locatedFileInfo = currentLocNodePtr->get_file_info();
@@ -810,7 +811,6 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
                          locatedFileInfo->get_physical_file_id(source_file_id);
 #endif
 
-#if 1
      printf ("setupPointerToPreviousNode: currentFileId = %d currentLocNodePtr = %s \n",currentFileId,currentLocNodePtr->class_name().c_str());
 #endif
 
@@ -949,11 +949,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      ROSEAttributesList* returnListOfAttributes = NULL;
      ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 
-#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST || 0
      printf ("filePreprocInfo = %p \n",filePreprocInfo);
      printf ("sourceFile = %p \n",sourceFile);
      printf ("sourceFile->get_file_info() = %p \n",sourceFile->get_file_info());
      printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
+     printf ("sourceFile->get_Fortran_only() = %s \n",sourceFile->get_Fortran_only() ? "true" : "false");
 #endif
 
   // DQ (1/9/2021): Cleaned up the logic here.
@@ -963,6 +964,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // if (filePreprocInfo != NULL)
      if ((sourceFile->get_Fortran_only() == false) && (filePreprocInfo != NULL) )
         {
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+          printf ("filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end() = %s \n",
+               filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end() ? "true" : "false");
+#endif
           if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
              {
 #if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
@@ -1166,6 +1171,24 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                     buildTokenStreamMapping(sourceFile,tokenVector);
 #if 0
                     printf ("DONE: Calling buildTokenStreamMapping() \n");
+#endif
+#if 0
+                 // DQ (4/25/2021): Debugging how the header file optimization.
+                    if (sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test17/Simple.h")
+                       {
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("sourceFile->get_unparse_tokens() == false \n");
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                   }
 #if 0
@@ -1512,17 +1535,17 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #else
                if (returnListOfAttributes == NULL)
                   {
-#if 1
+#if 0
                     printf ("Found returnListOfAttributes == NULL, calling getPreprocessorDirectives() \n");
                     printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
 #endif
 #ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
                     returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
 #endif
-#if 1
+#if 0
                     printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
 #endif
-#if 1
+#if 0
                     printf ("########################################################### \n");
                     printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
                     printf ("new_filename              = %s \n",new_filename.c_str());
@@ -1615,6 +1638,15 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      printf ("Leaving AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 
+#if 0
+  // DQ (4/25/2021): Debugging how the header file optimization.
+     if (sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test17/Simple.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
   // DQ (4/29/2020): Introduce test for recursive call.
      isRecursiveCall = false;
 
@@ -1697,6 +1729,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 0
      printf ("TOP of AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s name = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
+     ROSE_ASSERT(sourceFile != NULL);
+     printf (" --- sourceFile = %s \n",sourceFile->getFileName().c_str());
 #endif
 #if 0
      printf (" --- sourceFile->get_globalScope() = %p \n",sourceFile->get_globalScope());
@@ -1711,7 +1745,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
         {
           printf ("     parent = %s \n",currentStatement->get_parent()->class_name().c_str());
           ROSE_ASSERT(currentStatement->get_file_info() != NULL);
-#if 0
+#if 1
           currentStatement->get_startOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (START) debug");
 #endif
 #if 0
@@ -2059,6 +2093,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // DQ (11/2/2019): This is the call that can be redundant.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 
+#if 0
+       // DQ (4/24/2021): This is dead code. Debugging the header file optimization.
        // DQ (8/19/2019): The comments and CPP directives are being attached to the AST twice for those statements in the source file.
        // We need to prevent this by setting currentListOfAttributes = NULL when doing the header file optimization within the header file phase.
           ROSE_ASSERT(sourceFile != NULL);
@@ -2075,6 +2111,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 #endif
              }
+#endif
 
 #if 0
           printf ("currentListOfAttributes = %p \n",currentListOfAttributes);
@@ -2325,6 +2362,18 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                        {
                       // DQ (6/17/2020): Set the previousLocatedNode
                          previousLocatedNode = currentLocNodePtr;
+#if 0
+                         printf ("Setting previousLocatedNode = currentLocNodePtr = %p \n",previousLocatedNode);
+#endif
+                      // DQ (4/28/2021): Adding assertion.
+                         ROSE_ASSERT(previousLocatedNode != NULL);
+#if 0
+                         if (sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test11/Inner.h")
+                            {
+                              printf ("Exiting as a test! \n");
+                              ROSE_ABORT();
+                            }
+#endif
                        }
 #if 0
                     printf ("After resetting previousLocatedNode in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
@@ -2343,13 +2392,32 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                        }
 #endif
                   }
-#if 0
              // Debugging output
                  else
                   {
-                    printf ("Node belongs to a different file: \n");
-                  }
+#if 0
+                    printf ("Node belongs to a different file: (OK for SgGlobal) \n");
 #endif
+#if 0
+                    printf ("currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
+                    printf ("sourceFile->getFileName()                = %s \n",sourceFile->getFileName().c_str());
+#endif
+#if 0
+                    if (currentLocNode_physical_filename_from_id == sourceFile->getFileName())
+                       {
+                         if (isSgGlobal(n) == NULL && sourceFile->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test11/Inner.h")
+                            {
+                              printf ("Exiting as a test! \n");
+                              ROSE_ABORT();
+                            }
+                      // DQ (4/28/2021): We need to set the previousLocatedNode.
+                      // previousLocatedNode = currentLocNodePtr;
+#if 0
+                         printf ("Setting previousLocatedNode = currentLocNodePtr = %p \n",previousLocatedNode);
+#endif
+                       }
+#endif
+                  }
              } // end if current list of attribute is not empty
 
 #if 0
@@ -2366,6 +2434,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
+     ROSE_ASSERT(sourceFile != NULL);
+     printf (" --- sourceFile = %s \n",sourceFile->getFileName().c_str());
 #endif
 
      return inheritedAttribute;
@@ -2389,6 +2459,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
      printf ("\nTOP of AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s name = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
+     ROSE_ASSERT(sourceFile != NULL);
+     printf (" --- sourceFile = %s \n",sourceFile->getFileName().c_str());
 #endif
 #if 0
      SgStatement* currentStatement = isSgStatement(n);
@@ -2690,7 +2762,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                if (currentListOfAttributes == NULL)
                   {
                  // This case is used to handle the case of the currentFileNameId being negative (not a real file).
-#if 0
+#if 1
                     printf ("Not supporting gathering of CPP directives and comments for this file currentFileNameId = %d \n",currentFileNameId);
 #endif
                     return returnSynthesizeAttribute;
@@ -2717,12 +2789,16 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     if (previousLocNodePtr == NULL)
                        {
                          ROSE_ASSERT(n != NULL);
+#if 0
                          printf ("############### Note: previousLocNodePtr == NULL; locatedNode == NULL; n = %p = %s \n",n,n->class_name().c_str());
+#endif
                        }
                     if (isSgSourceFile(n) == NULL)
                        {
                          ROSE_ASSERT(previousLocNodePtr != NULL);
+#if 0
                          printf ("Note: previousLocNodePtr == NULL; reset to locatedNode = %p = %s \n",previousLocNodePtr,previousLocNodePtr->class_name().c_str());
+#endif
                        }
                   }
 
@@ -2801,7 +2877,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                           ROSE_ABORT();
                         }
 #endif
+#if 0
+                 // DQ (4/28/2021): Adding a new case.
+                    case V_SgGlobal:
+                       {
+                         printf ("Found SgGlobal: set previousLocatedNode = n \n");
+                         previousLocatedNode = isSgGlobal(n);
 
+                         ROSE_ASSERT(previousLocatedNode != NULL);
+                         break;
+                       }
+#endif
                  // I wanted to leave the SgFile case in the switch statement rather 
                  // than separating it out in a conditional statement at the top of the file.
                  // case V_SgFile:
@@ -2810,6 +2896,24 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
                          printf ("Processing case: V_SgSourceFile \n");
 #endif
+#if 0
+                      // DQ (4/28/2021): Commented out code below that does not appear to make any sense.
+                         printf ("in case V_SgSourceFile: Skipping the case of previousLocatedNode != NULL \n");
+                         SgLocatedNode* targetNode = previousLocatedNode;
+                         if (targetNode == NULL)
+                            {
+                              printf ("Calling break in case V_SgSourceFile (note: previousLocatedNode == NULL) \n");
+                              break;
+                            }
+#else
+                      // DQ (4/28/2021): Consider this as a work around.
+                         if (previousLocatedNode == NULL)
+                            {
+#if 0
+                              printf ("Detected previousLocatedNode == NULL: return returnSynthesizeAttribute \n");
+#endif
+                              return returnSynthesizeAttribute;
+                            }
                          ROSE_ASSERT(previousLocatedNode != NULL);
 #if 0
                             printf ("Case SgFile: See if we can find a better target to attach these comments than %s \n",previousLocNodePtr->sage_class_name());
@@ -2863,7 +2967,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                               // return returnSynthesizeAttribute;
                                }
-
+#endif
 #if 0
                              printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthisizedAttribute() calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): n->class_name() = %s \n",
                                   n->class_name().c_str());
@@ -3253,6 +3357,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                         ROSE_ASSERT(false);
 #endif
                                       }
+
+                                // DQ (4/28/2021): Set the previousLocatedNode.
+                                   previousLocatedNode = basicBlock;
                                  }
                                 else
                                  {
@@ -3953,6 +4060,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      printf (" --- previousLocatedNode = %p = %s \n",previousLocatedNode,(previousLocatedNode != NULL) ? previousLocatedNode->class_name().c_str() : "null");
+     ROSE_ASSERT(sourceFile != NULL);
+     printf (" --- sourceFile = %s \n",sourceFile->getFileName().c_str());
 #endif
 
   // DQ (6/15/2020): Set the previous node to be the current node as we leave evaluateSynthesizedAttribute().
