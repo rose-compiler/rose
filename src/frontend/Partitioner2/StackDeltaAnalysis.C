@@ -163,7 +163,7 @@ struct StackDeltaWorker {
             static boost::mutex mutex;
             boost::lock_guard<boost::mutex> lock(mutex);
             Sawyer::Message::Stream trace(StackDelta::mlog[TRACE]);
-            trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<" seconds\n";
+            trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<"\n";
         }
 
         // Progress reports

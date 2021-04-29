@@ -6,6 +6,7 @@
 #include <BaseSemanticsTypes.h>
 #include <BinaryHotPatch.h>
 #include <BinarySmtSolver.h>
+#include <Combinatorics.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -209,6 +210,11 @@ public:
     virtual void name(const std::string &s) { name_ = s; }
     /** @} */
 
+    /** Compute hash of current state.
+     *
+     *  Computes a hash of the current state by hashing its registers and memory. */
+    virtual void hash(Combinatorics::Hasher&);
+
     /** Print multi-line output for this object.
      * @{ */
     void print(std::ostream &stream, const std::string prefix="") const;
@@ -253,13 +259,19 @@ public:
     virtual void nInsns(size_t n) { nInsns_ = n; }
     /** @} */
 
-    /** Returns current instruction.
+    /** Property: Current instruction.
      *
      *  Returns the instruction which is being processed. This is set by @ref startInstruction and cleared by @ref
-     *  finishInstruction. Returns null if we are not processing an instruction. */
+     *  finishInstruction. Returns null if we are not processing an instruction.
+     *
+     * @{ */
     virtual SgAsmInstruction* currentInstruction() const {
         return currentInsn_;
     }
+    virtual void currentInstruction(SgAsmInstruction *insn) {
+        currentInsn_ = insn;
+    }
+    /** @} */
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
      *  processing an instruction.  Some policies use this to update a pointer to the current instruction. */

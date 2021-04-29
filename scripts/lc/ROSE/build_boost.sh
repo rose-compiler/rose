@@ -17,7 +17,9 @@ source ${ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
 # Uses ROSE_BUILD_BASE if set, else sets it:
 set_main_vars
-setup_gcc_compiler_base
+#setup_gcc_compiler_base
+#setup_intel_compiler
+setup_intel_19_0_4_compiler
 build_boost_rose
 print_rose_vars
 

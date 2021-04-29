@@ -132,37 +132,6 @@ namespace
   }
 
 
-  /// returns the NameData object for a name that is represented
-  /// as expression in Asis (e.g., identifier or selected)
-  NameData
-  getQualName(Element_Struct& elem, AstContext ctx)
-  {
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
-
-    Expression_Struct& idex  = elem.The_Union.Expression;
-
-    if (idex.Expression_Kind == An_Identifier)
-    {
-      logKind("An_Identifier");
-
-      std::string        ident{idex.Name_Image};
-
-      return NameData{ ident, ident, ctx.scope(), elem };
-    }
-
-    ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
-
-    NameData compound = getNameID(idex.Prefix, ctx);
-    NameData selected = getNameID(idex.Selector, ctx);
-
-    return NameData{ selected.ident,
-                     compound.fullName + "." + selected.fullName,
-                     ctx.scope(),
-                     selected.elem()
-                   };
-  }
-
-
   /// if \ref isPrivate \ref dcl's accessibility is set to private;
   /// otherwise nothing.
   void
@@ -344,10 +313,12 @@ namespace
 
     for (int i = 0; i < num; ++i)
     {
-      ROSE_ASSERT(names.at(i).fullName == names.at(i).ident);
+      const NameCreator::result_container::value_type obj = names.at(i);
 
-      const std::string& name = names.at(i).fullName;
-      Element_ID         id   = names.at(i).id();
+      ROSE_ASSERT(obj.fullName == obj.ident);
+
+      const std::string& name = obj.fullName;
+      Element_ID         id   = obj.id();
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
 
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
@@ -725,27 +696,23 @@ namespace
     return SG_DEREF(the_name);
   }
 
-  SgAdaTaskBody&
-  getTaskBody(Declaration_Struct& decl, AstContext ctx)
+  void
+  fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
   {
     ROSE_ASSERT(decl.Declaration_Kind == A_Task_Body_Declaration);
-
-    SgAdaTaskBody& sgnode = mkAdaTaskBody();
 
     {
       ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
 
-      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope_npc(sgnode)});
+      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
     }
 
     {
       ElemIdRange         stmts = idRange(decl.Body_Statements);
       LabelAndLoopManager lblmgr;
 
-      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope_npc(sgnode).labelsAndLoops(lblmgr)});
+      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
     }
-
-    return sgnode;
   }
 
   SgAdaTaskSpec&
@@ -1340,15 +1307,21 @@ namespace
     return !decl.Has_Reverse;
   }
 
-
+  // handles elements that can appear in a statement context (from a ROSE point of view)
+  //   besides statements this also includes declarations and clauses
   void handleStmt(Element_Struct& elem, AstContext ctx)
   {
-    logTrace() << "a statement (in progress) " << elem.Element_Kind << std::endl;
+    logTrace() << "a statement/decl/clause " << elem.Element_Kind << std::endl;
 
-    // declarations are statements too
     if (elem.Element_Kind == A_Declaration)
     {
       handleDeclaration(elem, ctx);
+      return;
+    }
+
+    if (elem.Element_Kind == A_Clause)
+    {
+      handleClause(elem, ctx);
       return;
     }
 
@@ -1374,6 +1347,7 @@ namespace
 
           SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
           SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
+
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
           SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
 
@@ -1512,7 +1486,7 @@ namespace
           SgTryStmt*    tryblk   = trydata.first;
           SgBasicBlock& block    = trydata.second;
 
-          completeStmt(block, elem, ctx, stmt.Statement_Identifier);
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
           traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
           traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
@@ -1794,6 +1768,7 @@ namespace
 
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
+    sgnode.set_parent(tryStmt.get_catch_statement_seq_root());
 
     traverseIDs(range, elemMap(), StmtCreator{ctx.scope(body)});
 
@@ -1865,21 +1840,28 @@ namespace
       {
         ROSE_ASSERT (el.Element_Kind == An_Expression);
 
-        //~ std::cerr << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-
         NameData                     usepkg = getName(el, ctx);
         SgScopeStatement&            scope  = ctx.scope();
         Expression_Struct&           expr   = asisExpression(usepkg.elem());
         SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
+
+        // fallback code for packages not extracted from Asis
+        if (!used)
+        {
+          logWarn() << "using unknown package: " << usepkg.fullName
+                    << std::endl;
+
+          used = findFirst(adaPkgs(), AdaIdentifier{usepkg.fullName});
+        }
+
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
 
         //~ std::cerr
-        logError()
-                   << "use decl: " << usepkg.fullName
-                   << " " << typeid(*used).name()
-                   << " (" << expr.Corresponding_Name_Definition
-                   << ", " << expr.Corresponding_Name_Declaration << ")"
-                   << std::endl;
+        //~ logError() << "use decl: " << usepkg.fullName
+                   //~ << " " << typeid(*used).name()
+                   //~ << " (" << expr.Corresponding_Name_Definition
+                   //~ << ", " << expr.Corresponding_Name_Declaration << ")"
+                   //~ << std::endl;
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
@@ -2260,6 +2242,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 void handleClause(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Clause);
+  logKind("A_Clause");
 
   Clause_Struct& clause = elem.The_Union.Clause;
 
@@ -2314,6 +2297,7 @@ void handleClause(Element_Struct& elem, AstContext ctx)
 void handleDefinition(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  logKind("A_Definition");
 
   // many definitions are handled else where
   // here we want to convert the rest that can appear in declarative context
@@ -2393,6 +2377,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Declaration);
+  logKind("A_Declaration");
 
   Declaration_Struct& decl = elem.The_Union.Declaration;
 
@@ -2435,9 +2420,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // private items
         {
           ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
-          ROSE_ASSERT((!range.empty()) == decl.Is_Private_Present);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true /* private items */});
+
+          // a package may contain an empty private section
+          pkgspec.set_hasPrivate(decl.Is_Private_Present);
         }
 
         placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));
@@ -2482,10 +2469,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
           if (range.size())
           {
-            SgBasicBlock& pkgblock = mkBasicBlock();
+            LabelAndLoopManager lblmgr;
+            SgBasicBlock&       pkgblock = mkBasicBlock();
 
             pkgbody.append_statement(&pkgblock);
-            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock)});
+            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock).labelsAndLoops(lblmgr)});
             placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
           }
           else
@@ -2700,7 +2688,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx);
         SgScopeStatement&       scope = ctx.scope();
-        ROSE_ASSERT(scope.get_parent());
+        //~ ROSE_ASSERT(scope.get_parent());
 
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
@@ -2900,7 +2888,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Body_Declaration");
 
-        SgAdaTaskBody&          tskbody = getTaskBody(decl, ctx);
+        SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
         SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
@@ -2918,6 +2906,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
+
+        fillTaskBody(decl, tskbody, ctx);
 
         /* unused fields:
              bool                           Has_Task;
@@ -3285,6 +3275,34 @@ getName(Element_Struct& elem, AstContext ctx)
   }
 
   return NameData{ ident, name, SG_DEREF(parent), elem };
+}
+
+NameData
+getQualName(Element_Struct& elem, AstContext ctx)
+{
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+
+  Expression_Struct& idex  = elem.The_Union.Expression;
+
+  if (idex.Expression_Kind == An_Identifier)
+  {
+    logKind("An_Identifier");
+
+    std::string        ident{idex.Name_Image};
+
+    return NameData{ ident, ident, ctx.scope(), elem };
+  }
+
+  ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
+
+  NameData compound = getNameID(idex.Prefix, ctx);
+  NameData selected = getNameID(idex.Selector, ctx);
+
+  return NameData{ selected.ident,
+                   compound.fullName + "." + selected.fullName,
+                   ctx.scope(),
+                   selected.elem()
+                 };
 }
 
 

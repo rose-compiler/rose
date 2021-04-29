@@ -24,6 +24,7 @@
 #include "RERS_empty_specialization.h"
 #include "CodeThornLib.h"
 #include "TopologicalSort.h"
+#include "Miscellaneous2.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -690,6 +691,7 @@ set<string> CodeThorn::CTAnalysis::variableIdsToVariableNames(CodeThorn::Variabl
   return res;
 }
 
+// deprecated
 CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUnusedGlobalVariableDeclarationList(SgProject* root) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(root);
   CodeThorn::CTAnalysis::VariableDeclarationList usedGlobalVars=computeUsedGlobalVariableDeclarationList(root);
@@ -699,32 +701,20 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUnu
   return globalVars;
 }
 
-#define DO_NOT_FILTER_VARS
+// deprecated
 CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUsedGlobalVariableDeclarationList(SgProject* root) {
   if(SgProject* project=isSgProject(root)) {
     CodeThorn::CTAnalysis::VariableDeclarationList usedGlobalVariableDeclarationList;
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-#ifdef DO_NOT_FILTER_VARS
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-#endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      // do not filter
-      usedGlobalVariableDeclarationList.push_back(*i);
-#ifdef DO_NOT_FILTER_VARS
-      if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
-        usedGlobalVariableDeclarationList.push_back(*i);
-      } else {
-        filteredVars++;
-      }
-#else
       if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
         usedGlobalVariableDeclarationList.push_back(*i);
       } else {
         filteredVars++;
       }
-#endif
     }
     return usedGlobalVariableDeclarationList;
   } else {
@@ -1651,6 +1641,7 @@ EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
 // does not exist in input program and the semantics are available in
 // the analyzer (e.g. malloc, strlen, etc.))
 list<EState> CodeThorn::CTAnalysis::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
+  ROSE_ASSERT(_estateTransferFunctions);
   CallString cs=currentEState.callString;
   SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalFunctionCallArguments(funCall, currentEState);
@@ -1663,7 +1654,7 @@ list<EState> CodeThorn::CTAnalysis::evaluateFunctionCallArguments(Edge edge, SgF
   }
   PState newPState=*evalResult.estate.pstate();
   ConstraintSet cset=*evalResult.estate.constraints();
-  return elistify(createEState(edge.target(),cs,newPState,cset));
+  return _estateTransferFunctions->elistify(createEState(edge.target(),cs,newPState,cset));
 }
 
 LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {
@@ -1746,38 +1737,43 @@ list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, const EState* 
   ROSE_ASSERT(getCFAnalyzer());
   SgNode* nextNodeToAnalyze1=getCFAnalyzer()->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
+  ROSE_ASSERT(_estateTransferFunctions);
   if(edge.isType(EDGE_LOCAL)) {
-    return transferFunctionCallLocalEdge(edge,estate);
+    return _estateTransferFunctions->transferFunctionCallLocalEdge(edge,estate);
+    //return transferFunctionCallLocalEdge(edge,estate);
   } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
     // handle assert(0)
-    return elistify(createFailedAssertEState(currentEState,edge.target()));
+    return _estateTransferFunctions->elistify(createFailedAssertEState(currentEState,edge.target()));
   } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-    return transferFunctionCall(edge,estate);
+    return _estateTransferFunctions->transferFunctionCall(edge,estate);
   } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // \todo the && condition excludes constructor calls
-    return transferFunctionCallExternal(edge,estate);
+    if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
+      listener->functionCallExternal(edge,estate);
+    }
+    return _estateTransferFunctions->transferFunctionCallExternal(edge,estate);
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
-    return transferReturnStmt(edge,estate);
+    return _estateTransferFunctions->transferReturnStmt(edge,estate);
   } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
-    return transferAsmStmt(edge,estate);
+    return _estateTransferFunctions->transferAsmStmt(edge,estate);
   } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
-    return transferFunctionEntry(edge,estate);
+    return _estateTransferFunctions->transferFunctionEntry(edge,estate);
   } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
-    return transferFunctionExit(edge,estate);
+    return _estateTransferFunctions->transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
-    return transferFunctionCallReturn(edge,estate);
+    return _estateTransferFunctions->transferFunctionCallReturn(edge,estate);
   } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(nextNodeToAnalyze1)) {
-    return transferCaseOptionStmt(caseStmt,edge,estate);
+    return _estateTransferFunctions->transferCaseOptionStmt(caseStmt,edge,estate);
   } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(nextNodeToAnalyze1)) {
-    return transferDefaultOptionStmt(caseStmt,edge,estate);
+    return _estateTransferFunctions->transferDefaultOptionStmt(caseStmt,edge,estate);
   } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
-    return transferVariableDeclaration(decl,edge,estate);
+    return _estateTransferFunctions->transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
-    return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+    return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1, edge, estate);
   } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
     // GNU extension
-    return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
+    return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
   } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
     // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
@@ -1793,7 +1789,7 @@ list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, const EState* 
     // can be same state if edge is a backedge to same cfg node
     EState newEState=currentEState;
     newEState.setLabel(edge.target());
-    return elistify(newEState);
+    return _estateTransferFunctions->elistify(newEState);
   }
 }
 
@@ -1903,7 +1899,7 @@ void CodeThorn::CTAnalysis::initializeCommandLineArgumentsInState(PState& initia
 	  SAWYER_MESG(logger[TRACE])<<"INIT: Copying: @argc="<<argc<<" char: "<<_commandLineOptions[argc][j]<<endl;
 	  AbstractValue argvElemAddressWithIndexOffset;
 	  AbstractValue AbstractIndex=AbstractValue(j);
-	  argvElemAddressWithIndexOffset=argvElemAddress+AbstractIndex;
+	  argvElemAddressWithIndexOffset=AbstractValue::operatorAdd(argvElemAddress,AbstractIndex);
 	  initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(_commandLineOptions[argc][j]));
 	}
 	argc++;
@@ -1947,69 +1943,42 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   // TODO
 }
 
-void CodeThorn::CTAnalysis::initializeGlobalVariablesOld(SgProject* root, EState& estate) {
-  if(SgProject* project=isSgProject(root)) {
-    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3h1."<<endl;
-
-#if 1
-    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
-    // this will not filter any variables
-    VariableIdSet setOfUsedVars;
-#else
-    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-#endif
-
-    // START_INIT 6
-    SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver: number of variableIds:"<<getVariableIdMapping()->getNumVarIds()<<endl;
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      if(!globalVarId.isValid()) {
-        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
-        continue;
-      }
-      ROSE_ASSERT(globalVarId.isValid());
-      // TODO: investigate why array variables get filtered (but should not)
-      if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
-        if(_ctOpt.getInterProceduralFlag()) {
-          // only initialize global variable in inter-procedural mode
-          estate=analyzeVariableDeclaration(*i,estate,estate.label());
-        } else {
-          // initialize global variable to arbitrary value
-	  estate=analyzeVariableDeclaration(*i,estate,estate.label()); // currently the same
-        }
-      } else {
-        filteredVars++;
-      }
-    }
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-    if(_variablesToIgnore.size()>0)
-      SAWYER_MESG(logger[TRACE])<< "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
-  } else {
-    SAWYER_MESG(logger[TRACE])<< "INIT: no global scope.";
-  }
-}
-
 void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
   if(SgProject* project=isSgProject(root)) {
+#if 1
+    ROSE_ASSERT(getVariableIdMapping());
+    CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
+    CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    std::set<VariableId> setOfFilteredGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
+    uint32_t numFilteredVars=setOfGlobalVars.size()-setOfFilteredGlobalVars.size();
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
+      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+    }
+    std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(_ctOpt.initialStateFilterUnusedVariables)?
+      getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfFilteredGlobalVars)
+      : getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
+      ;
+    uint32_t declaredInGlobalState=0;
+    for(auto decl : relevantGlobalVariableDecls) {
+      estate=analyzeVariableDeclaration(decl,estate,estate.label());
+      declaredInGlobalState++;
+      // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
+      globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+    }
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
+      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    }
+#else
     SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
 
-#if 1
-    // do not use usedVariablesInsideFunctions(project,getVariableIdMapping()->; (on full C)
-    // this will not filter any variables
-    VariableIdSet setOfUsedVars;
-#else
     VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-#endif
-
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
+    }
     // START_INIT 6
     uint32_t filteredVars=0;
     uint32_t declaredInGlobalState=0;
@@ -2024,7 +1993,6 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
       // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
       globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
       
-      // TODO: investigate why array variables get filtered (but should not)
       if(_ctOpt.initialStateFilterUnusedVariables) {
 	if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
 	  filteredVars++;
@@ -2035,10 +2003,13 @@ void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState
       estate=analyzeVariableDeclaration(*i,estate,estate.label());
       declaredInGlobalState++;
     }
-    SAWYER_MESG(logger[INFO])<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-    SAWYER_MESG(logger[INFO])<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    if(_ctOpt.status) {
+      cout<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
+      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+    }
+#endif
   } else {
-    SAWYER_MESG(logger[INFO])<< "INIT: no global scope. Global state remains without entries.";
+    cout<< "STATUS: no global scope. Global state remains without entries.";
   }
 }
 
@@ -2790,7 +2761,6 @@ CodeThorn::CTAnalysis::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, c
 //
 // wrapper functions to follow
 //
-
 std::list<EState> CodeThorn::CTAnalysis::elistify() {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->elistify();
@@ -2799,83 +2769,6 @@ std::list<EState> CodeThorn::CTAnalysis::elistify() {
 std::list<EState> CodeThorn::CTAnalysis::elistify(EState res) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->elistify(res);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionCallLocalEdge(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferFunctionCallLocalEdge(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionCall(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferFunctionCall(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferReturnStmt(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferReturnStmt(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferAsmStmt(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferAsmStmt(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionCallReturn(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferFunctionCallReturn(edge,estate);
-}
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionEntry(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferFunctionEntry(edge,estate);
-}
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionExit(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferFunctionExit(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferFunctionCallExternal(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  ROSE_ASSERT(getExprAnalyzer());
-  if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
-    listener->functionCallExternal(edge,estate);
-  }
-  return _estateTransferFunctions->transferFunctionCallExternal(edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferDefaultOptionStmt(defaultStmt,edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferCaseOptionStmt(caseStmt,edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferVariableDeclaration(decl,edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1,edge,estate);
-}
-
-std::list<EState> CodeThorn::CTAnalysis::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1,edge,estate);
-}
-
-list<EState> CodeThorn::CTAnalysis::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferIncDecOp(nextNodeToAnalyze2,edge,estate);
-}
-
-list<EState> CodeThorn::CTAnalysis::transferIdentity(Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferIdentity(edge,estate);
 }
 
 std::list<EState> CodeThorn::CTAnalysis::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {

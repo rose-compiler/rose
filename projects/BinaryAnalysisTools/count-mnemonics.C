@@ -1,6 +1,7 @@
 #include <rose.h>
 
 #include <Partitioner2/Engine.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -59,6 +60,7 @@ baseMnemonic(SgAsmInstruction *insn_) {
 	case ARM_CC_AL:
             return s;
     }
+    ASSERT_not_reachable("unhandled insn condition: " + boost::lexical_cast<std::string>(insn->get_condition()));
 #else
     return s;
 #endif

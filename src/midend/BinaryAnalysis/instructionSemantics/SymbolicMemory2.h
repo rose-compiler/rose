@@ -65,9 +65,7 @@ public:
     /** @} */
 
 public:
-    virtual bool
-    merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-          BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
     virtual void clear() ROSE_OVERRIDE;
 
@@ -81,6 +79,8 @@ public:
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
 public:
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
+
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 };
     

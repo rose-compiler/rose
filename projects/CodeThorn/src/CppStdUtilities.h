@@ -66,6 +66,10 @@ namespace CppStdUtilities {
     }
     output << std::endl;
   }
+
+  // compares two strings case-insensitively (useful as comparison function when sorting strings)
+  bool compareCaseInsensitively (const std::string& first, const std::string& second);
+
 }
 
 #endif

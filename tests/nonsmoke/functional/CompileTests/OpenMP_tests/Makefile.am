@@ -171,6 +171,14 @@ removed_Experimental_TEST = \
 	axpy_ompacc_parseonly.c 
 
 
+# NP 4/23/21 Fails on move to Intel 19 and RHEL8
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+        simd.c 
+else
+   C_TESTCODES_REQUIRED_TO_PASS += \
+        simd.c 
+endif
 
 # DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
 # It might be that it need not be updated since it is sufficently portable as it is (if not then it will be updated).

@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn memthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn memthorn thorn1 parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -559,6 +559,43 @@ memthorn_SOURCES = \
   MemThornCommandLineOptions.C \
   memthorn.C
 
+
+##############################################################
+# TOOL: THORN1
+##############################################################
+
+# yacc flags for LTL parser
+thorn1_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+thorn1_CXXFLAGS = -fopenmp -Wall -O3 
+
+# thorn1 has most of its code organized in two separate libraries
+thorn1_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+thorn1_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+thorn1dir=.
+
+# only informative
+thorn1_xHEADERS = \
+  CommandLineOptions.h \
+  Thorn1CommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+thorn1_SOURCES = \
+  LTLParser.y++ \
+  Thorn1CommandLineOptions.C \
+  thorn1.C
+
 ##############################################################
 # TOOL: WOODPECKER
 ##############################################################
@@ -826,7 +863,7 @@ check-ltl-rers-loop-aware-sync:
 
 #run CEGPRA tests
 check-ltl-cegpra:
-	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 # not used
 check-arrays:
@@ -862,9 +899,11 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
-check-vis:
+check-vis0:
 	./codethorn --solver=16 --abstraction-mode=1 $(srcdir)/tests/DOM200_pointers_merge.C --context-sensitive --normalize-all --vis --exploration-mode=topologic-sort --tg1-estate-memory-subgraphs --pointer-sets && dot -Tpdf transitiongraph1.dot -otg1.pdf && dot -Tpdf transitiongraph2.dot -otg2.pdf && dot -Tpdf cfg.dot -ocfg.pdf
 
+check-vis:
+	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
 
 # MS: 1-6 is reasonable for V1.2

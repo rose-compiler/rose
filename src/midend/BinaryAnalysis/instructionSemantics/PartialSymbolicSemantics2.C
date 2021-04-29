@@ -64,6 +64,14 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &s
 }
 
 void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    hasher.insert(nBits());
+    hasher.insert(name);
+    hasher.insert(offset);
+    hasher.insert(negate);
+}
+
+void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
     FormatRestorer restorer(stream); // restore format flags when we leave this scope

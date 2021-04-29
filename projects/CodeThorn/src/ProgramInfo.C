@@ -11,13 +11,22 @@ using namespace CodeThorn;
 using namespace std;
 
 ProgramInfo::ProgramInfo(ProgramAbstractionLayer* pal) {
-  root=pal->getRoot();
+  _root=pal->getRoot();
   _programAbstractionLayer=pal;
+  _variableIdMapping=pal->getVariableIdMapping();
   initCount();
 }
 
+/*
 ProgramInfo::ProgramInfo(SgProject* root) {
-  this->root=root;
+  this->_root=root;
+  initCount();
+}
+*/
+
+ProgramInfo::ProgramInfo(SgProject* root, VariableIdMappingExtended* vim) {
+  this->_root=root;
+  this->_variableIdMapping=vim;
   initCount();
 }
 
@@ -43,8 +52,9 @@ void ProgramInfo::initCount() {
 }
 
 void ProgramInfo::compute() {
-  ROSE_ASSERT(root);
-  RoseAst ast(root);
+  ROSE_ASSERT(_root);
+  RoseAst ast(_root);
+  ROSE_ASSERT(_variableIdMapping);
   _validData=true;
   for (auto node : ast) {
     if(auto funDef=isSgFunctionDefinition(node)) {
@@ -52,7 +62,7 @@ void ProgramInfo::compute() {
       std::set<SgVariableDeclaration*> localVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       count[numLocalVars]+=localVarDecls.size();
     } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
-      if(FunctionCallMapping::isFunctionPointerCall(fc)) {
+      if(FunctionCallMapping::isAstFunctionPointerCall(fc)) {
 	count[numFunPtrCall]++;
 	_functionPtrCallNodes.push_back(fc);
       } else {
@@ -81,8 +91,18 @@ void ProgramInfo::compute() {
       count[numArrayAccess]++;
     }
   }
-  if(SgProject* proj=isSgProject(root)) {
+  if(SgProject* proj=isSgProject(_root)) {
     std::list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(proj);
+#if 0
+    int i=0;
+    for(auto varDecl : globalVars) {
+      SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      cout<<"DEBUG: Decl: "<<i++<<": ";
+      cout<<SgNodeHelper::sourceFilenameLineColumnToString(initName);
+      cout<<" : "<<initName->unparseToString();
+      cout<<endl;
+    }
+#endif
     count[numGlobalVars]=globalVars.size();
   }
 }

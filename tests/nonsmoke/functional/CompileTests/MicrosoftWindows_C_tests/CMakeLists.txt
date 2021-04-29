@@ -27,7 +27,7 @@ set(files_to_test
 set(disabled_tests test2013_95.c)
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} MSCTEST)
 endforeach()
 
 list(APPEND ROSE_FLAGS

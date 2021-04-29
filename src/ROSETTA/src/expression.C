@@ -231,6 +231,10 @@ Grammar::setUpExpressions ()
   // DQ (12/13/2005): Added support for empty expression (and empty statement).
      NEW_TERMINAL_MACRO (NullExpression,         "NullExpression",             "NULL_EXPR" );
 
+  // PP (04/24/21): Adding explicit support for Ada others expressions
+     NEW_TERMINAL_MACRO (AdaOthersExp,           "AdaOthersExp",               "ADA_OTHERS_EXPR" );
+
+
   // DQ (12/13/2005): Added variant expression to support future patterns
   // specifications (contains RegEx string specifier for SgStatement IR node).
      NEW_TERMINAL_MACRO (VariantExpression,      "VariantExpression",          "VARIANT_EXPR" );
@@ -346,8 +350,11 @@ Grammar::setUpExpressions ()
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
-  // CR (06/24/2020) An initializer for Jovial tables containing two kinds of lists
+  // Rasmussen (06/24/2020) Initializer for Jovial tables (wraps SgExprListExp, useful for unparsing/analysis)
      NEW_TERMINAL_MACRO (JovialTablePresetExp, "JovialTablePresetExp", "JOVIAL_TABLE_PRESET_EXP" );
+
+  // Rasmussen (04/09/2021) Used for specifying a value at a position/location in a Jovial table
+     NEW_TERMINAL_MACRO (JovialPresetPositionExp, "JovialPresetPositionExp", "JOVIAL_PRESET_POSITION_EXP" );
 
      //SK (06/23/2015) SgMatrixExp for Matlab Matrix
      NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
@@ -468,7 +475,7 @@ Grammar::setUpExpressions ()
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
           AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
-          JovialTablePresetExp, "Expression", "ExpressionTag", false);
+          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -889,6 +896,7 @@ Grammar::setUpExpressions ()
 
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     AdaOthersExp.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      StatementExpression.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1092,6 +1100,7 @@ Grammar::setUpExpressions ()
      VarArgCopyOp.editSubstitute    ( "PRECEDENCE_VALUE", "16" );
 
      NullExpression.editSubstitute    ( "PRECEDENCE_VALUE", "16" );
+     AdaOthersExp.editSubstitute      ( "PRECEDENCE_VALUE", "16" );
      VariantExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (7/21/2006): Added support for GNU statement expression extension.
@@ -2652,6 +2661,9 @@ Grammar::setUpExpressions ()
      NullExpression.setFunctionPrototype    ( "HEADER_NULL_EXPRESSION", "../Grammar/Expression.code" );
   // NullExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
   //                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaOthersExp.setFunctionPrototype    ( "HEADER_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
+
      VariantExpression.setFunctionPrototype ( "HEADER_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
   // VariantExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
   //                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2870,10 +2882,14 @@ Grammar::setUpExpressions ()
   // DesignatedInitializer.setDataPrototype("SgExpression*" , "designator", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // CR (6/24/2020): An initializer for Jovial tables
+  // Rasmussen (6/24/2020): An initializer for Jovial tables
      JovialTablePresetExp.setFunctionPrototype ( "HEADER_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
-     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "default_sublist", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "specified_sublist", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "preset_list", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (4/9/2021): Used in Jovial table initialization.
+     JovialPresetPositionExp.setFunctionPrototype ("HEADER_JOVIAL_PRESET_POSITION_EXP", "../Grammar/Expression.code");
+     JovialPresetPositionExp.setDataPrototype("SgExprListExp*", "indices", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JovialPresetPositionExp.setDataPrototype("SgExpression*", "value", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
  // TV (04/22/2010): CUDA support
      CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
@@ -3247,6 +3263,7 @@ Grammar::setUpExpressions ()
      DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
 
      JovialTablePresetExp.setFunctionSource ( "SOURCE_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
+     JovialPresetPositionExp.setFunctionSource ( "SOURCE_JOVIAL_PRESET_POSITION_EXP", "../Grammar/Expression.code" );
 
      //FMZ (2/6/2009): Added for CoArray Reference
      CAFCoExpression.setFunctionSource ( "SOURCE_CO_EXPRESSION", "../Grammar/Expression.code" );
@@ -3449,6 +3466,10 @@ Grammar::setUpExpressions ()
   // NullExpression.setFunctionSource    ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
      NullExpression.setFunctionSource    ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
      NullExpression.editSubstitute       ( "GENERIC_TYPE", "SgTypeDefault" );
+
+     AdaOthersExp.setFunctionSource      ( "SOURCE_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
+     AdaOthersExp.setFunctionSource      ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
+     AdaOthersExp.editSubstitute         ( "GENERIC_TYPE", "SgTypeDefault" );
 
      VariantExpression.setFunctionSource ( "SOURCE_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
   // VariantExpression.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE", "../Grammar/Expression.code" );

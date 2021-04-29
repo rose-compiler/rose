@@ -380,16 +380,18 @@ set(ROSE_FLAGS -rose:verbose 0 -rose:skip_syntax_check
 
 foreach(file_to_test ${F90_TESTCODES_REQUIRED_TO_PASS})
   add_test(
-    NAME ${file_to_test}
+    NAME GFORTRANSUITE_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} -rose:f90 -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(GFORTRANSUITE_${file_to_test} PROPERTIES LABELS GFORTRANSUITE)
 endforeach()
 
 foreach(file_to_test ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS})
   add_test(
-    NAME ${file_to_test}
+    NAME GFORTRANSUITE_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} -rose:f77 -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(GFORTRANSUITE_${file_to_test} PROPERTIES LABELS GFORTRANSUITE)
 endforeach()
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
@@ -399,9 +401,10 @@ endforeach()
 #       on versions of gfortran 4.2 and 4.3.
 foreach(file_to_test ${F03_TESTCODES_REQUIRED_TO_PASS})
   add_test(
-    NAME ${file_to_test}
+    NAME GFORTRANSUITE_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} -rose:skip_syntax_check
             -rose:skipfinalCompileStep -rose:f2003 -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(GFORTRANSUITE_${file_to_test} PROPERTIES LABELS GFORTRANSUITE)
 endforeach()
 

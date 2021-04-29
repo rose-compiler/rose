@@ -76,6 +76,13 @@ SValue::SValue(const SValue &other): BaseSemantics::SValue(other) {
 }
 
 void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    hasher.insert(nBits());
+    hasher.insert(nVariables_);
+    hasher.insert(ctext_);
+}
+
+void
 SValue::print(std::ostream &out, BaseSemantics::Formatter &fmt) const {
     out <<ctext_;
 }

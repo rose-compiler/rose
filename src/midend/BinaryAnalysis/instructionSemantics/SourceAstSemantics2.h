@@ -137,6 +137,14 @@ public:
     }
 
 public:
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual void hash(Combinatorics::Hasher&) const override;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+public:
     // These are not needed since this domain never tries to compare semantic values.
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
@@ -152,10 +160,6 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
 
-    virtual bool isBottom() const ROSE_OVERRIDE {
-        return false;
-    }
-    
     virtual bool is_number() const ROSE_OVERRIDE {
         return false;
     }
@@ -163,8 +167,6 @@ public:
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
     }
-
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 
 public:
     /** Name of integer type used for value.

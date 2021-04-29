@@ -18,8 +18,10 @@
 
 #ifndef ROSE_ABORT
     #ifdef NDEBUG
+        #include <stdlib.h>
         #define ROSE_ABORT() abort()
     #else
+        #include <assert.h>
         #define ROSE_ABORT() assert(false)
     #endif
 #endif

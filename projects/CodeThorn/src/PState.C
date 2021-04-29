@@ -77,6 +77,10 @@ std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const 
   return ss.str();
 }
 
+std::string PState::memoryValueToDotString(AbstractValue av,VariableIdMapping* variableIdMapping) const {
+  return ":"+av.toString(variableIdMapping);
+}
+
 string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   for(PState::const_iterator j=begin();j!=end();++j) {
@@ -86,7 +90,14 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
     if(v2.isPtr()) {
       // nodes
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<v2.toString(variableIdMapping);
+      if(memLocExists(v2)) {
+	AbstractValue memVal=readFromMemoryLocation(v2);
+	ss<<memoryValueToDotString(memVal,variableIdMapping);
+      } else {
+	ss<<":???";
+      }
+      ss<<"\"];"<<endl;
       //endl; // target label intentionally not generated
       // edge
       ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
@@ -98,7 +109,15 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
       ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
       AbstractValueSet* avTargetSet=(*j).second.getAbstractValueSet();
       for(auto av : *avTargetSet) {
-        ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping)<<"\"];"<<endl;
+	AbstractValue memVal;
+	ss<<"\""<<dotNodeIdString(prefix,av)<<"\""<< " [label=\""<<av.toString(variableIdMapping);
+	if(memLocExists(av)) {
+	  memVal=readFromMemoryLocation(av);
+	  ss<<memoryValueToDotString(memVal,variableIdMapping);
+	} else {
+	  ss<<":???";
+	}
+	ss<<"\"];"<<endl;
       }
       //endl; // target label intentionally not generated
       // edge
@@ -109,7 +128,7 @@ string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapp
         ss<<";"<<endl;
       }
     } else {
-      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<memoryValueToDotString((*j).second,variableIdMapping)<<"\"];"<<endl;
     }
   }  
   return ss.str();
@@ -407,6 +426,17 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
   return this->varValue(abstractMemLoc);
 }
 
+void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc,
+							    AbstractValue abstractValue,
+							    bool strongUpdate) {
+  bool weakUpdate=!strongUpdate;
+  if(isApproximateMemRegion(memLoc.getVariableId())||weakUpdate) {
+    combineAtMemoryLocation(memLoc,abstractValue);
+  } else {
+    rawWriteAtAbstractAddress(memLoc,abstractValue);
+  }
+}
+
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
                                    AbstractValue abstractValue,
                                    bool strongUpdate) {
@@ -421,7 +451,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     //cout<<"DEBUG: ptr set recursion."<<endl;
     AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
     for (auto av : avSet) {
-      writeToMemoryLocation(av,abstractValue,false);
+      writeToMemoryLocation(av,abstractValue,false /*weak update*/);
     }
     return;
   } else {
@@ -453,33 +483,18 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
               AbstractValue change=AbstractValue(inStateElemSize);
               abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
               // TODO: check for memory bound
-              rawWriteAtAbstractAddress(abstractMemLoc,AbstractValue::createTop());
+	      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,AbstractValue::createTop(),strongUpdate);
             }
           }
         } else {
-          rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // should not happen (elemsize=0)
+          conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate); // should not happen (elemsize=0)
         }
       } else {
-        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // elem size is the same, keeping precision
+	// elem size is the same, keeping precision
+      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
       }
     } else {
-      // not in byte mode
-      if(abstractMemLoc.isPtrSet()) {
-        AbstractValueSet& set=*abstractMemLoc.getAbstractValueSet();
-        bool moreThanOneElement=set.size()>1;
-        for(auto memLoc : set) {
-          if(moreThanOneElement) {
-            //cout<<"DEBUG: COMBINE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
-            combineAtMemoryLocation(memLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
-          } else {
-            // strong update. TODO: local vars in recursive functions (must be marked as such)
-            //cout<<"DEBUG: WRITE SET ELEM AT: :"<<memLoc.toString(AbstractValue::_variableIdMapping)<<":"<<abstractValue.toString(AbstractValue::_variableIdMapping)<<endl;
-            rawWriteAtAbstractAddress(memLoc,abstractValue);
-          }
-        }
-      } else {
-        rawWriteAtAbstractAddress(abstractMemLoc,abstractValue); // not in bytemode (cannot handle unaligend access)
-      }
+      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
     }
   }
 }

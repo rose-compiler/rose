@@ -1,27 +1,28 @@
-#include "sage3basic.h"                                 // only because some header files need it
+#include <sage3basic.h>                                 // only because some header files need it
 
-#include "Sawyer/Assert.h"
-#include "Sawyer/ProgressBar.h"
+#include <Sawyer/Assert.h>
+#include <Sawyer/ProgressBar.h>
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
-#include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
-#include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
-#include "Concolic/BasicTypes.h"                        // Rose::BinaryAnalysis::Concolic
-#include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
-#include "BinaryDebugger.h"                             // Rose::BinaryAnalysis::Debugger
-#include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
-#include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
-#include "BinaryHotPatch.h"                             // Rose::BinaryAnalysis::HotPatch
-#include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
-#include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
-#include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
-#include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
-#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
-#include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
-#include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
-#include "BinaryVxcoreParser.h"                         // Rose::BinaryAnalysis::VxcoreParser
-#include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
+#include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
+#include <BinaryBestMapAddress.h>                       // Rose::BinaryAnalysis::BestMapAddress
+#include <BinaryCodeInserter.h>                         // Rose::BinaryAnalysis::CodeInserter
+#include <Concolic/BasicTypes.h>                        // Rose::BinaryAnalysis::Concolic
+#include <BinaryAnalysis/ModelChecker/Types.h>
+#include <BinaryDataFlow.h>                             // Rose::BinaryAnalysis::DataFlow
+#include <BinaryDebugger.h>                             // Rose::BinaryAnalysis::Debugger
+#include <BinaryFeasiblePath.h>                         // Rose::BinaryAnalysis::FeasiblePath
+#include <BinaryFunctionSimilarity.h>                   // Rose::BinaryAnalysis::FunctionSimilarity
+#include <BinaryHotPatch.h>                             // Rose::BinaryAnalysis::HotPatch
+#include <BinaryLoader.h>                               // Rose::BinaryAnalysis::BinaryLoader
+#include <BinaryNoOperation.h>                          // Rose::BinaryAnalysis::NoOperation
+#include <BinaryReachability.h>                         // Rose::BinaryAnalysis::Reachability
+#include <BinarySmtSolver.h>                            // Rose::BinaryAnalysis::SmtSolver
+#include <BinarySymbolicExprParser.h>                   // Rose::BinaryAnalysis::SymbolicExprParser
+#include <BinaryTaintedFlow.h>                          // Rose::BinaryAnalysis::TaintedFlow
+#include <BinaryToSource.h>                             // Rose::BinaryAnalysis::BinaryToSource
+#include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
+#include <Disassembler.h>                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -138,6 +139,7 @@ void initialize() {
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::HotPatch::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::ModelChecker::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
 #if __cplusplus >= 201103L

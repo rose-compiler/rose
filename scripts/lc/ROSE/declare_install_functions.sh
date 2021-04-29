@@ -29,6 +29,7 @@
 #   make_docs
 #   print_rose_vars
 #   _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
+#   _set_ROSE_COMPILER_VERSIONED_STD
 #   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
 #   set_ROSE_LATEST_INSTALL_VERSION
 #   set_ROSE_LATEST_WORKSPACE_VERSION
@@ -37,7 +38,6 @@
 #   setup_boost
 #   setup_boost_rose
 #   setup_boost_tce
-#   _setup_compiler_common
 #   setup_gcc_compiler
 #   setup_gcc_compiler_base
 #   setup_gcc_compiler_with_ada
@@ -352,19 +352,7 @@ use_latest_existing_install () {
   use_existing_workspace ${ROSE_LATEST_INSTALL_VERSION}
 }
 
-# Uses:
-#   ROSE_INSTALL_PATH
-# Sets:
-#   ROSE_HOME
-#   ROSE_LD_LIBRARY_PATH
-set_ROSE_HOME_ROSE_LD_LIBRARY_PATH () {
-  export ROSE_HOME=${ROSE_INSTALL_PATH}
-  export ROSE_LD_LIBRARY_PATH=\
-"${ROSE_HOME}/src/.libs":\
-"${ROSE_HOME}/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
-}
-
-# Parmater:
+# Parameter:
 #   Rose version
 # Sets:
 #   COMMON_BUILD_BASE
@@ -394,16 +382,21 @@ _use_latest_rose_begin () {
 
 # Uses:
 #   ROSE_COMPDB_SCRIPT_DIR
-#   ROSE_INSTALL_PATH
+#   ROSE_COMPILER_SUFFIX
 # Sets:
 #   COMP_DB_MAP
 #   RENDER_TEXT
 #   ROSE_HOME
+#   ROSE_BUILD_PATH
+#   ROSE_INSTALL_PATH
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_TOOL
 _use_rose_end () {
-  set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
-
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
+  export ROSE_HOME=${ROSE_INSTALL_PATH}
+  export ROSE_LD_LIBRARY_PATH=\
+"${ROSE_HOME}/src/.libs":\
+"${ROSE_HOME}/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
   # Used by test_this_build.sh:
   export COMP_DB_MAP="${ROSE_COMPDB_SCRIPT_DIR}/comp_db_map.py"
   export RENDER_TEXT="${ROSE_COMPDB_SCRIPT_DIR}/render_text.py"
@@ -513,10 +506,19 @@ do_preconfigure () {
 #================================================
 # FOR all C++ compilers
 #================================================
+# Uses:
+#   ROSE_COMPILER
+#   ROSE_COMPILER_VERSION
 # Sets:
+#   ROSE_COMPILER_CXX_STD
 #   ROSE_COMPILER_CXX_STD_FLAG
-_setup_compiler_common () {
-  export ROSE_COMPILER_CXX_STD_FLAG="-std=c++11"
+#   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
+_set_ROSE_COMPILER_VERSIONED_STD () {
+  export ROSE_COMPILER_CXX_STD="c++11"
+  export ROSE_COMPILER_CXX_STD_FLAG="-std=${ROSE_COMPILER_CXX_STD}"
+  export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
+  export ROSE_COMPILER_VERSIONED_STD="${ROSE_COMPILER_VERSIONED}-${ROSE_COMPILER_CXX_STD}"
 }
 
 #================================================
@@ -535,9 +537,12 @@ _setup_compiler_common () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_PATH
 #   ROSE_INTEL_GCC_COMPILER_VERSION
 setup_intel_compiler () {
@@ -565,9 +570,12 @@ setup_intel_compiler () {
 #   ROSE_BOOST_VERSION
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_PATH
 #   ROSE_INTEL_GCC_COMPILER_VERSION
 setup_intel_19_0_4_compiler () {
@@ -604,14 +612,19 @@ setup_intel_19_0_4_compiler () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
 #   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_PATH
+#   ROSE_NON_MPI_COMPILER_HOME
+#   COMPILERVARS_ARCHITECTURE
+#   COMPILERVARS_PLATFORM
 _setup_intel_compiler_common () {
-  _setup_compiler_common
   export ROSE_COMPILER="intel"
-  export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
+  # Intel compiler version should have been set by our caller:
+  _set_ROSE_COMPILER_VERSIONED_STD
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_MPI_KIND}/${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
   export  CC="${ROSE_COMPILER_HOME}/bin/mpicc"
   export CXX="${ROSE_COMPILER_HOME}/bin/mpic++"
@@ -638,10 +651,7 @@ _setup_intel_compiler_common () {
   module load gcc/${ROSE_INTEL_GCC_COMPILER_VERSION}
   pop_set_state
   #---------------------------------------
-
-  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED}.mpi-${_rose_backend_compiler_versioned}.mpi"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
+  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED}.mpi-${_rose_backend_compiler_versioned}.mpi"
 }
 #=====================================
 
@@ -660,16 +670,17 @@ _setup_intel_compiler_common () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
 #   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
 #   ROSE_INSTALL_PATH
 setup_intel_18_0_2_compiler_non_mpi () {
-  _setup_compiler_common
   export ROSE_COMPILER="intel"
   export ROSE_COMPILER_VERSION="18.0.2"
-  export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
+  _set_ROSE_COMPILER_VERSIONED_STD
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
   export  CC="${ROSE_COMPILER_HOME}/bin/icc"
   export CXX="${ROSE_COMPILER_HOME}/bin/icpc"
@@ -698,9 +709,7 @@ setup_intel_18_0_2_compiler_non_mpi () {
   pop_set_state
   #---------------------------------------
 
-  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED}-${_rose_backend_compiler_versioned}"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"
+  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED}-${_rose_backend_compiler_versioned}"
 }
 #=====================================
 
@@ -714,17 +723,17 @@ setup_intel_18_0_2_compiler_non_mpi () {
 #   ROSE_BACKEND_COMPILER_HOME
 #   ROSE_BACKEND_CXX
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
 #   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
+#   ROSE_COMPILER_VERSIONED_STD
 setup_gcc_compiler_base () {
-  _setup_compiler_common
   export ROSE_COMPILER="gcc"
 #  export ROSE_COMPILER_VERSION="6.1.0"
   export ROSE_COMPILER_VERSION="4.9.3"
-  export ROSE_COMPILER_VERSIONED="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}"
-  export ROSE_COMPILER_VERSIONED_STD="${ROSE_COMPILER}-${ROSE_COMPILER_VERSION}-${ROSE_COMPILER_CXX_STD}"
+  _set_ROSE_COMPILER_VERSIONED_STD
   export ROSE_COMPILER_HOME="/usr/tce/packages/${ROSE_COMPILER}/${ROSE_COMPILER_VERSIONED}"
   export  CC="${ROSE_COMPILER_HOME}/bin/cc"
   export CXX="${ROSE_COMPILER_HOME}/bin/c++"
@@ -758,31 +767,27 @@ _setup_jvm_library_path () {
   fi
 }
 
-# Sets the build and install paths, which have a common last path segment of:
+# Helps set the build and install paths, which have a common last path segment of:
 # rose-<branch>-<version>-<rose compiler>[-<target compiler>]
 # e.g.
 # rose-master-0.11.18.1-gcc-4.9.3-c++11
 # rose-master-0.11.18.1-intel-19.0.4.mpi-intel-19.0.4.mpi
 # 
-# If <workspace name> is not specified, it is: rose-<branch>-<version>
-# where <branch> is the git branch, without "/"
-# and <version> is the content of ./ROSE_VERSION
-#
-# This is a separate routine to reduce code duplication below:
-# Parameters:
-#   1: (optional) path suffix: -ada, -binary , -c-cxx, -fortran, -gprof, etc.
+# ROSE_COMPILER_SUFFIX is set separately in setup_gcc_compiler* and
+# setup_intel_compiler*.  Those do not use ROSE_REPO_NAME because it is not 
+# set if there is no rose build or rose use going on, e.g. build boost.
+# 
 # Uses:
 #   ROSE_BUILD_BASE
+#   ROSE_COMPILER_SUFFIX
 #   ROSE_INSTALL_BASE
 #   ROSE_REPO_NAME
 # Sets:
 #   ROSE_BUILD_PATH
 #   ROSE_INSTALL_PATH
 _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH () {
-  # No "-" before the parameter so empty parameter doesn't give a trailing "-":
-  _dir_name="${ROSE_REPO_NAME}-${ROSE_COMPILER_VERSIONED_STD}$1"
-  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${_dir_name}"
-  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${_dir_name}"  
+  export ROSE_BUILD_PATH="${ROSE_BUILD_BASE}/${ROSE_REPO_NAME}-${ROSE_COMPILER_SUFFIX}"
+  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE}/${ROSE_REPO_NAME}-${ROSE_COMPILER_SUFFIX}"  
 }
 
 # Uses:
@@ -797,14 +802,17 @@ _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH () {
 #   ROSE_BACKEND_CXX
 #   ROSE_BUILD_PATH
 #   ROSE_COMPILER
+#   ROSE_COMPILER_CXX_STD
+#   ROSE_COMPILER_CXX_STD_FLAG
 #   ROSE_COMPILER_HOME
+#   ROSE_COMPILER_SUFFIX
 #   ROSE_COMPILER_VERSION
 #   ROSE_COMPILER_VERSIONED
-#   ROSE_INSTALL_PATH
+#   ROSE_COMPILER_VERSIONED_STD
 setup_gcc_compiler () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH ""
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}"
 }
 
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
@@ -813,7 +821,7 @@ setup_gcc_compiler () {
 #   PATH
 setup_gcc_compiler_with_ada () {
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-ada"
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}-ada"
   # To get gprbuild etc.:
   # Be sure we use the right gcc and the right gnat.  There is a gcc we don't 
   # want in the gnat bin directory.  There is a gnat we don't want already in 
@@ -828,28 +836,28 @@ setup_gcc_compiler_with_ada () {
 setup_gcc_compiler_with_binary_analysis () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-binary"
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}-binary"
 }
 
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_c_cxx () {
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-c-cxx"
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}-c-cxx"
 }
 
 # Uses and Sets are same as setup_gcc_compiler:
 setup_gcc_compiler_with_fortran () {
   _setup_jvm_library_path
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-fortran"
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}-fortran"
 }
 
 # Uses and Sets are same as setup_gcc_compiler, but does not set:
 #   LD_LIBRARY_PATH
 setup_gcc_compiler_with_profiling () {
   setup_gcc_compiler_base
-  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH "-gprof"
+  export  ROSE_COMPILER_SUFFIX="${ROSE_COMPILER_VERSIONED_STD}-gprof"
 }
 
 #======================================
@@ -867,7 +875,7 @@ setup_boost_tce () {
   export ROSE_BOOST_HOME="/usr/tce/packages/boost/boost-${ROSE_BOOST_VERSION}-${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
 }
 
-# Run after setup_xxx_compiler, instead of use_tce_boost:
+# Run after setup_xxx_compiler, instead of setup_boost_tce:
 # Builds with -std=c++11
 # Uses:
 #   ROSE_BOOST_VERSION
@@ -875,17 +883,19 @@ setup_boost_tce () {
 #   ROSE_INSTALL_BASE
 # Sets:
 #   ROSE_BOOST_HOME
+#   ROSE_BOOST_ROOT
 #   ROSE_BOOST_VERSION_UNDERSCORES
-#   ROSE_BOOST_VERSIONED
+#   ROSE_BOOST_BUILD_INSTALL_DIR
 setup_boost_rose () {
   # Take out dots:
   export ROSE_BOOST_VERSION_UNDERSCORES=$(echo ${ROSE_BOOST_VERSION} | tr '.' '_')
-  export ROSE_BOOST_VERSIONED=boost_${ROSE_BOOST_VERSION_UNDERSCORES}
-  export ROSE_BOOST_HOME="${ROSE_INSTALL_BASE}/${ROSE_BOOST_VERSIONED}-${ROSE_COMPILER_VERSIONED_STD}"
+  export ROSE_BOOST_ROOT="boost_${ROSE_BOOST_VERSION_UNDERSCORES}"
+  export ROSE_BOOST_BUILD_INSTALL_DIR="${ROSE_BOOST_ROOT}-${ROSE_COMPILER_VERSIONED_STD}"
+  export ROSE_BOOST_HOME="${ROSE_INSTALL_BASE}/${ROSE_BOOST_BUILD_INSTALL_DIR}"
 }
 
 setup_boost () {
-  setup_boost_tce
+  setup_boost_rose
 }
 
 # Run after setup_xxx_compiler, instead of use_tce_boost:
@@ -893,6 +903,8 @@ setup_boost () {
 # Uses:
 #   CC
 #   CXX
+#   ROSE_BOOST_BUILD_INSTALL_DIR
+#   ROSE_BOOST_ROOT
 #   ROSE_BOOST_VERSION
 #   ROSE_BUILD_BASE
 #   ROSE_COMPILER_CXX_STD_FLAG
@@ -903,26 +915,27 @@ setup_boost () {
 # Sets:
 #   ROSE_BOOST_HOME
 #   ROSE_BOOST_VERSION_UNDERSCORES
-#   ROSE_BOOST_VERSIONED
 build_boost_rose () {
-  run_or_not cd ${ROSE_BUILD_BASE}
   setup_boost_rose
   # Using export below for ease of printing these local variables.  "set" shows 
   # unexported variables but shows function bodies too.
   # "env" only shows exported variables.
-  export boost_sourceforge_dir=${ROSE_BOOST_VERSIONED}
-  export boost_bzip_file=${boost_sourceforge_dir}.tar.bz2
-  export boost_build_path="${ROSE_BUILD_BASE}/${ROSE_BOOST_VERSIONED}"
+  export boost_bzip_file=${ROSE_BOOST_ROOT}.tar.bz2
+  export boost_untar_path="${ROSE_BUILD_BASE}/${ROSE_BOOST_ROOT}"
+  export boost_build_path="${ROSE_BUILD_BASE}/${ROSE_BOOST_BUILD_INSTALL_DIR}"
   export boost_install_path="${ROSE_BOOST_HOME}"
   log_separator_1
-  env | grep boost_
+  env | grep '^ROSE_BOOST_'
+  env | grep '^boost_'
   log_separator_1
 
+  run_or_not cd ${ROSE_BUILD_BASE}
   run_or_not log_then_run wget -nv https://sourceforge.net/projects/boost/files/boost/${ROSE_BOOST_VERSION}/${boost_bzip_file}/download -O ${boost_bzip_file}
   run_or_not log_then_run ${SRUN_DO} tar jxf ${boost_bzip_file}
   run_or_not rm -f ${boost_bzip_file}
-  run_or_not cd ${boost_build_path}
+  run_or_not mv ${boost_untar_path} ${boost_build_path}
 
+  run_or_not cd ${boost_build_path}
   run_or_not ${SRUN_DO} \
   ${RUN_AND_LOG} \
   ./bootstrap.sh --prefix=${boost_install_path} --with-libraries=all 
@@ -938,13 +951,16 @@ build_boost_rose () {
 #   LD_LIBRARY_PATH
 #   ROSE_BACKEND_COMPILER_HOME
 #   ROSE_BOOST_HOME
-#   ROSE_BUILD_PATH
 #   ROSE_COMPILER_CXX_STD_FLAG
-#   ROSE_INSTALL_PATH
+#   ROSE_COMPILER_SUFFIX
 #   ROSE_REPO_PATH
 #   RUN_AND_LOG
 #   SRUN_DO
+# Sets:
+#   ROSE_BUILD_PATH
+#   ROSE_INSTALL_PATH
 do_intel_configure () {
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
   run_or_not cd ${ROSE_BUILD_PATH}
   echo "------------------------"
@@ -992,15 +1008,18 @@ do_intel_configure () {
 #===============================================
 # Uses:
 #   ROSE_BOOST_HOME
-#   ROSE_BUILD_PATH
 #   ROSE_COMPILER
 #   ROSE_COMPILER_CXX_STD_FLAG
+#   ROSE_COMPILER_SUFFIX
 #   ROSE_COMPILER_VERSION
-#   ROSE_INSTALL_PATH
 #   ROSE_REPO_PATH
 #   RUN_AND_LOG
 #   SRUN_DO
+# Sets:
+#   ROSE_BUILD_PATH
+#   ROSE_INSTALL_PATH
 _do_gcc_configure_common () {
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
   # Optional parameters are added to the end of the configure parameters.
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
   run_or_not cd ${ROSE_BUILD_PATH}
@@ -1022,6 +1041,7 @@ _do_gcc_configure_common () {
 }
 
 # Enables C, CXX, Fortran, and Binary Analysis:
+# Same Uses and Sets as _do_gcc_configure_common
 do_gcc_configure () {
   _do_gcc_configure_common \
   --enable-c \
@@ -1031,6 +1051,7 @@ do_gcc_configure () {
   --with-sqlite3
 }
 
+# Same Uses and Sets as _do_gcc_configure_common
 do_gcc_configure_with_ada () {
   _do_gcc_configure_common \
   --enable-experimental_ada_frontend \
@@ -1039,9 +1060,11 @@ do_gcc_configure_with_ada () {
   --without-cuda \
   --disable-fortran \
   --without-java \
-  --without-python 
+  --without-python \
+  CXXFLAGS="${ROSE_COMPILER_CXX_STD_FLAG} -g -O2 -Wall"
 }
 
+# Same Uses and Sets as _do_gcc_configure_common
 do_gcc_configure_with_binary_analysis () {
   # Per Jim Leek 2019-12-09
   _do_gcc_configure_common \
@@ -1051,6 +1074,7 @@ do_gcc_configure_with_binary_analysis () {
   --with-sqlite3
 }
 
+# Same Uses and Sets as _do_gcc_configure_common
 # Just C and CXX, no Java dependency:
 do_gcc_configure_with_c_cxx () {
   _do_gcc_configure_common \
@@ -1059,6 +1083,7 @@ do_gcc_configure_with_c_cxx () {
   --without-java
 }
 
+# Same Uses and Sets as _do_gcc_configure_common
 do_gcc_configure_with_fortran () {
   # Fortran needs Java.
   _do_gcc_configure_common \
@@ -1067,6 +1092,7 @@ do_gcc_configure_with_fortran () {
   --enable-fortran
 }
 
+# Same Uses and Sets as _do_gcc_configure_common
 do_gcc_configure_with_profiling () {
   _do_gcc_configure_common \
   --enable-c \
@@ -1098,10 +1124,14 @@ _update_latest_installed_version () {
 #======================================
 # Uses:
 #   rose_latest_install_version_file
-#   ROSE_BUILD_PATH
+#   ROSE_COMPILER_SUFFIX
 #   ROSE_DO_UPDATE_VERSIONS
 #   ROSE_REPO_PATH
+# Sets:
+#   ROSE_BUILD_PATH
+#   ROSE_INSTALL_PATH
 make_and_install () {
+  _set_ROSE_BUILD_PATH_and_ROSE_INSTALL_PATH
   run_or_not cd ${ROSE_BUILD_PATH}
   run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make all -j${MAX_PROCS}
   run_or_not ${SRUN_DO} -c${MAX_PROCS} ${RUN_AND_LOG} --use_first_parm make install -j${MAX_PROCS}

@@ -173,6 +173,13 @@ public:
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
+
+    /** Calculate a hash for this memory state.
+     *
+     *  This hashes the addresses and values stored in memory. The goal is to be able to identify when two memory states are
+     *  the "same". An analysis might be able to take shortcuts if it encounters a state that it has seen before. */
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const = 0;
+
     /** Print a memory state to more than one line of output.
      * @{ */
     void print(std::ostream&, const std::string prefix = "") const;

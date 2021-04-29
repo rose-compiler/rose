@@ -495,10 +495,8 @@ namespace Ada_ROSE_Translation
   mkRangeExp();
 
   /// Creates an Ada others expression (for case and expression switches)
-  /// \note currently others is represented by SgNullExpression
-  /// \todo consider introducing an SgAdaOthersExp node
-  SgExpression&
-  mkOthersExp();
+  SgAdaOthersExp&
+  mkAdaOthersExp();
 
   /// Creates a new expression
   /// \param ty the type of the allocation

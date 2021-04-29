@@ -10,10 +10,12 @@ set(TESTCODES inputCode_SizeofTest.C)
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}_GNU
+    NAME SIZEOFOPTEST_${file_to_test}_GNU
     COMMAND SizeofTest_GNU -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(SIZEOFOPTEST_${file_to_test}_GNU PROPERTIES LABELS SIZEOFOPTEST)
   add_test(
-    NAME ${file_to_test}_Intel
+    NAME SIZEOFOPTEST_${file_to_test}_Intel
     COMMAND SizeofTest_Intel -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(SIZEOFOPTEST_${file_to_test}_Intel PROPERTIES LABELS SIZEOFOPTEST)
 endforeach()
 

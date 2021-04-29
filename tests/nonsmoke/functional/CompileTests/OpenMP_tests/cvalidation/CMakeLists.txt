@@ -26,7 +26,8 @@ set(ROSE_FLAGS -rose:C_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME OMPTEST_${file_to_test}
     COMMAND parseOmp ${ROSE_FLAGS} -I${CMAKE_SOURCE_DIR}/src/frontend/SageIII
                      -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(OMPTEST_${file_to_test} PROPERTIES LABELS OMPTEST)
 endforeach()

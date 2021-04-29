@@ -41,17 +41,18 @@ foreach(file_to_test ${TESTCODES})
   string(REPLACE "/" "_" testName "${file_to_test}")
 
   add_test(
-    NAME prepare_${testName}
+    NAME UNPARSEHEADERTOKEN_prepare_${testName}
     COMMAND ${CMAKE_COMMAND} -E remove_directory
     ${CMAKE_CURRENT_BINARY_DIR}/${TestDir}_unparsedHeaders)
+  set_tests_properties( UNPARSEHEADERTOKEN_prepare_${testName} PROPERTIES LABELS UNPARSEHEADERTOKEN)
 
   add_test(
-    NAME ${testName}
+    NAME UNPARSEHEADERTOKEN_${testName}
     COMMAND TestUnparseHeadersUsingTokens ${TEST_INCLUDE_PATHS} -rose:unparseHeaderFiles -rose:unparse_tokens
       -rose:unparseHeaderFilesRootFolder ${TestDir}_unparsedHeaders
       ${ROSE_FLAGS} -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
-  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName})
+  set_tests_properties(UNPARSEHEADERTOKEN_${testName} PROPERTIES DEPENDS UNPARSEHEADERTOKEN_prepare_${testName} LABELS UNPARSEHEADERTOKEN)
 
 endforeach()
 
@@ -61,15 +62,16 @@ foreach(file_to_test ${TESTCODES_FOR_DEFAULT_UNPARSE_FOLDER})
   string(REPLACE "/" "_" testName "${file_to_test}")
 
   add_test(
-    NAME prepare_${testName}
+    NAME UNPARSEHEADERTOKEN_prepare_${testName}
     COMMAND ${CMAKE_COMMAND} -E remove_directory
     ${CMAKE_CURRENT_BINARY_DIR}/${TestDir}_unparsedHeaders)
+  set_tests_properties( UNPARSEHEADERTOKEN_prepare_${testName} PROPERTIES LABELS UNPARSEHEADERTOKEN)
 
   add_test(
-    NAME ${testName}
+    NAME UNPARSEHEADERTOKEN_${testName}
     COMMAND TestUnparseHeadersUsingTokens -rose:unparseHeaderFiles ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
 
-  set_tests_properties(${testName} PROPERTIES DEPENDS prepare_${testName})
+  set_tests_properties(UNPARSEHEADERTOKEN_${testName} PROPERTIES DEPENDS UNPARSEHEADERTOKEN_prepare_${testName} LABELS UNPARSEHEADERTOKEN)
 
 endforeach()

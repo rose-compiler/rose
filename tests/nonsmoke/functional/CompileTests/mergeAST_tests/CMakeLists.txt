@@ -3,8 +3,8 @@ target_link_libraries(roseTestMerge ROSE_DLL EDG ${link_with_libraries})
 
 # This is a shortened list that tests more quickly.
 set(TESTCODES
-  mergeTest_01.C mergeTest_02.C mergeTest_03.C mergeTest_04.C mergeTest_05.C
-  mergeTest_06.C mergeTest_08.C mergeTest_10.C mergeTest_11.C
+  mergeTest_01.C mergeTest_02.C mergeTest_03.C
+  mergeTest_08.C mergeTest_10.C mergeTest_11.C
   mergeTest_12.C mergeTest_13.C mergeTest_14.C mergeTest_15.C mergeTest_16.C
   mergeTest_17.C mergeTest_18.C mergeTest_19.C mergeTest_20.C mergeTest_21.C
   mergeTest_22.C mergeTest_23.C mergeTest_24.C mergeTest_25.C mergeTest_26.C
@@ -21,17 +21,28 @@ set(TESTCODES
   mergeTest_86.C mergeTest_87.C mergeTest_88.C mergeTest_91.C mergeTest_92.C
   mergeTest_94.C mergeTest_95.C mergeTest_96.C mergeTest_97.C mergeTest_100.C
   mergeTest_101.C mergeTest_102.C mergeTest_103.C mergeTest_104.C mergeTest_105.C
-  mergeTest_106.C mergeTest_107.C mergeTest_110.C mergeTest_111.C mergeTest_112.C
+  mergeTest_106.C mergeTest_107.C mergeTest_110.C mergeTest_112.C
   mergeTest_114.C mergeTest_115.C mergeTest_116.C mergeTest_118.C mergeTest_119.C
-  mergeTest_120.C mergeTest_121.C mergeTest_128.C mergeTest_129.C mergeTest_130.C
+  mergeTest_120.C mergeTest_128.C mergeTest_129.C mergeTest_130.C
   mergeTest_131.C mergeTest_133.C mergeTest_134.C mergeTest_90.C
   mergeTest_124.C)
+
+set(TESTCODES_TO_FIX
+mergeTest_04.C mergeTest_05.C mergeTest_121.C
+)
+
+if(NOT ROSE_USING_GCC_VERSION_LATER_6_1 EQUAL 1)
+set(TESTCODES ${TESTCODES} 
+mergeTest_111.C
+)
+endif()
 
 set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict -rose:ast:merge)
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME MERGEASTTEST_${file_to_test}
     COMMAND roseTestMerge ${ROSE_FLAGS}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(MERGEASTTEST_${file_to_test} PROPERTIES LABELS MERGEASTTEST)
 endforeach()

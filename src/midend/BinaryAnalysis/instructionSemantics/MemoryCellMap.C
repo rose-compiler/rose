@@ -200,6 +200,14 @@ MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscO
     return retval;
 }
 
+void
+MemoryCellMap::hash(Combinatorics::Hasher &hasher, RiscOperators*/*addrOps*/, RiscOperators*/*valOps*/) const {
+    for (const CellMap::Node &node: cells.nodes()) {
+        hasher.insert(node.key());
+        node.value()->hash(hasher);
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

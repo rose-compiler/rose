@@ -201,7 +201,9 @@ namespace CodeThorn {
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
 
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
+    // deprecated
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
+    // deprecated
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
 
     void insertInputVarValue(int i);
@@ -264,7 +266,6 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
-    void initializeGlobalVariablesOld(SgProject* root, EState& estate);
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     
     /* command line options provided to analyzed application
@@ -395,30 +396,17 @@ namespace CodeThorn {
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
-    std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
-    std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
-    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferIdentity(Edge edge, const EState* estate);
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
-    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-    
+
+    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+
+    // only implemented in CTAnalysis
+    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST

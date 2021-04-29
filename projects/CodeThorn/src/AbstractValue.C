@@ -277,7 +277,7 @@ AbstractValue AbstractValue::convertPtrToPtrSet(AbstractValue val) {
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
-  case UNDEFINED: return "undefined";
+  case UNDEFINED: return "uninit";
   case INTEGER: return "constint";
   case FLOAT: return "float";
   case PTR: return "ptr";
@@ -677,7 +677,7 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case UNDEFINED: return "undefined";
+  case UNDEFINED: return "undefined(lhs)";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -717,7 +717,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case UNDEFINED: return "undefined";
+  case UNDEFINED: return "uninit(rhs)";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -762,7 +762,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case UNDEFINED: return "undefined";
+  case UNDEFINED: return "uninit";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -814,7 +814,7 @@ string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case UNDEFINED: return "undefined";
+  case UNDEFINED: return "uninit";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -1336,22 +1336,6 @@ std::string AbstractValueSet::toString(VariableIdMapping* vim) const {
   }
   ss<<"}";
   return ss.str();
-}
-
-AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorAdd(a,b);
-}
-AbstractValue CodeThorn::operator-(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorSub(a,b);
-}
-AbstractValue CodeThorn::operator*(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMul(a,b);
-}
-AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorDiv(a,b);
-}
-AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
-  return AbstractValue::operatorMod(a,b);
 }
 
 AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {

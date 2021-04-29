@@ -42,6 +42,11 @@ State::State(const State &other)
 
 State::~State() {}
 
+SValuePtr
+State::protoval() const {
+    return protoval_;
+}
+
 void
 State::clear() {
     registers_->clear();
@@ -138,6 +143,12 @@ State::merge(const StatePtr &other, RiscOperators *ops) {
     bool memoryChanged = memoryState()->merge(other->memoryState(), ops, ops);
     bool registersChanged = registerState()->merge(other->registerState(), ops);
     return memoryChanged || registersChanged;
+}
+
+void
+State::hash(Combinatorics::Hasher &hasher, RiscOperators *addrOps, RiscOperators *valOps) const {
+    registerState()->hash(hasher, valOps);
+    memoryState()->hash(hasher, addrOps, valOps);
 }
 
 void

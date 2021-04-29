@@ -2727,7 +2727,13 @@ TEST_TRANSLATOR=../../testTranslator
 
 LANG_FLAGS =
 
-ROSE_FLAGS = -std=c++
+# NP 4/23/21 C++14 flag is needed in order to parse the boost headers which use C++14.
+if USING_INTEL_COMPILER
+   ROSE_FLAGS = -std=c++14
+else
+   ROSE_FLAGS = -std=c++
+endif
+
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif

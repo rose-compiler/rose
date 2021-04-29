@@ -30,7 +30,7 @@ endif()
 set(ROSE_FLAGS -rose:UPC ${baseline_flags})
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test} TRUE)
+  compile_test(${file_to_test} UPCTEST TRUE)
 endforeach()
 
 # These tests are currently failing for me with the following output:

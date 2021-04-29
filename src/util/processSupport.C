@@ -26,7 +26,7 @@
 using namespace std;
 using namespace Rose;
 
-int systemFromVector(const vector<string>& argv) 
+int systemFromVector(const vector<string>& argv)
    {
      assert (!argv.empty());
 
@@ -35,7 +35,7 @@ int systemFromVector(const vector<string>& argv)
 
      if (pid == -1) {perror("fork"); abort();}
 
-     if (pid == 0) 
+     if (pid == 0)
         { // Child
           vector<const char*> argvC(argv.size() + 1);
           size_t length = argv.size();
@@ -43,8 +43,8 @@ int systemFromVector(const vector<string>& argv)
        // DQ (6/22/2020): Truncate as a test!
        // length = 5;
 
-       // for (size_t i = 0; i < argv.size(); ++i) 
-          for (size_t i = 0; i < length; ++i) 
+       // for (size_t i = 0; i < argv.size(); ++i)
+          for (size_t i = 0; i < length; ++i)
              {
                argvC[i] = strdup(argv[i].c_str());
 #if 0
@@ -63,7 +63,7 @@ int systemFromVector(const vector<string>& argv)
 
           perror(("execvp in systemFromVector: " + argv[0]).c_str());
           exit(1); // Should not get here normally
-        } 
+        }
        else
         { // Parent
           int status;
@@ -93,7 +93,7 @@ int systemFromVector(const vector<string>& argv)
           printf ("Error running MSVS compiler.\n");
           return 1;
         }
-  
+
      WaitForSingleObject(pi.hProcess,INFINITE);
      unsigned long exitCode;
      GetExitCodeProcess(pi.hProcess, &exitCode);

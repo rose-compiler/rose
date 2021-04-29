@@ -23,15 +23,15 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E
 function(java_test input_file)
   get_filename_component(test_name ${input_file} NAME_WE)
   add_test(
-    NAME ${test_name}
+    NAME MSJAVATEST_${test_name}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests
     COMMAND ${translator}
       ${ROSE_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
   )
 
   # these tests should fail if javac just prints out its usage info.
-  set_tests_properties(${test_name}
-    PROPERTIES FAIL_REGULAR_EXPRESSION "Usage: javac")
+  set_tests_properties(MSJAVATEST_${test_name}
+    PROPERTIES FAIL_REGULAR_EXPRESSION "Usage: javac" LABELS MSJAVATEST)
 endfunction()
 
 
@@ -45,14 +45,15 @@ endforeach()
 foreach(file_to_test
         ${TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE})
   add_test(
-    NAME ${file_to_test}_step1
+    NAME MSJAVATEST_${file_to_test}_step1
     COMMAND testTranslator ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(MSJAVATEST_${file_to_test}_step1 PROPERTIES LABELS MSJAVATEST)
   add_test(
-    NAME ${file_to_test}_step2
+    NAME MSJAVATEST_${file_to_test}_step2
     COMMAND testTranslator -rose:java:source 1.4 -rose:java:target 1.4
             ${ROSE_FLAGS_SKIP_FINAL_COMPILATION}
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
-  set_tests_properties(${file_to_test}_step2
-    PROPERTIES DEPENDS ${file_to_test}_step1)
+  set_tests_properties(MSJAVATEST_${file_to_test}_step2
+    PROPERTIES DEPENDS MSJAVATEST_${file_to_test}_step1 LABELS MSJAVATEST)
 endforeach()

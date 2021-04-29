@@ -51,7 +51,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
                          string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
 
 #ifndef USE_ROSE
-                      // DQ (3/6/2006): Note that SgGlobal will not have an associated 
+                      // DQ (3/6/2006): Note that SgGlobal will not have an associated
                       // filename and so will not trigger the targetFile to be set.
                       // printf ("targetFileName      = %s \n",targetFileName.c_str());
                       // printf ("filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
@@ -64,7 +64,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
                        }
 
                   }
-              
+
         };
 
      FindFileInfo visitor (targetFileName);
@@ -72,12 +72,13 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
 
      targetFile = visitor.targetFileInfo;
 
-  // DQ (12/6/2007): Skip the output of this message for Fortran applications 
+  // DQ (12/6/2007): Skip the output of this message for Fortran applications
   // (since we handle Fortran intrinsit functions more directly in the front-end)
   // if (targetFile == NULL)
   // Rasmussen (3/12/2018): Added check for Jovial language
      if (targetFile == NULL &&
              (     SageInterface::is_Fortran_language() == false
+                && SageInterface::is_Ada_language() == false
                 && SageInterface::is_Jovial_language() == false
                 && SageInterface::is_Java_language() == false
                 && SageInterface::is_Python_language() == false
@@ -91,7 +92,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
           printf ("Found Sg_File_Info for targetFileName = %s \n",targetFileName.c_str());
         }
 #endif
-     
+
   // ROSE_ASSERT(targetFile != NULL);
    }
 
@@ -165,7 +166,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::visit(SgNode* node)
                   }
 
             // DQ (11/1/2007): Skip marking these this way so that we can focus on having then marked by the code above!
-            // If they are first makred as compiler generated then they will not pass the test for if they are in the 
+            // If they are first makred as compiler generated then they will not pass the test for if they are in the
             // same file (Sg_File_Info::isSameFile()).
             // Now mark the subtree
             // markAsCompilerGenerated(node);
@@ -196,8 +197,8 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::visit(SgNode* node)
              {
             // printf ("Found a node from targetFile->get_filename() = %s (mark it as compiler generated) \n",targetFile->get_filename());
 
-            // DQ (5/6/2006): Added new classification so distinguish IR nodes from functions, variable, 
-            // typedefs, etc. that are placed into "rose_edg_required_macros_and_functions.h" to 
+            // DQ (5/6/2006): Added new classification so distinguish IR nodes from functions, variable,
+            // typedefs, etc. that are placed into "rose_edg_required_macros_and_functions.h" to
             // support the GNU compatability mode that is incompletely implemented by EDG).
                functionSymbol->get_file_info()->setFrontendSpecific();
 

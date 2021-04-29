@@ -284,7 +284,7 @@ main(int argc, char *argv[]) {
         }
     }
     engine.loadSpecimens(specimenNames);
-    info <<"; completed in " <<loadTimer <<" seconds\n";
+    info <<"; completed in " <<loadTimer <<"\n";
 
     // Disassemble, partition, and get list of functions.  No need to create an AST.
     info <<"performing disassemble and partition";
@@ -295,7 +295,7 @@ main(int argc, char *argv[]) {
         partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
-    info <<"; completed in " <<partitionTimer <<" seconds.\n";
+    info <<"; completed in " <<partitionTimer <<"\n";
     info <<"found " <<plural(functions.size(), "functions") <<"\n";
 
     // Consider only functions that have names

@@ -58,7 +58,7 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2004_133.C test2004_134.C test2004_135.C test2004_136.C test2004_137.C
     test2004_138.C test2004_139.C test2004_140.C test2004_141.C test2004_142.C
     test2004_144.C test2004_145.C test2004_146.C test2004_147.C test2004_148.C
-    test2004_149.C test2004_150.C test2004_151.C test2004_152.C test2004_153.C
+    test2004_150.C test2004_151.C test2004_152.C test2004_153.C
     test2004_154.C test2004_155.C test2004_156.C test2004_157.C test2004_158.C
     test2004_159.C test2004_160.C test2004_161.C test2004_162.C test2004_163.C
     test2004_164.C test2005_01.C test2005_02.C test2005_03.C test2005_04.C
@@ -66,10 +66,10 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2005_10.C test2005_11.C test2005_12.C test2005_13.C test2005_14.C
     test2005_15.C test2005_16.C test2005_17.C test2005_19.C test2005_20.C
     test2005_21.C test2005_22.C test2005_23.C test2005_24.C test2005_25.C
-    test2005_26.C test2005_27.C test2005_28.C test2005_29.C test2005_30.C
+    test2005_26.C test2005_27.C test2005_29.C test2005_30.C
     test2005_31.C test2005_32.C test2005_33.C test2005_36.C
     test2005_37.C test2005_38.C test2005_40.C test2005_41.C test2005_43.C
-    test2005_44.C test2005_45.C test2005_46.C test2005_47.C test2005_48.C
+    test2005_44.C test2005_46.C test2005_47.C test2005_48.C
     test2005_49.C test2005_50.C test2005_51.C test2005_52.C test2005_53.C
     test2005_55.C test2005_57.C test2005_58.C test2005_59.C test2005_60.C
     test2005_61.C test2005_62.C test2005_63.C test2005_64.C test2005_65.C
@@ -78,8 +78,8 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2005_76.C test2005_77.C test2005_78.C test2005_79.C test2005_80.C
     test2005_81.C test2005_83.C test2005_84.C test2005_86.C test2005_87.C
     test2005_88.C test2005_89.C test2005_90.C test2005_91.C test2005_92.C
-    test2005_93.C test2005_94.C test2005_95.C test2005_96.C test2005_97.C
-    test2005_98.C test2005_99.C test2005_100.C test2005_101.C test2005_102.C
+    test2005_94.C test2005_95.C test2005_96.C test2005_97.C
+    test2005_99.C test2005_100.C test2005_101.C 
     test2005_105.C test2005_106.C test2005_107.C test2005_108.C
     test2005_109.C test2005_110.C test2005_111.C test2005_112.C test2005_113.C
     test2005_114.C test2005_116.C test2005_117.C test2005_118.C test2005_119.C
@@ -94,14 +94,14 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2005_164.C test2005_165.C test2005_166.C test2005_167.C test2005_169.C
     test2005_170.C test2005_171.C test2005_173.C test2005_174.C test2005_175.C
     test2005_176.C test2005_177.C test2005_178.C test2005_179.C test2005_180.C
-    test2005_181.C test2005_182.C test2005_183.C test2005_184.C test2005_185.C
+    test2005_182.C test2005_183.C test2005_184.C test2005_185.C
     test2005_187.C test2005_189.C test2005_190.C test2005_191.C test2005_192.C
     test2005_193.C test2005_194.C test2005_195.C test2005_196.C test2005_197.C
     test2005_198.C test2005_199.C test2005_202.C test2005_203.C test2005_206.C
     test2005_207.C test2005_208.C test2005_209.C test2006_01.C test2006_02.C
     test2006_03.C test2006_04.C test2006_05.C test2006_06.C test2006_07.C
     test2006_08.C test2006_10.C test2006_12.C test2006_13.C test2006_14.C
-    test2006_16.C test2006_17.C test2006_18.C test2006_19.C test2006_20.C
+    test2006_16.C test2006_17.C test2006_18.C test2006_19.C 
     test2006_22.C test2006_23.C test2006_25.C test2006_26.C test2006_28.C
     test2006_34.C test2006_37.C test2006_38.C test2006_40.C test2006_41.C
     test2006_42.C test2006_46.C test2006_47.C test2006_50.C test2006_52.C
@@ -109,10 +109,10 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2006_59.C test2006_61.C test2006_62.C test2006_63.C test2006_66.C
     test2006_67.C test2006_68.C test2006_69.C test2006_70.C test2006_71.C
     test2006_72.C test2006_73.C test2006_74.C test2006_75.C test2006_76.C
-    test2006_77.C test2006_78.C test2006_79.C test2006_80.C test2006_81.C
+    test2006_77.C test2006_78.C test2006_80.C test2006_81.C
     test2006_82.C test2006_83.C test2006_85.C test2006_86.C
     test2006_87.C test2006_88.C test2006_89.C test2006_90.C test2006_91.C
-    test2006_92.C test2006_93.C test2006_94.C test2006_95.C test2006_96.C
+    test2006_93.C test2006_94.C test2006_95.C test2006_96.C
     test2006_97.C test2006_98.C test2006_99.C test2006_101.C test2006_102.C
     test2006_103.C test2006_104.C test2006_105.C test2006_106.C test2006_107.C
     test2006_108.C test2006_109.C test2006_111.C test2006_112.C test2006_113.C
@@ -152,6 +152,18 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     # test2005_142.C test2005_161.C test2006_84.C test2006_124.C 
     # test2006_141.C 
     )
+
+set(GNU_6_1_PROBLEM_FILE 
+   test2004_149.C   test2005_28.C   test2005_45.C   test2005_93.C
+   test2005_98.C   test2005_102.C   test2005_181.C   test2006_20.C   test2006_79.C    test2006_92.C 
+)
+
+if(NOT ROSE_USING_GCC_VERSION_LATER_6_1 EQUAL 1)
+
+set(EXTRA_TESTCODES_REQUIRED_TO_PASS ${EXTRA_TESTCODES_REQUIRED_TO_PASS} ${GNU_6_1_PROBLEM_FILE})
+
+endif()
+
 else()
   # The shorter set of tests
   set(TESTCODES_REQUIRED_TO_PASS
@@ -172,6 +184,7 @@ foreach(testcode ${TESTCODES_REQUIRED_TO_PASS})
     NAME copyAST_${basename}
     COMMAND copyExample ${ROSE_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${testcode})
+  set_tests_properties(copyAST_${basename} PROPERTIES LABELS COPYASTTEST)
 endforeach()
 
 # Use tests from the Cxx_tests directory
@@ -182,5 +195,6 @@ foreach(testcode ${EXTRA_TESTCODES_REQUIRED_TO_PASS})
     COMMAND copyExample ${ROSE_FLAGS}
             -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${testcode})
+  set_tests_properties(copyAST_${basename} PROPERTIES LABELS COPYASTTEST)
 endforeach()
 

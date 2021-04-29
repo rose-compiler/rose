@@ -251,6 +251,11 @@ public:
     void comment(const std::string&) const /*final*/;   // const is intentional (see documentation)
     /** @} */
 
+    /** Hash this semantic value.
+     *
+     *  Hashes the value by appending it to the specified hasher. */
+    virtual void hash(Combinatorics::Hasher&) const = 0;
+
     /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
      *  space or line termination.  See also, with_format().
      *  @{ */
@@ -279,16 +284,6 @@ public:
     WithFormatter operator+(const std::string &linePrefix);
     /** @} */
     
-    /** Some subclasses support the ability to add comments to values. We define no-op versions of these methods here
-     *  because it makes things easier.  The base class tries to be as small as possible by not storing comments at
-     *  all. Comments should not affect any computation (comparisons, hash values, etc), and therefore are allowed to be
-     *  modified even for const objects.
-     * @{ */
-    virtual std::string get_comment() const { return ""; }
-    virtual void set_comment(const std::string&) const {} // const is intended; cf. doxygen comment
-    /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // This is the virtual interface that uses names that are not consistent with most of the rest of binary analysis.  Calling
     // these directly is deprecated and we may make them protected at some time. [Robb Matzke 2021-03-18].
@@ -312,6 +307,15 @@ public: // for backward compatibility for now, but assume protected
 
     /** Virtual API. See @ref mayEqual. */
     virtual bool may_equal(const SValuePtr &other, const SmtSolverPtr &solver = SmtSolverPtr()) const = 0;
+
+    /** Some subclasses support the ability to add comments to values. We define no-op versions of these methods here
+     *  because it makes things easier.  The base class tries to be as small as possible by not storing comments at
+     *  all. Comments should not affect any computation (comparisons, hash values, etc), and therefore are allowed to be
+     *  modified even for const objects.
+     * @{ */
+    virtual std::string get_comment() const { return ""; }
+    virtual void set_comment(const std::string&) const {} // const is intended; cf. doxygen comment
+    /** @} */
 };
 
 std::ostream& operator<<(std::ostream&, const SValue&);

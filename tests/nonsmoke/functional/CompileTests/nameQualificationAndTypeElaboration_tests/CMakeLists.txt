@@ -27,7 +27,8 @@ set(TESTCODE_INCLUDES
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME NAMEQUALIFICATIONTEST_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
      -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(NAMEQUALIFICATIONTEST_${file_to_test} PROPERTIES LABELS NAMEQUALIFICATIONTEST)
 endforeach()

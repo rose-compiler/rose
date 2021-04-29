@@ -193,13 +193,13 @@ VariableValueRangeInfo::arraySize() {
 
 VariableValueRangeInfo::VariableValueRangeInfo(AbstractValue min0, AbstractValue max0) {
   assert(min0.isConstInt() && max0.isConstInt());
-  _width=max0-min0;
+  _width=AbstractValue::operatorSub(max0,min0);
   _min=min0;
   _max=max0;
   if((_width.operatorLess(0)).isTrue())
     _width=AbstractValue(0);
   AbstractValue one=AbstractValue(1);
-  _width=(VariableValueRangeInfo::_width+one);
+  _width=AbstractValue::operatorAdd(VariableValueRangeInfo::_width,one);
   _asize=1;
 }
 

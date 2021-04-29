@@ -88,13 +88,13 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
                   {
                     // Pei-Hung (03/01/2021): using only gcc_HEADERS and g++_HEADERS to check the header file directories is not sufficient.
                     // The directory names change according the the executable names of gcc and g++.
-                    
-                    const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH; 
+
+                    const char* CC_Basename = BACKEND_C_COMPILER_NAME_WITHOUT_PATH;
                     const char* CXX_Basename = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                    string CC_Headername(CC_Basename); 
+                    string CC_Headername(CC_Basename);
                     string CXX_Headername(CXX_Basename);
-                    CC_Headername += "_HEADERS"; 
-                    CXX_Headername += "_HEADERS"; 
+                    CC_Headername += "_HEADERS";
+                    CXX_Headername += "_HEADERS";
                     if (*i == CC_Headername || *i == CXX_Headername)
                        {
 #if 0
@@ -1887,23 +1887,13 @@ GetRoseClasspath ()
   // CER (2/12/2019): Added support for OFP version 0.8.5 requiring antlr-3.5.2-complete.jar.
   ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
   ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
-  if (ROSE_OFP_PATCH_VERSION_NUMBER >= 5)
-  {
-      classpath +=
-          findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
-              "lib/antlr-3.5.2-complete.jar");
-      classpath += ":";
-  }
-  else
-  {
-      classpath +=
-          findRoseSupportPathFromSource(
-              "src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar",
-              "lib/antlr-3.2.jar"
-          );
-      classpath += ":";
-  }
+
+  // Pei-Hung (4/3/2022): Only one antlr jar file, antlr-3.5.2-complete.jar, is kept in ROSE.
+  classpath +=
+      findRoseSupportPathFromSource(
+          "src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar",
+          "lib/antlr-3.5.2-complete.jar");
+  classpath += ":";
 
   // Open Fortran Parser (OFP) support (this is the jar file)
   // CER (10/4/2011): Switched to using date-based version for OFP jar file.
@@ -7789,11 +7779,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
             // Rasmussen (11/14/2017): Added check to ensure that Ada is configured
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-               printf ("Todo: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               //~ printf ("Todo: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
 
             // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.
                compilerNameString.push_back("compile");
+
+            // PP (04/17/21): add -I. to override -I- added by gnat compile
+            //                RC-637
+               compilerNameString.push_back("-I.");
 #else
                printf ("Error: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                ROSE_ABORT();

@@ -3803,6 +3803,11 @@ DispatcherM68k::stackPointerRegister() const {
 }
 
 RegisterDescriptor
+DispatcherM68k::stackFrameRegister() const {
+    return RegisterDescriptor();
+}
+
+RegisterDescriptor
 DispatcherM68k::callReturnRegister() const {
     return RegisterDescriptor();
 }

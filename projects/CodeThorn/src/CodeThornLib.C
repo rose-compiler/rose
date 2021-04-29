@@ -412,15 +412,23 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
   }
 }
 
-void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject) {
-  bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
-  bool showProgramStats=ctOpt.programStats;
-  bool showProgramStatsOnly=ctOpt.programStatsOnly;
-  if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
-    ProgramInfo programInfo(sageProject);
-    programInfo.compute();
-    if(unknownFunctionsFile) {
-      programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
+void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, FunctionCallMapping* funCallMapping) {
+  std::string fileName=ctOpt.externalFunctionsCSVFileName;
+  if(fileName.size()>0) {
+    if(!ctOpt.quiet)
+      cout<<"Writing list of external functions to file "<<fileName<<endl;
+    FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
+    std::list<string> sList;
+    for(auto fn : fnList)
+      sList.push_back(fn);
+    sList.sort(CppStdUtilities::compareCaseInsensitively);
+    stringstream csvList;
+    for(auto fn : sList) {
+      csvList<<fn<<endl;
+    }
+    if(!CppStdUtilities::writeFile(fileName, csvList.str())) {
+      cerr<<"Error: cannot write list of external functions to CSV file "<<fileName<<endl;
+      exit(1);
     }
   }
 }

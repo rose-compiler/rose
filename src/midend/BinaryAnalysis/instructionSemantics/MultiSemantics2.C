@@ -162,6 +162,12 @@ SValue::get_number() const
 }
 
 void
+SValue::hash(Combinatorics::Hasher &hasher) const {
+    for (const BaseSemantics::SValuePtr &subvalue: subvalues)
+        subvalue->hash(hasher);
+}
+
+void
 SValue::print(std::ostream &output, BaseSemantics::Formatter &formatter_) const
 {
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);

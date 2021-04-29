@@ -75,6 +75,17 @@ protected:
     }
 
 public:
+    ~Z3Solver() {
+#ifdef ROSE_HAVE_Z3
+        ctxVarDecls_.clear();
+        ctxCses_.clear();
+        z3Stack_.clear();
+        delete solver_;
+        delete ctx_;
+#endif
+    }
+
+public:
     /**  Construct Z3 solver preferring library linkage.
      *
      *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE

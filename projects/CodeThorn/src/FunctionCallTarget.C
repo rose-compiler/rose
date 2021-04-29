@@ -45,12 +45,12 @@ SgFunctionType* CodeThorn::FunctionCallTarget::getFunctionType() {
   return getDeclaration()->get_type();
 }
 
-SgName CodeThorn::FunctionCallTarget::getMangledFunctionTypeName() {
+SgName CodeThorn::FunctionCallTarget::getMangledFunctionName() {
   return getFunctionType()->get_mangled();
 }
 
 void CodeThorn::FunctionCallTarget::print() {
-  cout<<"NAME: "<<getFunctionName()<<" TYPE: "<<getFunctionType()<<":"<<getFunctionType()->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<getMangledFunctionTypeName()<<endl;
+  cout<<"NAME: "<<getFunctionName()<<" TYPE: "<<getFunctionType()<<":"<<getFunctionType()->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<getMangledFunctionName()<<endl;
 }
 
 bool CodeThorn::FunctionCallTarget::operator==(const CodeThorn::FunctionCallTarget& other) const {

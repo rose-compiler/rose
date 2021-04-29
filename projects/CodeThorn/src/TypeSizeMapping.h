@@ -49,12 +49,11 @@ namespace CodeThorn {
     CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
 
     // returns the element type size of an array
-    CodeThorn::TypeSize determineNumberOfElements(SgArrayType* sgType);
+    static CodeThorn::TypeSize determineNumberOfElements(SgArrayType* sgType);
 
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
 
-    void computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim);
     std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
     //int getOffset(CodeThorn::VariableId varId);
     // returns true if the variable is a member of a struct/class/union.

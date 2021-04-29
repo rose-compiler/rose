@@ -6,7 +6,7 @@ Markus Kowarschik, 10/2002
 
 The SgFile (always) constructor calls the function
 void attachPreprocessingInfo(SgFile *sageFilePtr);
-which in turn calls getPreprocessorDirectives (see above) and then 
+which in turn calls getPreprocessorDirectives (see above) and then
 invokes a tree traversal in order to attach the preprocessor directives
 (i.e., the preprocessingInfo objects) to located nodes in the AST.
 (Currently, we only attach preprocessingInfo objects to SgStatement
@@ -30,7 +30,7 @@ located node (currently: before the current statement), unparse flag: "before".
 All this is done in the evaluateInheritedAttribute member function of the
 derived tree traversal class.
 
-The evaluateSynthesizedAttribute member function deletes the list of 
+The evaluateSynthesizedAttribute member function deletes the list of
 preprocessingInfo objects as soon as the traversal returns to a SgFile
 object and attaches trailing preprocessing information to the last located
 node (currently to the last statement) that has been visited in
@@ -195,7 +195,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 
 // #ifndef  CXX_IS_ROSE_CODE_GENERATION
 
-// DQ (10/27/2007): Added display function to output information gather durring the collection of 
+// DQ (10/27/2007): Added display function to output information gather durring the collection of
 // comments and CPP directives across all files.
 void
 AttachPreprocessingInfoTreeTrav::display(const std::string & label) const
@@ -262,7 +262,7 @@ AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocat
                printf ("In handleBracedScopes: Found a case where the previousStatement was not a SgStatement: previousStatement = %p \n",previousStatement);
              }
 #endif
-       // If the previous statement was the current basicBlock, then there were no statements 
+       // If the previous statement was the current basicBlock, then there were no statements
        // in the SgBasicBlock and we have to add the comments inside the basic block.
        // if (previousStatement == basicBlock)
        // if (previousStatement == bracedScope)
@@ -308,10 +308,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
    ( SgLocatedNode* locatedNode, int lineNumber, PreprocessingInfo::RelativePositionType location, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)
    {
   // DQ (11/23/2008): Added comment.
-  // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently 
+  // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently
   // adds the PreprocessingInfo objects as attributes, but will be modified to insert the CPP directive specific
   // PreprocessingInfo objects as separate IR nodes and leave PreprocessingInfo objects that are comments inserted
-  // as attributes.  Note that attributes imply PreprocessingInfo specific atrributes and not the more general 
+  // as attributes.  Note that attributes imply PreprocessingInfo specific atrributes and not the more general
   // mechanism available in ROSE for user defined attributes to be saved into the AST.
 
      ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -368,9 +368,6 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           ROSE_ABORT();
         }
 #endif
-
-  // DQ (6/5/2020): Adding assertions to debug segfault below.
-     ROSE_ASSERT(locatedNode != NULL);
 
 #if 0
      printf ("Error checking for locatedNode \n");
@@ -432,8 +429,8 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
 
   // DQ (12/18/2012): Switch to using the physical file id now that we support this feature.
-     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                          locatedFileInfo->get_physical_file_id(source_file_id);
 
 #if 0
@@ -459,13 +456,14 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // int start_index = startIndexMap[currentFileId];
      int sizeOfCurrentListOfAttributes = currentListOfAttributes->size();
 
+
 #if DEBUG_IterateOverList
      printf ("Initial start_index = %d \n",start_index);
 #endif
 
    // Liao 2/1/2010: SgBasicBlock in Fortran should be ignored for attaching a preprocessing info with a 'before' position.
-   // The reason is that there is no  { ..} in Fortran and the preprocessing information should really be associated with 
-   // a statement showing up in the source code. 
+   // The reason is that there is no  { ..} in Fortran and the preprocessing information should really be associated with
+   // a statement showing up in the source code.
    // However, we allow a preprocessing info. to be attached to be inside of a SgBasicBlock to get the following special case right:
    // end do does not exist in AST. The comment has to be attached inside the do-loop's body to be unparsed right before 'end do'
    //  do i 1, 10
@@ -478,7 +476,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
         {
           if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
              {
-               isFortranBlockAndBeforePoisition = true; 
+               isFortranBlockAndBeforePoisition = true;
              }
         }
 
@@ -487,7 +485,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
 
   // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index,
-  // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
+  // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes
   // when location == PreprocessingInfo::after).
      if (!isFortranBlockAndBeforePoisition)
         {
@@ -525,6 +523,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
 #if DEBUG_IterateOverList
+               //std::cerr << "sagenode                             = " << typeid(*locatedNode).name() << std::endl;
                printf ("currentPreprocessingInfoLineNumber   = %d lineNumber = %d \n",currentPreprocessingInfoLineNumber,lineNumber);
                printf ("currentPreprocessingInfoColumnNumber = %d lineNumber = %d \n",currentPreprocessingInfoColumnNumber,lineNumber);
                printf ("starting line = %d ending_line = %d starting col = %d ending_col = %d \n",line,ending_line,col,ending_col);
@@ -534,30 +533,30 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
             // DQ (12/23/2008): So far this is the most reliable way to break out of the loop.
                ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
 
-#if 0
-#if 0
+#if 0 /* L88 */
+#if 0 /* L99 */
             // DQ (8/17/2020): Original code.
                if ( (currentPreprocessingInfoLineNumber > lineNumber) && (location == PreprocessingInfo::before) )
 #else
             // DQ (8/17/2020): Account for the column numbers.
-               if ( ( (currentPreprocessingInfoLineNumber > lineNumber) || 
+               if ( ( (currentPreprocessingInfoLineNumber > lineNumber) ||
                       ( (currentPreprocessingInfoLineNumber == lineNumber) && (currentPreprocessingInfoColumnNumber < ending_col) ) ) &&
                     ( (location == PreprocessingInfo::before) || (location == PreprocessingInfo::inside) ) )
-#endif
+#endif /* L99 */
                   {
                  // DQ (12/23/2008): I think that under this constraint we could exit this loop!
 #if DEBUG_IterateOverList
                     printf ("BREAK OUT OF LOOP: BREAK: Warning: Why are we searching this list of PreprocessingInfo beyond the line number of the current statement (using break) \n");
-#endif
+#endif /* DEBUG_IterateOverList */
                  // DQ (8/17/2020): This line was previously commented out except when DEBUG_IterateOverList was defined to be greater then zero.
                  // DQ (12/23/2008): I don't like the design which forces an exit from the loop here, but this is the most robust implementation so far.
                     break;
                   }
-#endif
+#endif /* L88 */
             // bool attachCommentOrDirective = (currentPreprocessingInfoPtr != NULL) && (currentPreprocessingInfoPtr->getLineNumber() <= lineNumber);
             // bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
-                  bool attachCommentOrDirective = 
-                       (currentPreprocessingInfoLineNumber < lineNumber) || 
+                  bool attachCommentOrDirective =
+                       (currentPreprocessingInfoLineNumber < lineNumber) ||
                        ( (currentPreprocessingInfoLineNumber == lineNumber) && (currentPreprocessingInfoColumnNumber < ending_col) );
 
             // DQ (1/7/2019): Supress comments and CPP directives onto member functions of the generated labda function class.
@@ -575,7 +574,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                if ( attachCommentOrDirective == true )
                   {
-#if DEBUG_ATTACH_PREPROCESSING_INFO || 0
+#if DEBUG_ATTACH_PREPROCESSING_INFO
                     printf ("Attaching \"%s\" (from file = %s file_id = %d line# %d) to %s locatedNode = %p = %s = %s at line %d position = %s \n",
                          currentPreprocessingInfoPtr->getString().c_str(),
                          currentPreprocessingInfoPtr->getFilename().c_str(),
@@ -596,7 +595,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                  // DQ (11/4/2019): If we want this assertion then it likely should be based on physical filenames (derived from physical fid ids).
                  // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
-                 // A variation of this test might be required later, though we should only be attacheing comments and 
+                 // A variation of this test might be required later, though we should only be attacheing comments and
                  // CPP directives before possible transformations.
 #if DEBUG_IterateOverList
                     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): locatedNode->get_file_info()->get_filename() = %s \n",locatedNode->get_file_info()->get_filename());
@@ -649,7 +648,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
 #endif
                  // Mark this PreprocessingInfo object as having been placed into the AST
-                 // It might make more sense to remove it from the list so it doesn't have 
+                 // It might make more sense to remove it from the list so it doesn't have
                  // to be traversed next time.
                  // currentPreprocessingInfoPtr->setHasBeenCopied();
 
@@ -657,7 +656,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // currentListOfAttributes->getList()[i] = NULL;
 
                  // DQ (4/30/2020): We no long need this in the new simplified support for CPP directivces and comments and unparsing of header files.
-                 // DQ (4/13/2007): If we are going to invalidate the list of accumulated attributes then we can start 
+                 // DQ (4/13/2007): If we are going to invalidate the list of accumulated attributes then we can start
                  // next time at the next index (at least).  This removes the order n^2 complexity of traversing over the whole loop.
                  // start_index = i+1;
                  // ROSE_ASSERT(startIndexMap.find(currentFileId) != startIndexMap.end());
@@ -669,7 +668,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // printf ("Incremented start_index to be %d \n",startIndexMap[currentFileId]);
                     printf ("Incremented start_index to be %d \n",start_index);
 #endif
-                 // Mark the location relative to the current node where the PreprocessingInfo 
+                 // Mark the location relative to the current node where the PreprocessingInfo
                  // object should be unparsed (before or after) relative to the current locatedNode
                     currentPreprocessingInfoPtr->setRelativePosition(location);
 #if DEBUG_IterateOverList
@@ -745,7 +744,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     statementsToInsertAfter.size(),localStatementsToInsertAfter.size());
 #endif
             // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
-            // insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
+            // insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes.
                statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
              }
         }
@@ -790,8 +789,8 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 void
 AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* currentLocNodePtr )
    {
-  // If we are at a SgCtorInitializerList IR nodes (and a few others) 
-  // then since it is visited last (after the definition) leave the 
+  // If we are at a SgCtorInitializerList IR nodes (and a few others)
+  // then since it is visited last (after the definition) leave the
   // previousLocNodePtr referenced to the function definition.
 
   // Supports assertions at end of function
@@ -802,12 +801,12 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
   // int currentFileId = currentLocNodePtr->get_startOfConstruct()->get_file_id();
      Sg_File_Info* locatedFileInfo = currentLocNodePtr->get_file_info();
 #if 0
-     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                          locatedFileInfo->get_file_id();
 #else
-     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                          locatedFileInfo->get_physical_file_id(source_file_id);
 #endif
 
@@ -847,7 +846,7 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
           ROSE_ASSERT (currentStatement != NULL);
           SgStatement* parentStatement = isSgStatement(currentStatement->get_parent());
 
-       // We can't enforce this since currentStatement may be SgGlobal and the parent 
+       // We can't enforce this since currentStatement may be SgGlobal and the parent
        // is SgSourceFile (which is not a SgStatement).
        // ROSE_ASSERT (parentStatement != NULL);
           ROSE_ASSERT ( (parentStatement != NULL) || (isSgGlobal(currentStatement) != NULL) );
@@ -880,7 +879,7 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
        }
 
 #if 1
-  // Nodes that should not have comments attached (since they are not unparsed directly 
+  // Nodes that should not have comments attached (since they are not unparsed directly
   // within the generation of the source code by the unparser (no associated unparse functions))
      ROSE_ASSERT (dynamic_cast<SgForInitStatement*>     (previousLocNodePtr) == NULL);
      ROSE_ASSERT (dynamic_cast<SgTypedefSeq*>           (previousLocNodePtr) == NULL);
@@ -899,11 +898,11 @@ void buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> &
 
 // DQ (1/4/2021): Adding support for comments and CPP directives and tokens to use new_filename.
 // ROSEAttributesList* AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, std::string fileNameForDirectivesAndComments )
-ROSEAttributesList* 
+ROSEAttributesList*
 AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave, SgSourceFile* sourceFile, std::string fileNameForDirectivesAndComments, std::string new_filename )
    {
   // This function abstracts the collection of comments and CPP directives into a list.
-  // The list is then used to draw from as the AST is traversed and the list elements 
+  // The list is then used to draw from as the AST is traversed and the list elements
   // are woven into the AST.
 
   // DQ (02/20/2021): Using the performance tracking within ROSE.
@@ -962,7 +961,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // if (sourceFile->get_Fortran_only() == false)
   //    {
   // if (filePreprocInfo != NULL)
-     if ((sourceFile->get_Fortran_only() == false) && (filePreprocInfo != NULL) )
+
+     // PP (04/13/21) adding ada support
+     const bool isFortranOrAda = sourceFile->get_Fortran_only() || sourceFile->get_Ada_only();
+
+     if ((isFortranOrAda == false) && (filePreprocInfo != NULL) )
         {
 #if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
           printf ("filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end() = %s \n",
@@ -990,7 +993,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
 
-            // DQ (1/17/2020): Get the token list from the 
+            // DQ (1/17/2020): Get the token list from the
             // LexTokenStreamTypePointer token_list_pointer = returnListOfAttributes->get_rawTokenStream();
             // ROSE_ASSERT(token_list_pointer != NULL);
                ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
@@ -1029,13 +1032,13 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
 
 #if 1
-            // DQ (1/18/2021): This is useless code, except that it converts the list<stream_element*> type to 
-            // a vector<stream_element*> type.  Obviously we should change the handling in the lexing step to 
+            // DQ (1/18/2021): This is useless code, except that it converts the list<stream_element*> type to
+            // a vector<stream_element*> type.  Obviously we should change the handling in the lexing step to
             // generate a vector<stream_element*> type directly so that we can avoid this silly translations.
-            // The reason we need it is because the processing of the mapping of the toke stream to the AST 
-            // is using the vector<stream_element*> type (which is likely best for being the most efficient, 
-            // and allows for integer indexing of the vector).  Then the token sequence mapping is just the 
-            // the lists of index values into the vector of tokens.  However, I don't see where the list or 
+            // The reason we need it is because the processing of the mapping of the toke stream to the AST
+            // is using the vector<stream_element*> type (which is likely best for being the most efficient,
+            // and allows for integer indexing of the vector).  Then the token sequence mapping is just the
+            // the lists of index values into the vector of tokens.  However, I don't see where the list or
             // vector if SgTokens* is used or located.
 
             // LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
@@ -1290,6 +1293,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
        // DQ (1/16/2021): Added debugging code.
           printf ("sourceFile->get_Fortran_only() = %s \n",sourceFile->get_Fortran_only() ? "true" : "false");
+          printf ("sourceFile->get_Ada_only() = %s \n",sourceFile->get_Ada_only() ? "true" : "false");
           printf ("filePreprocInfo = %p \n",filePreprocInfo);
 #endif
         }
@@ -1350,7 +1354,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           if (sourceFile->get_Fortran_only() == true)
              {
             // For Fortran CPP code you need to preprocess the code into an intermediate file in order to pass it through
-            // the Fortran frontend. This is because for Fortan everything is ONE file. 
+            // the Fortran frontend. This is because for Fortan everything is ONE file.
                if (sourceFile->get_requires_C_preprocessor() == true)
                   {
                     fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
@@ -1372,7 +1376,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
             // This is either of two different kinds of Fortran programs: fixed format or free format
-            //    * fix format is generally used for older Fortran code, F77 and earlier, and 
+            //    * fix format is generally used for older Fortran code, F77 and earlier, and
             //    * free format is generall used for newer codes, F90 and later
             //    * however this is a general rule, specifically a F03 code can use fixed format.
 
@@ -1469,6 +1473,20 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif // for #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
              }
+            else if (sourceFile->get_Ada_only() == true)
+             {
+               // PP (04/13/2021) adding Ada support for comments
+               //                 currently only comments are handled
+               //                 adding support for preprocessor macros will be added later
+               ROSE_ASSERT(returnListOfAttributes == nullptr);
+
+               returnListOfAttributes = new ROSEAttributesList;
+
+               // currently only Ada comments are supported; not yet preprocessor directives
+               returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST( fileNameForDirectivesAndComments,
+                                                                                       ROSEAttributesList::e_Ada_language
+                                                                                     );
+             }
             else
              {
             // Else we assume this is a C or C++ program (for which the lexical analysis is identical)
@@ -1529,7 +1547,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
             // DQ (12/4/2019): This fails for the snippet code support.
             // DQ (8/23/2018): At this point the token stream has been collected (verify).
-            // Note: to debug this support the token stream is always collected (the process 
+            // Note: to debug this support the token stream is always collected (the process
             // is fast, but making it optional in the future might be helpful).
                ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() != NULL);
 #else
@@ -1570,7 +1588,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           returnListOfAttributes = new ROSEAttributesList();
 
        // Copy the ROSEAttributesList from the global mapFilenameToAttributes as the elments that are attached to
-       // the AST from the ROSEAttributesList is set to NULL by the attachment process 
+       // the AST from the ROSEAttributesList is set to NULL by the attachment process
 
           std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = mapFilenameToAttributes.find(fileNameForTokenStream);
           if (currentFileItr != mapFilenameToAttributes.end())
@@ -1657,10 +1675,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 ROSEAttributesList*
 AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
    {
-  // This function will get the list of CPP directives and comments if it exists, 
-  // or build it if required.  The function is called each time we come to a IR 
-  // node as part of the traversal. If it is a new IR node (from a file not previously 
-  // visited) then the associated file will be read to gather its CPP directives and 
+  // This function will get the list of CPP directives and comments if it exists,
+  // or build it if required.  The function is called each time we come to a IR
+  // node as part of the traversal. If it is a new IR node (from a file not previously
+  // visited) then the associated file will be read to gather its CPP directives and
   // comments.
 
   // DQ (5/1/2020): This is now a data member.
@@ -1717,7 +1735,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 AttachPreprocessingInfoTreeTraversalInheritedAttrribute
 AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachPreprocessingInfoTreeTraversalInheritedAttrribute inheritedAttribute)
    {
-  // This is this inherited attribute evaluation.  It is executed as a preorder traversal 
+  // This is this inherited attribute evaluation.  It is executed as a preorder traversal
   // of the AST.  We don't use anything in the inherited attribute at present, however,
   // some actions have to be executed as we first visit an IR node and some have to be
   // executed as we last vist an IR node (post-order; see the evaluateSynthezidedAttribute()
@@ -1804,7 +1822,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
   // Pei-Hung(9/17/2020): Check if the AST node is SgFunctionParameterList for Fortran input
      if(sourceFile->get_Fortran_only() == true)
-       { 
+       {
          SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(n);
          if(functionParameterList != NULL)
            {
@@ -1815,7 +1833,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
   // DQ (8/6/2012): Allow those associated with the declaration and not inside of the template declaration.
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
-     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
+     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) ||
           (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
 // #if DEBUG_ATTACH_PREPROCESSING_INFO
@@ -1881,19 +1899,19 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
              }
 
 #if 0
-          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
-                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ?
+                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                   currentFileInfo->get_file_id();
 #else
 #if 0
-          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
-                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ?
+                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                   currentFileInfo->get_physical_file_id();
 #else
        // DQ (9/7/2018): Actually the default for C/C++ code should be that get_requires_C_preprocessor() == false, the other case is for C preprocessed fortran code.
-          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
-                               // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
-                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ?
+                               // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) :
+                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                   currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 #endif
@@ -1911,10 +1929,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
       // Pei-Hung (09/23/2020) For Fortran code,  target_source_file_id should be same as currentFileNameId when preprocessing is required
          if (SageInterface::is_Fortran_language() == true)
-         {  
-           target_source_file_id = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
-                                 // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) : 
-                                    Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+         {
+           target_source_file_id = (currentFilePtr->get_requires_C_preprocessor() == true) ?
+                                 // Sg_File_Info::getIDFromFilename(sourceFile->get_file_info()->get_filenameString()) :
+                                    Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                     currentFileInfo->get_physical_file_id(source_file_id);
          }
 
@@ -1992,7 +2010,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      SgStatement* statement = isSgStatement(n);
   // Liao 11/2/2010, Ideally we should put all SgLocatedNode here,
   // But we start with statements and initialized names first
-     SgInitializedName * i_name = isSgInitializedName (n); 
+     SgInitializedName * i_name = isSgInitializedName (n);
      SgAggregateInitializer * a_initor = isSgAggregateInitializer (n);
 
 #if 0
@@ -2019,7 +2037,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
         }
 #endif
      // Pei-Hung (9/17/2020): comment and preprocess information will not be attached to SgInitializedName that is
-     // part of the SgFunctionParameterList 
+     // part of the SgFunctionParameterList
 
      if (statement != NULL || (i_name != NULL && inheritedAttribute.isPartOfFunctionParameterList == false) || a_initor != NULL)
         {
@@ -2060,12 +2078,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           printf (" --- source_file_id = %d \n",source_file_id);
 #endif
 #if 0
-          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_file_id();
 #else
-          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 
@@ -2130,7 +2148,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGenerated();
                bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
 
-            // JJW (6/25/2008): These are always flagged as "to be unparsed", even if they are not 
+            // JJW (6/25/2008): These are always flagged as "to be unparsed", even if they are not
             // unparsed because their corresponding declarations aren't unparsed
                if (isSgClassDefinition(currentLocNodePtr) || isSgFunctionDefinition(currentLocNodePtr))
                   {
@@ -2162,11 +2180,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 
                  // DQ (9/20/2013): Fixing up references to get_file_id() to use get_physical_file_id().
-                 // fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                 //                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                 // fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ?
+                 //                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                  //                         currentFileInfo->get_file_id();
-                    fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                            Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                    fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                            Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                             currentFileInfo->get_physical_file_id(source_file_id);
                   }
 
@@ -2202,11 +2220,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                printf (" --- currentLocNodePtr->get_file_info()->get_file_id()                    = %d \n",currentLocNodePtr->get_file_info()->get_file_id());
                printf (" --- currentLocNodePtr->get_file_info()->get_physical_file_id()           = %d \n",currentLocNodePtr->get_file_info()->get_physical_file_id());
 #endif
-  
+
             // Pei-Hung (2/25/2020): If CPP is required, then we should use currentFileNameId here to use the preprocessed
             // input file.  Otherwise, all the preprocessed information is not attached to AST.  Comments and directives
             // will not be unparsed.
-            // DQ (11/3/2019): I think we want the source_file_id below, since they used to be that currentFileNameId 
+            // DQ (11/3/2019): I think we want the source_file_id below, since they used to be that currentFileNameId
             // and source_file_id had the same value, but this didn't allow us to support the header file unparsing.
             // Or perhaps it didn't allow the support of the optimization of the header file unparsing.
             // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
@@ -2229,16 +2247,16 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                    }
 #endif
             // DQ (4/16/2020): This is the cause of a redundant inclusion of a CPP directive and comment in test8. Basically,
-            // the issue is that the evaluation of the inherited attribute is causing it to be attached and the evaluation 
+            // the issue is that the evaluation of the inherited attribute is causing it to be attached and the evaluation
             // of the synthesized attribute is also causing it to be attached. If this is a fix then I need to work with Pei-Hung.
-            // Or the issue is that the Preprocessor list iterator is not being properly increments, and so this is why both 
+            // Or the issue is that the Preprocessor list iterator is not being properly increments, and so this is why both
             // attribute evaluation functions are adding the include directive in test8.
             // if ( ((sourceFile->get_requires_C_preprocessor() == true) ? currentFileNameId : source_file_id) == currentLocNode_physical_file_id )
             // if ( source_file_id == fileIdForOriginOfCurrentLocatedNode )
                if ( ((sourceFile->get_requires_C_preprocessor() == true) ? currentFileNameId : source_file_id) == currentLocNode_physical_file_id )
                   {
                  // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
-                 // A variation of this test might be required later, though we should only be attacheing comments and 
+                 // A variation of this test might be required later, though we should only be attacheing comments and
                  // CPP directives before possible transformations.
                  // if (currentLocNodePtr->get_file_info()->get_filename() != currentListOfAttributes->getFileName())
 
@@ -2268,10 +2286,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                        {
                       // DQ (12/4/2019): This fails for Fortran code so skip the test when using Fortran.
                       // ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
-                         if (sourceFile->get_Fortran_only() == false)
+                         if ((sourceFile->get_Fortran_only() == false) && (sourceFile->get_Ada_only() == false))
                             {
-                           // DQ (1/5/2021): Adding debugging code now that the filename of the token stream and the comments and CPP 
-                           // directives is computed based on the output filename for the source file. Relevant when a single source 
+                           // DQ (1/5/2021): Adding debugging code now that the filename of the token stream and the comments and CPP
+                           // directives is computed based on the output filename for the source file. Relevant when a single source
                            // file is read twice to build two different files.
                               if (currentLocNode_physical_filename_from_id != currentListOfAttributes->getFileName())
                                 {
@@ -2320,11 +2338,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
                  // DQ (8/19/2019): This is not the best place to isolate the two phases of processing the source file from the processin og the headers.
                  // DQ (8/19/2019): If we want to defer the insertion of CPP directives from header files into the AST then
-                 // we need to be able to call this function later. But since this is a recursive function maybe we could 
-                 // just call the whole process to insert comments and CPP directives into ROSE later, however, that would 
+                 // we need to be able to call this function later. But since this is a recursive function maybe we could
+                 // just call the whole process to insert comments and CPP directives into ROSE later, however, that would
                  // mark the nodes as transformed.
 
-                 // Or maybe we could do it once where the comments and CPP directives are inserted into the main source file, 
+                 // Or maybe we could do it once where the comments and CPP directives are inserted into the main source file,
                  // and then later when they are inserted into all of the header files.
 #if 0
                     printf ("Saving information about where to input comments and CPP directives from header files \n");
@@ -2383,7 +2401,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 
 #if 0
-                 // DQ (8/21/2018): As a result of adapting the physical file name to work with unparse headers, we have 
+                 // DQ (8/21/2018): As a result of adapting the physical file name to work with unparse headers, we have
                  // a bug when the SgFunctionParameterList is selected to be the target of an inserted CPP directive.
                     if (isSgFunctionParameterList(n) != NULL)
                        {
@@ -2449,8 +2467,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
     AttachPreprocessingInfoTreeTraversalInheritedAttrribute inheritedAttribute,
     SubTreeSynthesizedAttributes synthiziedAttributeList)
    {
-  // DQ (11/29/2008): FIXME: Note that this traversal does not use its inheritedAttribute 
-  // or synthiziedAttributeList attributes, so it could be expressed as a much 
+  // DQ (11/29/2008): FIXME: Note that this traversal does not use its inheritedAttribute
+  // or synthiziedAttributeList attributes, so it could be expressed as a much
   // simpler visit traversal.  We might do that later, if we decide that we REALLY
   // don't require inheritedAttribute or synthiziedAttributeList attributes.
 
@@ -2490,7 +2508,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // DQ (7/1/2014): Modify to avoid use of CPP directives in both template declarations and template instantiations (which might not be unparsed).
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true )
   // if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
-     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) || 
+     if ( (inheritedAttribute.isPartOfTemplateDeclaration              == true && templateDeclaration              == NULL) ||
           (inheritedAttribute.isPartOfTemplateInstantiationDeclaration == true && templateInstantiationDeclaration == NULL) )
         {
 // #if DEBUG_ATTACH_PREPROCESSING_INFO
@@ -2595,13 +2613,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                Sg_File_Info* currentFileInfo = sourceFile->get_file_info();
                ROSE_ASSERT(currentFileInfo != NULL);
 #if 0
-               currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+               currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_file_id();
 #else
             // Newer version of code using the physical source code position.
-               currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+               currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_physical_file_id(source_file_id);
 #endif
              }
@@ -2660,7 +2678,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // printf ("Calling locatedNode->get_file_info()->get_filename() \n");
 
             // DQ (6/20/2005): Compiler generated IR nodes to be output are now marked explicitly!
-            // isCompilerGeneratedOrTransformation = locatedNode->get_file_info()->isCompilerGenerated() || 
+            // isCompilerGeneratedOrTransformation = locatedNode->get_file_info()->isCompilerGenerated() ||
             //                                       locatedNode->get_file_info()->isTransformation() ||
                isCompilerGeneratedOrTransformation = locatedNode->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() ||
                                                      locatedNode->get_file_info()->isTransformation();
@@ -2693,12 +2711,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                Sg_File_Info* currentFileInfo = sourceFile->get_file_info();
                ROSE_ASSERT(currentFileInfo != NULL);
 #if 0
-               fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+               fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_file_id();
 #else
-               fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
-                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+               fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ?
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) :
                                    currentFileInfo->get_physical_file_id(source_file_id);
 #endif
 
@@ -3004,7 +3022,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // This is likely because the elements of that list are shared and were already processed at an earlier step in the AST File I/O.
                          // This is not a problem for the list of PreprocessingInfo since at this point they have already been added to the AST and are no longer
                          // required.  If we want to keep the actual token stream then that will have to be addressed.  We should also consider translating the
-                         // raw token stream (using the lex data structures) to use the SgToken data structure so that it could be saved with the AST.  All of 
+                         // raw token stream (using the lex data structures) to use the SgToken data structure so that it could be saved with the AST.  All of
                          // this is later work however...
 
                          // DQ (1/21/2008): Save the details of the token information for this file (even though at this point we are mostly done with it)
@@ -3059,7 +3077,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // DQ (12/19/2008): I think this should be true, but check it!
                             ROSE_ASSERT(previousLocatedNodeMap.size() == startIndexMap.size());
 #endif
-            
+
 #endif
 #if 1
                             if (statementsToInsertBefore.size() > 0)
@@ -3069,7 +3087,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                }
 #endif
                          // negara1 (08/12/2011): We reached the last AST node, so its safe to insert nodes for header files bodies.
-                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertBefore.begin(); it != statementsToInsertBefore.end(); it++) 
+                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertBefore.begin(); it != statementsToInsertBefore.end(); it++)
                                {
                                  ROSE_ASSERT(it->second != NULL);
 #if 0
@@ -3094,7 +3112,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                       statementsToInsertAfter.size());
                                }
 #endif
-                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertAfter.begin(); it != statementsToInsertAfter.end(); it++) 
+                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertAfter.begin(); it != statementsToInsertAfter.end(); it++)
                                {
 #if 0
                                  printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): case V_SgSourceFile: Calling SageInterface::insertStatementAfter(): it->second = %p = %s \n",it->second,it->second->class_name().c_str());
@@ -3109,8 +3127,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                     // last statement of SgClassDefinition instead.
                                        SgDeclarationStatement* lastMember = (classDefinition -> get_members()).back();
                                        SageInterface::insertStatementAfter(lastMember, it -> first, false);
-                                    } 
-                                   else 
+                                    }
+                                   else
                                     {
                                       SgBasicBlock* basicBlock = isSgBasicBlock(it -> second);
                                       if (basicBlock != NULL)
@@ -3136,7 +3154,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                                 printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
                                                 if (globalScope->get_declarations().empty() == false)
                                                    {
-                                                  // When there is no statement outside of the frontend (rose_edg_required_macros_and_functions.h), we want 
+                                                  // When there is no statement outside of the frontend (rose_edg_required_macros_and_functions.h), we want
                                                   // to put this after the last statement from rose_edg_required_macros_and_functions.h.
                                                      SgStatement* firstStatement = globalScope->get_declarations()[0];
                                                      printf ("Addressing insertion into globa scope: firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
@@ -3334,7 +3352,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                         previousStatement,previousStatement->class_name().c_str());
                                    printf ("case SgBasicBlock:  --------------------------------------------------------------------- basicBlock = %p \n",basicBlock);
 #endif
-                                // If the previous statement was the current basicBlock, then there were no statements 
+                                // If the previous statement was the current basicBlock, then there were no statements
                                 // in the SgBasicBlock and we have to add the comments inside the basic block.
                                    if (previousStatement == basicBlock)
                                       {
@@ -3381,8 +3399,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
 #endif
                       // DQ (4/9/2005): We need to point to the SgBasicBlock and not the last return statement (I think)
-                      // Reset the previousLocNodePtr to the current node so that all 
-                      // PreprocessingInfo objects will be inserted relative to the 
+                      // Reset the previousLocNodePtr to the current node so that all
+                      // PreprocessingInfo objects will be inserted relative to the
                       // current node next time.
                       // previousLocNodePtr = basicBlock;
 #if 1
@@ -3471,7 +3489,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                          break;
                        }
-                        // Liao 11/2/2010, support #include within SgAggregateInitializer { }   
+                        // Liao 11/2/2010, support #include within SgAggregateInitializer { }
                         // e.g.
                         /*
                              static const char c_tree_code_type[] = {
@@ -3669,7 +3687,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             }
 #endif
                       // Liao 6/10/2020, Fortran subroutine will have a SgInitializedName generated in AST to represent the subroutine name.
-                      // It is compiler-generated and has no appearance in the original source code. 
+                      // It is compiler-generated and has no appearance in the original source code.
                       // We should not attach comments to it.
                          if (SageInterface::is_Fortran_language ())
                             {
@@ -3681,7 +3699,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                            else
                             {
                               bool reset_start_index = false;
-                              iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber 
+                              iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                                    ( previousLocNodePtr, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 
                            // DQ (6/24/2020): Set this only in the evaluateInheritedAttribute() function.
@@ -3892,13 +3910,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgTemplateFunctionDeclaration:
                     case V_SgTemplateMemberFunctionDeclaration:
 
-                 // DQ (4/21/2005): this can be the last statement and if it is we have to 
+                 // DQ (4/21/2005): this can be the last statement and if it is we have to
                  // record it as such so that directives/comments can be attached after it.
                     case V_SgTemplateInstantiationDirectiveStatement:
                  // case V_SgFunctionParameterList:
                     case V_SgFunctionDeclaration:   // Liao 11/8/2010, this is necessary since SgInitializedName might be a previous located node.
                                  // we don't want to attach anything after an ending initialized name,
-                                 // So we give a chance to the init name's ancestor a chance. 
+                                 // So we give a chance to the init name's ancestor a chance.
                                  // For preprocessing info appearing after a last init name, we attach it inside the ancestor.
 
                     case V_SgMemberFunctionDeclaration:
@@ -3941,7 +3959,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          break;
                        }
 
-                 // The following cases are required because the fortran blocks can be nest in syntax, so a comment 
+                 // The following cases are required because the fortran blocks can be nest in syntax, so a comment
                  // after the block should be after the closing syntax for the consruct containing the block.
                  // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
                     case V_SgIfStmt:
@@ -4090,4 +4108,4 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
    }
 
 // ifndef  CXX_IS_ROSE_CODE_GENERATION
-// #endif 
+// #endif

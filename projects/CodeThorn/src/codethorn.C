@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.12.27";
+const std::string versionString="1.12.30";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -187,7 +187,6 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
     
-    optionallyGenerateExternalFunctionsFile(ctOpt, sageProject);
     optionallyGenerateAstStatistics(ctOpt, sageProject);
     optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
@@ -197,14 +196,23 @@ int main( int argc, char * argv[] ) {
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
 
-    ProgramInfo originalProgramInfo(sageProject);
+    VariableIdMappingExtended* vimOrig=new VariableIdMappingExtended(); // only used for program statistics of original non-normalized program
+    //AbstractValue::setVariableIdMapping(vim);
+    vimOrig->computeVariableSymbolMapping(sageProject,0);
+
+    ProgramInfo originalProgramInfo(sageProject,vimOrig);
     originalProgramInfo.compute();
     
     if(ctOpt.programStatsFileName.size()>0) {
       originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
     }
     if(ctOpt.programStatsOnly) {
+      cout<<"=================================="<<endl;
+      cout<<"Language Feature Usage Overview"<<endl;
+      cout<<"=================================="<<endl;
       originalProgramInfo.printDetailed();
+      cout<<endl;
+      vimOrig->typeSizeOverviewtoStream(cout);
       exit(0);
     }
 
@@ -212,11 +220,13 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
-      ProgramInfo normalizedProgramInfo(sageProject);
+      ProgramInfo normalizedProgramInfo(sageProject,analyzer->getVariableIdMapping());
       normalizedProgramInfo.compute();
       originalProgramInfo.printCompared(&normalizedProgramInfo);
+      analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
 
+    optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
     tc.startTimer();tc.stopTimer();
 
@@ -235,7 +245,11 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
     }
-    runSolver(ctOpt,analyzer,sageProject,tc);
+    if(ctOpt.runSolver) {
+      runSolver(ctOpt,analyzer,sageProject,tc);
+    } else {
+      cout<<"STATUS: skipping solver run."<<endl;
+    }
 
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);

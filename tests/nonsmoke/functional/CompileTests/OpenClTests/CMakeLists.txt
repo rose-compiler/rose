@@ -7,5 +7,5 @@ endif()
 set(ROSE_FLAGS -rose:skipfinalCompileStep)
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test} TRUE)
+  compile_test(${file_to_test} OPENCLTEST TRUE)
 endforeach()

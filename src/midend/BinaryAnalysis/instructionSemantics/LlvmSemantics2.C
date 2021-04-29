@@ -190,7 +190,7 @@ RiscOperators::get_stored_registers()
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
             // these variables.  By convention, the RegisterStateGeneric will add the register name + "_0" to all registers
             // initialized this way.
-            std::string comment = value->get_comment();
+            std::string comment = value->comment();
             if (0!=comment.compare(name + "_0"))
                 retval.push_back(regs[i]);
         }

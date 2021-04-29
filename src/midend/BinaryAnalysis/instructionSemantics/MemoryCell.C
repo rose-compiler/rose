@@ -88,6 +88,14 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 }
 
 void
+MemoryCell::hash(Combinatorics::Hasher &hasher) const {
+    ASSERT_not_null(address_);
+    address_->hash(hasher);
+    ASSERT_not_null(value_);
+    value_->hash(hasher);
+}
+
+void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
     stream <<"addr=" <<(*address_+fmt);

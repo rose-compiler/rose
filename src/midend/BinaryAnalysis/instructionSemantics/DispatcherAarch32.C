@@ -98,7 +98,6 @@ struct IP_add: P {
         SValuePtr b = d->read(args[2], 32);
         auto [result, nzcv] = d->addWithCarry(a, b, ops->boolean_(false));
         if (d->isIpRegister(args[0])) {
-            ASSERT_require(d->mustBeSet(d->isA32Mode()));
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
             } else {
@@ -716,7 +715,7 @@ struct IP_mrc: P {
 
         // System registers belong to coprocessors and we don't know what they are or how they behave. Therefore, every read
         // from a coprocessor must return a new variable.
-        SValuePtr value = ops->undefined_(32);
+        SValuePtr value = ops->undefined_(args[2]->get_type()->get_nBits());
         d->maybeWrite(enabled, args[2], value);
     }
 };
@@ -755,12 +754,22 @@ struct IP_mrs: P {
 struct IP_msr: P {
     void p(D d, Ops ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
-        SValuePtr result = d->read(args[1], 32);
-        if (auto rre = isSgAsmDirectRegisterExpression(args[0])) {
-            RegisterDescriptor dest = rre->get_descriptor();
-            result = ops->extract(result, dest.offset(), dest.offset() + dest.nBits());
+
+        uint32_t word = insn->get_raw_bytes()[0] |
+                        ((uint32_t)insn->get_raw_bytes()[1] << 8) |
+                        ((uint32_t)insn->get_raw_bytes()[2] << 16) |
+                        ((uint32_t)insn->get_raw_bytes()[3] << 24);
+        if (BitOps::bits(word, 12, 27) == 0b0011011000001111) {
+            // MSR MASK==0 && R == 1 is constrainted unpredictable behavior. The choices are that this instruction
+            // is either UNDEFINED or executes as NOP. ROSE will do the latter.
+        } else {
+            SValuePtr result = d->read(args[1], 32);
+            if (auto rre = isSgAsmDirectRegisterExpression(args[0])) {
+                RegisterDescriptor dest = rre->get_descriptor();
+                result = ops->extract(result, dest.offset(), dest.offset() + dest.nBits());
+            }
+            d->maybeWrite(enabled, args[0], result);
         }
-        d->maybeWrite(enabled, args[0], result);
     }
 };
 
@@ -1314,9 +1323,15 @@ struct IP_sbfx: P {
         SValuePtr a = d->read(args[1], 32);
         size_t lsb = isSgAsmIntegerValueExpression(args[2])->get_absoluteValue();
         size_t width = isSgAsmIntegerValueExpression(args[3])->get_absoluteValue();
-        SValuePtr aPart = ops->extract(a, lsb, lsb + width);
-        SValuePtr result = ops->signExtend(aPart, 32);
-        d->maybeWrite(enabled, args[0], result);
+        size_t msb = lsb + width - 1;
+        if (msb <= 31) {
+            SValuePtr aPart = ops->extract(a, lsb, lsb + width);
+            SValuePtr result = ops->signExtend(aPart, 32);
+            d->maybeWrite(enabled, args[0], result);
+        } else {
+            SValuePtr result = ops->undefined_(args[0]->get_type()->get_nBits());
+            d->maybeWrite(enabled, args[0], result);
+        }
     }
 };
 
@@ -2468,9 +2483,15 @@ struct IP_ubfx: P {
         size_t lsb = isSgAsmIntegerValueExpression(args[2])->get_absoluteValue();
         ASSERT_require(isSgAsmIntegerValueExpression(args[3]));
         size_t width = isSgAsmIntegerValueExpression(args[3])->get_absoluteValue();
-        SValuePtr bits = ops->extract(a, lsb, lsb+width);
-        SValuePtr result = ops->unsignedExtend(bits, 32);
-        d->maybeWrite(enabled, args[0], result);
+        size_t msb = lsb + width - 1;
+        if (msb <= 31) {
+            SValuePtr bits = ops->extract(a, lsb, lsb+width);
+            SValuePtr result = ops->unsignedExtend(bits, 32);
+            d->maybeWrite(enabled, args[0], result);
+        } else {
+            SValuePtr result = ops->undefined_(args[0]->get_type()->get_nBits());
+            d->maybeWrite(enabled, args[0], result);
+        }
     }
 };
 
@@ -2721,7 +2742,7 @@ struct IP_usat: P {
         size_t nBits = isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
         SValuePtr value = d->read(args[2], 32);
         auto [sat, overflowed] = d->unsignedSatQ(value, nBits);
-        SValuePtr result = ops->unsignedExtend(sat, 32);
+        SValuePtr result = sat ? ops->unsignedExtend(sat, 32) : ops->number_(32, 0);
         d->maybeWrite(enabled, args[0], result);
         SValuePtr yes = ops->boolean_(true);
         d->maybeWriteRegister(ops->and_(enabled, overflowed), d->REG_PSTATE_Q, yes);
@@ -3033,6 +3054,11 @@ DispatcherAarch32::instructionPointerRegister() const {
 RegisterDescriptor
 DispatcherAarch32::stackPointerRegister() const {
     return REG_SP;
+}
+
+RegisterDescriptor
+DispatcherAarch32::stackFrameRegister() const {
+    return RegisterDescriptor();
 }
 
 RegisterDescriptor
@@ -3709,12 +3735,13 @@ DispatcherAarch32::signedSat(const SValuePtr &input, size_t width) {
 
 // See AARCH32 SignedSatQ
 DispatcherAarch32::TwoValues
-DispatcherAarch32::signedSatQ(const SValuePtr &a, size_t n) {
+DispatcherAarch32::signedSatQ(const SValuePtr &aInput, size_t n) {
     // This implementation is completely different than documented because the documented version assumes that all values are
     // known. But we have to operate under the premise that values are symbolic and unknown, which makes this more complicated.
     // The return value will be truncated
-    ASSERT_not_null(a);
+    ASSERT_not_null(aInput);
     ASSERT_require(n > 0);
+    SValuePtr a = aInput->nBits() > n ? aInput : operators()->signExtend(aInput, n+1);
     ASSERT_require(a->nBits() > n);
 
     SValuePtr one = operators()->number_(a->nBits(), 1);                          // example using a.nBits=32 and N=16...
@@ -3739,6 +3766,9 @@ DispatcherAarch32::unsignedSat(const SValuePtr &input, size_t width) {
     // optimizations. But ROSE needs to assume that the input is a symbolic expression whose value is not known. Therefore, the
     // "input" argument in ROSE needs to be wider than the desired return value in order to determine if the value is out of
     // range. For safety, we require that the input is exactly one bit wider than the output.
+    //
+    // Also, see the comment in unsignedSatQ. When width is zero, unsignedSatQ returns a null SValue to indicate that the
+    // ARM implementation would return a zero-width unsigned value.
     ASSERT_not_null(input);
     ASSERT_require(width > 0);
     ASSERT_require(width + 1 == input->nBits());
@@ -3753,6 +3783,17 @@ DispatcherAarch32::unsignedSatQ(const SValuePtr &a, size_t n) {
         SValuePtr result = operators()->unsignedExtend(a, n);
         SValuePtr didOverflow = operators()->boolean_(false);
         return { result, didOverflow };
+    } else if (0 == n) {
+        // saturate A so it's in [0, 2^N-1]. Yes, the ARM code really does say 2^N-1 and not 2^(N+1)-1. The instructions that
+        // use this say that N is in [0, 31], not [1,32]. The ARM code also says that the width of the return value is
+        // N. Therefore it's possible for the ARM version to return a value that's zero bits wide.  ROSE can't handle
+        // zero-width values, so we return null instead and the caller better handle it.
+        //
+        // The ARM version might be buggy, because its final return statement, is "return (result<N-1:0>, saturated)" which is
+        // nonsense when N is zero.
+        //
+        // This information is from the 2021-03 version of the documentation at developer.arm.com.
+        return { SValuePtr(), operators()->boolean_(true) };
     } else {
         SValuePtr minVal = operators()->number_(n, 0);
         SValuePtr maxVal = operators()->invert(minVal);

@@ -13,6 +13,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <regex>
 
 #include <boost/config.hpp>
 #ifndef BOOST_WINDOWS
@@ -438,25 +439,44 @@ MemoryMap::adjustMap(const std::string &locatorString) {
     if (':' != *s++)
         throw adjustMapError(locatorString, "not a locator string");
 
-    // Virtual address
+    // Addresses to be adjusted
+    AddressIntervalSet where;
     while (isspace(*s)) ++s;
-    Sawyer::Optional<rose_addr_t> va = parseInteger<rose_addr_t>(s /*in,out*/);
-    if (!va)
-        throw adjustMapError(locatorString, "virtual address expected");
+    if ('/' == *s) {
+        // Addresses are all the regions whose name matches the specified regular expression. The regular
+        // expression ends at the next occurrance of "/:"
+        const char *terminator = strstr(s+1, "/:");
+        if (!terminator)
+            throw adjustMapError(locatorString, "regular expression must end with \"/:\"");
+        std::string reStr(s+1, terminator - (s+1));
+        std::regex re(reStr);
+        for (const Node &node: nodes()) {
+            if (std::regex_search(node.value().name(), re))
+                where.insert(node.key());
+        }
+        s = terminator + 1;
 
-    // Size of region
-    AddressInterval region;
-    while (isspace(*s)) ++s;
-    if ('+' == *s) {
-        ++s;
-        Sawyer::Optional<rose_addr_t> size = parseInteger<rose_addr_t>(s /*in,out*/);
-        if (!size)
-            throw adjustMapError(locatorString, "region size expected after '+'");
-        if (!*size)
-            throw adjustMapError(locatorString, "region cannot be empty");
-        region = AddressInterval::baseSize(*va, *size);
     } else {
-        region = AddressInterval::hull(*va, AddressInterval::whole().greatest());
+        // Region is specified by a starting address and a size in bytes.
+        Sawyer::Optional<rose_addr_t> va = parseInteger<rose_addr_t>(s /*in,out*/);
+        if (!va)
+            throw adjustMapError(locatorString, "virtual address expected");
+
+        // Size of region
+        AddressInterval region;
+        while (isspace(*s)) ++s;
+        if ('+' == *s) {
+            ++s;
+            Sawyer::Optional<rose_addr_t> size = parseInteger<rose_addr_t>(s /*in,out*/);
+            if (!size)
+                throw adjustMapError(locatorString, "region size expected after '+'");
+            if (!*size)
+                throw adjustMapError(locatorString, "region cannot be empty");
+            region = AddressInterval::baseSize(*va, *size);
+        } else {
+            region = AddressInterval::hull(*va, AddressInterval::whole().greatest());
+        }
+        where.insert(region);
     }
 
     // Commands
@@ -487,16 +507,18 @@ MemoryMap::adjustMap(const std::string &locatorString) {
                     ASSERT_not_reachable("invalid permission operator");
             }
         }
-        switch (op) {
-            case '-':
-                within(region).changeAccess(0, perm);
-                break;
-            case '+':
-                within(region).changeAccess(perm, 0);
-                break;
-            case '=':
-                within(region).changeAccess(perm, ~perm);
-                break;
+        for (const AddressInterval &region: where.intervals()) {
+            switch (op) {
+                case '-':
+                    within(region).changeAccess(0, perm);
+                    break;
+                case '+':
+                    within(region).changeAccess(perm, 0);
+                    break;
+                case '=':
+                    within(region).changeAccess(perm, ~perm);
+                    break;
+            }
         }
 
     } else if (!strncmp(s, "hexdump", 7)) {
@@ -514,33 +536,35 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         std::ostream &out = fout.is_open() ? fout : std::cout;
 
         HexdumpFormat fmt;
-        while (AddressInterval selected = atOrAfter(region.least()).singleSegment().available()) {
-            selected = selected & region;
-            rose_addr_t va = selected.least();
-            const ConstNodeIterator inode = at(va).nodes().begin();
-            const MemoryMap::Segment &segment = inode->value();
-            rose_addr_t bufferOffset = segment.offset() + selected.least() - inode->key().least();
-            const uint8_t *data = segment.buffer()->data() + bufferOffset;
-            out <<"# segment " <<segmentTitle(segment) <<"\n";
+        for (AddressInterval region: where.intervals()) {
+            while (AddressInterval selected = atOrAfter(region.least()).singleSegment().available()) {
+                selected = selected & region;
+                rose_addr_t va = selected.least();
+                const ConstNodeIterator inode = at(va).nodes().begin();
+                const MemoryMap::Segment &segment = inode->value();
+                rose_addr_t bufferOffset = segment.offset() + selected.least() - inode->key().least();
+                const uint8_t *data = segment.buffer()->data() + bufferOffset;
+                out <<"# segment " <<segmentTitle(segment) <<"\n";
 
-            // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print out some
-            // stuff to get the rest aligned if necessary.
-            rose_addr_t nRemain = selected.size();
-            rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
-            if (nLeader != 16) {
-                SgAsmExecutableFileFormat::hexdump(out, va, data, nLeader, fmt);
-                va += nLeader;
-                data += nLeader;
-                nRemain -= nLeader;
-                out <<"\n";
+                // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print out some
+                // stuff to get the rest aligned if necessary.
+                rose_addr_t nRemain = selected.size();
+                rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
+                if (nLeader != 16) {
+                    SgAsmExecutableFileFormat::hexdump(out, va, data, nLeader, fmt);
+                    va += nLeader;
+                    data += nLeader;
+                    nRemain -= nLeader;
+                    out <<"\n";
+                }
+                if (nRemain > 0) {
+                    SgAsmExecutableFileFormat::hexdump(out, va, data, nRemain, fmt);
+                    out <<"\n";
+                }
+                if (selected.greatest() == region.greatest())
+                    break;
+                region = AddressInterval::hull(selected.greatest()+1, region.greatest());
             }
-            if (nRemain > 0) {
-                SgAsmExecutableFileFormat::hexdump(out, va, data, nRemain, fmt);
-                out <<"\n";
-            }
-            if (selected.greatest() == region.greatest())
-                break;
-            region = AddressInterval::hull(selected.greatest()+1, region.greatest());
         }
 
     } else if (!strncmp(s, "srec", 4)) {
@@ -557,12 +581,14 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         }
         std::ostream &out = fout.is_open() ? fout : std::cout;
 
-        MemoryMap::Ptr tmpMap = shallowCopy();
-        tmpMap->at(region).keep();
-        if (!tmpMap->isEmpty()) {
-            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_MOTOROLA);
-            BOOST_FOREACH (const SRecord &srec, srecs)
-                out <<srec.toString() <<"\n";
+        for (const AddressInterval &region: where.intervals()) {
+            MemoryMap::Ptr tmpMap = shallowCopy();
+            tmpMap->at(region).keep();
+            if (!tmpMap->isEmpty()) {
+                for (const SRecord &srec: SRecord::create(tmpMap, SRecord::SREC_MOTOROLA))
+                    out <<srec.toString() <<"\n";
+
+            }
         }
 
     } else if (!strncmp(s, "hex", 3)) {
@@ -579,12 +605,13 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         }
         std::ostream &out = fout.is_open() ? fout : std::cout;
 
-        MemoryMap::Ptr tmpMap = shallowCopy();
-        tmpMap->at(region).keep();
-        if (!tmpMap->isEmpty()) {
-            std::vector<SRecord> srecs = SRecord::create(tmpMap, SRecord::SREC_INTEL);
-            BOOST_FOREACH (const SRecord &srec, srecs)
-                out <<srec.toString() <<"\n";
+        for (const AddressInterval &region: where.intervals()) {
+            MemoryMap::Ptr tmpMap = shallowCopy();
+            tmpMap->at(region).keep();
+            if (!tmpMap->isEmpty()) {
+                for (const SRecord &srec: SRecord::create(tmpMap, SRecord::SREC_INTEL))
+                    out <<srec.toString() <<"\n";
+            }
         }
 
     } else if (!strncmp(s, "print", 5)) {
@@ -593,7 +620,8 @@ MemoryMap::adjustMap(const std::string &locatorString) {
 
     } else if (!strncmp(s, "unmap", 5)) {
         s += 5;
-        within(region).prune();
+        for (const AddressInterval &region: where.intervals())
+            within(region).prune();
 
     } else {
         throw adjustMapError(locatorString, "unrecognized command");

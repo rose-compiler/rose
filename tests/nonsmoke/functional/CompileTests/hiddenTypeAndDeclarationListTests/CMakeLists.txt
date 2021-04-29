@@ -21,14 +21,16 @@ set(TESTCODE_INCLUDES
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME HIDDENTYPETEST_${file_to_test}
     COMMAND testTranslator ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(HIDDENTYPETEST_${file_to_test} PROPERTIES LABELS HIDDENTYPETEST)
 endforeach()
 
 add_test(
-  NAME test2005_56.C
+  NAME HIDDENTYPETEST_test2005_56.C
   COMMAND testTranslator ${ROSE_FLAGS}
     -DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
     -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/test2005_56.C
     -o ${CMAKE_CURRENT_BINARY_DIR}/test2005_56.o)
+  set_tests_properties(HIDDENTYPETEST_test2005_56.C PROPERTIES LABELS HIDDENTYPETEST)

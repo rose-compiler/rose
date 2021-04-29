@@ -118,6 +118,7 @@ public:
 
     virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
     virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor stackFrameRegister() const ROSE_OVERRIDE;
     virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
 
     virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {

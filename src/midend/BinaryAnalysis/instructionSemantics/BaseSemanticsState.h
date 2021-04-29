@@ -112,7 +112,7 @@ public:
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr protoval() const { return protoval_; }
+    SValuePtr protoval() const;
 
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();
@@ -190,6 +190,11 @@ public:
      *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Compute a hash of the state.
+     *
+     *  The state hash is computed by combining the memory hash with the register hash. */
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const;
 
     /** Print the register contents.
      *
