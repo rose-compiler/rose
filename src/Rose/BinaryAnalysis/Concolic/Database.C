@@ -4,6 +4,12 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/Specimen.h>
+#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
+#include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -14,12 +20,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
 #include <boost/serialization/nvp.hpp>
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
-#include <Rose/BinaryAnalysis/Concolic/Specimen.h>
-#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
-#include <Rose/BinaryAnalysis/Concolic/TestCase.h>
-#include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
+
 #include <ctime>
 #include <fstream>
 
@@ -130,7 +131,7 @@ generateId() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Functions for copying data from the database into an object (updateObject) or from an object into the database (updateDb)
+// Low-level test suite database operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
@@ -170,6 +171,25 @@ updateDb(const Database::Ptr &db, TestSuiteId id, const TestSuite::Ptr &obj) {
 }
 
 static void
+eraseDb(const Database::Ptr &db, TestSuiteId id) {
+    ASSERT_require(id);
+    if (db->testSuite()) {
+        TestSuiteId current = db->id(db->testSuite(), Update::NO);
+        if (*id == *current)
+            throw Exception("cannot delete the current test suite");
+    }
+
+    db->eraseSpecimens(id);
+    db->connection().stmt("delete from test_suites where id = ?id")
+        .bind("id", *id)
+        .run();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Low-level specimen database operations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void
 updateObject(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
     ASSERT_not_null(db);
     ASSERT_require(id);
@@ -203,6 +223,19 @@ updateDb(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
         .bind("content", obj->content())
         .run();
 }
+
+static void
+eraseDb(const Database::Ptr &db, SpecimenId id) {
+    ASSERT_require(id);
+    db->eraseTestCases(id);
+    db->connection().stmt("delete from specimens where id = ?id")
+        .bind("id", *id)
+        .run();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Low-level test case database operations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
 updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
@@ -279,6 +312,19 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
 }
 
 static void
+eraseDb(const Database::Ptr &db, TestCaseId id) {
+    ASSERT_require(id);
+    db->eraseSystemCalls(id);
+    db->connection().stmt("delete from test_cases where id = ?tcid")
+        .bind("tcid", *id)
+        .run();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Low-level system call database operations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void
 updateObject(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
     ASSERT_not_null(db);
     ASSERT_require(id);
@@ -345,6 +391,19 @@ updateDb(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
         .run();
 }
 
+static void
+eraseDb(const Database::Ptr &db, SystemCallId id) {
+    ASSERT_require(id);
+
+    db->connection().stmt("delete from system_calls where id = ?id")
+        .bind("id", *id)
+        .run();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Database operation helper templates
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Helper template function for the Database::object method
 template<class IdObjMap>
 static typename IdObjMap::Target // object pointer
@@ -379,6 +438,17 @@ idHelper(const Database::Ptr &db, const typename IdObjMap::Target &obj, Update::
         objMap.insert(id, obj);
     }
     return id;
+}
+
+// Helper template function for Database::erase method
+template<class IdObjMap>
+static typename IdObjMap::Source // ID
+eraseHelper(const Database::Ptr &db, const typename IdObjMap::Source &id, IdObjMap &objMap, const std::string &objectTypeName) {
+    if (!id)
+        throw Exception("invalid " + objectTypeName + " ID");
+    eraseDb(db, id);
+    objMap.eraseSource(id);
+    return typename IdObjMap::Source();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,17 +564,34 @@ Database::testSuite(const TestSuite::Ptr &ts) {
 
 std::vector<SpecimenId>
 Database::specimens() {
-    std::vector<SpecimenId> retval;
-    Sawyer::Database::Statement stmt;
     if (testSuiteId_) {
-        stmt = connection_.stmt("select id from specimens where test_suite = ?tsid order by created_ts")
-               .bind("tsid", *testSuiteId_);
+        return specimens(testSuiteId_);
     } else {
-        stmt = connection_.stmt("select id from specimens                          order by created_ts");
+        std::vector<SpecimenId> retval;
+        Sawyer::Database::Statement stmt = connection_.stmt("select id from specimens order by created_ts");
+        for (auto row: stmt)
+            retval.push_back(SpecimenId(*row.get<size_t>(0)));
+        return retval;
     }
+}
+
+std::vector<SpecimenId>
+Database::specimens(TestSuiteId testSuiteId) {
+    ASSERT_require(testSuiteId);
+    Sawyer::Database::Statement stmt;
+    stmt = connection_.stmt("select id from specimens where test_suite = ?tsid order by created_ts")
+           .bind("tsid", *testSuiteId_);
+    std::vector<SpecimenId> retval;
     for (auto row: stmt)
-        retval.push_back(SpecimenId(*row.get<size_t>(0)));
+        retval.push_back(SpecimenId(row.get<size_t>(0)));
     return retval;
+}
+
+void
+Database::eraseSpecimens(TestSuiteId testSuiteId) {
+    ASSERT_require(testSuiteId);
+    for (SpecimenId sid: specimens(testSuiteId))
+        erase(sid);
 }
 
 std::vector<TestCaseId>
@@ -520,6 +607,25 @@ Database::testCases() {
     for (auto row: stmt)
         retval.push_back(TestCaseId(row.get<size_t>(0)));
     return retval;
+}
+
+std::vector<TestCaseId>
+Database::testCases(SpecimenId specimenId) {
+    ASSERT_require(specimenId);
+    Sawyer::Database::Statement stmt;
+    stmt = connection_.stmt("select id from test_cases where specimen = ?sid order by created_ts")
+           .bind("sid", *specimenId);
+    std::vector<TestCaseId> retval;
+    for (auto row: stmt)
+        retval.push_back(TestCaseId(row.get<size_t>(0)));
+    return retval;
+}
+
+void
+Database::eraseTestCases(SpecimenId specimenId) {
+    ASSERT_require(specimenId);
+    for (TestCaseId tcid: testCases(specimenId))
+        erase(tcid);
 }
 
 std::vector<SystemCallId>
@@ -590,7 +696,8 @@ Database::systemCall(TestCaseId tcid, size_t idx) {
 void
 Database::eraseSystemCalls(TestCaseId tcid) {
     ASSERT_require(tcid);
-    connection_.stmt("delete from system_calls where test_case = ?tcid").bind("tcid", *tcid).run();
+    for (SystemCallId scid: systemCalls(tcid))
+        erase(scid);
 }
 
 TestSuite::Ptr
@@ -631,6 +738,26 @@ Database::id(const Specimen::Ptr &obj, Update::Flag update) {
 SystemCallId
 Database::id(const SystemCall::Ptr &obj, Update::Flag update) {
     return idHelper(sharedFromThis(), obj, update, systemCalls_);
+}
+
+TestSuiteId
+Database::erase(TestSuiteId id) {
+    return eraseHelper(sharedFromThis(), id, testSuites_, "test suite");
+}
+
+TestCaseId
+Database::erase(TestCaseId id) {
+    return eraseHelper(sharedFromThis(), id, testCases_, "test casse");
+}
+
+SpecimenId
+Database::erase(SpecimenId id) {
+    return eraseHelper(sharedFromThis(), id, specimens_, "specimen");
+}
+
+SystemCallId
+Database::erase(SystemCallId id) {
+    return eraseHelper(sharedFromThis(), id, systemCalls_, "system call");
 }
 
 TestSuite::Ptr
