@@ -13,7 +13,7 @@
 #include <boost/atomic.hpp>
 #endif /* BOOST_VERSION */
 
-#include "io-utility.h"
+#include <Rose/BinaryAnalysis/Concolic/io-utility.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
