@@ -13,7 +13,11 @@ class TokenStreamSequenceToNodeMapping_key
           SgNode* node;
           int lower_bound, upper_bound;
 
-          TokenStreamSequenceToNodeMapping_key(SgNode* n, int input_lower_bound, int input_upper_bound);
+       // DQ (4/21/2021): We need to include the SgSourceFile to allow header files to be supported.
+          SgSourceFile* sourceFile;
+
+       // TokenStreamSequenceToNodeMapping_key(SgNode* n, int input_lower_bound, int input_upper_bound);
+          TokenStreamSequenceToNodeMapping_key(SgSourceFile* sourceFile, SgNode* n, int input_lower_bound, int input_upper_bound);
           TokenStreamSequenceToNodeMapping_key(const TokenStreamSequenceToNodeMapping_key & X);
 
           bool operator==(const TokenStreamSequenceToNodeMapping_key & X) const;
@@ -84,8 +88,14 @@ class TokenStreamSequenceToNodeMapping
        // Constructor
           TokenStreamSequenceToNodeMapping( const TokenStreamSequenceToNodeMapping & X );
 
+       // DQ (4/21/2021): We need to make this dependent on the SgSourceFile so that we can support multiple files (e.g. header files).
        // Factory interval generator for new intervals (token sequences).
-          static TokenStreamSequenceToNodeMapping* createTokenInterval (SgNode* n, 
+       // static TokenStreamSequenceToNodeMapping* createTokenInterval (SgNode* n, 
+       //      int input_leading_whitespace_start, int input_leading_whitespace_end, 
+       //      int input_token_subsequence_start, int input_token_subsequence_end, 
+       //      int input_trailing_whitespace_start, int input_trailing_whitespace_end,
+       //      int input_else_whitespace_start,     int input_else_whitespace_end);
+          static TokenStreamSequenceToNodeMapping* createTokenInterval (SgSourceFile* sourceFile, SgNode* n, 
                int input_leading_whitespace_start, int input_leading_whitespace_end, 
                int input_token_subsequence_start, int input_token_subsequence_end, 
                int input_trailing_whitespace_start, int input_trailing_whitespace_end,
