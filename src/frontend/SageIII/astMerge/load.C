@@ -5,6 +5,11 @@
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 
+#define TAKE_MEMPOOL_SNAPSHOT 0
+#if TAKE_MEMPOOL_SNAPSHOT
+#  include "memory-pool-snapshot.h"
+#endif
+
 using namespace std;
 
 namespace Rose {
@@ -68,10 +73,10 @@ static void mergeFileIDs(
   unsigned num_nodes = Sg_File_Info::numberOfNodes();
   for (unsigned long i = start_node; i < num_nodes; i++) {
     // Compute the postion of the indexed Sg_File_Info object in the memory pool.
-    unsigned long positionInPool = i % Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE ;
-    unsigned long memoryBlock    = (i - positionInPool) / Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE;
+    unsigned long positionInPool = i % Sg_File_Info::pool_size ;
+    unsigned long memoryBlock    = (i - positionInPool) / Sg_File_Info::pool_size;
 
-    Sg_File_Info * fileInfo = &(((Sg_File_Info*)(Sg_File_Info_Memory_Block_List[memoryBlock]))[positionInPool]);
+    Sg_File_Info * fileInfo = &(((Sg_File_Info*)(Sg_File_Info::pools[memoryBlock]))[positionInPool]);
     ROSE_ASSERT(fileInfo != NULL);
 
     int oldFileId = fileInfo->get_file_id();
@@ -103,6 +108,9 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
   printf("Rose::AST::load:\n");
   printf(" -- project = %p\n", project);
 #endif
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astload-before.csv");
+#endif
   size_t num_nodes = Sg_File_Info::numberOfNodes();
 
   AST_FILE_IO::startUp(project);
@@ -131,6 +139,8 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
   while (astfile != astfiles.end()) {
     // Note the postfix increment in the following two lines
     std::string astfile_ = *(astfile++);
+
+    if (astfile_.empty()) continue;
 
     AST_FILE_IO::readASTFromFile(astfile_);
     AstData * ast = AST_FILE_IO::getAst(cnt++);
@@ -197,6 +207,9 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
   AST_FILE_IO::reset();
 
 //generateWholeGraphOfAST("merged", NULL);
+#if TAKE_MEMPOOL_SNAPSHOT
+  Rose::MemPool::snapshot("mempool-astload-after.csv");
+#endif
 }
 
 }

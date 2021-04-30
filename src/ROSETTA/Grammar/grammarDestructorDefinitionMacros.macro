@@ -19,17 +19,8 @@ a traversal which deletes a whole AST is provided by DeleteSgTree(SgNode*).
      automatically deleted their members.)
 
 */
-$CLASSNAME::~$CLASSNAME ()
-   {
-#if 0
-  // debugging information!
-     printf ("In $CLASSNAME::~$CLASSNAME (destructor) \n");
-#endif
-
-#if 1
-  // DQ (6/25/2006): Commented out destructor body to allow the File I/O to work.
-     $DESTRUCTOR_BODY
-#endif
-   }
+$CLASSNAME::~$CLASSNAME () {
+  $DESTRUCTOR_BODY
+}
 
 

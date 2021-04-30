@@ -11,9 +11,16 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # AST_FILE_IO.lo: StorageClassMemoryManagement.h 
 StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C AstSpecificDataManagingClass.h
 
+noinst_LTLIBRARIES = libastFileIO.la
+
+libastFileIO_la_SOURCES = memory-pool-snapshot.C
+libastFileIO_la_LIBADD = 
+libastFileIO_la_DEPENDENCIES =
+
 pkginclude_HEADERS =				\
 	AstSerialization.h			\
-	StorageClassMemoryManagement.h
+	StorageClassMemoryManagement.h \
+	memory-pool-snapshot.h
 
 # This file is generated
 nodist_pkginclude_HEADERS = \
@@ -29,7 +36,7 @@ rosetta-files-built:
 #    AST_FILE_IO.h
 #    StorageClasses.h
 
-EXTRA_DIST = CMakeLists.txt StorageClassMemoryManagement.C
+EXTRA_DIST = CMakeLists.txt StorageClassMemoryManagement.C memory-pool-snapshot.C
 
 # DQ (3/28/2006): Remove all generated code
 clean-local:

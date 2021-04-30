@@ -2029,7 +2029,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
      if (type != NULL)
         {
        // Note that the SgNode::get_parent() function is forced to return NULL for the case of a SgType IR node
-          ROSE_ASSERT(type->get_parent() == NULL);
+       // ROSE_ASSERT(type->get_parent() == NULL);
         }
 
   // Symbols can be shared within a single file but are not yet shared across files in the AST merge

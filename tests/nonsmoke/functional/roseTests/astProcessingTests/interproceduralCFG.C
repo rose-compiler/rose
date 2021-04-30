@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 //#include <rose.h>
 #include <string>
 #ifndef _MSC_VER
@@ -148,59 +149,51 @@ ss << fileName << "." << counter << ".dot";
     counter++;
     dotFileName1 = ss.str();
     //SgFunctionDefinition* fnc = functionDeclaration->get_definition();
-    if (fnc != NULL) {
-    StaticCFG::CFG* cfg = new StaticCFG::CFG(fnc);
-    SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
-     visitorTraversal* vis = new visitorTraversal();
-    g = cfg->getGraph();
-    myGraph* mg = new myGraph();
-    mg = instantiateGraph(g, (*cfg));
-    vis->tltnodes = 0;
-    vis->paths = 0;
- std::cout << dotFileName1 << std::endl;
- cfgToDot(fnc,dotFileName1);
+    if (fnc != NULL) 
+    {
+      StaticCFG::CFG            cfg{fnc};
+      visitorTraversal          vis;
+      SgIncidenceDirectedGraph* g = cfg.getGraph(); // not owning
+      std::unique_ptr<myGraph>  mg{instantiateGraph(g, cfg)};
+
+      vis.tltnodes = 0;
+      vis.paths = 0;
+      std::cout << dotFileName1 << std::endl;
+      cfgToDot(fnc,dotFileName1);
     //vis->firstPrepGraph(constcfg);
     //t1 = getCPUTime();
-    vis->constructPathAnalyzer(mg, true, 0, 0, true);
+      vis.constructPathAnalyzer(&*mg, true, 0, 0, true);
     
     //t2 = getCPUTim
-    std::cout << "function: " << fileName << std::endl;
-    std::cout << "paths: " << vis->paths << std::endl;
-    delete vis;
-    delete cfg;
-    delete g;
-    delete mg;
+      std::cout << "function: " << fileName << std::endl;
+      std::cout << "paths: " << vis.paths << std::endl;
     //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
     }
     }
    SgProject* proj = project; 
    SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
    if (mainDefDecl != NULL) {
-  SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
-   visitorTraversal* vis = new visitorTraversal();
-    StaticCFG::CFG cfg(mainDef);
+     SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
+     visitorTraversal vis;
+     StaticCFG::CFG cfg(mainDef);
    //cfg.buildFullCFG();
-    stringstream ss;
-    string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
-    string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
+     stringstream ss;
+     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
+     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
 
-    cfgToDot(mainDef,dotFileName1);
+     cfgToDot(mainDef,dotFileName1);
     //cfg->buildFullCFG();
-    SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
-    g = cfg.getGraph();
-    myGraph* mg = new myGraph();
-    mg = instantiateGraph(g, cfg);
-    vis->tltnodes = 0;
-    vis->paths = 0;
+     SgIncidenceDirectedGraph* g = cfg.getGraph();
+     std::unique_ptr<myGraph> mg{instantiateGraph(g, cfg)};
+     vis.tltnodes = 0;
+     vis.paths = 0;
     //vis->firstPrepGraph(constcfg);
-    vis->constructPathAnalyzer(mg, true, 0, 0, true);
+     vis.constructPathAnalyzer(&*mg, true, 0, 0, true);
     //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
     //cfg.clearNodesAndEdges();
-    std::cout << "finished" << std::endl;
-    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
+     std::cout << "finished" << std::endl;
+     std::cout << "tltnodes: " << vis.tltnodes << " paths: " << vis.paths << std::endl;
     //std::cout << "ipaths: " << ipaths << std::endl;
-    delete vis;
-
     }
 
 // Another way to query for collections of IR nodes
