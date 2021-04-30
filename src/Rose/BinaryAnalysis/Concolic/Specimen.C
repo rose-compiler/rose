@@ -2,8 +2,9 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Rose/BinaryAnalysis/Concolic/io-utility.h>
+
 #include <boost/lexical_cast.hpp>
-#include "io-utility.h"
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -3,16 +3,16 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
-#include <CommandLine.h>
+#include <CommandLine.h>                                // ROSE
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
-#include <SqlDatabase.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <SqlDatabase.h>                                // ROSE
 
 #ifdef __linux__
 #include <sys/mman.h>
@@ -1118,7 +1118,8 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
             TestCase::Ptr similarTestCase;
             BOOST_FOREACH (TestCaseId tid, db->testCases()) {
                 TestCase::Ptr otherTestCase = db->object(tid);
-                if (areSimilar(newTestCase, otherTestCase)) {
+                if (areSimilar(newTestCase, newSyscalls,
+                               otherTestCase, oldSyscalls)) {
                     similarTestCase = otherTestCase;
                     break;
                 }
@@ -1141,7 +1142,8 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
 }
 
 bool
-ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) const {
+ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const std::vector<SystemCall::Ptr> &aSyscalls,
+                             const TestCase::Ptr &b, const std::vector<SystemCall::Ptr> &bSyscalls) const {
     if (a->specimen() != b->specimen())
         return false;
 
@@ -1154,6 +1156,17 @@ ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) con
     std::vector<EnvValue> bEnv = b->env();
     if (aEnv.size() != bEnv.size() || !std::equal(aEnv.begin(), aEnv.end(), bEnv.begin()))
         return false;
+
+    if (aSyscalls.size() != bSyscalls.size())
+        return false;
+    for (size_t i = 0; i < aSyscalls.size(); ++i) {
+        if (aSyscalls[i]->functionId() != bSyscalls[i]->functionId())
+            return false;
+        if (aSyscalls[i]->callSite() != bSyscalls[i]->callSite())
+            return false;
+        if (aSyscalls[i]->returnValue() != bSyscalls[i]->returnValue())
+            return false;
+    }
 
     return true;
 }

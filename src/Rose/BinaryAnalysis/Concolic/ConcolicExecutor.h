@@ -5,8 +5,8 @@
 
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Sawyer/FileSystem.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Sawyer/FileSystem.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -518,7 +518,8 @@ private:
     void generateTestCase(const DatabasePtr&, const TestCasePtr&, const SmtSolverPtr&);
 
     // True if the two test cases are close enough that we only need to run one of them.
-    bool areSimilar(const TestCasePtr&, const TestCasePtr&) const;
+    bool areSimilar(const TestCasePtr&, const std::vector<SystemCallPtr>&,
+                    const TestCasePtr&, const std::vector<SystemCallPtr>&) const;
 
     // After processing a system call, update the symbolic state with any necessary system call side effects.
     void updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr&, Emulation::SystemCall&);
