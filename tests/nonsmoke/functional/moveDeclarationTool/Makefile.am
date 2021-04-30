@@ -265,6 +265,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
 
 
 # DQ (4/10/2021): Failing tests (only for EDG 6.x).
+# The variable declaration is moved into the case statement instead of being put at the top of the switch body.
 #  inputmoveDeclarationToInnermostScope_test2015_93.C 
 
 # FIXED: DQ (4/7/2021): Failing tests
