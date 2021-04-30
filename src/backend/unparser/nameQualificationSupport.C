@@ -15289,12 +15289,10 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
           if (i->second != qualifier)
              {
+               mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different...\n");
+               mfprintf(mlog [ WARN ] ) (">>>> %s\n", i->second.c_str());
+               mfprintf(mlog [ WARN ] ) (">>>> %s\n", qualifier.c_str());
                i->second = qualifier;
-
-#if 1
-               mfprintf(mlog [ WARN ] ) ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ABORT();
-#endif
              }
 #if 0
        // DQ (2/12/2012): commented this code out.

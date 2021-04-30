@@ -962,6 +962,21 @@ AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default pre
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
 
+AC_ARG_WITH(alloc-memset, [  --with-alloc-memset     Memory pool protection (memory is set on memory pool operation): 0 -> none, 1 -> command-line (NIY), 2 -> zeroed new/delete, 3 -> aggressive (diff. value for each mempool operation)],
+            [AC_DEFINE_UNQUOTED([ROSE_ALLOC_MEMSET], $with_alloc_memset, [With memset on mempool operations])],
+            [AC_DEFINE([ROSE_ALLOC_MEMSET], 0, [Without memset on mempool operations])]
+            )
+
+AC_ARG_WITH(pedantic-alloc, [  --with-pedantic-alloc   Enables pedantic assertions in Memory Pool: 0 -> none, 1 -> enabled ],
+            [AC_DEFINE_UNQUOTED([ROSE_PEDANTIC_ALLOC], $with_pedantic_alloc, [With pedantic allocation check])],
+            [AC_DEFINE([ROSE_PEDANTIC_ALLOC], 0, [Without pedantic allocation check])]
+            )
+
+AC_ARG_WITH(alloc-trace, [  --with-alloc-trace     Memory pool allocation tracing (tiny reproducers only): 0 -> none, 1 -> command-line (NIY), 2 -> enabled],
+            [AC_DEFINE_UNQUOTED([ROSE_ALLOC_TRACE], $with_alloc_trace, [With tracing of memory pool operation])],
+            [AC_DEFINE([ROSE_ALLOC_TRACE], 0, [Without tracing of memory pool operation])]
+            )
+
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
 # Pei-Hung (10/24/2016) use only ROSE_BUILD_BINARY_ANALYSIS_SUPPORT to control binary analysis tests
