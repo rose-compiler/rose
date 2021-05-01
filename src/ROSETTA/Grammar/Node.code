@@ -2711,8 +2711,8 @@ SgNode::get_parent () const
   // the symbol table as a way to support better debugging within the AST merge mechanims.
   // Sage II semantics: Types and Symbols always have a NULL parent (This is the way it is implemented (from Sage II))
   // if ( (isSgType( const_cast<SgNode*>(this) ) != NULL) || (isSgSymbol( const_cast<SgNode*>(this) ) != NULL) )
-     if ( isSgType( const_cast<SgNode*>(this) ) != NULL )
-          returnNode = NULL;
+//     if ( isSgType( const_cast<SgNode*>(this) ) != NULL )
+  //        returnNode = NULL;
 
      return returnNode;
    }

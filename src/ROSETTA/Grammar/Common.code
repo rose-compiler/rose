@@ -28,8 +28,30 @@ HEADER_START
       /*! \brief Casts pointer from base class to derived class (for const pointers) */
           ROSE_DLL_API friend const $CLASSNAME* is$CLASSNAME( const SgNode * s );
 
+     // ******************************************
+     // * Memory Pool / New / Delete
+     // ******************************************
+
      public:
-       // DQ (9/21/2005): Support for memory pools
+          static const unsigned pool_size; // 
+          static std::vector<unsigned char *> pools; // 
+
+          static $CLASSNAME * next_node; // 
+
+          static unsigned long initializeStorageClassArray($CLASSNAMEStorageClass *); // 
+
+          static void clearMemoryPool(); // 
+
+          static void extendMemoryPoolForFileIO(); // 
+
+          static $CLASSNAME * getPointerFromGlobalIndex(unsigned long); // 
+          static $CLASSNAME * getPointerFromGlobalIndex(AstSpecificDataManagingClass *, unsigned long); // 
+
+          static unsigned long getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long); // 
+          static void resetValidFreepointers(); // 
+          static unsigned long getNumberOfLastValidPointer(); // 
+
+
 #if defined(INLINE_FUNCTIONS)
       /*! \brief returns pointer to newly allocated IR node */
           inline void *operator new (size_t size);
@@ -40,24 +62,12 @@ HEADER_START
       /*! \brief deallocated memory for IR node (returns memory to memory pool for reuse) */
           void operator delete (void* pointer, size_t size);
 
-#if 1
-       /* RPM (2009-06-03): Apparently this must all be on one line for configuration "--with-javaport"; reverting r5427 */
-       // void operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };
-       // DQ (9/2/2015): Added comment for delete operator.
-      /*! \brief ROSETTA generated delete operator: deletes all non-traversed members. */
-          //void operator delete (void* pointer);
-#else
        // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
           void operator delete (void* pointer)
              {
-            // DQ (4/20/2009): Added comment and assertion to make sure this is not executed!
-            // printf ("This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE \n");
-            // ROSE_ASSERT(false);
-
             // This is the generated delete operator...
                $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME));
              }
-#endif
 
        // DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
        // using values that overflow signed values of int.
@@ -289,33 +299,7 @@ HEADER_START
        */
        // typedef unsigned long  AddressType;
 
-// #ifndef ROSE_USE_SWIG_SUPPORT
-#ifndef SWIG
 
-      /*! \brief Methods to find the pointer to a global and local index
-       */
-          friend $CLASSNAME* $CLASSNAME_getPointerFromGlobalIndex ( unsigned long globalIndex ) ;
-
-      /*! \brief Get the size of the memory pool
-
-          It actually returns the size of the whole blocks allocated, no matter they contain valid pointers or not.
-       */
-          friend unsigned long $CLASSNAME_getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long );
-
-      /*! \brief clear the memory pool */
-          friend void $CLASSNAME_clearMemoryPool ( );
-
-      /*! \brief internal support for AST file I/O (operating on the memory pools) */
-          friend void $CLASSNAME_extendMemoryPoolForFileIO ( unsigned long );
-
-      /*! \brief internal support for AST file I/O (operating on the memory pools) */
-          friend void $CLASSNAME_getNextValidPointer ( std::pair<$CLASSNAME*, std::vector < unsigned char* > :: const_iterator >& );
-
-      /*! \brief internal support for AST file I/O (operating on the memory pools) */
-          friend void $CLASSNAME_resetValidFreepointers( );
-
-// endif for ifndef ROSE_USE_SWIG_SUPPORT
-#endif
 
        // necessary, to have direct access to the p_freepointer and the private methods !
       /*! \brief friend class declaration to support AST File I/O */
