@@ -113,7 +113,7 @@ namespace CodeThorn {
 	return getBuiltInTypeSize(biTypeId);
       else
 	return unknownSizeValue();
-      }
+    }
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::getBuiltInTypeSize(enum CodeThorn::BuiltInType biType) {
@@ -183,6 +183,12 @@ namespace CodeThorn {
     return globalVarDecls;
   }
 
+  SgExprListExp* VariableIdMappingExtended::getAggregateInitExprListExp(SgVariableDeclaration* varDecl) {
+    SgExpression* exp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    // only a list if declaration has an aggregate initializer
+    return dynamic_cast<SgExprListExp*>(exp);
+  }
+
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     int numVarDecls=0;
@@ -225,11 +231,24 @@ namespace CodeThorn {
 	      // the array base type must have been declared before or it is a pointer type
 	      setElementSize(varId,determineTypeSize(elementType));
 	      setNumberOfElements(varId,determineNumberOfArrayElements(arrayType));
+
+	      // if number of elements hasn't been determined from type (e.g. int a[]={};) determine number of elements from initializer
+	      if(getNumberOfElements(varId)==unknownSizeValue()) {
+		if(SgExprListExp* initList=getAggregateInitExprListExp(varDecl)) {
+		  //cout<<"DEBUG: found agg init: "<<initList->unparseToString()<<endl;
+		  SgExpressionPtrList& exprPtrList=initList->get_expressions();
+		  CodeThorn::TypeSize numInitializerElements=exprPtrList.size();
+		  //cout<<"DEBUG: found agg init: "<<numInitializerElements<<" num elements!"<<endl;
+		  setNumberOfElements(varId,numInitializerElements);
+		}
+	      }
+		
 	      CodeThorn::TypeSize typeSize;
-	      if(getElementSize(varId)!=unknownSizeValue() && getNumberOfElements(varId)!=unknownSizeValue())
+	      if(getElementSize(varId)!=unknownSizeValue() && getNumberOfElements(varId)!=unknownSizeValue()) {
 		typeSize=getElementSize(varId)*getNumberOfElements(varId);
-	      else
+	      } else {
 		typeSize=unknownSizeValue();
+	      }
 	      setTypeSize(type,typeSize);
 	      setTotalSize(varId,typeSize);
 	    } else {
@@ -363,7 +382,31 @@ CodeThorn::TypeSize VariableIdMappingExtended::determineElementTypeSize(SgArrayT
 }
 
 CodeThorn::TypeSize VariableIdMappingExtended::determineNumberOfArrayElements(SgArrayType* arrayType) {
-  return typeSizeMapping.determineNumberOfElements(arrayType); // static function
+  //cout<<"DEBUG: VariableIdMappingExtended::determineNumberOfArrayElements:" <<arrayType->unparseToString()<<endl;
+  SgExpression * indexExp =  arrayType->get_index();
+  //cout<<"DEBUG:VariableIdMappingExtended::determineNumberOfArrayElements: indexExp: "<< indexExp->unparseToString()<<endl;
+#if 0
+  {
+    AbstractValue::setVariableIdMapping(this);
+    ExprAnalyzer tmpExprEvaluator;
+    AbstractValue abstractSize=tmpExprEvaluator.evaluateExpressionWithEmptyState(indexExp);
+    if(abstractSize.isConstInt()) {
+      cout<<"TypeSizeMapping: indexExp (eval): "<<abstractSize.getIntValue()<<endl;
+      return abstractSize.getIntValue();
+    } else {
+      cout<<"TypeSizeMapping: indexExp (eval): non-const."<<endl;
+    }
+  }
+#endif
+  if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
+    return unknownSizeValue();
+  } else { 
+    if(arrayType->get_is_variable_length_array()) {
+      return unknownSizeValue();
+    } else {
+      return arrayType->get_number_of_elements();
+    }
+  }
 }
 
 // also uses registerClassMembers 

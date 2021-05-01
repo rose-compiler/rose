@@ -16,11 +16,16 @@ namespace CodeThorn {
     void setLabel(CodeThorn::Label l);
     void setInitialLabel(CodeThorn::Label l);
     void setFinalLabels(CodeThorn::LabelSet lset);
+    void setVarName(std::string name);
+    void setVarType(std::string type);
 
   private:
     CodeThorn::Label label;
     CodeThorn::Label initialLabel;
     CodeThorn::LabelSet finalLabelsSet;
+    bool labelInfoAvailable=false;
+    std::string varName;
+    std::string varType;
   };
 
 } // end of namespace CodeThorn

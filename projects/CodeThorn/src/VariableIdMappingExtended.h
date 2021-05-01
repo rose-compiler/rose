@@ -53,12 +53,13 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
-  private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
     SgType* strippedType(SgType* type);
+    SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
 
+  private:
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 

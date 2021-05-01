@@ -186,15 +186,29 @@ namespace CodeThorn {
   
   //! Calculate the number of elements of an array type
   CodeThorn::TypeSize TypeSizeMapping::determineNumberOfElements(SgArrayType* t) {
+    cout<<"TypeSizeMapping::determineNumberOfElements:" <<t->unparseToString()<<endl;
+
     //return SageInterface::getArrayElementCount(sgType);
     ROSE_ASSERT(t);
     size_t result=0; 
     SgExpression * indexExp =  t->get_index();
+    cout<<"TypeSizeMapping: indexExp: "<< indexExp->unparseToString()<<endl;
+    //cout<<"SageInterface::getArrayElementCount(sgType): "<<SageInterface::getArrayElementCount(t)<<endl; (doesn't work with cast)
   
-    // assume dimension default to 1 if not specified ,such as a[] 
+    if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
+      result = unknownSizeValue();
+    } else {
+      if(t->get_is_variable_length_array ()) {
+	result=-1;
+      } else {
+	result=t->get_number_of_elements ();
+      }
+    }
+
     if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
       result = unknownSizeValue();
     } else { 
+      goto done;
       if(AbstractValue::getVariableIdMapping()==nullptr) {
 	while(SgCastExp* castExp=isSgCastExp(indexExp)) {
 	  indexExp=castExp->get_operand_i();
@@ -231,6 +245,8 @@ namespace CodeThorn {
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
 #endif
+  done:
+    cout<<"TypeSizeMapping: indexExp: (result): "<< result<<endl;
     return result;
   }
   

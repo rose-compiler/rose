@@ -2188,6 +2188,9 @@ void CodeThorn::CTAnalysis::generateAstNodeInfo(SgNode* node) {
         attr->setLabel(getCFAnalyzer()->getLabel(*i));
         attr->setInitialLabel(getCFAnalyzer()->initialLabel(*i));
         attr->setFinalLabels(getCFAnalyzer()->finalLabels(*i));
+      } else if(SgInitializedName* iName=isSgInitializedName(*i)) {
+	attr->setVarName(iName->unparseToString());
+	attr->setVarType(iName->get_type()->unparseToString());
       } else {
         (*i)->removeAttribute("info");
       }

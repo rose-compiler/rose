@@ -372,8 +372,8 @@ void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNo
     //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
     SAWYER_MESG(logger[TRACE]) << "Option VIS: generate ast node info."<<endl;
-    analyzer->generateAstNodeInfo(root);
     cout << "generating AST node info ... "<<endl;
+    analyzer->generateAstNodeInfo(root);
     dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
     write_file("ast.dot", dotFile);
     cout << "generated ast.dot."<<endl;
