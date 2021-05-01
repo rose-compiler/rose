@@ -234,8 +234,12 @@ std::string AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
   RoseAst ast(root);
   std::stringstream ss;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
-    ss << "\"" << *i <<"\""
-       << "[label=\"" << nodeTypeName(*i);
+    if(nodeTypeName(*i)=="null")
+      ss << "\"" << i.parent()<<"_null" <<"\"";
+    else
+      ss << "\"" << *i <<"\"";
+    ss << "[label=\"" << nodeTypeName(*i);
+
     if(*i && (*i)->attributeExists("info")) {
       AstAttribute* attr=(*i)->getAttribute("info");
       ss<<attr->toString();
@@ -245,7 +249,10 @@ std::string AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
     }
     ss<< "];"<<std::endl;
     if(*i!=root) {
-      ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
+      if(nodeTypeName(*i)=="null")
+	ss << "\""<<i.parent() << "\"" << " -> " << "\"" << i.parent()<<"_null" << "\""<<";" << std::endl;
+      else
+	ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
     }
   }
   return ss.str();
