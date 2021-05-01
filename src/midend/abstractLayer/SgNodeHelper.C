@@ -314,6 +314,9 @@ SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVari
   if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
     SgExpression* expr=assignInitializer->get_operand_i();
     return expr;
+  } else if(SgAggregateInitializer* aggregateInit=isSgAggregateInitializer(initializer)) {
+    // this returns SgExprListExp
+    return aggregateInit->get_initializers();
   } else {
     return 0;
   }
