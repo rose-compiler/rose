@@ -1865,7 +1865,7 @@ HEADER_JOVIAL_TABLE_PRESET_EXP_END
 
 // Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
 HEADER_JOVIAL_PRESET_POSITION_EXP_START
-int replace_expression (SgExpression *o, SgExpression *n);
+int replace_expression (SgExpression *o, SgExpression *n) $ROSE_OVERRIDE;
 HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START

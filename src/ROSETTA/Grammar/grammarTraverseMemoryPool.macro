@@ -10,19 +10,19 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
   // Initialize array to the address of the first element of the STL vector
   // (which is guaranteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
+     if ($CLASSNAME::pools.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::pools[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 #if 0
        // Iterate over the memory pools
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME::pools.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (int j=0; j < $CLASSNAME::pool_size; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -39,10 +39,10 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
           std::vector<$CLASSNAME*> nodeList;
 
        // Iterate over the memory pools to build the saved list of IR nodes for this type.
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME::pools.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (unsigned j=0; j < $CLASSNAME::pool_size; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -83,19 +83,19 @@ $CLASSNAME::traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor )
   // Initialize array to the address of the first element of the STL vector
   // (which is guarenteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
+     if ($CLASSNAME::pools.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::pools[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over the memory pools
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME::pools.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (unsigned j=0; j < $CLASSNAME::pool_size; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -127,24 +127,24 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
   // Initialize array to the address of the first element of the STL vector
   // (which is guarenteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
+     if ($CLASSNAME::pools.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::pools[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over the memory pools
           bool done = false;
-          unsigned int i=0;
+          unsigned i=0;
 
        // find the first valid IR node, call visit function, and then leave
-          while ( done == false && i < $CLASSNAME_Memory_Block_List.size() )
+          while ( done == false && i < $CLASSNAME::pools.size() )
              {
             // objectArray[i] is a single memory pool
-               int j=0;
-               while (done == false && j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE)
+               unsigned j=0;
+               while (done == false && j < $CLASSNAME::pool_size)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -177,22 +177,22 @@ $CLASSNAME::numberOfNodes()
   // nodes type.
 
      size_t count = 0;
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
+     if ($CLASSNAME::pools.empty() == false)
         {
        // Generate an array of memory pools (this is actually a STL vector, 
        // but it is contiguious, so OK to treat this way).
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::pools[0]);
 
        // Build a local variable for better performance (make it a loop invariant variable).
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over all of the memory pools for this IR node.
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME::pools.size(); i++)
              {
             // objectArray[i] is a single memory pool, iterate over all the 
             // IR nodes and only count those that are valid IR nodes used in 
             // the AST (i.e. allocated IR nodes).
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (unsigned j=0; j < $CLASSNAME::pool_size; j++)
                   {
                  // This is indexing the STL vector of C/C++ style arrays as a doubly 
                  // indexed array access. It is OK since we have leveraged the semantics 

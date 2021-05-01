@@ -12,13 +12,13 @@ $CLASSNAME::isInMemoryPool ()
 
      TestType tested = (TestType) ( this ) ;
 
-     std::vector < unsigned char* > :: const_iterator block = $CLASSNAME_Memory_Block_List.begin();
+     std::vector < unsigned char* > :: const_iterator block = $CLASSNAME::pools.begin();
 
   // DQ (1/17/2006): Modified conditional test to use "!=" instead of "<" 
   // while (found == false && block < Memory_Block_List.end())
-     while ( (found == false) && (block != $CLASSNAME_Memory_Block_List.end()) )
+     while ( (found == false) && (block != $CLASSNAME::pools.end()) )
         {
-          found = ( ( (*block) <= tested ) && ( tested  < (*block) + $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) ) ) ;
+          found = ( ( (*block) <= tested ) && ( tested  < (*block) + $CLASSNAME::pool_size * sizeof($CLASSNAME) ) ) ;
           ++block;
         }
 
