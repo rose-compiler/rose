@@ -69,6 +69,8 @@ namespace CodeThorn {
     void registerClassMemberVar(SgType*,VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
+    bool isMemberVariableDeclaration(SgVariableDeclaration*);
+    
     void recordWarning(std::string);
     std::list<std::string> _warnings;
 

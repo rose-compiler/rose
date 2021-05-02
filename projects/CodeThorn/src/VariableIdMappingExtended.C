@@ -65,12 +65,15 @@ namespace CodeThorn {
 	if(SgClassType* memberClassType=isSgClassType(type)) {
 	  typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
 	  setTypeSize(type,typeSize);
+	  getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
 	} else if(SgArrayType* arrayType=isSgArrayType(type)) {
 	  typeSize=determineTypeSize(type);
 	  setTypeSize(type,typeSize);
+	  getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
 	} else {
 	  // only built-in scalar types
 	  typeSize=determineTypeSize(type);
+	  getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
 	}
 	if(typeSize!=unknownSizeValue()) {
 	  offset+=typeSize;
@@ -189,6 +192,10 @@ namespace CodeThorn {
     return dynamic_cast<SgExprListExp*>(exp);
   }
 
+  bool VariableIdMappingExtended::isMemberVariableDeclaration(SgVariableDeclaration* varDecl) {
+    return isSgClassDefinition(varDecl->get_parent());
+  }
+
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     int numVarDecls=0;
@@ -207,7 +214,9 @@ namespace CodeThorn {
 	      numSymbolExists++;
 	      continue;
 	    }
-	    //cout<<"DEBUG: var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
+	    if(isMemberVariableDeclaration(varDecl))
+	      continue;
+	    cout<<"DEBUG: var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
 	    registerNewSymbol(sym);
 	    VariableId varId=variableId(sym);
 	    if(SgNodeHelper::isGlobalVariableDeclaration(varDecl)) {
@@ -259,11 +268,16 @@ namespace CodeThorn {
 	      setNumberOfElements(varId,1);
 	      setTotalSize(varId,getElementSize(varId));
 	    }
+	    if(getTotalSize(varId)==unknownSizeValue()) {
+	      cout<<"DEBUG: unknown size: "<<varDecl->unparseToString()<<endl;
+	    } else {
+	      cout<<"DEBUG: known size: "<<getTotalSize(varId)<<endl;
+	    }
 	  } else {
 	    cout<<"DEBUG: no symbol basis."<<endl;
 	  }
 	}
-	
+	#if 0
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
 	  //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
 	  std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
@@ -277,6 +291,7 @@ namespace CodeThorn {
 	    }
 	  }
 	}
+	#endif
       }
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
