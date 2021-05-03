@@ -34,8 +34,6 @@ void ProgramInfo::initCount() {
   for(int i=0;i<Element::NUM;i++) {
     count[i]=0;
   }
-  countNameMap[Element::numGlobalVars]      ="Global var decls  ";
-  countNameMap[Element::numLocalVars]       ="Local var decls   ";
   countNameMap[Element::numFunDefs]         ="Function defs     ";
   countNameMap[Element::numFunCall]         ="Function calls    ";
   countNameMap[Element::numFunPtrCall]      ="Function ptr calls";
@@ -59,8 +57,6 @@ void ProgramInfo::compute() {
   for (auto node : ast) {
     if(auto funDef=isSgFunctionDefinition(node)) {
       count[numFunDefs]++;
-      std::set<SgVariableDeclaration*> localVarDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
-      count[numLocalVars]+=localVarDecls.size();
     } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
       if(FunctionCallMapping::isAstFunctionPointerCall(fc)) {
 	count[numFunPtrCall]++;
@@ -90,20 +86,6 @@ void ProgramInfo::compute() {
     } else if(SgNodeHelper::isArrayAccess(node)) {
       count[numArrayAccess]++;
     }
-  }
-  if(SgProject* proj=isSgProject(_root)) {
-    std::list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(proj);
-#if 0
-    int i=0;
-    for(auto varDecl : globalVars) {
-      SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-      cout<<"DEBUG: Decl: "<<i++<<": ";
-      cout<<SgNodeHelper::sourceFilenameLineColumnToString(initName);
-      cout<<" : "<<initName->unparseToString();
-      cout<<endl;
-    }
-#endif
-    count[numGlobalVars]=globalVars.size();
   }
 }
 

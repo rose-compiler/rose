@@ -23,8 +23,6 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
-    void computeVariableSymbolMapping3(SgProject* project, int maxWarningsCount);
-    void registerAllVariableSymbols(SgProject* project, int maxWarningsCount);
 
     // deprecated
     void computeTypeSizes();
@@ -48,8 +46,12 @@ namespace CodeThorn {
     
     bool symbolExists(SgSymbol* sym);
     static SgVariableDeclaration* getVariableDeclarationFromSym(SgSymbol* sym);
+
+    CodeThorn::VariableIdSet getSetOfVarIds(VariableScope vs);
     CodeThorn::VariableIdSet getSetOfGlobalVarIds();
     CodeThorn::VariableIdSet getSetOfLocalVarIds();
+    CodeThorn::VariableIdSet getSetOfFunParamVarIds();
+
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
@@ -70,7 +72,11 @@ namespace CodeThorn {
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
     bool isMemberVariableDeclaration(SgVariableDeclaration*);
-    
+    // determines all size information obtainable from SgType and sets values in varidinfo
+    // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
+    void setVarIdInfoFromType(VariableId varId, SgType* type, SgVariableDeclaration* linkedDecl);
+    std::string varIdInfoToString(VariableId varId);
+  
     void recordWarning(std::string);
     std::list<std::string> _warnings;
 
