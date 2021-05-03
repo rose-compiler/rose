@@ -170,8 +170,8 @@ namespace CodeThorn {
     
     // link analysis is by default disabled (=false)
     void setLinkAnalysisFlag(bool);
-    enum AggregateType { AT_UNKNOWN, AT_SINGLE, AT_ARRAY, AT_STRUCT };
-    enum VariableScope { VS_UNKNOWN, VS_LOCAL, VS_GLOBAL, VS_MEMBER };
+    enum AggregateType { AT_UNKNOWN, AT_SINGLE, AT_ARRAY, AT_STRUCT, AT_STRING_LITERAL };
+    enum VariableScope { VS_UNKNOWN, VS_LOCAL, VS_FUNPARAM, VS_GLOBAL, VS_MEMBER };
     bool isVolatile(VariableId varId);
     void setVolatileFlag(VariableId varId, bool flag);
 
@@ -189,6 +189,7 @@ namespace CodeThorn {
       VariableScope variableScope;
       bool isVolatileFlag;
       bool relinked; // true if link analysis relinked this entry
+      bool unspecifiedSize; // true if no declaration can be found to determine type size
       std::string toString();
       std::string aggregateTypeToString();
       std::string variableScopeToString();

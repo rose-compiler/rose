@@ -703,7 +703,8 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   aggregateType(AT_UNKNOWN),
   variableScope(VS_UNKNOWN),
   isVolatileFlag(false),
-  relinked(false)
+  relinked(false),
+  unspecifiedSize(false)
 {
 }
 
@@ -788,6 +789,8 @@ std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
     return "array";
   case AT_STRUCT:
     return "struct";
+  case AT_STRING_LITERAL:
+    return "string";
   }
   return "undefined-aggregate-type-enum";
 }
@@ -802,6 +805,8 @@ std::string VariableIdMapping::VariableIdInfo::variableScopeToString() {
     return "global";
   case VS_MEMBER:
     return "member";
+  case VS_FUNPARAM:
+    return "parameter";
   }
   return "undefined-variable-scope-enum";
 }
@@ -915,8 +920,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         setElementSize(newVariableId,elementSize);
         setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
         setOffset(newVariableId,unknownSizeValue());
-        getVariableIdInfoPtr(newVariableId)->aggregateType=AT_ARRAY; // string literals are maintained as arrays with known length (includes terminating 0)
-
+        getVariableIdInfoPtr(newVariableId)->aggregateType=AT_STRING_LITERAL;
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
       } else {
