@@ -1031,7 +1031,6 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    SgType * type = nullptr, * base_type = nullptr;
    SgExpression* init = nullptr;
    std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
-   std::string name{};
    std::list<EntityDeclTuple> init_info;
 
    Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
@@ -2893,18 +2892,182 @@ void Build(const parser::DerivedTypeDef&x, T* scope)
    //     std::list<Statement<PrivateOrSequence>>, std::list<Statement<ComponentDefStmt>>,
    //     std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>> t;
 
-   const auto & stmt    {std::get<0>(x.t)};
-   const auto & end_stmt{std::get<5>(x.t)};
+   std::string type_name{};
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, type_name, modifier_enum_list);
 
-   std::string type_name{std::get<1>(stmt.statement.t).ToString()};
-
+   // Begin SageTreeBuilder for SgDerivedTypeStatement
    SgDerivedTypeStatement* derived_type_stmt{nullptr};
-// TODO
-#if FORTRAN
    builder.Enter(derived_type_stmt, type_name);
 
+   // Traverse body of type-def
+   std::list<SgStatement*> stmt_list;
+   Build(std::get<3>(x.t), stmt_list);
+
+   // EndTypeStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+   if (auto & opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgDerivedTypeStatement
    builder.Leave(derived_type_stmt);
+}
+
+void Build(const parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DerivedTypeStmt)\n";
 #endif
+   // std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
+
+   Build(std::get<0>(x.t), modifier_enum_list);  // std::list<TypeAttrSpec>
+   name = std::get<1>(x.t).ToString();           // Name
+}
+
+void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &stmt)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Statement<ComponentDefStmt>)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::DataComponentDefStmt &y) { Build(y, stmt); },
+         [&] (const auto &y) { ; } // ProcComponentDefStmt, ErrorRecovery
+      },
+      x.statement.u);
+}
+
+void Build(const parser::DataComponentDefStmt&x, SgStatement* &stmt)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DataComponentDefStmt)\n";
+#endif
+
+   SgVariableDeclaration* var_decl = nullptr;
+   SgType * type = nullptr, * base_type = nullptr;
+   SgExpression* init = nullptr;
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   std::list<EntityDeclTuple> init_info;
+
+   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
+   Build(std::get<1>(x.t), modifier_enum_list);           // std::list<ComponentAttrSpec>
+   Build(std::get<2>(x.t), init_info, base_type);         // std::list<ComponentDecl>
+
+   builder.Enter(var_decl, base_type, init_info);
+   builder.Leave(var_decl, modifier_enum_list);
+}
+
+void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(TypeAttrSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Abstract              &y) { ; },
+         [&] (const parser::AccessSpec            &y) { Build(y, modifier_enum); },
+         [&] (const parser::TypeAttrSpec::BindC   &y) { ; },
+         [&] (const parser::TypeAttrSpec::Extends &y) { ; },
+      },
+      x.u);
+}
+
+void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentAttrSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::CoarraySpec        &y) { ; },
+         [&] (const parser::ComponentArraySpec &y) { ; },
+         [&] (const parser::ErrorRecovery      &y) { ; },
+         [&] (const parser::AccessSpec         &y) { Build(y, modifier_enum); },
+         [&] (const parser::Allocatable &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
+            },
+         [&] (const parser::Contiguous &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous;
+            },
+         [&] (const parser::Pointer &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_pointer;
+            },
+      },
+      x.u);
+}
+
+void Build(const std::list<Fortran::parser::ComponentDecl> &x, std::list<EntityDeclTuple> &component_decls, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for ComponentDecl\n";
+#endif
+
+   for (const auto &elem : x) {
+      EntityDeclTuple component_decl;
+      std::string name;
+      SgType* type = nullptr;
+      SgExpression* init = nullptr;
+
+      Build(elem, name, init, type, base_type);
+      component_decl = std::make_tuple(name, type, init);
+      component_decls.push_back(component_decl);
+   }
+}
+
+void Build(const parser::ComponentDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentDecl)\n";
+#endif
+
+   name = std::get<parser::Name>(x.t).ToString();
+
+   SgScopeStatement *scope = nullptr;
+   if (auto & opt = std::get<1>(x.t)) {    // ComponentArraySpec
+      Build(opt.value(), type, base_type);
+   }
+
+   if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
+      Build(opt.value(), scope);
+   }
+
+   if (auto & opt = std::get<3>(x.t)) {    // CharLength
+      //      Build(opt.value(), scope);
+   }
+
+   if (auto & opt = std::get<4>(x.t)) {    // Initialization
+      Build(opt.value(), init);
+   }
+}
+
+void Build(const parser::ComponentArraySpec &x, SgType* &type, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentArraySpec)\n";
+#endif
+
+   std::list<SgExpression*> expr_list;
+
+   std::visit(
+      common::visitors{
+         [&] (const std::list<parser::ExplicitShapeSpec> &y)
+            {
+               Build(y, expr_list);
+               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
+            },
+         [&] (const parser::DeferredShapeSpecList &y)
+            {
+               ;
+            }
+      },
+      x.u);
 }
 
 template<typename T>
