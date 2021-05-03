@@ -20,7 +20,8 @@ FORTRAN_TESTCODES =       \
   tiny.f90                \
   type_decls_1.f90        \
   type_decls_2.f90        \
-  type_decls_3.f90
+  type_decls_3.f90        \
+  type_def_1.f90
 
 
 TEST_FORTRAN_Objects = ${FORTRAN_TESTCODES:.f90=.o}

@@ -276,6 +276,16 @@ template<typename T> void Build(const Fortran::parser::       OpenACCConstruct&x
 template<typename T> void Build(const Fortran::parser::AccEndCombinedDirective&x, T* scope);
 template<typename T> void Build(const Fortran::parser::    OmpEndLoopDirective&x, T* scope);
 
+// DerivedTypeDef
+void Build(const Fortran::parser::Statement<Fortran::parser::ComponentDefStmt>&x, SgStatement* &stmt);
+void Build(const Fortran::parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list);
+void Build(const Fortran::parser::DataComponentDefStmt&x, SgStatement* &stmt);
+void Build(const Fortran::parser::TypeAttrSpec      &x, LanguageTranslation::ExpressionKind &modifier_enum);
+void Build(const Fortran::parser::ComponentAttrSpec&x, LanguageTranslation::ExpressionKind &modifier_enum);
+void Build(const std::list<Fortran::parser::ComponentDecl> &x, std::list<EntityDeclTuple> &component_decls, SgType* base_type);
+void Build(const Fortran::parser::ComponentDecl&x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type);
+void Build(const Fortran::parser::ComponentArraySpec&x, SgType* &type, SgType* base_type);
+
 // DoConstruct
 void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
