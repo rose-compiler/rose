@@ -509,6 +509,7 @@ test_ast_attributes() {
     ASSERT_always_require(2 == attr1_n);
     ASSERT_always_require(2 == attr5_n);
 
+#if 0 // [Robb Matzke 2021-05-03]: It is unsafe to delete AST nodes
     // Delete an ast node, which should delete its attributes
     SageInterface::deleteAST(node1);
     node1 = NULL;
@@ -522,6 +523,7 @@ test_ast_attributes() {
     ASSERT_always_require(2 == AllocationCounter<Attr6>::nAllocated);
     ASSERT_always_require(1 == attr1_n);
     ASSERT_always_require(1 == attr5_n);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
