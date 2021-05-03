@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
@@ -229,6 +230,7 @@ private:
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     Debugger::Ptr process_;                             // subordinate process
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
+    size_t nSystemCallsProcessed_ = 0;                  // number of system calls done by processInstruction
     Sawyer::Optional<rose_addr_t> overrideNextIp_;      // next instruction to execute, used to skip over syscalls
     std::vector<SystemCall> systemCalls_;               // list of system calls in the order they're executed
 
@@ -312,6 +314,15 @@ public:
         overrideNextIp_.reset();
     }
     /** @} */
+
+    /** Information about system calls that will be encountered and which will need to be overridden.
+     *
+     *  This is the list of system calls we expect to encounter when fast forwarding through the executable concretely to the
+     *  starting point. Some (all?) of these, since they're considered program inputs, will need to be intercepted in order to
+     *  get the correct input values for the rest of the run. E.g., if a test case calls getpid, then its return value (a
+     *  program input) had better be the same each time we run a new testcase for this same specimen, even though the concrete
+     *  system call will almost certainly return a new PID for every test case. */
+    void systemCallInputs(const DatabasePtr&, const TestCasePtr&);
 
     /** Information about system calls that have been processed.
      *
@@ -403,6 +414,9 @@ public:
 
     /** Unrwap the RISC operators if tracing is enabled. */
     static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+
+    /** The concrete half of processInstruction. */
+    void processConcreteInstruction(SgAsmInstruction*);
 
 public:
     // overrides
@@ -515,7 +529,8 @@ private:
 
     // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
     // to be satisfiable.
-    void generateTestCase(const DatabasePtr&, const TestCasePtr&, const SmtSolverPtr&);
+    void generateTestCase(const DatabasePtr&, const TestCasePtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                          const SmtSolverPtr&);
 
     // True if the two test cases are close enough that we only need to run one of them.
     bool areSimilar(const TestCasePtr&, const std::vector<SystemCallPtr>&,

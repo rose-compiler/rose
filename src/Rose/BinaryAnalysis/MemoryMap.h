@@ -448,8 +448,20 @@ public:
      *  The locator string follows the syntax described in @ref insertProcessDocumentation. */
     void insertProcess(const std::string &locatorString);
 
+    /** Insert part of another process into this memory map.
+     *
+     *  The file descriptor is the file containing the memory of the process, such as /proc/self/mem. */
+    void insertProcess(int fd, const std::vector<ProcessMapRecord>&, const std::string &namePrefix);
+
     /** Documentation string for @ref insertProcess. */
     static std::string insertProcessDocumentation();
+
+    /** Copy part of a file into a buffer.
+     *
+     *  This copies (rather than directly references) part of a file and returns a pointer to a new buffer containing the data.
+     *  If an error occurs when reading the file, then a buffer is still returned but its length will only be what was actually
+     *  read, and a string is also returned containing the error message. */
+    std::pair<Buffer::Ptr, std::string> copyFromFile(int fd, const AddressInterval&);
 
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);

@@ -1,8 +1,10 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
+#include <boost/scope_exit.hpp>
 #include <CommandLine.h>                                // ROSE
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
@@ -19,8 +21,9 @@
 #include <sys/syscall.h>
 #endif
 
-namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 using namespace Sawyer::Message::Common;
 
@@ -123,7 +126,7 @@ operator<<(std::ostream &out, const SystemCall &sc) {
 
 RiscOperatorsPtr
 RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, const Debugger::Ptr &process,
-                        InputVariables &inputVariables, const IS::BaseSemantics::SValuePtr &protoval,
+                        InputVariables &inputVariables, const BS::SValuePtr &protoval,
                         const SmtSolver::Ptr &solver) {
     // Extend the register set with an additional Boolean register named "path"
     RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
@@ -147,7 +150,7 @@ RiscOperators::instance(const Settings &settings, const P2::Partitioner &partiti
 }
 
 RiscOperatorsPtr
-RiscOperators::promote(const IS::BaseSemantics::RiscOperatorsPtr &x) {
+RiscOperators::promote(const BS::RiscOperatorsPtr &x) {
     RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -172,7 +175,7 @@ RiscOperators::interrupt(int majr, int minr) {
     }
 }
 
-IS::BaseSemantics::SValuePtr
+BS::SValuePtr
 RiscOperators::systemCallFunctionNumber() {
     // FIXME[Robb Matzke 2020-08-28]: Assumes x86
     if (32 == partitioner_.instructionProvider().wordSize()) {
@@ -185,7 +188,7 @@ RiscOperators::systemCallFunctionNumber() {
     }
 }
 
-IS::BaseSemantics::SValuePtr
+BS::SValuePtr
 RiscOperators::systemCallArgument(size_t idx) {
     // FIXME[Robb Matzke 2020-08-28]: assuming x86
     if (partitioner_.instructionProvider().wordSize() == 32) {
@@ -248,7 +251,7 @@ RiscOperators::systemCallArgument(size_t idx) {
     ASSERT_not_reachable("invalid system call number");
 }
 
-IS::BaseSemantics::SValuePtr
+BS::SValuePtr
 RiscOperators::systemCallReturnValue() {
     // FIXME[Robb Matzke 2020-08-28]: Assumes x86
     if (32 == partitioner_.instructionProvider().wordSize()) {
@@ -261,8 +264,8 @@ RiscOperators::systemCallReturnValue() {
     }
 }
 
-IS::BaseSemantics::SValuePtr
-RiscOperators::systemCallReturnValue(const IS::BaseSemantics::SValuePtr &retval) {
+BS::SValuePtr
+RiscOperators::systemCallReturnValue(const BS::SValuePtr &retval) {
     // FIXME[Robb Matzke 2020-10-07]: Assumes x86
     if (32 == partitioner_.instructionProvider().wordSize()) {
         const RegisterDescriptor AX = partitioner_.instructionProvider().registerDictionary()->findOrThrow("eax");
@@ -276,7 +279,7 @@ RiscOperators::systemCallReturnValue(const IS::BaseSemantics::SValuePtr &retval)
 }
 
 void
-RiscOperators::doExit(const IS::BaseSemantics::SValuePtr &status) {
+RiscOperators::doExit(const BS::SValuePtr &status) {
     // This is called during the symbolic phase. The concrete system call hasn't happened yet.
     systemCalls().back().arguments.resize(1);
     if (auto exitValue = status->toSigned()) {
@@ -298,47 +301,90 @@ RiscOperators::doGetuid() {
 }
 
 void
+RiscOperators::systemCallInputs(const Database::Ptr &db, const TestCase::Ptr &tc) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(tc);
+    TestCaseId tcid = db->id(tc, Update::NO);
+
+    // For each system call that this test case is expected to encounter when fast forwarding to the starting location, create a system
+    // call record in this operators object and the corresponding input variables.
+    for (SystemCallId scid: db->systemCalls(tcid)) {
+        Concolic::SystemCall::Ptr dbsc = db->object(scid); // database system call record
+        systemCalls_.push_back(SystemCall());           // new system call semantic record
+        systemCalls_.back().callSite = dbsc->callSite();
+        systemCalls_.back().functionNumber = number_(wordSizeBits(), dbsc->functionId());
+        systemCalls_.back().returnValue = number_(wordSizeBits(), dbsc->returnValue());
+    }
+}
+
+void
 RiscOperators::systemCall() {
     ASSERT_always_require2(isSgAsmX86Instruction(currentInstruction()), "ISA not implemented yet");
 
-    // All system calls get appended to a vector of system calls that have been seen so far. We don't know how many arguments
-    // the call has without having a huge switch statement per architecture, but since arguments are passed in registers and
-    // registers are always present, and there's a maximum number of arguments possible, we'll just save all possible arguments
-    // even if the syscall uses only some.  Linux system calls have at most six arguments.
     SystemCall sc;
     sc.callSite = currentInstruction()->get_address();
     sc.functionNumber = systemCallFunctionNumber();
-    for (size_t i = 0; i < 6; ++i)
+    for (size_t i = 0; i < 6; ++i)                      // just grab all 6 potential Linux system call args
         sc.arguments.push_back(systemCallArgument(i));
-    systemCalls_.push_back(sc);
     mlog[DEBUG] <<"encountered " <<sc;
 
-    // A few system calls are handled directly.
-    if (auto fn = sc.functionNumber->toUnsigned()) {
-        if (32 == partitioner_.instructionProvider().wordSize()) {
-            switch (*fn) {
-                case 1:                                 // exit
-                case 252:                               // exit_group
-                    return doExit(systemCallArgument(0));
-                case 24:                                // getuid
-                    return doGetuid();
-            }
-        } else {
-            ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
-            switch (*fn) {
-                case 60:                                // exit
-                case 231:                               // exit_group
-                    return doExit(systemCallArgument(0));
-                case 102:                               // getuid
-                    return doGetuid();
+    if (nSystemCallsProcessed_ < systemCalls_.size()) {
+        // We're executing a system call that came from a previous test case and which must provide expected inputs to this test case.
+        // For instance, if this call to getpid() returned 112233 in the previous test case, then it better return 112233 again right
+        // here in the current test case.
+        const SystemCall &parent = systemCalls_[nSystemCallsProcessed_]; // this call # in the parent test case
+        mlog[DEBUG] <<"same syscall from parent test case was " <<parent;
+
+        // Check that we're executing system calls in the same order as we did in the parent test case.
+        if (!sc.functionNumber->mustEqual(parent.functionNumber)) {
+            mlog[ERROR] <<"system call #" <<nSystemCallsProcessed_ <<" is function " <<*sc.functionNumber <<" in this run"
+                        <<" but was function " <<*parent.functionNumber <<" in the parent test case\n";
+            throw Exception("mismatched system calls");
+        } else if (sc.callSite != parent.callSite) {
+            mlog[ERROR] <<"system call #" <<nSystemCallsProcessed_ <<" was from " <<StringUtility::addrToString(sc.callSite) + " in this run"
+                        <<" but was from " <<StringUtility::addrToString(parent.callSite) <<" in the parent test case\n";
+            throw Exception("mismatched system calls");
+        }
+
+        // Skip this system call, and just return the same inputs as in the parent test case. FIXME[Robb Matzke 2021-05-03]: For now we're
+        // only treating the system call return value as an input.
+        overrideNextIp(currentInstruction()->get_address() + currentInstruction()->get_size());
+        systemCallReturnValue(parent.returnValue);
+        ++nSystemCallsProcessed_;
+
+    } else {
+        // We've advanced past all the system calls that happened in the parent test case, and now are executing a system call
+        // that we did't previously get to. Save information about this new system call.
+        systemCalls_.push_back(sc);
+        ++nSystemCallsProcessed_;
+
+        // A few system calls are handled directly.
+        if (auto fn = sc.functionNumber->toUnsigned()) {
+            if (32 == partitioner_.instructionProvider().wordSize()) {
+                switch (*fn) {
+                    case 1:                                 // exit
+                    case 252:                               // exit_group
+                        return doExit(systemCallArgument(0));
+                    case 24:                                // getuid
+                        return doGetuid();
+                }
+            } else {
+                ASSERT_require(partitioner_.instructionProvider().wordSize() == 64);
+                switch (*fn) {
+                    case 60:                                // exit
+                    case 231:                               // exit_group
+                        return doExit(systemCallArgument(0));
+                    case 102:                               // getuid
+                        return doGetuid();
+                }
             }
         }
+        // FIXME[Robb Matzke 2020-08-28]: all other system calls are just ignored for now
     }
-    // FIXME[Robb Matzke 2020-08-28]: all other system calls are just ignored for now
 }
 
-IS::BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
+BS::SValuePtr
+RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnused) {
     // Read the register's value symbolically, and if we don't have a value then read it concretely and use the concrete value
     // to update the symbolic state.
     SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
@@ -347,8 +393,8 @@ RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SVa
     return Super::readRegister(reg, dflt);
 }
 
-IS::BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
+BS::SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnused) {
     // Return the register's symbolic value if it exists, else the concrete value.
     SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
     SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
@@ -356,9 +402,9 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const IS::BaseSemantics::SVa
     return Super::peekRegister(reg, dflt);
 }
 
-IS::BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SValuePtr &addr,
-                          const IS::BaseSemantics::SValuePtr &dfltUnused, const IS::BaseSemantics::SValuePtr &cond) {
+BS::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
+                          const BS::SValuePtr &dfltUnused, const BS::SValuePtr &cond) {
     // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
     // update the symbolic state. However, we can only read it concretely if the address is a constant.
     if (auto va = addr->toUnsigned()) {
@@ -372,9 +418,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
     }
 }
 
-IS::BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SValuePtr &addr,
-                          const IS::BaseSemantics::SValuePtr &dfltUnused) {
+BS::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
+                          const BS::SValuePtr &dfltUnused) {
     // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
     // symbolic.
     if (auto va = addr->toUnsigned()) {
@@ -524,7 +570,7 @@ RiscOperators::printInputVariables(std::ostream &out) const {
 
 // class method
 RiscOperatorsPtr
-Dispatcher::unwrapEmulationOperators(const IS::BaseSemantics::RiscOperatorsPtr &ops) {
+Dispatcher::unwrapEmulationOperators(const BS::RiscOperatorsPtr &ops) {
     if (IS::TraceSemantics::RiscOperatorsPtr trace = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(ops))
         return RiscOperators::promote(trace->subdomain());
     return RiscOperators::promote(ops);
@@ -546,27 +592,26 @@ Dispatcher::concreteSingleStep() {
 }
 
 void
+Dispatcher::processConcreteInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+
+    Debugger::Ptr process = emulationOperators()->process();
+    rose_addr_t ip = emulationOperators()->overrideNextIp().orElse(insn->get_address());
+    emulationOperators()->clearOverrideNextIp();
+    process->executionAddress(ip);
+    process->singleStep();
+}
+
+void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
-    // We need to single step the concrete execution regardless of whether the symbolic execution throw an exception, and we
-    // need to make sure the symbolic execution happens before the concrete execution.
-    struct Resources {
-        Dispatcher *self;
-        SgAsmInstruction *insn;
-        Resources(Dispatcher *self, SgAsmInstruction *insn)
-            : self(self), insn(insn) {}
+    // We do things this way so as to not interfere with debugging exceptions. We don't want to catch and re-throw.
+    BOOST_SCOPE_EXIT(this_, insn) {
+        this_->processConcreteInstruction(insn);
+    } BOOST_SCOPE_EXIT_END;
 
-        ~Resources() {
-            Debugger::Ptr process = self->emulationOperators()->process();
-            rose_addr_t ip = self->emulationOperators()->overrideNextIp().orElse(insn->get_address());
-            self->emulationOperators()->clearOverrideNextIp();
-            process->executionAddress(ip);
-            process->singleStep();
-        }
-    } r(this, insn);
-
-    // Symbolic execution (happens before the code above)
+    // Symbolic execution happens before the concrete execution (code above), but may throw an exception.
     Super::processInstruction(insn);
 }
 
@@ -700,7 +745,6 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 
     // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
     testCase->concolicResult(0);
-    db->eraseSystemCalls(db->id(testCase, Update::NO));
 
     // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
     // process which is created from the specimen.
@@ -710,10 +754,11 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, partitioner, process, inputVariables_,
                                            Emulation::SValue::instance(), solver);
+    ops->systemCallInputs(db, testCase);
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
-        IS::BaseSemantics::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
+        BS::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
         cpu = Emulation::Dispatcher::instance(trace);
     } else {
         cpu = Emulation::Dispatcher::instance(ops);
@@ -845,7 +890,7 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
             SmtSolver::Transaction transaction(solver); // because we'll need to cancel in order to follow the correct branch
             solver->insert(otherCond);
             if (SmtSolver::SAT_YES == solver->check()) {
-                generateTestCase(db, testCase, solver);
+                generateTestCase(db, testCase, ops, solver);
 
                 SAWYER_MESG(debug) <<"conditions are satisfiable when:\n";
                 BOOST_FOREACH (const std::string &varName, solver->evidenceNames()) {
@@ -886,6 +931,7 @@ ConcolicExecutor::saveSystemCall(const Database::Ptr &db, const TestCase::Ptr &t
     // We don't have a concrete return value yet because we're treating the return value as a program input.
     //systemCall->returnValue(...);
 
+
     db->save(systemCall);
 }
 
@@ -923,7 +969,7 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 
         try {
             cpu->processInstruction(insn);
-        } catch (const IS::BaseSemantics::Exception &e) {
+        } catch (const BS::Exception &e) {
             if (error) {
                 error <<e.what() <<", occurred at:\n";
                 printCallStack(error);
@@ -954,7 +1000,6 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         if (ops->systemCalls().size() != oldNSysCalls) {
             ASSERT_require(oldNSysCalls + 1 == ops->systemCalls().size());
             updateSystemCallSideEffects(ops, ops->systemCalls().back());
-            saveSystemCall(db, testCase, ops->systemCalls().back());
         }
 
         if (settings_.showingStates.exists(executionVa))
@@ -969,9 +1014,12 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 }
 
 void
-ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr &oldTestCase, const SmtSolver::Ptr &solver) {
+ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr &oldTestCase,
+                                   const BS::RiscOperatorsPtr &ops_, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(db);
     ASSERT_not_null(oldTestCase);
+    ASSERT_not_null(ops_);
+    auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(solver);                            // assertions must have been checked and satisfiable
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -985,11 +1033,20 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     Sawyer::Optional<size_t> adjustedArgc;              // whether we have a new argc value from the solver
     std::vector<EnvValue> env = oldTestCase->env();
 
-    // Get the initial system call information for the new test case by copying the system calls from the old test case.
-    std::vector<SystemCall::Ptr> oldSyscalls = db->objects(db->systemCalls(db->id(oldTestCase, Update::NO)));
+    // Initialize the system calls for the new test case with the values we've already seen in this execution, and then
+    // adjust them in the loop below.
     std::vector<SystemCall::Ptr> newSyscalls;
-    for (SystemCall::Ptr oldSyscall: oldSyscalls)
-        newSyscalls.push_back(SystemCall::instance(oldSyscall));
+    const std::vector<Emulation::SystemCall> emulatedSyscalls = ops->systemCalls();
+    for (size_t i = 0; i < emulatedSyscalls.size(); ++i) {
+        newSyscalls.push_back(SystemCall::instance());
+        newSyscalls.back()->callSequenceNumber(i);
+        newSyscalls.back()->functionId(emulatedSyscalls[i].functionNumber->toUnsigned().orElse(0));
+        newSyscalls.back()->callSite(emulatedSyscalls[i].callSite);
+        newSyscalls.back()->returnValue(emulatedSyscalls[i].returnValue->toSigned().orElse(-1));
+    }
+
+    // Get the initial system call information for the new test case by copying the system calls from the old test case.
+    const std::vector<SystemCall::Ptr> oldSyscalls = db->objects(db->systemCalls(db->id(oldTestCase, Update::NO)));
 
     bool hadError = false;
     BOOST_FOREACH (const std::string &solverVar, solver->evidenceNames()) {
@@ -1131,10 +1188,8 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 TestCaseId newTestCaseId = db->id(newTestCase);
                 db->systemCalls(newTestCaseId, newSyscalls);
                 if (debug) {
-                    debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
-                    debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
-                    for (size_t i = 0; i < args.size(); ++i)
-                        debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+                    debug <<"inserted testcase into database:\n";
+                    newTestCase->toYaml(debug, db, "  ");
                 }
             }
         }

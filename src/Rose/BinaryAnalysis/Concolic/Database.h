@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_Database_H
 #define ROSE_BinaryAnalysis_Concolic_Database_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
@@ -44,6 +45,7 @@ private:
     Sawyer::Container::BiMap<SpecimenId, SpecimenPtr> specimens_;
     Sawyer::Container::BiMap<TestCaseId, TestCasePtr> testCases_;
     Sawyer::Container::BiMap<TestSuiteId, TestSuitePtr> testSuites_;
+    Sawyer::Container::BiMap<ExecutionEventId, ExecutionEventPtr> executionEvents_;
     Sawyer::Container::BiMap<SystemCallId, SystemCallPtr> systemCalls_;
     
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
@@ -141,6 +143,33 @@ public:
     void eraseTestCases(SpecimenId);
 
     //------------------------------------------------------------------------------------------------------------------------
+    // Execution events
+    //------------------------------------------------------------------------------------------------------------------------
+
+    /** All execution events.
+     *
+     *  If this database object has a current test suite, then the return value is limited to execution events used by that
+     *  test suite, otherwise all execution events are returned. */
+    std::vector<ExecutionEventId> executionEvents();
+
+    /** All execution events for a particular test case. */
+    std::vector<ExecutionEventId> executionEvents(TestCaseId);
+
+    /** Execution events at a specific location.
+     *
+     *  Returns the execution events for a specific location. All events for the primary key of the location are returned,
+     *  sorted by the secondary key. */
+    std::vector<ExecutionEventId> executionEvents(TestCaseId, uint64_t primaryKey);
+
+    /** Primary keys for the location events.
+     *
+     *  The return value is the vector for all the primary location key values for the specified test case. */
+    std::vector<uint64_t> executionEventKeyFrames(TestCaseId);
+
+    /** Erase all events for a test case. */
+    void eraseExecutionEvents(TestCaseId);
+
+    //------------------------------------------------------------------------------------------------------------------------
     // System calls
     //------------------------------------------------------------------------------------------------------------------------
 
@@ -186,6 +215,7 @@ public:
     TestSuitePtr object(TestSuiteId, Update::Flag update = Update::YES);
     TestCasePtr object(TestCaseId, Update::Flag update = Update::YES);
     SpecimenPtr object(SpecimenId, Update::Flag update = Update::YES);
+    ExecutionEventPtr object(ExecutionEventId, Update::Flag update = Update::YES);
     SystemCallPtr object(SystemCallId, Update::Flag update = Update::YES);
     /** @} */
 
@@ -208,6 +238,7 @@ public:
     TestSuiteId id(const TestSuitePtr&, Update::Flag update = Update::YES);
     TestCaseId id(const TestCasePtr&, Update::Flag update = Update::YES);
     SpecimenId id(const SpecimenPtr&, Update::Flag update = Update::YES);
+    ExecutionEventId id(const ExecutionEventPtr&, Update::Flag update = Update::YES);
     SystemCallId id(const SystemCallPtr&, Update::Flag update = Update::YES);
     /** @} */
 
@@ -217,6 +248,7 @@ public:
     TestSuiteId erase(TestSuiteId);
     TestCaseId erase(TestCaseId);
     SpecimenId erase(SpecimenId);
+    ExecutionEventId erase(ExecutionEventId);
     SystemCallId erase(SystemCallId);
     /** @} */
 

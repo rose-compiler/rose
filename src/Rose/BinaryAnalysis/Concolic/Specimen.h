@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_Specimen_H
 #define ROSE_BinaryAnalysis_Concolic_Specimen_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
@@ -98,6 +99,9 @@ public:
      *  and the specimen name using C-style double-quoted string literal syntax if not empty.  The database ID is shown if a
      *  non-null database is specified and this specimen exists in that database. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
+
+    /** Print as a YAML node. */
+    void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);
 
     /** Property: Database creation timestamp string.
      *
