@@ -861,6 +861,74 @@ MemoryMap::readProcessMap(pid_t pid) {
     return records;
 }
 
+std::pair<Buffer::Ptr, std::string>
+MemoryMap::copyFromFile(int fd, const AddressInterval &where) {
+    if (where.isEmpty()) {
+        return {AllocatingBuffer::instance(0), ""};
+
+    } else {
+        auto buffer = AllocatingBuffer::instance(where.size());
+        uint8_t *p = buffer->data();
+        size_t nRemaining = where.size();
+        if (-1 == lseek(fd, where.least(), SEEK_SET)) {
+            buffer->resize(0);
+            return {buffer, std::string("seek failed: ") + strerror(errno)};
+        }
+
+        while (nRemaining > 0) {
+            ssize_t nRead = ::read(fd, p, nRemaining);
+            if (-1 == nRead) {
+                if (EINTR != errno) {
+                    buffer->resize(where.size() - nRemaining);
+                    return {buffer, std::string("read failed: ") + strerror(errno)};
+                }
+            } else if (0 == nRead) {
+                buffer->resize(where.size() - nRemaining);
+                return {buffer, "short read after " + StringUtility::plural(buffer->size(), "bytes")};
+            } else {
+                ASSERT_require((size_t)nRead <= nRemaining);
+                nRemaining -= (size_t)nRead;
+                p += (size_t)nRead;
+            }
+        }
+        return {buffer, ""};
+    }
+}
+
+void
+MemoryMap::insertProcess(int fd, const std::vector<ProcessMapRecord> &records, const std::string &namePrefix) {
+    for (ProcessMapRecord &record: records) {
+        std::string segmentName = namePrefix;
+        if (!record.comment.empty())
+            segmentName += "(" + record.comment + ")";
+
+#if 0 // [Robb Matzke 2020-08-25]: This would be cool if it worked (No such device: iostream error)
+        // Map data from the subordinate process into our memory segment
+        Buffer::Ptr buffer = MappedBuffer::instance(memName, boost::iostreams::mapped_file::readonly,
+                                                    record.fileOffset, record.interval.size());
+        ASSERT_not_null(buffer);
+#else
+        std::pair<Buffer::Ptr, std::string> pair = copyFromFile(r.memFile, record.interval);
+        Buffer::Ptr buffer = pair.first;
+        if (!pair.second.empty()) {
+            mlog[WARN] <<"segment \"" <<record.comment <<"\" at " <<StringUtility::addrToString(record.interval)
+                       <<": " <<pair.second <<"\n";
+            segmentName += "[" + boost::to_lower_copy(pair.second) + "]";
+            break;
+        }
+        ASSERT_not_null(buffer);
+
+        // If a read failed, map only what we could read
+        if (buffer.size() < record.interval.size())
+            record.interval = AddressInterval::baseSize(record.interval.least(), buffer->size());
+#endif
+
+        // Insert segment into memory map
+        if (!record.interval.isEmpty())
+            insert(record.interval, Segment(buffer, 0, record.accessibility, segmentName));
+    }
+}
+
 void
 MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #ifdef __linux__
@@ -899,54 +967,9 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
     std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
     if (-1 == (r.memFile = open(memName.c_str(), O_RDONLY)))
         throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
-    BOOST_FOREACH (ProcessMapRecord &record, mapRecords) {
-        std::string segmentName = "proc:" + boost::lexical_cast<std::string>(pid);
-        if (!record.comment.empty())
-            segmentName += "(" + record.comment + ")";
+    std::string namePrefix = "proc:" + boost::lexical_cast<std::string>(pid);
+    insertProcess(r.memFile, mapRecords, namePrefix);
 
-#if 0 // [Robb Matzke 2020-08-25]: This would be cool if it worked (No such device: iostream error)
-        // Map data from the subordinate process into our memory segment
-        Buffer::Ptr buffer = MappedBuffer::instance(memName, boost::iostreams::mapped_file::readonly,
-                                                    record.fileOffset, record.interval.size());
-        ASSERT_not_null(buffer);
-#else
-        // Copy data from the subordinate process into our memory segment
-        Buffer::Ptr buffer = AllocatingBuffer::instance(record.interval.size());
-        size_t nRemaining = record.interval.size();
-        if (-1 == lseek(r.memFile, record.interval.least(), SEEK_SET))
-            throw insertProcessError("seek failed in " + memName + " for", pid, strerror(errno));
-        rose_addr_t segmentBufferOffset = 0;
-        while (nRemaining > 0) {
-            uint8_t chunkBuf[8192];
-            size_t chunkSize = std::min(nRemaining, sizeof chunkBuf);
-            ssize_t nRead = ::read(r.memFile, chunkBuf, chunkSize);
-            if (-1==nRead) {
-                if (EINTR==errno)
-                    continue;
-                mlog[WARN] <<strerror(errno) <<" during read from " <<memName <<" for segment " <<record.comment
-                           <<" at " <<record.interval <<"\n";
-                segmentName += "[" + boost::to_lower_copy(std::string(strerror(errno))) + "]";
-                break;
-            } else if (0==nRead) {
-                mlog[WARN] <<"short read from " <<memName <<" for segment " <<record.comment <<" at " <<record.interval <<"\n";
-                segmentName += "[short read]";
-                break;
-            }
-            rose_addr_t nWrite = buffer->write(chunkBuf, segmentBufferOffset, nRead);
-            ASSERT_always_require(nWrite == (rose_addr_t)nRead);
-            nRemaining -= chunkSize;
-            segmentBufferOffset += chunkSize;
-        }
-
-        // If a read failed, map only what we could read
-        if (nRemaining > 0)
-            record.interval = AddressInterval::baseSize(record.interval.least(), record.interval.size()-nRemaining);
-#endif
-
-        // Insert segment into memory map
-        if (!record.interval.isEmpty())
-            insert(record.interval, Segment(buffer, 0, record.accessibility, segmentName));
-    }
 #else
     throw std::runtime_error("MemoryMap::insertProcess is not available on this system");
 #endif

@@ -7,8 +7,10 @@
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionManager.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/LinuxI386Executor.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>

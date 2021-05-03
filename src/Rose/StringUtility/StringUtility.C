@@ -216,6 +216,16 @@ bourneEscape(const std::string &s) {
     return s;
 }
 
+std::string
+yamlEscape(const std::string &s) {
+    std::string escaped = cEscape(s);
+    if (s.empty() || s != escaped) {
+        return "\"" + escaped + "\"";
+    } else {
+        return s;
+    }
+}
+
 // [Robb P Matzke 2016-06-15]: deprecated
 std::string
 escapeNewLineCharaters ( const std::string & X )

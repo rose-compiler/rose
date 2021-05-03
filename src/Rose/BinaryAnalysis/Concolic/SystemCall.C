@@ -1,6 +1,7 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
@@ -111,6 +112,19 @@ SystemCall::printableName(const Database::Ptr &db) {
             retval += " " + boost::lexical_cast<std::string>(*id);
     }
     return retval;
+}
+
+void
+SystemCall::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix) {
+    ASSERT_not_null(db);
+
+    out <<prefix <<"system-call: " <<*db->id(sharedFromThis(), Update::NO) <<"\n";
+    prefix = std::string(prefix.size(), ' ');
+
+    out <<prefix <<"sequence:    " <<callSequenceNumber() <<"\n"
+        <<prefix <<"function:    " <<functionId() <<"\n"
+        <<prefix <<"called-from: " <<StringUtility::addrToString(callSite()) <<"\n"
+        <<prefix <<"returning:   " <<returnValue() <<"\n";
 }
 
 } // namespace

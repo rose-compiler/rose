@@ -105,6 +105,7 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 #define PTRACE_GETREGS         ROSE_PT_NO_EQUIVALENT
 #define PTRACE_SETREGS         ROSE_PT_NO_EQUIVALENT
 #define PTRACE_GETFPREGS       ROSE_PT_NO_EQUIVALENT
+#define PTRACE_SETFPREGS       ROSE_PT_NO_EQUIVALENT
 #define PTRACE_SYSCALL         ROSE_PT_NO_EQUIVALENT
 
 struct user_regs_struct {                               // macOS dud
@@ -687,6 +688,37 @@ Debugger::kernelWordSize() {
     return kernelWordSize_;
 }
 
+Debugger::AllRegisters
+Debugger::readAllRegisters() {
+    AllRegisters retval;
+    if (REGPAGE_REGS == regsPageStatus_) {
+        retval.regs = regsPage_;
+        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
+        retval.fpregs = regsPage_;
+        regsPageStatus_ = REGPAGE_FPREGS;
+    } else if (REGPAGE_FPREGS == regsPageStatus_) {
+        retval.fpregs = regsPage_;
+        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
+        retval.regs = regsPage_;
+        regsPageStatus_ = REGPAGE_REGS;
+    } else {
+        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
+        retval.fpregs = regsPage_;
+        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
+        retval.regs = regsPage_;
+        regsPageStatus_ = REGPAGE_REGS;
+    }
+    return retval;
+}
+
+void
+Debugger::writeAllRegisters(const AllRegisters &all) {
+    sendCommand(PTRACE_SETFPREGS, child_, 0, (void*)all.fpregs.data());
+    sendCommand(PTRACE_SETREGS, child_, 0, (void*)all.regs.data());
+    regsPage_ = all.regs;
+    regsPageStatus_ = REGPAGE_REGS;
+}
+
 Sawyer::Container::BitVector
 Debugger::readRegister(RegisterDescriptor desc) {
     using namespace Sawyer::Container;
@@ -696,12 +728,12 @@ Debugger::readRegister(RegisterDescriptor desc) {
     size_t userOffset = 0;
     if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
         if (regsPageStatus_ != REGPAGE_REGS) {
-            sendCommand(PTRACE_GETREGS, child_, 0, regsPage_);
+            sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
             regsPageStatus_ = REGPAGE_REGS;
         }
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
         if (regsPageStatus_ != REGPAGE_FPREGS) {
-            sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_);
+            sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
             regsPageStatus_ = REGPAGE_FPREGS;
         }
     } else {
@@ -710,7 +742,7 @@ Debugger::readRegister(RegisterDescriptor desc) {
 
     // Extract the necessary data members from the struct. Assume that memory is little endian.
     size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
-    ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+    ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
     BitVector bits(8 * nUserBytes);
     for (size_t i=0; i<nUserBytes; ++i)
         bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regsPage_[userOffset+i]);
@@ -725,7 +757,7 @@ void
 Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
     using namespace Sawyer::Container;
 
-    // Side effect is to update the regsPage if necessary.
+    // Side effect is to update regsPage_ if necessary.
     (void) readRegister(desc);
 
     // Look up register according to kernel word size rather than the actual size of the register.
@@ -735,16 +767,16 @@ Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVec
     size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
     size_t userOffset = 0;
     if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
-        ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
         for (size_t i = 0; i < nUserBytes; ++i)
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-        sendCommand(PTRACE_SETREGS, child_, 0, regsPage_);
+        sendCommand(PTRACE_SETREGS, child_, 0, regsPage_.data());
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
 #ifdef __linux
-        ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
         for (size_t i = 0; i < nUserBytes; ++i)
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-        sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_);
+        sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_.data());
 #elif defined(_MSC_VER)
         #pragma message("unable to save FP registers on this platform")
 #else
@@ -979,13 +1011,7 @@ Debugger::setPersonality(unsigned long bits) {
 
 Sawyer::Optional<rose_addr_t>
 Debugger::findSystemCall() {
-#if __cplusplus >= 201103L
     std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
-#else
-    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
-    std::vector<uint8_t> needle(1, 0xcd);
-    needle.push_back(0x80);
-#endif
 
     // Make sure the syscall is still there if we already found it. This is reasonally fast.
     if (syscallVa_) {
@@ -1000,20 +1026,49 @@ Debugger::findSystemCall() {
     if (!syscallVa_) {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insertProcess(":noattach:" + boost::lexical_cast<std::string>(child_));
-#if __cplusplus >= 201103L
         syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE);
-#else
-        // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
-        std::vector<uint8_t> x(1, 0xcd);
-        x.push_back(0x80);
-        syscallVa_ = map->findAny(AddressInterval::whole(), x, MemoryMap::EXECUTABLE);
-#endif
     }
 
     return syscallVa_;
 }
 
-int
+int64_t
+Debugger::remoteSystemCall(int syscallNumber) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>());
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1});
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2});
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3});
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4});
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5});
+}
+
+int64_t
+Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
+                           uint64_t arg6) {
+    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5, arg6});
+}
+
+int64_t
 Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
     // Find a system call that we can hijack to do our bidding.
     Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
@@ -1062,7 +1117,7 @@ Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
     executionAddress(*syscallVa);
     singleStep();
     executionAddress(ip);
-    int retval = readRegister(syscallReg).toSignedInteger();
+    int64_t retval = readRegister(syscallReg).toSignedInteger();
 
     // Restore registers
     for (size_t i = 0; i < args.size(); ++i)

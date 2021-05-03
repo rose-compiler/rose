@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_LinuxExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_LinuxExecutor_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>

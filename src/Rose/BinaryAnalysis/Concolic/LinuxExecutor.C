@@ -1,6 +1,7 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/lexical_cast.hpp>
 #include <fcntl.h>

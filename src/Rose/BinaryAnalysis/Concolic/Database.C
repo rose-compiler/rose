@@ -1,10 +1,12 @@
 // Second implementation of Concolic::Database that works for both SQLite and PostgreSQL
 // The schema is not identical to that of the first implementation.
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
@@ -87,6 +89,27 @@ initSchema(Sawyer::Database::Connection db) {
            " test_suite integer not null,"
            " constraint fk_specimen foreign key (specimen) references specimens (id),"
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
+
+    db.run("drop table if exists execution_events");
+    db.run("create table execution_events ("
+           " created_ts varchar(32) not null,"
+           " id integer primary key,"
+           " test_suite integer not null,"
+
+           // Identification
+           " test_case integer not null,"               // test case to which this event belongs
+           " location integer not null,"                // event location field
+           " sequence_number integer not null,"         // events sequence field
+           " instruction_pointer integer not null,"     // value of the instruction pointer register at this event
+
+           // Actions. The interpretation of these fields depends on the action type.
+           " action_type varchar(32) not null,"         // action to be performed
+           " start_va integer,"                         // starting address for actions that need one
+           " size integer,"                             // size of the action for those that need one
+           " bytes bytea,"                              // bytes for the action if needed
+
+           "constraint fk_test_suite foreign key (test_suite) references test_suites (id),"
+           "constraint fk_test_case foreign key (test_case) references test_cases (id))");
 
     db.run("drop table if exists system_calls");
     db.run("create table system_calls ("
@@ -276,7 +299,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     ASSERT_not_null(obj);
     Sawyer::Database::Statement stmt;
     if (*db->connection().stmt("select count(*) from test_cases where id = ?id").bind("id", *id).get<size_t>()) {
-        stmt = db->connection().stmt("update test_cases set id = ?id, name = ?name, executor = ?executor,"
+        stmt = db->connection().stmt("update test_cases set name = ?name, executor = ?executor,"
                                      " specimen = ?specimen, argv = ?argv, envp = ?envp, concrete_rank = ?concrete_rank,"
                                      " concrete_interesting = ?interesting,"
                                      " concolic_result = ?concolic_result where id = ?id");
@@ -313,10 +336,172 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
 
 static void
 eraseDb(const Database::Ptr &db, TestCaseId id) {
+    ASSERT_not_null(db);
     ASSERT_require(id);
+    db->eraseExecutionEvents(id);
     db->eraseSystemCalls(id);
     db->connection().stmt("delete from test_cases where id = ?tcid")
         .bind("tcid", *id)
+        .run();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Low-level execution event database operations
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void
+updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr &obj) {
+    ASSERT_not_null(db);
+    ASSERT_require(id);
+    ASSERT_not_null(obj);
+
+    //                                        0           1          2         3                4
+    auto iter = db->connection().stmt("select created_ts, test_case, location, sequence_number, instruction_pointer,"
+                                      // 5           6         7     8
+                                      " action_type, start_va, size, bytes"
+                                      " from execution_events"
+                                      " where id = ?id"
+                                      " order by created_ts")
+                .bind("id", *id)
+                .begin();
+    if (!iter)
+        throw Exception("no such executon event in database where id=" + boost::lexical_cast<std::string>(*id));
+
+    TestCaseId tcid(*iter->get<size_t>(1));
+    TestCase::Ptr testcase = db->object(tcid);
+    ASSERT_not_null(testcase);
+
+    obj->timestamp(*iter->get<std::string>(0));
+    obj->testCase(testcase);
+    obj->location(ExecutionEvent::Location(*iter->get<uint64_t>(2), *iter->get<size_t>(3)));
+    obj->instructionPointer(*iter->get<rose_addr_t>(4));
+
+    std::string action = *iter->get<std::string>(5);
+    auto startVa = iter->get<rose_addr_t>(6);
+    auto size = iter->get<size_t>(7);
+    auto bytes = iter->get<std::vector<uint8_t>>(8);
+
+    if ("none" == action) {
+        obj->actionType(ExecutionEvent::Action::NONE);
+    } else if ("map_memory" == action) {
+        obj->actionType(ExecutionEvent::Action::MAP_MEMORY);
+        ASSERT_require(startVa);
+        ASSERT_require(size);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(bytes);
+        obj->bytes(*bytes);
+    } else if ("unmap_memory" == action) {
+        obj->actionType(ExecutionEvent::Action::UNMAP_MEMORY);
+        ASSERT_require(startVa);
+        ASSERT_require(size);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+    } else if ("write_memory" == action) {
+        obj->actionType(ExecutionEvent::Action::WRITE_MEMORY);
+        ASSERT_require(startVa);
+        ASSERT_require(size);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(bytes);
+        ASSERT_require(bytes->size() == *size);
+        obj->bytes(*bytes);
+    } else if ("hash_memory" == action) {
+        obj->actionType(ExecutionEvent::Action::HASH_MEMORY);
+        ASSERT_require(startVa);
+        ASSERT_require(size);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(bytes);
+        obj->bytes(*bytes);
+    } else if ("restore_registers" == action) {
+        obj->actionType(ExecutionEvent::Action::RESTORE_REGISTERS);
+        ASSERT_require(bytes);
+        obj->bytes(*bytes);
+    } else {
+        throw Exception("unrecognized execution action \"" + action + "\" where id=" + boost::lexical_cast<std::string>(*id));
+    }
+}
+
+static void
+updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr &obj) {
+    ASSERT_not_null(db);
+    ASSERT_require(id);
+    ASSERT_not_null(obj);
+
+    Sawyer::Database::Statement stmt;
+    if (*db->connection().stmt("select count(*) from execution_events where id = ?id").bind("id", *id).get<size_t>()) {
+        stmt = db->connection().stmt("update execution_events set "
+                                     "test_case = ?test_case, location = ?location, sequence_number = ?sequence_number,"
+                                     " instruction_pointer = ?instruction_pointer, action_type = ?action_type, start_va = ?start_va,"
+                                     " size = ?size, bytes = ?bytes"
+                                     " where id = ?id");
+    } else {
+        std::string created_ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        stmt = db->connection().stmt("insert into execution_events ("
+                                     " id, created_ts, test_suite,"
+                                     " test_case, location, sequence_number, instruction_pointer, action_type, start_va,"
+                                     " size, bytes"
+                                     ") values ("
+                                     " ?id, ?created_ts, ?test_suite,"
+                                     " ?test_case, ?location, ?sequence_number, ?instruction_pointer, ?action_type, ?start_va,"
+                                     " ?size, ?bytes"
+                                     ")")
+               .bind("created_ts", created_ts)
+               .bind("test_suite", *db->id(db->testSuite()));
+    }
+
+    stmt
+        .bind("id", *id)
+        .bind("test_case", *db->id(obj->testCase(), Update::YES))
+        .bind("location", obj->location().primary)
+        .bind("sequence_number", obj->location().secondary)
+        .bind("instruction_pointer", obj->instructionPointer());
+
+    switch (obj->actionType()) {
+        case ExecutionEvent::Action::NONE:
+            stmt.bind("action_type", "none");
+            stmt.bind("start_va", Sawyer::Nothing());
+            stmt.bind("size", Sawyer::Nothing());
+            stmt.bind("bytes", Sawyer::Nothing());
+            break;
+        case ExecutionEvent::Action::MAP_MEMORY:
+            stmt.bind("action_type", "map_memory");
+            stmt.bind("start_va", obj->memoryLocation().least());
+            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("bytes", obj->bytes());
+            break;
+        case ExecutionEvent::Action::UNMAP_MEMORY:
+            stmt.bind("action_type", "unmap_memory");
+            stmt.bind("start_va", obj->memoryLocation().least());
+            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("bytes", Sawyer::Nothing());
+            break;
+        case ExecutionEvent::Action::WRITE_MEMORY:
+            stmt.bind("action_type", "write_memory");
+            stmt.bind("start_va", obj->memoryLocation().least());
+            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("bytes", obj->bytes());
+            break;
+        case ExecutionEvent::Action::HASH_MEMORY:
+            stmt.bind("action_type", "hash_memory");
+            stmt.bind("start_va", obj->memoryLocation().least());
+            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("bytes", obj->bytes());
+            break;
+        case ExecutionEvent::Action::RESTORE_REGISTERS:
+            stmt.bind("action_type", "restore_registers");
+            stmt.bind("start_va", Sawyer::Nothing());
+            stmt.bind("size", Sawyer::Nothing());
+            stmt.bind("bytes", obj->bytes());
+            break;
+    }
+
+    stmt.run();
+}
+
+static void
+eraseDb(const Database::Ptr &db, ExecutionEventId id) {
+    ASSERT_not_null(db);
+    ASSERT_require(id);
+    db->connection().stmt("delete from execution_events where id = ?id")
+        .bind("id", *id)
         .run();
 }
 
@@ -369,7 +554,7 @@ updateDb(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
 
     Sawyer::Database::Statement stmt;
     if (*db->connection().stmt("select count(*) from system_calls where id = ?id").bind("id", *id).get<size_t>()) {
-        stmt = db->connection().stmt("update system_calls set id = ?id, test_case = ?tcid, call_number = ?seq "
+        stmt = db->connection().stmt("update system_calls set test_case = ?tcid, call_number = ?seq "
                                      " function_number = ?function, call_site = ?va, retval = ?retval"
                                      " where id = ?id");
     } else {
@@ -628,6 +813,69 @@ Database::eraseTestCases(SpecimenId specimenId) {
         erase(tcid);
 }
 
+std::vector<ExecutionEventId>
+Database::executionEvents() {
+    std::vector<ExecutionEventId> retval;
+    Sawyer::Database::Statement stmt;
+    if (testSuiteId_) {
+        stmt = connection_.stmt("select id from execution_events where test_suite = ?tsid order by created_ts")
+               .bind("tsid", *testSuiteId_);
+    } else {
+        stmt = connection_.stmt("select id from execution_units order by created_ts");
+    }
+    for (auto row: stmt)
+        retval.push_back(ExecutionEventId(row.get<size_t>(0)));
+    return retval;
+}
+
+std::vector<ExecutionEventId>
+Database::executionEvents(TestCaseId tcid) {
+    ASSERT_require(tcid);
+    Sawyer::Database::Statement stmt;
+    stmt = connection_.stmt("select id from execution_events where test_case = ?tcid order by location, sequence_number")
+           .bind("tcid", *tcid);
+    std::vector<ExecutionEventId> retval;
+    for (auto row: stmt)
+        retval.push_back(ExecutionEventId(row.get<size_t>(0)));
+    return retval;
+}
+
+std::vector<ExecutionEventId>
+Database::executionEvents(TestCaseId tcid, uint64_t primaryKey) {
+    ASSERT_require(tcid);
+    Sawyer::Database::Statement stmt;
+    stmt = connection_.stmt("select id from execution_events"
+                            " where test_case = ?tcid and location = ?locprim"
+                            " order by sequence_number")
+           .bind("tcid", *tcid)
+           .bind("locprim", primaryKey);
+    std::vector<ExecutionEventId> retval;
+    for (auto row: stmt)
+        retval.push_back(ExecutionEventId(row.get<size_t>(0)));
+    return retval;
+}
+
+std::vector<uint64_t>
+Database::executionEventKeyFrames(TestCaseId tcid) {
+    ASSERT_require(tcid);
+    Sawyer::Database::Statement stmt;
+    stmt = connection_.stmt("select distinct location from execution_events"
+                            " where test_case = ?tcid"
+                            " order by location")
+           .bind("tcid", *tcid);
+    std::vector<uint64_t> retval;
+    for (auto row: stmt)
+        retval.push_back(*row.get<uint64_t>(0));
+    return retval;
+}
+
+void
+Database::eraseExecutionEvents(TestCaseId tcid) {
+    ASSERT_require(tcid);
+    for (ExecutionEventId eeid: executionEvents(tcid))
+        erase(eeid);
+}
+
 std::vector<SystemCallId>
 Database::systemCalls() {
     std::vector<SystemCallId> retval;
@@ -715,6 +963,11 @@ Database::object(SpecimenId id, Update::Flag update) {
     return objectHelper(sharedFromThis(), id, update, specimens_, "specimen");
 }
 
+ExecutionEvent::Ptr
+Database::object(ExecutionEventId id, Update::Flag update) {
+    return objectHelper(sharedFromThis(), id, update, executionEvents_, "execution event");
+}
+
 SystemCall::Ptr
 Database::object(SystemCallId id, Update::Flag update) {
     return objectHelper(sharedFromThis(), id, update, systemCalls_, "system call");
@@ -735,6 +988,11 @@ Database::id(const Specimen::Ptr &obj, Update::Flag update) {
     return idHelper(sharedFromThis(), obj, update, specimens_);
 }
 
+ExecutionEventId
+Database::id(const ExecutionEvent::Ptr &obj, Update::Flag update) {
+    return idHelper(sharedFromThis(), obj, update, executionEvents_);
+}
+
 SystemCallId
 Database::id(const SystemCall::Ptr &obj, Update::Flag update) {
     return idHelper(sharedFromThis(), obj, update, systemCalls_);
@@ -753,6 +1011,11 @@ Database::erase(TestCaseId id) {
 SpecimenId
 Database::erase(SpecimenId id) {
     return eraseHelper(sharedFromThis(), id, specimens_, "specimen");
+}
+
+ExecutionEventId
+Database::erase(ExecutionEventId id) {
+    return eraseHelper(sharedFromThis(), id, executionEvents_, "execution event");
 }
 
 SystemCallId

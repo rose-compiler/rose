@@ -7,9 +7,11 @@ librose_partial_la_SOURCES =			\
     ConcolicExecutor.C				\
     ConcreteExecutor.C				\
     Database.C					\
+    ExecutionEvent.C				\
     ExecutionManager.C				\
     LinuxExecutor.C				\
     LinuxExitStatus.C				\
+    LinuxI386Executor.C				\
     LinuxTraceExecutor.C			\
     Specimen.C					\
     SystemCall.C				\

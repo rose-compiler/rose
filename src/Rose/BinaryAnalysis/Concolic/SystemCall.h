@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_SystemCall_H
 #define ROSE_BinaryAnalysis_Concolic_SystemCall_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -112,6 +113,9 @@ public:
      * Returns a string suitable for printing to a terminal, containing the word "syscall" and some additional identifying
      * information. If a database is specified, then the database ID is also shown. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
+
+    /** Print system call as YAML node. */
+    void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);
 };
 
 #include <Sawyer/SharedObject.h>
