@@ -35,7 +35,9 @@ namespace ada
   /// \param   atype the type of the array to be flattened.
   /// \return  iff \ref is not an arraytype, a pair <nullptr, empty vector> is returned
   ///          otherwise a pair of a array pointer, and a vector of index ranges.
-  ///          (the expressions are part of the AST and MUST NOT BE DELETED.
+  ///          Index ranges can be specified in terms of a range (SgRangeExp), a type
+  ///          attribute (SgAdaAttributeExp), or full type range (SgTypeExpression).
+  ///          (the expressions are part of the AST and MUST NOT BE DELETED).
   /// \pre     \ref atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
