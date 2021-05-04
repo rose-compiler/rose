@@ -118,6 +118,12 @@ public:
      *  suite, otherwise all specimens are returned. */
     std::vector<SpecimenId> specimens();
 
+    /** Specimens that are part of the specified test suite. */
+    std::vector<SpecimenId> specimens(TestSuiteId);
+
+    /** Erase all specimens for the specified test suite. */
+    void eraseSpecimens(TestSuiteId);
+
     //------------------------------------------------------------------------------------------------------------------------
     // Test cases
     //------------------------------------------------------------------------------------------------------------------------
@@ -127,6 +133,12 @@ public:
      *  If this database object has a current test suite, then the return value is limited to test cases used by that test
      *  suite, otherwise all test cases are returned. */
     std::vector<TestCaseId> testCases();
+
+    /** Test cases for a specific specimen. */
+    std::vector<TestCaseId> testCases(SpecimenId);
+
+    /** Erase all test cases for a specimen. */
+    void eraseTestCases(SpecimenId);
 
     //------------------------------------------------------------------------------------------------------------------------
     // System calls
@@ -197,6 +209,15 @@ public:
     TestCaseId id(const TestCasePtr&, Update::Flag update = Update::YES);
     SpecimenId id(const SpecimenPtr&, Update::Flag update = Update::YES);
     SystemCallId id(const SystemCallPtr&, Update::Flag update = Update::YES);
+    /** @} */
+
+    /** Deletes an object from the database.
+     *
+     * @{ */
+    TestSuiteId erase(TestSuiteId);
+    TestCaseId erase(TestCaseId);
+    SpecimenId erase(SpecimenId);
+    SystemCallId erase(SystemCallId);
     /** @} */
 
     /** Saves an object.
