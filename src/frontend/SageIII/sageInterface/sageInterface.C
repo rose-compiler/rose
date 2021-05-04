@@ -24958,9 +24958,6 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
     out<<" init name@"<< var_ref->get_symbol()->get_declaration();
 
-  if (SgIntVal* v= isSgIntVal(node))
-    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
-
   if (SgMemberFunctionRefExp* func_ref= isSgMemberFunctionRefExp(node) )
     out<<" member func decl@"<< func_ref->get_symbol_i()->get_declaration();
 
