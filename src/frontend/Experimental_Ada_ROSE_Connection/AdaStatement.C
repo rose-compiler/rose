@@ -324,7 +324,7 @@ namespace
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
 
       lst.push_back(&dcl);
-      recordNonUniqueNode(m, id, dcl);
+      recordNonUniqueNode(m, id, dcl, true /* overwrite existing entries if needed */);
     }
 
     return lst;
@@ -686,15 +686,20 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
+/*
+  PP (04/30/21) integrated into getExceptionBase
+
   SgInitializedName&
   getAliasedExcnDecl(Element_ID declid, AstContext ctx)
   {
     Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
     ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
 
-    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID, elem.ID);
+    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID);
     return SG_DEREF(the_name);
   }
+*/
+
 
   void
   fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
@@ -1482,12 +1487,13 @@ namespace
           ElemIdRange   exHndlrs = idRange(stmt.Block_Exception_Handlers);
           //~ logInfo() << "block ex handlers: " << exHndlrs.size() << std::endl;
 
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
+
           TryBlockNodes trydata  = createTryBlockIfNeeded(exHndlrs.size() > 0, sgnode);
           SgTryStmt*    tryblk   = trydata.first;
           SgBasicBlock& block    = trydata.second;
 
-          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
-          traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
           traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           if (tryblk)
@@ -2571,15 +2577,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
-        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-        SgTryStmt*              trystmt = trydata.first;
-        SgBasicBlock&           stmtblk = trydata.second;
-
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(declblk)});
         }
+
+        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
+        SgTryStmt*              trystmt = trydata.first;
+        SgBasicBlock&           stmtblk = trydata.second;
 
         {
           LabelAndLoopManager lblmgr;
@@ -3026,6 +3032,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&       scope   = ctx.scope();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         scope.append_statement(&sgnode);
@@ -3083,9 +3092,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
+        using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+
         logKind("An_Exception_Renaming_Declaration");
 
-        NameData                adaname = singleName(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
 
         if (isInvalidId(decl.Renamed_Entity))
         {
@@ -3095,31 +3106,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           return;
         }
 
-        Element_Struct& renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
-        ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
+        Element_Struct&    renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        ExBasePair         expair = getExceptionBase(renamed_entity_elem, ctx);
+        ROSE_ASSERT(expair.first || expair.second);
 
-        Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
+        SgScopeStatement&  scope   = ctx.scope();
+        SgAdaRenamingDecl& sgnode  = expair.first
+                                         ? mkAdaRenamingDecl(adaname.ident, *expair.first, scope)
+                                         : mkAdaRenamingDecl(adaname.ident, *expair.second, scope)
+                                         ;
 
-        // PP (11/18/20) Test whether Corresponding_Name_Definition is a valid ID
-        if (isInvalidId(renamed_entity_expr.Corresponding_Name_Definition))
-        {
-          logError() << "unavailable name definition: "
-                     << adaname.ident << "/" << renamed_entity_expr.Name_Image
-                     << std::endl;
-        }
-        else
-        {
-          SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
-          SgScopeStatement&       scope   = ctx.scope();
-          SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
-          attachSourceLocation(sgnode, elem, ctx);
-          privatize(sgnode, isPrivate);
-          scope.append_statement(&sgnode);
-          ROSE_ASSERT(sgnode.get_parent() == &scope);
-        }
-      break;
-    }
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        break;
+      }
 
 
     case A_Choice_Parameter_Specification:         // 11.2(4)

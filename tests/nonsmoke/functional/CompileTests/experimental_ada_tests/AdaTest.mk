@@ -115,6 +115,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   enumeration_with_text_io.adb         \
   exception_rename.ads                 \
+  exception_renamingrenaming.adb       \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
   goto_loop_v2.adb                     \

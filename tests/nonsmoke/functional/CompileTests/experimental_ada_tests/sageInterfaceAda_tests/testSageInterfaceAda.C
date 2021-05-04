@@ -14,9 +14,9 @@ namespace
   {
     if (!n) return;
 
-    si::ada::FlatArrayType res = si::ada::flattenArrayType(n->get_type());
+    si::ada::FlatArrayType res = si::ada::getArrayTypeInfo(n->get_type());
 
-    if (!res.first) return;
+    if (!res.first) { return; }
 
     os << "Found ArrayType: " << n->unparseToString() << std::flush;
 
@@ -52,6 +52,30 @@ namespace
 
     void visit(SgNode* n) ROSE_OVERRIDE
     {
+/*
+      if (!n) return;
+      switch (n->variantT())
+      {
+      // types    
+      case V_SgInitializedName:
+        {
+          SgInitializedName* init_name = isSgInitializedName(n);
+
+          // transAutoType(init_name);
+
+          // call Peter's interface function to grab type information
+          std::pair<SgArrayType*, std::vector<SgExpression*> > type_info = SageInterface::ada::getArrayTypeInfo(init_name->get_type());
+
+          if (type_info.first)
+          {
+            std::cout<<"Found an array type for "<<init_name->get_name() <<std::endl;
+          }
+          break;
+        }
+      
+      default: ;
+      }
+*/
       checkType(output, isSgExpression(n));
       checkType(output, isSgInitializedName(n));
       checkExpr(output, isSgAdaAttributeExp(n));
@@ -61,6 +85,7 @@ namespace
 
     std::stringstream output;
   };
+  
 
   template<class Checker>
   void check(SgProject* n)
@@ -98,5 +123,8 @@ int main( int argc, char * argv[] )
   AstTests::runAllTests(project);
 
   check<SageInterfaceAdaCheck>(project);
+
+  // last check, tests if symbol table conversion to case sensitive succeeds.
+  si::ada::convertToCaseSensitiveSymbolTables(project);
   return 0;
 }
