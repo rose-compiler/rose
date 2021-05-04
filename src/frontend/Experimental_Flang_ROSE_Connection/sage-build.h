@@ -8,6 +8,7 @@
 #include "flang/Semantics/scope.h"
 #include <iostream>
 #include <typeinfo>
+#include <boost/optional.hpp>
 
 #include "../Experimental_General_Language_Support/general_language_translation.h"
 
@@ -90,7 +91,10 @@ template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::      ImplicitPartStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitStmt &x, T* scope);
-template<typename T> void Build(const Fortran::parser::          ImplicitSpec &x, T* scope);
+void Build(const std::list<Fortran::parser::ImplicitSpec> &x, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list);
+void Build(const Fortran::parser::ImplicitSpec &x, SgType* &type, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
+void Build(const std::list<Fortran::parser::LetterSpec> &x, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
+void Build(const Fortran::parser::LetterSpec &x, std::tuple<char, boost::optional<char>> &letter_spec);
 void Build(const std::list<Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type);
 template<typename T> void Build(const Fortran::parser::  DeclarationConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::SpecificationConstruct &x, T* scope);

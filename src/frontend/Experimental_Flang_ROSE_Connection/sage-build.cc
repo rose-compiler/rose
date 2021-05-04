@@ -958,11 +958,23 @@ void Build(const parser::ImplicitStmt &x, T* scope)
    std::cout << "Rose::builder::Build(ImplicitStmt)\n";
 #endif
 
-   SgImplicitStatement* implicit_stmt;
+   SgImplicitStatement* implicit_stmt = nullptr;
 
    std::visit(
       common::visitors{
-         [&](const std::list<parser::ImplicitSpec> &y) { ; },
+         [&](const std::list<parser::ImplicitSpec> &y)
+            {
+	      std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> implicit_spec_list;
+
+	      // Traverse ImplicitSpecList
+	      Build(y, implicit_spec_list);
+
+	      // Begin SageTreeBuilder
+	      builder.Enter(implicit_stmt, implicit_spec_list);
+
+              // Leave SageTreeBuilder
+              builder.Leave(implicit_stmt);
+            },
          [&](const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &y)
 	    {
 	      bool is_external = false, is_type = false;
@@ -978,12 +990,74 @@ void Build(const parser::ImplicitStmt &x, T* scope)
       x.u);
 }
 
-template<typename T>
-void Build(const parser::ImplicitSpec &x, T* scope)
+void Build(const std::list<parser::ImplicitSpec> &x, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ImplicitSpec>)\n";
+#endif
+
+   for (const auto &elem : x) {
+      std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec;
+      SgType* type;
+      std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
+
+      // Get type and list of LetterSpec
+      Build(elem, type, letter_spec_list);
+
+      // Make tuple from type and list of LetterSpec, add tuple to ImplicitSpecList
+      implicit_spec = std::make_tuple(type, letter_spec_list);
+      implicit_spec_list.push_back(implicit_spec);
+   }
+}
+
+void Build(const parser::ImplicitSpec &x, SgType* &type, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitSpec)\n";
 #endif
+   // std::tuple<DeclarationTypeSpec, std::list<LetterSpec>> t;
+
+   Build(std::get<0>(x.t), type);             // DeclarationTypeSpec
+   Build(std::get<1>(x.t), letter_spec_list); // LetterSpecList
+}
+
+void Build(const std::list<parser::LetterSpec> &x, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<LetterSpec>)\n";
+#endif
+
+   for (const auto &elem : x) {
+      std::tuple<char, boost::optional<char>> letter_spec;
+
+      // Get LetterSpec tuple
+      Build(elem, letter_spec);
+
+      // Add LetterSpec tuple to list of LetterSpec
+      letter_spec_list.push_back(letter_spec);
+   }
+}
+
+void Build(const parser::LetterSpec &x, std::tuple<char, boost::optional<char>> &letter_spec)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(LetterSpec)\n";
+#endif
+   // std::tuple<Location, std::optional<Location>> t;
+   // using Location = const char *;
+
+   char first;
+   boost::optional<char> second;
+
+   first = std::get<0>(x.t)[0];
+
+   if (auto & opt = std::get<1>(x.t)) {
+      second = opt.value()[0];
+   } else {
+      second = boost::none;
+   }
+
+   letter_spec = std::make_tuple(first, second);
 }
 
 void Build(const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type)
