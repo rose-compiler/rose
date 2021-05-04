@@ -958,9 +958,24 @@ void Build(const parser::ImplicitStmt &x, T* scope)
    std::cout << "Rose::builder::Build(ImplicitStmt)\n";
 #endif
 
-   // std::list<ImplicitSpec>, std::list<ImplicitNoneNameSpec>
-   auto SpecVisitor = [&](const auto& y) { Build(y, scope); };
-   std::visit(SpecVisitor, x.u);
+   SgImplicitStatement* implicit_stmt;
+
+   std::visit(
+      common::visitors{
+         [&](const std::list<parser::ImplicitSpec> &y) { ; },
+         [&](const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &y)
+	    {
+	      bool is_external = false, is_type = false;
+	      Build(y, is_external, is_type);
+
+	      // Begin SageTreeBuilder for SgImplicitStatement with implicit-none
+	      builder.Enter(implicit_stmt, is_external, is_type);
+
+	      // Leave SageTreeBuilder
+	      builder.Leave(implicit_stmt);
+            },
+      },
+      x.u);
 }
 
 template<typename T>
@@ -971,12 +986,20 @@ void Build(const parser::ImplicitSpec &x, T* scope)
 #endif
 }
 
-template<typename T>
-void Build(const parser::ImplicitStmt::ImplicitNoneNameSpec &x, T* scope)
+void Build(const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ImplicitNoneNameSpec)\n";
+   std::cout << "Rose::builder::Build(std::list<ImplicitNoneNameSpec>)\n";
 #endif
+
+   for (auto y: x) {
+     if (parser::ImplicitStmt::EnumToString(y) == "External") {
+       is_external = true;
+     }
+     if (parser::ImplicitStmt::EnumToString(y) == "Type") {
+       is_type = true;
+     }
+   }
 }
 
 template<typename T>

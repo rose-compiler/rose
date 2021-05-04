@@ -91,7 +91,7 @@ template<typename T> void Build(const Fortran::parser::          ImplicitPart &x
 template<typename T> void Build(const Fortran::parser::      ImplicitPartStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitSpec &x, T* scope);
-template<typename T> void Build(const Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec &x, T* scope);
+void Build(const std::list<Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type);
 template<typename T> void Build(const Fortran::parser::  DeclarationConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::SpecificationConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   TypeDeclarationStmt &x, T* scope);
