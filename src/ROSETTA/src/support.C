@@ -1347,6 +1347,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype( "bool", "translateCommentsAndDirectivesIntoAST", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/2/2021): I think this should be a static data member (later).
   // negara1 (07/08/2011): Added to permit optional header files unparsing.
      File.setDataPrototype("bool","unparseHeaderFiles", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

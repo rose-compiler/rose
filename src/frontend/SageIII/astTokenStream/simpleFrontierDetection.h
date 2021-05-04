@@ -103,7 +103,9 @@ class SimpleFrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpPro
    };
 
 
+// DQ (5/2/2021): Modified API to support header file unparsing.
 void simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile );
+// void simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile, bool traverseHeaderFiles );
 
 
 #endif

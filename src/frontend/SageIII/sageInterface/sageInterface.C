@@ -1120,7 +1120,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // with the old name and add a symbol with the new name.
      ROSE_ASSERT(initializedNameNode != NULL);
 
-#define DEBUG_SET_NAME 0
+#define DEBUG_SET_NAME 1
 
   // SgNode * node = this;
 #if DEBUG_SET_NAME
@@ -1308,12 +1308,19 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 #endif
                          varRefExp->set_isModified(true);
                          varRefExp->setTransformation();
+#if 1
+                      // DQ (5/2/2021): The traversal over the file will identify the nesting of and transformations in outer (enclosing) IR nodes.
+                      // DQ (5/1/2021): I think that we may have to set the physical node id and maybe make it to be output.  This is 
+                      // special to the case of using the header file unparsing (any maybe the token-based unparsing with the header 
+                      // file unparsing, but I think just the header file unparsing).
+                         printf ("In SageInterface::set_name(): When unparsing header files, we need to set the physical file id to the correct file \n");
 
-                      // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we know how to handle it with the token-based unparsing.
+                      // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we 
+                      // know how to handle it with the token-based unparsing.  
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
                          ROSE_ASSERT(associatedStatement != NULL);
                          associatedStatement->setTransformation();
-
+#endif
 #if 0
                       // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
