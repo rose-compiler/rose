@@ -21,7 +21,16 @@ namespace
     os << "Found ArrayType: " << n->unparseToString() << std::flush;
 
     for (SgExpression* exp : res.second)
+    {
+      // test that the range is given in one of the known forms
+      ROSE_ASSERT(  isSgRangeExp(exp)
+                 || isSgTypeExpression(exp)
+                 || isSgAdaAttributeExp(exp)
+                 );
+
+      // test printing capabilities
       os << ", " << SG_DEREF(exp).unparseToString();
+    }
 
     os << std::endl;
   }
