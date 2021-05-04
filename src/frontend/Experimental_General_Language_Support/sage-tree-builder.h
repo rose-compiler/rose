@@ -180,11 +180,7 @@ public:
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
    void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
-#ifdef CPP_ELEVEN
    void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
-#else
-   void Enter(SgImplicitStatement* &);
-#endif
    void Leave(SgImplicitStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
