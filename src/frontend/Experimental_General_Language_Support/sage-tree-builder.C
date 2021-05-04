@@ -1097,18 +1097,16 @@ Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
    }
 }
 
-#ifdef CPP_ELEVEN
 void SageTreeBuilder::
 Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
-#else
-void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
-#endif
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
    // Implicit with Implicit-Spec
 
+   //TODO: Create SgImplicitStatement with the list of Implicit Specs,
+   // perhaps wait until SageBuilder function is created
+
    // Step through the list of Implicit Specs
-#ifdef CPP_ELEVEN
    for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
       SgType* type;
       std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
@@ -1130,10 +1128,6 @@ void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
          std::cout << "\n";
       }
    }
-#else
-   implicit_stmt = nullptr;
-#endif
-
 }
 
 void SageTreeBuilder::
