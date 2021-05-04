@@ -15,6 +15,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
      NEW_TERMINAL_MACRO (NonrealRefExp,          "NonrealRefExp",          "NONREAL_REF" );
      NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
+     NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
      NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
 
   // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
@@ -475,7 +476,7 @@ Grammar::setUpExpressions ()
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
           AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
-          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp, "Expression", "ExpressionTag", false);
+          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -638,6 +639,9 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
 
      AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+
+     AdaRenamingRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
      AdaAttributeExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
@@ -1323,6 +1327,10 @@ Grammar::setUpExpressions ()
      AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaRenamingRefExp.setFunctionPrototype ( "HEADER_ADA_RENAMING_REF_EXPRESSION", "../Grammar/Expression.code" );
+     AdaRenamingRefExp.setDataPrototype ( "SgAdaRenamingDecl*", "decl", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaAttributeExp.setFunctionPrototype ( "HEADER_ADA_ATTRIBUTE_EXPRESSION", "../Grammar/Expression.code" );
      AdaAttributeExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
      AdaAttributeExp.editSubstitute       ( "LIST_NAME", "arg" );
@@ -1624,11 +1632,16 @@ Grammar::setUpExpressions ()
               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      StringVal.setDataPrototype ( "bool", "wcharString", "= false",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     StringVal.setDataPrototype ( "bool", "usesSingleQuotes", "= false",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (12/23/2007): Added support for distinguishing double quotes (permits use of sing, double, or un-quoted strings in the SgFormatItem object).
-     StringVal.setDataPrototype ( "bool", "usesDoubleQuotes", "= false",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // PP (4/25/21) replace usesSingleQuotes and usesDoubleQuotes with
+  //   stringDelimiter (char)
+  //~   StringVal.setDataPrototype ( "bool", "usesSingleQuotes", "= false",
+  //~            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  //~ // DQ (12/23/2007): Added support for distinguishing double quotes (permits use of sing, double, or un-quoted strings in the SgFormatItem object).
+  //~   StringVal.setDataPrototype ( "bool", "usesDoubleQuotes", "= false",
+  //~            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "char", "stringDelimiter", "= 0",
+             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/13/2014): Added support for C++11 string types (16bit and 32bit character types for strings).
      StringVal.setDataPrototype ( "bool", "is16bitString", "= false",
@@ -3050,6 +3063,7 @@ Grammar::setUpExpressions ()
      AdaFloatVal.setFunctionSource ( "SOURCE_ADA_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
+     AdaRenamingRefExp.setFunctionSource ( "SOURCE_ADA_RENAMING_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaAttributeExp.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_EXPRESSION","../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );

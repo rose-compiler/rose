@@ -270,9 +270,21 @@ namespace
 
     void handle(SgStringVal& n)
     {
-      prn("\"");
-      prn(n.get_value());
-      prn("\"");
+      std::stringstream buf;
+
+      buf << n.get_stringDelimiter();
+
+      for (char c : n.get_value())
+      {
+        buf << c;
+
+        if (c == n.get_stringDelimiter())
+          buf << c;
+      }
+
+      buf << n.get_stringDelimiter();
+
+      prn(buf.str());
     }
 
 
@@ -299,6 +311,14 @@ namespace
       }
 
       prn(nameOf(n));
+    }
+
+    void handle(SgAdaRenamingRefExp& n)
+    {
+      SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
+
+      prn(scopeQual(dcl.get_scope()));
+      prn(dcl.get_name());
     }
 
     void handle(SgAggregateInitializer& n)
@@ -472,7 +492,7 @@ namespace
     SgScopeStatement* current = info.get_current_scope();
 
     return current ? unparser.computeScopeQual(*current, remote)
-                   : "<missing-scope>"; // <-- this should only be here if invoked from unparseToString..
+                   : "<missing-scope>"; // <-- this used iff invoked from unparseToString..
   }
 
 }
