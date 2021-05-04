@@ -215,6 +215,9 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
                   }
                ROSE_ASSERT(isSgStatement(locatedNode) == NULL || statement == locatedNode);
 
+            // DQ (5/3/2021): In order to be marked as a transformation, the node must be a statement.
+            // The evaluateSynthesizedAttribute() function will set the parent scopes as containing a transformation.
+
                if (statement != NULL)
                   {
 #if 0
@@ -227,6 +230,9 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
                  // Note that both of these must be set.
                     statement->setTransformation();
                     statement->setOutputInCodeGeneration();
+
+                 // DQ (5/3/2021): There may be some additional details of setting the physical_file_id as well to make 
+                 // sure that it is output into the correct file when header file unparsing is being supported.
 #endif
 #if 0
                     printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
@@ -248,7 +254,8 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
                  else
                   {
 #if 0
-                    printf ("WARNING: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): parent statement == NULL for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+                    printf ("WARNING: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): parent statement == NULL for locatedNode = %p = %s \n",
+                         locatedNode,locatedNode->class_name().c_str());
 #endif
                   }
              }
@@ -341,6 +348,13 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNo
 #if 0
                          printf ("   --- sourceFile_file_id = %d child_file_id = %d \n",sourceFile_file_id,child_file_id);
 #endif
+
+                      // DQ (5/3/2021): Since this is source file and header file dependent we need to do more than just 
+                      // set the value in the IR nodes that are shared across multiple files.  We require a file-based 
+                      // (indexed) map of lists of scopes that are to be marked as containing transformations.
+                      // Something like: std::map< SgSourceFile* , std::set<SgScopeStatement*> > to make it simple for 
+                      // ROSETTA, we need to store this outside of the map.
+
                          if (sourceFile_file_id == child_file_id)
                             {
                               n->set_containsTransformation(true);

@@ -997,7 +997,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // LexTokenStreamTypePointer token_list_pointer = returnListOfAttributes->get_rawTokenStream();
             // ROSE_ASSERT(token_list_pointer != NULL);
                ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
-
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+#endif
 #if 0
             // This is a list<stream_element*> type.
                LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
@@ -1044,7 +1046,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
                LexTokenStreamType* tokenStream = returnListOfAttributes->get_rawTokenStream();
                ROSE_ASSERT(tokenStream != NULL);
-
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+               printf ("In buildCommentAndCppDirectiveList(): tokenStream->size() = %zu \n",tokenStream->size());
+#endif
             // Set this value so that we can generate unique keys for any interval.
             // I think that a better mehcanism for generating unique keys would be possible (but this is simple).
                TokenStreamSequenceToNodeMapping::tokenStreamSize = tokenStream->size();
@@ -1065,6 +1070,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                   }
 
             // return tokenVector;
+#endif
+
+#if 0
+               printf ("tokenVector.size() = %zu \n",tokenVector.size());
 #endif
 
 #if 0

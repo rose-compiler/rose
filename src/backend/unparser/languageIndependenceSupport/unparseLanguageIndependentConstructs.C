@@ -2130,6 +2130,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if DEBUG_USING_CURPRINT
                     curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): unparseLeadingTokenStream = ") + (unparseLeadingTokenStream ? "true" : "false") + " */");
                     curprint(string("\n/* --- lastStatementOfGlobalScopeUnparsedUsingTokenStream = ") + (lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false") + " */");
+                    curprint(string("\n/* --- unparseLeadingTokenStream = ") + (unparseLeadingTokenStream ? "true" : "false") + " */");
 #endif
                     if (unparseLeadingTokenStream == true)
                        {
@@ -2252,7 +2253,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                        }
                   }
-#if 0
+
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                printf ("In unparseStatementFromTokenStream(): DONE with leading whitespace: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
                curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): DONE with leading whitespace: stmt = ") + stmt->class_name().c_str() + " */");
 #endif
@@ -2281,10 +2283,20 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
 #endif
                   }
-#if 0
+
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                printf ("In unparseStatementFromTokenStream(): DONE with token output: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
                curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): DONE with token output: stmt = ") + stmt->class_name().c_str() + " */");
 #endif
+
+            // DQ (5/3/2021): Independent of if this is the global scope or not, we need to output the trailing whitespace 
+            // if this is the last statement.
+
+#if DEBUG_USING_CURPRINT
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): NEED TO OUTPUT TRAILING WHITESPACE IF LAST STATMENT IN SCOPE \n");
+               curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): NEED TO OUTPUT TRAILING WHITESPACE IF LAST STATMENT IN SCOPE */"));
+#endif
+
 #if 1
             // DQ (1/6/2014): The code here is used to close off the global scope when the token stream unparsing is used,
             // else the global scope will be closed off by the code in the unparseGlobalScope function.
@@ -2320,6 +2332,20 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                   }
 #endif
             // ROSE_ASSERT(globalScope == NULL);
+#if 0
+               printf ("scope = %p globalScope = %p \n",scope,globalScope);
+               if (scope != NULL)
+                  {
+                    printf ("scope->get_containsTransformation() = %s \n",scope->get_containsTransformation() ? "true" : "false");
+                  }
+               if (globalScope != NULL)
+                  {
+                    printf ("globalScope->get_containsTransformation() = %s \n",globalScope->get_containsTransformation() ? "true" : "false");
+                  }
+#endif
+            // DQ (5/3/2021): The settings of scope->get_containsTransformation() will have to be supporting 
+            // on a per source file basis to support unparsing of header files using the token-based unparsing.
+            // This is something to work on next, once the existing work passes the current regression tests.
 
             // DQ (1/6/2014): Get the last statement in the global scope that has valid token information.
             // if (globalScope != NULL && globalScope->get_containsTransformation() == true)
@@ -2340,6 +2366,11 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("computed lastStatement of scope = %p = %s stmt = %p = %s \n",lastStatement,lastStatement->class_name().c_str(),stmt,stmt->class_name().c_str());
 #endif
                     isLastStatementOfScope = (stmt == lastStatement);
+
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
+                    printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
+#endif
+
 #else
                  // Check if this is the last statement in the file (global scope).
                  // SgDeclarationStatementPtrList & declarationList = globalScope->get_declarations();

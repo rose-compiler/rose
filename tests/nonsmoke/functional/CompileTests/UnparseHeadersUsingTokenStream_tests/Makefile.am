@@ -36,7 +36,7 @@ transformVariable_LDADD    = $(ROSE_LIBS)
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test7 test11 test12 test13 test14 test15 test16
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test11 test12 test13 test14 test15 test16
 # TEST_SPECIMENS = test7 test4 test0 test1 test2 test3 test5 test6 test11 test12 test13 test14 test15 test16
-TEST_SPECIMENS = test0 test1 test2 test3 test5 test6 test11 test12 test13 test14 test15 test16
+TEST_SPECIMENS = test17 test0 test1 test2 test3 test5 test6 test7 test11 test12 test13 test14 test15 test16
 
 # DQ (7/2/2020): Failing files
 # test8 (unclear what the issue is for this failing test (need to revisit).
