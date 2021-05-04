@@ -1553,7 +1553,11 @@ int convAdaLiteral<int>(const char* img)
   const char* cur  = img;
 
   if (*cur == '#')
-    return basedLiteral(res, cur, base);
+  {
+    return basedLiteral(res, cur, base);;
+  }
+
+  std::tie(res, cur) = parseDec<long int>(cur);
 
   if (*cur == '.')
   {
