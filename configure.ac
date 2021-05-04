@@ -12,11 +12,11 @@ AC_PREREQ([2.59])
 AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID], ["$(cat $srcdir/ROSE_VERSION)"],      [Set SCM version information to ROSE version.])
 
 # A CPP constant that can be used in "#if" directives to conditionally compile source code based on the ROSE version number. The
-# ROSE version "A.B.C.D" is encoded as an unsigned long "ABBCCCDDD". For example, version 0.9.13.17 is encoded as 9013017.
+# ROSE version "A.B.C.D" is encoded as an unsigned long "ABBCCCDDDD". For example, version 0.9.13.17 is encoded as 90130017.
 # Although the value is read from a file named SCM_DATE it doesn't have anything to do with a date and it's not the SCM system's
 # version but rather ROSE's version. The choice of the name "ROSE_VERSION" to hold an integer encoded version number follows
 # precedent set by many other packages including Boost, SQLite, Z3, etc.
-AC_DEFINE_UNQUOTED([ROSE_VERSION], [$(cat $srcdir/config/SCM_DATE)ul], [Integer encoded ROSE version A.B.C.D as ABBCCCDDD.])
+AC_DEFINE_UNQUOTED([ROSE_VERSION], [$(cat $srcdir/config/SCM_DATE)ul], [Integer encoded ROSE version A.B.C.D as ABBCCCDDDD.])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
 
