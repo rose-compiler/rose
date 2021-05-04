@@ -7,8 +7,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
-#include "LlvmSemantics2.h"
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/LlvmSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose;

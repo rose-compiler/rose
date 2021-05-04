@@ -28,8 +28,8 @@
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#   include <Partitioner2/Engine.h>
-#   include <Partitioner2/ModulesElf.h>
+#   include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#   include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #endif
 
 #include <algorithm>
@@ -1357,6 +1357,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Ada_language = true;
+
+                                   // PP (04/24/2020)
+                                   SageBuilder::symbol_table_case_insensitive_semantics = true;
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.

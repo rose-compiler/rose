@@ -1,6 +1,6 @@
 #include <rose.h>
 
 // Test that we can include this header by itself
-#include <BaseSemanticsMemoryState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h>
 
 int main() {}

@@ -3,7 +3,7 @@
 
 #include <bROwSE/bROwSE.h>
 
-#include <BinaryString.h>                               // ROSE
+#include <Rose/BinaryAnalysis/String.h>
 #include <Wt/WContainerWidget>
 
 namespace bROwSE {

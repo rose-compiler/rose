@@ -41,7 +41,7 @@ namespace
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
       // base cases
-      void handle(SgType&)                  { res = NULL; }
+      void handle(SgType&)                  { res = nullptr; }
       void handle(SgArrayType& n)           { res = &n; }
 
       // possibly skipped types
@@ -58,7 +58,7 @@ namespace
   SgArrayType*
   ArrayType::find(SgType* n)
   {
-    SgArrayType* res = sg::dispatch(ArrayType(), n);
+    SgArrayType* res = sg::dispatch(ArrayType{}, n);
 
     return res;
   }
@@ -80,7 +80,7 @@ namespace
     void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
     // base cases for expressions
-    //~ void handle(SgExpression&)            { res = NULL; }
+    //~ void handle(SgExpression&)            { res = nullptr; }
     void handle(SgRangeExp& n)            { res = &n; }
     void handle(SgAdaAttributeExp& n)     { res = &n; }
 
@@ -88,7 +88,7 @@ namespace
     void handle(SgTypeExpression& n)      { res = recurse(n.get_type()); }
 
     // base case for types
-    //~ void handle(SgType& n)                { res = NULL; }
+    //~ void handle(SgType& n)                { res = nullptr; }
 
     // type expressions
     void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
@@ -163,9 +163,9 @@ namespace
   ArrayBounds::find(SgType* n, SgArrayType* baseType)
   {
     if (!baseType)
-      return ArrayBounds::ReturnType();
+      return ArrayBounds::ReturnType{};
 
-    return sg::dispatch(ArrayBounds(), n);
+    return sg::dispatch(ArrayBounds{}, n);
   }
 
   ArrayBounds::ReturnType
@@ -293,6 +293,37 @@ namespace
   {
     return find(n, dim);
   }
+
+  void convertSymbolTablesToCaseSensitive_internal(SgNode* node)
+  {
+    using SymbolTableEntry    = std::pair<const SgName, SgSymbol*>;
+    using TmpSymbolTableEntry = std::pair<SgName, SgSymbol*>;
+
+    SgScopeStatement*   scopestmt = isSgScopeStatement(node);
+    if (!scopestmt) return;
+
+    SgSymbolTable&      sytable  = SG_DEREF(scopestmt->get_symbol_table());
+    ROSE_ASSERT(sytable.isCaseInsensitive());
+
+    rose_hash_multimap& symap    = SG_DEREF(sytable.get_table());
+    const size_t        mapsize  = symap.size();
+
+    // store all entries for later use
+    std::vector<TmpSymbolTableEntry> tmp;
+
+    // std::for_each(symap.begin(), symap.end(), std::back_inserter(tmp));
+    for (SymbolTableEntry& el : symap)
+      tmp.push_back(el);
+
+    symap.clear();
+    sytable.setCaseInsensitive(false);
+
+    //~ std::for_each(tmp.begin(), tmp.end(), boost::inserter(symap, symap.end()));
+    for (TmpSymbolTableEntry& elTmp : tmp)
+      symap.insert(elTmp);
+
+    ROSE_ASSERT(symap.size() == mapsize);
+  }
 }
 
 namespace SageInterface
@@ -313,7 +344,7 @@ namespace ada
   }
 
   std::pair<SgArrayType*, std::vector<SgExpression*> >
-  flattenArrayType(SgType* atype)
+  getArrayTypeInfo(SgType* atype)
   {
     SgArrayType* restype = ArrayType::find(atype);
 
@@ -324,7 +355,7 @@ namespace ada
   range(const SgAdaAttributeExp& n)
   {
     if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
-      return NULL;
+      return nullptr;
 
     const size_t dim = dimValue(SG_DEREF(n.get_args()));
 
@@ -467,18 +498,48 @@ namespace ada
   //
   // \todo move code below to Ada to C++ translator
 
-  /// Traversal to change the comment style from Ada to C++
-  struct CommentCxxifier : AstSimpleProcessing
-  {
-    explicit
-    CommentCxxifier(bool useLineComments)
-    : AstSimpleProcessing(),
-      prefix(useLineComments ? "//" : "/*"),
-      suffix(useLineComments ? ""   : "*/"),
-      commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
-    {}
 
-    void visit(SgNode*) ROSE_OVERRIDE;
+  struct ConversionTraversal : AstSimpleProcessing
+  {
+      explicit
+      ConversionTraversal(std::function<void(SgNode*)>&& conversionFn)
+      : AstSimpleProcessing(), fn(std::move(conversionFn))
+      {}
+
+      void visit(SgNode*) ROSE_OVERRIDE;
+
+    private:
+      std::function<void(SgNode*)> fn;
+
+      ConversionTraversal()                                      = delete;
+      ConversionTraversal(const ConversionTraversal&)            = delete;
+      ConversionTraversal(ConversionTraversal&&)                 = delete;
+      ConversionTraversal& operator=(ConversionTraversal&&)      = delete;
+      ConversionTraversal& operator=(const ConversionTraversal&) = delete;
+  };
+
+  void ConversionTraversal::visit(SgNode* n)
+  {
+    fn(n);
+  }
+
+
+  /// Traversal to change the comment style from Ada to C++
+  struct CommentCxxifier
+  {
+      explicit
+      CommentCxxifier(bool useLineComments)
+      : prefix(useLineComments ? "//" : "/*"),
+        suffix(useLineComments ? ""   : "*/"),
+        commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
+      {}
+
+      CommentCxxifier& operator=(CommentCxxifier&&)      = default;
+      CommentCxxifier(CommentCxxifier&&)                 = default;
+      CommentCxxifier(const CommentCxxifier&)            = default;
+      CommentCxxifier& operator=(const CommentCxxifier&) = default;
+
+      void operator()(SgNode*) const;
 
     private:
       //~ bool lineComments;
@@ -487,13 +548,10 @@ namespace ada
       const PreprocessingInfo::DirectiveType commentKind;
 
       CommentCxxifier()                                  = delete;
-      CommentCxxifier(const CommentCxxifier&)            = delete;
-      CommentCxxifier(CommentCxxifier&&)                 = delete;
-      CommentCxxifier& operator=(CommentCxxifier&&)      = delete;
-      CommentCxxifier& operator=(const CommentCxxifier&) = delete;
   };
 
-  void CommentCxxifier::visit(SgNode* n)
+
+  void CommentCxxifier::operator()(SgNode* n) const
   {
     SgLocatedNode* node = isSgLocatedNode(n);
     if (node == nullptr) return;
@@ -517,15 +575,25 @@ namespace ada
     }
   }
 
-  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ROSE_ASSERT(root);
 
-    CommentCxxifier adaToCxxCommentConverter{cxxLineComments};
+    ConversionTraversal converter(std::move(fn));
 
-    adaToCxxCommentConverter.traverse(root, preorder);
+    converter.traverse(root, preorder);
   }
 
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
+  {
+    conversionTraversal(CommentCxxifier{cxxLineComments}, root);
+  }
+
+
+  void convertToCaseSensitiveSymbolTables(SgNode* root)
+  {
+    conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
+  }
 } // Ada
 } // SageInterface
 

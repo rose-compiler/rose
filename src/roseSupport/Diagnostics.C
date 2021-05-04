@@ -5,24 +5,24 @@
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
-#include <BinaryBestMapAddress.h>                       // Rose::BinaryAnalysis::BestMapAddress
-#include <BinaryCodeInserter.h>                         // Rose::BinaryAnalysis::CodeInserter
-#include <Concolic/BasicTypes.h>                        // Rose::BinaryAnalysis::Concolic
-#include <BinaryAnalysis/ModelChecker/Types.h>
-#include <BinaryDataFlow.h>                             // Rose::BinaryAnalysis::DataFlow
-#include <BinaryDebugger.h>                             // Rose::BinaryAnalysis::Debugger
-#include <BinaryFeasiblePath.h>                         // Rose::BinaryAnalysis::FeasiblePath
-#include <BinaryFunctionSimilarity.h>                   // Rose::BinaryAnalysis::FunctionSimilarity
-#include <BinaryHotPatch.h>                             // Rose::BinaryAnalysis::HotPatch
-#include <BinaryLoader.h>                               // Rose::BinaryAnalysis::BinaryLoader
-#include <BinaryNoOperation.h>                          // Rose::BinaryAnalysis::NoOperation
-#include <BinaryReachability.h>                         // Rose::BinaryAnalysis::Reachability
-#include <BinarySmtSolver.h>                            // Rose::BinaryAnalysis::SmtSolver
-#include <BinarySymbolicExprParser.h>                   // Rose::BinaryAnalysis::SymbolicExprParser
-#include <BinaryTaintedFlow.h>                          // Rose::BinaryAnalysis::TaintedFlow
-#include <BinaryToSource.h>                             // Rose::BinaryAnalysis::BinaryToSource
+#include <Rose/BinaryAnalysis/BestMapAddress.h>
+#include <Rose/BinaryAnalysis/CodeInserter.h>
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/BinaryAnalysis/DataFlow.h>
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/FeasiblePath.h>
+#include <Rose/BinaryAnalysis/FunctionSimilarity.h>
+#include <Rose/BinaryAnalysis/HotPatch.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Reachability.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/TaintedFlow.h>
+#include <Rose/BinaryAnalysis/ToSource.h>
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
-#include <Disassembler.h>                               // Rose::BinaryAnalysis::Disassembler
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -130,7 +130,7 @@ void initialize() {
         BinaryAnalysis::Debugger::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in BinaryConcolic.h
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in Rose/BinaryAnalysis/Concolic.h
         BinaryAnalysis::Concolic::initDiagnostics();
 #endif
         BinaryAnalysis::DataFlow::initDiagnostics();

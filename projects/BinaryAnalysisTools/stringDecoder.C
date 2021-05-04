@@ -1,9 +1,9 @@
 #include <rose.h>
 
-#include <ConcreteSemantics2.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

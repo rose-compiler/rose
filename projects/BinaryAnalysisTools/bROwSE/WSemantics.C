@@ -1,11 +1,11 @@
 #include <rose.h>
 
-#include <BinarySymbolicExpr.h>                         // ROSE
-#include <BinaryVariables.h>                            // ROSE
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
-#include <MemoryCellList.h>                             // ROSE
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WPanel>

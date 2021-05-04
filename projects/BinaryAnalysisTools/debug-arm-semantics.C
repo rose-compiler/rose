@@ -1,11 +1,11 @@
 #include <rose.h>
 
 #include <boost/filesystem.hpp>
-#include <Disassembler.h>
-#include <MemoryMap.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

@@ -19,10 +19,10 @@ static const char *description =
 
 #include <rose.h>                                       // MUST BE FIRST
 
-#include <BinaryDebugger.h>                             // ROSE header
+#include <Rose/BinaryAnalysis/Debugger.h>
 #include <boost/algorithm/string/join.hpp>
 #include <Diagnostics.h>                                // ROSE header
-#include <Partitioner2/Engine.h>                        // ROSE header
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Trace.h>
 #include <StringUtility.h>                              // ROSE header
 

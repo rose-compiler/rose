@@ -7106,7 +7106,7 @@ HEADER_UNPARSE_INFO_START
                b_useAlternativeDefiningDeclaration = 54, /*!< Skip the use of name qualification (used in generating strings of template instantiations) */
 
             // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-            // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+            // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
             // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
                b_usedInUparseToStringFunction = 55, /*!< Mark this use as being called from the unparseToString() functions (used in debugging) */
 
@@ -7444,7 +7444,7 @@ HEADER_UNPARSE_INFO_START
           void unset_useAlternativeDefiningDeclaration();
 
        // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
        // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
           bool usedInUparseToStringFunction() const;
           void set_usedInUparseToStringFunction();
@@ -8165,6 +8165,13 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaTaskBodyDecl:
              {
                const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaRenamingDecl:
+             {
+               const SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(node);
                name = dcl->get_name();
                break;
              }
@@ -15956,7 +15963,7 @@ SgFile::SgFile ( const SgFile & X )
      ROSE_ASSERT(false);
    }
 
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 void
 SgFile::initialization()
@@ -17186,7 +17193,7 @@ void
 SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMap)
    {
 #if 1
-  // DQ (1/19/2021): This is a newer version of this function that only inserts the input map into 
+  // DQ (1/19/2021): This is a newer version of this function that only inserts the input map into
   // a map container that is using the SgSourceFile instead of the file_id as a key (to the map).
 
      if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(this) == Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
@@ -17286,7 +17293,7 @@ std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
 SgSourceFile::get_tokenSubsequenceMap()
    {
 #if 1
-  // DQ (1/23/2021): Newer version, uses the "this" pointer as a key so that multiple SgSourceFile IR nodes 
+  // DQ (1/23/2021): Newer version, uses the "this" pointer as a key so that multiple SgSourceFile IR nodes
   // can use the same file (reading the same filename).
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = NULL;
 
@@ -17333,8 +17340,8 @@ SgSourceFile::get_tokenSubsequenceMap()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
   // DQ (1/11/2021): This is using the file_id instead of the filename, as a result it should be unique, I think.
-  // So this is a better solution than using the filename, since the filename is not unique when a file is read 
-  // twice as in when buildSourceFile is called to build another copy fo the file which is edited (transformed) 
+  // So this is a better solution than using the filename, since the filename is not unique when a file is read
+  // twice as in when buildSourceFile is called to build another copy fo the file which is edited (transformed)
   // to become a dynamic library (as in the codeSegregation tool).
      int index = this->get_startOfConstruct()->get_file_id();
 
@@ -17367,7 +17374,7 @@ SgSourceFile::get_tokenSubsequenceMap()
 #if 1
        // DQ (1/13/2021): I think the semantics of this function should be to return a tokenSubsequenceMap only if one already exists.
        // To put make a tokenSubsequenceMap available the set_tokenSubsequenceMap() function must be called first.
-       // I think that this clear and simple semantics will make it easier to debug the current issues that are causing specific 
+       // I think that this clear and simple semantics will make it easier to debug the current issues that are causing specific
        // file_ids to be reused when the second file is build using the buildSourceFile() function.
           printf ("Error: exiting in SgSourceFile::get_tokenSubsequenceMap(): NOT USED (call set_tokenSubsequenceMap() first): index = %d filename = %s \n",index,this->getFileName().c_str());
           ROSE_ASSERT(false);
@@ -17375,7 +17382,7 @@ SgSourceFile::get_tokenSubsequenceMap()
         }
        else
         {
-       // DQ (1/11/2021): Debugging case there the token sequence from the second file (with the same name) 
+       // DQ (1/11/2021): Debugging case there the token sequence from the second file (with the same name)
        // might not be added to the Rose::tokenSubsequenceMapOfMaps data structure. Added this debugging code.
 
        // DQ (1/12/2021): This can be the case when a file is copied (read a second time uisng the buildSourceFile() function).
@@ -20926,7 +20933,7 @@ SgUnparse_Info::unset_useAlternativeDefiningDeclaration()
    { unsetBit(b_useAlternativeDefiningDeclaration); }
 
 // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
-// regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations 
+// regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
 // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
 bool
 SgUnparse_Info::usedInUparseToStringFunction() const

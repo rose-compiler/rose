@@ -3,10 +3,10 @@
 
 #include "RSIM_Common.h"
 
-#include <ConcreteSemantics2.h>
-#include <NullSemantics2.h>
-#include <DispatcherX86.h>
-#include <DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
 
 class RSIM_Thread;
 

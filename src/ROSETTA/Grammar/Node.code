@@ -170,7 +170,7 @@ struct HexdumpFormat {
     bool pad_chars;             /**< Pad character part of output with spaces for partial final line (default true). */
 };
 
-#include <RegisterDescriptor.h>
+#include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /** Mapping from instruction virtual address to instruction. */

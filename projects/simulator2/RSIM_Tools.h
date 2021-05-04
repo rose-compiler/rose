@@ -2,7 +2,7 @@
 #define ROSE_RSIM_Tools_H
 
 #include "stringify.h"          // Needed by the MemoryAccessWatcher tool
-#include <Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 #include <errno.h>
 #include <fcntl.h>

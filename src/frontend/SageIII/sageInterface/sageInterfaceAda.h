@@ -31,14 +31,14 @@ namespace ada
   /// @}
 
 
-  /// flattens the representation of Ada array types.
+  /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
   /// \return  iff \ref is not an arraytype, a pair <nullptr, empty vector> is returned
   ///          otherwise a pair of a array pointer, and a vector of index ranges.
   ///          (the expressions are part of the AST and MUST NOT BE DELETED.
   /// \pre     \ref atype is not null.
   /// @{
-  FlatArrayType flattenArrayType(SgType* atype);
+  FlatArrayType getArrayTypeInfo(SgType* atype);
   //~ FlatArrayType flattenArrayType(SgType& atype);
   /// @}
 
@@ -88,6 +88,9 @@ namespace ada
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter
   void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
+
+  /// converts all symbol tables from case insensitive to case sensitive
+  void convertToCaseSensitiveSymbolTables(SgNode* root);
 
 
 } // Ada

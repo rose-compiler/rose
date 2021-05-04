@@ -1160,6 +1160,9 @@ Grammar::setUpTypes ()
      AdaSubtype.setDataPrototype ("SgAdaTypeConstraint*", "constraint", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaSubtype.setDataPrototype ("bool", "fromRootType", "= false",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaDerivedType.setFunctionPrototype ("HEADER_ADA_DERIVEDTYPE", "../Grammar/Type.code" );
 
      AdaDerivedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );

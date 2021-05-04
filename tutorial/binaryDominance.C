@@ -10,8 +10,8 @@ static const char *programDescription =
     "calculates the immediate dominator for each vertex, and shows the results.";
 
 #include <rose.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

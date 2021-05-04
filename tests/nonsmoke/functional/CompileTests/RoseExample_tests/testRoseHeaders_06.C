@@ -116,17 +116,17 @@ namespace ELF{
 
 #include "DataConversion.h"
 // Files in src/frontend/ExecFormats
-#include "MemoryMap.h"
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 
-#include "InstructionEnumsX86.h"
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include "x86InstructionProperties.h"
 #include "armInstructionEnum.h"
 #include "powerpcInstructionEnum.h"
 
 // Files in src/frontend/Disassemblers
-#include "Disassembler.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerX86.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
+#include <Rose/BinaryAnalysis/DisassemblerX86.h>
 #include "Partitioner.h"
 #include "Assembler.h"
 #include "AssemblerX86.h"

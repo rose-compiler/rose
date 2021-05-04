@@ -16,11 +16,11 @@
 #include <bROwSE/WStatus.h>
 #include <bROwSE/WStrings.h>
 #include <CommandLine.h>                                // ROSE
-#include <Disassembler.h>                               // ROSE
-#include <Partitioner2/Engine.h>                        // ROSE
-#include <Partitioner2/Modules.h>                       // ROSE
-#include <Partitioner2/ModulesPe.h>                     // ROSE
-#include <Partitioner2/Partitioner.h>                   // ROSE
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <signal.h>
 #include <Wt/WApplication>
 #include <Wt/WBootstrapTheme>

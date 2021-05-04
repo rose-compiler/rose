@@ -23,8 +23,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 #include <AsmUnparser.h>
-#include <BinaryControlFlow.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

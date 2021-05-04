@@ -3,7 +3,7 @@
 
 #include <bROwSE/bROwSE.h>
 
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/CommandLine.h>
 #include <Wt/WApplication>
 #include <Wt/WEnvironment>

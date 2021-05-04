@@ -4,10 +4,10 @@
 #include <rose_config.h>
 
 
-#include <BinaryDebugger.h>
+#include <Rose/BinaryAnalysis/Debugger.h>
 #include <Combinatorics.h>
 #include <CommandLine.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
 #include <boost/algorithm/string/predicate.hpp>

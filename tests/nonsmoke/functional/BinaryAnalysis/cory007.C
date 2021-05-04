@@ -7,7 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 
-#include <BinarySymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Sawyer/Attribute.h>
 #include <SageBuilderAsm.h>
 #include <sstream>

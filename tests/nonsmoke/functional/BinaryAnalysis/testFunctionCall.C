@@ -6,7 +6,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include "rose.h"
-#include "BinaryFunctionCall.h"
+#include <Rose/BinaryAnalysis/FunctionCall.h>
 
 #include <boost/graph/graphviz.hpp>
 

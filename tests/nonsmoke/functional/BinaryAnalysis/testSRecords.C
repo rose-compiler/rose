@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <SRecord.h>
+#include <Rose/BinaryAnalysis/SRecord.h>
 
 #include <sstream>
 

@@ -2,9 +2,9 @@
 
 #include <rose.h>
 
-#include <SRecord.h>
+#include <Rose/BinaryAnalysis/SRecord.h>
 #include <BinaryVxcoreParser.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>

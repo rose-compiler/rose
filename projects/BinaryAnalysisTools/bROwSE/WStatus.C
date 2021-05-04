@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/WStatus.h>
 
-#include <BinarySymbolicExpr.h>                         // ROSE
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE

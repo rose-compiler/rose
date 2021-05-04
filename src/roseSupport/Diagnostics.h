@@ -71,7 +71,7 @@ namespace Rose {
  *
  * @code
  *  // in BinaryLoader.C
- *  #include "BinaryLoader.h"
+ *  #include <Rose/BinaryAnalysis/BinaryLoader.h>
  *  Rose::Diagnostics::Facility BinaryLoader::mlog;
  * @endcode
  *

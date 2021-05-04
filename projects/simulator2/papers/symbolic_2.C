@@ -36,7 +36,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
-#include "BinaryYicesSolver.h"
+#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include "SymbolicSemantics.h"
 
 // Monitors the CPU instruction pointer.  When it reaches a specified value analyze the function at the specified location.

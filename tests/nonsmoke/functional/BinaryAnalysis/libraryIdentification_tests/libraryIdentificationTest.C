@@ -20,12 +20,12 @@ static const char *description =
 #include <Sawyer/Message.h>
 #include <CallGraph.h>
 
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/GraphViz.h>
-#include <Partitioner2/ModulesM68k.h>
-#include <Partitioner2/ModulesPe.h>
-#include <Partitioner2/Modules.h>
-#include <Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>

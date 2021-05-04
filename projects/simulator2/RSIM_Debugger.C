@@ -7,8 +7,8 @@
 
 #include <Diagnostics.h>
 #include <rose_strtoull.h>
-#include <BaseSemantics2.h>
-#include <Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <stringify.h>
 

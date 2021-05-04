@@ -1,11 +1,11 @@
 // Operations on specimen functions
 #include <rose.h>
 
-#include <BaseSemantics2.h>                             // ROSE
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <bROwSE/FunctionUtil.h>
-#include <Partitioner2/DataFlow.h>
-#include <Partitioner2/GraphViz.h>
-#include <Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
