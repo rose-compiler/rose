@@ -763,6 +763,7 @@ namespace
           logKind("An_Integer_Literal");
 
           res = &mkValue<SgIntVal>(expr.Value_Image);
+
           //~ res = &mkValue<SgLongIntVal>(expr.Value_Image);
           /* unused fields: (Expression_Struct)
                enum Attribute_Kinds  Attribute_Kind
