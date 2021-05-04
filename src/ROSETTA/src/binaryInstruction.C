@@ -177,7 +177,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmAarch32Instruction);
 #if defined(SgAsmAarch32Instruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsAarch32.h>
+    #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #endif // SgAsmAarch32Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -301,7 +301,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmAarch64Instruction);
 #if defined(SgAsmAarch64Instruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsAarch64.h>
+    #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #endif // SgAsmAarch64Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -392,7 +392,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmX86Instruction);
     DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsX86.h>
+    #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
     namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmX86Instruction_HEADERS
 
@@ -584,7 +584,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmPowerpcInstruction);
     DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsPowerpc.h>
+    #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #endif // SgAsmPowerpcInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -662,7 +662,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmMipsInstruction);
     DECLARE_HEADERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsMips.h>
+    #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #endif // SgAsmMipsInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -726,7 +726,7 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmM68kInstruction);
     DECLARE_HEADERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include "InstructionEnumsM68k.h"
+    #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #endif // SgAsmM68kInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -851,7 +851,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <MemoryMap.h>
+    #include <Rose/BinaryAnalysis/MemoryMap.h>
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -4940,7 +4940,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
-    #include <MemoryMap.h>
+    #include <Rose/BinaryAnalysis/MemoryMap.h>
     namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmInterpretation_HEADERS
 
@@ -14964,7 +14964,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmGenericSection);
 #if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
-#   include <MemoryMap.h>
+#   include <Rose/BinaryAnalysis/MemoryMap.h>
 #endif // SgAsmGenericSection_HEADERS
 
 #ifdef DOCUMENTATION
@@ -15908,7 +15908,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmGenericFile);
 #if defined(SgAsmGenericFile_HEADERS) || defined(DOCUMENTATION)
-    #include "MemoryMap.h"
+    #include <Rose/BinaryAnalysis/MemoryMap.h>
     #include "DataConversion.h"
     #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
 #endif // SgAsmGenericFile_HEADERS

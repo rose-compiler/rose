@@ -69,28 +69,6 @@ SUBDIRS += \
 	programTransformation/loopProcessing
 endif
 
-nobase_pkginclude_HEADERS=					\
-	BinaryAnalysis/ModelChecker.h				\
-	BinaryAnalysis/ModelChecker/BasicBlockUnit.C		\
-	BinaryAnalysis/ModelChecker/Engine.C			\
-	BinaryAnalysis/ModelChecker/ErrorTag.C			\
-	BinaryAnalysis/ModelChecker/ExecutionUnit.C		\
-	BinaryAnalysis/ModelChecker/ExternalFunctionUnit.C	\
-	BinaryAnalysis/ModelChecker/FailureUnit.C		\
-	BinaryAnalysis/ModelChecker/InstructionUnit.C		\
-	BinaryAnalysis/ModelChecker/NullDerefTag.C		\
-	BinaryAnalysis/ModelChecker/P2Model.C			\
-	BinaryAnalysis/ModelChecker/Path.C			\
-	BinaryAnalysis/ModelChecker/PathNode.C			\
-	BinaryAnalysis/ModelChecker/PathPredicate.C		\
-	BinaryAnalysis/ModelChecker/PathPrioritizer.C		\
-	BinaryAnalysis/ModelChecker/PathQueue.C			\
-	BinaryAnalysis/ModelChecker/Periodic.C			\
-	BinaryAnalysis/ModelChecker/Settings.C			\
-	BinaryAnalysis/ModelChecker/Semantics.C			\
-	BinaryAnalysis/ModelChecker/SourceLister.C		\
-	BinaryAnalysis/ModelChecker/Tag.C
-
 # ------------------------------------------------------------------------------
 #  Library: programTransformation.la
 # ------------------------------------------------------------------------------

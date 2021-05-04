@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;

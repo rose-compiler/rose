@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <BinaryVxcoreParser.h>
 
-#include <BaseSemanticsRiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>

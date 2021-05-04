@@ -2,10 +2,10 @@ include_rules
 
 : language.y \
   |> ^ BISON %f^ \
-     bison -d -pann -o ./tempBisonOutput.c %f && \
-     mv tempBisonOutput.c language-parser.cc && \
-     mv tempBisonOutput.h language.tab.h \
-  |> language-parser.cc language.tab.h
+     bison -d -pann -o ./language-parser.c %f && \
+     mv language-parser.c language-parser.cc && \
+     cp language-parser.h language.tab.h \
+  |> language-parser.cc language-parser.h language.tab.h
 
 : language.l \
   |> ^ FLEX %f^ \
@@ -13,7 +13,7 @@ include_rules
      mv lex.ann.c language-lexer.cc \
   |> language-lexer.cc
 
-run $(librose_compile) -D__LOCALSTL_H --depend=language.tab.h \
+run $(librose_compile) -D__LOCALSTL_H --depend=language-parser.h \
     language-lexer.cc language-parser.cc annotations.cc annvariable.cc structure.cc enum_property.cc procedure.cc \
     set_property.cc pointerrule.cc analyze.cc rule.cc broadway_expr.cc report.cc
 

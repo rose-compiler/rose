@@ -54,7 +54,7 @@ endif
 
 SUBDIRS += ECJ_ROSE_Connection
 
-SUBDIRS += Disassemblers BinaryFormats BinaryLoader Partitioner2
+SUBDIRS += Disassemblers BinaryFormats
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPFrontend
@@ -73,36 +73,4 @@ SUBDIRS += DLX
 # as part of adding the Fortran 2003 support using the Open Fortan Parser.
 EXTRA_DIST = CMakeLists.txt frontend.docs
 
-#------------------------------------------------------------------------------------------------------------------------
-# Header files for the binary partitioner must be installed under the Partitioner2 subdirectory and included as
-# <Partitioner2/*.h> to avoid conflicts with other headers.  Thus, we need to list them here instead of in the subdirectory.
 
-nobase_pkginclude_HEADERS=			\
-	Partitioner2/AddressUsageMap.h		\
-	Partitioner2/BasicBlock.h		\
-	Partitioner2/BasicTypes.h		\
-	Partitioner2/CfgPath.h			\
-	Partitioner2/Config.h			\
-	Partitioner2/ControlFlowGraph.h		\
-	Partitioner2/DataBlock.h		\
-	Partitioner2/DataFlow.h			\
-	Partitioner2/Engine.h			\
-	Partitioner2/Exception.h		\
-	Partitioner2/Function.h			\
-	Partitioner2/FunctionCallGraph.h	\
-	Partitioner2/GraphViz.h			\
-	Partitioner2/InstructionProvider.h	\
-	Partitioner2/Modules.h			\
-	Partitioner2/ModulesElf.h		\
-	Partitioner2/ModulesLinux.h		\
-	Partitioner2/ModulesM68k.h		\
-	Partitioner2/ModulesMips.h		\
-	Partitioner2/ModulesPe.h		\
-	Partitioner2/ModulesPowerpc.h		\
-	Partitioner2/ModulesX86.h		\
-	Partitioner2/ParallelPartitioner.h	\
-	Partitioner2/Partitioner.h		\
-	Partitioner2/Reference.h		\
-	Partitioner2/Semantics.h		\
-	Partitioner2/Thunk.h			\
-	Partitioner2/Utility.h

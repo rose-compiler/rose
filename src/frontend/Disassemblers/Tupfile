@@ -2,17 +2,13 @@ include_rules
 
 SOURCES = Assembler.C AssemblerX86.C AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C		\
     AssemblerX86Init5.C AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C				\
-    AssemblerX86Init.C BinaryInstructionCache.C DisassemblerAarch32.C DisassemblerAarch64.C Disassembler.C			\
-    DisassemblerM68k.C DisassemblerMips.C DisassemblerNull.C DisassemblerPowerpc.C DisassemblerX86.C RegisterDescriptor.C	\
-    RegisterParts.C Registers.C SgAsmAarch32Instruction.C SgAsmAarch64Instruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C	\
+    AssemblerX86Init.C 	\
+    SgAsmAarch32Instruction.C SgAsmAarch64Instruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C	\
     SgAsmExpression.C SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C SgAsmIntegerValueExpression.C		\
     SgAsmInterpretation.C SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmNullInstruction.C SgAsmPowerpcInstruction.C	\
     SgAsmType.C SgAsmX86Instruction.C x86InstructionProperties.C
 
 run $(librose_compile) $(SOURCES)
 
-run $(public_header) Assembler.h AssemblerX86.h AssemblerX86Init.h BinaryInstructionCache.h BitPattern.h			\
-    DisassemblerAarch32.h DisassemblerAarch64.h Disassembler.h DisassemblerM68k.h DisassemblerMips.h DisassemblerNull.h		\
-    DisassemblerPowerpc.h DisassemblerX86.h InstructionEnumsAarch32.h InstructionEnumsAarch64.h InstructionEnumsM68k.h		\
-    InstructionEnumsMips.h InstructionEnumsPowerpc.h InstructionEnumsX86.h RegisterDescriptor.h RegisterParts.h Registers.h	\
+run $(public_header) Assembler.h AssemblerX86.h AssemblerX86Init.h BitPattern.h			\
     x86InstructionProperties.h

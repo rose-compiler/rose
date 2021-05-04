@@ -57,38 +57,6 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
-  SgInitializedName&
-  getException(Element_Struct& el, AstContext ctx)
-  {
-    ROSE_ASSERT(el.Element_Kind == An_Expression);
-
-    NameData        name = getQualName(el, ctx);
-    Element_Struct& elem = name.elem();
-
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
-    Expression_Struct& ex  = elem.The_Union.Expression;
-
-    SgInitializedName* res = findFirst(asisExcps(), ex.Corresponding_Name_Definition);
-
-    //~ use this if package standard is included
-    //~ return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
-
-    if (res) return *res;
-
-    res = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image});
-    if (res) return *res;
-
-    ROSE_ASSERT(!FAIL_ON_ERROR);
-    logError() << "Unknown exception: " << ex.Name_Image << std::endl;
-
-    // \todo create an SgInitializedName if the exception was not found
-    // \todo the exception could be from a renaming declaration
-    SgInitializedName& sgnode = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
-
-    sgnode.set_scope(&ctx.scope());
-    return sgnode;
-  }
-
   SgNode&
   getExprType(Expression_Struct& typeEx, AstContext ctx)
   {
@@ -226,7 +194,7 @@ namespace
   SgClassDefinition&
   getRecordBody(Record_Definition_Struct& rec, AstContext ctx)
   {
-    SgClassDefinition&        sgnode = SG_DEREF( sb::buildClassDefinition_nfi() );
+    SgClassDefinition&        sgnode     = mkRecordBody();
     ElemIdRange               components = idRange(rec.Record_Components);
     //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
@@ -254,7 +222,7 @@ namespace
     if (def.Definition_Kind == A_Null_Record_Definition)
     {
       logKind("A_Null_Record_Definition");
-      SgClassDefinition&      sgdef = SG_DEREF( sb::buildClassDefinition_nfi() );
+      SgClassDefinition&      sgdef = mkRecordBody();
 
       attachSourceLocation(sgdef, elem, ctx);
       return sgdef;
@@ -405,7 +373,7 @@ namespace
           SgAdaTypeConstraint& constraint = getConstraintID(typenode.Integer_Constraint, ctx);
           SgTypeInt&           superty    = SG_DEREF(sb::buildIntType());
 
-          res.n = &mkAdaSubtype(superty, constraint);
+          res.n = &mkAdaSubtype(superty, constraint, true);
           /* unused fields:
            */
           break;
@@ -701,6 +669,48 @@ namespace
   }
 } // anonymous
 
+std::pair<SgInitializedName*, SgAdaRenamingDecl*>
+getExceptionBase(Element_Struct& el, AstContext ctx)
+{
+  ROSE_ASSERT(el.Element_Kind == An_Expression);
+
+  NameData        name = getQualName(el, ctx);
+  Element_Struct& elem = name.elem();
+
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  Expression_Struct& ex  = elem.The_Union.Expression;
+
+  //~ use this if package standard is included
+  //~ return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+
+  // first try: look up in user defined exceptions
+  if (SgInitializedName* ini = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
+    return std::make_pair(ini, nullptr);
+
+  // second try: look up in renamed declarations
+  if (SgDeclarationStatement* dcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
+  {
+    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(dcl));
+
+    return std::make_pair(nullptr, &rendcl);
+  }
+
+  // third try: look up in exceptions defined in standard
+  if (SgInitializedName* ini = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image}))
+    return std::make_pair(ini, nullptr);
+
+  // last resort: create a new initialized name representing the exception
+  ROSE_ASSERT(!FAIL_ON_ERROR);
+  logError() << "Unknown exception: " << ex.Name_Image << std::endl;
+
+  // \todo create an SgInitializedName if the exception was not found
+  SgInitializedName& init = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
+
+  init.set_scope(&ctx.scope());
+  return std::make_pair(&init, nullptr);
+}
+
+
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx)
 {
@@ -872,9 +882,14 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 
   if (elem.Element_Kind == An_Expression)
   {
-    SgInitializedName& exception = getException(elem, ctx);
+    auto              expair = getExceptionBase(elem, ctx);
+    SgScopeStatement& scope = ctx.scope();
 
-    exceptExpr = &mkExceptionRef(exception, ctx.scope());
+    exceptExpr = expair.first ? &mkExceptionRef(*expair.first, scope)
+                              : &mkAdaRenamingRefExp(SG_DEREF(expair.second))
+                              ;
+
+    attachSourceLocation(SG_DEREF(exceptExpr), elem, ctx);
   }
   else if (elem.Element_Kind == A_Definition)
   {

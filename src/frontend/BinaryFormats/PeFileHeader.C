@@ -3,7 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "MemoryMap.h"
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include "Diagnostics.h"
 #include <boost/format.hpp>
 

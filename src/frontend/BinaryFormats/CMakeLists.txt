@@ -5,9 +5,7 @@ add_library(roseBinaryFormats OBJECT
   ExecGeneric.C
   ExtentMap.C
   Hexdump.C
-  MemoryMap.C
   Rva.C
-  SRecord.C
   BinaryVxcoreParser.C
 
   ### Generic Base Classes ###
@@ -51,6 +49,6 @@ add_library(roseBinaryFormats OBJECT
 add_dependencies(roseBinaryFormats rosetta_generated)
 
 install(
-  FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
-         SRecord.h WorkLists.h SgSharedVector.h StatSerializer.h BinaryVxcoreParser.h
+  FILES  DataConversion.h IntelPinSupport.h ByteOrder.h
+         WorkLists.h SgSharedVector.h StatSerializer.h BinaryVxcoreParser.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
