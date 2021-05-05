@@ -1219,8 +1219,8 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
           printf ("original_start_of_token_subsequence = %d \n",original_start_of_token_subsequence);
           printf ("leading_whitespace_start > original_start_of_token_subsequence                            = %s \n",leading_whitespace_start > original_start_of_token_subsequence ? "true" : "false");
 
-          ROSE_ASSERT(leading_whitespace_start-1 >= 0);
-          ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+          ROSE_ASSERT((size_t)leading_whitespace_start-1 >= 0);
+          ROSE_ASSERT((size_t)leading_whitespace_start-1 < tokenStream.size());
 
           printf ("tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE         = %s \n",
                tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ? "true" : "false");
@@ -1229,13 +1229,17 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
           printf ("tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme.c_str());
 #endif
 
-          ROSE_ASSERT(leading_whitespace_start-1 >= 0);
-          ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+          ROSE_ASSERT((size_t)leading_whitespace_start-1 >= 0);
+          ROSE_ASSERT((size_t)leading_whitespace_start-1 < tokenStream.size());
 
+       // DQ (5/4/2021): We need to bew able to iterate to zero, but we can't with this logic.
        // while ( leading_whitespace_start > original_start_of_token_subsequence &&
        //         ( tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
        //           tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO) )
-          while ( (leading_whitespace_start-1 > 0) && (leading_whitespace_start > original_start_of_token_subsequence) &&
+       // while ( (leading_whitespace_start-1 > 0) && (leading_whitespace_start > original_start_of_token_subsequence) &&
+       //         ( tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
+       //           tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO) )
+          while ( (leading_whitespace_start > 0) && (leading_whitespace_start > original_start_of_token_subsequence) &&
                   ( tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
                     tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO) )
              {
@@ -1246,14 +1250,19 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
 
                leading_whitespace_start--;
 
-               ROSE_ASSERT(leading_whitespace_start-1 >= 0);
-               ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+            // ROSE_ASSERT(leading_whitespace_start-1 >= 0);
+            // ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+               ROSE_ASSERT((size_t)leading_whitespace_start >= 0);
+               ROSE_ASSERT((size_t)leading_whitespace_start < tokenStream.size());
 
 #if DEBUG_TRIM_FROM_LEFT
-               printf ("bottom of loop: tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme.c_str());
+            // printf ("bottom of loop: tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme.c_str());
+               printf ("bottom of loop: tokenStream[leading_whitespace_start]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start]->p_tok_elem->token_lexeme.c_str());
 #endif
-               ROSE_ASSERT(leading_whitespace_start-1 >= 0);
-               ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+            // ROSE_ASSERT(leading_whitespace_start-1 >= 0);
+            // ROSE_ASSERT(leading_whitespace_start-1 < tokenStream.size());
+               ROSE_ASSERT((size_t)leading_whitespace_start >= 0);
+               ROSE_ASSERT((size_t)leading_whitespace_start < tokenStream.size());
              }
 
 #if DEBUG_TRIM_FROM_LEFT
@@ -1621,11 +1630,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
           SgLocatedNode* locatedNode = isSgLocatedNode(n);
 
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+       // DQ (5/4/2021): This is used in debugging only, so it is only computed when this macro is used.
        // DQ (4/21/2021): We need to only support the computation of the token sequence mapping on the 
        // SgStatement IR nodes from the matching file. However, this may not be correct for the handling 
        // of the lib file in dynamic linking transformations which create a new file from the original 
        // input source file.
           bool nodeInSourceFile = (locatedNode != NULL) && (locatedNode->get_file_info()->get_filenameString() == inheritedAttribute.sourceFile->getFileName());
+#endif
 #if 0
        // DQ (4/26/2021): Force this to be true so that we process all IR nodes.
           nodeInSourceFile = true;
@@ -1633,6 +1645,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
           printf ("Forcing nodeInSourceFile = true \n");
 #endif
 #else
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+       // DQ (5/4/2021): This is used in debugging only, so it is only computed when this macro is used.
        // DQ (4/21/2021): Make sure that we process the global scope (which will be associated with the original 
        // input source file, and not the soure file associated with any header file).
           if (isSgGlobal(n) != NULL)
@@ -1648,6 +1662,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
              {
                nodeInSourceFile = true;
              }
+#endif
 #endif
 #endif
 
@@ -2332,14 +2347,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                      // ROSE_ASSERT(k2 != tokenStreamSequenceVector.end());
                                         if (k2 != tokenStreamSequenceVector.end())
                                            {
-#if 1
+#if 0
                                              printf ("Calling erase on tokenStreamSequenceVector \n");
 #endif
                                              tokenStreamSequenceVector.erase(k2);
                                            }
                                           else
                                            {
+#if 0
                                              printf ("mappingInfo = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",mappingInfo,mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
                                            }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
                                         printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
@@ -4397,8 +4414,6 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end,
                               mappingInfo->trailing_whitespace_start,mappingInfo->trailing_whitespace_end);
 #endif
-
-
                       // DQ (3/22/2021): This token subsequence has been built, but never initialized (I think it should not hav been built).
                          if (mappingInfo->token_subsequence_start == -1 || mappingInfo->token_subsequence_end == -1)
                             {
@@ -6023,16 +6038,18 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                     printf ("starting_line = %d ending_line = %d starting_column = %d ending_column = %d process_node = %s \n",starting_line,ending_line,starting_column,ending_column,process_node ? "true" : "false");
                     printf (" --- start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
 #endif
-
+#if 0
+                 // DQ (5/4/2021): I think this is a spurious warning and makes less sense in the new design that supports header file unparsing.
                  // DQ (1/26/2015): This appears to be triggered by a SgNullStatement.
                     if (subtreeHasValidSourcePosition == true && process_node == false)
                        {
-#if 1
+#if 0
                          printf ("WARNING: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false): n = %p = %s \n",n,n->class_name().c_str());
 #endif
                       // printf ("ERROR: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false) \n");
                       // ROSE_ABORT();
                        }
+#endif
 #if 1
                  // DQ (1/4/2014): commented out to test with using token based unparsing.
 
@@ -6124,8 +6141,8 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          printf ("In tokenStream: start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
                          printf ("tokenStream.size() = %zu \n",tokenStream.size());
 
-                         ROSE_ASSERT(start_of_token_subsequence >= 0);
-                         ROSE_ASSERT(start_of_token_subsequence < tokenStream.size());
+                         ROSE_ASSERT((size_t)start_of_token_subsequence >= 0);
+                         ROSE_ASSERT((size_t)start_of_token_subsequence < tokenStream.size());
 
                          printf ("BEFORE BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num   = %d \n",
                               start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
@@ -6421,7 +6438,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                         printf ("start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",start_of_token_subsequence,original_end_of_token_subsequence);
 #endif
                                      // DQ (4/26/2021): debugging.
-                                        if (start_of_token_subsequence+1 >= tokenStream.size())
+                                        if ((size_t)start_of_token_subsequence+1 >= tokenStream.size())
                                            {
                                              printf ("start_of_token_subsequence = %d \n",start_of_token_subsequence);
                                              printf ("tokenStream.size()         = %zu \n",tokenStream.size());
@@ -6432,7 +6449,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                                 }
 #endif
                                            }
-                                        ROSE_ASSERT(start_of_token_subsequence+1 < tokenStream.size());
+                                        ROSE_ASSERT((size_t)start_of_token_subsequence+1 < tokenStream.size());
 
                                         ROSE_ASSERT(tokenStream[start_of_token_subsequence+1] != NULL);
                                         ROSE_ASSERT(tokenStream[start_of_token_subsequence+1]->p_tok_elem != NULL);
@@ -6486,8 +6503,8 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               printf ("Found case of SgClassDefinition: classDefinition = %p \n",classDefinition);
 #endif
                            // DQ (5/3/2021): Added assertion to debug failing case in astTokenStreamTests with file: C_tests/test2012_25.c.
-                              ROSE_ASSERT(start_of_token_subsequence >= 0);
-                              ROSE_ASSERT(start_of_token_subsequence < tokenStream.size());
+                              ROSE_ASSERT((size_t)start_of_token_subsequence >= 0);
+                              ROSE_ASSERT((size_t)start_of_token_subsequence < tokenStream.size());
 #if 0
                               printf ("BEFORE LOOP: SgBasicBlock: Adjusting the start of the token subsequence to find the leading '{' token = %s \n",
                                    tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
@@ -6509,8 +6526,8 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
 
                            // DQ (5/3/2021): Added assertion to debug failing case in astTokenStreamTests with file: C_tests/test2012_25.c.
-                              ROSE_ASSERT(start_of_token_subsequence >= 0);
-                              ROSE_ASSERT(start_of_token_subsequence < tokenStream.size());
+                              ROSE_ASSERT((size_t)start_of_token_subsequence >= 0);
+                              ROSE_ASSERT((size_t)start_of_token_subsequence < tokenStream.size());
 
                            // DQ (12/19/2014): If we didn't find the "{" then reset it back to it's original value (this is an issue 
                            // for some template types used in variable declarations in template declarations (iostream header file).
@@ -7217,7 +7234,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
    }
 
 
-  // DQ (1/20/2021): Changed the API to add a pointer to the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
+// DQ (1/20/2021): Changed the API to add a pointer to the map<SgNode*,TokenStreamSequenceToNodeMapping*>.
 TokenMappingTraversal::TokenMappingTraversal( vector<stream_element*> & ts, bool input_useTokenSequenceToImproveSourcePositionInfo,
                                               map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMapPointer)
    : tokenStream(ts),
@@ -8265,8 +8282,9 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
   // Build the inherited attribute
      bool processThisNode = true;
 
+#if 0
      printf ("tokenVector.size() = %zu \n",tokenVector.size());
-
+#endif
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ABORT();
