@@ -40,7 +40,7 @@ TEST_EXEC ?= $(abs_builddir)/testAdaLiteralParser
 #
 # define test suite
 
-TESTCODES_REQUIRED_TO_PASS := numbers.txt
+TESTCODES_REQUIRED_TO_PASS := literals.txt
 
 #
 # targets

@@ -613,6 +613,18 @@ namespace ada
 
 namespace
 {
+  bool
+  isBasedDelimiter(char ch)
+  {
+    return ch == '#' || ch == ':';
+  }
+
+  bool
+  isExponentChar(char ch)
+  {
+    return ch == 'E' || ch == 'e';
+  }
+
   std::pair<size_t, bool>
   check(size_t s, size_t m)
   {
@@ -673,7 +685,7 @@ namespace
     T      res = 0;
     size_t divisor = 1*base;
 
-    while ((*buf != 0) && (*buf != '#'))
+    while ((*buf != 0) && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
 
@@ -699,12 +711,9 @@ namespace
   std::pair<int, const char*>
   parseExp(const char* buf)
   {
-    if (*buf == 0)
-      return std::make_pair(0, buf);
-
     long int exp = 0;
 
-    if ((*buf == 'e') || (*buf == 'E'))
+    if (isExponentChar(*buf))
     {
       ++buf;
       const bool positiveE = (*buf != '-');
@@ -732,14 +741,14 @@ namespace
   {
     int exp = 0;
 
-    ROSE_ASSERT(*cur == '#');
+    ROSE_ASSERT(isBasedDelimiter(*cur));
 
     ++cur;
     base = res;
 
     std::tie(res, cur) = parseDec<long int>(cur, base);
 
-    if (*cur == '#')
+    if (isBasedDelimiter(*cur))
     {
       ++cur;
 
@@ -760,7 +769,7 @@ int convertIntLiteral(const char* img)
 
   std::tie(res, cur) = parseDec<long int>(cur);
 
-  if (*cur == '#')
+  if (isBasedDelimiter(*cur))
   {
     return basedLiteral(res, cur, base);
   }
@@ -784,6 +793,32 @@ int convertIntLiteral(const char* img)
   return computeLiteral(res, base, exp);
 }
 
+std::string convertStringLiteral(const char* textrep)
+{
+  ROSE_ASSERT(textrep);
+
+  std::stringstream buf;
+  const char        delimiter = *textrep;
+  ROSE_ASSERT(delimiter == '"' || delimiter == '%');
+
+  ++textrep;
+  while (*(textrep+1))
+  {
+    // a delimiter within a text requires special handling
+    //   -> skip the first occurrence if the delimiter is doubled
+    if (*textrep == delimiter)
+    {
+      ++textrep;
+      ROSE_ASSERT(*textrep == delimiter);
+    }
+
+    buf << *textrep;
+    ++textrep;
+  }
+
+  return std::move(buf).str();
+}
+
 
 long double convertRealLiteral(const char* img)
 {
@@ -792,7 +827,7 @@ long double convertRealLiteral(const char* img)
   boost::replace_all(litText, "_", "");
 
   // handle 'normal' real literals
-  if (litText.find('#') == std::string::npos)
+  if (litText.find_first_of("#:") == std::string::npos)
   {
     // logWarn() << "R: " << conv<long double>(litText) << std::endl;
     return boost::lexical_cast<long double>(litText);
@@ -806,7 +841,7 @@ long double convertRealLiteral(const char* img)
   const char* cur  = img;
 
   std::tie(base, cur) = parseDec<long int>(cur);
-  ROSE_ASSERT(*cur == '#');
+  ROSE_ASSERT(isBasedDelimiter(*cur));
 
   ++cur;
   std::tie(dec, cur) = parseDec<long double>(cur, base);
@@ -819,7 +854,7 @@ long double convertRealLiteral(const char* img)
 
   const long double res = dec + frac;
 
-  ROSE_ASSERT(*cur == '#');
+  ROSE_ASSERT(isBasedDelimiter(*cur));
   ++cur;
 
   std::tie(exp, cur) = parseExp(cur);
