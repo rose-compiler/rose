@@ -98,6 +98,8 @@ namespace ada
   /// \{
   int convertIntLiteral(const char* img);
 
+  std::string convertStringLiteral(const char* img);
+
   long double convertRealLiteral(const char* img);
   /// \}
 
