@@ -98,6 +98,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_22.c \
      test2012_23.c \
      test2012_24.c \
+     test2012_25.c \
      test2012_26.c \
      test2012_27.c \
      test2012_29.c \
@@ -327,7 +328,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_14.c \
      constants.c
 
-# DQ (5/2/2021): Failing test (empty file).
+# FIXED: DQ (5/2/2021): Failing test (empty file).
 #     test2012_25.c 
 
 # if ROSE_USE_EDG_VERSION_5_0 && !ROSE_USE_EDG_VERSION_6_0
@@ -1229,12 +1230,19 @@ $(TEST_Cxx_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/te
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) -rose:unparse_tokens -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 	diff -u $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C) ./rose_$(@:.C.passed=.C)
 
-TEST_TOKEN_UNPARSER_TRANSLATOR = testVariableTransformations
+# TEST_TOKEN_UNPARSER_TRANSLATOR = testVariableTransformations
+TEST_TOKEN_UNPARSER_TRANSLATOR = testTokenUnparserTransformations
 
 CXX_TOKEN_UNPARSER_TESTCODES_REQUIRED_TO_PASS = \
    input_test2021_01.C \
    input_test2021_02.C \
-   input_test2021_03.C
+   input_test2021_03.C \
+   input_test2021_04.C \
+   input_test2021_05.C \
+   input_test2021_07.C
+
+# DQ (5/4/2021): Failing test (was not previously tested):
+# input_test2021_06.C
 
 CXX_TOKEN_UNPARSER_TESTCODES_CURRENTLY_FAILING = 
 
@@ -1248,10 +1256,15 @@ print:
 	@echo "print makefile rule"
 	@echo  $(TEST_Cxx_Source_variable_transformations_passed)
 
-$(TEST_Cxx_Source_variable_transformations_passed): %.passed: $(TEST_TOKEN_UNPARSER_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+$(TEST_Cxx_Source_token_unparser_transformations_passed): %.passed: $(TEST_TOKEN_UNPARSER_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@echo "In TEST_Cxx_Source_token_unparser_transformations_passed makefile rule."
 	@$(RTH_RUN) CMD="./$(TEST_TOKEN_UNPARSER_TRANSLATOR) -rose:unparse_tokens -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 #	diff -u $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C) ./rose_$(@:.C.passed=.C)
+
+# $(TEST_Cxx_Source_variable_transformations_passed): %.passed: $(TEST_TOKEN_UNPARSER_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
+#	@echo "In TEST_Cxx_Source_token_unparser_transformations_passed makefile rule."
+#	@$(RTH_RUN) CMD="./$(TEST_TOKEN_UNPARSER_TRANSLATOR) -rose:unparse_tokens -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+##	diff -u $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/$(@:.C.passed=.C) ./rose_$(@:.C.passed=.C)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Token Stream Mapping
@@ -1325,6 +1338,8 @@ token_unparser_transformation_cxx_tests: $(TEST_TOKEN_UNPARSER_TRANSLATOR)
 
 # DQ (1/30/2021): Need to add C++ tests: PASSING_TEST_Cxx_Source_passed
 
+# DQ (5/4/2021): Added $(MAKE) token_unparser_transformation_cxx_tests (below).
+
 # Additional automake targets
 # check-local: $(LIN_TEST_TARGETS)
 check-local:
@@ -1333,6 +1348,7 @@ check-local:
 	@$(MAKE) test_unparsingEmptyFileUsingTokens
 	@$(MAKE) test_unparsingFileWithCR_UsingTokens
 	@$(MAKE) test_unparsingFileWithText_UsingTokens
+	@$(MAKE) token_unparser_transformation_cxx_tests
 	@$(MAKE) $(PASSING_TEST_Mapping_Source_passed)
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 # DQ (1/30/2021): Adding C++ tests.
