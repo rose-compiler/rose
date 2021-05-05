@@ -2864,6 +2864,11 @@ void Build(const parser::IfConstruct&x, T* scope)
    // Pop true body scope
    SageBuilderCpp17::popScopeStack();
 
+   SgBasicBlock* false_body{nullptr};
+   if (auto & else_block = std::get<3>(x.t)) {
+     Build(else_block.value(), false_body); // Traverse optional ElseBlock
+   }
+
    // EndIfStmt - std::optional<Name> v;
    bool have_end_stmt_name = false;
    if (auto & opt = std::get<parser::Statement<parser::EndIfStmt>>(x.t).statement.v) {
@@ -2872,7 +2877,7 @@ void Build(const parser::IfConstruct&x, T* scope)
 
    // Enter SageTreeBuilder
    SgIfStmt* if_stmt{nullptr};
-   builder.Enter(if_stmt, ifthen_expr, true_body, nullptr /* false_body */, true /* is_ifthen */);
+   builder.Enter(if_stmt, ifthen_expr, true_body, false_body, true /* is_ifthen */);
 
    // Leave SageTreeBuilder
    builder.Leave(if_stmt);
@@ -2888,12 +2893,23 @@ void Build(const parser::IfThenStmt&x, SgExpression* &expr)
    Build(std::get<1>(x.t), expr); // ScalarLogicalExpr
 }
 
-template<typename T>
-void Build(const parser::IfConstruct::ElseBlock&x, T* scope)
+void Build(const parser::IfConstruct::ElseBlock&x, SgBasicBlock* &false_body)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ElseBlock)\n";
 #endif
+   // std::tuple<Statement<ElseStmt>, Block> t;
+
+   // Build false body and push scope
+   false_body = SageBuilderCpp17::buildBasicBlock_nfi();
+   SageBuilderCpp17::pushScopeStack(false_body);
+
+   // Traverse Block
+   SgScopeStatement* scope{nullptr};
+   Build(std::get<1>(x.t), scope);
+
+   // Pop false body scope
+   SageBuilderCpp17::popScopeStack();
 }
 
 template<typename T>

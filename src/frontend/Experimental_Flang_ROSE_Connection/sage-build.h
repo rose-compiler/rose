@@ -296,7 +296,7 @@ void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 
 // IfConstruct
 void Build(const Fortran::parser::              IfThenStmt&x, SgExpression* &expr);
-template<typename T> void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, T* scope);
+void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, SgBasicBlock* &false_body);
 template<typename T> void Build(const Fortran::parser::IfConstruct::ElseIfBlock&x, T* scope);
 
 // SpecificationConstruct
