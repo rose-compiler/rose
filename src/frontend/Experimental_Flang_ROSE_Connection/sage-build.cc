@@ -2854,15 +2854,11 @@ void Build(const parser::IfConstruct&x, T* scope)
    SgExpression* ifthen_expr{nullptr};
    Build(std::get<0>(x.t).statement, ifthen_expr);
 
-   // Build true body and push scope
+   // True body
    SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
-   SageBuilderCpp17::pushScopeStack(true_body);
-
-   // Traverse Block
-   Build(std::get<1>(x.t), scope);
-
-   // Pop true body scope
-   SageBuilderCpp17::popScopeStack();
+   SageBuilderCpp17::pushScopeStack(true_body); // Push true scope
+   Build(std::get<1>(x.t), scope);              // Traverse Block
+   SageBuilderCpp17::popScopeStack();           // Pop true body scope
 
    SgBasicBlock* false_body{nullptr};
    if (auto & else_block = std::get<3>(x.t)) {
