@@ -153,7 +153,7 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
-   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
+   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, bool is_ifthen = false);
    void Leave(SgIfStmt*);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);

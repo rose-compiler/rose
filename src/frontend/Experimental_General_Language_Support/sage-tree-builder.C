@@ -854,7 +854,7 @@ Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
 }
 
 void SageTreeBuilder::
-Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body, bool is_ifthen)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
 
@@ -863,6 +863,11 @@ Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, Sg
 
    SgStatement* conditional_stmt = SageBuilder::buildExprStatement_nfi(conditional);
    if_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
+
+   if (is_ifthen) {
+     if_stmt->set_use_then_keyword(true);
+     if_stmt->set_has_end_statement(true);
+   }
 }
 
 void SageTreeBuilder::
