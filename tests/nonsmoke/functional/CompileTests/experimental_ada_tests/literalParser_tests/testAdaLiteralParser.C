@@ -2,6 +2,7 @@
 #include "sageInterfaceAda.h"
 
 #include <sstream>
+#include <boost/algorithm/string/trim.hpp>
 
 namespace si = SageInterface;
 
@@ -31,41 +32,68 @@ namespace
     T                 res;
     
     ss >> res;
-    assert(eof(ss));
+    if (!eof(ss))
+    {
+      std::string rem;
+      ss >> rem;
+      std::cerr << res << " .. " << rem << std::endl;
+    }
+
     return res;
   }
 
+  template <>
+  auto read<std::string>(std::istream& stream, char sep) -> std::string
+  {
+    return readStr(stream, sep);
+  }
+  
+
   template <class T>
-  T convertNumber(const char* val) { ROSE_ASSERT(false); return T(); }
+  T convertLiteral(const char* val) { ROSE_ASSERT(false); return T(); }
   
   template <>
   int 
-  convertNumber<int>(const char* val) { return si::ada::convertIntLiteral(val); }
+  convertLiteral<int>(const char* val) { return si::ada::convertIntLiteral(val); }
   
   template <>
   long double 
-  convertNumber<long double>(const char* val) { return si::ada::convertRealLiteral(val); }
+  convertLiteral<long double>(const char* val) { return si::ada::convertRealLiteral(val); }
+  
+  template <>
+  std::string 
+  convertLiteral<std::string>(const char* val) { return si::ada::convertStringLiteral(val); }
   
   template <class T>
-  T tolerance() { ROSE_ASSERT(false); return T(); }
+  bool eq(const T& lhs, const T& rhs) 
+  { 
+    return lhs == rhs; 
+  }
   
   template <>
-  int 
-  tolerance<int>() { return 0; }
+  bool 
+  eq<long double>(const long double& lhs, const long double& rhs) 
+  { 
+    constexpr long double tolerance = .0001;
+  
+    return std::abs(lhs - rhs) < tolerance; 
+  }
   
   template <>
-  long double 
-  tolerance<long double>() { return .0001; }
+  bool 
+  eq<std::string>(const std::string& lhs, const std::string& rhs) 
+  { 
+    return boost::trim_left_copy(lhs) == boost::trim_left_copy(rhs);
+  }
 
   template <class T>
   void checkConversion(std::istream& is)
   {
     const T           valAsNum     = read<T>(is);
+    const std::string valAsStr     = boost::trim_left_copy(read<std::string>(is));
+    const T           valAdaParser = convertLiteral<T>(valAsStr.c_str());
 
-    const std::string valAsStr     = read<std::string>(is);
-    const T           valAdaParser = convertNumber<T>(valAsStr.c_str());
-
-    if (std::abs(valAsNum - valAdaParser) > tolerance<T>())
+    if (!eq(valAsNum, valAdaParser))
     {
       std::cerr << std::endl << valAsNum << " " << valAdaParser << "(" << valAsStr << ")" << std::endl;
 
@@ -80,7 +108,9 @@ namespace
     if (kind == "int")
       checkConversion<int>(is);
     else if (kind == "real")
-      checkConversion<long double>(is);  
+      checkConversion<long double>(is);
+    else if (kind == "string")
+      checkConversion<std::string>(is); 
   }
 }
 
@@ -108,6 +138,8 @@ int main( int argc, char * argv[] )
 
     checkLine(linestream);
     assert(eof(linestream));
+    
+    // std::cerr << line << " passed." << std::endl;
   } 
 
   return 0;
