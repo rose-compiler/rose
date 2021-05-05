@@ -1918,6 +1918,24 @@ SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_sha
    return SageBuilder::buildArrayType(base_type, dim_info);
 }
 
+// SgBasicBlock
+//
+
+SgBasicBlock* buildBasicBlock_nfi()
+{
+   return SageBuilder::buildBasicBlock_nfi();
+}
+
+void pushScopeStack(SgBasicBlock* stmt)
+{
+   SageBuilder::pushScopeStack(stmt);
+}
+
+void popScopeStack()
+{
+   SageBuilder::popScopeStack();
+}
+
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)

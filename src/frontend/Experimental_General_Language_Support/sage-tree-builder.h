@@ -280,6 +280,11 @@ namespace SageBuilderCpp17 {
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 
+// SgBasicBlock
+   SgBasicBlock* buildBasicBlock_nfi();
+   void pushScopeStack(SgBasicBlock* stmt);
+   void popScopeStack();
+
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs);
