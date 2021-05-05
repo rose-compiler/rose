@@ -1366,26 +1366,10 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
 {
   ROSE_ASSERT(textrep);
 
-  std::stringstream buf;
-  const char        delimiter = *textrep;
+  const char delimiter = *textrep;
   ROSE_ASSERT(delimiter == '"' || delimiter == '%');
 
-  ++textrep;
-  while (*(textrep+1))
-  {
-    // a delimiter within a text requires special handling
-    //   -> skip the first occurrence if the delimiter is doubled
-    if (*textrep == delimiter)
-    {
-      ++textrep;
-      ROSE_ASSERT(*textrep == delimiter);
-    }
-
-    buf << *textrep;
-    ++textrep;
-  }
-
-  SgStringVal& sgnode = mkLocatedNode<SgStringVal>(buf.str());
+  SgStringVal& sgnode = mkLocatedNode<SgStringVal>(si::ada::convertStringLiteral(textrep));
 
   sgnode.set_stringDelimiter(delimiter);
   return sgnode;
