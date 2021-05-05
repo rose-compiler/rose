@@ -1837,12 +1837,29 @@ void Build(const parser::IfStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfStmt)\n";
 #endif
+   //  std::tuple<ScalarLogicalExpr, UnlabeledStatement<ActionStmt>> t;
 
-   SgExpression* expr = nullptr;
+   SgIfStmt*         if_stmt{nullptr};
+   SgExpression* conditional{nullptr};
 
-   Build(std::get<0>(x.t), expr);            // ScalarLogicalExpr
-   Build(std::get<1>(x.t).statement, scope); // UnlabeledStatement<ActionStmt>
+   // Traverse conditional expr
+   Build(std::get<0>(x.t), conditional);
 
+   // Build true body and push scope
+   SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
+   SageBuilderCpp17::pushScopeStack(true_body);
+
+   // Traverse true body statement
+   Build(std::get<1>(x.t).statement, scope);
+
+   // Pop true body scope
+   SageBuilderCpp17::popScopeStack();
+
+   // Enter SageTreeBuilder
+   builder.Enter(if_stmt, conditional, true_body, nullptr /* false_body */);
+
+   // Leave SageTreeBuilder
+   builder.Leave(if_stmt);
 }
 
 template<typename T>
