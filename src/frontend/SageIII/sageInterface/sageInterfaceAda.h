@@ -94,6 +94,14 @@ namespace ada
   /// converts all symbol tables from case insensitive to case sensitive
   void convertToCaseSensitiveSymbolTables(SgNode* root);
 
+  /// converts text to constant values
+  /// \{
+  int convertIntLiteral(const char* img);
+
+  long double convertRealLiteral(const char* img);
+  /// \}
+
+
 
 } // Ada
 } // SageInterface
