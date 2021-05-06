@@ -342,7 +342,7 @@ if ROSE_USE_GCC_OMP
 endif
 
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-  librose_la_LIBADD += -L${DOT_ASIS_LIB_DIR_} -ldot_asis 
+  librose_la_LIBADD += -L${DOT_ASIS_LIB_DIR_} -lasis_adapter
 endif
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)

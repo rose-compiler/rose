@@ -266,7 +266,7 @@ endif
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 # ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
   ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
-  DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/lib
+  DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib
 #  ROSE_ADA_LIBS = -ldot_asis
 #  ROSE_ADA_LIBS_WITH_PATH = $(DOT_ASIS_LIB_DIR_)/libdot_asis.so
 endif
