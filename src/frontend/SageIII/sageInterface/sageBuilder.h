@@ -1447,6 +1447,9 @@ ROSE_DLL_API SgJovialForThenStatement* buildJovialForThenStatement_nfi(SgExpress
 //! class declaration and definition (creating both the defining and nondefining declarations as required).
 ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& name, SgScopeStatement* scope=NULL);
 
+//! Build a Fortran module declaration.
+ROSE_DLL_API SgModuleStatement * buildModuleStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/);
+
 //! Build a Jovial table declaration statement
 ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name,
                                                                  SgClassDeclaration::class_types kind, SgScopeStatement* scope=NULL);
