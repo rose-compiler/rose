@@ -25,7 +25,7 @@ procedure Run_Parser_Adapter is
    Options : aliased Options_Record; -- Initialized
    Tool    : Asis_Adapter.Tool.Class; -- Initialized
 
-   procedure Log (Message : in String) is
+   procedure Log (Message : in String; Debug : in Boolean) is
    begin
       Ada.Text_Io.Put_Line ("Run_Asis_Adapter:  " & Message);
    end;
