@@ -2229,6 +2229,8 @@ src/Rose/BinaryAnalysis/ModelChecker/Makefile
 src/Rose/BinaryAnalysis/Partitioner2/Makefile
 src/Rose/BinaryAnalysis/Unparser/Makefile
 src/Rose/Color/Makefile
+src/Rose/CommandLine/Makefile
+src/Rose/Diagnostics/Makefile
 src/Rose/FileSystem/Makefile
 src/Rose/StringUtility/Makefile
 src/ROSETTA/Makefile

@@ -100,7 +100,7 @@ public:
 
     /** Command line arguments.
      *
-     *  The arguments exclude <code>argv[0]</code> and <code>argv[argc]</code> and are just the elements in between.
+     *  The arguments, including argv[0] (the program name) but not argv[argc] (the null pointer).
      *
      * @{ */
     std::vector<std::string> args() const;

@@ -9,7 +9,6 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
-#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
@@ -101,28 +100,16 @@ initSchema(Sawyer::Database::Connection db) {
            " location integer not null,"                // event location field
            " sequence_number integer not null,"         // events sequence field
            " instruction_pointer integer not null,"     // value of the instruction pointer register at this event
+           " comment varchar(32) not null,"             // arbitrary comment for debugging
 
            // Actions. The interpretation of these fields depends on the action type.
            " action_type varchar(32) not null,"         // action to be performed
            " start_va integer,"                         // starting address for actions that need one
-           " size integer,"                             // size of the action for those that need one
-           " bytes bytea,"                              // bytes for the action if needed
+           " scalar integer,"                           // scalar value for those actions that need one
+           " bytes bytea,"                              // vector value for those actions that need one
 
            "constraint fk_test_suite foreign key (test_suite) references test_suites (id),"
            "constraint fk_test_case foreign key (test_case) references test_cases (id))");
-
-    db.run("drop table if exists system_calls");
-    db.run("create table system_calls ("
-           " created_ts varchar(32) not null,"
-           " id integer primary key,"
-           " test_suite integer not null,"
-           " test_case integer not null,"               // test case for which this system call occurs
-           " call_number integer not null,"             // sequence number of instruction call within test case
-           " function_number integer not null,"         // system call function identification number
-           " call_site integer,"                        // address at which the system call occurs
-           " retval integer,"                           // system call concrete return value
-           " constraint fk_test_case foreign key (test_case) references test_cases (id),"
-           " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
 }
 
 static void
@@ -179,6 +166,7 @@ updateDb(const Database::Ptr &db, TestSuiteId id, const TestSuite::Ptr &obj) {
         stmt = db->connection().stmt("update test_suites set name = ?name where id = ?id");
     } else {
         std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        obj->timestamp(ts);
         stmt = db->connection().stmt("insert into test_suites (id, created_ts, name) values (?id, ?ts, ?name)")
                .bind("ts", ts);
     }
@@ -235,6 +223,7 @@ updateDb(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
         stmt = db->connection().stmt("update specimens set name = ?name, content = ?content where id = ?id");
     } else {
         std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        obj->timestamp(ts);
         stmt = db->connection().stmt("insert into specimens (id, created_ts, name, content, test_suite)"
                                      " values (?id, ?ts, ?name, ?content, ?test_suite)")
                .bind("ts", ts)
@@ -305,6 +294,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
                                      " concolic_result = ?concolic_result where id = ?id");
     } else {
         std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        obj->timestamp(ts);
         stmt = db->connection().stmt("insert into test_cases (id, created_ts, name, executor, specimen, argv, envp,"
                                      " concrete_rank, concrete_interesting, concolic_result, test_suite)"
                                      " values (?id, ?ts, ?name, ?executor, ?specimen, ?argv, ?envp,"
@@ -339,7 +329,6 @@ eraseDb(const Database::Ptr &db, TestCaseId id) {
     ASSERT_not_null(db);
     ASSERT_require(id);
     db->eraseExecutionEvents(id);
-    db->eraseSystemCalls(id);
     db->connection().stmt("delete from test_cases where id = ?tcid")
         .bind("tcid", *id)
         .run();
@@ -357,8 +346,8 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
 
     //                                        0           1          2         3                4
     auto iter = db->connection().stmt("select created_ts, test_case, location, sequence_number, instruction_pointer,"
-                                      // 5           6         7     8
-                                      " action_type, start_va, size, bytes"
+                                      // 5           6         7       8      9
+                                      " action_type, start_va, scalar, bytes, comment"
                                       " from execution_events"
                                       " where id = ?id"
                                       " order by created_ts")
@@ -375,10 +364,11 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
     obj->testCase(testcase);
     obj->location(ExecutionEvent::Location(*iter->get<uint64_t>(2), *iter->get<size_t>(3)));
     obj->instructionPointer(*iter->get<rose_addr_t>(4));
+    obj->comment(*iter->get<std::string>(9));
 
     std::string action = *iter->get<std::string>(5);
     auto startVa = iter->get<rose_addr_t>(6);
-    auto size = iter->get<size_t>(7);
+    auto scalar = iter->get<size_t>(7);
     auto bytes = iter->get<std::vector<uint8_t>>(8);
 
     if ("none" == action) {
@@ -386,32 +376,44 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
     } else if ("map_memory" == action) {
         obj->actionType(ExecutionEvent::Action::MAP_MEMORY);
         ASSERT_require(startVa);
-        ASSERT_require(size);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(scalar);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
         ASSERT_require(bytes);
         obj->bytes(*bytes);
     } else if ("unmap_memory" == action) {
         obj->actionType(ExecutionEvent::Action::UNMAP_MEMORY);
         ASSERT_require(startVa);
-        ASSERT_require(size);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(scalar);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
     } else if ("write_memory" == action) {
         obj->actionType(ExecutionEvent::Action::WRITE_MEMORY);
         ASSERT_require(startVa);
-        ASSERT_require(size);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(scalar);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
         ASSERT_require(bytes);
-        ASSERT_require(bytes->size() == *size);
+        ASSERT_require(bytes->size() == *scalar);
         obj->bytes(*bytes);
     } else if ("hash_memory" == action) {
         obj->actionType(ExecutionEvent::Action::HASH_MEMORY);
         ASSERT_require(startVa);
-        ASSERT_require(size);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *size));
+        ASSERT_require(scalar);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
+        ASSERT_require(bytes);
+        obj->bytes(*bytes);
+    } else if ("write_register" == action) {
+        obj->actionType(ExecutionEvent::Action::WRITE_REGISTER);
+        ASSERT_require(scalar);
+        obj->scalar(*scalar);
         ASSERT_require(bytes);
         obj->bytes(*bytes);
     } else if ("restore_registers" == action) {
         obj->actionType(ExecutionEvent::Action::RESTORE_REGISTERS);
+        ASSERT_require(bytes);
+        obj->bytes(*bytes);
+    } else if ("os_syscall" == action) {
+        obj->actionType(ExecutionEvent::Action::OS_SYSCALL);
+        ASSERT_require(scalar);
+        obj->scalar(*scalar);
         ASSERT_require(bytes);
         obj->bytes(*bytes);
     } else {
@@ -430,20 +432,21 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
         stmt = db->connection().stmt("update execution_events set "
                                      "test_case = ?test_case, location = ?location, sequence_number = ?sequence_number,"
                                      " instruction_pointer = ?instruction_pointer, action_type = ?action_type, start_va = ?start_va,"
-                                     " size = ?size, bytes = ?bytes"
+                                     " scalar = ?scalar, bytes = ?bytes, comment = ?comment"
                                      " where id = ?id");
     } else {
-        std::string created_ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        obj->timestamp(ts);
         stmt = db->connection().stmt("insert into execution_events ("
                                      " id, created_ts, test_suite,"
                                      " test_case, location, sequence_number, instruction_pointer, action_type, start_va,"
-                                     " size, bytes"
+                                     " scalar, bytes, comment"
                                      ") values ("
                                      " ?id, ?created_ts, ?test_suite,"
                                      " ?test_case, ?location, ?sequence_number, ?instruction_pointer, ?action_type, ?start_va,"
-                                     " ?size, ?bytes"
+                                     " ?scalar, ?bytes, ?comment"
                                      ")")
-               .bind("created_ts", created_ts)
+               .bind("created_ts", ts)
                .bind("test_suite", *db->id(db->testSuite()));
     }
 
@@ -452,45 +455,58 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
         .bind("test_case", *db->id(obj->testCase(), Update::YES))
         .bind("location", obj->location().primary)
         .bind("sequence_number", obj->location().secondary)
-        .bind("instruction_pointer", obj->instructionPointer());
+        .bind("instruction_pointer", obj->instructionPointer())
+        .bind("comment", obj->comment());
 
     switch (obj->actionType()) {
         case ExecutionEvent::Action::NONE:
             stmt.bind("action_type", "none");
             stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("size", Sawyer::Nothing());
+            stmt.bind("scalar", Sawyer::Nothing());
             stmt.bind("bytes", Sawyer::Nothing());
             break;
         case ExecutionEvent::Action::MAP_MEMORY:
             stmt.bind("action_type", "map_memory");
             stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("scalar", obj->memoryLocation().size());
             stmt.bind("bytes", obj->bytes());
             break;
         case ExecutionEvent::Action::UNMAP_MEMORY:
             stmt.bind("action_type", "unmap_memory");
             stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("scalar", obj->memoryLocation().size());
             stmt.bind("bytes", Sawyer::Nothing());
             break;
         case ExecutionEvent::Action::WRITE_MEMORY:
             stmt.bind("action_type", "write_memory");
             stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("scalar", obj->memoryLocation().size());
+            ASSERT_require(obj->bytes().size() == obj->memoryLocation().size());
             stmt.bind("bytes", obj->bytes());
             break;
         case ExecutionEvent::Action::HASH_MEMORY:
             stmt.bind("action_type", "hash_memory");
             stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("size", obj->memoryLocation().size());
+            stmt.bind("scalar", obj->memoryLocation().size());
+            stmt.bind("bytes", obj->bytes());
+            break;
+        case ExecutionEvent::Action::WRITE_REGISTER:
+            stmt.bind("action_type", "write_register");
+            stmt.bind("start_va", Sawyer::Nothing());
+            stmt.bind("scalar", obj->scalar());
             stmt.bind("bytes", obj->bytes());
             break;
         case ExecutionEvent::Action::RESTORE_REGISTERS:
             stmt.bind("action_type", "restore_registers");
             stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("size", Sawyer::Nothing());
+            stmt.bind("scalar", Sawyer::Nothing());
             stmt.bind("bytes", obj->bytes());
             break;
+        case ExecutionEvent::Action::OS_SYSCALL:
+            stmt.bind("action_type", "os_syscall");
+            stmt.bind("start_va", Sawyer::Nothing());
+            stmt.bind("scalar", obj->scalar());
+            stmt.bind("bytes", obj->bytes());
     }
 
     stmt.run();
@@ -501,86 +517,6 @@ eraseDb(const Database::Ptr &db, ExecutionEventId id) {
     ASSERT_not_null(db);
     ASSERT_require(id);
     db->connection().stmt("delete from execution_events where id = ?id")
-        .bind("id", *id)
-        .run();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Low-level system call database operations
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static void
-updateObject(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
-    ASSERT_not_null(db);
-    ASSERT_require(id);
-    ASSERT_not_null(obj);
-
-    //                                        0           1          2            3                4          5
-    auto iter = db->connection().stmt("select created_ts, test_case, call_number, function_number, call_site, retval"
-                                      " from system_calls"
-                                      " where id = ?id"
-                                      " order by created_ts").bind("id", *id).begin();
-    if (!iter)
-        throw Exception("no such system call in database where id=" + boost::lexical_cast<std::string>(*id));
-
-    TestCaseId tcid(*iter->get<size_t>(1));
-    TestCase::Ptr testcase = db->object(tcid);
-    ASSERT_not_null(testcase);
-
-    obj->timestamp(*iter->get<std::string>(0));
-    obj->testCase(testcase);
-    obj->callSequenceNumber(*iter->get<size_t>(2));
-    obj->functionId(*iter->get<size_t>(3));
-    obj->callSite(*iter->get<rose_addr_t>(4));
-    obj->returnValue(*iter->get<int>(5));
-}
-
-static void
-updateDb(const Database::Ptr &db, SystemCallId id, const SystemCall::Ptr &obj) {
-    ASSERT_not_null(db);
-    ASSERT_require(id);
-    ASSERT_not_null(obj);
-    ASSERT_not_null(obj->testCase());
-    TestCaseId tcid = db->id(obj->testCase(), Update::NO);
-    ASSERT_require(tcid);
-
-    // Assign a call sequence number if there is none yet.
-    if (INVALID_INDEX == obj->callSequenceNumber()) {
-        size_t csn = db->connection().stmt("select count(*) from system_calls where test_case = ?tcid")
-                     .bind("tcid", *tcid)
-                     .get<size_t>().get();
-        obj->callSequenceNumber(csn);
-    }
-
-    Sawyer::Database::Statement stmt;
-    if (*db->connection().stmt("select count(*) from system_calls where id = ?id").bind("id", *id).get<size_t>()) {
-        stmt = db->connection().stmt("update system_calls set test_case = ?tcid, call_number = ?seq "
-                                     " function_number = ?function, call_site = ?va, retval = ?retval"
-                                     " where id = ?id");
-    } else {
-        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
-        stmt = db->connection().stmt("insert into system_calls (id, created_ts, test_suite, test_case, call_number,"
-                                     " function_number, call_site, retval)"
-                                     " values (?id, ?ts, ?tsid, ?tcid, ?seq, ?function, ?va, ?retval)")
-               .bind("ts", ts)
-               .bind("tsid", *db->id(db->testSuite()));
-    }
-
-    stmt
-        .bind("id", *id)
-        .bind("tcid", *tcid)
-        .bind("seq", obj->callSequenceNumber())
-        .bind("function", obj->functionId())
-        .bind("va", obj->callSite())
-        .bind("retval", obj->returnValue())
-        .run();
-}
-
-static void
-eraseDb(const Database::Ptr &db, SystemCallId id) {
-    ASSERT_require(id);
-
-    db->connection().stmt("delete from system_calls where id = ?id")
         .bind("id", *id)
         .run();
 }
@@ -840,6 +776,15 @@ Database::executionEvents(TestCaseId tcid) {
     return retval;
 }
 
+size_t
+Database::nExecutionEvents(TestCaseId tcid) {
+    ASSERT_require(tcid);
+    return connection_.stmt("select count(*) from execution_events where test_case = ?tcid")
+        .bind("tcid", *tcid)
+        .get<size_t>()
+        .orElse(0);
+}
+
 std::vector<ExecutionEventId>
 Database::executionEvents(TestCaseId tcid, uint64_t primaryKey) {
     ASSERT_require(tcid);
@@ -876,78 +821,6 @@ Database::eraseExecutionEvents(TestCaseId tcid) {
         erase(eeid);
 }
 
-std::vector<SystemCallId>
-Database::systemCalls() {
-    std::vector<SystemCallId> retval;
-    Sawyer::Database::Statement stmt;
-    if (testSuiteId_) {
-        stmt = connection_.stmt("select id from system_calls where test_suite = ?tsid order by created_ts")
-               .bind("tsid", *testSuiteId_);
-    } else {
-        stmt = connection_.stmt("select id from system_calls                          order by created_ts");
-    }
-    for (auto row: stmt)
-        retval.push_back(SystemCallId(row.get<size_t>(0)));
-    return retval;
-}
-
-std::vector<SystemCallId>
-Database::systemCalls(TestCaseId tcid) {
-    ASSERT_require(tcid);
-    Sawyer::Database::Statement stmt;
-    stmt = connection_.stmt("select id from system_calls where test_case = ?tcid order by created_ts")
-           .bind("tcid", *tcid);
-    std::vector<SystemCallId> retval;
-    for (auto row: stmt)
-        retval.push_back(SystemCallId(row.get<size_t>(0)));
-    return retval;
-}
-
-std::vector<SystemCallId>
-Database::systemCalls(TestCaseId tcid, const std::vector<SystemCall::Ptr> &syscalls) {
-    ASSERT_require(tcid);
-    std::vector<SystemCallId> retval;
-    eraseSystemCalls(tcid);
-    for (size_t i = 0; i < syscalls.size(); ++i) {
-        ASSERT_not_null(syscalls[i]);
-        ASSERT_require(syscalls[i]->callSequenceNumber() == i);
-        if (syscalls[i]->testCase()) {
-            ASSERT_require(id(syscalls[i]->testCase(), Update::NO).isEqual(tcid));
-        } else {
-            syscalls[i]->testCase(object(tcid));
-        }
-        retval.push_back(id(syscalls[i]));
-    }
-    return retval;
-}
-
-size_t
-Database::nSystemCalls(TestCaseId tcid) {
-    ASSERT_require(tcid);
-    return connection_.stmt("select count(*) from system_calls where test_case = ?tcid")
-        .bind("tcid", *tcid)
-        .get<size_t>().get();
-}
-
-SystemCallId
-Database::systemCall(TestCaseId tcid, size_t idx) {
-    ASSERT_require(tcid);
-    auto stmt = connection_.stmt("select id from system_calls where test_case = ?tcid and call_number = ?idx")
-                .bind("tcid", *tcid)
-                .bind("idx", idx);
-    for (auto row: stmt)
-        return SystemCallId(row.get<size_t>(0));
-    throw Exception("invalid system call index " + boost::lexical_cast<std::string>(idx) +
-                    " for test case " + boost::lexical_cast<std::string>(*tcid));
-}
-
-void
-Database::eraseSystemCalls(TestCaseId tcid) {
-    ASSERT_require(tcid);
-    for (SystemCallId scid: systemCalls(tcid))
-        erase(scid);
-}
-
 TestSuite::Ptr
 Database::object(TestSuiteId id, Update::Flag update) {
     return objectHelper(sharedFromThis(), id, update, testSuites_, "test suite");
@@ -966,11 +839,6 @@ Database::object(SpecimenId id, Update::Flag update) {
 ExecutionEvent::Ptr
 Database::object(ExecutionEventId id, Update::Flag update) {
     return objectHelper(sharedFromThis(), id, update, executionEvents_, "execution event");
-}
-
-SystemCall::Ptr
-Database::object(SystemCallId id, Update::Flag update) {
-    return objectHelper(sharedFromThis(), id, update, systemCalls_, "system call");
 }
 
 TestSuiteId
@@ -993,11 +861,6 @@ Database::id(const ExecutionEvent::Ptr &obj, Update::Flag update) {
     return idHelper(sharedFromThis(), obj, update, executionEvents_);
 }
 
-SystemCallId
-Database::id(const SystemCall::Ptr &obj, Update::Flag update) {
-    return idHelper(sharedFromThis(), obj, update, systemCalls_);
-}
-
 TestSuiteId
 Database::erase(TestSuiteId id) {
     return eraseHelper(sharedFromThis(), id, testSuites_, "test suite");
@@ -1016,11 +879,6 @@ Database::erase(SpecimenId id) {
 ExecutionEventId
 Database::erase(ExecutionEventId id) {
     return eraseHelper(sharedFromThis(), id, executionEvents_, "execution event");
-}
-
-SystemCallId
-Database::erase(SystemCallId id) {
-    return eraseHelper(sharedFromThis(), id, systemCalls_, "system call");
 }
 
 TestSuite::Ptr

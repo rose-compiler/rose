@@ -10,7 +10,7 @@
 #include <utility>
 #include <sstream>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "sageGeneric.h"
 
 #include "a_nodes.h"

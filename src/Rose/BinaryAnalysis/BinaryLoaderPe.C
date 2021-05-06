@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 namespace Rose {

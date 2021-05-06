@@ -11,7 +11,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 
 using namespace Rose;

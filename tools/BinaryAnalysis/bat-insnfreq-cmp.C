@@ -7,8 +7,8 @@ static const char *description =
     "shows a database name and a percent match where higher values imply a better match.";
 
 #include <rose.h>
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>

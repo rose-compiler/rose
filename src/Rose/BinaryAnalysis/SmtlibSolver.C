@@ -5,7 +5,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 

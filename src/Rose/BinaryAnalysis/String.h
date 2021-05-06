@@ -3,9 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Optional.h>
 

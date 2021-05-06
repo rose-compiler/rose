@@ -94,6 +94,6 @@ done
 
 
 # Add a comment to the Message.h file
-sed --in-place -e '1i// See also Rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h
+sed --in-place -e '1i// See also Rose::Diagnostics in $ROSE/src/Rose/Diagnostics.h' Message.h
 
 rm -rf "$SAWYER_ROOT"

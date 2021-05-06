@@ -3,8 +3,8 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>

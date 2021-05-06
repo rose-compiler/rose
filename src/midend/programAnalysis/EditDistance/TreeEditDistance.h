@@ -1,7 +1,7 @@
 #ifndef ROSE_EditDistance_TreeEditDistance_H
 #define ROSE_EditDistance_TreeEditDistance_H
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>

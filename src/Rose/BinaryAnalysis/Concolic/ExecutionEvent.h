@@ -31,11 +31,18 @@ public:
     /** Type of events. */
     enum class Action {
         NONE,                                           // Don't perform any action
+
+        // Actions that have an effect on the simulated process.
         MAP_MEMORY,                                     // Add addresses to the memory map
         UNMAP_MEMORY,                                   // Remove addresses from the memory map
         WRITE_MEMORY,                                   // Change values in the memory map
         HASH_MEMORY,                                    // Verify that a memory region hashes to a particular value
+        WRITE_REGISTER,                                 // Change value of a single register
         RESTORE_REGISTERS,                              // Set all register values
+
+        // System calls. The scalar value is the system call number and the bytes hold the system call concrete
+        // arguments. Additional events may follow in order to reproduce the effects of the system call.
+        OS_SYSCALL,
     };
 
     /** Location of event.
@@ -61,10 +68,12 @@ private:
     // Event identification
     Location location_;                                 // location event occurs
     size_t instructionPointer_ = 0;                     // value of instruction pointer when event occurs
+    std::string comment_;                               // optional comment
 
     // Action to be taken, based on event type
     Action action_ = Action::NONE;                      // type of action to perform on the subordinate when replaying
     AddressInterval memoryLocation_;                    // memory locations affected by the action, if any
+    uint64_t scalar_ = 0;                               // scalar value
     std::vector<uint8_t> bytes_;                        // byte data needed by action, if any
 
 protected:
@@ -79,40 +88,68 @@ public:
     /** Allocating constructor setting location.
      *
      *  Constructs an event at a particular location having no action. */
-    static Ptr instance(const TestCasePtr&, const Location &location, rose_addr_t ip);
+    static Ptr instance(const TestCasePtr&, const Location&, rose_addr_t ip);
 
     /** Allocating constructor for memory map events.
      *
      *  Creates an event at a particular location that will cause the specified addresses to be mapped. The protections
      *  are specified as a string containing zero or more of the letters "r", "w", or "x" in any order. */
-    static Ptr instanceMapMemory(const TestCasePtr&, const Location &location, rose_addr_t ip,
+    static Ptr instanceMapMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
                                  const AddressInterval &addresses, const std::string &prot);
 
     /** Allocating constructor for memory unmap events.
      *
      *  Creates an event at a particular location that will cause the specified memory addresses to be unmapped. */
-    static Ptr instanceUnmapMemory(const TestCasePtr&, const Location &location, rose_addr_t ip,
+    static Ptr instanceUnmapMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
                                    const AddressInterval &addresses);
 
     /** Allocating constructor for memory write events.
      *
      *  Creates an event at a particular location that will cause the specified memory addresses to be written with specified
-     *  bytes. */
-    static Ptr instanceWriteMemory(const TestCasePtr&, const Location &location, rose_addr_t ip,
-                                   const AddressInterval &addresses, const std::vector<uint8_t> &bytes);
+     *  bytes.
+     *
+     * @{ */
+    static Ptr instanceWriteMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
+                                   rose_addr_t va, const std::vector<uint8_t> &bytes);
+
+    template<typename Unsigned>
+    static Ptr instanceWriteMemory(const TestCasePtr &tc, const Location &loc, rose_addr_t ip, rose_addr_t va, Unsigned value) {
+        std::vector<uint8_t> bytes;
+        for (size_t i = 0; i < sizeof value; ++i)
+            bytes.push_back(BitOps::bits(value, i*8, i*8+7));
+        return instanceWriteMemory(tc, loc, ip, va, bytes);
+    }
+    /** @} */
 
     /** Allocating constructor describing a memory hash.
      *
      *  Creates an event at a particular location that will hash the specified memory and compare it with the specified
      *  hash. The hash uses SHA256 since ROSE has a built-in version of this hasher. */
-    static Ptr instanceHashMemory(const TestCasePtr&, const Location &location, rose_addr_t ip,
+    static Ptr instanceHashMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
                                   const AddressInterval &addresses, const Combinatorics::Hasher::Digest&);
+
+    /** Allocating constructor describing one register.
+     *
+     *  Create an event at a particular location that will set the specified register to the specified value when replayed. */
+    static Ptr instanceWriteRegister(const TestCasePtr&, const Location&, rose_addr_t ip,
+                                     RegisterDescriptor, uint64_t value);
 
     /** Allocating constructor describing all registers.
      *
-     *  Create an even at a particular location tht will initialize all registers to previously obtained values. */
-    static Ptr instanceRestoreRegisters(const TestCasePtr&, const Location &location, rose_addr_t ip,
+     *  Create an even at a particular location that will initialize all registers to previously obtained values. */
+    static Ptr instanceRestoreRegisters(const TestCasePtr&, const Location&, rose_addr_t ip,
                                         const Debugger::AllRegisters&);
+
+    /** Allocating constructor for marking a system call.
+     *
+     *  A system call event is a marker for a system call, and the action depends on the system call. Usually the action
+     *  only affects the simulated operating system and will be followed by zero or more other events to adjust the memory
+     *  and registers in the subordinate process. */
+    static Ptr instanceSyscall(const TestCasePtr&, const Location&, rose_addr_t ip,
+                               uint64_t functionNumber, const std::vector<uint64_t> &arguments);
+
+    /** Make a copy of this event. */
+    Ptr copy() const;
 
     /** Property: Owning test case.
      *
@@ -133,6 +170,13 @@ public:
      * @{ */
     const std::string& timestamp() const;
     void timestamp(const std::string&);
+    /** @} */
+
+    /** Property: Arbitrary comment for debugging.
+     *
+     * @{ */
+    const std::string& comment() const;
+    void comment(const std::string&);
     /** @} */
 
     /** Property: Event location.
@@ -180,8 +224,26 @@ public:
     void bytes(const std::vector<uint8_t>&);
     /** @} */
 
+    /** Property: Words for action.
+     *
+     *  This property interprets the @ref bytes as 64-bit little endian words.
+     *
+     * @{ */
+    std::vector<uint64_t> words() const;
+    void words(const std::vector<uint64_t>&);
+    /** @} */
+
     /** Returns the bytes as a register value collection. */
     Debugger::AllRegisters allRegisters() const;
+
+    /** Property: Scalar value.
+     *
+     *  Some events store a scalar value. The value is 64 bits but the interpretation depends on the event type.
+     *
+     * @{ */
+    uint64_t scalar() const;
+    void scalar(uint64_t);
+    /** @} */
 
     /** Print as YAML node. */
     void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);

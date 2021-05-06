@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/SRecord.h>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/StringUtility.h>
 #include "integerOps.h"
 #include <boost/algorithm/string/predicate.hpp>

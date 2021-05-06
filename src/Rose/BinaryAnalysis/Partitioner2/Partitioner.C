@@ -12,8 +12,8 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/DisassemblerNull.h>
 #include <Rose/RecursionCounter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>

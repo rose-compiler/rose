@@ -7,7 +7,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

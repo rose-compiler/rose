@@ -4,7 +4,7 @@
 
 #include "integerOps.h"
 #include "stringify.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Sawyer/BitVector.h>
 
 using namespace Rose;

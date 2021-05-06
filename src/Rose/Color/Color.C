@@ -5,7 +5,7 @@
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <cmath>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <cstdio>
 #include <ctype.h>
 #include <rose_isnan.h>

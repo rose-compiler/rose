@@ -2,7 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

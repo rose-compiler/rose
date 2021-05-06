@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/Concolic/LinuxI386Executor.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
@@ -17,7 +18,13 @@ namespace Concolic {
 // Variables that exist in the specimen.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Describes where a symbolic variable came from. */
+/** Describes where a symbolic variable came from.
+ *
+ *  Every variable corresponds to an ExecutionEvent so that if a variable's value is changed then the corresponding execution
+ *  event (when copied to the newly generated test case) is also updated. For instance, if main's argc changes from 2 to 1 then
+ *  the corresponding memory-write event for the new test case will be set to 2 instead of 1 when it's copied from the parent
+ *  test case. Thus, when the new test case runs and the event is reached, the event's action will cause the concrete
+ *  execution's argc to be overwritten with 2. */
 class InputVariables {
 public:
     class Variable {
@@ -33,6 +40,7 @@ public:
 
     private:
         Whence whence_;
+        ExecutionEventId executionEventId_;             // Event that adjusts the value in concrete execution
         union {
             struct {
                 size_t idx1, idx2;
@@ -47,40 +55,46 @@ public:
             : whence_(INVALID) {}
 
         /** Create a variable for the program argument count. */
-        static Variable programArgc() {
+        static Variable programArgc(const ExecutionEventId &eeid) {
             Variable v;
             v.whence_ = PROGRAM_ARGUMENT_COUNT;
+            v.executionEventId_ = eeid;
             return v;
         }
 
         /** Create a variable for a program argument. */
-        static Variable programArgument(size_t argIdx, size_t charIdx) {
+        static Variable programArgument(const ExecutionEventId &eeid, size_t argIdx, size_t charIdx) {
             Variable v;
             v.whence_ = PROGRAM_ARGUMENT;
+            v.executionEventId_ = eeid;
             v.arrayOfStrings.idx1 = argIdx;
             v.arrayOfStrings.idx2 = charIdx;
             return v;
         }
 
         /** Create a variable for a program environment variable. */
-        static Variable environmentVariable(size_t envIdx, size_t charIdx) {
+        static Variable environmentVariable(const ExecutionEventId &eeid, size_t envIdx, size_t charIdx) {
             Variable v;
             v.whence_ = ENVIRONMENT;
+            v.executionEventId_ = eeid;
             v.arrayOfStrings.idx1 = envIdx;
             v.arrayOfStrings.idx2 = charIdx;
             return v;
         }
 
-        /** Create a variable for a system call return value.
-         *
-         *  The serial number is a serial number of all system calls, starting at zero. */
-        static Variable systemCallReturn(size_t serialNumber) {
+        /** Create a variable for a system call return value. */
+        static Variable systemCallReturn(const ExecutionEventId &eeid) {
             Variable v;
             v.whence_ = SYSTEM_CALL_RETVAL;
-            v.systemCall.serialNumber = serialNumber;
+            v.executionEventId_ = eeid;
             return v;
         }
-        
+
+        /** Associated execution event. */
+        ExecutionEventId executionEventId() const {
+            return executionEventId_;
+        }
+
         /** Index of string in array. */
         size_t variableIndex() const {
             switch (whence_) {
@@ -130,22 +144,20 @@ private:
 
 public:
     /** Insert a record describing the number of program arguments. */
-    void insertProgramArgumentCount(const SymbolicExpr::Ptr&);
+    void insertProgramArgumentCount(const ExecutionEventId&, const SymbolicExpr::Ptr&);
 
     /** Insert a record for a program argument.
      *
      *  The @p i and @p j are the indexes for the <code>char *argv[]</code> argument of a C or C++ program's "main" function. */
-    void insertProgramArgument(size_t i, size_t j, const SymbolicExpr::Ptr&);
+    void insertProgramArgument(const ExecutionEventId&, size_t i, size_t j, const SymbolicExpr::Ptr&);
 
     /** Insert a record for an environment variable.
      *
      *  The @p i and @p j are the indexes for the <code>char *envp[]</code> argument of a C or C++ program's "main" function. */
-    void insertEnvironmentVariable(size_t i, size_t j, const SymbolicExpr::Ptr&);
+    void insertEnvironmentVariable(const ExecutionEventId&, size_t i, size_t j, const SymbolicExpr::Ptr&);
 
-    /** Insert a record for a system call return.
-     *
-     *  The argument is the sequence number of the system call. I.e., how many system calls have occurred before this one. */
-    void insertSystemCallReturn(size_t serialNumber, const SymbolicExpr::Ptr&);
+    /** Insert a record for a system call return. */
+    void insertSystemCallReturn(const ExecutionEventId&, const SymbolicExpr::Ptr&);
 
     /** Find a variable record when given a symbolic variable name. */
     Variable get(const std::string &symbolicVarName) const;
@@ -179,30 +191,25 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr; /**< Pointer to
 
 /** Values thrown when subordinate exits. */
 class Exit: public Exception {
-    const SValuePtr status_;
+    uint64_t status_;
 
 public:
-    explicit Exit(const SValuePtr &status)
+    explicit Exit(uint64_t status)
         : Exception("subordinate exit"), status_(status) {}
 
     ~Exit() throw () {}
 
     /** Symbolic exit status. */
-    SValuePtr status() const {
+    uint64_t status() const {
         return status_;
     }
 };
 
 /** Description of a system call. */
-class SystemCall {
-public:
-    rose_addr_t callSite = (rose_addr_t)(-1);
-    InstructionSemantics2::BaseSemantics::SValuePtr functionNumber;
-    std::vector<InstructionSemantics2::BaseSemantics::SValuePtr> arguments;
-    InstructionSemantics2::BaseSemantics::SValuePtr returnValue;
-
-    void print(std::ostream &out) const;
-    friend std::ostream& operator<<(std::ostream&, const SystemCall&);
+struct SystemCall {
+    rose_addr_t ip;                                     // where the system call occurs
+    uint64_t functionNumber;                            // which system call
+    std::vector<uint64_t> arguments;                    // the concrete arguments for the system call
 };
 
 /** Semantic operations. */
@@ -227,27 +234,35 @@ public:
 
 private:
     Settings settings_;                                 // emulation settings
+    DatabasePtr db_;                                    // concolic database connection
+    TestCasePtr testCase_;                              // test case whose instructions are being processed
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
-    Debugger::Ptr process_;                             // subordinate process
+    LinuxI386Executor::Ptr process_;                    // subordinate process
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
-    size_t nSystemCallsProcessed_ = 0;                  // number of system calls done by processInstruction
-    Sawyer::Optional<rose_addr_t> overrideNextIp_;      // next instruction to execute, used to skip over syscalls
-    std::vector<SystemCall> systemCalls_;               // list of system calls in the order they're executed
+    Sawyer::Optional<SystemCall> systemCall_;           // set each time a system call is encountered
 
 protected:
     /** Allocating constructor. */
-    RiscOperators(const Settings &settings, const Partitioner2::Partitioner &partitioner, const Debugger::Ptr &process,
+    RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
+                  const Partitioner2::Partitioner &partitioner, const LinuxI386ExecutorPtr &process,
                   InputVariables &inputVariables, const InstructionSemantics2::BaseSemantics::StatePtr &state,
                   const SmtSolverPtr &solver)
         : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
-          settings_(settings), partitioner_(partitioner), process_(process), inputVariables_(inputVariables) {
+          settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
+          inputVariables_(inputVariables) {
+        ASSERT_not_null(db);
+        ASSERT_not_null(testCase);
+        ASSERT_not_null(process);
+        ASSERT_not_null(state);
+        ASSERT_not_null(solver);
         name("Concolic-symbolic");
         (void) SValue::promote(state->protoval());
     }
 
 public:
     /** Allocating constructor. */
-    static RiscOperatorsPtr instance(const Settings &settings, const Partitioner2::Partitioner&, const DebuggerPtr&process,
+    static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
+                                     const Partitioner2::Partitioner&, const LinuxI386ExecutorPtr &process,
                                      InputVariables&, const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
@@ -279,8 +294,14 @@ public:
         return partitioner_;
     }
 
-    /** Property: Subordinate process. */
-    Debugger::Ptr process() const {
+    /** Property: Test case. */
+    TestCasePtr testCase() const;
+
+    /** Property: Database. */
+    DatabasePtr database() const;
+
+    /** Property: Concrete half of the concolic executor semantics. */
+    LinuxI386Executor::Ptr process() const {
         return process_;
     }
 
@@ -293,52 +314,44 @@ public:
     /** Register definitions. */
     const RegisterDictionary* registerDictionary() const;
 
+    /** Create info about program arguments.
+     *
+     *  This function creates the execution events and symbolic variables for program arguments (argc, argv, envp) and creates
+     *  a mapping from the symbolic variable to its corresponding concrete execution event. */
+    void createProgramArguments(const SmtSolver::Ptr&);
+
     /** Print input variables.
      *
      *  Shows the mapping from input variables to their symbolic values. */
     void printInputVariables(std::ostream&) const;
 
-    /** Property: Override for the next instruction to be executed.
-     *
-     *  When set, this will cause the concrete execution to execute the specified address instead of what it would normally
-     *  execute.  It will then clear the override.  This can be used for skipping over instructions such as system calls.
-     *
-     *  @{ */
-    Sawyer::Optional<rose_addr_t> overrideNextIp() const {
-        return overrideNextIp_;
-    }
-    void overrideNextIp(rose_addr_t va) {
-        overrideNextIp_ = va;
-    }
-    void clearOverrideNextIp() {
-        overrideNextIp_.reset();
-    }
-    /** @} */
-
-    /** Information about system calls that will be encountered and which will need to be overridden.
-     *
-     *  This is the list of system calls we expect to encounter when fast forwarding through the executable concretely to the
-     *  starting point. Some (all?) of these, since they're considered program inputs, will need to be intercepted in order to
-     *  get the correct input values for the rest of the run. E.g., if a test case calls getpid, then its return value (a
-     *  program input) had better be the same each time we run a new testcase for this same specimen, even though the concrete
-     *  system call will almost certainly return a new PID for every test case. */
-    void systemCallInputs(const DatabasePtr&, const TestCasePtr&);
-
-    /** Information about system calls that have been processed.
-     *
-     * @{ */
-    const std::vector<SystemCall>& systemCalls() const { return systemCalls_; }
-    std::vector<SystemCall>& systemCalls() { return systemCalls_; }
-    /** @} */
-
     /** Get system call information from machine state.
      *
      *  @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr systemCallFunctionNumber();
+    uint64_t systemCallFunctionNumber();
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallArgument(size_t idx);
+    RegisterDescriptor systemCallReturnRegister();
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue();
     InstructionSemantics2::BaseSemantics::SValuePtr systemCallReturnValue(const InstructionSemantics2::BaseSemantics::SValuePtr&);
     /** @} */
+
+    /** Information about a system call.
+     *
+     *  This information is updated each time a system call is encountered.
+     *
+     * @{ */
+    const Sawyer::Optional<SystemCall>& systemCall() const {
+        return systemCall_;
+    }
+    Sawyer::Optional<SystemCall>& systemCall() {
+        return systemCall_;
+    }
+    /** @} */
+
+    /** Actions to perform after a system call occurs.
+     *
+     *  If the previous call to Dispatcher::processInstruction wasn't a system call then this is a no-op. */
+    void finishSystemCall();
 
 public:
     // Base class overrides -- the acutal RISC operations
@@ -365,15 +378,12 @@ public:
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
 private:
-    // Handles a Linux system call of the INT 0x80 variety.
-    void systemCall();
+    // Handles a Linux system call of the INT 0x80 variety. This is called before the concrete system call executes. See also,
+    // finishSystemCall.
+    void startSystemCall();
 
-
-    void doExit(const InstructionSemantics2::BaseSemantics::SValuePtr&);
-    void doGetuid();
-
-    // Mark locations of specimen command-line arguments.
-    void markProgramArguments(const SmtSolver::Ptr&);
+    // Special handling for some system calls
+    void doSyscallExit(uint64_t);
 };
 
 /**< Pointer to virtual CPU. */
@@ -510,8 +520,7 @@ private:
     Partitioner2::Partitioner partition(const DatabasePtr&, const SpecimenPtr&);
 
     // Create the process for the concrete execution.
-    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCasePtr&, Sawyer::FileSystem::TemporaryDirectory&,
-                              const Partitioner2::Partitioner&);
+    LinuxI386ExecutorPtr makeProcess(const DatabasePtr&, const TestCasePtr&, const boost::filesystem::path &tempDir);
 
     // Run the execution
     void run(const DatabasePtr&, const TestCasePtr&, const Emulation::DispatcherPtr&);
@@ -533,14 +542,7 @@ private:
                           const SmtSolverPtr&);
 
     // True if the two test cases are close enough that we only need to run one of them.
-    bool areSimilar(const TestCasePtr&, const std::vector<SystemCallPtr>&,
-                    const TestCasePtr&, const std::vector<SystemCallPtr>&) const;
-
-    // After processing a system call, update the symbolic state with any necessary system call side effects.
-    void updateSystemCallSideEffects(const Emulation::RiscOperatorsPtr&, Emulation::SystemCall&);
-
-    // Save info about a single system call in the database.
-    void saveSystemCall(const DatabasePtr&, const TestCasePtr&, const Emulation::SystemCall&);
+    bool areSimilar(const TestCasePtr&, const TestCasePtr&) const;
 
 public:
     // TODO: Lots of properties to control the finer aspects of executing a test case!

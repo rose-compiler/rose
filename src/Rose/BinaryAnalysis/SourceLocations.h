@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>

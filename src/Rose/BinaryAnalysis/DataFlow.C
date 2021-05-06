@@ -4,7 +4,7 @@
 
 #include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

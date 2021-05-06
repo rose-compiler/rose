@@ -410,6 +410,17 @@ public:
      *  Restores registers that were read earlier. */
     void writeAllRegisters(const AllRegisters&);
 
+    /** Read subordinate memory.
+     *
+     *  Returns the number of bytes read. The implementation accesses the subordinate memory via proc filesystem rather than
+     *  sending PTRACE_PEEKDATA commands. This allows large areas of memory to be read efficiently. */
+    size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer);
+
+    /** Read subordinate memory as an array of bytes.
+     *
+     *  If the read fails then a shorter buffer is returned. */
+    std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes);
+
     /** Read subordinate memory as a bit vector.
      *
      * @code
@@ -430,12 +441,6 @@ public:
         size_t n = writeMemory(va, sizeof(T), (const uint8_t*)&value);
         ASSERT_always_require(n == sizeof(T));
     }
-
-    /** Read subordinate memory.
-     *
-     *  Returns the number of bytes read. The implementation accesses the subordinate memory via proc filesystem rather than
-     *  sending PTRACE_PEEKDATA commands. This allows large areas of memory to be read efficiently. */
-    size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer);
 
     /** Read C-style NUL-terminated string from subordinate.
      *

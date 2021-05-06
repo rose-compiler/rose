@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <Rose/BitOps.h>
 #include <boost/format.hpp>

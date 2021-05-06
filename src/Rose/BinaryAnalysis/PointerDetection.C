@@ -5,8 +5,8 @@
 
 #include <AsmUnparser_compat.h>
 #include <boost/foreach.hpp>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>

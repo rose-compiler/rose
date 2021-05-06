@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <EditDistance/TreeEditDistance.h>
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>

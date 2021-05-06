@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "integerOps.h"                 /* needed for signExtend() */
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 

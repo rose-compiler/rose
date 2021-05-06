@@ -21,7 +21,7 @@
 #include <boost/unordered_map.hpp>
 #include <cassert>
 #include <inttypes.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Optional.h>
