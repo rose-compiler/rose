@@ -286,10 +286,10 @@ nobase_pkginclude_HEADERS=							\
     Rose/BinaryAnalysis/AsmFunctionIndex.h					\
     Rose/BinaryAnalysis/AstHash.h						\
     Rose/BinaryAnalysis/BestMapAddress.h					\
-    Rose/BinaryAnalysis/BinaryLoader.C						\
-    Rose/BinaryAnalysis/BinaryLoaderElf.C					\
-    Rose/BinaryAnalysis/BinaryLoaderElfObj.C					\
-    Rose/BinaryAnalysis/BinaryLoaderPe.C					\
+    Rose/BinaryAnalysis/BinaryLoader.h						\
+    Rose/BinaryAnalysis/BinaryLoaderElf.h					\
+    Rose/BinaryAnalysis/BinaryLoaderElfObj.h					\
+    Rose/BinaryAnalysis/BinaryLoaderPe.h					\
     Rose/BinaryAnalysis/CallingConvention.h					\
     Rose/BinaryAnalysis/CodeInserter.h						\
     Rose/BinaryAnalysis/Concolic.h						\
@@ -371,25 +371,25 @@ nobase_pkginclude_HEADERS=							\
     Rose/BinaryAnalysis/Matrix.h						\
     Rose/BinaryAnalysis/MemoryMap.h						\
     Rose/BinaryAnalysis/ModelChecker.h						\
-    Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.C				\
-    Rose/BinaryAnalysis/ModelChecker/Engine.C					\
-    Rose/BinaryAnalysis/ModelChecker/ErrorTag.C					\
-    Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.C				\
-    Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.C			\
-    Rose/BinaryAnalysis/ModelChecker/FailureUnit.C				\
-    Rose/BinaryAnalysis/ModelChecker/InstructionUnit.C				\
-    Rose/BinaryAnalysis/ModelChecker/NullDerefTag.C				\
-    Rose/BinaryAnalysis/ModelChecker/P2Model.C					\
-    Rose/BinaryAnalysis/ModelChecker/Path.C					\
-    Rose/BinaryAnalysis/ModelChecker/PathNode.C					\
-    Rose/BinaryAnalysis/ModelChecker/PathPredicate.C				\
-    Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.C				\
-    Rose/BinaryAnalysis/ModelChecker/PathQueue.C				\
-    Rose/BinaryAnalysis/ModelChecker/Periodic.C					\
-    Rose/BinaryAnalysis/ModelChecker/Settings.C					\
-    Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.C			\
-    Rose/BinaryAnalysis/ModelChecker/SourceLister.C				\
-    Rose/BinaryAnalysis/ModelChecker/Tag.C					\
+    Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h				\
+    Rose/BinaryAnalysis/ModelChecker/Engine.h					\
+    Rose/BinaryAnalysis/ModelChecker/ErrorTag.h					\
+    Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h				\
+    Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h			\
+    Rose/BinaryAnalysis/ModelChecker/FailureUnit.h				\
+    Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h				\
+    Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h				\
+    Rose/BinaryAnalysis/ModelChecker/P2Model.h					\
+    Rose/BinaryAnalysis/ModelChecker/Path.h					\
+    Rose/BinaryAnalysis/ModelChecker/PathNode.h					\
+    Rose/BinaryAnalysis/ModelChecker/PathPredicate.h				\
+    Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.h				\
+    Rose/BinaryAnalysis/ModelChecker/PathQueue.h				\
+    Rose/BinaryAnalysis/ModelChecker/Periodic.h					\
+    Rose/BinaryAnalysis/ModelChecker/Settings.h					\
+    Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h			\
+    Rose/BinaryAnalysis/ModelChecker/SourceLister.h				\
+    Rose/BinaryAnalysis/ModelChecker/Tag.h					\
     Rose/BinaryAnalysis/NoOperation.h						\
     Rose/BinaryAnalysis/Partitioner2.h						\
     Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h				\

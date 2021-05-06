@@ -1,0 +1,30 @@
+# each line specifies a test
+# a test has three comma-separated components: 
+#   int/real/string (strings cannot test for , or leading space), 
+#   expected numeric value (can be prefixed with space), 
+#   string value as specified in source
+# note: negative values are not part of Ada literals (the sign serves as unary operator).
+int, 1,  1
+int, 12, 1_2
+int, 13, 13
+int, 255, 255
+int, 255, 2#1111_1111#
+int, 255, 16#FF#
+int, 255, 016#0FF# 
+int, 224, 224
+int, 224, 16#E#E1
+int, 224, 2#1110_0000#
+int, 224, 16#E#e1
+int, 224, 2#1110_0000#
+real, 0.1234, 0.1234
+real, 4095.0, 4095.0
+real, 4095.0, 16#F.FF#E+2
+real, 4095.0, 2#1.1111_1111_1110#E11
+real, 0.1234, 12.34e-2
+real, 4095.0, 16:F.FF:E+2
+real, 4095.0, 2:1.1111_1111_1110:e11
+string, Hello World, "Hello World"
+string, Hello World, %Hello World%
+string, "Hi","""Hi"""
+string, 10% is less than 20%, "10% is less than 20%"
+string, 10% is less than 20%, %10%% is less than 20%%%
