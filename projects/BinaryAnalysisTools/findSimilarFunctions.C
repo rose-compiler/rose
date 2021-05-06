@@ -1,6 +1,6 @@
 #include <rose.h>
 
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>

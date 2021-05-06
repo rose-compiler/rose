@@ -1,8 +1,8 @@
 #include "rose.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
-#include <CommandLine.h>                                // ROSE
-#include "Diagnostics.h"
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include "integerOps.h"
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>

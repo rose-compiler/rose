@@ -830,6 +830,14 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
     return retval;
 }
 
+std::vector<uint8_t>
+Debugger::readMemory(rose_addr_t va, size_t nBytes) {
+    std::vector<uint8_t> buf(nBytes);
+    size_t nRead = readMemory(va, nBytes, buf.data());
+    buf.resize(nRead);
+    return buf;
+}
+
 size_t
 Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #ifdef __linux__
@@ -1021,12 +1029,19 @@ Debugger::findSystemCall() {
             syscallVa_.reset();
     }
 
-    // If we haven't found a syscall (even if we previously searched for one) then search now.  This is not a very efficient
-    // way to do this, but at least it's simple.
-    if (!syscallVa_) {
-        MemoryMap::Ptr map = MemoryMap::instance();
-        map->insertProcess(":noattach:" + boost::lexical_cast<std::string>(child_));
-        syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE);
+    // If we haven't found a syscall (even if we previously searched for one) then search now.
+    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(child_);
+    for (const MemoryMap::ProcessMapRecord &segment: segments) {
+        if ("[vvar]" == segment.comment) {
+            // Linux vvar segment cannot be read from /proc/*/mem even though it's marked readable in the map
+        } else if ((segment.accessibility & MemoryMap::READ_EXECUTE) != MemoryMap::READ_EXECUTE) {
+            // Don't try to read memory which is not readable and executable
+        } else {
+            auto map = MemoryMap::instance();
+            map->insertProcessPid(child_, std::vector<MemoryMap::ProcessMapRecord>{segment});
+            if ((syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE)))
+                break;
+        }
     }
 
     return syscallVa_;

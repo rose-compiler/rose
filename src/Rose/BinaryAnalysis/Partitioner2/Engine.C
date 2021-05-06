@@ -12,8 +12,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/DisassemblerM68k.h>
 #include <Rose/BinaryAnalysis/DisassemblerMips.h>
 #include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>

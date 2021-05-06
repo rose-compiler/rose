@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/DisassemblerM68k.h>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"

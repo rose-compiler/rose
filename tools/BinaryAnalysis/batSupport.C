@@ -3,7 +3,7 @@
 #include <rose.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>                                // rose
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose

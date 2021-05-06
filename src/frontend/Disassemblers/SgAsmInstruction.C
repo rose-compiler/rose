@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
 #include "AsmUnparser_compat.h"

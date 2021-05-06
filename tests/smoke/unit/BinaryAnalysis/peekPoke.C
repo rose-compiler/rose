@@ -5,7 +5,7 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <sstream>

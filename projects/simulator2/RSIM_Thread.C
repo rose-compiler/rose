@@ -3,7 +3,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <errno.h>
 #include <stdarg.h>

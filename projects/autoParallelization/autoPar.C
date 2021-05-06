@@ -23,7 +23,7 @@
 // all kinds of analyses needed
 #include "autoParSupport.h"
 #include <string> 
-#include <CommandLine.h> // Commandline support in librose
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool automatically inserts OpenMP directives into sequential codes.";
 static const char* description =

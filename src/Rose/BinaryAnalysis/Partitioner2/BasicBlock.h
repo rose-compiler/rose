@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>

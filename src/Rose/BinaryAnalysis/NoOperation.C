@@ -4,8 +4,8 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>

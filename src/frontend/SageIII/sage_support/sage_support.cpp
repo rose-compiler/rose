@@ -14,7 +14,7 @@
 #include "failSafePragma.h"
 #include "cmdline.h"
 #include <Rose/FileSystem.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"

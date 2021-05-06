@@ -11,7 +11,7 @@
 
 #include "RSIM_Linux64.h"
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Diagnostics.h>                                // rose
+#include <Rose/Diagnostics.h>
 #include <Rose/FileSystem.h>
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall

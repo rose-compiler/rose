@@ -10,7 +10,7 @@
 #include <istream>
 #include <list>
 #include <ostream>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <rose_override.h>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Synchronization.h>

@@ -11,7 +11,7 @@
 #include "unparser.h"
 #include "modified_sage.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 /* support for handling precedence and associativity */
 typedef int PrecedenceSpecifier;

@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/FileSystem.h>
 
 #include <Sawyer/CommandLine.h>

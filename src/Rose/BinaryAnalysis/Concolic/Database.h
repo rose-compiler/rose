@@ -46,8 +46,7 @@ private:
     Sawyer::Container::BiMap<TestCaseId, TestCasePtr> testCases_;
     Sawyer::Container::BiMap<TestSuiteId, TestSuitePtr> testSuites_;
     Sawyer::Container::BiMap<ExecutionEventId, ExecutionEventPtr> executionEvents_;
-    Sawyer::Container::BiMap<SystemCallId, SystemCallPtr> systemCalls_;
-    
+
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
 
 protected:
@@ -155,6 +154,9 @@ public:
     /** All execution events for a particular test case. */
     std::vector<ExecutionEventId> executionEvents(TestCaseId);
 
+    /** Number of execution events for a particular test case. */
+    size_t nExecutionEvents(TestCaseId);
+
     /** Execution events at a specific location.
      *
      *  Returns the execution events for a specific location. All events for the primary key of the location are returned,
@@ -170,39 +172,6 @@ public:
     void eraseExecutionEvents(TestCaseId);
 
     //------------------------------------------------------------------------------------------------------------------------
-    // System calls
-    //------------------------------------------------------------------------------------------------------------------------
-
-    /** All system calls.
-     *
-     *  If this database object has a current test suite, then the return value is limited to system calls used by that test
-     *  suite, otherwise all system calls are returned. */
-    std::vector<SystemCallId> systemCalls();
-
-    /** All system calls for a particular test case. */
-    std::vector<SystemCallId> systemCalls(TestCaseId);
-    
-    /** Number of system call records for a test case.
-     *
-     *  Returns the number of system call records for the specified test case. */
-    size_t nSystemCalls(TestCaseId);
-
-    /** A particular system call for a test suite.
-     *
-     *  The system call index must be less than the value returned by @ref nSystemCalls, or else an empty system call ID is
-     *  returned. */
-    SystemCallId systemCall(TestCaseId, size_t idx);
-
-    /** Erase all system calls associated with a test case. */
-    void eraseSystemCalls(TestCaseId);
-
-    /** Replace all system calls associated with a test case.
-     *
-     *  All existing calls are removed from the specified test case and the new system calls are inserted in their
-     *  place. Returns the new system call IDs in the database. */
-    std::vector<SystemCallId> systemCalls(TestCaseId, const std::vector<SystemCallPtr>&);
-
-    //------------------------------------------------------------------------------------------------------------------------
     // Overloaded methods for all objects.
     //------------------------------------------------------------------------------------------------------------------------
 
@@ -216,7 +185,6 @@ public:
     TestCasePtr object(TestCaseId, Update::Flag update = Update::YES);
     SpecimenPtr object(SpecimenId, Update::Flag update = Update::YES);
     ExecutionEventPtr object(ExecutionEventId, Update::Flag update = Update::YES);
-    SystemCallPtr object(SystemCallId, Update::Flag update = Update::YES);
     /** @} */
 
 #if ROSE_CONCOLIC_DB_VERSION == 1
@@ -239,7 +207,6 @@ public:
     TestCaseId id(const TestCasePtr&, Update::Flag update = Update::YES);
     SpecimenId id(const SpecimenPtr&, Update::Flag update = Update::YES);
     ExecutionEventId id(const ExecutionEventPtr&, Update::Flag update = Update::YES);
-    SystemCallId id(const SystemCallPtr&, Update::Flag update = Update::YES);
     /** @} */
 
     /** Deletes an object from the database.
@@ -249,7 +216,6 @@ public:
     TestCaseId erase(TestCaseId);
     SpecimenId erase(SpecimenId);
     ExecutionEventId erase(ExecutionEventId);
-    SystemCallId erase(SystemCallId);
     /** @} */
 
     /** Saves an object.

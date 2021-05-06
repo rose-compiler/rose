@@ -1,6 +1,6 @@
 #include <rose.h>
 
-#include <CommandLine.h>                                // ROSE
+#include <Rose/CommandLine.h>
 #include "integerOps.h"
 
 #include <iostream>

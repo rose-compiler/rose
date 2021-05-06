@@ -5,7 +5,7 @@
 
 #include <ByteOrder.h>
 #include <Combinatorics.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -448,10 +448,13 @@ public:
      *  The locator string follows the syntax described in @ref insertProcessDocumentation. */
     void insertProcess(const std::string &locatorString);
 
-    /** Insert part of another process into this memory map.
+    /** Insert part of another process's memory into this memory map.
      *
-     *  The file descriptor is the file containing the memory of the process, such as /proc/self/mem. */
-    void insertProcess(int fd, const std::vector<ProcessMapRecord>&, const std::string &namePrefix);
+     * @{ */
+    bool insertProcessPid(pid_t, const AddressInterval &where, unsigned accessibility, const std::string &name);
+    void insertProcessPid(pid_t, const std::vector<ProcessMapRecord>&);
+    bool insertProcessMemory(int memFile, const AddressInterval &where, unsigned accessibility, std::string name);
+    /** @} */
 
     /** Documentation string for @ref insertProcess. */
     static std::string insertProcessDocumentation();
@@ -461,7 +464,7 @@ public:
      *  This copies (rather than directly references) part of a file and returns a pointer to a new buffer containing the data.
      *  If an error occurs when reading the file, then a buffer is still returned but its length will only be what was actually
      *  read, and a string is also returned containing the error message. */
-    std::pair<Buffer::Ptr, std::string> copyFromFile(int fd, const AddressInterval&);
+    static std::pair<Buffer::Ptr, std::string> copyFromFile(int fd, const AddressInterval&);
 
     /** Erases regions of zero bytes that are executable and readable and at least @p minsize in size. */
     void eraseZeros(size_t minsize);

@@ -2,7 +2,7 @@
 
 #include <Rose/GraphUtility.h>
 #include <Rose/StringUtility.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Sawyer/CommandLine.h>
 #include <iostream>
 #include <sstream>

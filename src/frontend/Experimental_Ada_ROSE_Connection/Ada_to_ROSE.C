@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "rose_config.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"

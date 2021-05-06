@@ -6,11 +6,11 @@ static const char *description =
 #ifdef INTERNAL_BUILD
     #include <rose.h>
     #include <rosePublicConfig.h>
-    #include <CommandLine.h>
+    #include <Rose/CommandLine.h>
 #else
     #include <rose/rose.h>                              // must be first!
     #include <rose/rosePublicConfig.h>
-    #include <rose/CommandLine.h>
+    #include <rose/Rose/CommandLine.h>
 #endif
 
 namespace {

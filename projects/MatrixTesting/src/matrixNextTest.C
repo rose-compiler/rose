@@ -4,7 +4,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <cstring>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>

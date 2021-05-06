@@ -235,6 +235,8 @@ libroseLibraries = \
    $(top_builddir)/src/Rose/BinaryAnalysis/Partitioner2/librose_partial.la \
    $(top_builddir)/src/Rose/BinaryAnalysis/Unparser/librose_partial.la \
    $(top_builddir)/src/Rose/Color/librose_partial.la \
+   $(top_builddir)/src/Rose/CommandLine/librose_partial.la \
+   $(top_builddir)/src/Rose/Diagnostics/librose_partial.la \
    $(top_builddir)/src/Rose/FileSystem/librose_partial.la \
    $(top_builddir)/src/Rose/StringUtility/librose_partial.la \
    $(libroseSqlite3xConnection) \
@@ -310,7 +312,6 @@ nobase_pkginclude_HEADERS=							\
 	Rose/BinaryAnalysis/Concolic/LinuxI386Executor.h			\
 	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h			\
 	Rose/BinaryAnalysis/Concolic/Specimen.h					\
-	Rose/BinaryAnalysis/Concolic/SystemCall.h				\
 	Rose/BinaryAnalysis/Concolic/TestCase.h					\
 	Rose/BinaryAnalysis/Concolic/TestSuite.h				\
 	Rose/BinaryAnalysis/Concolic/io-utility.h				\
@@ -465,12 +466,17 @@ nobase_pkginclude_HEADERS=							\
 	Rose/BitFlags.h								\
 	Rose/BitOps.h								\
 	Rose/Color.h								\
+	Rose/CommandLine.h							\
 	Rose/Constants.h							\
+	Rose/Diagnostics.h							\
+	Rose/Exception.h							\
 	Rose/FileSystem.h							\
 	Rose/FormatRestorer.h							\
 	Rose/GraphUtility.h							\
+	Rose/Initialize.h							\
 	Rose/Progress.h								\
 	Rose/RecursionCounter.h							\
+	Rose/SourceLocation.h							\
 	Rose/StringUtility.h
 
 

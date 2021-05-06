@@ -11,7 +11,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>

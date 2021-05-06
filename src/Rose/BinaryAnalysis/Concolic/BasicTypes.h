@@ -45,9 +45,6 @@ using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 class TestCase;
 using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
-class SystemCall;
-using SystemCallPtr = Sawyer::SharedPointer<SystemCall>;
-
 class ConcreteExecutor;
 using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
 
@@ -157,7 +154,6 @@ using TestSuiteId = ObjectId<TestSuite>;                /**< Database ID for tes
 using SpecimenId = ObjectId<Specimen>;                  /**< Database ID for specimen objects. */
 using TestCaseId = ObjectId<TestCase>;                  /**< Database ID for test case objects. */
 using ExecutionEventId = ObjectId<ExecutionEvent>;      /**< Database ID for execution event objects. */
-using SystemCallId = ObjectId<SystemCall>;              /**< Database ID for system call objects. */
 
 /** Object traits.
  *
@@ -185,11 +181,6 @@ struct ObjectTraits<TestCase> {
 template<>
 struct ObjectTraits<ExecutionEvent> {
     using Id = ExecutionEventId;
-};
-
-template<>
-struct ObjectTraits<SystemCall> {
-    using Id = SystemCallId;
 };
 
 } // namespace

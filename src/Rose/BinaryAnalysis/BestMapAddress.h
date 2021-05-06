@@ -3,10 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/Progress.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {

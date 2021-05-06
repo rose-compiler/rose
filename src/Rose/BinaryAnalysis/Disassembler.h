@@ -5,10 +5,10 @@
 
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include "Diagnostics.h"                                // Rose::Diagnostics
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Registers.h>
-#include "RoseException.h"
+#include "Rose/Exception.h"
 #include "integerOps.h"
 #include "Map.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>

@@ -7,7 +7,7 @@ static const char *description =
     "systems whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
-#include <CommandLine.h>                                        // rose
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 #include <batSupport.h>

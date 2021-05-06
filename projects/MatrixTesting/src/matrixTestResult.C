@@ -11,7 +11,7 @@ static const char *description =
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <cstdio>
 #include <cstring>
 #include <LinearCongruentialGenerator.h>

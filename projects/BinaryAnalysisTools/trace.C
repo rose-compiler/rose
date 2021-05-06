@@ -21,7 +21,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <boost/algorithm/string/join.hpp>
-#include <Diagnostics.h>                                // ROSE header
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Trace.h>
 #include <Rose/StringUtility.h>

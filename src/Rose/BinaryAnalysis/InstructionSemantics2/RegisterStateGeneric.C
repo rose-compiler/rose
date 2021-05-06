@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/format.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
 #include <boost/format.hpp>
 

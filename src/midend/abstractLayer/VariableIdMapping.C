@@ -5,7 +5,7 @@
 #include "RoseAst.h"
 #include <set>
 #include <vector>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "SgNodeHelper.h"
 
 using namespace std;

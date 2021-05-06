@@ -10,7 +10,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux32.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <errno.h>
 #include <syscall.h>

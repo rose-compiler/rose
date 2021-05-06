@@ -14,7 +14,6 @@ librose_partial_la_SOURCES =			\
     LinuxI386Executor.C				\
     LinuxTraceExecutor.C			\
     Specimen.C					\
-    SystemCall.C				\
     TestCase.C					\
     TestSuite.C					\
     Utility.C

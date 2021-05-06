@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
-#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
@@ -65,7 +64,7 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix)
         out <<prefix <<"name: " <<StringUtility::yamlEscape(name()) <<"\n";
 
     out <<prefix <<"created:  " <<timestamp() <<"\n";
-    out <<prefix <<"specimen: " <<db->id(specimen(), Update::NO) <<StringUtility::yamlEscape(specimen()->name()) <<"\n";
+    out <<prefix <<"specimen: " <<db->id(specimen(), Update::NO) <<" " <<StringUtility::yamlEscape(specimen()->name()) <<"\n";
 
     //-------- Inputs ---------
     out <<prefix <<"inputs:\n";
@@ -79,14 +78,6 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix)
         for (const EnvValue &nameValue: env()) {
             out <<prefix <<"    - " <<StringUtility::yamlEscape(nameValue.first)
                 <<": " <<StringUtility::yamlEscape(nameValue.second) <<"\n";
-        }
-    }
-
-    if (size_t nSysCalls = db->nSystemCalls(tcid)) {
-        out <<prefix <<"  system-calls:\n";
-        for (size_t i = 0; i < nSysCalls; ++i) {
-            SystemCall::Ptr sc = db->object(db->systemCall(tcid, i));
-            sc->toYaml(out, db, prefix + "    - ");
         }
     }
 

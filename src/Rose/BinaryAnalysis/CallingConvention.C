@@ -5,8 +5,8 @@
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <boost/foreach.hpp>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>    // Dataflow components that we can re-use
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h> // Fast binary analysis data structures

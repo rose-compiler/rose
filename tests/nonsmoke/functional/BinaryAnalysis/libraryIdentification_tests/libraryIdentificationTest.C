@@ -12,9 +12,8 @@ static const char *description =
 
 #include <rose.h>
 
-// DQ (2/2/2009): This will go into rose.h at some point.
 #include <libraryIdentification.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Message.h>

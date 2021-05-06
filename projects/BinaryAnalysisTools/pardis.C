@@ -8,7 +8,7 @@ static const char *description =
 // ROSE headers. Don't use <rose/...> because that's broken for programs distributed as part of ROSE.
 #include <rose.h>                                       // must be first ROSE header
 #include <Rose/Color.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <rose_strtoull.h>

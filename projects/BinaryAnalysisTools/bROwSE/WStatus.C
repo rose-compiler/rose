@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <Rose/Color.h>
-#include <Diagnostics.h>                                // ROSE
+#include <Rose/Diagnostics.h>
 #include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>

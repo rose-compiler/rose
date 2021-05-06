@@ -9,7 +9,11 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 
+#include <boost/format.hpp>
+
+#include <fcntl.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -17,8 +21,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-static const unsigned i386_NR_mmap = 90;
-static const unsigned i386_NR_munmap = 91;
+static const unsigned i386_NR_mmap   = 192;             //  | 0x40000000; // __X32_SYSCALL_BIT
+static const unsigned i386_NR_munmap = 91;              //  | 0x40000000; // __X32_SYSCALL_BIT
 
 LinuxI386Executor::LinuxI386Executor(const Database::Ptr &db, TestCaseId tcid, const TestCase::Ptr &tc)
     : db_(db), testCaseId_(tcid), testCase_(tc) {
@@ -53,10 +57,11 @@ LinuxI386Executor::mapScratchPage() {
                                                  PROT_EXEC | PROT_READ | PROT_WRITE,
                                                  MAP_ANONYMOUS | MAP_PRIVATE,
                                                  -1, 0);
-    if (status < 0) {
-        mlog[ERROR] <<"mmap system call failed for scratch page\n";
+    if (status < 0 && status > -4096) {
+        mlog[ERROR] <<"mmap system call failed for scratch page: " <<strerror(-status) <<"\n";
     } else {
-        scratchVa_ = (uint64_t)status;
+        scratchVa_ = (uint64_t)(uint32_t)status;
+        SAWYER_MESG(mlog[DEBUG]) <<"scratch page mapped at " <<StringUtility::addrToString(scratchVa_) <<"\n";
     }
 
     // Write an "INT 0x80" instruction to the beginning of the page.
@@ -99,6 +104,8 @@ LinuxI386Executor::load(const boost::filesystem::path &targetDir) {
 
     // Create the process
     debugger_ = Debugger::instance(ds);
+    SAWYER_MESG(mlog[DEBUG]) <<"loaded pid=" <<debugger_->isAttached() <<" " <<exeName <<"\n";
+    mapScratchPage();
 }
 
 void
@@ -134,11 +141,34 @@ LinuxI386Executor::ip() const {
     return debugger_->executionAddress();
 }
 
+std::vector<MemoryMap::ProcessMapRecord>
+LinuxI386Executor::disposableMemory() {
+    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(debugger_->isAttached());
+    for (auto segment = segments.begin(); segment != segments.end(); /*void*/) {
+        ASSERT_forbid(segment->interval.isEmpty());
+        if ("[vvar]" == segment->comment) {
+            // Reading and writing to this memory segment doesn't work
+            segment = segments.erase(segment);
+        } else if ("[vdso]" == segment->comment) {
+            // Pointless to read and write this segment -- its contents never changes
+            segment = segments.erase(segment);
+        } else if (segment->interval.least() == scratchVa_) {
+            // This segment is for our own personal use
+            segment = segments.erase(segment);
+        } else {
+            ++segment;
+        }
+    }
+    return segments;
+}
+
 void
 LinuxI386Executor::saveMemory() {
-    auto map = MemoryMap::instance();
     SAWYER_MESG(mlog[DEBUG]) <<"saving subordinate memory\n";
-    map->insertProcess(debugger_->isAttached(), MemoryMap::Attach::NO);
+    auto map = MemoryMap::instance();
+    std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
+    map->insertProcessPid(debugger_->isAttached(), segments);
+
     for (const MemoryMap::Node &node: map->nodes()) {
         if (node.key().least() != scratchVa_) {
             SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(node.key())
@@ -157,7 +187,7 @@ LinuxI386Executor::saveMemory() {
             std::vector<uint8_t> buf(node.key().size());
             size_t nRead = map->at(node.key()).read(buf).size();
             ASSERT_always_require(nRead == node.key().size());
-            auto eeWrite = ExecutionEvent::instanceWriteMemory(testCase_, newLocation(), ip(), node.key(), buf);
+            auto eeWrite = ExecutionEvent::instanceWriteMemory(testCase_, newLocation(), ip(), node.key().least(), buf);
             db_->save(eeWrite);
         }
     }
@@ -179,33 +209,31 @@ hashMemoryRegion(Combinatorics::Hasher &hasher, const MemoryMap::Ptr &map, Addre
 
 void
 LinuxI386Executor::hashMemory() {
-    auto map = MemoryMap::instance();
     SAWYER_MESG(mlog[DEBUG]) <<"hashing subordinate memory\n";
-    map->insertProcess(debugger_->isAttached(), MemoryMap::Attach::NO);
+    auto map = MemoryMap::instance();
+    std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
+    map->insertProcessPid(debugger_->isAttached(), segments);
     for (const MemoryMap::Node &node: map->nodes()) {
-        if (node.key().least() != scratchVa_) {
-            Combinatorics::HasherSha256Builtin hasher;
-            hashMemoryRegion(hasher, map, node.key());
-            SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(node.key())
-                                     <<", " <<StringUtility::plural(node.key().size(), "bytes")
-                                     <<", hash = " <<hasher.toString() <<"\n";
-            auto eeHash = ExecutionEvent::instanceHashMemory(testCase_, newLocation(), ip(), node.key(), hasher.digest());
-            db_->save(eeHash);
-        }
+        SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(node.key())
+                                 <<StringUtility::plural(node.key().size(), "bytes") <<"\n";
+        Combinatorics::HasherSha256Builtin hasher;
+        hashMemoryRegion(hasher, map, node.key());
+        SAWYER_MESG(mlog[DEBUG]) <<"    hash = " <<hasher.toString() <<"\n";
+        auto eeHash = ExecutionEvent::instanceHashMemory(testCase_, newLocation(), ip(), node.key(), hasher.digest());
+        db_->save(eeHash);
     }
 }
 
 void
 LinuxI386Executor::unmapMemory() {
     SAWYER_MESG(mlog[DEBUG]) <<"unmapping memory\n";
-    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(debugger_->isAttached());
+    std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
-        if (segment.interval.least() != scratchVa_ && "[vvar]" != segment.comment) {
-            SAWYER_MESG(mlog[DEBUG]) <<"  at " <<StringUtility::addrToString(segment.interval) <<": " <<segment.comment <<"\n";
-            int64_t status = debugger_->remoteSystemCall(i386_NR_munmap, segment.interval.least(), segment.interval.size());
-            if (status < 0)
-                mlog[ERROR] <<"unamp memory failed at " <<StringUtility::addrToString(segment.interval)
-                            <<" for " <<segment.comment <<"\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"  at " <<StringUtility::addrToString(segment.interval) <<": " <<segment.comment <<"\n";
+        int64_t status = debugger_->remoteSystemCall(i386_NR_munmap, segment.interval.least(), segment.interval.size());
+        if (status < 0) {
+            mlog[ERROR] <<"unamp memory failed at " <<StringUtility::addrToString(segment.interval)
+                        <<" for " <<segment.comment <<"\n";
         }
     }
 }
@@ -220,7 +248,7 @@ LinuxI386Executor::saveRegisters() {
 
 void
 LinuxI386Executor::processAllEvents() {
-    while (curLocation_.primary > eventKeyFrames_.back()) {
+    while (!eventKeyFrames_.empty() && curLocation_.primary > eventKeyFrames_.back()) {
         mlog[ERROR] <<"passed execution events with key=" <<eventKeyFrames_.back() <<" without processing them\n";
         eventKeyFrames_.pop_back();
     }
@@ -252,9 +280,10 @@ LinuxI386Executor::processEvents() {
             case ExecutionEvent::Action::MAP_MEMORY: {
                 AddressInterval where = event->memoryLocation();
                 ASSERT_forbid(where.isEmpty());
-                SAWYER_MESG(mlog[DEBUG]) <<"  map memory at " <<StringUtility::addrToString(where) <<"\n";
+                SAWYER_MESG(mlog[DEBUG]) <<"  map " <<where.size() <<" bytes at " <<StringUtility::addrToString(where) <<", prot=";
                 unsigned prot = 0;
                 for (char letter: event->bytes()) {
+                    SAWYER_MESG(mlog[DEBUG]) <<letter;
                     switch (letter) {
                         case 'r':
                             prot |= PROT_READ;
@@ -270,10 +299,14 @@ LinuxI386Executor::processEvents() {
                             break;
                     }
                 }
-                int64_t status = debugger_->remoteSystemCall(i386_NR_mmap, where.least(), where.size(), prot,
-                                                             MAP_ANONYMOUS | MAP_FIXED, -1, 0);
-                if (status < 0)
-                    mlog[ERROR] <<"MAP_MEMORY event failed to map memory\n";
+                SAWYER_MESG(mlog[DEBUG]) <<", private|anon|fixed\n";
+                int32_t status = debugger_->remoteSystemCall(i386_NR_mmap, where.least(), where.size(), prot,
+                                                             MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+                if (status < 0 && status > -4096) {
+                    mlog[ERROR] <<"MAP_MEMORY event failed to map memory (" <<strerror(-status) <<")\n";
+                } else {
+                    ASSERT_require((uint64_t)(uint32_t)status == where.least());
+                }
                 break;
             }
 
@@ -302,15 +335,18 @@ LinuxI386Executor::processEvents() {
                 AddressInterval where = event->memoryLocation();
                 SAWYER_MESG(mlog[DEBUG]) <<"  hash memory at " <<StringUtility::addrToString(where) <<"\n";
                 ASSERT_forbid(where.isEmpty());
-                auto map = MemoryMap::instance();
-                map->insertProcess(debugger_->isAttached(), MemoryMap::Attach::NO);
-                Combinatorics::HasherSha256Builtin hasher;
-                hashMemoryRegion(hasher, map, where);
-                Combinatorics::Hasher::Digest currentDigest = hasher.digest();
-                const Combinatorics::Hasher::Digest &savedDigest = event->bytes();
-                ASSERT_require(currentDigest.size() == savedDigest.size());
-                if (!std::equal(currentDigest.begin(), currentDigest.end(), savedDigest.begin()))
-                    mlog[ERROR] <<"memory hash comparison failed at " <<StringUtility::addrToString(where) <<"\n";
+                std::vector<uint8_t> buf(where.size());
+                if (where.size() != debugger_->readMemory(where.least(), where.size(), buf.data())) {
+                    mlog[ERROR] <<"memory hash comparison failed at " <<StringUtility::addrToString(where) <<": read error\n";
+                } else {
+                    Combinatorics::HasherSha256Builtin hasher;
+                    hasher.insert(buf);
+                    Combinatorics::Hasher::Digest currentDigest = hasher.digest();
+                    const Combinatorics::Hasher::Digest &savedDigest = event->bytes();
+                    ASSERT_require(currentDigest.size() == savedDigest.size());
+                    if (!std::equal(currentDigest.begin(), currentDigest.end(), savedDigest.begin()))
+                        mlog[ERROR] <<"memory hash comparison failed at " <<StringUtility::addrToString(where) <<": hash differs\n";
+                }
                 break;
             }
 
@@ -320,8 +356,61 @@ LinuxI386Executor::processEvents() {
                 debugger_->writeAllRegisters(allRegisters);
                 break;
             }
+
+            case ExecutionEvent::Action::OS_SYSCALL: {
+                // System call events adjust the simulated operating system but not the process. If the process needs to be
+                // adjusted then the syscall event will be followed by additional events to adjust the memory and registers.
+                break;
+            }
         }
     }
+}
+
+void
+LinuxI386Executor::executeInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    rose_addr_t va = insn->get_address();
+
+    // Make sure the executable has the same instruction in those bytes.
+    std::vector<uint8_t> buf = debugger_->readMemory(va, insn->get_size());
+    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_raw_bytes().begin())) {
+        if (mlog[ERROR]) {
+            mlog[ERROR] <<"symbolic instruction doesn't match concrete instruction at " <<StringUtility::addrToString(va) <<"\n"
+                        <<"  symbolic insn:  " <<insn->toString() <<"\n"
+                        <<"  symbolic bytes:";
+            for (uint8_t byte: insn->get_raw_bytes())
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n"
+                        <<"  concrete bytes:";
+            for (uint8_t byte: buf)
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n";
+        }
+        throw Exception("symbolic instruction doesn't match concrete instructon at " + StringUtility::addrToString(va));
+    }
+
+    debugger_->executionAddress(va);
+    debugger_->singleStep();
+}
+
+Sawyer::Container::BitVector
+LinuxI386Executor::readRegister(RegisterDescriptor reg) {
+    return debugger_->readRegister(reg);
+}
+
+Sawyer::Container::BitVector
+LinuxI386Executor::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) {
+    return debugger_->readMemory(va, nBytes, order);
+}
+
+std::string
+LinuxI386Executor::readCString(rose_addr_t va, size_t maxBytes) {
+    return debugger_->readCString(va, maxBytes);
+}
+
+bool
+LinuxI386Executor::isTerminated() {
+    return debugger_->isTerminated();
 }
 
 } // namespace

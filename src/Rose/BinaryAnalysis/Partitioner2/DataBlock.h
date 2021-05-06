@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <SageBuilderAsm.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>

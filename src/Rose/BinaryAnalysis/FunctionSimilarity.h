@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Matrix.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/Progress.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 

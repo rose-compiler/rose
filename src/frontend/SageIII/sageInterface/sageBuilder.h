@@ -19,7 +19,7 @@
 
 #include "sageInterface.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 // forward declarations required for templated functions using those functions
 namespace SageInterface {

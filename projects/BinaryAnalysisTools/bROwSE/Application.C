@@ -15,7 +15,7 @@
 #include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
 #include <bROwSE/WStrings.h>
-#include <CommandLine.h>                                // ROSE
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>

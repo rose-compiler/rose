@@ -1,6 +1,6 @@
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_getline.h>

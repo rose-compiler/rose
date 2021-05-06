@@ -9,7 +9,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <Combinatorics.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <integerOps.h>
 #include <stringify.h>
 #include <sstream>

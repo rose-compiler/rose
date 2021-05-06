@@ -25,16 +25,12 @@ BUILT_SOURCES = license.h
 
 libroseSupport_la_SOURCES =			\
 	Combinatorics.C				\
-	CommandLine.C				\
-	Diagnostics.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
-	initialize.C				\
 	memoryUsage.C				\
 	optionDeclaration.C			\
 	rangemap.C				\
 	roseTranslators.C			\
-	SourceLocation.C			\
 	sourceLocationInheritedAttribute.C	\
 	stringify.C				\
 	transformationSupport.C			\

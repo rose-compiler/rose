@@ -15,7 +15,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/Progress.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>
 

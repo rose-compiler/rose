@@ -6,7 +6,7 @@
 
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Combinatorics.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 

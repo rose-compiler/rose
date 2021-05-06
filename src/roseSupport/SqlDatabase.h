@@ -2,7 +2,7 @@
 #define ROSE_SqlDatabase_H
 
 #include <Rose/FormatRestorer.h>
-#include "RoseException.h"
+#include "Rose/Exception.h"
 #include <Rose/StringUtility.h>
 #include "rose_override.h"
 

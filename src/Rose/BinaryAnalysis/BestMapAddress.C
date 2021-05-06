@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <integerOps.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/ProgressBar.h>

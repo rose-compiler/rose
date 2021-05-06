@@ -3,16 +3,18 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/FileSystem.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/scope_exit.hpp>
 #include <regex>
 
 #include <boost/config.hpp>
@@ -855,20 +857,20 @@ MemoryMap::readProcessMap(pid_t pid) {
         record.fileOffset = rose_strtoull(matched.str(4).c_str(), NULL, 16);
         record.deviceName = matched.str(5);
         record.inode = boost::lexical_cast<size_t>(matched.str(6));
-        record.comment = matched.str(7);
+        record.comment = boost::trim_copy(matched.str(7));
         records.push_back(record);
     }
     return records;
 }
 
-std::pair<Buffer::Ptr, std::string>
+std::pair<MemoryMap::Buffer::Ptr, std::string>
 MemoryMap::copyFromFile(int fd, const AddressInterval &where) {
     if (where.isEmpty()) {
         return {AllocatingBuffer::instance(0), ""};
 
     } else {
         auto buffer = AllocatingBuffer::instance(where.size());
-        uint8_t *p = buffer->data();
+        uint8_t *p = (uint8_t*)buffer->data();
         size_t nRemaining = where.size();
         if (-1 == lseek(fd, where.least(), SEEK_SET)) {
             buffer->resize(0);
@@ -895,55 +897,63 @@ MemoryMap::copyFromFile(int fd, const AddressInterval &where) {
     }
 }
 
+bool
+MemoryMap::insertProcessMemory(int memFile, const AddressInterval &where, unsigned accessibility, std::string name) {
+    // Mapping from /proc/*/mem to here doesn't work, so we read the data instead
+    std::pair<Buffer::Ptr, std::string> pair = copyFromFile(memFile, where);
+    Buffer::Ptr buffer = pair.first;
+    if (!pair.second.empty()) {
+        mlog[WARN] <<"segment \"" <<name <<"\" at " <<StringUtility::addrToString(where)
+                       <<": " <<pair.second <<"\n";
+        name += "[" + boost::to_lower_copy(pair.second) + "]";
+    }
+    ASSERT_not_null(buffer);
+
+    // If a read failed, map only what we could read
+    if (buffer->size() > 0) {
+        AddressInterval toMap = AddressInterval::baseSize(where.least(), buffer->size());
+        insert(toMap, Segment(buffer, 0, accessibility, name));
+        return true;                                    // inserted
+    } else {
+        return false;                                   // not inserted
+    }
+}
+
+bool
+MemoryMap::insertProcessPid(pid_t pid, const AddressInterval &where, unsigned accessibility, const std::string &name) {
+    std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
+    int memFile = ::open(memName.c_str(), O_RDONLY);
+    if (-1 == memFile)
+        throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
+    BOOST_SCOPE_EXIT(memFile) { ::close(memFile); } BOOST_SCOPE_EXIT_END;
+    return insertProcessMemory(memFile, where, accessibility, name);
+}
+
 void
-MemoryMap::insertProcess(int fd, const std::vector<ProcessMapRecord> &records, const std::string &namePrefix) {
-    for (ProcessMapRecord &record: records) {
+MemoryMap::insertProcessPid(pid_t pid, const std::vector<ProcessMapRecord> &records) {
+    std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
+    int memFile = ::open(memName.c_str(), O_RDONLY);
+    if (-1 == memFile)
+        throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
+    BOOST_SCOPE_EXIT(memFile) { ::close(memFile); } BOOST_SCOPE_EXIT_END;
+    std::string namePrefix = "proc:" + boost::lexical_cast<std::string>(pid);
+
+    for (const ProcessMapRecord &record: records) {
         std::string segmentName = namePrefix;
         if (!record.comment.empty())
             segmentName += "(" + record.comment + ")";
-
-#if 0 // [Robb Matzke 2020-08-25]: This would be cool if it worked (No such device: iostream error)
-        // Map data from the subordinate process into our memory segment
-        Buffer::Ptr buffer = MappedBuffer::instance(memName, boost::iostreams::mapped_file::readonly,
-                                                    record.fileOffset, record.interval.size());
-        ASSERT_not_null(buffer);
-#else
-        std::pair<Buffer::Ptr, std::string> pair = copyFromFile(r.memFile, record.interval);
-        Buffer::Ptr buffer = pair.first;
-        if (!pair.second.empty()) {
-            mlog[WARN] <<"segment \"" <<record.comment <<"\" at " <<StringUtility::addrToString(record.interval)
-                       <<": " <<pair.second <<"\n";
-            segmentName += "[" + boost::to_lower_copy(pair.second) + "]";
-            break;
-        }
-        ASSERT_not_null(buffer);
-
-        // If a read failed, map only what we could read
-        if (buffer.size() < record.interval.size())
-            record.interval = AddressInterval::baseSize(record.interval.least(), buffer->size());
-#endif
-
-        // Insert segment into memory map
-        if (!record.interval.isEmpty())
-            insert(record.interval, Segment(buffer, 0, record.accessibility, segmentName));
+        insertProcessMemory(memFile, record.interval, record.accessibility, segmentName);
     }
 }
 
 void
 MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #ifdef __linux__
-    // Resources that need to be cleaned up on return or exception
-    struct Resources {
-        int memFile;
-        pid_t resumeProcess;
-        Resources(): memFile(-1), resumeProcess(-1) {}
-        ~Resources() {
-            if (-1 != memFile)
-                close(memFile);
-            if (-1 != resumeProcess)
-                ptrace(PTRACE_DETACH, resumeProcess, 0, 0);
-        }
-    } r;
+    pid_t resumeProcess = -1;
+    BOOST_SCOPE_EXIT(&resumeProcess) {
+        if (-1 != resumeProcess)
+            ptrace(PTRACE_DETACH, resumeProcess, 0, 0);
+    } BOOST_SCOPE_EXIT_END;
 
     // We need to attach to the process with ptrace before we're allowed to read from its /proc/xxx/mem file. We should also
     // stop it while we read its state.
@@ -958,17 +968,13 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
         if (WIFSIGNALED(wstat))
             throw insertProcessError("cannot read from", pid, "died with " +
                                      boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat)))));
-        r.resumeProcess = pid;
+        resumeProcess = pid;
         ASSERT_require2(WIFSTOPPED(wstat) && WSTOPSIG(wstat)==SIGSTOP, "subordinate process did not stop");
     }
 
     // Read memory
     std::vector<ProcessMapRecord> mapRecords = readProcessMap(pid);
-    std::string memName = "/proc/" + boost::lexical_cast<std::string>(pid) + "/mem";
-    if (-1 == (r.memFile = open(memName.c_str(), O_RDONLY)))
-        throw insertProcessError("cannot open " + memName + " for" + strerror(errno));
-    std::string namePrefix = "proc:" + boost::lexical_cast<std::string>(pid);
-    insertProcess(r.memFile, mapRecords, namePrefix);
+    insertProcessPid(pid, mapRecords);
 
 #else
     throw std::runtime_error("MemoryMap::insertProcess is not available on this system");

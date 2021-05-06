@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 #include <set>
 #include <string>
 

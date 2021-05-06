@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
 
 #include <Combinatorics.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
