@@ -4,6 +4,7 @@
 #include "VariableIdMapping.h"
 #include "TypeSizeMapping.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 
 namespace CodeThorn {
@@ -23,9 +24,6 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
-
-    // deprecated
-    void computeTypeSizes();
 
     // direct lookup
     CodeThorn::TypeSize getTypeSize(SgType* type);
@@ -59,6 +57,8 @@ namespace CodeThorn {
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
     SgType* strippedType(SgType* type);
+    // does not strip pointer types, to avoid infinite recursion in rekursive data types
+    SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
 
   private:
@@ -80,6 +80,9 @@ namespace CodeThorn {
     void recordWarning(std::string);
     std::list<std::string> _warnings;
 
+    bool isRegisteredType(SgType* type);
+    void registerType(SgType* type);
+    
     // list of all global variable declarations
     // list of local variable declarations
     // declarations with initializer and complete or incomplete type: isDeclWithInitializer(getInitializer),isDeclWithoutInitializer,isDeclWithCompleteType
@@ -91,6 +94,7 @@ namespace CodeThorn {
 
     std::list<SgFunctionDefinition*> _functionDefinitions;
     std::list<SgFunctionDeclaration*> _functionDeclarations;
+    std::unordered_set<SgType*> _registeredTypes;
   };
 }
 
