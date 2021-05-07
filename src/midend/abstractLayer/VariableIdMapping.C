@@ -66,23 +66,26 @@ size_t VariableIdMapping::getArrayDimensionsFromInitializer(SgAggregateInitializ
   return result;
 }
 
-VariableIdMapping::VariableIdMapping():linkAnalysis(false) {
+VariableIdMapping::VariableIdMapping() {
 }
 
 VariableIdMapping::~VariableIdMapping() {
 }
 
-void VariableIdMapping::setLinkAnalysisFlag(bool flag) {
-  linkAnalysis=flag;
+SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
+  SgSymbol* sym=getSymbol(varId);
+  return getVariableDeclarationFromSymbol(sym);
 }
 
-SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
-  SgSymbol* varSym=getSymbol(varId);
-  return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(varSym));
+SgVariableDeclaration* VariableIdMapping::getVariableDeclarationFromSymbol(SgSymbol* sym) {
+  return isSgVariableDeclaration(SgNodeHelper::findVariableDeclarationWithVariableSymbol(sym));
 }
 
 SgType* VariableIdMapping::getType(VariableId varId) {
-  SgSymbol* varSym=getSymbol(varId);
+  return getTypeFromSymbol(getSymbol(varId));
+}
+
+SgType* VariableIdMapping::getTypeFromSymbol(SgSymbol* varSym) {
   SgType* type=varSym->get_type();
   if(type) {
     if(SgTypedefType* typeDeftype=isSgTypedefType(type)) {
@@ -362,8 +365,6 @@ void VariableIdMapping::setVolatileFlag(VariableId variableId, bool flag) {
   mappingVarIdToInfo[variableId].isVolatileFlag=flag;
 }
 
-
-
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) { 
@@ -444,35 +445,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
   // creates variableid for each string literal in the entire program
   registerStringLiterals(project);
 
-  if(linkAnalysis) {
-    performLinkAnalysisRemapping();
-  }
-
   return;
-}
-
-SgSymbol* VariableIdMapping::selectLinkSymbol(std::set<SgSymbol*>& symSet) {
-  ROSE_ASSERT(symSet.size()>0);
-  return *symSet.begin();
-}
-
-void VariableIdMapping::performLinkAnalysisRemapping() {
-  for(VarNameToSymMappingType::iterator i=mappingGlobalVarNameToSymSet.begin();i!=mappingGlobalVarNameToSymSet.end();++i) {
-    std::set<SgSymbol*>& symSet=(*i).second;
-    VariableId v;
-    if(symSet.size()>0) {
-      v=variableId(selectLinkSymbol(symSet)); // choose some symbol
-      ROSE_ASSERT(v.isValid());
-      for (std::set<SgSymbol*>::iterator i=symSet.begin();i!=symSet.end();++i) {
-        SgSymbol* sym=*i;
-        if(sym!=mappingVarIdToInfo[v].sym) {
-          mappingSymToVarId[sym]=v;
-          mappingVarIdToInfo[v].sym=sym;
-          mappingVarIdToInfo[v].relinked=true;
-        }
-      }
-    }
-  }
 }
 
 string VariableIdMapping::variableName(VariableId varId) {
@@ -668,7 +641,6 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     }
     
     VariableId newVarId=variableId(sym);
-    // set size to 1 (to compute bytes, multiply by size of type)
     setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
@@ -886,7 +858,11 @@ bool VariableIdMapping::isStringLiteralAddress(VariableId stringVarId) {
 }
 
 bool VariableIdMapping::isFunctionParameter(VariableId varId) {
-  if(SgVariableSymbol* varSym=isSgVariableSymbol(getSymbol(varId))) {
+  return getVariableIdInfoPtr(varId)->variableScope==VS_MEMBER;
+}
+
+bool VariableIdMapping::isFunctionParameter(SgSymbol* sym) {
+  if(SgVariableSymbol* varSym=isSgVariableSymbol(sym)) {
     if(SgInitializedName* initName=varSym->get_declaration()) {
       if(isSgFunctionParameterList(initName->get_parent())) {
         return true;
