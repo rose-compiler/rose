@@ -24,7 +24,7 @@ static const char *description =
 #include <Diagnostics.h>                                // ROSE header
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Trace.h>
-#include <StringUtility.h>                              // ROSE header
+#include <Rose/StringUtility.h>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;                // INFO, WARN, ERROR, FATAL, etc.

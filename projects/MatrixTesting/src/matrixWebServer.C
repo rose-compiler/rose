@@ -12,7 +12,7 @@ static Sawyer::Message::Facility mlog;
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
-#include <Color.h>                                      // ROSE
+#include <Rose/Color.h>
 #include <Diagnostics.h>                                // ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>

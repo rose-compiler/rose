@@ -13,7 +13,7 @@
 #include "keep_going.h"
 #include "failSafePragma.h"
 #include "cmdline.h"
-#include "FileSystem.h"
+#include <Rose/FileSystem.h>
 #include <CommandLine.h>
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT

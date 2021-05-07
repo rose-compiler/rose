@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
-#include <BitOps.h>
+#include <Rose/BitOps.h>
 #include <Diagnostics.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;

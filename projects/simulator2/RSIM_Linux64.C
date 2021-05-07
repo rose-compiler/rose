@@ -12,7 +12,7 @@
 #include "RSIM_Linux64.h"
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Diagnostics.h>                                // rose
-#include <FileSystem.h>                                 // rose
+#include <Rose/FileSystem.h>
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall

@@ -56,12 +56,9 @@ add_subdirectory(support)
 ######## build main library ###########
 set(rose_util_src
   ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-  Color.C
-  FileSystem.C
   LinearCongruentialGenerator.C
   rose_getline.C
   processSupport.C
-  Progress.C
   rose_getline.C
   rose_strtoull.C
 )

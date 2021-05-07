@@ -3,7 +3,7 @@
 
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <boost/algorithm/string/trim.hpp>
-#include <Color.h>                                      // ROSE
+#include <Rose/Color.h>
 #include <Diagnostics.h>                                // ROSE
 #include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>

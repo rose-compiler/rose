@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include <AsmUnparser_compat.h>
-#include <Color.h>
+#include <Rose/Color.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>

@@ -138,12 +138,16 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:failsafe>
   $<TARGET_OBJECTS:trans_tracking>
   $<TARGET_OBJECTS:astRewriteMechanism>
+  $<TARGET_OBJECTS:roseNamespace>
   $<TARGET_OBJECTS:roseBinaryAnalysis>
   $<TARGET_OBJECTS:roseBinaryAnalysisConcolic>
   $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2>
   $<TARGET_OBJECTS:roseBinaryAnalysisModelChecker>
   $<TARGET_OBJECTS:roseBinaryAnalysisPartitioner2>
   $<TARGET_OBJECTS:roseBinaryAnalysisUnparser>
+  $<TARGET_OBJECTS:roseColor>
+  $<TARGET_OBJECTS:roseFileSystem>
+  $<TARGET_OBJECTS:roseStringUtility>
   $<TARGET_OBJECTS:mstl>)
 
 if(enable-java)

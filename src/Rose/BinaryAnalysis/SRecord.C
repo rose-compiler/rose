@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/SRecord.h>
 
 #include "Diagnostics.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "integerOps.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>

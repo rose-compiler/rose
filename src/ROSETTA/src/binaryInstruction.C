@@ -3547,7 +3547,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
     #include <Sawyer/BitVector.h>
-    #include <BitFlags.h>
+    #include <Rose/BitFlags.h>
 #endif // SgAsmFloatType_HEADERS
 
 #ifdef DOCUMENTATION

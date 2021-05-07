@@ -1,7 +1,7 @@
 #include <rose_config.h>
 
 #include "FileUtility.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 
 using namespace std;
 using namespace Rose;

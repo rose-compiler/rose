@@ -1,7 +1,7 @@
 #ifndef bROwSE_H
 #define bROwSE_H
 
-#include <Color.h>                                      // ROSE
+#include <Rose/Color.h>
 #include <Diagnostics.h>                                // ROSE
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

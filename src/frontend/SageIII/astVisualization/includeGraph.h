@@ -1,7 +1,6 @@
 #ifndef INCLUDE_FILE_GRAPH_H
 #define INCLUDE_FILE_GRAPH_H
 
-// #include "StringUtility.h"
 // Support for building include graphs (graphs of include files)
 
 namespace IncludeFileGraph

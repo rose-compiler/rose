@@ -28,12 +28,9 @@ rose_paths.C:
 noinst_LTLIBRARIES = libroseutil.la
 
 libroseutil_la_SOURCES =			\
-	Color.C					\
 	compilationFileDatabase.C		\
-	FileSystem.C				\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
-	Progress.C				\
 	rose_getline.C				\
 	rose_strtoull.C
 nodist_libroseutil_la_SOURCES = rose_paths.C

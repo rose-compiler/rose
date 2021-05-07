@@ -1,7 +1,7 @@
 #define __STDC_FORMAT_MACROS
 
 // ROSE includes
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 #include <FileUtility.h>
 
 #include <rose_config.h>

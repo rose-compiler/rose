@@ -2,7 +2,7 @@
 
 #include "rosePublicConfig.h"
 #include "SqlDatabase.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>

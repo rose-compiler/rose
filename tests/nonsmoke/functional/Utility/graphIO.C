@@ -1,7 +1,7 @@
 #include <rose.h>
 
-#include "GraphUtility.h"
-#include "StringUtility.h"
+#include <Rose/GraphUtility.h>
+#include <Rose/StringUtility.h>
 #include "Diagnostics.h"
 #include <Sawyer/CommandLine.h>
 #include <iostream>

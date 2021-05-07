@@ -2,7 +2,7 @@
 #include <rosePublicConfig.h>
 #include <ROSE_ABORT.h>
 
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include <string.h>
 #include <iostream>
 #include "commandline_processing.h"

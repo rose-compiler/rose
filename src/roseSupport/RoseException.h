@@ -1,18 +1,9 @@
-#ifndef ROSE_Exception_H
-#define ROSE_Exception_H
+#ifndef ROSE_Deprecated_RoseException_H
+#define ROSE_Deprecated_RoseException_H
 
-#include <stdexcept>
-
-namespace Rose {
-
-/** Base class for all ROSE exceptions. */
-class Exception: public std::runtime_error {
-public:
-    /** Construct an exception with an error message. */
-    explicit Exception(const std::string &s): std::runtime_error(s) {}
-    ~Exception() throw() {}
-};
-
-} // namespace
+// [Robb Matzke 2021-05-07]: deprecated
+#include <rose_pragma_message.h>
+ROSE_PRAGMA_MESSAGE("This header is deprecated; use Rose/Exception.h instead");
+#include <Rose/Exception.h>
 
 #endif

@@ -1,7 +1,7 @@
 // Test code for string utility library
 #include <rose.h>
 
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "Combinatorics.h"
 #include <EditDistance/Levenshtein.h>
 #include <EditDistance/DamerauLevenshtein.h>

@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <Diagnostics.h>
-#include <FileSystem.h>
+#include <Rose/FileSystem.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/SRecord.h>

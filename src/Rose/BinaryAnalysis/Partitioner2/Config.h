@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <FileSystem.h>
+#include <Rose/FileSystem.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>

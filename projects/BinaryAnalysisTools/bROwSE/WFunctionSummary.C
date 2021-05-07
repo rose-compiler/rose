@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/WFunctionSummary.h>
 
-#include <Color.h>                                      // ROSE
+#include <Rose/Color.h>
 #include <Wt/WTable>
 #include <Wt/WText>
 #include <Wt/WTextArea>
