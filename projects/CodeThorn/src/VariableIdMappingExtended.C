@@ -2,14 +2,24 @@
 #include "VariableIdMappingExtended.h"
 #include "CodeThornLib.h"
 
-
 using namespace Sawyer::Message;
 using namespace std;
 
 
 namespace CodeThorn {
 
-  static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType) {
+  void VariableIdMappingExtended::createTypeLists() {
+    _memPoolTraversal.traverseMemoryPool();
+  }
+
+  void VariableIdMappingExtended::dumpTypeLists() {
+    _memPoolTraversal.dumpClassTypes();
+    _memPoolTraversal.dumpArrayTypes();
+    cout<<"Number of class types: "<<_memPoolTraversal.classTypes.size()<<endl;
+    cout<<"Number of array types: "<<_memPoolTraversal.arrayTypes.size()<<endl;
+  }
+  
+  std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
     std::list<SgVariableDeclaration*> declVarList;
     if(SgDeclarationStatement* declStmt1=classType->get_declaration()) {
       if(SgClassDeclaration* classDecl1=isSgClassDeclaration(declStmt1)) {
@@ -319,6 +329,9 @@ namespace CodeThorn {
    */
   
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
+
+    createTypeLists();
+
     RoseAst ast(project);
     int ct=0;
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -434,23 +447,6 @@ namespace CodeThorn {
 
   size_t  VariableIdMappingExtended::getNumVarIds() {
     return mappingVarIdToInfo.size();
-  }
-}
-
-void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* type, int32_t nestingLevel) {
-  ROSE_ASSERT(nestingLevel>0);
-  ROSE_ASSERT(type);
-  string nestingLevelIndent=std::string(nestingLevel, '@');
-  for(auto mvarId : classMembers[type]) {
-    os<<"     "<<nestingLevelIndent;
-    os<<setw(2)<<mappingVarIdToInfo[mvarId].offset<<": ";
-    os<<"id:"+mvarId.toString()+":\""+mvarId.toString(this)+"\"";
-    os<<","<<getVariableIdInfo(mvarId).aggregateTypeToString();
-    os<<endl;
-    if(mappingVarIdToInfo[mvarId].aggregateType==AT_STRUCT) {
-      // recurse into nested type and increase nesting level by 1
-      classMemberOffsetsToStream(os,getType(mvarId),nestingLevel+1);
-    }
   }
 }
 
@@ -595,6 +591,38 @@ void VariableIdMappingExtended::typeSizeOverviewtoStream(ostream& os) {
   cout<<"================================================="<<endl;
 }
 
+void VariableIdMappingExtended::toStream(ostream& os) {
+  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
+    VariableId varId=variableIdFromCode(i);
+    if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
+      os<<std::right<<std::setw(3)<<i<<",";
+      os<<varIdInfoToString(varId);
+      os<<endl;
+      if(mappingVarIdToInfo[varId].aggregateType==AT_STRUCT) {
+	os<<"Data members "<<"("<<classMembers[getType(varId)].size()<<"):"<<endl;
+	int32_t nestingLevel=1;
+	classMemberOffsetsToStream(os,getType(varId),nestingLevel);
+      }
+    }
+  }
+}
+
+void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* type, int32_t nestingLevel) {
+  ROSE_ASSERT(nestingLevel>0);
+  ROSE_ASSERT(type);
+  string nestingLevelIndent=std::string(nestingLevel, '@');
+  nestingLevelIndent="     "+nestingLevelIndent;
+  for(auto mvarId : classMembers[type]) {
+    os<<nestingLevelIndent<<setw(2)<<varIdInfoToString(mvarId);
+    os<<endl;
+    if(mappingVarIdToInfo[mvarId].aggregateType==AT_STRUCT) {
+      os<<nestingLevelIndent<<"Data members "<<"("<<classMembers[getType(mvarId)].size()<<"):"<<endl;
+      // recurse into nested type and increase nesting level by 1
+      classMemberOffsetsToStream(os,getType(mvarId),nestingLevel+1);
+    }
+  }
+}
+
 std::string VariableIdMappingExtended::varIdInfoToString(VariableId varId) {
   std::stringstream ss;
   ss<<std::setw(25)<<std::left<<"id:"+varId.toString()+":\""+varId.toString(this)+"\""
@@ -629,27 +657,11 @@ std::string VariableIdMappingExtended::varIdInfoToString(VariableId varId) {
     ss<<","<<"<non-symbol-memory-region-id>";
   } else if(SgSymbol* sym=getSymbol(varId)) {
     ss<<","<<variableName(varId);
+    ss<<",type:"<<getType(varId)->unparseToString();
   } else {
     ss<<","<<"<missing-symbol>";
   }
   return ss.str();
-}
-
-void VariableIdMappingExtended::toStream(ostream& os) {
-  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
-    VariableId varId=variableIdFromCode(i);
-    if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
-      os<<std::right<<std::setw(3)<<i<<",";
-      os<<varIdInfoToString(varId);
-      os<<endl;
-      if(mappingVarIdToInfo[varId].aggregateType==AT_STRUCT) {
-	//os<<"Data members "<<"("<<classMembers[getType(varId)].size()<<"):"<<endl;
-	
-	int32_t nestingLevel=1;
-	classMemberOffsetsToStream(os,getType(varId),nestingLevel);
-      }
-    }
-  }
 }
 
 // OLD METHODS (VIM2)

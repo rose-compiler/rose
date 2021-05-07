@@ -24,7 +24,6 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
-
     // direct lookup
     CodeThorn::TypeSize getTypeSize(SgType* type);
     CodeThorn::TypeSize getTypeSize(VariableId varId);
@@ -60,8 +59,44 @@ namespace CodeThorn {
     // does not strip pointer types, to avoid infinite recursion in rekursive data types
     SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
+    static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
 
   private:
+    class MemPoolTraversal : public ROSE_VisitTraversal {
+    public:
+      void visit(SgNode* node) {
+	if(SgClassType* ctype=isSgClassType(node)) {
+	  classTypes.insert(ctype);
+	}
+	if(SgArrayType* ctype=isSgArrayType(node)) {
+	  arrayTypes.insert(ctype);
+	}
+      }
+      std::unordered_set<SgClassType*> classTypes; // class, struct, union
+      std::unordered_set<SgArrayType*> arrayTypes; // any dimension
+      void dumpClassTypes() {
+	int i=0;
+	for(auto t:classTypes) {
+	  auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
+	  std::cout<<i++<<": class Type (";
+	  if(mList.first)
+	    std::cout<<mList.second.size();
+	  else
+	    std::cout<<"unknown";
+	  std::cout<<") :"<<t->unparseToString()<<std::endl;
+	}
+      }
+      void dumpArrayTypes() {
+	int i=0;
+	for(auto t:arrayTypes) {
+	  std::cout<<"Array Type "<<i++<<":"<<t->unparseToString()<<std::endl;
+	}
+      }
+    };
+    
+    void createTypeLists();
+    void dumpTypeLists();
+
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 
@@ -83,18 +118,12 @@ namespace CodeThorn {
     bool isRegisteredType(SgType* type);
     void registerType(SgType* type);
     
-    // list of all global variable declarations
-    // list of local variable declarations
-    // declarations with initializer and complete or incomplete type: isDeclWithInitializer(getInitializer),isDeclWithoutInitializer,isDeclWithCompleteType
-    // list of all types (from all declarations)
-    // list of all declarations varid:(global|local|member,+class_member_list(varid),array-dim-vector<expr|num>+elementtype,varid->type,class|union|array|built-in
-    // noinit|complete-type-init|incomplete-type-init)
-    // determineTypeSize(type)
-    // determineInitializerSize(initializer-expr)
+    MemPoolTraversal _memPoolTraversal;
 
     std::list<SgFunctionDefinition*> _functionDefinitions;
     std::list<SgFunctionDeclaration*> _functionDeclarations;
     std::unordered_set<SgType*> _registeredTypes;
+
   };
 }
 
