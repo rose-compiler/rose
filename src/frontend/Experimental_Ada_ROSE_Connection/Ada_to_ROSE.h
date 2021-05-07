@@ -221,8 +221,10 @@ struct ElemCreator
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// \note If an expression has decayed to a located node, the operator position will not be set.
 /// @{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx);
 void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 /// @}
 
@@ -384,11 +386,14 @@ namespace
   template <class KeyT, class DclT, class ValT>
   inline
   void
-  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    if (m.find(key) != m.end()) return;
+    const bool nodeExists = (m.find(key) != m.end());
 
-    recordNode(m, key, val);
+    if (nodeExists && !replace)
+      return;
+
+    recordNode(m, key, val, nodeExists);
   }
 
   /// retrieves a node from map \ref m with key \ref key.

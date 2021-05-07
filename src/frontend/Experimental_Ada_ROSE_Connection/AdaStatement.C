@@ -132,37 +132,6 @@ namespace
   }
 
 
-  /// returns the NameData object for a name that is represented
-  /// as expression in Asis (e.g., identifier or selected)
-  NameData
-  getQualName(Element_Struct& elem, AstContext ctx)
-  {
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
-
-    Expression_Struct& idex  = elem.The_Union.Expression;
-
-    if (idex.Expression_Kind == An_Identifier)
-    {
-      logKind("An_Identifier");
-
-      std::string        ident{idex.Name_Image};
-
-      return NameData{ ident, ident, ctx.scope(), elem };
-    }
-
-    ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
-
-    NameData compound = getNameID(idex.Prefix, ctx);
-    NameData selected = getNameID(idex.Selector, ctx);
-
-    return NameData{ selected.ident,
-                     compound.fullName + "." + selected.fullName,
-                     ctx.scope(),
-                     selected.elem()
-                   };
-  }
-
-
   /// if \ref isPrivate \ref dcl's accessibility is set to private;
   /// otherwise nothing.
   void
@@ -355,7 +324,7 @@ namespace
       attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
 
       lst.push_back(&dcl);
-      recordNonUniqueNode(m, id, dcl);
+      recordNonUniqueNode(m, id, dcl, true /* overwrite existing entries if needed */);
     }
 
     return lst;
@@ -717,15 +686,20 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
+/*
+  PP (04/30/21) integrated into getExceptionBase
+
   SgInitializedName&
   getAliasedExcnDecl(Element_ID declid, AstContext ctx)
   {
     Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
     ROSE_ASSERT(elem.Element_Kind == A_Defining_Name);
 
-    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID, elem.ID);
+    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID);
     return SG_DEREF(the_name);
   }
+*/
+
 
   void
   fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
@@ -1338,15 +1312,21 @@ namespace
     return !decl.Has_Reverse;
   }
 
-
+  // handles elements that can appear in a statement context (from a ROSE point of view)
+  //   besides statements this also includes declarations and clauses
   void handleStmt(Element_Struct& elem, AstContext ctx)
   {
-    logTrace() << "a statement (in progress) " << elem.Element_Kind << std::endl;
+    logTrace() << "a statement/decl/clause " << elem.Element_Kind << std::endl;
 
-    // declarations are statements too
     if (elem.Element_Kind == A_Declaration)
     {
       handleDeclaration(elem, ctx);
+      return;
+    }
+
+    if (elem.Element_Kind == A_Clause)
+    {
+      handleClause(elem, ctx);
       return;
     }
 
@@ -1372,6 +1352,7 @@ namespace
 
           SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
           SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
+
           SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
           SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
 
@@ -1506,17 +1487,18 @@ namespace
           ElemIdRange   exHndlrs = idRange(stmt.Block_Exception_Handlers);
           //~ logInfo() << "block ex handlers: " << exHndlrs.size() << std::endl;
 
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
+
           TryBlockNodes trydata  = createTryBlockIfNeeded(exHndlrs.size() > 0, sgnode);
           SgTryStmt*    tryblk   = trydata.first;
           SgBasicBlock& block    = trydata.second;
 
-          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
-          traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
           traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
 
           if (tryblk)
           {
-            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope_npc(sgnode), SG_DEREF(tryblk)});
+            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
 
             placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
           }
@@ -1792,6 +1774,7 @@ namespace
 
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
     sgnode.set_trystmt(&tryStmt);
+    sgnode.set_parent(tryStmt.get_catch_statement_seq_root());
 
     traverseIDs(range, elemMap(), StmtCreator{ctx.scope(body)});
 
@@ -2265,6 +2248,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 void handleClause(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Clause);
+  logKind("A_Clause");
 
   Clause_Struct& clause = elem.The_Union.Clause;
 
@@ -2319,6 +2303,7 @@ void handleClause(Element_Struct& elem, AstContext ctx)
 void handleDefinition(Element_Struct& elem, AstContext ctx)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  logKind("A_Definition");
 
   // many definitions are handled else where
   // here we want to convert the rest that can appear in declarative context
@@ -2398,6 +2383,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
   ROSE_ASSERT(elem.Element_Kind == A_Declaration);
+  logKind("A_Declaration");
 
   Declaration_Struct& decl = elem.The_Union.Declaration;
 
@@ -2591,15 +2577,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
 
-        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-        SgTryStmt*              trystmt = trydata.first;
-        SgBasicBlock&           stmtblk = trydata.second;
-
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(declblk)});
         }
+
+        TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
+        SgTryStmt*              trystmt = trydata.first;
+        SgBasicBlock&           stmtblk = trydata.second;
 
         {
           LabelAndLoopManager lblmgr;
@@ -3046,6 +3032,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&       scope   = ctx.scope();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
 
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         scope.append_statement(&sgnode);
@@ -3103,9 +3092,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
+        using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+
         logKind("An_Exception_Renaming_Declaration");
 
-        NameData                adaname = singleName(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
 
         if (isInvalidId(decl.Renamed_Entity))
         {
@@ -3115,31 +3106,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           return;
         }
 
-        Element_Struct& renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
-        ROSE_ASSERT(renamed_entity_elem.Element_Kind == An_Expression);
+        Element_Struct&    renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        ExBasePair         expair = getExceptionBase(renamed_entity_elem, ctx);
+        ROSE_ASSERT(expair.first || expair.second);
 
-        Expression_Struct& renamed_entity_expr = renamed_entity_elem.The_Union.Expression;
+        SgScopeStatement&  scope   = ctx.scope();
+        SgAdaRenamingDecl& sgnode  = expair.first
+                                         ? mkAdaRenamingDecl(adaname.ident, *expair.first, scope)
+                                         : mkAdaRenamingDecl(adaname.ident, *expair.second, scope)
+                                         ;
 
-        // PP (11/18/20) Test whether Corresponding_Name_Definition is a valid ID
-        if (isInvalidId(renamed_entity_expr.Corresponding_Name_Definition))
-        {
-          logError() << "unavailable name definition: "
-                     << adaname.ident << "/" << renamed_entity_expr.Name_Image
-                     << std::endl;
-        }
-        else
-        {
-          SgInitializedName& aliased = getAliasedExcnDecl(renamed_entity_expr.Corresponding_Name_Definition, ctx);
-          SgScopeStatement&       scope   = ctx.scope();
-          SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, aliased, scope);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
-          attachSourceLocation(sgnode, elem, ctx);
-          privatize(sgnode, isPrivate);
-          scope.append_statement(&sgnode);
-          ROSE_ASSERT(sgnode.get_parent() == &scope);
-        }
-      break;
-    }
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+        break;
+      }
 
 
     case A_Choice_Parameter_Specification:         // 11.2(4)
@@ -3295,6 +3280,34 @@ getName(Element_Struct& elem, AstContext ctx)
   }
 
   return NameData{ ident, name, SG_DEREF(parent), elem };
+}
+
+NameData
+getQualName(Element_Struct& elem, AstContext ctx)
+{
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+
+  Expression_Struct& idex  = elem.The_Union.Expression;
+
+  if (idex.Expression_Kind == An_Identifier)
+  {
+    logKind("An_Identifier");
+
+    std::string        ident{idex.Name_Image};
+
+    return NameData{ ident, ident, ctx.scope(), elem };
+  }
+
+  ROSE_ASSERT(idex.Expression_Kind == A_Selected_Component);
+
+  NameData compound = getNameID(idex.Prefix, ctx);
+  NameData selected = getNameID(idex.Selector, ctx);
+
+  return NameData{ selected.ident,
+                   compound.fullName + "." + selected.fullName,
+                   ctx.scope(),
+                   selected.elem()
+                 };
 }
 
 

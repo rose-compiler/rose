@@ -29,6 +29,7 @@ Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
 #define OUTPUT_HIDDEN_LIST_DATA 0
 #define OUTPUT_DEBUGGING_INFORMATION 0
 
+// DQ (4/15/2021): This is required to be set (to one) by default.
 #define HIGH_FEDELITY_TOKEN_UNPARSING 1
 
 // DQ (2/5/2021): Adding debugging support for token-based unparsing.
@@ -578,7 +579,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   {
                     statementInFile = true;
                   }
-#if 0
+
+#if DEBUG_STATEMENT_FROM_FILE
                printf ("In statementFromFile(): stmt->get_file_info()->isShared() = %s \n",stmt->get_file_info()->isShared() ? "true" : "false");
 #endif
             // DQ (11/10/2019): Details apply when nodes are shared across multiple files.
@@ -587,7 +589,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                  // Need to consult the fileIDsToUnparse to see if the current file id is in the list.
                     SgFileIdList & fileIdList = stmt->get_file_info()->get_fileIDsToUnparse();
                     ROSE_ASSERT(fileIdList.size() == stmt->get_file_info()->get_fileLineNumbersToUnparse().size());
-#if 0
+
+#if DEBUG_STATEMENT_FROM_FILE
                     printf ("Output fileIdList (size = %zu): \n",fileIdList.size());
                     for (size_t i = 0; i < fileIdList.size(); i++)
                        {
@@ -598,7 +601,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                     SgFileIdList::const_iterator pos = find(fileIdList.begin(),fileIdList.end(),sourceFile->get_file_info()->get_physical_file_id());
                     if (pos != fileIdList.end())
                        {
-#if 0
+#if DEBUG_STATEMENT_FROM_FILE
                          printf ("In statementFromFile(): current file is sharing this IR node: source file_id = %d stmt physical_file_id = %d \n",
                               sourceFile->get_file_info()->get_physical_file_id(),stmt->get_file_info()->get_physical_file_id());
 #endif
@@ -633,11 +636,12 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   }
              }
 
-       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence
-       // and if they are not marked as transformations, then we want to skip their output. And example of
-       //
+       // DQ (4/11/2021): The case of just using the unparseHeaderFiles without the token needs to work as well.
+       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence 
+       // and if they are not marked as transformations, then we want to skip their output. And example of 
        // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
-          if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
+       // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
+          if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
              {
             // bool isOutputInCodeGeneration = stmt->get_file_info()->isOutputInCodeGeneration();
                bool isTransformation = stmt->get_file_info()->isTransformation();
@@ -649,7 +653,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
                string statementfilename = stmt->get_file_info()->get_physical_filename();
                bool isInIncludeFileMap = EDG_ROSE_Translation::edg_include_file_map.find(statementfilename) != EDG_ROSE_Translation::edg_include_file_map.end();
-#if 0
+
+#if DEBUG_STATEMENT_FROM_FILE
                printf ("statementfilename      = %s \n",statementfilename.c_str());
                printf ("isTransformation       = %s \n",isTransformation ? "true" : "false");
                printf ("containsTransformation = %s \n",containsTransformation ? "true" : "false");
@@ -663,24 +668,62 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
                     SgSourceFile* header_file_asssociated_source_file = includeFile->get_source_file();
 
+#if DEBUG_STATEMENT_FROM_FILE
+                    printf ("Processing header file: header_file_asssociated_source_file = %p \n",header_file_asssociated_source_file);
+#endif
                  // DQ (3/14/2021): This is null for rose_edg_required_macros_and_functions.h (pre-included for all ROSE processed code).
                  // ROSE_ASSERT(header_file_asssociated_source_file != NULL);
                     if (header_file_asssociated_source_file != NULL)
                        {
+#if DEBUG_STATEMENT_FROM_FILE
+                         printf ("case header_file_asssociated_source_file != NULL: header_file_asssociated_source_file = %p \n",header_file_asssociated_source_file);
+                         printf (" --- filename = %s \n",header_file_asssociated_source_file->getFileName().c_str());
+#endif
+#if 0
+                      // Printout the source files for which we have associated token streams.
+#endif
                          if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
                             {
                            // This is a statement for which we might have a token subsequence.
-#if 0
+#if DEBUG_STATEMENT_FROM_FILE
                               printf ("This is a statement for which we have a token subsequence \n");
 #endif
+#if DEBUG_USING_CURPRINT
+                              curprint ("\n/* This is a statement for which we have a token subsequence */ \n");
+#endif
+#if DEBUG_STATEMENT_FROM_FILE && 1
+                              printf ("Output the list of files with computed token subsequence lists: \n");
+                              std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >::iterator i = Rose::tokenSubsequenceMapOfMapsBySourceFile.begin();
+                              while (i != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
+                                 {
+                                   SgSourceFile* sourceFile = i->first;
+                                   ROSE_ASSERT(sourceFile != NULL);
+                                   printf (" --- sourceFile = %p = %s filename = %s \n",sourceFile,sourceFile->class_name().c_str(),sourceFile->getFileName().c_str());
+                                   i++;
+                                 }
+#endif
                               std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = header_file_asssociated_source_file->get_tokenSubsequenceMap();
-#if 0
+#if DEBUG_STATEMENT_FROM_FILE
                               printf (" --- tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+#endif
+#if DEBUG_USING_CURPRINT
+                              curprint ( string("\n/* --- tokenStreamSequenceMap.size() = " ) + StringUtility::numberToString(tokenStreamSequenceMap.size()) + " */ \n");
+#endif
+#if DEBUG_STATEMENT_FROM_FILE && 1
+                           // Printout the token stream so that we know it is the correct one.
+                              std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator j = tokenStreamSequenceMap.begin();
+                              while (j != tokenStreamSequenceMap.end())
+                                 {
+                                   SgNode* node = j->first;
+                                   ROSE_ASSERT(node != NULL);
+                                   printf (" --- node = %p = %s name = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+                                   j++;
+                                 }
 #endif
                               if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
                                  {
                                 // The token sequence IS available for this statement.
-#if 0
+#if DEBUG_STATEMENT_FROM_FILE
                                    printf ("############################################################# \n");
                                    printf ("############################################################# \n");
                                    printf ("In statementFromFile(): token stream subsequence IS available \n");
@@ -691,7 +734,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                                 else
                                  {
                                 // The token sequence is NOT available for this statement.
-#if 0
+#if DEBUG_STATEMENT_FROM_FILE
                                    printf ("################################################################# \n");
                                    printf ("################################################################# \n");
                                    printf ("In statementFromFile(): token stream subsequence is NOT available \n");
@@ -700,6 +743,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
                                    statementInFile = false;
 #if 0
+                                // DQ (4/11/2021): I think that this case allows header files of the generated library file in the code segregation to be
+                                // processed and skipped, since they are not supported in the token sequence constrcution (becasue it would be redundant).
+                                // DQ (4/10/2021): Make this an error (at least while I am debugging why the global scope of a header file is not being unparsed).
                                    printf ("Exiting as a test! \n");
                                    ROSE_ASSERT(false);
 #endif
@@ -707,11 +753,39 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                             }
                            else
                             {
-                              statementInFile = false;
-#if 0
+                           // DQ (4/11/2021): If we are only unparsing headers without the token unparsing, then this is true, 
+                           // else if we needed the token subsequences, then it is false.
+                           // statementInFile = false;
+                           // if (sourceFile->get_unparseHeaderFiles() == true)
+                              if (sourceFile->get_unparse_tokens() == true)
+                                 {
+                                   statementInFile = false;
+                                 }
+                                else
+                                 {
+                                // DQ (4/11/2021): If we are not using the token, then we need not have found them, but we 
+                                // should be unparsing the header files.
+                                   ROSE_ASSERT(sourceFile->get_unparseHeaderFiles() == true);
+#if DEBUG_STATEMENT_FROM_FILE
+                                   printf ("Comparing filename: sourceFilename = %s \n",sourceFilename.c_str());
+                                   printf (" ----------------statementfilename = %s \n",statementfilename.c_str());
+#endif
+                                // DQ (4/11/2021): if the token subsequence is unavailable then we also have to check the names.
+                                // This is a bit more efficent if we use file_ids instead of strings.
+                                   if (sourceFilename == statementfilename)
+                                      {
+                                        statementInFile = true;
+                                      }
+                                     else
+                                      {
+                                        statementInFile = false;
+                                      }
+                                 }
+
+#if DEBUG_STATEMENT_FROM_FILE
                               printf ("################################################################ \n");
                               printf ("################################################################ \n");
-                              printf ("In statementFromFile(): Token map is not available for this file \n");
+                              printf ("In statementFromFile(): Token map is not available for this file (but unparsing the header files without the tokens is OK) \n");
                               printf ("################################################################ \n");
                               printf ("################################################################ \n");
 #endif
@@ -721,50 +795,77 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
                             }
                        }
+                      else
+                       {
+#if DEBUG_STATEMENT_FROM_FILE
+                         printf ("In statementFromFile(): case header_file_asssociated_source_file == NULL \n");
+#endif
+                       }
+                  }
+                 else
+                  {
+#if DEBUG_STATEMENT_FROM_FILE
+                    printf ("Skipping processing of header file \n");
+#endif
+                    if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
+                       {
+                         SgGlobal* globalscope = isSgGlobal(stmt);
+#if DEBUG_STATEMENT_FROM_FILE
+                         printf ("globalscope = %p \n",globalscope);
+#endif
+                         if (globalscope != NULL)
+                            {
+#if DEBUG_STATEMENT_FROM_FILE
+                              printf ("Found a reference to a SgGlobal while unparsing a header file: set statementInFile = true \n");
+#endif
+                              statementInFile = true;
+                            }
+                       }
                   }
              }
 
 #if 1
-            // DQ (1/4/2014): commented out to test with using token based unparsing.
+       // DQ (1/4/2014): commented out to test with using token based unparsing.
 
-            // DQ (12/22/2014): this is the most general way to supress the output of normalized template declaration member and non-member functions.
-            // The alternative approach is implemented in the unparseTemplateDeclarationStatment_support() function.
-               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
-               if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
-                  {
+       // DQ (12/22/2014): this is the most general way to supress the output of normalized template declaration member and non-member functions.
+       // The alternative approach is implemented in the unparseTemplateDeclarationStatment_support() function.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
+          if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
+             {
 #if 0
-                    SgSourceFile* sourcefile = info.get_current_source_file();
-                    printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
+               SgSourceFile* sourcefile = info.get_current_source_file();
+               printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
 #endif
 
 #if 1
-                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparsing of the normalized functions.
-                 // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
-                    if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
-                      {
+            // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparsing of the normalized functions.
+            // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
+               if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
+                 {
 #if 0
-                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
-                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                    printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                         functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
-                         statementInFile = false;
-                      }
+                    statementInFile = false;
+                 }
 #endif
 
 #if 0
-                 // DQ (5/28/2019): I think we should allow this to be unparsed, and so that any attached CPP directives
-                 // can be ouput, even if within the unparser we don't output the function definition.
-                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false)
-                       {
+            // DQ (5/28/2019): I think we should allow this to be unparsed, and so that any attached CPP directives
+            // can be ouput, even if within the unparser we don't output the function definition.
+               if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false)
+                  {
 #if 0
-                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
-                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+                    printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                         functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
-                         statementInFile = false;
-                       }
-#endif
+                    statementInFile = false;
                   }
 #endif
-#if 0
+             }
+#endif
+
+#if DEBUG_STATEMENT_FROM_FILE
           printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt,
                stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(),statementfilename.c_str(), sourceFilename.c_str());
@@ -1157,8 +1258,11 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
      static std::set<SgStatement*> previouslySeenStatement;
 
+  // DQ (4/18/2021): This needs to be able to support token sequences from different files, currently it does 
+  // not distinquish between different files and they detects previously unparsed token sequences by mistake.
   // DQ (1/13/2015): Adding another mechanism to support supression of previously unparsed token subsequences (required to support macros that map to multiple statements).
-     static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
+  // static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
+     static std::set<std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> > previouslyUnparsedTokenSubsequences;
 
      bool redundantStatement = false;
 
@@ -1186,7 +1290,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
   // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
      if (info.usedInUparseToStringFunction() == true)
         {
-#if 0
+#if DEBUG_REDUNDANT_STATEMENT_MAPPING
           printf ("Note: In redundantStatementMappingToTokenSequence(): info.usedInUparseToStringFunction() == true: returning false \n");
 #endif
           return false;
@@ -1201,12 +1305,36 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
      printf ("In redundantStatementMappingToTokenSequence(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
      printf (" --- previouslyUnparsedTokenSubsequences.size() = %zu \n",previouslyUnparsedTokenSubsequences.size());
      int counter_j = 0;
+#if 0
      for (std::set<TokenStreamSequenceToNodeMapping*>::iterator i = previouslyUnparsedTokenSubsequences.begin(); i != previouslyUnparsedTokenSubsequences.end(); i++)
         {
           TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = *i;
           printf(" --- --- previouslyUnparsedTokenSubsequences[%d] = %p \n",counter_j,tokenStreamSequenceToNodeMapping);
+
+       // DQ (4/17/2021): Output the token sequence so that we can unsderstand why the second forward 
+       // class declaration is being considered in the previouslyUnparsedTokenSubsequences set.
+#if 1
+          tokenStreamSequenceToNodeMapping->display("In redundantStatementMappingToTokenSequence(): token sequence");
+#endif
           counter_j++;
         }
+#else
+  // Need to support new for new version of previouslyUnparsedTokenSubsequences.
+     for (std::set< std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> >::iterator i = previouslyUnparsedTokenSubsequences.begin(); i != previouslyUnparsedTokenSubsequences.end(); i++)
+        {
+          SgSourceFile* sourceFile = i->first;
+          TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = i->second;
+          printf(" --- --- source file = %s previouslyUnparsedTokenSubsequences[%d] = %p \n",sourceFile->getFileName().c_str(),counter_j,tokenStreamSequenceToNodeMapping);
+#if 0
+          tokenStreamSequenceToNodeMapping->display("In redundantStatementMappingToTokenSequence(): token sequence");
+#endif
+          counter_j++;
+        }
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
      printf (" --- tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end() = %s \n",
           (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end()) ? "true" : "false");
 #endif
@@ -1303,13 +1431,26 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
              }
             else
              {
+#if 1
+            // DQ (4/18/2021): This needs to only be declared with the new form of the static previouslyUnparsedTokenSubsequences data structure.
+               std::pair<SgSourceFile*,TokenStreamSequenceToNodeMapping*> sourceFile_tokenSubsequence(sourceFile,tokenSubsequence);
+#endif
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                printf ("Not found in redundantTokenEndings: lastTokenIndex = %d \n",lastTokenIndex);
+#if 0
                printf ("previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end() = %s \n",
                     (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end()) ? "true" : "false");
+#else
+               printf ("previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end() = %s \n",
+                    (previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end()) ? "true" : "false");
+#endif
 #endif
             // DQ (1/13/2015): We might need to output the last statement that has a replicated token sequence, and not the first (I think).
+#if 0
                if (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
+#else
+               if (previouslyUnparsedTokenSubsequences.find(sourceFile_tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
+#endif
                   {
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                     printf ("Return TRUE from redundantStatementMappingToTokenSequence(): tokenSubsequence = %p stmt = %p = %s \n",tokenSubsequence,stmt,stmt->class_name().c_str());
@@ -1321,7 +1462,11 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 #if DEBUG_REDUNDANT_STATEMENT_MAPPING
                     printf ("Record that this TokenStreamSequenceToNodeMapping data has been processed: tokenSubsequence = %p \n",tokenSubsequence);
 #endif
+#if 0
                     previouslyUnparsedTokenSubsequences.insert(tokenSubsequence);
+#else
+                    previouslyUnparsedTokenSubsequences.insert(sourceFile_tokenSubsequence);
+#endif
                   }
              }
         }
@@ -1619,6 +1764,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
      printf ("In unparseStatementFromTokenStream(): stmt = %p = %s unparseStatus = %s \n",stmt,stmt->class_name().c_str(),unparseStatus ? "true" : "false");
      printf (" --- lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
+     printf (" --- unparseStatus = %s \n",unparseStatus ? "true" : "false");
 #endif
 
 #if 0
@@ -1642,7 +1788,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
        // bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
           bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt,info);
-
+#if 0
+       // DQ (4/17/2021): This is the different betwen when the second forward class declaration is unparsed and when it is not unparsed.
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+          printf ("FFFFFFFFFFFF redundantStatement = %s FFFFFFFFFFFF \n",redundantStatement ? "true" : "false");
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+#endif
        // DQ (9/24/2018): These are always going to be redundant, since these are inserted after the token stream mapping,
        // and redundantly represent the same tokens in the token stream.
           if (isSgIncludeDirectiveStatement(stmt) != NULL)
@@ -1842,8 +1993,13 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if DEBUG_USING_CURPRINT
                          curprint("/* In unparseStatementFromTokenStream(): globalScope != NULL */ \n");
 #endif
+                      // DQ (4/11/2021): I think it is reasonable for this to be true in many cases.
                       // DQ (1/7/2015): I think this must be true if the SgGlobal is called using this function.
-                         ROSE_ASSERT(globalScope->get_containsTransformation() == false);
+                         if (globalScope->get_containsTransformation() == true)
+                            {
+                              printf ("Note: globalScope->get_containsTransformation() == true (is this correct?) \n");
+                            }
+                      // ROSE_ASSERT(globalScope->get_containsTransformation() == false);
 
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                          printf ("Processing corner case of empty global scope unparsed using the token stream \n");
@@ -2673,6 +2829,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
+#if 0
      if (skipOutputOfPreprocessingInfo == false)
         {
 #if 0
@@ -2703,6 +2860,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           printf ("In unparseStatement(): skipping output of comments and CCP directives for SgStatement stmt = %p = %s (before) \n",stmt,stmt->class_name().c_str());
 #endif
         }
+#endif
 
   // This is the other part of the accumulation of the compiler-generated statements into compilerGeneratedStatementQueue
   // so that they can be unparsed after any CPP directives or comments are unparsed (above). Because there is a return
@@ -2990,7 +3148,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                        }
 #else
                  // If we are unparsing from the token stream, then we need to handle the attached preprocessing info as well.
-                 // But we need to handle them as part of unparing the token stream, not from the AST. The reason this is important
+                 // But we need to handle them as part of unparsing the token stream, not from the AST. The reason this is important
                  // is demonstrated by test2014_101.c and test2014_102.c when used with the testing mode (ROSE_tokenUnparsingTestingMode == true).
                  // In this mode AST nodes are periodically marked for unparsing from the AST and thus exersizing the logic to
                  // switch back and forth between the unparsing from the token stream and unparsing from the AST.
@@ -3446,6 +3604,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
           curprint("/* In unparseStatement(): logic to set: info.unset_unparsedPartiallyUsingTokenStream() */");
 #endif
+#if 0
+          printf ("In unparseStatement(): logic to set: info.unset_unparsedPartiallyUsingTokenStream() \n");
+#endif
 
        // DQ (12/12/2014): If we are truely unparsing from the AST, then this should be valid.
           if (global_unparsed_as == e_unparsed_as_AST)
@@ -3576,6 +3737,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if DEBUG_USING_CURPRINT
                curprint("\n/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */");
 #endif
+#if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %s \n",stmt->class_name().c_str());
+#endif
                switch (stmt->variantT())
                   {
                     case V_SgGlobal:                        unparseGlobalStmt                    (stmt, info); break;
@@ -3658,6 +3822,81 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      printf ("   --- lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
 #endif
 
+#if 1
+  // DQ (4/16/2021): Moved outside of true branch (below) so that it can be used after the executaion of the 
+  // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
+     SgSourceFile* sourceFile = info.get_current_source_file();
+  // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+     if (sourceFile == NULL)
+        {
+          printf ("NOTE: In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens = %s sourceFile == NULL \n",outputStatementAsTokens ? "true" : "false");
+        }
+#endif
+#if 0
+     printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+     SgStatement* firstStatement = NULL;
+     SgStatement* lastStatement  = NULL;
+     if (sourceFile != NULL && sourceFile->get_isHeaderFile() == true)
+        {
+          SgIncludeFile* include_file = sourceFile->get_associated_include_file();
+          ROSE_ASSERT(include_file != NULL);
+#if 0
+          printf ("include_file->get_first_source_sequence_number() = %u \n",include_file->get_first_source_sequence_number());
+          printf ("include_file->get_last_source_sequence_number()  = %u \n",include_file->get_last_source_sequence_number());
+#endif
+          firstStatement = include_file->get_firstStatement();
+          lastStatement  = include_file->get_lastStatement();
+
+       // ROSE_ASSERT(firstStatement != NULL);
+       // ROSE_ASSERT(lastStatement  != NULL);
+
+          if (firstStatement != NULL && lastStatement != NULL)
+             {
+#if 0
+               Sg_File_Info* first_file_info = firstStatement->get_file_info();
+               ROSE_ASSERT(first_file_info != NULL);
+               printf (" --- firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+               printf (" --- firstStatement = %p: (physical) line = %d column = %d filename = %s \n",firstStatement,
+                    first_file_info->get_physical_line(),first_file_info->get_col(),first_file_info->get_physical_filename().c_str());
+
+               Sg_File_Info* last_file_info = lastStatement->get_file_info();
+               ROSE_ASSERT(last_file_info != NULL);
+               printf (" --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+               printf (" --- lastStatement = %p: (physical) line = %d column = %d filename = %s \n",lastStatement,
+                    last_file_info->get_physical_line(),last_file_info->get_col(),last_file_info->get_physical_filename().c_str());
+#endif
+             }
+            else
+             {
+            // DQ (4/28/2021): Added debugging information.
+               if (firstStatement != NULL)
+                  {
+                    Sg_File_Info* first_file_info = firstStatement->get_file_info();
+                    ROSE_ASSERT(first_file_info != NULL);
+                    printf (" --- firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+                    printf (" --- firstStatement = %p: (physical) line = %d column = %d filename = %s \n",firstStatement,
+                         first_file_info->get_physical_line(),first_file_info->get_col(),first_file_info->get_physical_filename().c_str());
+                  }
+
+            // DQ (4/28/2021): Added debugging information.
+               if (lastStatement != NULL)
+                  {
+                    Sg_File_Info* last_file_info = lastStatement->get_file_info();
+                    ROSE_ASSERT(last_file_info != NULL);
+                    printf (" --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+                    printf (" --- lastStatement = %p: (physical) line = %d column = %d filename = %s \n",lastStatement,
+                         last_file_info->get_physical_line(),last_file_info->get_col(),last_file_info->get_physical_filename().c_str());
+                  }
+
+               ROSE_ASSERT(firstStatement == NULL);
+               ROSE_ASSERT(lastStatement  == NULL);
+             }
+        }
+#endif
+
   // DQ (1/10/2014): We need to handle the general case of trailing tokens at the end of a statements.
      if (outputStatementAsTokens == true)
         {
@@ -3669,7 +3908,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
        // DQ (3/7/2021): Note that an issue is when the token unparsing is used on a header file, and then the
        // last statement of the scope is not the last statement of the file.
-          SgSourceFile* sourceFile = info.get_current_source_file();
+       // SgSourceFile* sourceFile = info.get_current_source_file();
           ROSE_ASSERT(sourceFile != NULL);
 #if 0
           printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
@@ -3682,6 +3921,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // include_file->set_first_source_sequence_number(first_seq_number);
        // include_file->set_last_source_sequence_number(last_seq_number);
 
+#if 0
+       // DQ (4/16/2021): Moved outside of this true branch (above) so that it can be used after the executaion of the 
+       // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
           SgStatement* firstStatement = NULL;
           SgStatement* lastStatement  = NULL;
           if (sourceFile->get_isHeaderFile() == true)
@@ -3720,7 +3962,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     ROSE_ASSERT(lastStatement  == NULL);
                   }
              }
-
+#endif
 #if 0
           if (lastStatement != NULL)
              {
@@ -3728,6 +3970,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
 #endif
 
+#if 0
+       // DQ (4/15/2021): I think this is the cause of the last comments and CPP directives being redundantly output.
           if (stmt == lastStatement)
              {
             // Output the trailing whitespace.
@@ -3758,6 +4002,34 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                skipOutputOfPreprocessingInfo = true;
              }
+#else
+#if 0
+          printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
+          printf ("Skipped processing of last statement in token-based unparsing of last statement \n");
+          printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
+
+          printf ("outputStatementAsTokens == true: stmt          = %p = %s name = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+          if (lastStatement != NULL)
+             {
+               printf ("outputStatementAsTokens == true: lastStatement = %p = %s name = %s \n",lastStatement,lastStatement->class_name().c_str(),SageInterface::get_name(lastStatement).c_str());
+             }
+            else
+             {
+               printf ("lastStatement == NULL \n");
+             }
+          ROSE_ASSERT(info.get_current_source_file() != NULL);
+          printf ("outputStatementAsTokens == true: info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
+#endif
+#if 0
+       // DQ (4/16/2021): I think we need to skip the output of the tailing whitespace, is this is a statement from a header file and the current file is
+       // if (stmt == lastStatement)
+          SgGlobal* globalScope = isSgGlobal(stmt);
+          if (globalScope != NULL)
+             {
+               skipOutputOfPreprocessingInfo = true;
+             }
+#endif
+#endif
 
 #if 0
           printf ("SageInterface::get_name(stmt) = %s \n",SageInterface::get_name(stmt).c_str());
@@ -3780,6 +4052,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
 #if 0
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens == false (process trailing whitespace) \n");
+#endif
+#if 0
+          printf ("outputStatementAsTokens == false: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          ROSE_ASSERT(info.get_current_source_file() != NULL);
+          printf ("outputStatementAsTokens == false: info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
 #endif
        // DQ (2/18/2021): This is a bug in the token-based unparsing for test_127.cpp in the code segregation tests.
        // The details below are copied from the top of that test code. This will need to be fixed later.
@@ -4101,6 +4378,29 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
      curprint("/* test 3 */\n");
 #endif
+#if 0
+     printf ("Leaving unparseStatement(): stmt          = %p = %s \n",stmt,stmt->class_name().c_str());
+     printf ("Leaving unparseStatement(): lastStatement = %p \n",lastStatement);
+     if (lastStatement != NULL)
+        {
+          printf ("Leaving unparseStatement(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+        }
+     ROSE_ASSERT(info.get_current_source_file() != NULL);
+     printf ("Leaving unparseStatement(): info.get_current_source_file() = %p filename = %s \n",info.get_current_source_file(),info.get_current_source_file()->getFileName().c_str());
+#endif
+
+  // DQ (4/16/2021): As a rule, the comments and CPP directives attached to global scope can't be unparsed in the header files.
+     SgGlobal* globalScope = isSgGlobal(stmt);
+     if (globalScope != NULL && sourceFile->get_isHeaderFile() == true)
+        {
+#if 0
+          printf ("Resetting skipOutputOfPreprocessingInfo = true \n");
+#endif
+#if DEBUG_USING_CURPRINT
+          curprint("/* reseting skipOutputOfPreprocessingInfo = true */\n");
+#endif
+          skipOutputOfPreprocessingInfo = true;
+        }
 
      if (skipOutputOfPreprocessingInfo == false)
         {
@@ -4730,6 +5030,12 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      printf ("In unparseGlobalStmt(): sourceFile                     = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
 
+#if 0
+  // DQ (4/11/2021): The global scope is shared across the header files and with the source file for the translation unit.
+  // This is not an issue for the token-base unparsing since the token suquences for each file are held in a map indexed 
+  // by the SgSourceFile pointer.  Thus the global scope pointer can be safely used as a keep into the different token 
+  // subsequence maps for each file.
+
   // DQ (1/10/2014): Support new definition of the SgSourceFile via the SgUnparse_Info (verify it is the same,
   // then we can eliminate the computation via the parent pointer).  This will be significantly more efficent
   // where we need a reference to the SgSourceFile in the unparsing of more general statements when using the
@@ -4749,6 +5055,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #endif
           return;
         }
+#endif
 
   // DQ (3/16/2015): This can be the SgGlobal that is in the SgProject (used for a larger concept fo global scope across multiple files).
   // In this case the globalScope->get_parent() is a SgProject.

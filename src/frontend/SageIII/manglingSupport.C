@@ -1532,6 +1532,16 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_badaAttributeExp_" << std::hex << e << "_eadaAttributeExp_";
           break;
         }
+        case V_SgAdaOthersExp: {
+          const SgAdaOthersExp* e = isSgAdaOthersExp(expr);
+          mangled_name << "_badaOthersExp_" << std::hex << e << "_eadaOthersExp_";
+          break;
+        }
+        case V_SgAdaRenamingRefExp: {
+          const SgAdaRenamingRefExp* e = isSgAdaRenamingRefExp(expr);
+          mangled_name << "_badaRenamingRefExp_" << std::hex << e << "_eadaRenamingRefExp_";
+          break;
+        }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
           ROSE_ABORT();

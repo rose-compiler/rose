@@ -10,28 +10,6 @@
 
 using namespace std;
 
-#if 0
-namespace AST_FileIO
-   {
-     class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
-        {
-          public:
-               int counter;
-               void visit ( SgNode* node );
-        };
-
-     void MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
-        {
-          ROSE_ASSERT(node != NULL);
-       // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
-          ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
-          node->checkDataMemberPointersIfInMemoryPool();
-        }
-    }
-#endif
-
-/* JH(01/17/2006) Initializing the static data members
-*/
 AstData*
 AST_FILE_IO :: actualRebuildAst;
 
@@ -56,9 +34,14 @@ AST_FILE_IO::registeredAttributes;
    memory pools, already stored in listOfAccumulatedPoolSizes [ V_$CLASSNAME ].
 */
 
+#define DEBUG_AstFileIO_startUp 0
+
 void 
 AST_FILE_IO :: startUp( SgProject* root )
    {
+#if DEBUG_AstFileIO_startUp
+      std::cout << "AST_FILE_IO::startUp" << std::endl;
+#endif
    /* Our array containing the total memory pool sizes starts at startingIndex. This is the first multiple of 100
       that is greater than the indices used internally. We sort the the memory pool size at
       position [ V_$CLASSNAME + 1 ]. Concurrently, we allocate the appropriate STORAGE_class_list arrays.
@@ -92,6 +75,10 @@ AST_FILE_IO :: startUp( SgProject* root )
      unsigned long globalIndexCounter = 1;
 
      $REPLACE_STARTUP
+
+#if DEBUG_AstFileIO_startUp
+      std::cout << "listOfMemoryPoolSizes [935] = " << std::dec << listOfMemoryPoolSizes [935] << std::endl;
+#endif
 
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
@@ -300,135 +287,57 @@ AST_FILE_IO :: areFreepointersContainingGlobalIndices ( )
       return freepointersOfCurrentAstAreSetToGlobalIndices;
    }
 
+#define DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer 0
 
+unsigned long AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode * pointer) {
+  if (pointer == nullptr) return 0;
 
-/* JH (01/03/2006) manipulatePointerDataMembers: check if the pointer points to a valid SgNode.
-   First check, if the pointer is a NILL pointer. If so, do nothing. Otherwise:
-   * if yes, call the appropriate virual function to receive the global index. That is stored
-     in the pointer again.
-   * if no, we have somehow a pointer that is not valid. Thus, we look, if the pointer is in any
-     memory pools. If so, we get its global index an store it, but print a warning. If not, we
-     break with an assert.
-*/
-unsigned long
-AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
-  {
-  // This converts the pointer value held in the p_freepointer into a global index.
-     unsigned long globalIndex = 0;
-     if ( pointer != NULL )
-        {
-#if FILE_IO_EXTRA_CHECK
-          assert ( freepointersOfCurrentAstAreSetToGlobalIndices == true );
-#if 0
-       // Debugging code
-          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
-          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
-          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
-          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
-          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+  ROSE_ASSERT(freepointersOfCurrentAstAreSetToGlobalIndices);
+#if DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer
+  printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer():\n");
+  printf ("  pointer = %p = %s \n", pointer, pointer ? pointer->class_name().c_str() : "");
+  printf ("  pointer->p_freepointer = %p \n", pointer ? pointer->p_freepointer : nullptr);
 #endif
-          assert ( pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER() );
+//ROSE_ASSERT(pointer->p_freepointer != nullptr);
+  ROSE_ASSERT(pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER());
+
+  unsigned long globalIndex = (unsigned long) (pointer->p_freepointer);
+#if DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer
+  printf ("  globalIndex = %zd \n", globalIndex);
 #endif
+  return globalIndex;
+}
 
-#if FILE_IO_EXTRA_CHECK
-          if (pointer->p_freepointer == NULL)
-             {
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
-             }
-#endif
-       // DQ (6/6/2010): This is equivalent to the test for (globalIndex > 0).
-          assert ( pointer->p_freepointer != NULL );
+#define DEBUG_AstFileIO_getSgClassPointerFromGlobalIndex 0
 
-          globalIndex = (unsigned long) (pointer->p_freepointer);
+SgNode * AST_FILE_IO :: getSgClassPointerFromGlobalIndex ( unsigned long globalIndex ) {
+  if (globalIndex == 0) return nullptr;
 
-#if FILE_IO_EXTRA_CHECK
-          if (globalIndex == 0)
-             {
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): globalIndex = %lu \n",globalIndex);
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
-             }
-
-          assert (  0 < globalIndex );
-       // DQ (7/10/2010): I think this is not a reasonable test. And large AST's demonstrate this problem.
-#if 0
-       // assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
-          if (AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) > globalIndex )
-             {
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
-               printf ("     pointer->p_freepointer = %p = %" PRIuPTR " \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
-               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) = %" PRIuPTR " \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()));
-             }
-       // assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
+#if DEBUG_AstFileIO_getGlobalIndexFromSgClassPointer
+  printf ("In AST_FILE_IO::getSgClassPointerFromGlobalIndex():\n");
+  printf ("  globalIndex = %zd \n", globalIndex);
 #endif
 
-       // DQ (7/10/2010): I think this is not a reasonable test. And large AST's demonstrate this problem.
-#if 0
-       // assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
-          if (globalIndex >= AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) )
-             {
-               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer( SgNode* pointer = %p = %s) \n",pointer,pointer->class_name().c_str());
-               printf ("     pointer->p_freepointer = %p = %" PRIuPTR " \n",pointer->p_freepointer,(unsigned long)pointer->p_freepointer);
-               printf ("     AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) = %" PRIuPTR " \n",AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1));
-             }
-       // assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
-#endif
-#endif
-        }
+  ROSE_ASSERT(!freepointersOfCurrentAstAreSetToGlobalIndices);
+  ROSE_ASSERT( globalIndex < getTotalNumberOfNodesOfAstInMemoryPool() + getTotalNumberOfNodesOfNewAst() );
 
-     return globalIndex;
-   }
-
-
-
-
-/* JH (01/03/2006) remanipulatePointerDataMembers: check if the index stored in the pointer is
-   lesss than 100, then we have one of the operate types or an builtin type. Otherwise,
-   we get the pointer after computing the type od memory pool, that contains the pointer.
-*/
-SgNode*
-AST_FILE_IO :: getSgClassPointerFromGlobalIndex ( unsigned long globalIndex )
-  {
-
-  // DQ (9/3/2015): This function currently generates a warning from Intel where it is used (called).
-  // The reason is that the input is a ROSE IR node pointer cast to a unsigned long int, and then
-  // used as an integer index to the (for example) SgAddOp_getPointerFromGlobalIndex( unsigned long globalIndex )
-  // function in the code that is generated by ROSETTA below.  To avoid the warning it would be a
-  // better design to have this function (getSgClassPointerFromGlobalIndex(unsigned long)) take
-  // a SgNode pointer and modify the (for example) SgAddOp_getPointerFromGlobalIndex( unsigned long globalIndex )
-  // functions to take the same SgNode pointer so that we can avoid the problematic casting (which 
-  // appears to be the cause for the warnings).  This should be implemented later as part of a
-  // seperate commit and push not connected to this current work to support the Intel v14
-  // compiler.
-
-#if FILE_IO_EXTRA_CHECK
-     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == false );
-  // std::cout << globalIndex << " " << getTotalNumberOfNodesOfAstInMemoryPool() << " " << getTotalNumberOfNodesOfNewAst( ) << std::endl;
-     assert ( globalIndex < getTotalNumberOfNodesOfAstInMemoryPool() + getTotalNumberOfNodesOfNewAst( ));
-#endif
-
-     SgNode* returnPointer = NULL;
+  SgNode* returnPointer = NULL;
 
 $REPLACE_GETSGPOINTER
 
-     return returnPointer;
-   }
+#if DEBUG_AstFileIO_getSgClassPointerFromGlobalIndex
+  printf ("  returnPointer = %p\n", returnPointer); // might not have been read yet
+#endif
+
+  return returnPointer;
+}
 
 
 
 /* JH (01/03/2006) This mehtods steps through all memory pools and deletes all data contained in
    the pools, to prepare the base for starting the memory extension for rebuilding the AST.
 */
-void
-AST_FILE_IO :: clearAllMemoryPools ( )
-  {
+void AST_FILE_IO::clearAllMemoryPools( ) {
     freepointersOfCurrentAstAreSetToGlobalIndices = false;
  // JH (08/08/2006) calling delete on the roots of the stored ASTs, in order to have 
  // empty memory pools afterwards

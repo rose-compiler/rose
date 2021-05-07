@@ -686,6 +686,12 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_pwd@/src/frontend/SageIII \
                          @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
+			 @top_srcdir@/src/Rose/BinaryAnalysis \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic \
+                         @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics2 \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/ModelChecker \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitoner2 \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
                          @top_srcdir@/src/frontend/BinaryFormats/ExecLE.C \
@@ -693,8 +699,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/BinaryFormats/ExtentMap.C \
                          @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
-                         @top_srcdir@/src/frontend/BinaryLoader \
-                         @top_srcdir@/src/frontend/Partitioner2 \
                          @top_srcdir@/src/frontend/SageIII/ \
                          @top_srcdir@/src/frontend/SageIII/docs \
                          @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
@@ -707,7 +711,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/midend/astMatching \
                          @top_srcdir@/src/midend/BinaryAnalysis \
                          @top_srcdir@/src/midend/BinaryAnalysis/dataflowanalyses \
-                         @top_srcdir@/src/midend/BinaryAnalysis/instructionSemantics \
                          @top_srcdir@/src/midend/BinaryAnalysis/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \

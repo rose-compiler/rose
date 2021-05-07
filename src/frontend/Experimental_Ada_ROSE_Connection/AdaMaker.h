@@ -33,6 +33,9 @@ namespace Ada_ROSE_Translation
   ///   endOfConstruct to compiler generated.
   void markCompilerGenerated(SgLocatedNode& n);
 
+  /// sets the symbol table associated with \ref n to case insensitive
+  void setSymbolTableCaseSensitivity(SgScopeStatement& n);
+
   /// creates a new node by calling new SageNode(args...)
   template <class SageNode, class ... Args>
   inline
@@ -55,6 +58,18 @@ namespace Ada_ROSE_Translation
     return sgnode;
   }
 
+  /// creates a scope statement and sets the symbol table case sensitivity
+  template <class SageNode, class ... Args>
+  inline
+  SageNode&
+  mkScopeStmt(Args... args)
+  {
+    SageNode& sgnode = mkLocatedNode<SageNode>(args...);
+
+    setSymbolTableCaseSensitivity(sgnode);
+    return sgnode;
+  }
+
 
   //
   // Type Makers
@@ -71,7 +86,7 @@ namespace Ada_ROSE_Translation
 
   /// builds a subtype constraint by \ref constr
   SgAdaSubtype&
-  mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr);
+  mkAdaSubtype(SgType& superty, SgAdaTypeConstraint& constr, bool fromRoot = false);
 
   /// builds a derived type from a \ref basetype
   SgAdaDerivedType&
@@ -266,6 +281,10 @@ namespace Ada_ROSE_Translation
   SgClassDeclaration&
   mkRecordDecl(const std::string& name, SgClassDefinition& def, SgScopeStatement& scope);
 
+  /// builds the body for a record
+  SgClassDefinition&
+  mkRecordBody();
+
   /// creates a defining record declaration for the non-defining declaration \ref nondef,
   ///   and the body \ref body in scope \ref scope.
   SgClassDeclaration&
@@ -436,9 +455,9 @@ namespace Ada_ROSE_Translation
   mkVarDecl(SgInitializedName& var, SgScopeStatement& scope);
 
   /// creates an exception declaration
-  /// \note exceptions in Ada are names, in ROSE each exception is represented
-  ///       as a variable of type Exception
-  /// \todo revisit exception representation
+  /// \note exceptions in Ada are objects (*), in ROSE each exception is represented
+  ///       as a variable of type Exception.
+  ///       (*) https://learn.adacore.com/courses/intro-to-ada/chapters/exceptions.html#exception-declaration
   SgVariableDeclaration&
   mkExceptionDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope);
 
@@ -495,10 +514,8 @@ namespace Ada_ROSE_Translation
   mkRangeExp();
 
   /// Creates an Ada others expression (for case and expression switches)
-  /// \note currently others is represented by SgNullExpression
-  /// \todo consider introducing an SgAdaOthersExp node
-  SgExpression&
-  mkOthersExp();
+  SgAdaOthersExp&
+  mkAdaOthersExp();
 
   /// Creates a new expression
   /// \param ty the type of the allocation
@@ -507,15 +524,17 @@ namespace Ada_ROSE_Translation
   mkNewExp(SgType& ty, SgExprListExp* args_opt = nullptr);
 
 
-  /// Creates a reference to the "exception type"
-  /// \todo revisit exception representation
+  /// Creates a reference to the exception object \ref exception
   SgExpression&
   mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope);
 
-  /// Creates a reference to the "exception type"
-  /// \todo revisit exception representation
+  /// Creates a reference to a task \ref task
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
+
+  /// Creates a reference to an Ada renaming declaration \ref decl
+  SgAdaRenamingRefExp&
+  mkAdaRenamingRefExp(SgAdaRenamingDecl& decl);
 
   /// creates a field selection expression (expr.field)
   SgDotExp&
@@ -601,7 +620,7 @@ namespace Ada_ROSE_Translation
   }
 
   /// converts text to constant values
-  /// @{
+  /// \{
   template <class T>
   inline
   T convAdaLiteral(const char* img)
@@ -614,7 +633,7 @@ namespace Ada_ROSE_Translation
 
   template <>
   long double convAdaLiteral<long double>(const char* img);
-  /// @}
+  /// \}
 
 
   /// creates a value representation of type \ref SageValue for the string \ref textrep.

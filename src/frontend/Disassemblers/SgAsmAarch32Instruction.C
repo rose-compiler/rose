@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #include <sage3basic.h>
 
-#include <Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

@@ -220,7 +220,9 @@ namespace sg
     GEN_VISIT(SgAdaTaskSpec)
     GEN_VISIT(SgAdaTaskSpecDecl)
     GEN_VISIT(SgAdaTaskSymbol)
+    GEN_VISIT(SgAdaRenamingSymbol)
     GEN_VISIT(SgAdaTaskRefExp)
+    GEN_VISIT(SgAdaRenamingRefExp)
     GEN_VISIT(SgAdaTaskType)
     GEN_VISIT(SgAdaTaskTypeDecl)
     GEN_VISIT(SgAdaTerminateStmt)
@@ -1065,6 +1067,7 @@ namespace sg
     GEN_VISIT(SgFinishExp)
     GEN_VISIT(SgHereExp)
     GEN_VISIT(SgDotDotExp)
+    GEN_VISIT(SgAdaOthersExp)
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)
 #endif /* WITH_BINARY_NODES */

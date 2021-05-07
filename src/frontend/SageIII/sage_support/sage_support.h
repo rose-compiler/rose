@@ -27,7 +27,7 @@
 
 #include "attachPreprocessingInfo.h"
 
-#include "BinaryLoader.h"
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include "sageBuilder.h"
 
 #include "CollectionHelper.h"

@@ -1,8 +1,8 @@
 #include <sage3basic.h>
 #ifdef ROSE_ENABLE_PYTHON_API
 
-#include <BinaryUnparserBase.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <boost/python.hpp>
 
 using namespace Rose::BinaryAnalysis;

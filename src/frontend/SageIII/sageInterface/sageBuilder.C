@@ -12897,6 +12897,19 @@ SgDerivedTypeStatement * SageBuilder::buildDerivedTypeStatement(const SgName& na
      return type_decl;
    }
 
+//! Build a Fortran module declaration.
+SgModuleStatement * SageBuilder::buildModuleStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+   {
+     SgClassDeclaration::class_types kind = SgClassDeclaration::e_fortran_module;
+     SgModuleStatement* module_stmt = buildClassDeclarationStatement_nfi <SgModuleStatement> (name, kind, scope);
+
+     setOneSourcePositionForTransformation(module_stmt);
+     ROSE_ASSERT(module_stmt->get_firstNondefiningDeclaration() != NULL);
+     setOneSourcePositionForTransformation(module_stmt->get_firstNondefiningDeclaration());
+
+     return module_stmt;
+   }
+
 //! Build a Jovial table declaration statement.  A Jovial table is essentially a C struct with an optional struct size.
 SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name,
                                                                 SgClassDeclaration::class_types kind,
@@ -16690,11 +16703,14 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
                     isCopyOfExistingFile_testForSharedNodes = true;
                     fileBeingCopied = file;
 
+#if 0
+                 // DQ (4/24/2021): This data member header_file_unparsing_optimization is now static.
                  // We are building a second copy of an originally specified file (so we need to set the optimization setting similarly).
                     if (file->get_header_file_unparsing_optimization() == true)
                        {
                          set_header_file_unparsing_optimization = true;
                        }
+#endif
                   }
              }
 
@@ -16804,6 +16820,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == true);
 
+#if 0
+  // DQ (4/24/2021): This data member header_file_unparsing_optimization is now static (so we don't need this code).
      if (set_header_file_unparsing_optimization == true)
         {
           result->set_header_file_unparsing_optimization(true);
@@ -16811,7 +16829,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
        // DQ (9/18/2019): Also set the values for the source file and header files.
        // I think we only want to set the source file version to true and the header file version to false.
        // This is enforced in the attachPreprocessingInfo() function.
-          result->set_header_file_unparsing_optimization_source_file(true);
+
+       // DQ (4/24/2021): Debugging header file optimization.
+       // result->set_header_file_unparsing_optimization_source_file(true);
+
        // result->set_header_file_unparsing_optimization_header_file(true);
           result->set_header_file_unparsing_optimization_header_file(false);
 
@@ -16824,6 +16845,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
                result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
         }
+#endif
 
 #if 0
   // DQ (3/4/2014): This fix is only for Java and for C will cause a second SgFile to be redundently added to the file list.

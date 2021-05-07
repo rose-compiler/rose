@@ -184,35 +184,56 @@ void setFileInfo( SageNode& n,
 }
 
 
+///
+
+
+namespace
+{
+  /// \private
+  template <class SageNode>
+  void attachSourceLocation_internal(SageNode& n, Element_Struct& elem, AstContext ctx)
+  {
+    const std::string&      unit = ctx.sourceFileName();
+    Source_Location_Struct& loc  = elem.Source_Location;
+
+    setFileInfo( n,
+                 &SageNode::set_startOfConstruct, &SageNode::get_startOfConstruct,
+                 unit, loc.First_Line, loc.First_Column );
+
+    setFileInfo( n,
+                 &SageNode::set_endOfConstruct,   &SageNode::get_endOfConstruct,
+                 unit, loc.Last_Line,  loc.Last_Column );
+  }
+}
+
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// \note to avoid useless instantiations, the template function has two
+///       front functions for Sage nodes with location information.
+/// \note If an expression has decayed to a located node, the operator position will not be set.
+/// \{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx)
+{
+  attachSourceLocation_internal(n, elem, ctx);
+}
+
+void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx)
 {
   const std::string&      unit = ctx.sourceFileName();
   Source_Location_Struct& loc  = elem.Source_Location;
 
   setFileInfo( n,
-               &SgLocatedNode::set_file_info,        &SgLocatedNode::get_file_info,
+               &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
                unit, loc.First_Line, loc.First_Column );
 
-  setFileInfo( n,
-               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
-               unit, loc.First_Line, loc.First_Column );
-
-  setFileInfo( n,
-               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
-               unit, loc.Last_Line,  loc.Last_Column);
+  attachSourceLocation(static_cast<SgLocatedNode&>(n), elem, ctx);
 }
 
 void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
 {
-  Source_Location_Struct& loc  = elem.Source_Location;
-  const std::string&      unit = ctx.sourceFileName();
-
-  //~ setFileInfo(n, &SgPragma::set_file_info,        &SgPragma::get_file_info,        unit, loc.First_Line, loc.First_Column);
-  setFileInfo(n, &SgPragma::set_startOfConstruct, &SgPragma::get_startOfConstruct, unit, loc.First_Line, loc.First_Column);
-  setFileInfo(n, &SgPragma::set_endOfConstruct,   &SgPragma::get_endOfConstruct,   unit, loc.Last_Line,  loc.Last_Column);
+  attachSourceLocation_internal(n, elem, ctx);
 }
+/// \}
 
 namespace
 {
@@ -245,14 +266,12 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
-          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
 
       case A_Clause:                  // Asis.Clauses
         {
-          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -284,7 +303,6 @@ namespace
 
       case A_Definition:              // Asis.Definitions
         {
-          logKind("A_Definition");
           handleDefinition(elem, ctx);
           break;
         }
@@ -842,6 +860,9 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
   SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+
+  setSymbolTableCaseSensitivity(astScope);
+
   std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
   initializeAdaTypes(astScope);

@@ -1,0 +1,4 @@
+include_rules
+
+run $(public_header) -o include/rose/Rose \
+    BinaryAnalysis.h
