@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Progress.h>
+#include <Rose/Progress.h>
 #include <RoseException.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>

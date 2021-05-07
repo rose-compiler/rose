@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <boost/regex.hpp>
-#include <Color.h>
+#include <Rose/Color.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 

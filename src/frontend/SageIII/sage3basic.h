@@ -32,7 +32,7 @@
 #include <inttypes.h>
 
 #include "rose_override.h"                              // defines ROSE_OVERRIDE, ROSE_FINAL, etc for C++11 or later
-#include "rose_constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
+#include "Rose/Constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
 
 #include <semaphore.h>
 #include "fileoffsetbits.h"
@@ -280,7 +280,7 @@ namespace boost {
 #include "rose_attributes_list.h"
 
 // Include ROSE common utility function library
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "FileUtility.h"
 #include "escape.h"
 

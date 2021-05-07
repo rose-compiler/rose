@@ -26,7 +26,7 @@
 
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <Progress.h>
+#include <Rose/Progress.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/move/utility_core.hpp>

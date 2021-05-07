@@ -1,4 +1,4 @@
-// Consider using $ROSE/src/util/FileSystem.h since that one is documented and uses a proper path type and supports both
+// Consider using $ROSE/src/Rose/FileSystem.h since that one is documented and uses a proper path type and supports both
 // version 2 and version 3 of boost::filesystem.
 
 // UNDER NO CIRCUMSTANCES SHOULD BOOST_FILESYSTEM_VERSION BE SET!!!
@@ -14,7 +14,7 @@
 // particular file then that should be documented where we state which versions of boost are supported, and possibly
 // checked during configuration. [Matzke 11/17/2014]: 
 
-#include <FileSystem.h>
+#include <Rose/FileSystem.h>
 
 #include <boost/filesystem.hpp>
 #include <string>

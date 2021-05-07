@@ -5,7 +5,7 @@
 
 #include <Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Progress.h>
+#include <Rose/Progress.h>
 #include <RoseException.h>
 #include <Sawyer/Set.h>
 

@@ -4,7 +4,7 @@
 
 #include "grammarString.h"
 #include "AstNodeClass.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "FileUtility.h"
 #include <string>
 #include <sstream>

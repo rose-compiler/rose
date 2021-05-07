@@ -5,8 +5,8 @@ include_rules
 
 # Create a librose_util.so library, but also link the same objects into librose.so.
 run $(support_compile_linklib) -o rose_util --objects=OBJECTS \
-    Color.C compilationFileDatabase.C FileSystem.C LinearCongruentialGenerator.C processSupport.C \
-    Progress.C rose_getline.C rose_strtoull.C rose_paths.C
+    compilationFileDatabase.C LinearCongruentialGenerator.C processSupport.C \
+    rose_getline.C rose_strtoull.C rose_paths.C
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) BitFlags.h BitOps.h Color.h compilationFileDatabase.h FileSystem.h FormatRestorer.h GraphUtility.h \

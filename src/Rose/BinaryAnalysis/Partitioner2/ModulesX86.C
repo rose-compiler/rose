@@ -5,7 +5,7 @@
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 
-#include <BitOps.h>
+#include <Rose/BitOps.h>
 #include <boost/format.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

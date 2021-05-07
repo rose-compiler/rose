@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
-#include <StringUtility.h>                              // rose
+#include <Rose/StringUtility.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>

@@ -8,13 +8,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <FileSystem.h>
+#include <Rose/FileSystem.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
-#include <Progress.h>
+#include <Rose/Progress.h>
 #include <RoseException.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>

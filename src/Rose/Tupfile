@@ -1,4 +1,17 @@
 include_rules
 
-run $(public_header) -o include/rose/Rose \
-    BinaryAnalysis.h
+run $(librose_compile)				\
+    Progress.C
+
+run $(public_header) -o include/rose/Rose	\
+    BinaryAnalysis.h				\
+    BitFlags.h					\
+    BitOps.h					\
+    Color.h					\
+    Constants.h					\
+    FileSystem.h				\
+    FormatRestorer.h				\
+    GraphUtility.h				\
+    Progress.h					\
+    RecursionCounter.h				\
+    StringUtility.h

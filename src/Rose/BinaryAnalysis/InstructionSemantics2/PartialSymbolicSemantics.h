@@ -20,7 +20,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include "integerOps.h"
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include "FormatRestorer.h"
+#include <Rose/FormatRestorer.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 

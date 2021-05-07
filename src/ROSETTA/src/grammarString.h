@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string>
 #include "grammar.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "FileUtility.h"
 
 #include <iostream>
