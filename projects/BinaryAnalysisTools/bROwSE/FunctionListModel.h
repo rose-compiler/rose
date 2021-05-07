@@ -4,7 +4,7 @@
 #include <bROwSE/bROwSE.h>
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/Statistics.h>
-#include <Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WModelIndex>
 

@@ -1,11 +1,11 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 
-#include <Disassembler.h>
-#include <DispatcherM68k.h>
-#include <Partitioner2/Engine.h>
-#include <SymbolicSemantics2.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 #include <map>
 #include <Sawyer/Assert.h>

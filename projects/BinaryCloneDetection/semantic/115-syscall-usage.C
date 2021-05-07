@@ -12,14 +12,14 @@
 #include <vector>
 
 //For finding the syscall numbers
-#include "AsmFunctionIndex.h"
+#include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
 #include "AsmUnparser.h"
-#include "BinaryLoader.h"
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include "PartialSymbolicSemantics.h"
-#include "BinaryControlFlow.h"
-#include "BinaryFunctionCall.h"
-#include "BinaryDominance.h"
-#include "BinarySmtSolver.h"
+#include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/FunctionCall.h>
+#include <Rose/BinaryAnalysis/Dominance.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 
 static SqlDatabase::TransactionPtr transaction;
 

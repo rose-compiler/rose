@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "MemoryMap.h"
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/version.hpp>
 #if BOOST_VERSION < 106700

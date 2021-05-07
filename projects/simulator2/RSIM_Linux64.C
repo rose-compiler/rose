@@ -10,7 +10,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux64.h"
-#include <BinaryDebugger.h>                             // rose
+#include <Rose/BinaryAnalysis/Debugger.h>
 #include <Diagnostics.h>                                // rose
 #include <FileSystem.h>                                 // rose
 

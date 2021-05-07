@@ -4,9 +4,9 @@
 #include <boost/thread.hpp>
 #include <bROwSE/WBusy.h>
 #include <bROwSE/WMemoryMap.h>
-#include <Disassembler.h>                               // ROSE
-#include <Partitioner2/Modules.h>                       // ROSE
-#include <Partitioner2/ModulesPe.h>                     // ROSE
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 #include <rose_strtoull.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Stopwatch.h>

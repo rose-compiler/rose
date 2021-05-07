@@ -482,26 +482,6 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
-    {
-      bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
-      bool showProgramStats=ctOpt.programStats;
-      bool showProgramStatsOnly=ctOpt.programStatsOnly;
-      if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
-        ProgramInfo programInfo(sageProject);
-        programInfo.compute();
-        if(unknownFunctionsFile) {
-          ROSE_ASSERT(analyzer);
-          programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
-        }
-        if(showProgramStats||showProgramStatsOnly) {
-          programInfo.printDetailed();
-        }
-        if(showProgramStatsOnly) {
-          exit(0);
-        }
-      }
-    }
-
     if(ctOpt.unparse) {
       sageProject->unparse(0,0);
       return 0;

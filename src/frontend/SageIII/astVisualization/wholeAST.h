@@ -71,16 +71,16 @@ class CustomAstDOTGenerationNodeType
 //#define __builtin_constant_p(exp) (0)
 #endif
                ROSE_ASSERT(node != NULL);
-               ROSE_ASSERT(labelString.size() < 4000);
-               ROSE_ASSERT(optionString.size() < 4000);
+               ROSE_ASSERT(labelString.size() < 8000);
+               ROSE_ASSERT(optionString.size() < 8000);
              }
 
        // DQ (3/21/2007): Added copy constructor
           CustomAstDOTGenerationNodeType ( const CustomAstDOTGenerationNodeType & X )
              : target(X.target), labelString(X.labelString), optionString(X.optionString)
              {
-               ROSE_ASSERT(X.optionString.size() < 4000);
-               ROSE_ASSERT(optionString.size() < 4000);
+               ROSE_ASSERT(X.optionString.size() < 8000);
+               ROSE_ASSERT(optionString.size() < 8000);
              }
 
        // These are implemented to support the STL find function (STL algorithm)

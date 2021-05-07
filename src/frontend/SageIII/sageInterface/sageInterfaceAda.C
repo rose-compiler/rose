@@ -6,6 +6,8 @@
 #include <iostream>
 #include <exception>
 
+#include <boost/lexical_cast.hpp>
+
 namespace si = SageInterface;
 
 namespace
@@ -41,7 +43,7 @@ namespace
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
       // base cases
-      void handle(SgType&)                  { res = NULL; }
+      void handle(SgType&)                  { res = nullptr; }
       void handle(SgArrayType& n)           { res = &n; }
 
       // possibly skipped types
@@ -58,7 +60,7 @@ namespace
   SgArrayType*
   ArrayType::find(SgType* n)
   {
-    SgArrayType* res = sg::dispatch(ArrayType(), n);
+    SgArrayType* res = sg::dispatch(ArrayType{}, n);
 
     return res;
   }
@@ -80,7 +82,7 @@ namespace
     void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
     // base cases for expressions
-    //~ void handle(SgExpression&)            { res = NULL; }
+    //~ void handle(SgExpression&)            { res = nullptr; }
     void handle(SgRangeExp& n)            { res = &n; }
     void handle(SgAdaAttributeExp& n)     { res = &n; }
 
@@ -88,7 +90,7 @@ namespace
     void handle(SgTypeExpression& n)      { res = recurse(n.get_type()); }
 
     // base case for types
-    //~ void handle(SgType& n)                { res = NULL; }
+    //~ void handle(SgType& n)                { res = nullptr; }
 
     // type expressions
     void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
@@ -163,9 +165,9 @@ namespace
   ArrayBounds::find(SgType* n, SgArrayType* baseType)
   {
     if (!baseType)
-      return ArrayBounds::ReturnType();
+      return ArrayBounds::ReturnType{};
 
-    return sg::dispatch(ArrayBounds(), n);
+    return sg::dispatch(ArrayBounds{}, n);
   }
 
   ArrayBounds::ReturnType
@@ -293,6 +295,37 @@ namespace
   {
     return find(n, dim);
   }
+
+  void convertSymbolTablesToCaseSensitive_internal(SgNode* node)
+  {
+    using SymbolTableEntry    = std::pair<const SgName, SgSymbol*>;
+    using TmpSymbolTableEntry = std::pair<SgName, SgSymbol*>;
+
+    SgScopeStatement*   scopestmt = isSgScopeStatement(node);
+    if (!scopestmt) return;
+
+    SgSymbolTable&      sytable  = SG_DEREF(scopestmt->get_symbol_table());
+    ROSE_ASSERT(sytable.isCaseInsensitive());
+
+    rose_hash_multimap& symap    = SG_DEREF(sytable.get_table());
+    const size_t        mapsize  = symap.size();
+
+    // store all entries for later use
+    std::vector<TmpSymbolTableEntry> tmp;
+
+    // std::for_each(symap.begin(), symap.end(), std::back_inserter(tmp));
+    for (SymbolTableEntry& el : symap)
+      tmp.push_back(el);
+
+    symap.clear();
+    sytable.setCaseInsensitive(false);
+
+    //~ std::for_each(tmp.begin(), tmp.end(), boost::inserter(symap, symap.end()));
+    for (TmpSymbolTableEntry& elTmp : tmp)
+      symap.insert(elTmp);
+
+    ROSE_ASSERT(symap.size() == mapsize);
+  }
 }
 
 namespace SageInterface
@@ -313,7 +346,7 @@ namespace ada
   }
 
   std::pair<SgArrayType*, std::vector<SgExpression*> >
-  flattenArrayType(SgType* atype)
+  getArrayTypeInfo(SgType* atype)
   {
     SgArrayType* restype = ArrayType::find(atype);
 
@@ -324,7 +357,7 @@ namespace ada
   range(const SgAdaAttributeExp& n)
   {
     if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
-      return NULL;
+      return nullptr;
 
     const size_t dim = dimValue(SG_DEREF(n.get_args()));
 
@@ -467,18 +500,48 @@ namespace ada
   //
   // \todo move code below to Ada to C++ translator
 
-  /// Traversal to change the comment style from Ada to C++
-  struct CommentCxxifier : AstSimpleProcessing
-  {
-    explicit
-    CommentCxxifier(bool useLineComments)
-    : AstSimpleProcessing(),
-      prefix(useLineComments ? "//" : "/*"),
-      suffix(useLineComments ? ""   : "*/"),
-      commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
-    {}
 
-    void visit(SgNode*) ROSE_OVERRIDE;
+  struct ConversionTraversal : AstSimpleProcessing
+  {
+      explicit
+      ConversionTraversal(std::function<void(SgNode*)>&& conversionFn)
+      : AstSimpleProcessing(), fn(std::move(conversionFn))
+      {}
+
+      void visit(SgNode*) ROSE_OVERRIDE;
+
+    private:
+      std::function<void(SgNode*)> fn;
+
+      ConversionTraversal()                                      = delete;
+      ConversionTraversal(const ConversionTraversal&)            = delete;
+      ConversionTraversal(ConversionTraversal&&)                 = delete;
+      ConversionTraversal& operator=(ConversionTraversal&&)      = delete;
+      ConversionTraversal& operator=(const ConversionTraversal&) = delete;
+  };
+
+  void ConversionTraversal::visit(SgNode* n)
+  {
+    fn(n);
+  }
+
+
+  /// Traversal to change the comment style from Ada to C++
+  struct CommentCxxifier
+  {
+      explicit
+      CommentCxxifier(bool useLineComments)
+      : prefix(useLineComments ? "//" : "/*"),
+        suffix(useLineComments ? ""   : "*/"),
+        commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
+      {}
+
+      CommentCxxifier& operator=(CommentCxxifier&&)      = default;
+      CommentCxxifier(CommentCxxifier&&)                 = default;
+      CommentCxxifier(const CommentCxxifier&)            = default;
+      CommentCxxifier& operator=(const CommentCxxifier&) = default;
+
+      void operator()(SgNode*) const;
 
     private:
       //~ bool lineComments;
@@ -487,13 +550,10 @@ namespace ada
       const PreprocessingInfo::DirectiveType commentKind;
 
       CommentCxxifier()                                  = delete;
-      CommentCxxifier(const CommentCxxifier&)            = delete;
-      CommentCxxifier(CommentCxxifier&&)                 = delete;
-      CommentCxxifier& operator=(CommentCxxifier&&)      = delete;
-      CommentCxxifier& operator=(const CommentCxxifier&) = delete;
   };
 
-  void CommentCxxifier::visit(SgNode* n)
+
+  void CommentCxxifier::operator()(SgNode* n) const
   {
     SgLocatedNode* node = isSgLocatedNode(n);
     if (node == nullptr) return;
@@ -517,14 +577,296 @@ namespace ada
     }
   }
 
-  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ROSE_ASSERT(root);
 
-    CommentCxxifier adaToCxxCommentConverter{cxxLineComments};
+    ConversionTraversal converter(std::move(fn));
 
-    adaToCxxCommentConverter.traverse(root, preorder);
+    converter.traverse(root, preorder);
   }
+
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments)
+  {
+    conversionTraversal(CommentCxxifier{cxxLineComments}, root);
+  }
+
+
+  void convertToCaseSensitiveSymbolTables(SgNode* root)
+  {
+    conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
+  }
+
+  /*
+  template<class T>
+  T powInt(T num, size_t exp, size_t res = 1)
+  {
+    if (exp == 0)
+      return res;
+
+    if ((exp % 2) == 0)
+      return powInt(num*num, exp/2, res);
+
+    return powInt(num, exp-1, num*res);
+  }
+*/
+
+namespace
+{
+  bool
+  isBasedDelimiter(char ch)
+  {
+    return ch == '#' || ch == ':';
+  }
+
+  bool
+  isExponentChar(char ch)
+  {
+    return ch == 'E' || ch == 'e';
+  }
+
+  std::pair<size_t, bool>
+  check(size_t s, size_t m)
+  {
+    return std::make_pair(s, s < m);
+  }
+
+  std::pair<size_t, bool>
+  char2Val(char c, size_t max)
+  {
+    using ResultType = std::pair<size_t, bool>;
+
+    if ((c >= '0') && (c <= '9'))
+      return check(c - '0', max);
+
+    if ((c >= 'A') && (c <= 'F'))
+      return check(c - 'A' + 10, max);
+
+    if ((c >= 'a') && (c <= 'f'))
+      return check(c - 'a' + 10, max);
+
+    return ResultType{0, false};
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseDec(const char* buf, size_t base = 10)
+  {
+    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+
+    T res = 0;
+
+    while (*buf != 0)
+    {
+      const auto v = char2Val(*buf, base);
+
+      if (!v.second)
+        return std::make_pair(res, buf);
+
+      res = res*base + v.first;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+  template <class T>
+  std::pair<T, const char*>
+  parseFrac(const char* buf, size_t base = 10)
+  {
+    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+
+    T      res = 0;
+    size_t divisor = 1*base;
+
+    while ((*buf != 0) && (!isBasedDelimiter(*buf)))
+    {
+      const auto v = char2Val(*buf, base);
+
+      ROSE_ASSERT(v.second);
+
+      T val = v.first;
+
+      res += val/divisor;
+      divisor = divisor*base;
+
+      ++buf;
+
+      // skip underscores
+      // \note (this is imprecise, since an underscore must be followed
+      //       by an integer.
+      while (*buf == '_') ++buf;
+    }
+
+    return std::make_pair(res, buf);
+  }
+
+
+  std::pair<int, const char*>
+  parseExp(const char* buf)
+  {
+    long int exp = 0;
+
+    if (isExponentChar(*buf))
+    {
+      ++buf;
+      const bool positiveE = (*buf != '-');
+
+      // skip sign
+      if (!positiveE || (*buf == '+')) ++buf;
+
+      std::tie(exp, buf) = parseDec<long int>(buf, 10);
+
+      if (!positiveE) exp = -exp;
+    }
+
+    return std::make_pair(exp, buf);
+  }
+
+  template <class T>
+  T computeLiteral(T val, int base, int exp)
+  {
+    return val * std::pow(base, exp);
+  }
+
+
+  long int
+  basedLiteral(long int res, const char* cur, int base)
+  {
+    int exp = 0;
+
+    ROSE_ASSERT(isBasedDelimiter(*cur));
+
+    ++cur;
+    base = res;
+
+    std::tie(res, cur) = parseDec<long int>(cur, base);
+
+    if (isBasedDelimiter(*cur))
+    {
+      ++cur;
+
+      std::tie(exp, cur) = parseExp(cur);
+    }
+
+    return computeLiteral(res, base, exp);
+  }
+} // anonymous
+
+
+int convertIntLiteral(const char* img)
+{
+  long int    res  = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(res, cur) = parseDec<long int>(cur);
+
+  if (isBasedDelimiter(*cur))
+  {
+    return basedLiteral(res, cur, base);
+  }
+
+  if (*cur == '.')
+  {
+    throw std::logic_error("SageInterfaceAda.C: Ada decimal literals not yet handled");
+
+    //~ long int decimal = 0;
+
+    //~ ++cur;
+    //~ std::tie(decimal, cur) = parseDec<long int>(cur);
+  }
+
+  std::tie(exp, cur) = parseExp(cur);
+
+  //~ logWarn() << "r: "
+            //~ << res << ' ' << base << '^' << exp << '\n'
+            //~ << std::endl;
+
+  return computeLiteral(res, base, exp);
+}
+
+std::string convertStringLiteral(const char* textrep)
+{
+  ROSE_ASSERT(textrep);
+
+  std::stringstream buf;
+  const char        delimiter = *textrep;
+  ROSE_ASSERT(delimiter == '"' || delimiter == '%');
+
+  ++textrep;
+  while (*(textrep+1))
+  {
+    // a delimiter within a text requires special handling
+    //   -> skip the first occurrence if the delimiter is doubled
+    if (*textrep == delimiter)
+    {
+      ++textrep;
+      ROSE_ASSERT(*textrep == delimiter);
+    }
+
+    buf << *textrep;
+    ++textrep;
+  }
+
+  return std::move(buf).str();
+}
+
+
+long double convertRealLiteral(const char* img)
+{
+  std::string litText{img};
+
+  boost::replace_all(litText, "_", "");
+
+  // handle 'normal' real literals
+  if (litText.find_first_of("#:") == std::string::npos)
+  {
+    // logWarn() << "R: " << conv<long double>(litText) << std::endl;
+    return boost::lexical_cast<long double>(litText);
+  }
+
+  // handle based real literals
+  long double dec  = 0;
+  long double frac = 0;
+  int         base = 10;
+  int         exp  = 0;
+  const char* cur  = img;
+
+  std::tie(base, cur) = parseDec<long int>(cur);
+  ROSE_ASSERT(isBasedDelimiter(*cur));
+
+  ++cur;
+  std::tie(dec, cur) = parseDec<long double>(cur, base);
+
+  if (*cur == '.')
+  {
+    ++cur;
+    std::tie(frac, cur) = parseFrac<long double>(cur, base);
+  }
+
+  const long double res = dec + frac;
+
+  ROSE_ASSERT(isBasedDelimiter(*cur));
+  ++cur;
+
+  std::tie(exp, cur) = parseExp(cur);
+
+/*
+    logWarn() << "r: "
+            << res << ' ' << dec << '+' << frac << ' ' << base << ' ' << exp << '\n'
+            << res * base
+            << std::endl;
+*/
+  return computeLiteral(res, base, exp);
+}
 
 } // Ada
 } // SageInterface

@@ -4,12 +4,19 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
-#include "BinaryControlFlow.h"
+#include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
+#include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
+#include <Rose/BinaryAnalysis/Unparser/M68k.h>
+#include <Rose/BinaryAnalysis/Unparser/Mips.h>
+#include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
+#include <Rose/BinaryAnalysis/Unparser/X86.h>
 #include "Diagnostics.h"
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::Unparser;
 
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {

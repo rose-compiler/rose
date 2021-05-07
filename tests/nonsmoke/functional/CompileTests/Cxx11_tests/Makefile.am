@@ -473,7 +473,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2012_23.C \
    test2014_46.C \
    test2015_11.C \
-   test2016_40.C \
    test2019_15.C \
    test2019_43.C \
    test2019_44.C \
@@ -913,10 +912,15 @@ TESTCODE_CURRENTLY_FAILING = \
 # NOTE: test2012_10.C works on with GNU 5.1, but not GNU 6.1 (something different in the header files, not handled by EDG 4.12).
 # Priority to fix: test2014_85.C, test2015_11.C, test2016_41.C, test2017_17.C
 
+# NP 4/23/21 Test test2016_40.C fails when given -std=c++14 flag but will pass when given the -std=c++11 flag.
+
 if USING_INTEL_COMPILER
   TESTCODE_CURRENTLY_FAILING += \
+    test2016_40.C \
     rose-2037.C
 else
+  TESTCODES_REQUIRED_TO_PASS += \
+    test2016_40.C 
 if ROSE_USING_GCC_VERSION_LATER_6_1
   TESTCODES_REQUIRED_TO_PASS += \
     rose-2037.C
@@ -1236,7 +1240,14 @@ TEST_TRANSLATOR=../../testTranslator
 #########
 # ROSE_FLAGS
 
-LANG_FLAGS = -std=c++11
+
+# NP 4/23/21 C++14 flag is needed in order to parse the boost headers which use C++14.
+
+if USING_INTEL_COMPILER
+   LANG_FLAGS = -std=c++14
+else
+   LANG_FLAGS = -std=c++11
+endif
 
 ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND

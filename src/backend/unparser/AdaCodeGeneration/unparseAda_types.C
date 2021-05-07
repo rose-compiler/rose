@@ -69,7 +69,11 @@ namespace
 
     void handle(SgAdaSubtype& n)
     {
-      type(n.get_base_type());
+      ROSE_ASSERT(!n.get_fromRootType() || n.get_constraint());
+
+      if (!n.get_fromRootType())
+        type(n.get_base_type());
+
       support_opt(n.get_constraint());
     }
 

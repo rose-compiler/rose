@@ -2,11 +2,11 @@
 #define ROSE_BatSupport_H
 
 #include <rose.h>
-#include <BinaryFeasiblePath.h>                         // rose
-#include <BinarySerialIo.h>                             // rose
-#include <BinarySymbolicExpr.h>                         // rose
-#include <Partitioner2/Function.h>                      // rose
-#include <Partitioner2/Partitioner.h>                   // rose
+#include <Rose/BinaryAnalysis/FeasiblePath.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>

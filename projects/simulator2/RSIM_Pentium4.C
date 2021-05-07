@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Pentium4.h"
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;

@@ -5,11 +5,11 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "SymbolicSemantics2.h"
-#include "PartialSymbolicSemantics2.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
 #include "CommandLine.h"
-#include "DispatcherX86.h"
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 #include "Diagnostics.h"
 #include "x86InstructionProperties.h"
 

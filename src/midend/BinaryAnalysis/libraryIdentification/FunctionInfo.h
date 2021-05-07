@@ -3,10 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BinaryAstHash.h>
+#include <Rose/BinaryAnalysis/AstHash.h>
 #include "Combinatorics.h"
-#include <Partitioner2/Partitioner.h>
-#include <Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 /** LibraryIdentification.
  *
  *  This namespace encapsulates function for FLIRT ( Fast Library

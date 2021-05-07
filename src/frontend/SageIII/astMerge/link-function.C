@@ -82,11 +82,15 @@ class LinkFunctionAcrossFiles {
       std::map< std::string, std::map< SgFunctionSymbol *, FunctionDeclTriplet > > & name_map
     ) const {
 
-//    std::cout << "#  LinkFunctionAcrossFiles::build_name_symbol_decls_map" << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+      std::cout << "#  LinkFunctionAcrossFiles::build_name_symbol_decls_map" << std::endl;
+#endif
 
       std::map<SgFunctionDeclaration *, FunctionDeclTriplet> decl_triplet_map;
       for (auto decl: decls.decls) {
-//      std::cout << "#    decl = " << std::hex << decl << " ( " << decl->class_name() << " )" << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+        std::cout << "#    decl = " << std::hex << decl << " ( " << decl->class_name() << " ) : " << decl->get_name() << std::endl;
+#endif
 
         SgFunctionDeclaration * first_nondef = isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
         ROSE_ASSERT(first_nondef != NULL);
@@ -100,7 +104,9 @@ class LinkFunctionAcrossFiles {
       }
 
       for (auto sym: symbols.symbols) {
-//      std::cout << "#    sym = " << std::hex << sym << " ( " << sym->class_name() << " )" << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+        std::cout << "#    sym = " << std::hex << sym << " ( " << sym->class_name() << " ) : " << sym->get_name() << std::endl;
+#endif
 
         SgFunctionDeclaration * decl = isSgFunctionDeclaration(sym->get_declaration());
         ROSE_ASSERT(decl != NULL);
@@ -112,7 +118,16 @@ class LinkFunctionAcrossFiles {
           std::cerr << "  decl->get_definingDeclaration         = " << std::hex << decl->get_definingDeclaration()         << std::endl;
         }
         ROSE_ASSERT(decl_triplet_map.find(decl) != decl_triplet_map.end());
-        name_map[sym->get_mangled_name().getString()][sym] = decl_triplet_map[decl];
+
+        SgFunctionType * ftype = isSgFunctionType(decl->get_type());
+        ROSE_ASSERT(ftype != nullptr);
+
+        std::string name = decl->get_qualified_name().getString();
+        for (auto t: ftype->get_arguments()) {
+          name += "__" + t->get_mangled().getString();
+        }
+
+        name_map[name][sym] = decl_triplet_map[decl];
       }
     }
 
@@ -133,17 +148,23 @@ class LinkFunctionAcrossFiles {
       std::map< std::string, std::map< SgFunctionSymbol *, FunctionDeclTriplet > > name_map;
       build_name_symbol_decls_map(name_map);
 
-//    std::cout << "#  LinkFunctionAcrossFiles::apply" << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+      std::cout << "#  LinkFunctionAcrossFiles::apply" << std::endl;
+#endif
 
       for (auto p: name_map) {
         ROSE_ASSERT(p.second.size() > 0);
 
-//      std::cout << "#    " << p.first << " -> " << p.second.size() << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+        std::cout << "#    " << p.first << " -> " << p.second.size() << std::endl;
+#endif
 
         SgFunctionSymbol * symbol = select_shared_function_symbol(p.first, p.second);
         if (symbol == NULL) continue; // Case of a declaration with file-scope
 
-//      std::cout << "#      symbol = " << std::hex << symbol << " ( " << symbol->class_name() << " )" << std::endl;
+#if DEBUG_LinkFunctionAcrossFiles
+        std::cout << "#      symbol = " << std::hex << symbol << " ( " << symbol->class_name() << " )" << std::endl;
+#endif
 
         SgFunctionDeclaration * first_nondef_decl = p.second[symbol].first_nondef_decl;
         ROSE_ASSERT(first_nondef_decl != NULL);

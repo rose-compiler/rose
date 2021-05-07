@@ -818,17 +818,20 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 
   // bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
 
+#if 0
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
      bool header_file_unparsing_optimization             = false;
      bool header_file_unparsing_optimization_source_file = false;
      bool header_file_unparsing_optimization_header_file = false;
 
-     if (sageFilePtr->get_header_file_unparsing_optimization() == true)
+  // DQ (4/24/2021): Trying to debug the header file optimization support.
+  // if (sageFilePtr->get_header_file_unparsing_optimization() == true)
         {
           header_file_unparsing_optimization = true;
 
-          if (sageFilePtr->get_header_file_unparsing_optimization_source_file() == true)
+       // DQ (4/24/2021): Trying to debug the header file optimization support.
+       // if (sageFilePtr->get_header_file_unparsing_optimization_source_file() == true)
              {
                ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_header_file() == false);
 #if 0
@@ -839,7 +842,9 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
             else
              {
                ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_source_file() == false);
-               if (sageFilePtr->get_header_file_unparsing_optimization_header_file() == true)
+
+            // DQ (4/24/2021): Trying to debug the header file optimization support.
+            // if (sageFilePtr->get_header_file_unparsing_optimization_header_file() == true)
                   {
 #if 0
                     printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
@@ -854,13 +859,15 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 #endif
         }
 
-#if 0
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+     printf ("In attachPreprocessingInfo(): header_file_unparsing_optimization_header_file                    = %s \n",header_file_unparsing_optimization_header_file ? "true" : "false");
      printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization()             = %s \n",sageFilePtr->get_header_file_unparsing_optimization() ? "true" : "false");
      printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization_source_file() = %s \n",sageFilePtr->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
      printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",sageFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
 #if 0
+  // DQ (4/24/2021): This was diabled in 2020 as part of the header file unparsing support.
      if (header_file_unparsing_optimization_source_file == true)
         {
 #if 0
@@ -868,6 +875,13 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 #endif
           processAllFiles = false;
         }
+#endif
+
+#else
+#if DEBUG_ATTACH_PREPROCESSOR_INFO
+  // DQ (4/24/2021): Trying to debug the header file optimization support.
+     printf ("In attachPreprocessingInfo(): Skipping header_file_unparsing_optimization preamble \n");
+#endif
 #endif
 
 #if 0
@@ -916,7 +930,9 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
   // traverseWithinFile, so that the whole AST will be processed (which is in a SgSourceFile 
   // using a name without the "_preprocessed" suffix, though the statements in the file are 
   // marked with a source position from the filename with the "_preprocessed" suffix).
-     bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
+
+  // DQ (4/24/2021): This is not used and generates a compiler warning.
+  // bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
 #if 0
      printf ("####################################################################### \n");

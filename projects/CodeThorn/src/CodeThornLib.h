@@ -24,7 +24,7 @@ namespace CodeThorn {
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]);
   void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject);
   void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root);
-  void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, SgProject* sageProject);
+  void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, FunctionCallMapping* funCallMapping);
   void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
   void optionallyGenerateTraversalInfoAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);

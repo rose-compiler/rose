@@ -3,8 +3,8 @@
 #include "sage3basic.h"
 #include "SageBuilderAsm.h"
 
-#include "InstructionEnumsX86.h"
-#include "BinaryLoader.h"
+#include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 
 #include <boost/foreach.hpp>
 #include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]

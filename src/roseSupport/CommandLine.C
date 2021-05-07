@@ -2,7 +2,7 @@
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <BinarySmtCommandLine.h>
+#include <Rose/BinaryAnalysis/SmtCommandLine.h>
 #endif
 
 #include <boost/algorithm/string/predicate.hpp>

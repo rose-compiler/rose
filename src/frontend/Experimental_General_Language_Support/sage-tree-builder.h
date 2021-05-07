@@ -118,10 +118,12 @@ public:
 
    void Enter(SgFunctionParameterList* &, SgScopeStatement* &, const std::string &, SgType*, bool);
    void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<LanguageTranslation::FormalParameter> &);
+   void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<std::string> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
                                         const LanguageTranslation::FunctionModifierList &, bool);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
+   void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, const std::string &result_name = "");
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -130,10 +132,8 @@ public:
    void Leave(SgDerivedTypeStatement*);
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
-   void Leave(SgVariableDeclaration*);
-
-// Multiple variable form
    void Enter(SgVariableDeclaration* &, SgType*, std::list<std::tuple<std::string, SgType*, SgExpression*>> &);
+   void Leave(SgVariableDeclaration*);
    void Leave(SgVariableDeclaration*, std::list<LanguageTranslation::ExpressionKind> &);
 
    void Enter(SgEnumDeclaration* &, const std::string &);
@@ -232,12 +232,12 @@ private:
    LanguageEnum language_;
    TraversalContext context_;
    std::map<const std::string, SgVarRefExp*> forward_var_refs_;
-   std::map<const std::string, SgPointerType*> forward_type_refs_;
+   std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
-   void reset_forward_type_ref(const std::string &type_name, SgNamedType* type);
+   void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
 public:
    bool is_Fortran_language() {return (language_ == e_language_fortran);}
@@ -312,6 +312,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildAggregateInitializer_nfi(SgExprListExp* initializers, SgType* type = nullptr);
    SgExpression*  buildAsteriskShapeExp_nfi();
    SgExpression*  buildNullExpression_nfi();
+   SgExpression*  buildFunctionCallExp(SgFunctionCallExp*);
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 // Other
@@ -319,6 +320,10 @@ namespace SageBuilderCpp17 {
 // This is new and should be added to SageBuilder?
    SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
                                                         SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
+
+// Non builder helper functions
+   void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
+
 
 } // namespace SageBuilderCpp17
 } // namespace builder

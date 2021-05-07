@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BinaryAstHash.h>
+#include <Rose/BinaryAnalysis/AstHash.h>
 #include <time.h>
 #include "Combinatorics.h"
 

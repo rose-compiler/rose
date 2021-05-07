@@ -7779,7 +7779,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
             // Rasmussen (11/14/2017): Added check to ensure that Ada is configured
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-               printf ("Todo: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
+               //~ printf ("Todo: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
 
             // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.

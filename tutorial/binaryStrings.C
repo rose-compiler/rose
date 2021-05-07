@@ -2,8 +2,8 @@
 #include <rose.h>
 
 #include <boost/foreach.hpp>
-#include <Partitioner2/Engine.h>
-#include <BinaryString.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/String.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

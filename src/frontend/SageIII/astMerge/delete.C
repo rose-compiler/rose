@@ -2,6 +2,13 @@
 #include "sage3basic.h"
 #include "fixupTraversal.h"
 
+#define DEBUG_DeleteDisconnectedNode_ordered_delete 0
+#if DEBUG_DeleteDisconnectedNode_ordered_delete
+#  include "wholeAST_API.h"
+#  include "memory-pool-snapshot.h"
+#endif
+
+
 namespace Rose {
 namespace AST {
 
@@ -51,6 +58,10 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
       }
     }
 
+#if DEBUG_DeleteDisconnectedNode_ordered_delete
+    unsigned cnt = 0;
+#endif
+
     // Delete starting from the roots
     while (roots.size() > 0) {
       std::vector<SgNode *> next;
@@ -59,6 +70,13 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
 
         // Only delete if it has not already been deleted
         if (r->get_freepointer() == AST_FileIO::IS_VALID_POINTER()) {
+#if DEBUG_DeleteDisconnectedNode_ordered_delete
+          std::cout << "Delete[" << std::dec << cnt << "] " << std::hex << r << " " << r->class_name() << std::endl;
+//          std::ostringstream oss; oss << "astmerge-delete-" << cnt;
+//          generateWholeGraphOfAST(oss.str());
+//          Rose::MemPool::snapshot(oss.str()+".csv");
+          cnt++;
+#endif
           delete r;
         }
 
@@ -70,6 +88,11 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
       roots.clear();
       roots.insert(roots.end(), next.begin(), next.end());
     }
+#if DEBUG_DeleteDisconnectedNode_ordered_delete
+//    std::ostringstream oss; oss << "astmerge-delete-" << cnt;
+//    generateWholeGraphOfAST(oss.str());
+//    Rose::MemPool::snapshot(oss.str()+".csv");
+#endif
   }
 
   void apply(SgProject * project) {
@@ -78,7 +101,6 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
     recursive_saves(SgNode::get_globalTypeTable());
 
     traverseMemoryPool();
-
     ordered_delete();
   }
 };

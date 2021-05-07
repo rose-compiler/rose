@@ -261,6 +261,7 @@ HEADER_EXPRESSION_LIST_EXPRESSION_START
 
           SgExpressionPtrList& get_expressions();
           const SgExpressionPtrList& get_expressions() const;
+          void set_expressions(SgExpressionPtrList e_list);
 
 HEADER_LIST_DECLARATIONS
 
@@ -570,6 +571,13 @@ HEADER_STRING_VALUE_EXPRESSION_START
           virtual bool isLValue() const $ROSE_OVERRIDE;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL Recursively call up the chain to answer the child
 
+       // PP (4/25/21) implement usesSingleQuote and usesDoubleQuote based on
+       //              stringDelimiter for backward compatibility.
+          bool get_usesSingleQuotes() const    { return get_stringDelimiter() == '\''; }
+          bool get_usesDoubleQuotes() const    { return get_stringDelimiter() == '"'; }
+
+          void set_usesSingleQuotes(bool usesSingleQuotes);
+          void set_usesDoubleQuotes(bool usesDoubleQuotes);
 HEADER_STRING_VALUE_EXPRESSION_END
 
 
@@ -687,6 +695,10 @@ HEADER_JOVIAL_BIT_VALUE_EXPRESSION_END
 HEADER_ADA_TASK_REF_EXPRESSION_START
 //~ SgType* get_type() const $ROSE_OVERRIDE;
 HEADER_ADA_TASK_REF_EXPRESSION_END
+
+HEADER_ADA_RENAMING_REF_EXPRESSION_START
+//~ SgType* get_type() const $ROSE_OVERRIDE;
+HEADER_ADA_RENAMING_REF_EXPRESSION_END
 
 HEADER_ADA_ATTRIBUTE_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
@@ -1683,6 +1695,10 @@ HEADER_NULL_EXPRESSION_START
 
 HEADER_NULL_EXPRESSION_END
 
+HEADER_ADA_OTHERS_EXPRESSION_START
+HEADER_ADA_OTHERS_EXPRESSION_END
+
+
 HEADER_VARIANT_EXPRESSION_START
 HEADER_VARIANT_EXPRESSION_END
 
@@ -1860,7 +1876,7 @@ HEADER_JOVIAL_TABLE_PRESET_EXP_END
 
 // Rasmussen (4/9/2021): Added SgJovialPresetPositionExp to support initialization of Jovial tables
 HEADER_JOVIAL_PRESET_POSITION_EXP_START
-int replace_expression (SgExpression *o, SgExpression *n);
+int replace_expression (SgExpression *o, SgExpression *n) $ROSE_OVERRIDE;
 HEADER_JOVIAL_PRESET_POSITION_EXP_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
@@ -3253,6 +3269,9 @@ const SgExpressionPtrList&
 SgExprListExp::get_expressions() const
    { return p_expressions; }
 
+void SgExprListExp::set_expressions(SgExpressionPtrList e_list) 
+   { p_expressions= e_list; }
+
 void
 SgExprListExp::append_expression(SgExpression *what)
    { what->set_parent(this); p_expressions.push_back(what); }
@@ -4138,6 +4157,32 @@ $CLASSNAME::~$CLASSNAME()
    }
 #endif
 
+void $CLASSNAME::set_usesSingleQuotes(bool usesSingleQuotes)
+{
+  if (usesSingleQuotes)
+  {
+    set_stringDelimiter('\'');
+  }
+  else if (get_usesSingleQuotes())
+  {
+    // unset only if the current delimiter uses single quotes
+    set_stringDelimiter(0);
+  }
+}
+
+void $CLASSNAME::set_usesDoubleQuotes(bool usesDoubleQuotes)
+{
+  if (usesDoubleQuotes)
+  {
+    set_stringDelimiter('"');
+  }
+  else if (get_usesDoubleQuotes())
+  {
+    // unset only if the current delimiter uses double quotes
+    set_stringDelimiter(0);
+  }
+}
+
 SOURCE_STRING_VALUE_EXPRESSION_END
 
 
@@ -4358,6 +4403,40 @@ SgType* SgAdaTaskRefExp::get_type() const
   return SgAdaTaskType::createType(get_decl(), NULL);
 }
 SOURCE_ADA_TASK_REF_EXPRESSION_END
+
+SOURCE_ADA_RENAMING_REF_EXPRESSION_START
+SgType* SgAdaRenamingRefExp::get_type() const
+{
+  SgAdaRenamingDecl* decl = get_decl();
+  ROSE_ASSERT(decl);
+
+  SgSymbol* sy = decl->get_renamed();
+  ROSE_ASSERT(sy);
+
+  while (SgAdaRenamingSymbol* rensy = isSgAdaRenamingSymbol(sy))
+  {
+    decl = rensy->get_declaration();
+    ROSE_ASSERT(decl);
+
+    sy = decl->get_renamed();
+  }
+
+  if (SgVariableSymbol* varsy = isSgVariableSymbol(sy))
+  {
+    SgInitializedName* var = varsy->get_declaration();
+
+    ROSE_ASSERT(var);
+    return var->get_type();
+  }
+
+
+  // not sure what to do for packages
+  //   renamed functions are handled else where
+  ROSE_ASSERT(isSgAdaPackageSymbol(sy));
+  return SgTypeVoid::createType();
+}
+
+SOURCE_ADA_RENAMING_REF_EXPRESSION_END
 
 
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_START
@@ -6721,10 +6800,11 @@ SgCastExp::cast_type_to_string ( enum cast_type_enum cast_type )
          case e_dynamic_cast: s = "e_dynamic_cast"; break;
          case e_reinterpret_cast: s = "e_reinterpret_cast"; break;
          case e_safe_cast: s = "e_safe_cast"; break;
+         case e_ada_type_qualification: s = "e_ada_type_qualification"; break;
          case e_last_cast: s = "e_last_cast"; break;
 
          default:
-              printf ("ERROR: default reach in switch: cast_type = %d \n",cast_type);
+              printf ("ERROR: default reached in switch: cast_type = %d \n",cast_type);
        }
 
      return s;
@@ -8789,6 +8869,9 @@ SOURCE_GET_TYPE_CLASS_EXPRESSION_END
 
 SOURCE_NULL_EXPRESSION_START
 SOURCE_NULL_EXPRESSION_END
+
+SOURCE_ADA_OTHERS_EXPRESSION_START
+SOURCE_ADA_OTHERS_EXPRESSION_END
 
 SOURCE_VARIANT_EXPRESSION_START
 SOURCE_VARIANT_EXPRESSION_END

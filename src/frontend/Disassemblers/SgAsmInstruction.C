@@ -4,9 +4,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "BinaryNoOperation.h"
+#include <Rose/BinaryAnalysis/NoOperation.h>
 #include "Diagnostics.h"
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;

@@ -1,8 +1,8 @@
 #include <rose.h>
 
-#include <BinaryMagic.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/MagicNumber.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
 

@@ -12,7 +12,7 @@ static const char *description =
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 #include <boost/archive/xml_oarchive.hpp>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Stopwatch.h>
 
 using namespace Rose;

@@ -6,7 +6,7 @@ x86sim is a simulator for linux-x86 and linux-amd64. It's composed of
 three main parts:
 
 1. ROSE's instruction semantics layer simulates the execution of each
-   instruction.  The simulator uses ConcreteSemantics2.h and overrides
+   instruction.  The simulator uses ConcreteSemantics.h and overrides
    a few of the RISC operators in order to do things like intercepting
    system calls.  This part of the simulator is relatively small and
    simple since most of the code is part of the ROSE library itself.

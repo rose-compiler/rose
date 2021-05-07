@@ -1,7 +1,7 @@
 #include <rose.h>
 
-#include <BinarySourceLocations.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/SourceLocations.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

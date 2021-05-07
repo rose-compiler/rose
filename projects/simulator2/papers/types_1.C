@@ -4,9 +4,9 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
-#include "BinaryYicesSolver.h"
+#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include "SymbolicSemantics.h"
-#include "BinaryPointerDetection.h"
+#include <Rose/BinaryAnalysis/PointerDetection.h>
 
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics;

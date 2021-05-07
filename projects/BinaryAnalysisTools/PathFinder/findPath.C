@@ -4,25 +4,25 @@
 #include <PathFinder/semantics.h>
 
 #include <AsmUnparser_compat.h>
-#include <BinarySourceLocations.h>
-#include <BinarySymbolicExprParser.h>
-#include <BinaryYicesSolver.h>
+#include <Rose/BinaryAnalysis/SourceLocations.h>
+#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <CommandLine.h>
 #include <Diagnostics.h>
-#include <Partitioner2/CfgPath.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <rose_strtoull.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
-#include <SymbolicMemory2.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
