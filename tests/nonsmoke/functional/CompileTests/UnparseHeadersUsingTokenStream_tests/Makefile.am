@@ -42,7 +42,6 @@ TEST_SPECIMENS = test17 test0 test1 test2 test3 test5 test6 test7 test11 test12 
 # test8 (unclear what the issue is for this failing test (need to revisit).
 # test10 (this is the case of a heaer file included twice, not currently supported in the comment and CPP integration into the AST).
 
-
 EXTRA_DIST += $(TEST_SPECIMENS) UnparseHeadersTransformVisitorUsingTokens.h
 
 # DQ (11/2/2018): Test with -rose:unparse_tokens
