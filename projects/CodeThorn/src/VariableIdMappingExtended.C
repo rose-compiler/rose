@@ -12,11 +12,36 @@ namespace CodeThorn {
     _memPoolTraversal.traverseMemoryPool();
   }
 
+  void VariableIdMappingExtended::initTypeSizes() {
+    for(auto type:_memPoolTraversal.classTypes)
+      _typeSize[type]=unknownSizeValue();
+    for(auto type:_memPoolTraversal.arrayTypes)
+      _typeSize[type]=unknownSizeValue();
+    for(auto type:_memPoolTraversal.builtInTypes)
+      _typeSize[type]=unknownSizeValue();
+  }
+
+  void VariableIdMappingExtended::computeTypeSizes() {
+    for(auto tPair:_typeSize) {
+      if(tPair.second==unknownSizeValue()) {
+	SgType* t=tPair.first;
+	_typeSize[t]=computeTypeSize(t);
+      }
+    }
+  }
+
   void VariableIdMappingExtended::dumpTypeLists() {
     _memPoolTraversal.dumpClassTypes();
     _memPoolTraversal.dumpArrayTypes();
     cout<<"Number of class types: "<<_memPoolTraversal.classTypes.size()<<endl;
     cout<<"Number of array types: "<<_memPoolTraversal.arrayTypes.size()<<endl;
+  }
+
+  void VariableIdMappingExtended::dumpTypeSizes() {
+    cout<<"Type sizes:"<<endl;
+    for(auto tPair:_typeSize) {
+      cout<<tPair.first->unparseToString()<<" : "<<tPair.second<<endl;
+    }
   }
   
   std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
@@ -77,6 +102,12 @@ namespace CodeThorn {
 	registerNewSymbol(sym);
 	SgType* type=sym->get_type();
 	VariableId varId=variableId(sym);
+	{
+	  SgName name=sym->get_name();
+	  if(name == "limit_rate") {
+	    cout<<"REGISTERED(!!!): limit_rate : sym="<<sym<<endl;
+	  }
+	}
 	registerClassMemberVar(classType,varId);
 	getVariableIdInfoPtr(varId)->variableScope=VS_MEMBER;
 	setOffset(varId,offset);
@@ -136,6 +167,19 @@ namespace CodeThorn {
       } else {
 	_typeSize[type]=newTypeSize;
       }
+    }
+  }
+
+  CodeThorn::TypeSize VariableIdMappingExtended::computeTypeSize(SgType* type) {
+    return unknownSizeValue();
+  }
+
+  CodeThorn::TypeSize VariableIdMappingExtended::getTypeSizeNew(SgType* type) {
+    auto typeIter=_typeSize.find(type);
+    if(typeIter!=_typeSize.end()) {
+      return (*typeIter).second;
+    } else {
+      return unknownSizeValue();
     }
   }
 
@@ -327,11 +371,25 @@ namespace CodeThorn {
       for each param decl: setVarIdInfoFromType(param=varId->sym->type)
       registerStringLiterals(project);
    */
+  void VariableIdMappingExtended::registerClassMembersNew() {
+    for(auto classType:_memPoolTraversal.classTypes) {
+      registerClassMembers(classType, 0);
+      //cout<<"REGISTER CLASS MEMBERS OF:"<<classType->get_name()<<endl;
+    }
+  }
+
+  // SgInitializedName: SgName get_qualified_name();
+  // SgSymbol: SgName get_mangled_name(); SgDeclarationStatement* get_declaration();
+  // SgDeclarationStatement->SgVariableDeclaration: SgInitializedName * get_decl_item();
   
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
 
     createTypeLists();
-
+    initTypeSizes();
+    computeTypeSizes();
+    registerClassMembersNew();
+    //dumpTypeSizes();
+    //return;
     RoseAst ast(project);
     int ct=0;
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {

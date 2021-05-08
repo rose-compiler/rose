@@ -67,13 +67,16 @@ namespace CodeThorn {
       void visit(SgNode* node) {
 	if(SgClassType* ctype=isSgClassType(node)) {
 	  classTypes.insert(ctype);
-	}
-	if(SgArrayType* ctype=isSgArrayType(node)) {
+	} else if(SgArrayType* ctype=isSgArrayType(node)) {
 	  arrayTypes.insert(ctype);
+	} else {
+	  builtInTypes.insert(ctype);
 	}
       }
       std::unordered_set<SgClassType*> classTypes; // class, struct, union
       std::unordered_set<SgArrayType*> arrayTypes; // any dimension
+      std::unordered_set<SgArrayType*> builtInTypes; // all other pointers
+
       void dumpClassTypes() {
 	int i=0;
 	for(auto t:classTypes) {
@@ -95,8 +98,14 @@ namespace CodeThorn {
     };
     
     void createTypeLists();
+    void initTypeSizes();
+    void computeTypeSizes();
+    CodeThorn::TypeSize computeTypeSize(SgType* type);
+    CodeThorn::TypeSize getTypeSizeNew(SgType* type);
     void dumpTypeLists();
-
+    void dumpTypeSizes();
+    void registerClassMembersNew();
+    
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 
