@@ -31,6 +31,8 @@ namespace CodeThorn {
     void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
     CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
 
+    // true if consistency check passed
+    bool consistencyCheck(SgProject* project);
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
@@ -105,7 +107,10 @@ namespace CodeThorn {
     void dumpTypeLists();
     void dumpTypeSizes();
     void registerClassMembersNew();
-    
+    std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
+    std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
+    std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
+      
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 

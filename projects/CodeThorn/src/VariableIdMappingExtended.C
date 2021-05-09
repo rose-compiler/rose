@@ -43,6 +43,78 @@ namespace CodeThorn {
       cout<<tPair.first->unparseToString()<<" : "<<tPair.second<<endl;
     }
   }
+
+  list<SgVarRefExp*> VariableIdMappingExtended::structAccessesInsideFunctions(SgProject* project) {
+    list<SgVarRefExp*> varRefExpList;
+    list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+    for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
+      RoseAst ast(*i);
+      for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+	if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
+	  if(isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent())) {
+	    varRefExpList.push_back(varRefExp);
+	  }
+	}
+      }
+    }
+    return varRefExpList;
+  }
+
+  list<SgVarRefExp*> VariableIdMappingExtended::variableAccessesInsideFunctions(SgProject* project) {
+    list<SgVarRefExp*> varRefExpList;
+    list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+    for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
+      RoseAst ast(*i);
+      for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
+	if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
+	  if(!(isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent()))) {
+	    varRefExpList.push_back(varRefExp);
+	  }
+	}
+      }
+    }
+    return varRefExpList;
+  }
+
+  int32_t VariableIdMappingExtended::checkVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
+    int32_t numErrors=0;
+    // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
+    for(auto v:accesses) {
+      VariableId varId=variableId(v);
+      if(!varId.isValid()) {
+	// report error, and record error
+	numErrors++;
+	SgVariableSymbol* varSym=v->get_symbol();
+	cout<<"Error #"<<numErrors<<": "<<accessName<<" with unregistered symbol:"<<varSym<<": "<<varSym->get_name();
+	// print expression
+	SgExpression* eroot=v;
+	while(SgExpression* p=isSgExpression(eroot->get_parent()))
+	  eroot=p;
+	cout<<" : "<<eroot->unparseToString();
+	cout<<" : symbol(s) with same name:";
+	for(auto vPair : mappingSymToVarId) {
+	  if(vPair.first->get_name() == varSym->get_name()) {
+	    cout<<vPair.first<<" ";
+	  }
+	}
+	cout<<endl;
+      }
+    }
+    return numErrors;
+  }
+  
+  bool VariableIdMappingExtended::consistencyCheck(SgProject* project) {
+    list<SgVarRefExp*> varAccesses=variableAccessesInsideFunctions(project);
+    int32_t numVarErrors=checkVarRefExpAccessList(varAccesses,"var access");
+    list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+    int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
+    if(numVarErrors>0||numStructErrors) {
+      cout<<"\nSymbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
+    } else {
+      cout<<"Symbol consistency check PASSED."<<endl;
+    }
+    return numVarErrors==0 && numStructErrors==0;
+  }
   
   std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
     std::list<SgVariableDeclaration*> declVarList;
@@ -102,12 +174,6 @@ namespace CodeThorn {
 	registerNewSymbol(sym);
 	SgType* type=sym->get_type();
 	VariableId varId=variableId(sym);
-	{
-	  SgName name=sym->get_name();
-	  if(name == "limit_rate") {
-	    cout<<"REGISTERED(!!!): limit_rate : sym="<<sym<<endl;
-	  }
-	}
 	registerClassMemberVar(classType,varId);
 	getVariableIdInfoPtr(varId)->variableScope=VS_MEMBER;
 	setOffset(varId,offset);
@@ -207,6 +273,8 @@ namespace CodeThorn {
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     //computeVariableSymbolMapping1(project,maxWarningsCount);
     computeVariableSymbolMapping2(project,maxWarningsCount);
+    if(!consistencyCheck(project))
+      exit(1);
     //computeVariableSymbolMapping3(project,maxWarningsCount);
   }
 
@@ -378,9 +446,10 @@ namespace CodeThorn {
     }
   }
 
-  // SgInitializedName: SgName get_qualified_name();
+  // SgInitializedName: SgName get_qualified_name(); SgSymbol* search_for_symbol_from_symbol_table();
   // SgSymbol: SgName get_mangled_name(); SgDeclarationStatement* get_declaration();
   // SgDeclarationStatement->SgVariableDeclaration: SgInitializedName * get_decl_item();
+  // VarRefExp: SgVariableSymbol* get_symbol(); SgInitializedName * get_declaration()
   
   void VariableIdMappingExtended::computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount) {
 
