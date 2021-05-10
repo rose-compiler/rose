@@ -1855,8 +1855,10 @@ void Build(const parser::IfStmt&x, T* scope)
    // Pop true body scope
    SageBuilderCpp17::popScopeStack();
 
+   SgStatement* true_body_stmt = SageBuilderCpp17::wrapperBasicBlock(true_body);
+
    // Enter SageTreeBuilder
-   builder.Enter(if_stmt, conditional, true_body, nullptr /* false_body */);
+   builder.Enter(if_stmt, conditional, true_body_stmt, nullptr /* false_body */);
 
    // Leave SageTreeBuilder
    builder.Leave(if_stmt);
@@ -2860,9 +2862,22 @@ void Build(const parser::IfConstruct&x, T* scope)
    Build(std::get<1>(x.t), scope);              // Traverse Block
    SageBuilderCpp17::popScopeStack();           // Pop true body scope
 
+   // Else ifs
+   SgStatement* else_if_stmts{nullptr};
+   // Traverse list of else if blocks
+   // TODO: implement more than one else if clause
+   // Get back one SgIfStmt that is an else if clause that contains false bodies with all the subsequent else if clauses
+   Build(std::get<2>(x.t), else_if_stmts);
+
+   // Optional Else
    SgBasicBlock* false_body{nullptr};
    if (auto & else_block = std::get<3>(x.t)) {
-     Build(else_block.value(), false_body); // Traverse optional ElseBlock
+      Build(else_block.value(), false_body); // Traverse optional ElseBlock
+
+      if (else_if_stmts) {
+         // add false_body to the else if stmt
+         SageBuilderCpp17::set_false_body(else_if_stmts, false_body);
+      }
    }
 
    // EndIfStmt - std::optional<Name> v;
@@ -2871,9 +2886,17 @@ void Build(const parser::IfConstruct&x, T* scope)
       have_end_stmt_name = true;
    }
 
+   SgStatement* true_body_stmt  = SageBuilderCpp17::wrapperBasicBlock( true_body);
+   SgStatement* false_body_stmt = SageBuilderCpp17::wrapperBasicBlock(false_body);
+
+   if (else_if_stmts) {
+      // else_if_stmt becomes false body for main SgIfStmt
+      false_body_stmt = else_if_stmts;
+   }
+
    // Enter SageTreeBuilder
    SgIfStmt* if_stmt{nullptr};
-   builder.Enter(if_stmt, ifthen_expr, true_body, false_body, true /* is_ifthen */);
+   builder.Enter(if_stmt, ifthen_expr, true_body_stmt, false_body_stmt, true /* is_ifthen */, true /* has_end_stmt */);
 
    // Leave SageTreeBuilder
    builder.Leave(if_stmt);
@@ -2906,6 +2929,39 @@ void Build(const parser::IfConstruct::ElseBlock&x, SgBasicBlock* &false_body)
 
    // Pop false body scope
    SageBuilderCpp17::popScopeStack();
+}
+
+void Build(const std::list<parser::IfConstruct::ElseIfBlock> &x, SgStatement* &else_if_stmt)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ElseIfBlock>)\n";
+#endif
+
+   // std::tuple<Statement<ElseIfStmt>, Block> t;
+   // elseifstmt -   std::tuple<ScalarLogicalExpr, std::optional<Name>> t;
+
+   if (!x.empty()) {
+     auto & first_else_if = x.front();
+     SgExpression* conditional{nullptr};
+     Build(std::get<0>(std::get<0>(first_else_if.t).statement.t), conditional);
+
+     // Build true body and push scope
+     SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
+     SageBuilderCpp17::pushScopeStack(true_body);
+     // Traverse true body statement
+     SgScopeStatement* scope{nullptr};
+     Build(std::get<1>(first_else_if.t), scope);
+     // Pop true body scope
+     SageBuilderCpp17::popScopeStack();
+
+     SgStatement* true_body_stmt = SageBuilderCpp17::wrapperBasicBlock(true_body);
+
+     // Enter SageTreeBuilder  (don't leave SageTreeBuilder because this will become part of the main SgIfStmt
+     SgIfStmt* elseifstmt{nullptr};
+     builder.Enter(elseifstmt, conditional, true_body_stmt, nullptr /* false_body */, true /* is_ifthen */, false /* has_end_stmt */, true /* is_else_if */);
+
+     else_if_stmt = SageBuilderCpp17::wrapperIfStmt(elseifstmt);
+   }
 }
 
 template<typename T>
