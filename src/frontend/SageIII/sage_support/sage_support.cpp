@@ -387,13 +387,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                   }
                break;
              }
-             
-         // Ada: others=>  is represented using SgVoidVal    
-          case V_SgVoidVal:
-             {
-               s="others=>";  
-               break;
-             }
 
           default:
              {
