@@ -109,9 +109,9 @@ namespace CodeThorn {
     list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
     int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
     if(numVarErrors>0||numStructErrors) {
-      cout<<"\nSymbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
+      cout<<"\nINFO: ROSE AST Symbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
     } else {
-      cout<<"Symbol consistency check PASSED."<<endl;
+      cout<<"INFO: ROSE AST Symbol consistency check PASSED."<<endl;
     }
     return numVarErrors==0 && numStructErrors==0;
   }
