@@ -153,7 +153,7 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
-   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, bool is_ifthen = false);
+   void Enter(SgIfStmt* &, SgExpression*, SgStatement*, SgStatement*, bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
    void Leave(SgIfStmt*);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
@@ -317,13 +317,16 @@ namespace SageBuilderCpp17 {
    SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &);
 
 // Other
+   SgStatement* wrapperIfStmt(SgIfStmt* if_stmt);
+   SgStatement* wrapperBasicBlock(SgBasicBlock* basic_block);
    SgCommonBlockObject* buildCommonBlockObject(std::string name = "", SgExprListExp* expr_list = nullptr);
 // This is new and should be added to SageBuilder?
    SgFunctionCallExp* buildIntrinsicFunctionCallExp_nfi(const std::string &name,
                                                         SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
 
 // Non builder helper functions
-   void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
+   void set_false_body(SgStatement* &else_if_stmt, SgBasicBlock* false_body);
+   void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
 
 
 } // namespace SageBuilderCpp17
