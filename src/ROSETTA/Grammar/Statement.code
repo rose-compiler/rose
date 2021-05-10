@@ -2115,6 +2115,7 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_struct,             /*!< struct declaration */
                e_union,              /*!< union declaration */
                e_template_parameter, /*!< type parameter in a template declaration */
+               e_fortran_module,     /*!< A Fortran module declaration */
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
                e_java_parameter,     /*!< A Java parameter type declaration */
