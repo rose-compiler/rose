@@ -12897,6 +12897,19 @@ SgDerivedTypeStatement * SageBuilder::buildDerivedTypeStatement(const SgName& na
      return type_decl;
    }
 
+//! Build a Fortran module declaration.
+SgModuleStatement * SageBuilder::buildModuleStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+   {
+     SgClassDeclaration::class_types kind = SgClassDeclaration::e_fortran_module;
+     SgModuleStatement* module_stmt = buildClassDeclarationStatement_nfi <SgModuleStatement> (name, kind, scope);
+
+     setOneSourcePositionForTransformation(module_stmt);
+     ROSE_ASSERT(module_stmt->get_firstNondefiningDeclaration() != NULL);
+     setOneSourcePositionForTransformation(module_stmt->get_firstNondefiningDeclaration());
+
+     return module_stmt;
+   }
+
 //! Build a Jovial table declaration statement.  A Jovial table is essentially a C struct with an optional struct size.
 SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name,
                                                                 SgClassDeclaration::class_types kind,
