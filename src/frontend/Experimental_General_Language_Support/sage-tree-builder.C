@@ -2005,6 +2005,19 @@ SgExpression* buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs)
    return SageBuilder::buildOrOp_nfi(lhs, rhs);
 }
 
+SgExpression* buildMinusOp_nfi(SgExpression* i, bool is_prefix /* = true */)
+{
+   SgUnaryOp::Sgop_mode mode_enum;
+
+   if (is_prefix) {
+     mode_enum = SgUnaryOp::Sgop_mode::prefix;
+   } else {
+     mode_enum = SgUnaryOp::Sgop_mode::postfix;
+   }
+
+   return SageBuilder::buildMinusOp_nfi(i, mode_enum);
+}
+
 SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
 {
    return SageBuilder::buildSubtractOp_nfi(lhs, rhs);
@@ -2114,7 +2127,14 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
 
 void set_false_body(SgIfStmt* &if_stmt, SgBasicBlock* false_body)
 {
+   ROSE_ASSERT(if_stmt);
    if_stmt->set_false_body(false_body);
+}
+
+void set_need_paren(SgExpression* &expr)
+{
+   ROSE_ASSERT(expr);
+   expr->set_need_paren(true);
 }
 
 void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type)

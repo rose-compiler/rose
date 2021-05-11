@@ -298,6 +298,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildMinusOp_nfi(SgExpression* i, bool is_prefix = true);
 
 // Expressions
    SgExpression*  buildBoolValExp_nfi(bool value);
@@ -324,6 +325,7 @@ namespace SageBuilderCpp17 {
 
 // Non builder helper functions
    void set_false_body(SgIfStmt* &if_stmt, SgBasicBlock* false_body);
+   void set_need_paren(SgExpression* &expr);
    void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
 
 
