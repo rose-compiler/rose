@@ -2294,6 +2294,9 @@ void Build(const parser::Expr::Parentheses&x, T* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Parentheses)\n";
 #endif
+
+   Build(x.v.value(), expr); // common::Indirection<Expr>
+   SageBuilderCpp17::set_need_paren(expr);
 }
 
 template<typename T>
@@ -2310,6 +2313,10 @@ void Build(const parser::Expr::Negate&x, T* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Negate)\n";
 #endif
+
+   SgExpression* val;
+   Build(x.v.value(), val); // common::Indirection<Expr>
+   expr = SageBuilderCpp17::buildMinusOp_nfi(val);
 }
 
 template<typename T>
