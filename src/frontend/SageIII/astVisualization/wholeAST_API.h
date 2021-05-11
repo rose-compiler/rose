@@ -17,6 +17,10 @@ ROSE_DLL_API void generateWholeGraphOfAST( std::string filename, std::set<SgNode
 
 //! Generate a whole AST graph with a specified filename, and the default filter sets, excluding frontend-specific nodes by default
 ROSE_DLL_API void generateWholeGraphOfAST( std::string filename);
+
+//! Generate a whole AST graph with a specified filename, and the default filter sets, excluding frontend-specific nodes by default, char* for gdb
+ROSE_DLL_API void generateWholeGraphOfAST( const char * filename);
+
 //! Generate a whole AST graph with a specified filename and a set of filter flags, excluding frontend-specific nodes by default
 ROSE_DLL_API void generateWholeGraphOfAST( std::string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags);
 
