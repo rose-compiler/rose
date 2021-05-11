@@ -250,9 +250,9 @@ std::string AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
     ss<< "];"<<std::endl;
     if(*i!=root) {
       if(nodeTypeName(*i)=="null")
-	ss << "\""<<i.parent() << "\"" << " -> " << "\"" << i.parent()<<"_null" << "\""<<";" << std::endl;
+        ss << "\""<<i.parent() << "\"" << " -> " << "\"" << i.parent()<<"_null" << "\""<<";" << std::endl;
       else
-	ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
+        ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
     }
   }
   return ss.str();
