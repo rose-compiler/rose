@@ -15,7 +15,6 @@
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "merge.h"
 #endif
-
 // **********************************************************
 // **********************************************************
 //       Source code which can be more later
@@ -440,6 +439,7 @@ CustomMemoryPoolDOTGenerationData::additionalNodeInfo(SgNode* node)
 
      const NodeType tmp (node,"","");
      std::list<NodeType>::iterator i = nodeList.end();
+
      i = find(nodeList.begin(),nodeList.end(),tmp);
      if (i != nodeList.end())
         {
@@ -3249,6 +3249,13 @@ generateWholeGraphOfAST( string filename, set<SgNode*> & skippedNodeSet )
    {
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet);
    }
+
+// Facilitate gdb to call this function
+void   
+generateWholeGraphOfAST( const char* filename)
+{
+  generateWholeGraphOfAST (std::string(filename), NULL);
+}
 
 void   
 generateWholeGraphOfAST( string filename)
