@@ -24,6 +24,7 @@ FORTRAN_TESTCODES =               \
   implicit_none_external.f90      \
   implicit_none_external_type.f90 \
   implicit_none_type.f90          \
+  negative_values.f90             \
   print1.f90                      \
   subroutine_1.f90                \
   tiny.f90                        \
