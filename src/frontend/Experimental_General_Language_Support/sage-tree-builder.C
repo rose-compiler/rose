@@ -865,15 +865,15 @@ Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, Sg
    if_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
 
    if (is_ifthen) {
-     if_stmt->set_use_then_keyword(true);
+      if_stmt->set_use_then_keyword(true);
    }
 
    if (has_end_stmt) {
-     if_stmt->set_has_end_statement(true);
+      if_stmt->set_has_end_statement(true);
    }
 
    if (is_else_if) {
-     if_stmt->set_is_else_if_statement(true);
+      if_stmt->set_is_else_if_statement(true);
    }
 }
 
