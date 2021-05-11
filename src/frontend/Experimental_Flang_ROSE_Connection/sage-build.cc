@@ -964,27 +964,27 @@ void Build(const parser::ImplicitStmt &x, T* scope)
       common::visitors{
          [&](const std::list<parser::ImplicitSpec> &y)
             {
-	      std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> implicit_spec_list;
+              std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> implicit_spec_list;
 
-	      // Traverse ImplicitSpecList
-	      Build(y, implicit_spec_list);
+              // Traverse ImplicitSpecList
+              Build(y, implicit_spec_list);
 
-	      // Begin SageTreeBuilder
-	      builder.Enter(implicit_stmt, implicit_spec_list);
+              // Begin SageTreeBuilder
+              builder.Enter(implicit_stmt, implicit_spec_list);
 
               // Leave SageTreeBuilder
               builder.Leave(implicit_stmt);
             },
          [&](const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &y)
-	    {
-	      bool is_external = false, is_type = false;
-	      Build(y, is_external, is_type);
+            {
+              bool is_external = false, is_type = false;
+              Build(y, is_external, is_type);
 
-	      // Begin SageTreeBuilder for SgImplicitStatement with implicit-none
-	      builder.Enter(implicit_stmt, is_external, is_type);
+              // Begin SageTreeBuilder for SgImplicitStatement with implicit-none
+              builder.Enter(implicit_stmt, is_external, is_type);
 
-	      // Leave SageTreeBuilder
-	      builder.Leave(implicit_stmt);
+              // Leave SageTreeBuilder
+              builder.Leave(implicit_stmt);
             },
       },
       x.u);
@@ -1067,12 +1067,12 @@ void Build(const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool 
 #endif
 
    for (auto y: x) {
-     if (parser::ImplicitStmt::EnumToString(y) == "External") {
-       is_external = true;
-     }
-     if (parser::ImplicitStmt::EnumToString(y) == "Type") {
-       is_type = true;
-     }
+      if (parser::ImplicitStmt::EnumToString(y) == "External") {
+         is_external = true;
+      }
+      if (parser::ImplicitStmt::EnumToString(y) == "Type") {
+         is_type = true;
+      }
    }
 }
 
