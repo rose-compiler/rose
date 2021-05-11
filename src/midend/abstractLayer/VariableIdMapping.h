@@ -69,8 +69,12 @@ namespace CodeThorn {
     VariableId variableId(SgInitializedName* initName);
     VariableId variableId(SgSymbol* sym);
     VariableId variableIdFromCode(int);
-    SgSymbol* getSymbol(VariableId varId);
+
+    virtual SgSymbol* getSymbol(VariableId varId);
     virtual SgType* getType(VariableId varId);
+    virtual SgVariableDeclaration* getVariableDeclaration(VariableId varId);
+    static SgType* getTypeFromSymbol(SgSymbol* sym);
+    static SgVariableDeclaration* getVariableDeclarationFromSymbol(SgSymbol* sym); // note: formal function params have no declaration
 
     // returns true if this variable is Of type bool. This also includes the C type _Bool.
     bool isOfBoolType(VariableId varId);
@@ -88,7 +92,6 @@ namespace CodeThorn {
     bool isOfClassType(VariableId varId);
     bool isOfArrayType(VariableId varId);
 
-    virtual SgVariableDeclaration* getVariableDeclaration(VariableId varId);
     // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
     bool isVariableIdValid(VariableId varId);
     std::string variableName(VariableId varId);
@@ -122,8 +125,10 @@ namespace CodeThorn {
     SgSymbol* createAndRegisterNewSymbol(std::string name);
     CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
     CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
+
     void registerNewSymbol(SgSymbol* sym);
     void registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize);
+
     virtual void toStream(std::ostream& os);
     void generateDot(std::string filename,SgNode* astRoot);
 
@@ -131,13 +136,6 @@ namespace CodeThorn {
     VariableIdSet determineVariableIdsOfVariableDeclarations(std::set<SgVariableDeclaration*> varDecls);
     VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     VariableIdSet variableIdsOfAstSubTree(SgNode* node);
-
-    /* if this mode is activated variable ids are created for each element of arrays with fixed size
-       e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
-       this mode must be set before the mapping is computed with computeVariableSymbolMapping
-    */
-    //void setModeVariableIdForEachArrayElement(bool active);
-    //bool getModeVariableIdForEachArrayElement();
 
     bool hasAssignInitializer(VariableId arrayVar);
     bool isAggregateWithInitializerList(VariableId arrayVar);
@@ -156,6 +154,7 @@ namespace CodeThorn {
 
     // returns true if the variable is a formal parameter in a function definition
     virtual bool isFunctionParameter(VariableId varId);
+    static bool isFunctionParameter(SgSymbol* sym);
 
     // determines for struct/class/union's data member if its
     // SgInitializeName defines an anonymous bitfield (e.g. struct S {
@@ -169,9 +168,8 @@ namespace CodeThorn {
     static TypeSize unknownSizeValue();
     
     // link analysis is by default disabled (=false)
-    void setLinkAnalysisFlag(bool);
-    enum AggregateType { AT_UNKNOWN, AT_SINGLE, AT_ARRAY, AT_STRUCT };
-    enum VariableScope { VS_UNKNOWN, VS_LOCAL, VS_GLOBAL, VS_MEMBER };
+    enum AggregateType { AT_UNKNOWN, AT_SINGLE, AT_ARRAY, AT_STRUCT, AT_STRING_LITERAL };
+    enum VariableScope { VS_UNKNOWN, VS_LOCAL, VS_FUNPARAM, VS_GLOBAL, VS_MEMBER };
     bool isVolatile(VariableId varId);
     void setVolatileFlag(VariableId varId, bool flag);
 
@@ -182,13 +180,14 @@ namespace CodeThorn {
       SgSymbol* sym;
       TypeSize numberOfElements; // can be zero for arrays, it is 1 for a single variable, for structs/classes/unions it is the number of member variables, if unknown -1.
       TypeSize elementSize; // in bytes, if unknown -1
-      std::map<TypeSize,TypeSize> numDimensionElements; // in elements, if unknown -1 or non existent (getDimensionElements(0) returns -1)
       TypeSize totalSize; // in bytes, if unknown -1
       TypeSize offset;      // in bytes, only for member variables, if unknown -1
       AggregateType aggregateType;
       VariableScope variableScope;
       bool isVolatileFlag;
+      std::map<TypeSize,TypeSize> numDimensionElements; // in elements, if unknown -1 or non existent (getDimensionElements(0) returns -1)
       bool relinked; // true if link analysis relinked this entry
+      bool unspecifiedSize; // true if no declaration can be found to determine type size
       std::string toString();
       std::string aggregateTypeToString();
       std::string variableScopeToString();
@@ -212,9 +211,6 @@ namespace CodeThorn {
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
     std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
 
-    SgSymbol* selectLinkSymbol(std::set<SgSymbol*>& symSet);
-    void performLinkAnalysisRemapping();
-    bool linkAnalysis;
   public:
     VariableIdInfo getVariableIdInfo(VariableId vid);
     VariableIdInfo* getVariableIdInfoPtr(VariableId vid);
