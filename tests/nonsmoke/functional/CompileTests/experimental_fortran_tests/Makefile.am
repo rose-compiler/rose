@@ -15,6 +15,11 @@ FORTRAN_TESTCODES =               \
   function_2.f90                  \
   function_3.f90                  \
   function_4.f90                  \
+  ifstmt1.f90                     \
+  ifstmt2.f90                     \
+  ifstmt3.f90                     \
+  ifstmt4.f90                     \
+  ifstmt5.f90                     \
   implicit_none.f90               \
   implicit_none_external.f90      \
   implicit_none_external_type.f90 \
