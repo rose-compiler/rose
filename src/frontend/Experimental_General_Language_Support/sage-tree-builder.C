@@ -854,7 +854,7 @@ Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
 }
 
 void SageTreeBuilder::
-Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgStatement* true_body, SgStatement* false_body, bool is_ifthen, bool has_end_stmt, bool is_else_if)
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body, bool is_ifthen, bool has_end_stmt, bool is_else_if)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
 
@@ -2105,16 +2105,6 @@ SgExprListExp* buildExprListExp_nfi(const std::list<SgExpression*> &list)
    return expr_list;
 }
 
-SgStatement* wrapperIfStmt(SgIfStmt* if_stmt)
-{
-   return if_stmt;
-}
-
-SgStatement* wrapperBasicBlock(SgBasicBlock* basic_block)
-{
-   return basic_block;
-}
-
 SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* expr_list)
 {
    SgCommonBlockObject* common_block_object = SageBuilder::buildCommonBlockObject(name, expr_list);
@@ -2122,10 +2112,8 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
    return common_block_object;
 }
 
-void set_false_body(SgStatement* &else_if_stmt, SgBasicBlock* false_body)
+void set_false_body(SgIfStmt* &if_stmt, SgBasicBlock* false_body)
 {
-   SgIfStmt* if_stmt = isSgIfStmt(else_if_stmt);
-   ROSE_ASSERT(if_stmt);
    if_stmt->set_false_body(false_body);
 }
 

@@ -22,6 +22,7 @@ class SgExprListExp;
 class SgFunctionParameterList;
 class SgScopeStatement;
 class SgStatement;
+class SgIfStmt;
 class SgType;
 
 #define PRINT_FLANG_TRAVERSAL 0
@@ -297,8 +298,7 @@ void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 // IfConstruct
 void Build(const Fortran::parser::              IfThenStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, SgBasicBlock* &false_body);
-void Build(const std::list<Fortran::parser::IfConstruct::ElseIfBlock> &x, SgStatement* &else_if_stmt);
-template<typename T> void Build(const Fortran::parser::IfConstruct::ElseIfBlock&x, T* scope);
+void Build(const std::list<Fortran::parser::IfConstruct::ElseIfBlock> &x, SgBasicBlock* &else_if_block, SgIfStmt* &else_if_stmt);
 
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::             DerivedTypeDef&x, T* scope);
