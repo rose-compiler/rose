@@ -46,15 +46,22 @@ AstUtility::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* 
   //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   CodeThorn::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-    //cout<<"DEBUG: checking variable "<<(*i)->unparseToString();
+    //cout<<"DEBUG: determining varid for variable "<<(*i)->unparseToString()<<endl;
     VariableId id = variableIdMapping->variableId(*i);
     if(!id.isValid()) {
+      //cout<<" : invalid."<<endl;
+      SgExpression* exp=*i;
+      while(isSgExpression(exp->get_parent()))
+	exp=isSgExpression(exp->get_parent());
+      cout<<"EXPRESSION: "<<exp->unparseToString()<<endl;
       ostringstream exceptionMsg;
       exceptionMsg << "Error: AstUtility::usedVariablesInsideFunctions: Invalid variable id for SgVarRefExp "
                    << (*i)->unparseToString() << ", Symbol: " << (*i)->get_symbol() << endl;
       cerr<<exceptionMsg.str();
-      //exit(1);
+	//exit(1);
       //throw CodeThorn::Exception(exceptionMsg.str());
+    } else {
+      //cout<<" : OK"<<endl;
     }
     setOfUsedVars.insert(id);
   }

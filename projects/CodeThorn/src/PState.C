@@ -491,7 +491,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
         }
       } else {
 	// elem size is the same, keeping precision
-      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
+	conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
       }
     } else {
       conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);

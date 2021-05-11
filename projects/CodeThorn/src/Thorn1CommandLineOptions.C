@@ -91,7 +91,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(experimentalOptions)
     ;
 
-  args.parse(argc,argv,all,configFileOptions);
+  args.parseAllowUnregistered(argc,argv,all);
 
   if (args.isUserProvided("help")) {
     cout << visibleOptions << "\n";
@@ -159,7 +159,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     }
     // No match with elements in the white list above. 
     // Must be a CodeThorn option, therefore remove it from argv.
-    argv[i] = strdup("");
+    //argv[i] = strdup("");
   }
 
   return args;

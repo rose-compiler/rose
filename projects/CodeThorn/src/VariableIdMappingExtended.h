@@ -4,6 +4,7 @@
 #include "VariableIdMapping.h"
 #include "TypeSizeMapping.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 
 namespace CodeThorn {
@@ -23,12 +24,6 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
-    void computeVariableSymbolMapping3(SgProject* project, int maxWarningsCount);
-    void registerAllVariableSymbols(SgProject* project, int maxWarningsCount);
-
-    // deprecated
-    void computeTypeSizes();
-
     // direct lookup
     CodeThorn::TypeSize getTypeSize(SgType* type);
     CodeThorn::TypeSize getTypeSize(VariableId varId);
@@ -36,6 +31,8 @@ namespace CodeThorn {
     void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
     CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
 
+    // true if consistency check passed
+    bool consistencyCheck(SgProject* project);
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
@@ -48,17 +45,72 @@ namespace CodeThorn {
     
     bool symbolExists(SgSymbol* sym);
     static SgVariableDeclaration* getVariableDeclarationFromSym(SgSymbol* sym);
+
+    CodeThorn::VariableIdSet getSetOfVarIds(VariableScope vs);
     CodeThorn::VariableIdSet getSetOfGlobalVarIds();
     CodeThorn::VariableIdSet getSetOfLocalVarIds();
+    CodeThorn::VariableIdSet getSetOfFunParamVarIds();
+
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
-  private:
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
     SgType* strippedType(SgType* type);
+    // does not strip pointer types, to avoid infinite recursion in rekursive data types
+    SgType* strippedType2(SgType* type);
+    SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
+    static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
 
+  private:
+    class MemPoolTraversal : public ROSE_VisitTraversal {
+    public:
+      void visit(SgNode* node) {
+	if(SgClassType* ctype=isSgClassType(node)) {
+	  classTypes.insert(ctype);
+	} else if(SgArrayType* ctype=isSgArrayType(node)) {
+	  arrayTypes.insert(ctype);
+	} else {
+	  builtInTypes.insert(ctype);
+	}
+      }
+      std::unordered_set<SgClassType*> classTypes; // class, struct, union
+      std::unordered_set<SgArrayType*> arrayTypes; // any dimension
+      std::unordered_set<SgArrayType*> builtInTypes; // all other pointers
+
+      void dumpClassTypes() {
+	int i=0;
+	for(auto t:classTypes) {
+	  auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
+	  std::cout<<i++<<": class Type (";
+	  if(mList.first)
+	    std::cout<<mList.second.size();
+	  else
+	    std::cout<<"unknown";
+	  std::cout<<") :"<<t->unparseToString()<<std::endl;
+	}
+      }
+      void dumpArrayTypes() {
+	int i=0;
+	for(auto t:arrayTypes) {
+	  std::cout<<"Array Type "<<i++<<":"<<t->unparseToString()<<std::endl;
+	}
+      }
+    };
+    
+    void createTypeLists();
+    void initTypeSizes();
+    void computeTypeSizes();
+    CodeThorn::TypeSize computeTypeSize(SgType* type);
+    CodeThorn::TypeSize getTypeSizeNew(SgType* type);
+    void dumpTypeLists();
+    void dumpTypeSizes();
+    void registerClassMembersNew();
+    std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
+    std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
+    std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
+      
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 
@@ -68,20 +120,24 @@ namespace CodeThorn {
     void registerClassMemberVar(SgType*,VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
+    bool isMemberVariableDeclaration(SgVariableDeclaration*);
+    // determines all size information obtainable from SgType and sets values in varidinfo
+    // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
+    void setVarIdInfoFromType(VariableId varId, SgType* type, SgVariableDeclaration* linkedDecl);
+    std::string varIdInfoToString(VariableId varId);
+  
     void recordWarning(std::string);
     std::list<std::string> _warnings;
 
-    // list of all global variable declarations
-    // list of local variable declarations
-    // declarations with initializer and complete or incomplete type: isDeclWithInitializer(getInitializer),isDeclWithoutInitializer,isDeclWithCompleteType
-    // list of all types (from all declarations)
-    // list of all declarations varid:(global|local|member,+class_member_list(varid),array-dim-vector<expr|num>+elementtype,varid->type,class|union|array|built-in
-    // noinit|complete-type-init|incomplete-type-init)
-    // determineTypeSize(type)
-    // determineInitializerSize(initializer-expr)
+    bool isRegisteredType(SgType* type);
+    void registerType(SgType* type);
+    
+    MemPoolTraversal _memPoolTraversal;
 
     std::list<SgFunctionDefinition*> _functionDefinitions;
     std::list<SgFunctionDeclaration*> _functionDeclarations;
+    std::unordered_set<SgType*> _registeredTypes;
+
   };
 }
 

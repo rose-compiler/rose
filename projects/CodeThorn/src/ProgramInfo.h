@@ -39,8 +39,6 @@ private:
     numLogicOrOp,
     numLogicAndOp,
     numConditionalExp,
-    numGlobalVars,
-    numLocalVars,
     numArrowOp,
     numDerefOp,
     numStructAccess,

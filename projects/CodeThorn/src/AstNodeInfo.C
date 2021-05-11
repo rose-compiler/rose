@@ -9,9 +9,14 @@ namespace CodeThorn {
   }
 
   std::string AstNodeInfo::toString() { std::stringstream ss;
-    ss<<"\\n lab:"<<label<<" ";
-    ss<<"init:"<<initialLabel<<" ";
-    ss<<"final:"<<finalLabelsSet.toString();
+    if(labelInfoAvailable) {
+      ss<<"\\n lab:"<<label<<" ";
+      ss<<"init:"<<initialLabel<<" ";
+      ss<<"final:"<<finalLabelsSet.toString();
+    }
+    if(varName!=""||varType!="") {
+      ss<<"\\n"<<varType<<"\\n"<<varName;
+    }
     return ss.str(); 
   }
 
@@ -24,6 +29,9 @@ namespace CodeThorn {
     newNodeInfo->label=this->label;
     newNodeInfo->initialLabel=this->initialLabel;
     newNodeInfo->finalLabelsSet=this->finalLabelsSet;
+    newNodeInfo->labelInfoAvailable=this->labelInfoAvailable;
+    newNodeInfo->varName=this->varName;
+    newNodeInfo->varType=this->varType;
     return newNodeInfo;
   }
 
@@ -34,15 +42,26 @@ namespace CodeThorn {
 
 
   void AstNodeInfo::setLabel(CodeThorn::Label l) { 
+    labelInfoAvailable=true;
     label=l;
   }
 
   void AstNodeInfo::setInitialLabel(CodeThorn::Label l) {
+    labelInfoAvailable=true;
     initialLabel=l;
   }
 
   void AstNodeInfo::setFinalLabels(CodeThorn::LabelSet lset) {
+    labelInfoAvailable=true;
     finalLabelsSet=lset;
+  }
+
+  void AstNodeInfo::setVarName(std::string name) {
+    varName=name;
+  }
+
+  void AstNodeInfo::setVarType(std::string type) {
+    varType=type;
   }
 
 }
