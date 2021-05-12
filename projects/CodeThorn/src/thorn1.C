@@ -173,37 +173,32 @@ int main( int argc, char * argv[] ) {
     optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
-    SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
+    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
 
-    if(ctOpt.info.printVariableIdMapping) {
-      cout<<"VariableIdMapping:"<<endl;
-      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
-      //AbstractValue::setVariableIdMapping(vim);
+    optionallyGenerateAstStatistics(ctOpt, project);
 
-      vim->computeVariableSymbolMapping(sageProject,0);
-      vim->toStream(cout);
-      exit(0);
-    }
-    
-    optionallyGenerateAstStatistics(ctOpt, sageProject);
-    if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-
-    //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
+    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
 
     optionallyPrintProgramInfos(ctOpt, analyzer);
-    optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
+    optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
-    VariableIdMappingExtended* vimOrig=new VariableIdMappingExtended(); // only used for program statistics of original non-normalized program
+    VariableIdMappingExtended* vimOrig=createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
-    vimOrig->computeVariableSymbolMapping(sageProject,0);
-
-    ProgramInfo originalProgramInfo(sageProject,vimOrig);
+    
+    ProgramInfo originalProgramInfo(project,vimOrig);
     originalProgramInfo.compute();
     
     if(ctOpt.programStatsFileName.size()>0) {
       originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
     }
+
+    if(ctOpt.info.printVariableIdMapping) {
+      cout<<"VariableIdMapping:"<<endl;
+      vimOrig->toStream(cout);
+      exit(0);
+    }
+
     if(ctOpt.programStatsOnly) {
       cout<<"=================================="<<endl;
       cout<<"Language Feature Usage Overview"<<endl;
@@ -214,11 +209,13 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
+    if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
+    initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
+    cout<<"THORN1: check:"<<analyzer->getVariableIdMapping()->getAstConsistencySymbolCheckFlag()<<endl;
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
-      ProgramInfo normalizedProgramInfo(sageProject,analyzer->getVariableIdMapping());
+      ProgramInfo normalizedProgramInfo(project,analyzer->getVariableIdMapping());
       normalizedProgramInfo.compute();
       originalProgramInfo.printCompared(&normalizedProgramInfo);
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);

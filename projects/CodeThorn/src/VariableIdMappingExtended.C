@@ -44,6 +44,14 @@ namespace CodeThorn {
     }
   }
 
+  bool VariableIdMappingExtended::isDataMemberAccess(SgVarRefExp* varRefExp) {
+    return (varRefExp!=nullptr) && (isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent()));
+  }
+
+  bool VariableIdMappingExtended::isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp) {
+    return (varRefExp!=nullptr) && !isDataMemberAccess(varRefExp);
+  }
+  
   list<SgVarRefExp*> VariableIdMappingExtended::structAccessesInsideFunctions(SgProject* project) {
     list<SgVarRefExp*> varRefExpList;
     list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
@@ -51,7 +59,7 @@ namespace CodeThorn {
       RoseAst ast(*i);
       for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 	if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
-	  if(isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent())) {
+	  if(isDataMemberAccess(varRefExp)) {
 	    varRefExpList.push_back(varRefExp);
 	  }
 	}
@@ -67,7 +75,7 @@ namespace CodeThorn {
       RoseAst ast(*i);
       for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
 	if(SgVarRefExp* varRefExp=isSgVarRefExp(*j)) {
-	  if(!(isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent()))) {
+	  if(!(isDataMemberAccess(varRefExp))) {
 	    varRefExpList.push_back(varRefExp);
 	  }
 	}
@@ -273,9 +281,12 @@ namespace CodeThorn {
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     //computeVariableSymbolMapping1(project,maxWarningsCount);
     computeVariableSymbolMapping2(project,maxWarningsCount);
-    if(!consistencyCheck(project))
-      exit(1);
-    //computeVariableSymbolMapping3(project,maxWarningsCount);
+    if(getAstConsistencySymbolCheckFlag()) {
+      if(!consistencyCheck(project))
+	exit(1);
+    } else {
+      cout<<"INFO: AST consistency symbol check: disabled by user."<<endl;
+    }
   }
 
   void VariableIdMappingExtended::computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount) {
@@ -791,8 +802,17 @@ std::string VariableIdMappingExtended::varIdInfoToString(VariableId varId) {
   return ss.str();
 }
 
+void VariableIdMappingExtended::setAstConsistencySymbolCheckFlag(bool flag) {
+  _astConsistencySymbolCheckFlag=flag;
+}
+bool VariableIdMappingExtended::getAstConsistencySymbolCheckFlag() {
+  return _astConsistencySymbolCheckFlag;
+}
+
+
 // OLD METHODS (VIM2)
 
 std::string VariableIdMappingExtended::typeSizeMappingToString() {
   return typeSizeMapping.toString();
 }
+

@@ -62,8 +62,14 @@ namespace CodeThorn {
     SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
     static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
-
+    static bool isDataMemberAccess(SgVarRefExp* varRefExp);
+    static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
+    void setAstConsistencySymbolCheckFlag(bool flag);
+    bool getAstConsistencySymbolCheckFlag();
+    
   private:
+    bool _astConsistencySymbolCheckFlag=true;
+    
     class MemPoolTraversal : public ROSE_VisitTraversal {
     public:
       void visit(SgNode* node) {
