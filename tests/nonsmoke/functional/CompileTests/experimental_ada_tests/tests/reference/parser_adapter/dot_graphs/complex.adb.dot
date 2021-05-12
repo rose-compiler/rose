@@ -952,6 +952,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 3:19 .. 3:25</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PRIVATE_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Has_Private   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Type_Operators ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2470104</TD></TR>
           </TABLE>> ];
   Element_2440092 -> Element_2425057
       [ label="Names ( 1)" ];
