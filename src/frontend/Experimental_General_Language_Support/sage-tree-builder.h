@@ -31,6 +31,7 @@ class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
+class SgModuleStatement;
 class SgNamedType;
 class SgNamespaceDeclarationStatement;
 class SgPntrArrRefExp;
@@ -182,6 +183,9 @@ public:
    void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
    void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
    void Leave(SgImplicitStatement*);
+
+   void Enter(SgModuleStatement* &, const std::string &);
+   void Leave(SgModuleStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 

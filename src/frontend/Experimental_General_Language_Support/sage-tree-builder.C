@@ -1151,6 +1151,28 @@ Leave(SgImplicitStatement* implicit_stmt)
    SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgModuleStatement* &module_stmt, const std::string &name)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgModuleStatement* &, ...)\n";
+
+   module_stmt = SageBuilder::buildModuleStatement(name, SageBuilder::topScopeStack());
+
+   SgClassDefinition* class_def = module_stmt->get_definition();
+   ROSE_ASSERT(class_def);
+   SageBuilder::pushScopeStack(class_def);
+}
+
+void SageTreeBuilder::
+Leave(SgModuleStatement* module_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgModuleStatement*, ...) \n";
+   ROSE_ASSERT(module_stmt);
+
+   SageBuilder::popScopeStack();  // class definition
+   SageInterface::appendStatement(module_stmt, SageBuilder::topScopeStack());
+}
+
 // For Jovial, the symbol table may have multiple enumerators with the same name. This
 // function returns the correct value based on the type of the variable.
 SgEnumVal* SageTreeBuilder::
