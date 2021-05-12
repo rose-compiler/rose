@@ -202,7 +202,10 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool unparse=false;
   bool displayVersion=false;
   bool runSolver=true;
-  
+
+  // consistency checking options
+  bool astConsistencySymbolCheckFlag=true; // performed by VariableIdMapping
+
   struct Info {
     bool printVariableIdMapping=false;
     bool printAstNodeStats=false;

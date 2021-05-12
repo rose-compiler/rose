@@ -748,6 +748,7 @@ void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProj
 
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {
     VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended();
+    variableIdMapping->setAstConsistencySymbolCheckFlag(ctOpt.astConsistencySymbolCheckFlag);
     variableIdMapping->computeVariableSymbolMapping(project);
     return variableIdMapping;
   }
