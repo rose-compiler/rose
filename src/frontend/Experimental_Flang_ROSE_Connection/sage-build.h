@@ -87,6 +87,8 @@ void Build(const Fortran::parser::      CharLiteralConstant &x, SgExpression* &e
 void Build(const Fortran::parser::   LogicalLiteralConstant &x, SgExpression* &expr);
 
 void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
+void Build(const std::list<Fortran::parser::Statement<Fortran::common::Indirection<Fortran::parser::UseStmt>>> &x);
+void Build(const Fortran::parser::UseStmt &x);
 
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
