@@ -217,10 +217,9 @@ void Build(const parser::Module &x, T* scope)
    Build(std::get<parser::SpecificationPart>(x.t), module_scope);
 
    // std::optional<ModuleSubprogramPart>
-#if 0
    if (auto & opt = std::get<2>(x.t)) {
+     Build(opt.value());
    }
-#endif
 
    // EndModuleStmt - std::optional<Name> v;
    if (auto & opt = std::get<3>(x.t).statement.v) {
@@ -229,6 +228,49 @@ void Build(const parser::Module &x, T* scope)
    }
 
    builder.Leave(module_stmt);
+}
+
+void Build(const parser::ModuleSubprogramPart &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ModuleSubprogramPart)\n";
+#endif
+
+   // build ContainsStmt
+   SgContainsStatement* contains_stmt{nullptr};
+   builder.Enter(contains_stmt);
+   builder.Leave(contains_stmt);
+
+   // Traverse the list of ModuleSubprograms
+   Build(std::get<std::list<parser::ModuleSubprogram>>(x.t));
+}
+
+void Build(const std::list<parser::ModuleSubprogram> &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ModuleSubprogram>)\n";
+#endif
+
+   for (auto & subprogram : x) {
+     Build(subprogram);
+   }
+}
+
+void Build(const parser::ModuleSubprogram &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ModuleSubprogram)\n";
+#endif
+
+   SgScopeStatement* scope{nullptr};
+
+   std::visit(
+      common::visitors{
+         [&] (const common::Indirection<parser::SeparateModuleSubprogram> &y) { ; },
+         // common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>
+         [&] (const auto &y) { Build(y.value(), scope); },
+      },
+      x.u);
 }
 
 template<typename T>

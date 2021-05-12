@@ -13,6 +13,7 @@ class SgCaseOptionStmt;
 class SgCastExp;
 class SgCommonBlock;
 class SgCommonBlockObject;
+class SgContainsStatement;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -190,6 +191,9 @@ public:
 
    void Enter(SgUseStatement* &, const std::string &, const std::string &);
    void Leave(SgUseStatement*);
+
+   void Enter(SgContainsStatement* &);
+   void Leave(SgContainsStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 

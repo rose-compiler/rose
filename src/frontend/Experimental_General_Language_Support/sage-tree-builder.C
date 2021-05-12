@@ -403,9 +403,14 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
 
+   ROSE_ASSERT(param_scope);
+
    BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+      // TODO: deal with fortran functions when the dummy argument is not declared and implicitly typed.
       SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
+      ROSE_ASSERT(symbol);
       SgInitializedName* init_name = symbol->get_declaration();
+      ROSE_ASSERT(init_name);
       param_list->append_arg(init_name);
    }
 
@@ -1201,6 +1206,25 @@ Leave(SgUseStatement* use_stmt)
    ROSE_ASSERT(use_stmt);
 
    SageInterface::appendStatement(use_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgContainsStatement* &contains_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgContainsStatement* &, ...)\n";
+
+   contains_stmt = new SgContainsStatement();
+   ROSE_ASSERT(contains_stmt);
+   SageInterface::setSourcePosition(contains_stmt);
+}
+
+void SageTreeBuilder::
+Leave(SgContainsStatement* contains_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgContainsStatement*, ...) \n";
+   ROSE_ASSERT(contains_stmt);
+
+   SageInterface::appendStatement(contains_stmt, SageBuilder::topScopeStack());
 }
 
 // For Jovial, the symbol table may have multiple enumerators with the same name. This
