@@ -209,12 +209,12 @@ void Build(const parser::Module &x, T* scope)
    std::string module_stmt_name;
    Build(std::get<0>(x.t).statement.v, module_stmt_name);
 
-   //   SgModuleStatement* module_stmt = nullptr;
-   //   builder.Enter(module_stmt, module_stmt_name);
+   SgModuleStatement* module_stmt = nullptr;
+   builder.Enter(module_stmt, module_stmt_name);
 
    // SpecificationPart
-   SgScopeStatement* function_scope{nullptr};
-   Build(std::get<parser::SpecificationPart>(x.t), function_scope);
+   SgScopeStatement* module_scope{nullptr};
+   Build(std::get<parser::SpecificationPart>(x.t), module_scope);
 
    // std::optional<ModuleSubprogramPart>
 #if 0
@@ -228,7 +228,7 @@ void Build(const parser::Module &x, T* scope)
       Build(opt.value(), end_module_stmt_name);
    }
 
-   //   builder.Leave(module_stmt);
+   builder.Leave(module_stmt);
 }
 
 template<typename T>
