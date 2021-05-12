@@ -45,7 +45,7 @@ namespace CodeThorn {
   }
 
   bool VariableIdMappingExtended::isDataMemberAccess(SgVarRefExp* varRefExp) {
-    return (varRefExp!=nullptr) && (isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent()));
+    return (varRefExp!=nullptr) && (isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent())) && (isSgBinaryOp(varRefExp->get_parent())->get_rhs_operand()==varRefExp);
   }
 
   bool VariableIdMappingExtended::isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp) {
