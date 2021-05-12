@@ -1,4 +1,5 @@
 #include "rose.h"
+#include <CommandLine.h> // Commandline support in librose
 #include <Sawyer/CommandLine.h>
 using namespace std;
 using namespace Sawyer::Message::Common; // if you want unqualified DEBUG, WARN, ERROR, FATAL, etc.
@@ -11,16 +12,14 @@ Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup standard;
-    standard.doc("The following switches are recognized by all tools in this package.");
-
-    standard.insert(Switch("help", 'h')
-                    .shortName('?')
-                    .action(showHelpAndExit(0))
-                    .doc("Show this documentation."));
-
     SwitchGroup featureVector;
     featureVector.doc("The following switches are specific to scalarizer.");
+  
+    bool showRoseHelp = false;
+    featureVector.insert(Switch("rose:help")
+             .longPrefix("-")
+             .intrinsicValue(true, showRoseHelp)
+             .doc("Show the old-style ROSE help.")); 
 
     featureVector.insert(Switch("debug")
                 .intrinsicValue(true, enable_debug)
@@ -33,13 +32,13 @@ parseCommandLine(int argc, char *argv[]) {
     Parser parser;
     parser
         .purpose("Feature Vector")
-        .doc("synopsis", "@prop{programName} [@v{switches}]")
+        .doc("synopsis", "@prop{programName} [@v{switches}] [@v{files}] ")
         .doc("description",
              "This program prints out the feature vector of a program "
              "to help verifying ROSE output correctness. ");
 
-    //parser.skippingUnknownSwitches(true);
-    return parser.with(standard).with(featureVector).parse(argc, argv).apply();
+    parser.skippingUnknownSwitches(true);
+    return parser.with(Rose::CommandLine::genericSwitches()).with(featureVector).parse(argc, argv).apply();
 }
 
 class nodeTraversal : public AstSimpleProcessing
@@ -99,9 +98,9 @@ int main( int argc, char * argv[] ){
   Rose::Diagnostics::initAndRegister(&mlog, "featureVector");
 
   Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv);
-  std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
+  std::vector<std::string> positionalArgs = cmdline.unparsedArgs(true);
 
-  SgProject* project = frontend(argc,argv);
+  SgProject* project = frontend(positionalArgs);
   Rose_STL_Container<std::string> filenames = project->getAbsolutePathFileNames();
   for(Rose_STL_Container<std::string>::iterator it = filenames.begin(); it != filenames.end(); it++)
     cout << "filename: " << *it << endl;
