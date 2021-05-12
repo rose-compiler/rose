@@ -27,7 +27,9 @@ procedure Run_Parser_Adapter is
 
    procedure Log (Message : in String; Debug : in Boolean) is
    begin
-      Ada.Text_Io.Put_Line ("Run_Asis_Adapter:  " & Message);
+      if Debug then
+        Ada.Text_Io.Put_Line ("Run_Asis_Adapter:  " & Message);
+      end if;
    end;
 
    procedure Get_Options is
