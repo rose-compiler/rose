@@ -1,5 +1,4 @@
 with Asis.Declarations;
-with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
@@ -217,15 +216,6 @@ package body Asis_Adapter.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Corresponding_Type_Declaration", ID);
          Result.Corresponding_Type_Declaration := ID;
-      end;
-
-      procedure Add_Corresponding_Type_Operators is begin
-         Add_Element_List
-           (This           => State,
-            Elements_In    => Asis.Definitions.Corresponding_Type_Operators (Element),
-            Dot_Label_Name => "Corresponding_Type_Operators",
-            List_Out       => Result.Corresponding_Type_Operators,
-            Add_Edges      => False);
       end;
 
       procedure Add_Corresponding_Type_Partial_View is
@@ -1068,7 +1058,6 @@ package body Asis_Adapter.Element.Declarations is
          Add_Corresponding_First_Subtype;
          Add_Corresponding_Last_Constraint;
          Add_Corresponding_Last_Subtype;
-         Add_Corresponding_Type_Operators;
 
       when A_Formal_Incomplete_Type_Declaration => -- A2012
          State.Add_Not_Implemented (Ada_2012);
