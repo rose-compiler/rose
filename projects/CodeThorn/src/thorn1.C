@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="0.9.1";
+const std::string versionString="0.9.2";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -211,7 +211,6 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
     initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
-    cout<<"THORN1: check:"<<analyzer->getVariableIdMapping()->getAstConsistencySymbolCheckFlag()<<endl;
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
