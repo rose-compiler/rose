@@ -34,7 +34,6 @@ public:
     typedef Buffer<A, T> Super;                         /**< Type of base class. */
 
 private:
-    Address size_;
     std::vector<Value> values_;
 
 private:
@@ -45,12 +44,11 @@ private:
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
-        s & BOOST_SERIALIZATION_NVP(size_);
         s & BOOST_SERIALIZATION_NVP(values_);
     }
 
 protected:
-    explicit AllocatingBuffer(Address size = 0): Super(".AllocatingBuffer"), size_(size), values_(size) {}
+    explicit AllocatingBuffer(Address size = 0): Super(".AllocatingBuffer"), values_(size) {}
 
 public:
     /** Allocating constructor.
@@ -83,7 +81,7 @@ public:
     }
     
     Address available(Address start) const /*override*/ {
-        return start < size_ ? size_-start : 0;
+        return start < values_.size() ? values_.size() - start : 0;
     }
 
     void resize(Address newSize) /*override*/ {
@@ -105,7 +103,7 @@ public:
     }
 
     const Value* data() const /*override*/ {
-        return size_ > 0 ? &values_[0] : NULL;
+        return values_.size() > 0 ? &values_[0] : NULL;
     }
 };
 
