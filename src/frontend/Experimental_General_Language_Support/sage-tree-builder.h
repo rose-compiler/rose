@@ -47,6 +47,7 @@ class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
 
@@ -186,6 +187,9 @@ public:
 
    void Enter(SgModuleStatement* &, const std::string &);
    void Leave(SgModuleStatement*);
+
+   void Enter(SgUseStatement* &, const std::string &, const std::string &);
+   void Leave(SgUseStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 

@@ -370,12 +370,9 @@ void Build(const parser::SpecificationPart &x, T* scope)
    std::cout << "Rose::builder::Build(SpecificationPart)\n";
 #endif
 
-   const auto & implicit_part = std::get<parser::ImplicitPart>(x.t);
-   Build(implicit_part, scope);
-
-   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
-   Build(decl_construct, scope);
-
+   Build(std::get<std::list<parser::Statement<common::Indirection<parser::UseStmt>>>>(x.t)); // traverse list of UseStmts
+   Build(std::get<parser::ImplicitPart>(x.t), scope);                                        // traverse ImplicitPart
+   Build(std::get<std::list<parser::DeclarationConstruct>>(x.t), scope);                     // traverse list of DeclarationConstructs
 }
 
 void BuildFunctionReturnType(const parser::SpecificationPart &x, std::string &result_name, SgType* &return_type)
@@ -915,6 +912,39 @@ void Build(const parser::ComplexPart &x, SgExpression* &expr)
    // std::variant<SignedIntLiteralConstant, SignedRealLiteralConstant, NamedConstant>
    auto ComplexPartVisitor = [&](const auto& y) { Build(y, expr); };
    std::visit(ComplexPartVisitor, x.u);
+}
+
+void Build(const std::list<parser::Statement<common::Indirection<parser::UseStmt>>> &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<UseStmt>)\n";
+#endif
+
+   for (auto &use_stmt: x) {
+      Build(use_stmt.statement.value());
+   }
+}
+
+void Build(const parser::UseStmt &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(UseStmt)\n";
+#endif
+
+   std::string module_nature= "";
+   if (auto & opt = x.nature) {
+      module_nature = parser::UseStmt::EnumToString(opt.value());
+   }
+
+   std::string module_name;
+   Build(x.moduleName, module_name);
+
+   // TODO
+   // std::variant<std::list<Rename>, std::list<Only>> u;
+
+   SgUseStatement* use_stmt{nullptr};
+   builder.Enter(use_stmt, module_name, module_nature);
+   builder.Leave(use_stmt);
 }
 
 template<typename T>

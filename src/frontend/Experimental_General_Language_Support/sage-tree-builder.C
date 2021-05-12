@@ -1173,6 +1173,36 @@ Leave(SgModuleStatement* module_stmt)
    SageInterface::appendStatement(module_stmt, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgUseStatement* &use_stmt, const std::string &module_name, const std::string &module_nature)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgUseStatement* &, ...)\n";
+
+   use_stmt = new SgUseStatement(module_name, false, module_nature);
+   ROSE_ASSERT(use_stmt);
+   SageInterface::setSourcePosition(use_stmt);
+
+   SgClassSymbol* module_symbol = SageInterface::lookupClassSymbolInParentScopes(module_name);
+   ROSE_ASSERT(module_symbol);
+
+   SgClassDeclaration* decl = module_symbol->get_declaration();
+   ROSE_ASSERT(decl);
+
+   SgModuleStatement* module_stmt = isSgModuleStatement(decl);
+   ROSE_ASSERT(module_stmt);
+
+   use_stmt->set_module(module_stmt);
+}
+
+void SageTreeBuilder::
+Leave(SgUseStatement* use_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgUseStatement*, ...) \n";
+   ROSE_ASSERT(use_stmt);
+
+   SageInterface::appendStatement(use_stmt, SageBuilder::topScopeStack());
+}
+
 // For Jovial, the symbol table may have multiple enumerators with the same name. This
 // function returns the correct value based on the type of the variable.
 SgEnumVal* SageTreeBuilder::
