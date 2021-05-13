@@ -867,6 +867,7 @@ context-free syntax
   'V'                            -> WordsPerEntry            {cons("WordsPerEntryV")}
 
   CompileTimeNumericFormula      -> EntrySize
+  EQ                             -> EntrySize                {reject}
 
   EntrySize                      -> OptEntrySize
   % empty %                      -> OptEntrySize             {cons("no-entry-size")}
