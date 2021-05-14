@@ -15,9 +15,7 @@ namespace ATermSupport {
 class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-  // C++11
-  // rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_jovial}
-   rb::SageTreeBuilder sage_tree_builder;
+   rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_jovial};
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
