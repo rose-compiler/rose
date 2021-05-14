@@ -1165,6 +1165,9 @@ Enter(SgModuleStatement* &module_stmt, const std::string &name)
 
    SgClassDefinition* class_def = module_stmt->get_definition();
    ROSE_ASSERT(class_def);
+
+   // Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(module_stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(class_def);
 }
 
@@ -1175,7 +1178,6 @@ Leave(SgModuleStatement* module_stmt)
    ROSE_ASSERT(module_stmt);
 
    SageBuilder::popScopeStack();  // class definition
-   SageInterface::appendStatement(module_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
