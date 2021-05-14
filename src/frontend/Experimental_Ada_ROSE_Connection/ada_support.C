@@ -21,10 +21,10 @@
 
 // #include <stdio.h>
 #include "a_nodes.h"
-#include "tool_2_wrapper.h"
+#include "adapter_wrapper.h"
 
-// extern "C" void dot_asisinit (void);
-// extern "C" void dot_asisfinal (void);
+// extern "C" void asis_adapterinit (void);
+// extern "C" void asis_adapterfinal (void);
 
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
@@ -161,15 +161,15 @@ int main(int argc, char** argv)
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
-       dot_asisinit();
+       asis_adapterinit();
 
-    // PP (11/5/20): Use Charles' new tool_2_wrapper_with_flags function
+    // PP (11/5/20): Use Charles' new adapter_wrapper_with_flags function
        mprintf( "calling Asis: src:%s gnat:%s outdir:%s pdunit:%d implunit:%d dbg:%d\n",
                 cstring_SrcFile, gnat_home, cstring_GnatOutputDir,
                 settings.processPredefinedUnits, settings.processImplementationUnits, settings.asisDebug
               );
 
-       head_nodes = tool_2_wrapper_with_flags( cstring_SrcFile,
+       head_nodes = adapter_wrapper_with_flags( cstring_SrcFile,
                                                const_cast<char*>(gnat_home),
                                                cstring_GnatOutputDir,
                                                settings.processPredefinedUnits,
@@ -178,10 +178,10 @@ int main(int argc, char** argv)
                                              );
 
        if (head_nodes.Elements == NULL) {
-          mprintf ("tool_2_wrapper_with_flags returned NO elements.\n");
+          mprintf ("adapter_wrapper_with_flags returned NO elements.\n");
           status = 1;
        } else {
-          mprintf ("tool_2_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
+          mprintf ("adapter_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
        }
 
        boostfs::current_path(currentDir);
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 
      Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
 
-     dot_asisfinal();
+     asis_adapterfinal();
      mprintf ("Leaving ada_main(): status = %d \n", status);
      return status;
    }

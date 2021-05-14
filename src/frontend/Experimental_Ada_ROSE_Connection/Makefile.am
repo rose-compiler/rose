@@ -2,14 +2,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ADA_SRC_DIR := $(top_srcdir)/src/frontend/Experimental_Ada_ROSE_Connection
 
-AM_CPPFLAGS := $(ROSE_INCLUDES) -I$(ADA_SRC_DIR) -I$(ADA_SRC_DIR)/dot_asis/dot_asis_library/include/
+AM_CPPFLAGS := $(ROSE_INCLUDES) -I$(ADA_SRC_DIR) -I$(ADA_SRC_DIR)/parser/asis_adapter/include/
 
 noinst_LTLIBRARIES := libexperimentalRoseAda.la
 
 # DQ (8/23/2017): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-SUBDIRS := dot_asis
+SUBDIRS := parser
 
   libexperimentalRoseAda_la_SOURCES := \
     ada_support.C \

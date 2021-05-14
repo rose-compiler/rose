@@ -1,0 +1,20 @@
+with "../asis_adapter/asis_adapter";
+
+project C_Main is
+
+   for Source_Dirs use
+     ("./source");
+
+   for Object_Dir use "./obj";
+
+   for Languages use ("C");
+
+   for Main use
+     ("run_parser_adapter.c");
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+end C_Main;
+
