@@ -235,7 +235,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
   std::set<const EState*> existingEStateSet;
   if (earlyTermination) {
     if(_ctOpt.status) {
-      cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
+      SAWYER_MESG(logger[INFO]) << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
     }
     transitionGraph.setForceQuitExploration(true);
   } else {
@@ -2128,37 +2128,40 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   setWorkLists(_explorationMode);
   
   estate.io.recordNone(); // ensure that extremal value is different to bot
-  if(_ctOpt.getInterProceduralFlag()) {
-    const EState* initialEState=processNew(estate); // START_INIT 6
-    ROSE_ASSERT(initialEState);
-    variableValueMonitor.init(initialEState);
-    addToWorkList(initialEState);
-    SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
-    SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
-  } else {
-    LabelSet startLabels=getFlow()->getStartLabelSet();
-    cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
-    for(auto slab : startLabels) {
-      // initialize intra-procedural analysis with all function entry points
-      estate.setLabel(slab);
-      const EState* initialEState=processNew(estate);
+  if(_ctOpt.runSolver) {
+    if(_ctOpt.getInterProceduralFlag()) {
+      const EState* initialEState=processNew(estate); // START_INIT 6
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
-      SAWYER_MESG(logger[TRACE]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+    } else {
+      LabelSet startLabels=getFlow()->getStartLabelSet();
+      if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
+      for(auto slab : startLabels) {
+	// initialize intra-procedural analysis with all function entry points
+	estate.setLabel(slab);
+	const EState* initialEState=processNew(estate);
+	ROSE_ASSERT(initialEState);
+	variableValueMonitor.init(initialEState);
+	addToWorkList(initialEState);
+	SAWYER_MESG(logger[TRACE]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+      }
     }
-  }
-  
-  // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored,emptycsetstored);
+    // initialize summary states map for abstract model checking mode
+    initializeSummaryStates(initialPStateStored,emptycsetstored);
 
-  if(_ctOpt.rers.rersBinary) {
-    //initialize the global variable arrays in the linked binary version of the RERS problem
-    SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
-    RERS_Problem::createGlobalVarAddressMapsFP(this);
+    if(_ctOpt.rers.rersBinary) {
+      //initialize the global variable arrays in the linked binary version of the RERS problem
+      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
+      RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
+      RERS_Problem::createGlobalVarAddressMapsFP(this);
+    }
+    SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
+  } else {
+    if(_ctOpt.status) cout<<"STATUS: skipping solver run."<<endl;
   }
-  SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
 }
 
 void CodeThorn::CTAnalysis::initAstNodeInfo(SgNode* node) {

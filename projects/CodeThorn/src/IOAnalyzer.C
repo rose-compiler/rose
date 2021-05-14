@@ -34,10 +34,12 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
 
 void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
   super::initializeSolver3(functionToStartAt, root, tc);
-  const EState* currentEState=estateWorkListCurrent->front();
-  ROSE_ASSERT(currentEState);
-  if(getModeLTLDriven()) {
-    setStartEState(currentEState);
+  if(_ctOpt.runSolver) {
+    const EState* currentEState=estateWorkListCurrent->front();
+    ROSE_ASSERT(currentEState);
+    if(getModeLTLDriven()) {
+      setStartEState(currentEState);
+    }
   }
 }
 

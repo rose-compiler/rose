@@ -119,7 +119,7 @@ namespace CodeThorn {
     if(numVarErrors>0||numStructErrors) {
       cout<<"\nINFO: ROSE AST Symbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
     } else {
-      cout<<"INFO: ROSE AST Symbol consistency check PASSED."<<endl;
+      //cout<<"INFO: ROSE AST Symbol consistency check PASSED."<<endl;
     }
     return numVarErrors==0 && numStructErrors==0;
   }
@@ -558,9 +558,9 @@ namespace CodeThorn {
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
     }
-    cout<<"INFO: Number of registered class types    : "<<ct<<endl;
-    cout<<"INFO: Number of registered var decls      : "<<numVarDecls<<endl;
-    cout<<"INFO: Number of registered function params: "<<numFunctionParams<<endl;
+    //cout<<"INFO: Number of registered class types    : "<<ct<<endl;
+    //cout<<"INFO: Number of registered var decls      : "<<numVarDecls<<endl;
+    //cout<<"INFO: Number of registered function params: "<<numFunctionParams<<endl;
   }
 
   // class members handling
