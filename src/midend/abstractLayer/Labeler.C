@@ -296,17 +296,19 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   case V_SgGotoStatement:
   case V_SgLabelStatement:
   case V_SgNullStatement:
-  case V_SgPragmaDeclaration:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
     return 1;
 
     // declarations
+  case V_SgPragmaDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
   case V_SgTypedefDeclaration:
+  case V_SgStaticAssertionDeclaration:
+  case V_SgUsingDeclarationStatement:
     return 1;
 
   // All OpenMP constructs are in the CFG
