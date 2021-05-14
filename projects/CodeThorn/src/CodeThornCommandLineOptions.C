@@ -266,7 +266,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   visibleOptions.add_options()            
-    ("config,c", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
+    ("config", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
