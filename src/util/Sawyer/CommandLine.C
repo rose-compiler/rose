@@ -2207,6 +2207,8 @@ public:
                 }
             }
             ASSERT_not_reachable("no matching switch, although the GroupedSwitches has an entry");
+            // A return value is required for all control paths
+            return "no matching switch, although the GroupedSwitches has an entry";
         }
     }
     std::string switchIssues(unsigned /*flags*/) {
