@@ -411,7 +411,6 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     exit(1);
   case V_SgTryStmt: // PP (09/04/20)
   case V_SgNullStatement:
-  case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
     return labeler->getLabel(node);
   case V_SgFunctionDefinition:
@@ -422,10 +421,14 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgDefaultOptionStmt:
       return labeler->getLabel(node);
 
+  case V_SgPragmaDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
-      return labeler->getLabel(node);
+  case V_SgTypedefDeclaration:
+  case V_SgStaticAssertionDeclaration:
+  case V_SgUsingDeclarationStatement:
+    return labeler->getLabel(node);
 
   case V_SgExprStatement: {
     return labeler->getLabel(node);
@@ -492,10 +495,6 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
   case V_SgOmpWorkshareStatement:
-    return labeler->getLabel(node);
-
-    // special case
-  case V_SgTypedefDeclaration:
     return labeler->getLabel(node);
 
   case V_SgFunctionCallExp:
@@ -581,14 +580,17 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   case V_SgNullStatement:
-  case V_SgPragmaDeclaration:
   case V_SgInitializedName:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
     // declarations
+  case V_SgPragmaDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
+  case V_SgTypedefDeclaration:
+  case V_SgStaticAssertionDeclaration:
+  case V_SgUsingDeclarationStatement:
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   case V_SgDefaultOptionStmt:
@@ -752,10 +754,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgOmpThreadprivateStatement:
   case V_SgOmpWorkshareStatement:
     finalSet.insert(labeler->getLabel(node));
-    return finalSet;
-
-    // special case
-  case V_SgTypedefDeclaration:
     return finalSet;
 
   case V_SgAsmStmt: {
@@ -1300,7 +1298,6 @@ Flow CFAnalysis::flow(SgNode* n) {
     }
     return edgeSet;
   }
-  case V_SgUsingDeclarationStatement: // PP
   case V_SgBreakStmt:
   case V_SgInitializedName:
   case V_SgNullStatement:
@@ -1312,6 +1309,9 @@ Flow CFAnalysis::flow(SgNode* n) {
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
+  case V_SgTypedefDeclaration:
+  case V_SgStaticAssertionDeclaration:
+  case V_SgUsingDeclarationStatement:
     return edgeSet;
 
   // Code duplication only for easy distinction between OMP parallel and OMP for (could be combined easily)
@@ -1422,10 +1422,6 @@ Flow CFAnalysis::flow(SgNode* n) {
   case V_SgOmpTaskwaitStatement:
   case V_SgOmpThreadprivateStatement:
   case V_SgOmpWorkshareStatement:
-    return edgeSet;
-
-    // special case
-  case V_SgTypedefDeclaration:
     return edgeSet;
 
   case V_SgAsmStmt: {
@@ -1660,7 +1656,7 @@ Flow CFAnalysis::flow(SgNode* n) {
     return edgeSet;
   }
   default:
-    throw CodeThorn::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
+    throw CodeThorn::Exception("Unknown node in CFAnalysis::flow: unrecognized ROSE AST node: "+node->class_name()+", detected in "+SgNodeHelper::sourceFilenameLineColumnToString(node)+": "+node->unparseToString());
   }
 }
 
