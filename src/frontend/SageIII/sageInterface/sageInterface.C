@@ -21395,6 +21395,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgAttributeSpecificationStatement:
       case V_SgEmptyDeclaration:
       case V_SgFortranIncludeLine:
+      case V_SgImplicitStatement: // Rasmussen 5/13/2021: TODO: implicit statement with letter-list
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
       case V_SgPragmaDeclaration:

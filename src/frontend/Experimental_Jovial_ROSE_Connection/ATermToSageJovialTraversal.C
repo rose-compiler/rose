@@ -7919,17 +7919,11 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
    else return ATfalse;
 
 // Remove single quotes
-// Return to C++11 usage when possible
-#if 1
-   if (compool_name.back()  == '\'') compool_name.pop_back();
-   if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
-#else
    unsigned int len = compool_name.length();
    ROSE_ASSERT(len > 2);
-   if (compool_name[0]  == '\'' && compool_name[len-1]) {
+   if (compool_name[0] == '\'' && compool_name[len-1] == '\'') {
       compool_name = compool_name.substr(1,len-2);
    }
-#endif
 
    sage_tree_builder.Enter(directive_stmt, compool_name, declared_name_list);
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_compool);
