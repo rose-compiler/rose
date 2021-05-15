@@ -1795,6 +1795,7 @@ bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
 }
 
 bool SgNodeHelper::hasAssignInitializer(SgVariableDeclaration* decl) {
+  ROSE_ASSERT(decl);
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   ROSE_ASSERT(initName0);
   if(SgInitializedName* initName=isSgInitializedName(initName0)) {
