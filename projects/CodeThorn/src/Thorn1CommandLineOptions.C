@@ -63,13 +63,13 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   visibleOptions.add_options()            
-    ("config,c", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
+    ("config", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-all", "Show all help options.")
     ("help-exp", "Show options for experimental features.")
-    ("start-function", po::value< string >(&ctOpt.startFunctionName), "Name of function to start the analysis from.")
+    ("start-function", po::value< string >(&ctOpt.startFunctionName), "Name of function to start the analysis from (only for compatibility, has no effect)")
     //    ("program-stats-only",po::value< bool >(&ctOpt.programStatsOnly)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs and exit.")
     ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions (functions for which no implementation is provided) to CSV file [arg].")
     //    ("external-function-calls-csv",po::value< string >(&ctOpt.externalFunctionCallsCSVFileName), "write a list of all function calls to external functions encountered during the program analysis to a CSV file.")

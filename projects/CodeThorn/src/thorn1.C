@@ -79,7 +79,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="0.9.2";
+const std::string versionString="0.9.3";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -165,6 +165,10 @@ int main( int argc, char * argv[] ) {
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
+    // thorn 1 configuration
+    ctOpt.intraProcedural=true; // do not check for start function
+    ctOpt.runSolver=false; // do not run solver
+
     IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     optionallyRunInternalChecks(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
@@ -210,7 +214,9 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
+    //initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
+    string startFunctionName="";
+    analyzer->initializeSolver3(startFunctionName,project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
@@ -219,7 +225,7 @@ int main( int argc, char * argv[] ) {
       originalProgramInfo.printCompared(&normalizedProgramInfo);
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
-
+    
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     tc.startTimer();tc.stopTimer();
 

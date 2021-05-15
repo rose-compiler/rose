@@ -31,7 +31,9 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
   _root=root;
 
   tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: normalization"<<endl;
+  if(ctOpt.status) cout<<"Phase: normalization";
+  if(ctOpt.status && ctOpt.normalizeLevel==0) cout<<" (skipped)";
+  if(ctOpt.status) cout<<endl;
   normalizationPass(ctOpt,root);
   tc.stopTimer(TimingCollector::normalization);
  

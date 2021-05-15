@@ -73,7 +73,9 @@ VariableIdMapping::~VariableIdMapping() {
 }
 
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
+  ROSE_ASSERT(varId.isValid());
   SgSymbol* sym=getSymbol(varId);
+  ROSE_ASSERT(sym);
   return getVariableDeclarationFromSymbol(sym);
 }
 
@@ -827,12 +829,18 @@ VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNo
 
 bool VariableIdMapping::hasAssignInitializer(VariableId arrayVar) {
   SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
-  return SgNodeHelper::hasAssignInitializer(decl);
+  if(decl)
+    return SgNodeHelper::hasAssignInitializer(decl);
+  else
+    return false;
 }
 
 bool VariableIdMapping::isAggregateWithInitializerList(VariableId arrayVar) {
  SgVariableDeclaration* decl=this->getVariableDeclaration(arrayVar);
- return SgNodeHelper::isAggregateDeclarationWithInitializerList(decl);
+ if(decl)
+   return SgNodeHelper::isAggregateDeclarationWithInitializerList(decl);
+ else
+   return false;
 }
 
 SgExpressionPtrList& VariableIdMapping::getInitializerListOfArrayVariable(VariableId arrayVar) {
