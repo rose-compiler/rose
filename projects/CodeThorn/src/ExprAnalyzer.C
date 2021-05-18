@@ -794,7 +794,9 @@ ExprAnalyzer::evalAssignOp(SgAssignOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   Edge fakeEdge;
-  std::list<EState> estateList=_analyzer->transferAssignOp(node,fakeEdge,&estate);
+  ROSE_ASSERT(_analyzer);
+  ROSE_ASSERT(_analyzer->getEStateTransferFunctions());
+  std::list<EState> estateList=_analyzer->getEStateTransferFunctions()->transferAssignOp(node,fakeEdge,&estate);
   ROSE_ASSERT(estateList.size()==1);
   res.result=rhsResult.result; // value result of assignment
   res.estate=*estateList.begin();

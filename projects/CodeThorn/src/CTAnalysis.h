@@ -395,7 +395,6 @@ namespace CodeThorn {
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
 
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;

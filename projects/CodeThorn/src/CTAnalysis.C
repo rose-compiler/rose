@@ -2280,11 +2280,6 @@ std::list<EState> CodeThorn::CTAnalysis::elistify(EState res) {
   return _estateTransferFunctions->elistify(res);
 }
 
-std::list<EState> CodeThorn::CTAnalysis::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  return _estateTransferFunctions->transferAssignOp(nextNodeToAnalyze2,edge,estate);
-}
-
 void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
   switch(int argVal=ctOpt.functionResolutionMode) {
   case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
