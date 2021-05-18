@@ -268,7 +268,7 @@ void EStateTransferFunctions::initDiagnostics() {
     // ad 4
     CallString cs=currentEState.callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
-      cs=_analyzer->transferFunctionCallContext(cs, currentEState.label());
+      cs=transferFunctionCallContext(cs, currentEState.label());
     }
     EState newEState=createEState(edge.target(),cs,newPState,cset);
     return elistify(newEState);
@@ -335,7 +335,7 @@ std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge,
       // nothing to do for external function call (label is not added
       // to callstring by external function call)
     } else {
-      if(_analyzer->isFeasiblePathContext(cs,functionCallLabel)) {
+      if(isFeasiblePathContext(cs,functionCallLabel)) {
         cs.removeLastLabel();
       } else {
         if(cs.isEmpty()) {
@@ -977,7 +977,7 @@ list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* 
 
 std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
   SAWYER_MESG(logger[TRACE]) << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
-  auto pList=_analyzer->evalAssignOp(nextNodeToAnalyze2, edge, estate);
+  auto pList=evalAssignOp(nextNodeToAnalyze2, edge, estate);
   std::list<EState> estateList;
   for (auto p : pList) {
     EState estate=p.first;
@@ -1110,7 +1110,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
             //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
             Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
             //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
-            CodeThorn::CTAnalysis::MemoryUpdateList memUpdList=_analyzer->evalAssignOp(assignOp,dummyEdge,&currentEState);
+            CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOp(assignOp,dummyEdge,&currentEState);
             std::list<EState> estateList;
             ROSE_ASSERT(memUpdList.size()==1);
             auto memUpd=*memUpdList.begin();
@@ -1398,7 +1398,7 @@ void EStateTransferFunctions::setElementSize(VariableId variableId, SgType* elem
   if(getVariableIdMapping()->getElementSize(variableId)!=0
      && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
     SAWYER_MESG(logger[WARN])<<"Element type size mismatch: "
-                <<"CTAnalysis::setElementSize: variableId name: "<<getVariableIdMapping()->variableName(variableId)
+                <<"EStateTransferFunctions::setElementSize: variableId name: "<<getVariableIdMapping()->variableName(variableId)
                 <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
                 <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
                 <<endl;
@@ -1565,4 +1565,226 @@ list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAn
   return newEStateList;
 }
 
+CodeThorn::EStateTransferFunctions::MemoryUpdateList
+CodeThorn::EStateTransferFunctions::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
+  MemoryUpdateList memoryUpdateList;
+  CallString cs=estatePtr->callString;
+  EState currentEState=*estatePtr;
+  SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
+  SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
+  list<SingleEvalResultConstInt> res=getExprAnalyzer()->evaluateExpression(rhs,currentEState, CodeThorn::ExprAnalyzer::MODE_VALUE);
+  for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
+    VariableId lhsVar;
+    bool isLhsVar=getExprAnalyzer()->checkIfVariableAndDetermineVarId(lhs,lhsVar);
+    if(isLhsVar) {
+      EState estate=(*i).estate;
+      if(getVariableIdMapping()->isOfClassType(lhsVar)) {
+        // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
+        SAWYER_MESG(logger[WARN])<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
+      } else if(getVariableIdMapping()->isOfCharType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfIntegerType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfEnumType(lhsVar)) /* PP */ {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfFloatingPointType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfBoolType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfPointerType(lhsVar)) {
+        // assume here that only arrays (pointers to arrays) are assigned
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(getVariableIdMapping()->getType(lhsVar))) {
+        // assume here that only arrays (pointers to arrays) are assigned
+        SAWYER_MESG(logger[WARN])<<"DEBUG: LHS assignment: typestring band aid"<<endl;
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else if(getVariableIdMapping()->isOfReferenceType(lhsVar)) {
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+      } else {
+        // other types (e.g. function pointer type)
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,(*i).result)));
+#if 0
+        SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
+        SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
+                                  <<"type lhs: '"<<getVariableIdMapping()->getType(lhsVar)->unparseToString()<<"'"
+                                  <<", "
+                                  <<"AST type node: "<<getVariableIdMapping()->getType(lhsVar)->class_name()
+                                  <<", Expr:"<<nextNodeToAnalyze2->unparseToString()
+                                  <<endl;
+        exit(1);
+#endif
+      }
+    } else if(isSgDotExp(lhs)) {
+      SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs "<<lhs->unparseToString()<<"."<<endl;
+      list<SingleEvalResultConstInt> lhsRes=getExprAnalyzer()->evaluateExpression(lhs,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
+      for (auto lhsAddressResult : lhsRes) {
+        EState estate=(*i).estate;
+        AbstractValue lhsAddress=lhsAddressResult.result;
+        SAWYER_MESG(logger[TRACE])<<"detected dot operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsAddress,(*i).result)));
+      }
+    } else if(isSgArrowExp(lhs)) {
+      SAWYER_MESG(logger[TRACE])<<"detected arrow operator on lhs "<<lhs->unparseToString()<<"."<<endl;
+      list<SingleEvalResultConstInt> lhsRes=getExprAnalyzer()->evaluateExpression(lhs,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
+      for (auto lhsAddressResult : lhsRes) {
+        EState estate=(*i).estate;
+        AbstractValue lhsAddress=lhsAddressResult.result;
+        SAWYER_MESG(logger[TRACE])<<"detected arrow operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
+        memoryUpdateList.push_back(make_pair(estate,make_pair(lhsAddress,(*i).result)));
+      }
+    } else if(isSgPntrArrRefExp(lhs)) {
+      EState estate=(*i).estate;
+      PState oldPState=*estate.pstate();
+      if(_analyzer->getSkipArrayAccesses()) {
+        // estateList.push_back(createEState(edge.target(),cs,oldPState,oldcset));
+        // nothing to do (no memory access to add to list)
+      } else {
+        SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
+        SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(lhs));
+        if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
+          PState pstate2=oldPState;
+          VariableId arrayVarId=getVariableIdMapping()->variableId(varRefExp);
+          AbstractValue arrayPtrValue;
+          // two cases
+          if(getVariableIdMapping()->isOfArrayType(arrayVarId)) {
+            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
+            arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
+          } else if(getVariableIdMapping()->isOfPointerType(arrayVarId)) {
+            // in case it is a pointer retrieve pointer value
+            AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
+            if(pstate2.varExists(ptr)) {
+              arrayPtrValue=getExprAnalyzer()->readFromMemoryLocation(estate.label(),&pstate2,ptr);
+              //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(getVariableIdMapping())<<endl;
+              // convert integer to VariableId
+              if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
+                if(getOptionOutputWarnings())
+                  cout<<"Warning: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(getVariableIdMapping())<<" array index is top or bot. Not supported yet."<<endl;
+              }
+              // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<getVariableIdMapping()->variableName(arrayVarId);
+            } else {
+              if(getOptionOutputWarnings())
+                cout<<"Warning: lhs array access: pointer variable does not exis2t in PState:"<<ptr.toString()<<endl;
+              arrayPtrValue=AbstractValue::createTop();
+            }
+          } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
+            AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
+            if(pstate2.varExists(ptr)) {
+              arrayPtrValue=getExprAnalyzer()->readFromReferenceMemoryLocation(estate.label(),&pstate2,ptr);
+            } else {
+              arrayPtrValue=AbstractValue::createTop();
+            }
+          } else {
+            SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
+            exit(1);
+          }
+
+          list<SingleEvalResultConstInt> res=getExprAnalyzer()->evaluateExpression(indexExp,currentEState);
+          ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
+          AbstractValue indexValue=(*(res.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+          AbstractValue arrayElementAddr=arrayPtrPlusIndexValue;
+          //cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(getVariableIdMapping())<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<getVariableIdMapping()->variableName(arrayVarId)<<" Index:"<<index<<endl;
+          if(arrayElementAddr.isBot()) {
+            // inaccessible memory location, return empty estate list
+            return memoryUpdateList;
+          }
+          // read value of variable var id (same as for VarRefExp - TODO: reuse)
+          // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
+          //TODO: getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
+          memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+        } else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(lhs)) {
+          // address of op, need to compute an l-value and use as address
+          
+        } else {
+          list<SingleEvalResultConstInt> arrExpRes=getExprAnalyzer()->evaluateExpression(arrExp,currentEState);
+          ROSE_ASSERT(arrExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue arrPtrValue=(*(arrExpRes.begin())).value();
+          list<SingleEvalResultConstInt> indexExpRes=getExprAnalyzer()->evaluateExpression(indexExp,currentEState);
+          ROSE_ASSERT(indexExpRes.size()==1); // this should always hold for normalized ASTs
+          AbstractValue indexValue=(*(indexExpRes.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrPtrValue,indexValue);
+          AbstractValue arrayElementAddr=arrayPtrPlusIndexValue;
+          if(arrayElementAddr.isBot()) {
+            return memoryUpdateList; // inaccessible memory location, return empty estate list
+          }
+          memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,(*i).result)));
+          //above evaluation covers all cases now
+          //SAWYER_MESG(logger[ERROR]) <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"lhs AST: "<<AstTerm::astTermWithNullValuesToString(lhs)<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"expr: "<<lhs->unparseToString()<<endl;
+          //SAWYER_MESG(logger[ERROR]) <<"arraySkip: "<<_analyzer->getSkipArrayAccesses()<<endl;
+          //exit(1);
+        }
+      }
+    } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
+      SgExpression* lhsOperand=lhsDerefExp->get_operand();
+      SAWYER_MESG(logger[TRACE])<<"lhsOperand: "<<lhsOperand->unparseToString()<<endl;
+      list<SingleEvalResultConstInt> resLhs=getExprAnalyzer()->evaluateExpression(lhsOperand,currentEState);
+      if(resLhs.size()>1) {
+        throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
+      }
+      ROSE_ASSERT(resLhs.size()==1);
+      AbstractValue lhsPointerValue=(*resLhs.begin()).result;
+      SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+      if(lhsPointerValue.isNullPtr()) {
+        getExprAnalyzer()->recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
+        //return estateList;
+        if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
+          // no state can follow, but as requested keep going without effect
+        } else {
+          // no state can follow
+          return memoryUpdateList;
+        }
+      } else if(lhsPointerValue.isTop()) {
+        getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
+        // specific case a pointer expr evaluates to top. Dereference operation
+        // potentially modifies any memory location in the state.
+        AbstractValue lhsAddress=lhsPointerValue;
+        memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,(*i).result))); // lhsAddress is TOP!!!
+      } else if(!(lhsPointerValue.isPtr())) {
+        // changed isUndefined to isTop (2/17/20)
+        if(lhsPointerValue.isTop() && _analyzer->getIgnoreUndefinedDereference()) {
+          //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+          // skip write access, just create new state (no effect)
+          // nothing to do, as it request to not update the state in this case
+        } else {
+          SAWYER_MESG(logger[WARN])<<"not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<" : assuming change of any memory location."<<endl;
+          getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estatePtr->label());
+          // specific case a pointer expr evaluates to top. Dereference operation
+          // potentially modifies any memory location in the state.
+          // iterate over all elements of the state and merge with rhs value
+          memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsPointerValue,(*i).result))); // lhsPointerValue is TOP!!!
+        }
+      } else {
+        //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+        memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsPointerValue,(*i).result)));
+      }
+    } else {
+      //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
+      if(_analyzer->getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
+        SAWYER_MESG(logger[WARN])<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
+      } else {
+        SAWYER_MESG(logger[ERROR]) << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+        SAWYER_MESG(logger[ERROR]) << "expr: "<< lhs->unparseToString()<<endl;
+        SAWYER_MESG(logger[ERROR]) << "type: "<<lhs->class_name()<<endl;
+        //cerr << "performing no update of state!"<<endl;
+        exit(1);
+      }
+    }
+  }
+  return memoryUpdateList;
+}
+
+  // value semantics for upates
+CallString EStateTransferFunctions::transferFunctionCallContext(CallString cs, Label lab) {
+  SAWYER_MESG(logger[TRACE])<<"FunctionCallTransfer: adding "<<lab.toString()<<" to cs: "<<cs.toString()<<endl;
+  cs.addLabel(lab);
+  return cs;
+}
+bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
+  return cs.getLength()==0||cs.isLastLabel(lab);
+}
+
+  
 }

@@ -57,6 +57,15 @@ namespace CodeThorn {
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
 
+    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
+    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
+    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
+    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+
+    // functions for handling callstring contexts
+    CallString transferFunctionCallContext(CallString cs, Label lab);
+    bool isFeasiblePathContext(CallString& cs,Label lab);
+
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);

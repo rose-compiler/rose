@@ -385,20 +385,11 @@ namespace CodeThorn {
     // extracts the result from the ExprAnalyzer data structure.
     list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
-    // functions for handling callstring contexts
-    CallString transferFunctionCallContext(CallString cs, Label lab);
-    bool isFeasiblePathContext(CallString& cs,Label lab);
-
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
-    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
-    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
-    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
-    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
