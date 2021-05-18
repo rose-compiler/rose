@@ -401,9 +401,6 @@ namespace CodeThorn {
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
-    // only implemented in CTAnalysis
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
     bool isStartLabel(Label label);

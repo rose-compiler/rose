@@ -948,7 +948,7 @@ std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAn
   //PState newPState;
   //ConstraintSet newCSet;
   if(edge.isType(EDGE_TRUE) || edge.isType(EDGE_FALSE)) {
-    return _analyzer->transferTrueFalseEdge(nextNodeToAnalyze2, edge, estate);
+    return transferTrueFalseEdge(nextNodeToAnalyze2, edge, estate);
   } else if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
     return transferIncDecOp(nextNodeToAnalyze2,edge,estate);
   } else if(SgAssignOp* assignOp=isSgAssignOp(nextNodeToAnalyze2)) {
@@ -1508,5 +1508,61 @@ AbstractValue EStateTransferFunctions::singleValevaluateExpression(SgExpression*
   AbstractValue val=valueResult.result;
   return val;
 }
-  
+
+list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  EState currentEState=*estate;
+  CallString cs=estate->callString;
+  Label newLabel;
+  PState newPState;
+  ConstraintSet newCSet;
+  list<SingleEvalResultConstInt> evalResultList=getExprAnalyzer()->evaluateExpression(nextNodeToAnalyze2,currentEState);
+  list<EState> newEStateList;
+  for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
+      i!=evalResultList.end();
+      ++i) {
+    SingleEvalResultConstInt evalResult=*i;
+    if(evalResult.isBot()) {
+      SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT at: "
+                               <<ProgramLocationsReport::programLocation(getLabeler(),estate->label())
+                               <<endl;
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
+    } else if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
+      // pass on EState
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
+    } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
+      // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
+      //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
+    } else {
+      // all other cases (assume evaluating to true or false, sane as top)
+      // pass on EState
+      newLabel=edge.target();
+      newPState=*evalResult.estate.pstate();
+      ROSE_ASSERT(getExprAnalyzer());
+      if(ReadWriteListener* readWriteListener=getExprAnalyzer()->getReadWriteListener()) {
+        readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      }
+      // use new empty cset instead of computed cset
+      ROSE_ASSERT(newCSet.size()==0);
+      EState newEstate=createEState(newLabel,cs,newPState,newCSet);
+      newEStateList.push_back(newEstate);
+    }
+  }
+  return newEStateList;
+}
+
 }

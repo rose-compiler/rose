@@ -51,9 +51,9 @@ namespace CodeThorn {
     // special case, called from transferFunctionCall
     std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
     std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
-#if 0
+
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-#endif
+
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
 
