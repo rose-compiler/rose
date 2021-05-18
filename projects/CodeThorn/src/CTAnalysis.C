@@ -1115,65 +1115,6 @@ int CodeThorn::CTAnalysis::computeNumberOfElements(SgVariableDeclaration* decl) 
   return 0;
 }
 
-// sets all elements in PState according to aggregate
-// initializer. Also models default values of Integers (floats not
-// supported yet). EState is only used for lookup (modified is only
-// the PState object).
-PState CodeThorn::CTAnalysis::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
-  //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
-  ROSE_ASSERT(aggregateInitializer);
-  SAWYER_MESG(logger[TRACE])<<"analyzeSgAggregateInitializer::array-initializer:"<<aggregateInitializer->unparseToString()<<endl;
-  Label label=currentEState.label();
-  PState newPState=pstate;
-  int elemIndex=0;
-  SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
-  SgExpressionPtrList& initList=initListObjPtr->get_expressions();
-
-  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-    AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-    SgExpression* exp=*i;
-    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-    if(assignInit==nullptr) {
-      SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
-      SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      AbstractValue newVal=AbstractValue::createTop();
-      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
-    } else {
-      // initialize element of array initializer in state
-      SgExpression* assignInitExpr=assignInit->get_operand();
-      // currentEState from above, newPState must be the same as in currentEState.
-      AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
-    }
-    elemIndex++;
-  }
-  // initialize remaining elements (if there are any) with default value
-  int aggregateSize=(int)getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-  // if array size is not 0 then it was determined from the type and remaining elements are initialized
-  if(aggregateSize==0) {
-    // update aggregate size if it was not set yet
-    aggregateSize=initList.size();
-    getVariableIdMapping()->setNumberOfElements(initDeclVarId,aggregateSize);
-  }
-
-  // otherwise the size is determined from the aggregate initializer itself (done above)
-  if(aggregateSize!=0) {
-    for(int i=elemIndex;i<aggregateSize;i++) {
-      AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
-      SAWYER_MESG(logger[TRACE])<<"Init aggregate default value: "<<arrayElemAddr.toString()<<endl;
-      // there must be a default value because an aggregate initializer exists (it is never undefined in this case)
-      // note: int a[3]={}; also forces the array to be initialized with {0,0,0}, the list can be empty.
-      // whereas with int a[3]; all 3 are undefined
-      AbstractValue defaultValue=AbstractValue(0); // TODO: cases where default value is not 0.
-      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,defaultValue);
-    }
-  } else {
-    // if aggregate size is 0 there is nothing to do
-  }
-  return newPState;
-}
-
-
 bool CodeThorn::CTAnalysis::isFailedAssertEState(const EState* estate) {
   if(estate->io.isFailedAssertIO())
     return true;

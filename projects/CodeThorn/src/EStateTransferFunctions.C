@@ -821,7 +821,7 @@ std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOp
   EState currentEState=*estate;
 
   // value of switch expression
-  AbstractValue switchCondVal=_analyzer->singleValevaluateExpression(condExpr,currentEState);
+  AbstractValue switchCondVal=singleValevaluateExpression(condExpr,currentEState);
 
   // if there is at least one case that is definitely reachable, then
   // the default (label) is non-reachable (fall-through still
@@ -837,8 +837,8 @@ std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOp
     SgExpression* caseExpr=caseStmt->get_key();
     SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
     if(caseExprOptionalRangeEnd) {
-      AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
-      AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+      AbstractValue caseValRangeBegin=singleValevaluateExpression(caseExpr,currentEState);
+      AbstractValue caseValRangeEnd=singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
       AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
       AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
       if(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue()) {
@@ -848,7 +848,7 @@ std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOp
       }
     }
     // value of constant case value
-    AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+    AbstractValue caseVal=singleValevaluateExpression(caseExpr,currentEState);
     // compare case constant with switch expression value
     SAWYER_MESG(logger[TRACE])<<"switch-default filter cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
     // check that not any case label may be equal to the switch-expr value (exact for concrete values)
@@ -891,13 +891,13 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
   EState currentEState=*estate;
 
   // value of switch expression
-  AbstractValue switchCondVal=_analyzer->singleValevaluateExpression(condExpr,currentEState);
+  AbstractValue switchCondVal=singleValevaluateExpression(condExpr,currentEState);
 
   SgExpression* caseExpr=caseStmt->get_key();
   SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
   if(caseExprOptionalRangeEnd) {
-    AbstractValue caseValRangeBegin=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
-    AbstractValue caseValRangeEnd=_analyzer->singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+    AbstractValue caseValRangeBegin=singleValevaluateExpression(caseExpr,currentEState);
+    AbstractValue caseValRangeEnd=singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
     AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
     AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
     if(comparisonValBegin.isTop()||comparisonValEnd.isTop()||(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue())) {
@@ -911,7 +911,7 @@ std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionSt
     }
   }
   // value of constant case value
-  AbstractValue caseVal=_analyzer->singleValevaluateExpression(caseExpr,currentEState);
+  AbstractValue caseVal=singleValevaluateExpression(caseExpr,currentEState);
   // compare case constant with switch expression value
   SAWYER_MESG(logger[TRACE])<<"switch cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
   AbstractValue comparisonVal=caseVal.operatorEq(switchCondVal);
@@ -1207,7 +1207,7 @@ std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNode
                getVariableIdMapping()->setNumberOfElements(initDeclVarId, _analyzer->computeNumberOfElements(decl));
             }
             PState newPState=*currentEState.pstate();
-            newPState=_analyzer->analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
+            newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
             return createEState(targetLabel,cs,newPState,cset);
           } else {
             // type not supported yet
@@ -1442,5 +1442,71 @@ void EStateTransferFunctions::initializeGlobalVariablesNew(SgProject* root, ESta
   VariableId EStateTransferFunctions::globalVarIdByName(std::string varName) {
     return globalVarName2VarIdMapping[varName];
   }
+
+// sets all elements in PState according to aggregate
+// initializer. Also models default values of Integers (floats not
+// supported yet). EState is only used for lookup (modified is only
+// the PState object).
+PState EStateTransferFunctions::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
+  //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
+  ROSE_ASSERT(aggregateInitializer);
+  SAWYER_MESG(logger[TRACE])<<"analyzeSgAggregateInitializer::array-initializer:"<<aggregateInitializer->unparseToString()<<endl;
+  Label label=currentEState.label();
+  PState newPState=pstate;
+  int elemIndex=0;
+  SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+  SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+
+  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+    AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+    SgExpression* exp=*i;
+    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+    if(assignInit==nullptr) {
+      SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
+      SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      AbstractValue newVal=AbstractValue::createTop();
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
+    } else {
+      // initialize element of array initializer in state
+      SgExpression* assignInitExpr=assignInit->get_operand();
+      // currentEState from above, newPState must be the same as in currentEState.
+      AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
+    }
+    elemIndex++;
+  }
+  // initialize remaining elements (if there are any) with default value
+  int aggregateSize=(int)getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+  // if array size is not 0 then it was determined from the type and remaining elements are initialized
+  if(aggregateSize==0) {
+    // update aggregate size if it was not set yet
+    aggregateSize=initList.size();
+    getVariableIdMapping()->setNumberOfElements(initDeclVarId,aggregateSize);
+  }
+
+  // otherwise the size is determined from the aggregate initializer itself (done above)
+  if(aggregateSize!=0) {
+    for(int i=elemIndex;i<aggregateSize;i++) {
+      AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
+      SAWYER_MESG(logger[TRACE])<<"Init aggregate default value: "<<arrayElemAddr.toString()<<endl;
+      // there must be a default value because an aggregate initializer exists (it is never undefined in this case)
+      // note: int a[3]={}; also forces the array to be initialized with {0,0,0}, the list can be empty.
+      // whereas with int a[3]; all 3 are undefined
+      AbstractValue defaultValue=AbstractValue(0); // TODO: cases where default value is not 0.
+      getExprAnalyzer()->initializeMemoryLocation(label,&newPState,arrayElemAddr,defaultValue);
+    }
+  } else {
+    // if aggregate size is 0 there is nothing to do
+  }
+  return newPState;
+}
+
+AbstractValue EStateTransferFunctions::singleValevaluateExpression(SgExpression* expr,EState currentEState) {
+  list<SingleEvalResultConstInt> resultList=getExprAnalyzer()->evaluateExpression(expr,currentEState);
+  ROSE_ASSERT(resultList.size()==1);
+  SingleEvalResultConstInt valueResult=*resultList.begin();
+  AbstractValue val=valueResult.result;
+  return val;
+}
   
 }

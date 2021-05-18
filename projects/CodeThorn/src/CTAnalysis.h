@@ -145,10 +145,6 @@ namespace CodeThorn {
     void setElementSize(VariableId variableId, SgType* elementType);
 
     int computeNumberOfElements(SgVariableDeclaration* decl);
-    // modifies PState with written initializers
-    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer, PState pState, EState currentEState);
-    // modifies PState with written initializers
-    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1, EState currentEState, Label targetLabel);
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
@@ -407,10 +403,6 @@ namespace CodeThorn {
 
     // only implemented in CTAnalysis
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-
-    // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
-    // requires normalized AST
-    AbstractValue singleValevaluateExpression(SgExpression* expr,EState currentEState);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 

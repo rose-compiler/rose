@@ -40,8 +40,7 @@ namespace CodeThorn {
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
-    EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
-    
+
     std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
     std::list<EState> transferIdentity(Edge edge, const EState* estate);
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
@@ -59,8 +58,17 @@ namespace CodeThorn {
     std::list<EState> elistify(EState res);
 
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
-    VariableId globalVarIdByName(std::string varName);
+    // modifies PState with written initializers
+    EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
+    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState);
 
+    // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
+    // requires normalized AST
+    AbstractValue singleValevaluateExpression(SgExpression* expr,EState currentEState);
+    
+    // only used in hybrid prototype binding
+    VariableId globalVarIdByName(std::string varName);
+    
   protected:
     void setElementSize(VariableId variableId, SgType* elementType);
     CodeThorn::CTAnalysis* _analyzer;
