@@ -41,5 +41,6 @@ install(FILES
   SemanticCallbacks.h
   SourceLister.h
   Tag.h
+  Types.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/ModelChecker)

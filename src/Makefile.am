@@ -395,10 +395,11 @@ nobase_pkginclude_HEADERS=							\
 	Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.h			\
 	Rose/BinaryAnalysis/ModelChecker/PathQueue.h				\
 	Rose/BinaryAnalysis/ModelChecker/Periodic.h				\
-	Rose/BinaryAnalysis/ModelChecker/Settings.h				\
 	Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h			\
+	Rose/BinaryAnalysis/ModelChecker/Settings.h				\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h				\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h					\
+	Rose/BinaryAnalysis/ModelChecker/Types.h				\
 	Rose/BinaryAnalysis/NoOperation.h					\
 	Rose/BinaryAnalysis/Partitioner2.h					\
 	Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h			\
