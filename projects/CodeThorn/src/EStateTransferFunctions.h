@@ -36,15 +36,16 @@ namespace CodeThorn {
     std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
     std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
     std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
+
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
     std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
     std::list<EState> transferIdentity(Edge edge, const EState* estate);
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
+    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
 
     // special case, called from transferFunctionCall
     std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);

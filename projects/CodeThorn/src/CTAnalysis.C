@@ -79,9 +79,11 @@ CodeThorn::CTAnalysis::CTAnalysis():
 
 // override
 void CodeThorn::CTAnalysis::initializeSolver() {
-  EStateTransferFunctions* etf=new EStateTransferFunctions();
-  etf->setAnalyzer(this);
-  _transferFunctions=etf;
+  if(_transferFunctions==nullptr) {
+    EStateTransferFunctions* etf=new EStateTransferFunctions();
+    etf->setAnalyzer(this);
+    _transferFunctions=etf;
+  }
 }
 
 // override
