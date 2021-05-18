@@ -6578,13 +6578,15 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else return ATfalse;
 
    // Several different options due to ambiguous grammar:
-   //  1. function call
+   //  1. Table reference argument of a function call not yet declared,
+   //     e.g. LOC(table_var(5))
+   //  2. Function call
    //     a. With a function symbol
    //     b. Without a function symbol (must build nondefining declaration)
-   //  2. type conversion
+   //  3. Type conversion
    //     a. General conversion (isSgTypedefSymbol)
    //     b. StatusConversion   (isSgEnumSymbol)
-   //  3. variable
+   //  4. Variable
    //     a. Table reference
    //     b. Table initialization replication operator
 
@@ -6593,9 +6595,17 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 //
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
+// No symbol exists yet (perhaps a table variable declared later)
+//
+   if (!symbol && sage_tree_builder.isInitializationContext()) {
+      // This will add a var ref to forward_var_refs_
+      SgVarRefExp* var_ref = sage_tree_builder.buildVarRefExp_nfi(name);
+      expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list); // table/array reference
+   }
+
 // Look for function call
 //
-   if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
+   else if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
       SgFunctionCallExp* func_call = nullptr;
       sage_tree_builder.Enter(func_call, name, expr_list);
       sage_tree_builder.Leave(func_call);

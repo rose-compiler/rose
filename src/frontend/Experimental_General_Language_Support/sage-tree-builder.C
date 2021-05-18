@@ -767,9 +767,8 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
    if (func_symbol == nullptr) {
       SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
       if (symbol || isInitializationContext()) {
-         // There is a symbol but it is not a function, punt and let variable handling take care of it.
-         // Also, if this name is in an initialization expression it must be a constant so there will be a
-         // function declaration already (it can't be implicit).
+         // There is a symbol (but not a function symbol) or name that could be part of an
+         // initialization expression, punt and let variable handling take care of it.
          return;
       }
       else {
