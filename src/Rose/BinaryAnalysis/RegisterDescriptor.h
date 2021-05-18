@@ -166,6 +166,17 @@ public:
         return nBits() != 0;
     }
 
+    /** The raw value of the descriptor.
+     *
+     * @{ */
+    uint32_t raw() const {
+        return data_;
+    }
+    void raw(uint32_t r) {
+        data_ = r;
+    }
+    /** @} */
+
     // The following trickery is to have something like "explicit operator bool" before C++11
 private:
     typedef void(RegisterDescriptor::*unspecified_bool)() const;
