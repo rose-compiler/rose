@@ -1,6 +1,16 @@
 From:
-/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2020/include/libadalang/libadalang-analysis.ads
+/collab/usr/global/tools/rose/toss_3_x86_64_ib/GNAT/2020/include/libadalang:
 
+This is the hierarchy of libadalang AST node types, from libadalang-analysis.ads.
+A libadalang node will belong to (usually, but not always?) one of the leaf types below.
+
+Each derived leaf type has a corresponding enum literal with "Ada_" prepended,
+in Ada_Node_Kind_Type in libadalang_common.ads.  Each non-leaf type has a 
+corresponding subtype there, with "Ada_" prepended and sometimes "_Range" appended.  e.g.,
+Abort_Present => Ada_Abort_Present_Range
+Abort_Node    => Ada_Abort_Node
+Ada_Node      => Ada_Ada_Node
+Stmt          => Ada_Stmt
 
 Ada_Node
 	Abort_Node
@@ -14,6 +24,7 @@ Ada_Node
 			Alternatives_List
 			Constraint_List
 			Decl_List
+			Stmt_List
 		Aspect_Assoc_List
 		Base_Assoc_List
 		Basic_Assoc_List
@@ -36,7 +47,6 @@ Ada_Node
 		Param_Spec_List
 		Pragma_Node_List
 		Select_When_Part_List
-		Stmt_List
 		Unconstrained_Array_Index_List
 		Variant_List
 	Aliased_Node
@@ -164,7 +174,6 @@ Ada_Node
 	Constant_Node
 		Constant_Absent
 		Constant_Present
-	Contract_Cases
 	Declarative_Part
 		Private_Part
 		Public_Part
@@ -180,6 +189,7 @@ Ada_Node
 		Box_Expr
 		Case_Expr
 		Case_Expr_Alternative
+		Contract_Cases
 		Name
 			Attribute_Ref
 				Update_Attribute_Ref
