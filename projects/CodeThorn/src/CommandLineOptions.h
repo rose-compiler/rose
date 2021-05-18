@@ -60,16 +60,7 @@ public:
   /// parse command line, store are options in args.
   void parse(int argc, char * argv[], po::options_description all, po::options_description configFileOptions);
   };
-
-template<typename T>
-  void CommandLineOptions::setOption(std::string option, T value) {
-  if (count(option) < 1) {
-    throw CodeThorn::Exception("Trying to set command line option \"" + option + "\" that does not exist.");
-  }
-  const_cast<boost::program_options::variable_value&>(operator[](option)) = 
-    boost::program_options::variable_value(boost::any(value), false);
- }
- 
+  
 // TODO: move to CodeThornCommandLineOptions, once all args
 // references are removed from codethorn library.
  extern CommandLineOptions args;

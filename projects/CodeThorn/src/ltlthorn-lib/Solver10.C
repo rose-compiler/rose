@@ -63,7 +63,8 @@ void Solver10::run() {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _analyzer->_startPState;
-  newStartPState.writeToMemoryLocation(_analyzer->globalVarIdByName("output"),CodeThorn::AbstractValue(-7));
+  ROSE_ASSERT(_analyzer->getEStateTransferFunctions());
+  newStartPState.writeToMemoryLocation(_analyzer->getEStateTransferFunctions()->globalVarIdByName("output"),CodeThorn::AbstractValue(-7));
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
   std::list<PStatePlusIOHistory> workList;
@@ -145,7 +146,7 @@ bool isEmptyWorkList;
       for (set<int>::iterator inputVal=_analyzer->_inputVarValues.begin(); inputVal!=_analyzer->_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState.writeToMemoryLocation(_analyzer->globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
+        newPState.writeToMemoryLocation(_analyzer->getEStateTransferFunctions()->globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);
@@ -292,7 +293,7 @@ int Solver10::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
     for (set<int>::iterator inputVal=_analyzer->_inputVarValues.begin(); inputVal!=_analyzer->_inputVarValues.end(); inputVal++) {
       // copy the state and initialize new input
       PState newPState = currentState.first;
-      newPState.writeToMemoryLocation(_analyzer->globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
+      newPState.writeToMemoryLocation(_analyzer->getEStateTransferFunctions()->globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
       list<int> newHistory = currentState.second;
       ROSE_ASSERT(newHistory.size() % 2 == 0);
       newHistory.push_back(*inputVal);
@@ -369,7 +370,7 @@ list<int> Solver10::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
 bool Solver10::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
   for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
     //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
-    pState.writeToMemoryLocation(_analyzer->globalVarIdByName("input"),
+    pState.writeToMemoryLocation(_analyzer->getEStateTransferFunctions()->globalVarIdByName("input"),
                               CodeThorn::AbstractValue(*i));
     RERS_Problem::rersGlobalVarsCallInitFP(_analyzer, pState, thread_id);
     (void) RERS_Problem::calculate_outputFP(thread_id);

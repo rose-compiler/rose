@@ -1091,22 +1091,6 @@ void CodeThorn::CTAnalysis::swapWorkLists() {
 }
 
 
-// set the size of an element determined by this type
-void CodeThorn::CTAnalysis::setElementSize(VariableId variableId, SgType* elementType) {
-  unsigned int typeSize=getVariableIdMapping()->getTypeSize(elementType);
-  if(getVariableIdMapping()->getElementSize(variableId)!=0
-     && getVariableIdMapping()->getElementSize(variableId)!=typeSize) {
-    SAWYER_MESG(logger[WARN])<<"Element type size mismatch: "
-                <<"CTAnalysis::setElementSize: variableId name: "<<getVariableIdMapping()->variableName(variableId)
-                <<"typesize(from VID):"<<getVariableIdMapping()->getElementSize(variableId)
-                <<" typeSize(fromtype): "<<typeSize<<" of "<<elementType->unparseToString()
-                <<endl;
-    // keep existing size from variableIdMapping
-    return;
-  }
-  getVariableIdMapping()->setElementSize(variableId,typeSize);
-}
-
 // for arrays: number of elements (nested arrays not implemented yet)
 // for variable: 1
 // for structs: not implemented yet
@@ -1189,354 +1173,6 @@ PState CodeThorn::CTAnalysis::analyzeSgAggregateInitializer(VariableId initDeclV
   return newPState;
 }
 
-EState CodeThorn::CTAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
-
-  /*
-    1) declaration of variable or array
-    - AggregateInitializer (e.g. T a[]={1,2,3};)
-    - AggregateInitializer (e.g. T a[5]={1,2,3};)
-    - AssignInitializer (e.g. T x=1+2;)
-    2) if array, determine size of array (from VariableIdMapping)
-    3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
-   */
-
-  SAWYER_MESG(logger[TRACE])<<"analyzeVariableDeclaration:"<<decl->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
-  CallString cs=currentEState.callString;
-  Label label=currentEState.label();
-
-  const SgInitializedNamePtrList& initNameList=decl->get_variables();
-  SgNode* initName0;
-  if(initNameList.size()>1) {
-    SAWYER_MESG(logger[ERROR])<<"Error: variable declaration contains more than one variable. Normalization required."<<endl;
-    SAWYER_MESG(logger[ERROR])<<"Error: "<<decl->unparseToString()<<endl;
-
-    exit(1);
-  } else {
-    //SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-    ROSE_ASSERT(initNameList.size()==1);
-    initName0=*initNameList.begin();
-  }
-  if(initName0!=nullptr) {
-    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-      VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
-      // not possible to support yet. getIntValue must succeed on declarations.
-      /*
-      if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
-        // DEAD CODE
-        PState newPState=*currentEState.pstate();
-        newPState.reserveMemoryLocation(initDeclVarId);
-        ConstraintSet cset=*currentEState.constraints();
-        InputOutput io;
-        io.recordNone();
-        return createEState(targetLabel,cs,newPState,cset);
-      }
-      */
-      // deactivated 05/20/2020
-      //      if(getVariableIdMapping()->isOfArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
-        // in case of a constant array the array (and its members) are not added to the state.
-        // they are considered to be determined from the initializer without representing them
-        // in the state
-        // logger[DEBUG] <<"not adding array to PState."<<endl;
-      //  PState newPState=*currentEState.pstate();
-      //  ConstraintSet cset=*currentEState.constraints();
-      //  return createEState(targetLabel,cs,newPState,cset);
-      //}
-
-      ConstraintSet cset=*currentEState.constraints();
-      SgInitializer* initializer=initName->get_initializer();
-      if(initializer) {
-        //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
-        // special case that initializer is an assignment (reusing transferAssignOp)
-        if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
-          SgExpression* assignInitOperand=assignInit->get_operand_i();
-          ROSE_ASSERT(assignInitOperand);
-          if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
-            SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
-            //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
-            Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
-            //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
-            CodeThorn::CTAnalysis::MemoryUpdateList memUpdList=evalAssignOp(assignOp,dummyEdge,&currentEState);
-            std::list<EState> estateList;
-            ROSE_ASSERT(memUpdList.size()==1);
-            auto memUpd=*memUpdList.begin();
-            // code is normalized, lhs must be a variable : tmpVar= var=val;
-            // store result of assignment in declaration variable
-            EState estate=memUpd.first;
-            PState newPState=*estate.pstate();
-            AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-            AbstractValue lhsAddr=memUpd.second.first;
-            AbstractValue rhsValue=memUpd.second.second;
-            getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAddr,rhsValue); // assignment in initializer
-            getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,rhsValue); // initialization of declared var
-            return createEState(targetLabel,cs,newPState,cset);
-          } else if(SgFunctionRefExp* funRefExp=isSgFunctionRefExp(assignInitOperand)) {
-            //cout<<"DEBUG: DETECTED isSgFunctionRefExp: evaluating expression ..."<<endl;
-            list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(funRefExp,currentEState);
-            if(res.size()!=1) {
-              if(res.size()>1) {
-                SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
-                SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
-                exit(1);
-              } else {
-                ROSE_ASSERT(res.size()==0);
-                SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
-              }
-            } else {
-              ROSE_ASSERT(res.size()==1);
-              SingleEvalResultConstInt evalResult=*res.begin();
-              SAWYER_MESG(logger[TRACE])<<"rhs eval result 2: "<<evalResult.result.toString()<<endl;
-              
-              EState estate=evalResult.estate;
-              PState newPState=*estate.pstate();
-              AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-              getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
-              ConstraintSet cset=*estate.constraints();
-              return createEState(targetLabel,cs,newPState,cset);
-            }
-          }
-        }
-        if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
-          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          // TODO: for(offset(membervar) : membervars {initialize(address(initDeclVarId)+offset,eval(initializer+));}
-          //AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-          // TODO: STRUCT VARIABLE DECLARATION
-          //getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
-          PState newPState=*currentEState.pstate();
-          return createEState(targetLabel,cs,newPState,cset);
-        }
-        if(getVariableIdMapping()->isOfReferenceType(initDeclVarId)) {
-          SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
-          ROSE_ASSERT(assignInit);
-          SgExpression* assignInitOperand=assignInit->get_operand_i();
-          ROSE_ASSERT(assignInitOperand);
-          //list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(assignInitOperand,currentEState, CodeThorn::ExprAnalyzer::MODE_ADDRESS);
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateLExpression(assignInitOperand,currentEState);
-
-          SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
-          if(res.size()>1) {
-            SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
-            SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
-            exit(1);
-          } else if(res.size()==0) {
-            // TODO: remove this case once initialization is fully supported
-            SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<decl->unparseToString()<<endl;
-            AbstractValue result=AbstractValue::createTop();
-            EState estate=currentEState;
-            PState newPState=*estate.pstate();
-            AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-            //initDeclVarAddr.setRefType(); // known to be ref from isOfReferenceType above
-            // creates a memory cell in state that contains the address of the referred memory cell
-            getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,result);
-            ConstraintSet cset=*estate.constraints();
-            return createEState(targetLabel,cs,newPState,cset);
-          }
-          SingleEvalResultConstInt evalResult=*res.begin();
-          SAWYER_MESG(logger[TRACE])<<"rhs (reference init) result: "<<evalResult.result.toString()<<endl;
-            
-          EState estate=evalResult.estate;
-          PState newPState=*estate.pstate();
-          AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
-          //initDeclVarAddr.setRefType(); // known to be ref from isOfReferenceType above
-          // creates a memory cell in state that contains the address of the referred memory cell
-          getExprAnalyzer()->initializeMemoryLocation(label,&newPState,initDeclVarAddr,evalResult.value());
-          ConstraintSet cset=*estate.constraints();
-          return createEState(targetLabel,cs,newPState,cset);
-        }
-        // has aggregate initializer
-        if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
-          if(SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type())) {
-            SgType* arrayElementType=arrayType->get_base_type();
-            setElementSize(initDeclVarId,arrayElementType);
-            // only set size from aggregate initializer if not known from type
-            if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==0) {
-               getVariableIdMapping()->setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
-            }
-            PState newPState=*currentEState.pstate();
-            newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
-            return createEState(targetLabel,cs,newPState,cset);
-          } else {
-            // type not supported yet
-            SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type at: "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<" : "<<aggregateInitializer->get_type()->unparseToString()<<endl;
-            // do not modify state. Value remains top.
-            PState newPState=*currentEState.pstate();
-            ConstraintSet cset=*currentEState.constraints();
-            return createEState(targetLabel,cs,newPState,cset);
-          }
-        } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-          SgExpression* rhs=assignInitializer->get_operand_i();
-          ROSE_ASSERT(rhs);
-          SAWYER_MESG(logger[TRACE])<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
-
-          // only create string in state with variable as pointer-address if it is an array (not for the case it is a char* pointer)
-          // in the case of char* it is handled as a pointer initializer (and the string-pointer is already available in state)
-          if(SgStringVal* stringValNode=isSgStringVal(assignInitializer->get_operand())) {
-            if(isSgArrayType(initName->get_type())) {
-              // handle special cases of: char a[]="abc"; char a[4]="abc";
-              // TODO: a[5]="ab";
-              SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-              //size_t stringLen=stringValNode->get_value().size();
-              if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==0) {
-                VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
-                size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
-                getVariableIdMapping()->setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
-                SAWYER_MESG(logger[TRACE])<<"Determined size of array from literal string memory region size: "<<stringLiteralMemoryRegionSize<<endl;
-              } else {
-                SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<getVariableIdMapping()->getNumberOfElements(initDeclVarId)<<endl;
-              }
-              SgType* variableType=initializer->get_type(); // for char and wchar
-              setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
-              PState newPState=*currentEState.pstate();
-              initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
-              ConstraintSet cset=*currentEState.constraints();
-              return createEState(targetLabel,cs,newPState,cset);
-            }
-          }
-          // set type info for initDeclVarId
-          getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-          SgType* variableType=initializer->get_type();
-          setElementSize(initDeclVarId,variableType);
-
-          // build lhs-value dependent on type of declared variable
-          //AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
-          AbstractValue lhsAbstractAddress=AbstractValue::createAddressOfVariable(initDeclVarId); // creates a pointer to initDeclVar
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState);
-          if(res.size()!=1) {
-            if(res.size()>1) {
-              SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
-              SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
-              exit(1);
-            } else {
-              ROSE_ASSERT(res.size()==0);
-              SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<rhs->unparseToString()<<endl;
-              EState estate=currentEState;
-              PState newPState=*estate.pstate();
-              // getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAbstractAddress,CodeThorn::Top());
-              getExprAnalyzer()->reserveMemoryLocation(label,&newPState,lhsAbstractAddress);
-              ConstraintSet cset=*estate.constraints();
-              return createEState(targetLabel,cs,newPState,cset);
-            }
-          }
-          ROSE_ASSERT(res.size()==1);
-          SingleEvalResultConstInt evalResult=*res.begin();
-          SAWYER_MESG(logger[TRACE])<<"rhs eval result 1: "<<evalResult.result.toString()<<endl;
-
-          EState estate=evalResult.estate;
-          PState newPState=*estate.pstate();
-          getExprAnalyzer()->initializeMemoryLocation(label,&newPState,lhsAbstractAddress,evalResult.value());
-          ConstraintSet cset=*estate.constraints();
-          return createEState(targetLabel,cs,newPState,cset);
-        } else {
-          SAWYER_MESG(logger[WARN]) << "unsupported initializer in declaration: "<<decl->unparseToString()<<" not adding to state (assuming arbitrary value)"<<endl;
-          PState newPState=*currentEState.pstate();
-          return createEState(targetLabel,cs,newPState,cset);
-        }
-      } else {
-        // no initializer (model default cases)
-        ROSE_ASSERT(initName!=nullptr);
-        SgArrayType* arrayType=isSgArrayType(initName->get_type());
-        if(arrayType) {
-          SgType* arrayElementType=arrayType->get_base_type();
-          setElementSize(initDeclVarId,arrayElementType);
-          int numElements=getVariableIdMapping()->getArrayElementCount(arrayType);
-          if(numElements==0) {
-            SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
-            std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
-            if(arrayDimExps.size()>1) {
-              if(getAbstractionMode()==3) {
-                CodeThorn::Exception("multi-dimensional arrays not supported yet.");
-              } else {
-                SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
-              }
-              // not adding it to state. Will be used as unknown.
-              PState newPState=*currentEState.pstate();
-              return createEState(targetLabel,cs,newPState,cset);
-            }
-            ROSE_ASSERT(arrayDimExps.size()==1);
-            SgExpression* arrayDimExp=*arrayDimExps.begin();
-            SAWYER_MESG(logger[TRACE])<<"Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
-            list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(arrayDimExp,currentEState);
-            ROSE_ASSERT(evalResultList.size()==1);
-            SingleEvalResultConstInt evalRes=*evalResultList.begin();
-            AbstractValue arrayDimAVal=evalRes.result;
-            SAWYER_MESG(logger[TRACE])<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
-            if(arrayDimAVal.isConstInt()) {
-              numElements=arrayDimAVal.getIntValue();
-              getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-            } else {
-              if(getAbstractionMode()==3) {
-                CodeThorn::Exception("Could not determine size of array (non-const size).");
-              }
-              // TODO: size of array remains 1?
-            }
-          } else {
-            getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-          }
-        } else {
-          // set type info for initDeclVarId
-          getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-          SgType* variableType=initName->get_type();
-          setElementSize(initDeclVarId,variableType);
-        }
-
-	SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
-        PState newPState=*currentEState.pstate();
-        if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
-	  SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
-          // add default array elements to PState
-          auto length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-	  if(length>0) {
-	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of size: "<<decl->unparseToString()<<":"<<length<<endl;
-	    for(CodeThorn::TypeSize elemIndex=0;elemIndex<length;elemIndex++) {
-	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
-	      // set default init value
-	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
-	    }
-	  } else {
-	    SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
-	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
-	      // set default init value
-	      getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr); // TODO: reserve summary memory location	    
-	  }
-
-        } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
-	  SAWYER_MESG(logger[TRACE])<<"PState: upd: class"<<endl;
-          // create only address start address of struct (on the
-          // stack) alternatively addresses for all member variables
-          // can be created; however, a member var can only be
-          // assigned by denoting an element relative to the start of
-          // the struct, similar only a pointer can be created. the
-          // value is actually uninitialized and therefore is
-          // implicitly bot.
-          AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-          SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
-          // TODO: STRUCT VARIABLE DECLARATION
-          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
-        } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
-	  SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
-          // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
-          AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-          getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,pointerVal);
-        } else {
-          // set it to top (=any value possible (uninitialized)) for
-          // all remaining cases. It will become an error-path once
-          // all cases are addressed explicitly above.
-          SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
-          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,AbstractValue::createAddressOfVariable(initDeclVarId));
-        }
-	SAWYER_MESG(logger[TRACE])<<"Creating new EState"<<endl;
-        return createEState(targetLabel,cs,newPState,cset);
-      }
-    } else {
-      logger[ERROR] << "in declaration (@initializedName) no variable found ... bailing out."<<endl;
-      exit(1);
-    }
-  } else {
-    logger[ERROR] << "in declaration: no variable found ... bailing out."<<endl;
-    exit(1);
-  }
-  ROSE_ASSERT(false); // non-reachable
-}
 
 bool CodeThorn::CTAnalysis::isFailedAssertEState(const EState* estate) {
   if(estate->io.isFailedAssertIO())
@@ -1840,7 +1476,6 @@ void CodeThorn::CTAnalysis::initialize(SgProject* project) {
 void CodeThorn::CTAnalysis::initializeCommandLineArgumentsInState(PState& initialPState) {
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
-  // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
   string functionName=SgNodeHelper::getFunctionName(_startFunRoot);
   if(_startFunRoot==0) {
     // no main function, therefore nothing to initialize
@@ -1943,76 +1578,6 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
 
 void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg) {
   // TODO
-}
-
-void CodeThorn::CTAnalysis::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
-  if(SgProject* project=isSgProject(root)) {
-#if 1
-    ROSE_ASSERT(getVariableIdMapping());
-    CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
-    CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    std::set<VariableId> setOfFilteredGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
-    uint32_t numFilteredVars=setOfGlobalVars.size()-setOfFilteredGlobalVars.size();
-    if(_ctOpt.status) {
-      cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
-      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-    }
-    std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(_ctOpt.initialStateFilterUnusedVariables)?
-      getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfFilteredGlobalVars)
-      : getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
-      ;
-    uint32_t declaredInGlobalState=0;
-    for(auto decl : relevantGlobalVariableDecls) {
-      estate=analyzeVariableDeclaration(decl,estate,estate.label());
-      declaredInGlobalState++;
-      // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
-      globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
-    }
-    if(_ctOpt.status) {
-      cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
-      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
-    }
-#else
-    SAWYER_MESG(logger[INFO])<< "Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    SAWYER_MESG(logger[INFO])<< globalVars.size()<<endl;
-
-    VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-    if(_ctOpt.status) {
-      cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-    }
-    // START_INIT 6
-    uint32_t filteredVars=0;
-    uint32_t declaredInGlobalState=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=getVariableIdMapping()->variableId(*i);
-      if(!globalVarId.isValid()) {
-        cout<<"WARNING: invalid global varid of: "<<(*i)->unparseToString()<<endl;
-        continue;
-      }
-      ROSE_ASSERT(globalVarId.isValid());
-
-      // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
-      globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(*i))]=getVariableIdMapping()->variableId(*i);
-      
-      if(_ctOpt.initialStateFilterUnusedVariables) {
-	if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
-	  filteredVars++;
-	  SAWYER_MESG(logger[TRACE])<<"Global var:"<<(*i)->unparseToString()<<" filtered (unused)"<<endl;
-	  continue;
-	}
-      }
-      estate=analyzeVariableDeclaration(*i,estate,estate.label());
-      declaredInGlobalState++;
-    }
-    if(_ctOpt.status) {
-      cout<< "STATUS: Number of unused variables filtered in initial state: "<<filteredVars<<endl;
-      cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
-    }
-#endif
-  } else {
-    cout<< "STATUS: no global scope. Global state remains without entries.";
-  }
 }
 
 void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
@@ -2124,7 +1689,8 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   EState estate(slab,initialPStateStored,emptycsetstored);
 
   //initializeGlobalVariablesOld(root, estate);
-  initializeGlobalVariablesNew(root, estate);
+  ROSE_ASSERT(_estateTransferFunctions);
+  _estateTransferFunctions->initializeGlobalVariablesNew(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
   
   setWorkLists(_explorationMode);
@@ -2392,8 +1958,10 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertWorklistStates() {
 }
 
 int CodeThorn::CTAnalysis::reachabilityAssertCode(const EState* currentEStatePtr) {
+  ROSE_ASSERT(_estateTransferFunctions);
+  ROSE_ASSERT(getExprAnalyzer());
   if(_ctOpt.rers.rersBinary) {
-    int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->label(),currentEStatePtr->pstate(),globalVarIdByName("output")).getIntValue();
+    int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->label(),currentEStatePtr->pstate(),_estateTransferFunctions->globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
     }
@@ -2851,4 +2419,13 @@ void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptio
   }
   SAWYER_MESG(logger[TRACE])<<"TRACE: selected function resolution mode: "<<CFAnalysis::functionResolutionMode<<endl;
 
+}
+
+VariableId CodeThorn::CTAnalysis::globalVarIdByName(std::string varName) {
+  ROSE_ASSERT(getEStateTransferFunctions());
+  return getEStateTransferFunctions()->globalVarIdByName(varName);
+}
+
+CodeThorn::EStateTransferFunctions* CodeThorn::CTAnalysis::getEStateTransferFunctions() {
+  return _estateTransferFunctions;
 }

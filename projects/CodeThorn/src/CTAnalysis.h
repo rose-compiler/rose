@@ -198,8 +198,6 @@ namespace CodeThorn {
     // used by the hybrid analyzer (state marshalling)
     void mapGlobalVarInsert(std::string name, int* addr);
 
-    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
-
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     // deprecated
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
@@ -266,8 +264,6 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
-    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
-    
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
@@ -284,10 +280,14 @@ namespace CodeThorn {
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
-    // only used temporarily for binary-binding prototype
-    std::map<std::string,VariableId> globalVarName2VarIdMapping;
-    std::vector<bool> binaryBindingAssert;
 
+    // only used temporarily for binary-binding prototype
+    std::vector<bool> binaryBindingAssert;
+    // only used in binary-prototype binding
+    VariableId globalVarIdByName(std::string varName);
+
+    CodeThorn::EStateTransferFunctions* getEStateTransferFunctions();
+    
     // functions related to abstractions during the analysis
     void eventGlobalTopifyTurnedOn();
     bool isActiveGlobalTopify();

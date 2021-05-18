@@ -447,7 +447,7 @@ pair<EStatePtrSet, EStatePtrSet> CounterexampleAnalyzer::getConcreteOutputAndAbs
 vector<const EState*> CounterexampleAnalyzer::sortAbstractInputStates(vector<const EState*> v, EStatePtrSet abstractInputStates) {
   for (EStatePtrSet::iterator i=abstractInputStates.begin(); i!=abstractInputStates.end(); ++i) {
     PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
-    int inVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("input")).getIntValue();
+    int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
     v[inVal - 1] = (*i);
   }
   return v;
@@ -458,7 +458,7 @@ vector<const EState*> CounterexampleAnalyzer::getFollowingInputStates(vector<con
   for (EStatePtrSet::iterator i=firstInputStates.begin(); i!=firstInputStates.end(); ++i) {
     if ((*i)->io.isStdInIO()) {
       PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
-      int inVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("input")).getIntValue();
+      int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       v[inVal - 1] = (*i);
     } else {
       cout << "ERROR: CounterexampleAnalyzer::cegarPrefixAnalysisForLtl: successor of initial model's start state is not an input state." << endl;
@@ -468,12 +468,18 @@ vector<const EState*> CounterexampleAnalyzer::getFollowingInputStates(vector<con
   return v;
 }
 
+CodeThorn::VariableId CounterexampleAnalyzer::globalVarIdByName(std::string s) {
+  ROSE_ASSERT(_analyzer);
+  ROSE_ASSERT(_analyzer->getEStateTransferFunctions());
+  return _analyzer->getEStateTransferFunctions()->globalVarIdByName(s);
+}
+
 vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, const EState*eState, TransitionGraph* model) {
   EStatePtrSet successors = model->succ(eState);
   for (EStatePtrSet::iterator k=successors.begin(); k!=successors.end(); ++k) {
     if ((*k)->io.isStdInIO()) {
       PState* pstate = const_cast<PState*>( (*k)->pstate() ); 
-      int inVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("input")).getIntValue();
+      int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       v[inVal - 1] = true; 
     }else {
       cout << "ERROR: CounterexampleAnalyzer::cegarPrefixAnalysisForLtl: successor of prefix output (or start) state is not an input state." << endl;
@@ -530,7 +536,7 @@ list<pair<const EState*, int> > CounterexampleAnalyzer::removeTraceLeadingToErro
   assert(errorState->io.isFailedAssertIO() || errorState->io.isStdErrIO() );
   list<pair<const EState*, int> > erroneousTransitions;
   PState* pstate = const_cast<PState*>( errorState->pstate() ); 
-  int latestInputVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("input")).getIntValue();
+  int latestInputVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
   //eliminate the error state
   const EState* eliminateThisOne = errorState;
   EStatePtrSet preds = stg->pred(eliminateThisOne);
@@ -564,11 +570,11 @@ CeIoVal CounterexampleAnalyzer::eStateToCeIoVal(const EState* eState) {
   int inOutVal;
   pair<int, IoType> result;
   if (eState->io.isStdInIO()) {
-    inOutVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("input")).getIntValue();
+    inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
     result = pair<int, IoType>(inOutVal, CodeThorn::IO_TYPE_INPUT);
   } else if (eState->io.isStdOutIO()) {
     if (eState->io.op == InputOutput::STDOUT_VAR) {
-      inOutVal = pstate->readFromMemoryLocation(_analyzer->globalVarIdByName("output")).getIntValue();
+      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
     } else if (eState->io.op == InputOutput::STDOUT_CONST) {
       inOutVal = eState->io.val.getIntValue();
     } else {

@@ -40,6 +40,8 @@ namespace CodeThorn {
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
+    EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
+    
     std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
     std::list<EState> transferIdentity(Edge edge, const EState* estate);
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
@@ -55,9 +57,17 @@ namespace CodeThorn {
 #endif
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
+
+    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
+    VariableId globalVarIdByName(std::string varName);
+
   protected:
+    void setElementSize(VariableId variableId, SgType* elementType);
     CodeThorn::CTAnalysis* _analyzer;
     std::string _rersHybridOutputFunctionName="calculate_output"; // only used if rersmode is active
+  private:
+    // only used in RERS mapping for hybrid output function name (transferFunctionCallLocalEdge)
+    std::map<std::string,VariableId> globalVarName2VarIdMapping;
   };
 }
 
