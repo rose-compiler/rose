@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;

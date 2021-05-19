@@ -1,13 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
+
 #include <boost/scope_exit.hpp>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

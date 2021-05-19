@@ -1,40 +1,9 @@
-#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
-#define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
-#include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifndef ROSE_Deprecated_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
+#define ROSE_Deprecated_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
-#include <Rose/Exception.h>
+// [Robb Matzke 2021-05-19]: deprecated
+#include <rose_pragma_message.h>
+ROSE_PRAGMA_MESSAGE("This header is deprecated; use Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h instead");
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
 
-namespace Rose {
-namespace BinaryAnalysis {
-namespace InstructionSemantics2 {
-namespace BaseSemantics {
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Exceptions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Base class for exceptions thrown by instruction semantics. */
-class Exception: public Rose::Exception {
-public:
-    SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): Rose::Exception(mesg), insn(insn) {}
-    void print(std::ostream&) const;
-};
-
-class NotImplemented: public Exception {
-public:
-    NotImplemented(const std::string &mesg, SgAsmInstruction *insn)
-        : Exception(mesg, insn) {}
-};
-
-std::ostream& operator<<(std::ostream&, const Exception&);
-
-} // namespace
-} // namespace
-} // namespace
-} // namespace
-
-#endif
 #endif

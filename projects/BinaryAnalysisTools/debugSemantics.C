@@ -12,7 +12,7 @@
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>

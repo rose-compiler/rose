@@ -12,7 +12,6 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scope_exit.hpp>

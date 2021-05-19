@@ -142,6 +142,7 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:roseBinaryAnalysis>
   $<TARGET_OBJECTS:roseBinaryAnalysisConcolic>
   $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2>
+  $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2BaseSemantics>
   $<TARGET_OBJECTS:roseBinaryAnalysisModelChecker>
   $<TARGET_OBJECTS:roseBinaryAnalysisPartitioner2>
   $<TARGET_OBJECTS:roseBinaryAnalysisUnparser>

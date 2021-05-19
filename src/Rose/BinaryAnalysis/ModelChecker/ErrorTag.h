@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
 namespace Rose {

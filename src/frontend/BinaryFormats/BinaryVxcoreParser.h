@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Rose/Diagnostics.h>

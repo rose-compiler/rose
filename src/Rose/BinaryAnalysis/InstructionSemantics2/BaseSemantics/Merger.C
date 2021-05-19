@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Merger.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

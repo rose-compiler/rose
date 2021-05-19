@@ -1,11 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
