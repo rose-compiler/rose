@@ -634,29 +634,7 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
-// TODO: DEPRECATED: Always build a namespace
-#if 0
-// Only build a namespace if currently not loading a compool module
-   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
-      namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
-      SageInterface::setSourcePosition(namespace_decl);
-
-      SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
-      ROSE_ASSERT(namespace_defn);
-      ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
-
-   // TEMPORARY: fix in SageBuilder
-      namespace_defn->setCaseInsensitive(true);
-      ROSE_ASSERT(namespace_defn->isCaseInsensitive());
-
-   // Append before push (so that symbol lookup will work)
-      SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
-      SageBuilder::pushScopeStack(namespace_defn);
-   }
-   else {
-      namespace_decl = nullptr;
-   }
-#else
+// Build a namespace to contain the module
    namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
    SageInterface::setSourcePosition(namespace_decl);
 
@@ -671,7 +649,6 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
    // Append before push (so that symbol lookup will work)
    SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(namespace_defn);
-#endif
 }
 
 void SageTreeBuilder::
@@ -679,17 +656,7 @@ Leave(SgNamespaceDeclarationStatement* namespace_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
-// TODO: DEPRECATED: Always build a namespace
-#if 0
-// Make sure that a compool module is not being loaded because, if so, there won't
-// be a namespace on the stack.
-//
-   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
-      SageBuilder::popScopeStack();  // namespace definition
-   }
-#else
    SageBuilder::popScopeStack();  // namespace definition
-#endif
 }
 
 void SageTreeBuilder::
@@ -1374,24 +1341,6 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
-// TODO: DEPRECATED: Always build a namespace
-#if 0
-// Make sure that a compool module is not being loaded because, if so, there won't
-// be a namespace on the stack.
-//
-   if (ModuleBuilderFactory::get_compool_builder().getLoadingModuleState() == false) {
-      compool_decl = new SgJovialCompoolStatement(name);
-      SageInterface::setSourcePosition(compool_decl);
-
-      compool_decl->set_definingDeclaration(compool_decl);
-      compool_decl->set_firstNondefiningDeclaration(compool_decl);
-
-      SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
-   }
-   else {
-      compool_decl = nullptr;
-   }
-#else
    compool_decl = new SgJovialCompoolStatement(name);
    SageInterface::setSourcePosition(compool_decl);
 
@@ -1399,16 +1348,12 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
    compool_decl->set_firstNondefiningDeclaration(compool_decl);
 
    SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
-#endif
 }
 
 void SageTreeBuilder::
 Leave(SgJovialCompoolStatement* compool_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
-
-// TODO?
-// SageBuilder::popScopeStack();  // compool definition
 }
 
 void SageTreeBuilder::
@@ -1446,7 +1391,7 @@ Enter(SgJovialTableStatement* &table_decl,
    SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
    if (is_block) struct_kind = SgClassDeclaration::e_jovial_block;
 
-   // This function builds a class declaration and definition with both the defining and nondefining declarations as required
+   // This function builds a class declaration and definition with both the defining and nondefining declarations
    table_decl = SageBuilder::buildJovialTableStatement(type_name, struct_kind, SageBuilder::topScopeStack());
    ROSE_ASSERT(table_decl);
    SageInterface::setSourcePosition(table_decl);

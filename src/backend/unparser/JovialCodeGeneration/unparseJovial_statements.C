@@ -875,8 +875,7 @@ Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& in
      }
    info.dec_nestingLevel();
 
-   curprint_indented(");", info);
-   unp->cur.insert_newline(1);
+   curprint_indented(")", info);
 }
 
 void
@@ -892,6 +891,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint(" STATUS");
 
      unparseEnumBody(enum_decl, info);
+     curprint(";\n");
    }
 
 void
@@ -913,7 +913,6 @@ Unparse_Jovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          }
 
       unparseOverlayExpr(overlay, info);
-
       curprint(";\n");
    }
 
@@ -1210,6 +1209,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
          // Unparse table body
             unparseTableBody(table_def, info);
+          }
+          else {
+            // anonymous status type
+            curprint(";");
           }
         }
      else
