@@ -2,9 +2,9 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
+
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -39,7 +39,6 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
 class MemoryCellList: public MemoryCellState {
 public:
     typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
-    typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< Set of concrete virtual addresses. */
 protected:
     CellList cells;                                     // list of cells in reverse chronological order
     bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
@@ -232,11 +231,11 @@ public:
     virtual       CellList& get_cells()       { return cells; }
     /** @} */
 
-    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                   RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                       RiscOperators *valOps) ROSE_OVERRIDE;
 
-    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                          RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                              RiscOperators *valOps) ROSE_OVERRIDE;
 
 protected:
     // Compute a new value by merging the specified cells.  If the cell list is empty return the specified default.

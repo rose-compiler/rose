@@ -3,7 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h>
 
 #include <boost/serialization/access.hpp>
@@ -41,14 +42,14 @@ private:
 protected:
     MemoryCellState() {}                                // for serialization
 
-    explicit MemoryCellState(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
+    explicit MemoryCellState(const MemoryCellPtr &protocell);
 
-    MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {}
+    MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
 
-    MemoryCellState(const MemoryCellState &other)
-        : MemoryState(other), protocell(other.protocell) {} // latestWrittenCell_ is cleared
+    MemoryCellState(const MemoryCellState &other);
+
+public:
+    ~MemoryCellState();
 
 public:
     /** Promote a base memory state pointer to a BaseSemantics::MemoryCellState pointer.  The memory state @p m must have a
@@ -80,8 +81,8 @@ public:
      *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
      *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
      *  same set. */
-    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                   RiscOperators *valOps) = 0;
+    virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                       RiscOperators *valOps) = 0;
 
     /** Writers for an address.
      *
@@ -89,8 +90,8 @@ public:
      *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
      *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
      *  same set. */
-    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                          RiscOperators *valOps) = 0;
+    virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                              RiscOperators *valOps) = 0;
 
     /** Find all matching cells.
      *

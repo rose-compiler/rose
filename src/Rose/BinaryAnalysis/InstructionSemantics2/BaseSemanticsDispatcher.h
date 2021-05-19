@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Registers.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
@@ -315,6 +316,8 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Dispatcher);
 
 #endif
 #endif

@@ -10,6 +10,7 @@
 #include <Combinatorics.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/version.hpp>
@@ -806,8 +807,8 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 } // namespace
 } // namespace
 
-// Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators, 1);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators);
 
 #endif
 #endif

@@ -9,6 +9,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/version.hpp>
@@ -231,8 +232,8 @@ std::ostream& operator<<(std::ostream&, const RegisterState::WithFormatter&);
 } // namespace
 } // namespace
 
-// Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterState, 1);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterState);
 
 #endif
 #endif

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <Sawyer/SharedPointer.h>
 
@@ -325,6 +326,8 @@ std::ostream& operator<<(std::ostream&, const SValue::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue);
 
 #endif
 #endif

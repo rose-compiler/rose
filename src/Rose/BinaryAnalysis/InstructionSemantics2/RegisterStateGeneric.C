@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/format.hpp>

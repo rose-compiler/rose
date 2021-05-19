@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
 #include <boost/scope_exit.hpp>
@@ -466,5 +467,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Dispatcher);
 
 #endif

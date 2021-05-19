@@ -3,11 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <boost/foreach.hpp>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
+
 #include <Sawyer/Map.h>
 
+#include <boost/foreach.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -118,10 +119,10 @@ public:
     virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
-    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                   RiscOperators *valOps) ROSE_OVERRIDE;
-    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                                          RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                       RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                              RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
 } // namespace

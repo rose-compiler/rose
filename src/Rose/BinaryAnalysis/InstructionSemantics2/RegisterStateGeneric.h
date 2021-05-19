@@ -3,7 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

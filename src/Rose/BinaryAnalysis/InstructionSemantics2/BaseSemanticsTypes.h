@@ -29,6 +29,7 @@ class Formatter;
 class Merger;
 class SValue;
 class RegisterState;
+class MemoryCell;
 class MemoryState;
 class State;
 class RiscOperators;
@@ -49,6 +50,9 @@ typedef boost::shared_ptr<RegisterState> RegisterStatePtr;
 
 /** Shared-ownership pointer to a memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<MemoryState> MemoryStatePtr;
+
+/** Shared-ownership pointer to a memory cell. See @ref heap_object_shared_ownership. */
+typedef boost::shared_ptr<MemoryCell> MemoryCellPtr;
 
 /** Shared-ownership pointer to a semantic state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<State> StatePtr;

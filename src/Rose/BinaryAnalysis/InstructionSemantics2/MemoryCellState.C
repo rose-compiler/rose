@@ -3,10 +3,24 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
+
+MemoryCellState::MemoryCellState(const MemoryCellPtr &protocell)
+    : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
+
+MemoryCellState::MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+    : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {}
+
+MemoryCellState::MemoryCellState(const MemoryCellState &other)
+    : MemoryState(other), protocell(other.protocell) {} // latestWrittenCell_ is cleared
+
+MemoryCellState::~MemoryCellState() {}
 
 void
 MemoryCellState::clear() {

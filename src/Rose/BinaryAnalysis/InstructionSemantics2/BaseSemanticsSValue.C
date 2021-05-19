@@ -104,4 +104,6 @@ SValue::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue);
+
 #endif

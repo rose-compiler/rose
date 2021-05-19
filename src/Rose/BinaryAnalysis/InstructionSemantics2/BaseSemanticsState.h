@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
@@ -269,6 +270,8 @@ std::ostream& operator<<(std::ostream&, const State::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::State);
 
 #endif
 #endif

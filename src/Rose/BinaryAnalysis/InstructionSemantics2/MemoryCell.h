@@ -3,18 +3,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
 #include <Sawyer/Set.h>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/list.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
-
-/** Shared-ownership pointer to a semantic memory cell. See @ref heap_object_shared_ownership. */
-typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
 
 /** Represents one location in memory.
  *
@@ -25,8 +23,6 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
  *  new cell; however, the result of a dataflow merge operation might produce cells that have multiple writers. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 public:
-    typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< A set of concrete virtual addresses. */
-
     /** Visitor for traversing a cells. */
     class Visitor {
     public:
@@ -83,25 +79,15 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryCell() {}                                     // for serialization
+    MemoryCell();                                       // for serialization
 
-    MemoryCell(const SValuePtr &address, const SValuePtr &value)
-        : address_(address), value_(value) {
-        ASSERT_not_null(address);
-        ASSERT_not_null(value);
-    }
+    MemoryCell(const SValuePtr &address, const SValuePtr &value);
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
-    MemoryCell(const MemoryCell &other)
-        : boost::enable_shared_from_this<MemoryCell>(other) {
-        address_ = other.address_->copy();
-        value_ = other.value_->copy();
-        writers_ = other.writers_;
-        ioProperties_ = other.ioProperties_;
-    }
+    MemoryCell(const MemoryCell &other);
 
 public:
-    virtual ~MemoryCell() {}
+    virtual ~MemoryCell();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -265,10 +251,7 @@ public:
 
     /** Print the memory cell on a single line.
      * @{ */
-    void print(std::ostream &stream) const {
-        Formatter fmt;
-        print(stream, fmt);
-    }
+    void print(std::ostream &stream) const;
     virtual void print(std::ostream&, Formatter&) const;
     /** @} */
 
@@ -288,13 +271,9 @@ public:
      *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
-    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
-    WithFormatter operator+(const std::string &linePrefix) {
-        static Formatter fmt;
-        fmt.set_line_prefix(linePrefix);
-        return with_format(fmt);
-    }
+    WithFormatter with_format(Formatter&);
+    WithFormatter operator+(Formatter&);
+    WithFormatter operator+(const std::string &linePrefix);
     /** @} */
 
     // [Robb Matzke 2021-03-18]: deprecated.
@@ -330,6 +309,8 @@ std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCell);
 
 #endif
 #endif

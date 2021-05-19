@@ -5,7 +5,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

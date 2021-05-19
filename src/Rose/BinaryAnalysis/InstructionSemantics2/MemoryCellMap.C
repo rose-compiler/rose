@@ -3,6 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
@@ -96,9 +101,9 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         if (newValue)
             thisCellChanged = true;
 
-        MemoryCell::AddressSet thisWriters  = thisCell  ? thisCell->getWriters()  : MemoryCell::AddressSet();
-        MemoryCell::AddressSet otherWriters = otherCell ? otherCell->getWriters() : MemoryCell::AddressSet();
-        MemoryCell::AddressSet newWriters = otherWriters | thisWriters;
+        AddressSet thisWriters  = thisCell  ? thisCell->getWriters()  : AddressSet();
+        AddressSet otherWriters = otherCell ? otherCell->getWriters() : AddressSet();
+        AddressSet newWriters = otherWriters | thisWriters;
         if (newWriters != thisWriters)
             thisCellChanged = true;
 
@@ -182,18 +187,18 @@ MemoryCellMap::findCell(const SValuePtr &addr) const {
     return cells.getOrDefault(generateCellKey(addr));
 }
 
-MemoryCell::AddressSet
+AddressSet
 MemoryCellMap::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    MemoryCell::AddressSet retval;
+    AddressSet retval;
     CellKey key = generateCellKey(addr);
     if (MemoryCellPtr cell = cells.getOrDefault(key))
         retval = cell->getWriters();
     return retval;
 }
 
-MemoryCell::AddressSet
+AddressSet
 MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    MemoryCell::AddressSet retval;
+    AddressSet retval;
     CellKey key = generateCellKey(addr);
     if (MemoryCellPtr cell = cells.getOrDefault(key))
         retval = cell->getWriters();

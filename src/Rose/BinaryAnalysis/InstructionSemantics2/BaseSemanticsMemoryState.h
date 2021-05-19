@@ -7,6 +7,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
 namespace Rose {
@@ -223,6 +224,8 @@ std::ostream& operator<<(std::ostream&, const MemoryState::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryState);
 
 #endif
 #endif
