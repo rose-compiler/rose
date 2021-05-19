@@ -1786,5 +1786,69 @@ bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
   return cs.getLength()==0||cs.isLastLabel(lab);
 }
 
-  
+list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, const EState* estate) {
+  ROSE_ASSERT(edge.source()==estate->label());
+  //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
+  EState currentEState=*estate;
+  PState currentPState=*currentEState.pstate();
+  ConstraintSet cset=*currentEState.constraints();
+  // 1. we handle the edge as outgoing edge
+  ROSE_ASSERT(_analyzer->getCFAnalyzer());
+  SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
+  ROSE_ASSERT(nextNodeToAnalyze1);
+  if(edge.isType(EDGE_LOCAL)) {
+    return transferFunctionCallLocalEdge(edge,estate);
+    //return transferFunctionCallLocalEdge(edge,estate);
+  } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
+    // handle assert(0)
+    return elistify(_analyzer->createFailedAssertEState(currentEState,edge.target()));
+  } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+    return transferFunctionCall(edge,estate);
+  } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+    // \todo the && condition excludes constructor calls
+    if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
+      listener->functionCallExternal(edge,estate);
+    }
+    return transferFunctionCallExternal(edge,estate);
+  } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
+    // "return x;": add $return=eval() [but not for "return f();"]
+    return transferReturnStmt(edge,estate);
+  } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
+    return transferAsmStmt(edge,estate);
+  } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
+    return transferFunctionEntry(edge,estate);
+  } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
+    return transferFunctionExit(edge,estate);
+  } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
+    return transferFunctionCallReturn(edge,estate);
+  } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(nextNodeToAnalyze1)) {
+    return transferCaseOptionStmt(caseStmt,edge,estate);
+  } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(nextNodeToAnalyze1)) {
+    return transferDefaultOptionStmt(caseStmt,edge,estate);
+  } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
+    return transferVariableDeclaration(decl,edge,estate);
+  } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
+    return transferExprStmt(nextNodeToAnalyze1, edge, estate);
+  } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
+    // GNU extension
+    return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
+  } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+    // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
+    //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
+    // this case cannot happen for normalized code
+    SAWYER_MESG(logger[ERROR])<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
+    exit(1);
+    //bool useConstraints=false
+    //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
+  } else {
+      ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
+      ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
+    // nothing to analyze, just create new estate (from same State) with target label of edge
+    // can be same state if edge is a backedge to same cfg node
+    EState newEState=currentEState;
+    newEState.setLabel(edge.target());
+    return elistify(newEState);
+  }
+}
+
 }

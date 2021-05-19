@@ -28,7 +28,7 @@ namespace CodeThorn {
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
     static Sawyer::Message::Facility logger;
     bool getOptionOutputWarnings();
-    
+    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);

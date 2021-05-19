@@ -343,15 +343,16 @@ std::string CodeThorn::CTAnalysis::programPositionInfo(CodeThorn::Label lab) {
   return SgNodeHelper::lineColumnNodeToString(node);
 }
 
-bool CodeThorn::CTAnalysis::isApproximatedBy(const EState* es1, const EState* es2) {
-  return es1->isApproximatedBy(es2);
+bool CodeThorn::CTAnalysis::getOptionOutputWarnings() {
+  return exprAnalyzer.getOptionOutputWarnings();
 }
 
 void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
   exprAnalyzer.setOptionOutputWarnings(flag);
 }
-bool CodeThorn::CTAnalysis::getOptionOutputWarnings() {
-  return exprAnalyzer.getOptionOutputWarnings();
+
+bool CodeThorn::CTAnalysis::isApproximatedBy(const EState* es1, const EState* es2) {
+  return es1->isApproximatedBy(es2);
 }
 
 EState CodeThorn::CTAnalysis::combine(const EState* es1, const EState* es2) {
@@ -1308,68 +1309,7 @@ void CodeThorn::CTAnalysis::recordExternalFunctionCall(SgFunctionCallExp* funCal
 
 list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
-  //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
-  EState currentEState=*estate;
-  PState currentPState=*currentEState.pstate();
-  ConstraintSet cset=*currentEState.constraints();
-  // 1. we handle the edge as outgoing edge
-  ROSE_ASSERT(getCFAnalyzer());
-  SgNode* nextNodeToAnalyze1=getCFAnalyzer()->getNode(edge.source());
-  ROSE_ASSERT(nextNodeToAnalyze1);
-  ROSE_ASSERT(_estateTransferFunctions);
-  if(edge.isType(EDGE_LOCAL)) {
-    return _estateTransferFunctions->transferFunctionCallLocalEdge(edge,estate);
-    //return transferFunctionCallLocalEdge(edge,estate);
-  } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
-    // handle assert(0)
-    return _estateTransferFunctions->elistify(createFailedAssertEState(currentEState,edge.target()));
-  } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferFunctionCall(edge,estate);
-  } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-    // \todo the && condition excludes constructor calls
-    if(ReadWriteListener* listener=getExprAnalyzer()->getReadWriteListener()) {
-      listener->functionCallExternal(edge,estate);
-    }
-    return _estateTransferFunctions->transferFunctionCallExternal(edge,estate);
-  } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
-    // "return x;": add $return=eval() [but not for "return f();"]
-    return _estateTransferFunctions->transferReturnStmt(edge,estate);
-  } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferAsmStmt(edge,estate);
-  } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
-    return _estateTransferFunctions->transferFunctionEntry(edge,estate);
-  } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
-    return _estateTransferFunctions->transferFunctionExit(edge,estate);
-  } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
-    return _estateTransferFunctions->transferFunctionCallReturn(edge,estate);
-  } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferCaseOptionStmt(caseStmt,edge,estate);
-  } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferDefaultOptionStmt(caseStmt,edge,estate);
-  } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferVariableDeclaration(decl,edge,estate);
-  } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
-    return _estateTransferFunctions->transferExprStmt(nextNodeToAnalyze1, edge, estate);
-  } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
-    // GNU extension
-    return _estateTransferFunctions->transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
-  } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-    // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
-    //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
-    // this case cannot happen for normalized code
-    SAWYER_MESG(logger[ERROR])<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
-    exit(1);
-    //bool useConstraints=false
-    //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
-  } else {
-      ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
-      ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
-    // nothing to analyze, just create new estate (from same State) with target label of edge
-    // can be same state if edge is a backedge to same cfg node
-    EState newEState=currentEState;
-    newEState.setLabel(edge.target());
-    return _estateTransferFunctions->elistify(newEState);
-  }
+  return _estateTransferFunctions->transferEdgeEState(edge,estate);
 }
 
 void CodeThorn::CTAnalysis::initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
@@ -1402,17 +1342,6 @@ void CodeThorn::CTAnalysis::initializeStringLiteralsInState(PState& initialPStat
     */
   }
 }
-
-/*
-void CodeThorn::CTAnalysis::initialize(SgProject* project) {
-  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:start"<<endl;
-  getVariableIdMapping()->computeVariableSymbolMapping(project);
-  SAWYER_MESG(logger[INFO])<<"initializeVariableIdMapping:done"<<endl;
-  functionCallMapping.computeFunctionCallMapping(project);
-  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  AbstractValue::setVariableIdMapping(getVariableIdMapping());
-}
-*/
 
 void CodeThorn::CTAnalysis::initializeCommandLineArgumentsInState(PState& initialPState) {
   // TODO1: add formal paramters of solo-function
@@ -1519,6 +1448,7 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
 
 void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg) {
   // TODO
+  ROSE_ASSERT(false);
 }
 
 void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
