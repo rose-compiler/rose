@@ -101,7 +101,7 @@ rose_rajaloop.cpp:./measureTool
 # test for code instrumentor---------------------
 #Generate the loop count info. file , using the translator's loop_counting mode
 instrumentor_lib.o: $(Midend_Analysis_SOURCE_PATH)/instrumentor_lib.c
-	gcc -c -o $@ $^
+	g++ -I$(top_srcdir)/src/util -c -o $@ $^
 instrumentor_lib.a: instrumentor_lib.o
 	ar r $@ $^
 bt-loop-count.log: codeInstrumentor
