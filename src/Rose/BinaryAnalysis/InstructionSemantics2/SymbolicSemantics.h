@@ -12,9 +12,6 @@
 #include "Cxx_GrammarSerialization.h"
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

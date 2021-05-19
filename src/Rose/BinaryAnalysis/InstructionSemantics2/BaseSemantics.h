@@ -12,5 +12,11 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h>
 
 #endif
