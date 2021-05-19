@@ -22,10 +22,7 @@ using namespace std;
 namespace CodeThorn {
 
   class CTAnalysis;
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
+
   class SingleEvalResult {
   public:
     EState estate;
@@ -36,10 +33,6 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   class SingleEvalResultConstInt {
   public:
     void init(EState estate, AbstractValue result);
@@ -70,11 +63,6 @@ namespace CodeThorn {
     virtual void functionCallExternal(Edge edge, const EState* estate) {}
   };
   
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
-  //#define EXPR_VISITOR
   class ExprAnalyzer {
   public:
     enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
@@ -194,10 +182,6 @@ namespace CodeThorn {
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     ReadWriteListener* _readWriteListener=nullptr;
     
-    // evaluation state
-#ifdef EXPR_VISITOR
-    SingleEvalResultConstInt res;
-#endif
     // evaluation functions
     list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
     list<SingleEvalResultConstInt> evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
