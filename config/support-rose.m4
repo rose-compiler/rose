@@ -2225,6 +2225,7 @@ src/Rose/Makefile
 src/Rose/BinaryAnalysis/Makefile
 src/Rose/BinaryAnalysis/Concolic/Makefile
 src/Rose/BinaryAnalysis/InstructionSemantics2/Makefile
+src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Makefile
 src/Rose/BinaryAnalysis/ModelChecker/Makefile
 src/Rose/BinaryAnalysis/Partitioner2/Makefile
 src/Rose/BinaryAnalysis/Unparser/Makefile

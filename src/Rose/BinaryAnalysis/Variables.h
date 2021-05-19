@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 

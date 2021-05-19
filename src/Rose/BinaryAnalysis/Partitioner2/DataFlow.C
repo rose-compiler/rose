@@ -4,7 +4,7 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/Color.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
