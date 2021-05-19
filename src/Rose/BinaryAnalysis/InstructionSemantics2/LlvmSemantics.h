@@ -4,8 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#include "CommandLine.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/CommandLine.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

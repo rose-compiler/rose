@@ -5,8 +5,8 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "CommandLine.h"
-#include "Diagnostics.h"
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>

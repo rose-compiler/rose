@@ -5,8 +5,8 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>

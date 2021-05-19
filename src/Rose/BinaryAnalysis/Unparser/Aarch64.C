@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <BitOps.h>
+#include <Rose/BitOps.h>
 #include <boost/regex.hpp>
 #include <stringify.h>
 

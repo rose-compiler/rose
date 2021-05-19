@@ -89,7 +89,7 @@
 */
 
 #include "rose.h"
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include "wholeAST_API.h"
 #include "transformationTracking.h"
 #include <iostream>

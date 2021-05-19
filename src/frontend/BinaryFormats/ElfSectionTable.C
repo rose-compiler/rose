@@ -3,7 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "stringify.h"
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we

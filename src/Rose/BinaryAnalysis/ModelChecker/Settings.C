@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <rose_isnan.h>
 
 namespace Rose {

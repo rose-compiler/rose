@@ -7,7 +7,7 @@
 
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
 #include "stringify.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
 #include <boost/shared_ptr.hpp>

@@ -8,7 +8,7 @@
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/Map.h>
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 #include <ostream>
 #include <vector>
 

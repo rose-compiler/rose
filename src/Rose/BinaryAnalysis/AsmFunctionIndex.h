@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "callbacks.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

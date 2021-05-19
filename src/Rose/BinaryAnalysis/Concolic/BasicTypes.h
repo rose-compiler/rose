@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <rose_strtoull.h>
+#include <memory>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -39,34 +40,37 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Specimen;
-typedef Sawyer::SharedPointer<Specimen> SpecimenPtr;
+using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 
 class TestCase;
-typedef Sawyer::SharedPointer<TestCase> TestCasePtr;
-
-class SystemCall;
-typedef Sawyer::SharedPointer<SystemCall> SystemCallPtr;
+using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
 class ConcreteExecutor;
-typedef Sawyer::SharedPointer<ConcreteExecutor> ConcreteExecutorPtr;
+using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
+
+class ExecutionEvent;
+using ExecutionEventPtr = Sawyer::SharedPointer<ExecutionEvent>;
 
 class LinuxExecutor;
-typedef Sawyer::SharedPointer<LinuxExecutor> LinuxExecutorPtr;
+using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
+
+class LinuxI386Executor;
+using LinuxI386ExecutorPtr = Sawyer::SharedPointer<LinuxI386Executor>;
 
 class ConcolicExecutor;
-typedef Sawyer::SharedPointer<ConcolicExecutor> ConcolicExecutorPtr;
+using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
 
 class TestSuite;
-typedef Sawyer::SharedPointer<TestSuite> TestSuitePtr;
+using TestSuitePtr = Sawyer::SharedPointer<TestSuite>;
 
 class Database;
-typedef Sawyer::SharedPointer<Database> DatabasePtr;
+using DatabasePtr = Sawyer::SharedPointer<Database>;
 
 class ExecutionManager;
-typedef Sawyer::SharedPointer<ExecutionManager> ExecutionManagerPtr;
+using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
 class LinuxExitStatus;
-typedef Sawyer::SharedPointer<LinuxExitStatus> LinuxExitStatusPtr;
+using LinuxExitStatusPtr = Sawyer::SharedPointer<LinuxExitStatus>;
 
 class ConcreteExecutorResult;
 
@@ -146,10 +150,10 @@ bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
     return lhs.get() < rhs.get();
 }
 
-typedef ObjectId<TestSuite> TestSuiteId;                /**< Database ID for test suite objects. */
-typedef ObjectId<Specimen> SpecimenId;                  /**< Database ID for specimen objects. */
-typedef ObjectId<TestCase> TestCaseId;                  /**< Database ID for test case objects. */
-typedef ObjectId<SystemCall> SystemCallId;              /**< Database ID for system call objects. */
+using TestSuiteId = ObjectId<TestSuite>;                /**< Database ID for test suite objects. */
+using SpecimenId = ObjectId<Specimen>;                  /**< Database ID for specimen objects. */
+using TestCaseId = ObjectId<TestCase>;                  /**< Database ID for test case objects. */
+using ExecutionEventId = ObjectId<ExecutionEvent>;      /**< Database ID for execution event objects. */
 
 /** Object traits.
  *
@@ -175,8 +179,8 @@ struct ObjectTraits<TestCase> {
 };
 
 template<>
-struct ObjectTraits<SystemCall> {
-    using Id = SystemCallId;
+struct ObjectTraits<ExecutionEvent> {
+    using Id = ExecutionEventId;
 };
 
 } // namespace

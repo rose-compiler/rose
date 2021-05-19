@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 
 #include <stdexcept>
 #include <string>

@@ -4,8 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.h>
-#include "Diagnostics.h"
-#include "RoseException.h"
+#include <Rose/Diagnostics.h>
+#include <Rose/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 #include <boost/foreach.hpp>

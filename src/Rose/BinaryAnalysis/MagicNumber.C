@@ -5,8 +5,8 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
-#include <Diagnostics.h>
-#include <FileSystem.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/FileSystem.h>
 
 #ifdef ROSE_HAVE_LIBMAGIC
 #include <magic.h>                                      // part of libmagic

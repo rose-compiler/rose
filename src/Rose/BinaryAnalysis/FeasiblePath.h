@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>

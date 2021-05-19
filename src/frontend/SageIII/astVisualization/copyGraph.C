@@ -2,8 +2,8 @@
 #include "sage3basic.h"
 #include "wholeAST_API.h"
 #include "AstDOTGeneration.h"
-#include "Diagnostics.h"
-#include "StringUtility.h"
+#include <Rose/Diagnostics.h>
+#include <Rose/StringUtility.h>
 // #include "copyGraph.h"
 // #include "astGraph.h"
 // #include <fstream>

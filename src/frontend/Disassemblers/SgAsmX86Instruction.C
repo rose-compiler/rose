@@ -7,10 +7,10 @@
 #include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
-#include "CommandLine.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include "Diagnostics.h"
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include "x86InstructionProperties.h"
 
 using namespace Rose;                                   // temporary until this lives in "rose"

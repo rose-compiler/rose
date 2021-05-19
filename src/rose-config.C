@@ -33,8 +33,8 @@ static const char *description =
   "subdirectories (among others) where the ROSE library and its headers are installed.}";
 
 #include <rose.h>                                       // POLICY_OK -- this is not a ROSE library source file
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <rose_getline.h>
 
 #include <boost/algorithm/string/split.hpp>

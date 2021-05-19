@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>

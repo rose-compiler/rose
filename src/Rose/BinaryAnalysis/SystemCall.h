@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <boost/filesystem.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/Map.h>
 #include <string>
 #include <vector>

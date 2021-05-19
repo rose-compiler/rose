@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BitFlags.h>
+#include <Rose/BitFlags.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>

@@ -6,8 +6,8 @@
 
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
 #include <Combinatorics.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 

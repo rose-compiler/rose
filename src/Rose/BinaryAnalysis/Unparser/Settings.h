@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Color.h>
+#include <Rose/Color.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 #include <Sawyer/CommandLine.h>

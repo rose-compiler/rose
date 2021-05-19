@@ -7,7 +7,7 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>                                // rose
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 

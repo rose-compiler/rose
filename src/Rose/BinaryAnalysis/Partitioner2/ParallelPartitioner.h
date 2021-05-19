@@ -4,7 +4,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
 
 #include <Rose/BinaryAnalysis/InstructionCache.h>
-#include <Progress.h>
+#include <Rose/Progress.h>
 #include <queue>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>

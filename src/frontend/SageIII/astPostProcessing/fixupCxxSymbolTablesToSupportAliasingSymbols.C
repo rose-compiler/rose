@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
 

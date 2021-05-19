@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

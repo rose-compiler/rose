@@ -3,7 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BitFlags.h>
+#include <array>
+#include <Rose/BitFlags.h>
 #include <boost/filesystem.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
@@ -221,6 +222,15 @@ public:
 public:
     static Sawyer::Message::Facility mlog;              /**< Diagnostic facility for debugger. */
 
+    /** Opaque collection of register values. */
+    using RegisterPage = std::array<uint8_t, 512>;
+
+    /** Normal and floating point register values. */
+    struct AllRegisters {
+        RegisterPage regs;
+        RegisterPage fpregs;
+    };
+
 private:
     typedef Sawyer::Container::Map<RegisterDescriptor, size_t> UserRegDefs;
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
@@ -234,8 +244,8 @@ private:
     UserRegDefs userRegDefs_;                           // how registers map to user_regs_struct in <sys/user.h>
     UserRegDefs userFpRegDefs_;                         // how registers map to user_fpregs_struct in <sys/user.h>
     size_t kernelWordSize_;                             // cached width in bits of kernel's words
-    uint8_t regsPage_[512];                             // latest register information read from subordinate
-    RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
+    RegisterPage regsPage_;                             // latest register information read from subordinate
+    RegPageStatus regsPageStatus_;                      // what are the contents of regsPage_?
     Disassembler *disassembler_;                        // how to disassemble instructions
     Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
@@ -390,6 +400,27 @@ public:
     void writeRegister(RegisterDescriptor, uint64_t value);
     /** @} */
 
+    /** Read all registers.
+     *
+     *  The return value is opaque but can be used to restore registers with writeAllRegisters. */
+    AllRegisters readAllRegisters();
+
+    /** Write all registers.
+     *
+     *  Restores registers that were read earlier. */
+    void writeAllRegisters(const AllRegisters&);
+
+    /** Read subordinate memory.
+     *
+     *  Returns the number of bytes read. The implementation accesses the subordinate memory via proc filesystem rather than
+     *  sending PTRACE_PEEKDATA commands. This allows large areas of memory to be read efficiently. */
+    size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer);
+
+    /** Read subordinate memory as an array of bytes.
+     *
+     *  If the read fails then a shorter buffer is returned. */
+    std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes);
+
     /** Read subordinate memory as a bit vector.
      *
      * @code
@@ -410,12 +441,6 @@ public:
         size_t n = writeMemory(va, sizeof(T), (const uint8_t*)&value);
         ASSERT_always_require(n == sizeof(T));
     }
-
-    /** Read subordinate memory.
-     *
-     *  Returns the number of bytes read. The implementation accesses the subordinate memory via proc filesystem rather than
-     *  sending PTRACE_PEEKDATA commands. This allows large areas of memory to be read efficiently. */
-    size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer);
 
     /** Read C-style NUL-terminated string from subordinate.
      *
@@ -441,8 +466,24 @@ public:
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
 
-    /** Cause the subordinate to execute a system call. */
-    int remoteSystemCall(int syscallNumber, std::vector<uint64_t> args);
+    /** Cause the subordinate to execute a system call.
+     *
+     *  @{ */
+    int64_t remoteSystemCall(int syscallNumber);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1, uint64_t arg2);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1, uint64_t arg2, uint64_t arg3);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+    int64_t remoteSystemCall(int syscallNumber,
+                             uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5, uint64_t arg6);
+    int64_t remoteSystemCall(int syscallNumber, std::vector<uint64_t> args);
+    /** @} */
 
     /** Cause the subordinate to open a file.
      *
