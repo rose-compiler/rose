@@ -2233,27 +2233,18 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    printf("... traverse_SpecifiedTableItemDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_spec_item_desc, t_amb, t_name, t_item_desc, t_preset;
+   ATerm t_name, t_item_desc, t_preset, t_item_desc2, t_loc_spec, t_start_bit, t_start_word;
    char* name;
 
+   SgExpression *preset{nullptr}, *start_bit{nullptr}, *start_word{nullptr};
    SgType* item_type = nullptr;
-   SgExpression* preset = nullptr;
    SgExprListExp* attr_list = nullptr;
    LocationSpecifier loc_spec(nullptr,nullptr);
+   SgEnumDeclaration* enum_decl = nullptr;
    SgVariableDeclaration* var_decl = nullptr;
+   bool is_anon = false;
 
-   if (ATmatch(term, "SpecifiedTableItemDeclaration(<term>,<term>,<term>)", &t_name, &t_spec_item_desc, &t_preset)) {
-
-      // SpecifiedTableItemDeclaration can have an ambiguity if an SpecifiedItemDescription has a type name starting with "a"
-      if (ATmatch(t_spec_item_desc, "amb(<term>)", &t_amb)) {
-         // MATCHED an ambiguity, choose the first one
-         ATermList tail = (ATermList) ATmake("<term>", t_amb);
-         t_item_desc = ATgetFirst(tail);
-      }
-      else {
-         t_item_desc = t_spec_item_desc;
-      }
-
+   if (ATmatch(term, "SpecifiedTableItemDeclaration(<term>,<term>,<term>)", &t_name, &t_item_desc, &t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED TableItemName
       } else return ATfalse;
@@ -2261,8 +2252,62 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
       attr_list = SageBuilder::buildExprListExp();
       setSourcePosition(attr_list, t_item_desc);
 
-      if (traverse_SpecifiedItemDescription(t_item_desc, item_type, loc_spec, attr_list)) {
-         // MATCHED SpecifiedItemDescription
+      if (ATmatch(t_item_desc, "SpecifiedItemDescription(<term>,<term>)", &t_item_desc2, &t_loc_spec)) {
+
+      // 1. Look for a StatusItemDescription first
+         if (match_StatusItemDescription(t_item_desc2)) {
+            Sawyer::Optional<SgExpression*> status_size;
+
+         // This is an anonymous status type because not ItemTypeDescription so will have body
+            std::string enum_anon_name{"_anon_typeof_" + std::string(name)};
+            is_anon = true;
+            enum_decl = nullptr;
+
+         // Begin SageTreeBuilder
+            sage_tree_builder.Enter(enum_decl, enum_anon_name);
+            setSourcePosition(enum_decl, term);
+            if (traverse_StatusItemDescription(t_item_desc2, enum_decl, status_size)) {
+               if (status_size) {
+                  SgTypeInt* field_type = SageBuilder::buildIntType(*status_size);
+                  enum_decl->set_field_type(field_type);
+               }
+
+            // End SageTreeBuilder
+               sage_tree_builder.Leave(enum_decl);
+
+               item_type = enum_decl->get_type();
+            }
+            else {
+               std::cerr << "ERROR: matched an StatusItemDescription but failed in building an SgEnumDeclaration \n";
+               ROSE_ABORT();
+            }
+         }
+
+      // 2. This will be a named or intrinsic type
+         else if (traverse_ItemTypeDescription(t_item_desc2, item_type)) {
+            // MATCHED ItemTypeDescription without StatusItemDescription
+         }
+         else return ATfalse;
+
+      // process location-specifier here (don't really need to call a function)
+         if (ATmatch(t_loc_spec, "LocationSpecifier(<term>,<term>)", &t_start_bit, &t_start_word)) {
+
+           if (ATmatch(t_start_bit, "StartingBitSTAR()")) {
+              start_bit = new SgAsteriskShapeExp();
+              ROSE_ASSERT(start_bit);
+              setSourcePosition(start_bit, t_start_bit);
+           }
+           else if (traverse_Formula(t_start_bit, start_bit)) {
+              // MATCHED StartingBit
+           } else return ATfalse;
+
+           if (traverse_Formula(t_start_word, start_word)) {
+              // MATCHED StartingWord
+           } else return ATfalse;
+
+           loc_spec = LocationSpecifier(start_bit, start_word);
+         }
+
       } else return ATfalse;
 
       if (traverse_TablePreset(t_preset, preset)) {
@@ -2286,6 +2331,12 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
 
 // The bitfield is used to contain both the start_bit and start_word as an expression list
    setLocationSpecifier(var_decl, loc_spec);
+
+   if (is_anon) {
+      SgEnumDeclaration* def_decl = isSgEnumDeclaration(enum_decl->get_definingDeclaration());
+      ROSE_ASSERT(def_decl);
+      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   }
 
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
@@ -6578,13 +6629,15 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else return ATfalse;
 
    // Several different options due to ambiguous grammar:
-   //  1. function call
+   //  1. Table reference argument of a function call not yet declared,
+   //     e.g. LOC(table_var(5))
+   //  2. Function call
    //     a. With a function symbol
    //     b. Without a function symbol (must build nondefining declaration)
-   //  2. type conversion
+   //  3. Type conversion
    //     a. General conversion (isSgTypedefSymbol)
    //     b. StatusConversion   (isSgEnumSymbol)
-   //  3. variable
+   //  4. Variable
    //     a. Table reference
    //     b. Table initialization replication operator
 
@@ -6593,9 +6646,17 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 //
    SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
+// No symbol exists yet (perhaps a table variable declared later)
+//
+   if (!symbol && sage_tree_builder.isInitializationContext()) {
+      // This will add a var ref to forward_var_refs_
+      SgVarRefExp* var_ref = sage_tree_builder.buildVarRefExp_nfi(name);
+      expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list); // table/array reference
+   }
+
 // Look for function call
 //
-   if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
+   else if (isSgFunctionSymbol(symbol) || symbol == nullptr) {
       SgFunctionCallExp* func_call = nullptr;
       sage_tree_builder.Enter(func_call, name, expr_list);
       sage_tree_builder.Leave(func_call);
