@@ -106,7 +106,6 @@ CODETHORN_HEADER_FILES=\
   EStateTransferFunctions.h \
   EStateWorkList.h \
   EStatePriorityWorkList.h \
-  ExprAnalyzer.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -238,7 +237,6 @@ CODETHORN_SOURCE_FILES=\
   EStateTransferFunctions.C \
   EStateWorkList.C \
   EStatePriorityWorkList.C \
-  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \

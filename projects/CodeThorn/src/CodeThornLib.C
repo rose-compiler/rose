@@ -112,7 +112,6 @@ void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initAndRegister(&CodeThorn::logger, "CodeThorn");
   // class specific loggers for CodeThorn library functions
   CTAnalysis::initDiagnostics();
-  ExprAnalyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
   Normalization::initDiagnostics();
@@ -167,7 +166,7 @@ namespace CodeThorn {
       }
       normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
-    ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
+    EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
     VariableIdMappingExtended* vid=new VariableIdMappingExtended();
     AbstractValue::setVariableIdMapping(vid);
     RoseAst ast(sageProject);

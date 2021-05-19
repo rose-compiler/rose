@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "CodeThornException.h"
 #include "CTAnalysis.h" // dependency on process-functions
 #include "CppStdUtilities.h"
@@ -13,7 +13,7 @@ using namespace Sawyer::Message;
 
 namespace PredefinedSemanticFunctions {
 /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
-  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(ExprAnalyzer* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   // memcpy is a void function, no return value
@@ -35,7 +35,7 @@ namespace PredefinedSemanticFunctions {
     }
     if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return ExprAnalyzer::listify(res); // returns top
+      return EStateTransferFunctions::listify(res); // returns top
     }
     int memRegionSizeTarget=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[0]);
     int copyRegionElementSizeTarget=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[0]);
@@ -46,11 +46,11 @@ namespace PredefinedSemanticFunctions {
     // check if size to copy is either top
     if(memcpyArgs[2].isTop()) {
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return ExprAnalyzer::listify(res);
+      return EStateTransferFunctions::listify(res);
     } else if(memRegionSizeTarget!=memRegionSizeSource) {
       // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return ExprAnalyzer::listify(res);
+      return EStateTransferFunctions::listify(res);
     } else {
       if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
         if(copyRegionElementSizeTarget!=0)
@@ -72,7 +72,7 @@ namespace PredefinedSemanticFunctions {
     if(copyRegionElementSize==0) {
       cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return ExprAnalyzer::listify(res);
+      return EStateTransferFunctions::listify(res);
     }
     int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
 
@@ -110,15 +110,15 @@ namespace PredefinedSemanticFunctions {
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
     }
-    return ExprAnalyzer::listify(res);
+    return EStateTransferFunctions::listify(res);
   } else {
     cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
     exit(1);
   }
-  return ExprAnalyzer::listify(res);
+  return EStateTransferFunctions::listify(res);
   }
 
-  list<SingleEvalResultConstInt> evalFunctionCallStrLen(ExprAnalyzer* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+  list<SingleEvalResultConstInt> evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
     SingleEvalResultConstInt res;
     //cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
     res.init(estate,AbstractValue(CodeThorn::Top()));
@@ -171,7 +171,7 @@ namespace PredefinedSemanticFunctions {
           // found 0
           AbstractValue finalResult=AbstractValue(pos);
           res.init(estate,finalResult);
-          return ExprAnalyzer::listify(res);
+          return EStateTransferFunctions::listify(res);
         } else if(cmpResult.isFalse()) {
           pos++;
         } else {
@@ -183,7 +183,7 @@ namespace PredefinedSemanticFunctions {
     // fallthrough for top/bot
     // return top for unknown (or out-of-bounds access)
     res.init(estate,AbstractValue(CodeThorn::Top()));
-    return ExprAnalyzer::listify(res);
+    return EStateTransferFunctions::listify(res);
   }
 
 } // end of namespace PredefinedSemanticFunctions

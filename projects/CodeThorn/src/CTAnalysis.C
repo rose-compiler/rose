@@ -71,7 +71,6 @@ CodeThorn::CTAnalysis::CTAnalysis():
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
-  exprAnalyzer.setAnalyzer(this);
   ROSE_ASSERT(_estateTransferFunctions==nullptr);
   _estateTransferFunctions=new EStateTransferFunctions();
   _estateTransferFunctions->setAnalyzer(this);
@@ -344,11 +343,11 @@ std::string CodeThorn::CTAnalysis::programPositionInfo(CodeThorn::Label lab) {
 }
 
 bool CodeThorn::CTAnalysis::getOptionOutputWarnings() {
-  return exprAnalyzer.getOptionOutputWarnings();
+  return _estateTransferFunctions->getOptionOutputWarnings();
 }
 
 void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
-  exprAnalyzer.setOptionOutputWarnings(flag);
+  _estateTransferFunctions->setOptionOutputWarnings(flag);
 }
 
 bool CodeThorn::CTAnalysis::isApproximatedBy(const EState* es1, const EState* es2) {
@@ -481,11 +480,11 @@ void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* ini
 }
 
 bool CodeThorn::CTAnalysis::getPrintDetectedViolations() {
-  return exprAnalyzer.getPrintDetectedViolations();
+  return _estateTransferFunctions->getPrintDetectedViolations();
 }
 
 void CodeThorn::CTAnalysis::setPrintDetectedViolations(bool flag) {
-  exprAnalyzer.setPrintDetectedViolations(flag);
+  _estateTransferFunctions->setPrintDetectedViolations(flag);
 }
 
 bool CodeThorn::CTAnalysis::getIgnoreFunctionPointers() {
@@ -493,19 +492,19 @@ bool CodeThorn::CTAnalysis::getIgnoreFunctionPointers() {
 }
 
 void CodeThorn::CTAnalysis::setInterpreterMode(CodeThorn::InterpreterMode mode) {
-  exprAnalyzer.setInterpreterMode(mode);
+  _estateTransferFunctions->setInterpreterMode(mode);
 }
 
 CodeThorn::InterpreterMode CodeThorn::CTAnalysis::getInterpreterMode() {
-  return exprAnalyzer.getInterpreterMode();
+  return _estateTransferFunctions->getInterpreterMode();
 }
 
 void CodeThorn::CTAnalysis::setInterpreterModeOutputFileName(string fileName) {
-  exprAnalyzer.setInterpreterModeFileName(fileName);
+  _estateTransferFunctions->setInterpreterModeFileName(fileName);
 }
 
 string CodeThorn::CTAnalysis::getInterpreterModeOutputFileName() {
-  return exprAnalyzer.getInterpreterModeFileName();
+  return _estateTransferFunctions->getInterpreterModeFileName();
 }
 
 void CodeThorn::CTAnalysis::setOptionContextSensitiveAnalysis(bool flag) {
@@ -547,7 +546,7 @@ void CodeThorn::CTAnalysis::initDiagnostics() {
 
 void CodeThorn::CTAnalysis::enableSVCompFunctionSemantics() {
   _svCompFunctionSemantics=true;
-  exprAnalyzer.setSVCompFunctionSemantics(true);
+  _estateTransferFunctions->setSVCompFunctionSemantics(true);
   _externalErrorFunctionName="__VERIFIER_error";
   _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
   _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
@@ -556,7 +555,7 @@ void CodeThorn::CTAnalysis::enableSVCompFunctionSemantics() {
 
 void CodeThorn::CTAnalysis::disableSVCompFunctionSemantics() {
   _svCompFunctionSemantics=false;
-  exprAnalyzer.setSVCompFunctionSemantics(false);
+  _estateTransferFunctions->setSVCompFunctionSemantics(false);
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
   _externalNonDetLongFunctionName="";
@@ -567,8 +566,8 @@ void CodeThorn::CTAnalysis::disableSVCompFunctionSemantics() {
 }
 
 bool CodeThorn::CTAnalysis::svCompFunctionSemantics() { return _svCompFunctionSemantics; }
-bool CodeThorn::CTAnalysis::getStdFunctionSemantics() { return exprAnalyzer.getStdFunctionSemantics(); }
-void CodeThorn::CTAnalysis::setStdFunctionSemantics(bool flag) { exprAnalyzer.setStdFunctionSemantics(flag); }
+bool CodeThorn::CTAnalysis::getStdFunctionSemantics() { return _estateTransferFunctions->getStdFunctionSemantics(); }
+void CodeThorn::CTAnalysis::setStdFunctionSemantics(bool flag) { _estateTransferFunctions->setStdFunctionSemantics(flag); }
 
 // TODO: move to flow analyzer (reports label,init,final sets)
 string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) {
@@ -661,8 +660,8 @@ bool CodeThorn::CTAnalysis::isIncompleteSTGReady() {
   return false;
 }
 
-CodeThorn::ExprAnalyzer* CodeThorn::CTAnalysis::getExprAnalyzer() {
-  return &exprAnalyzer;
+CodeThorn::EStateTransferFunctions* CodeThorn::CTAnalysis::getExprAnalyzer() {
+  return getEStateTransferFunctions();
 }
 
 void CodeThorn::CTAnalysis::setSolver(Solver* solver) {
@@ -1224,7 +1223,7 @@ list<EState> CodeThorn::CTAnalysis::evaluateFunctionCallArguments(Edge edge, SgF
   ROSE_ASSERT(_estateTransferFunctions);
   CallString cs=currentEState.callString;
   SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
-  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalFunctionCallArguments(funCall, currentEState);
+  list<SingleEvalResultConstInt> evalResultList=_estateTransferFunctions->evalFunctionCallArguments(funCall, currentEState);
   ROSE_ASSERT(evalResultList.size()>0);
   list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
   SingleEvalResultConstInt evalResult=*resultListIter;
@@ -1466,7 +1465,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   resetInputSequenceIterator();
   RoseAst completeast(root);
 
-  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
+  _estateTransferFunctions->setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
 
   // START_INIT 2
@@ -1854,15 +1853,15 @@ int CodeThorn::CTAnalysis::reachabilityAssertCode(const EState* currentEStatePtr
 
 void CodeThorn::CTAnalysis::setSkipUnknownFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag; 
-  exprAnalyzer.setSkipUnknownFunctionCalls(flag);
+  _estateTransferFunctions->setSkipUnknownFunctionCalls(flag);
 }
 
 void CodeThorn::CTAnalysis::setSkipArrayAccesses(bool skip) {
-  exprAnalyzer.setSkipArrayAccesses(skip);
+  _estateTransferFunctions->setSkipArrayAccesses(skip);
 }
 
 bool CodeThorn::CTAnalysis::getSkipArrayAccesses() {
-  return exprAnalyzer.getSkipArrayAccesses();
+  return _estateTransferFunctions->getSkipArrayAccesses();
 }
 
 bool CodeThorn::CTAnalysis::getIgnoreUndefinedDereference() {

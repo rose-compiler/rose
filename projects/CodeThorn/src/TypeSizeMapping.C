@@ -4,7 +4,7 @@
 #include "TypeSizeMapping.h"
 #include "CodeThornException.h"
 #include "CodeThornLib.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "AbstractValue.h"
 #include "VariableIdMappingExtended.h"
 
@@ -228,15 +228,15 @@ namespace CodeThorn {
         }
       } else {
         // variable id mapping is available in AbstractValue
-        ExprAnalyzer tmpExprEvaluator;
-        AbstractValue abstractSize=tmpExprEvaluator.evaluateExpressionWithEmptyState(indexExp);
-        if(abstractSize.isConstInt()) {
+        EStateTransferFunctions* tmpExprEvaluator=new EStateTransferFunctions();
+        AbstractValue abstractSize=tmpExprEvaluator->evaluateExpressionWithEmptyState(indexExp);
+	if(abstractSize.isConstInt()) {
           result=abstractSize.getIntValue();
         } else {
           // TODO: make the result of this entire function an abstract value
-	  cout<<"DEBUG:P2"<<endl;
           result=unknownSizeValue();
         }
+	delete tmpExprEvaluator;
       }
     }
     // consider multi dimensional case 

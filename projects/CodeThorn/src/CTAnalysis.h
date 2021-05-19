@@ -26,7 +26,7 @@
 #include "CFAnalysis.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "EState.h"
 #include "TransitionGraph.h"
 #include "TransitionGraphReducer.h"
@@ -92,7 +92,6 @@ namespace CodeThorn {
     friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
-    friend class ExprAnalyzer;
   public:
     static void initDiagnostics();
     CTAnalysis();
@@ -160,11 +159,8 @@ namespace CodeThorn {
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
 
-    //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    //void setCFAnalyzer(CFAnalysis* cf);
-    //CFAnalysis* getCFAnalyzer() const;
-
-    ExprAnalyzer* getExprAnalyzer();
+    // deprecated, only for backward compatibility
+    EStateTransferFunctions* getExprAnalyzer();
 
     // access  functions for computed information
     FunctionCallMapping* getFunctionCallMapping();
@@ -427,8 +423,6 @@ namespace CodeThorn {
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
     
-    ExprAnalyzer exprAnalyzer;
-
     // abstract layer
     //FunctionCallMapping functionCallMapping;
     //FunctionCallMapping2 functionCallMapping2;
