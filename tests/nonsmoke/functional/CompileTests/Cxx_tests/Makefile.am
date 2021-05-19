@@ -2456,7 +2456,8 @@ else
      test2017_69.C \
      test2016_96.C \
      test2015_135.C \
-     test2015_136.C
+     test2015_136.C \
+     vector_cpp.C
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_8
@@ -2977,6 +2978,8 @@ test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdi
 test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
 	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
 
+test_bug_980: $(srcdir)/cpp_vector.C
+	../../testTranslator -rose:verbose 0 -c $^
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 
