@@ -403,9 +403,14 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList* for Fortran) \n";
 
+   ROSE_ASSERT(param_scope);
+
    BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+      // TODO: deal with fortran functions when the dummy argument is not declared and implicitly typed.
       SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
+      ROSE_ASSERT(symbol);
       SgInitializedName* init_name = symbol->get_declaration();
+      ROSE_ASSERT(init_name);
       param_list->append_arg(init_name);
    }
 
@@ -820,7 +825,7 @@ Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
 }
 
 void SageTreeBuilder::
-Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body)
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body, bool is_ifthen, bool has_end_stmt, bool is_else_if)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
 
@@ -829,6 +834,18 @@ Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, Sg
 
    SgStatement* conditional_stmt = SageBuilder::buildExprStatement_nfi(conditional);
    if_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
+
+   if (is_ifthen) {
+      if_stmt->set_use_then_keyword(true);
+   }
+
+   if (has_end_stmt) {
+      if_stmt->set_has_end_statement(true);
+   }
+
+   if (is_else_if) {
+      if_stmt->set_is_else_if_statement(true);
+   }
 }
 
 void SageTreeBuilder::
@@ -1063,18 +1080,16 @@ Enter(SgImplicitStatement* &implicit_stmt, bool none_external, bool none_type)
    }
 }
 
-#ifdef CPP_ELEVEN
 void SageTreeBuilder::
 Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
-#else
-void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
-#endif
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgImplicitStatement* &, implicit_spec_list)\n";
    // Implicit with Implicit-Spec
 
+   //TODO: Create SgImplicitStatement with the list of Implicit Specs,
+   // perhaps wait until SageBuilder function is created
+
    // Step through the list of Implicit Specs
-#ifdef CPP_ELEVEN
    for (std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec : implicit_spec_list) {
       SgType* type;
       std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
@@ -1096,10 +1111,6 @@ void SageTreeBuilder::Enter(SgImplicitStatement* &implicit_stmt)
          std::cout << "\n";
       }
    }
-#else
-   implicit_stmt = nullptr;
-#endif
-
 }
 
 void SageTreeBuilder::
@@ -1109,6 +1120,79 @@ Leave(SgImplicitStatement* implicit_stmt)
    ROSE_ASSERT(implicit_stmt);
 
    SageInterface::appendStatement(implicit_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgModuleStatement* &module_stmt, const std::string &name)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgModuleStatement* &, ...)\n";
+
+   module_stmt = SageBuilder::buildModuleStatement(name, SageBuilder::topScopeStack());
+
+   SgClassDefinition* class_def = module_stmt->get_definition();
+   ROSE_ASSERT(class_def);
+
+   // Append now (before Leave is called) so that symbol lookup will work
+   SageInterface::appendStatement(module_stmt, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(class_def);
+}
+
+void SageTreeBuilder::
+Leave(SgModuleStatement* module_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgModuleStatement*, ...) \n";
+   ROSE_ASSERT(module_stmt);
+
+   SageBuilder::popScopeStack();  // class definition
+}
+
+void SageTreeBuilder::
+Enter(SgUseStatement* &use_stmt, const std::string &module_name, const std::string &module_nature)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgUseStatement* &, ...)\n";
+
+   use_stmt = new SgUseStatement(module_name, false, module_nature);
+   ROSE_ASSERT(use_stmt);
+   SageInterface::setSourcePosition(use_stmt);
+
+   SgClassSymbol* module_symbol = SageInterface::lookupClassSymbolInParentScopes(module_name);
+   ROSE_ASSERT(module_symbol);
+
+   SgClassDeclaration* decl = module_symbol->get_declaration();
+   ROSE_ASSERT(decl);
+
+   SgModuleStatement* module_stmt = isSgModuleStatement(decl);
+   ROSE_ASSERT(module_stmt);
+
+   use_stmt->set_module(module_stmt);
+}
+
+void SageTreeBuilder::
+Leave(SgUseStatement* use_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgUseStatement*, ...) \n";
+   ROSE_ASSERT(use_stmt);
+
+   SageInterface::appendStatement(use_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgContainsStatement* &contains_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgContainsStatement* &, ...)\n";
+
+   contains_stmt = new SgContainsStatement();
+   ROSE_ASSERT(contains_stmt);
+   SageInterface::setSourcePosition(contains_stmt);
+}
+
+void SageTreeBuilder::
+Leave(SgContainsStatement* contains_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgContainsStatement*, ...) \n";
+   ROSE_ASSERT(contains_stmt);
+
+   SageInterface::appendStatement(contains_stmt, SageBuilder::topScopeStack());
 }
 
 // For Jovial, the symbol table may have multiple enumerators with the same name. This
@@ -1868,6 +1952,24 @@ SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_sha
    return SageBuilder::buildArrayType(base_type, dim_info);
 }
 
+// SgBasicBlock
+//
+
+SgBasicBlock* buildBasicBlock_nfi()
+{
+   return SageBuilder::buildBasicBlock_nfi();
+}
+
+void pushScopeStack(SgBasicBlock* stmt)
+{
+   SageBuilder::pushScopeStack(stmt);
+}
+
+void popScopeStack()
+{
+   SageBuilder::popScopeStack();
+}
+
 // Operators
 //
 SgExpression* buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -1923,6 +2025,19 @@ SgExpression* buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs)
 SgExpression* buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs)
 {
    return SageBuilder::buildOrOp_nfi(lhs, rhs);
+}
+
+SgExpression* buildMinusOp_nfi(SgExpression* i, bool is_prefix /* = true */)
+{
+   SgUnaryOp::Sgop_mode mode_enum;
+
+   if (is_prefix) {
+     mode_enum = SgUnaryOp::Sgop_mode::prefix;
+   } else {
+     mode_enum = SgUnaryOp::Sgop_mode::postfix;
+   }
+
+   return SageBuilder::buildMinusOp_nfi(i, mode_enum);
 }
 
 SgExpression* buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs)
@@ -2030,6 +2145,18 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name, SgExprListExp* exp
    SgCommonBlockObject* common_block_object = SageBuilder::buildCommonBlockObject(name, expr_list);
    SageInterface::setSourcePosition(common_block_object);
    return common_block_object;
+}
+
+void set_false_body(SgIfStmt* &if_stmt, SgBasicBlock* false_body)
+{
+   ROSE_ASSERT(if_stmt);
+   if_stmt->set_false_body(false_body);
+}
+
+void set_need_paren(SgExpression* &expr)
+{
+   ROSE_ASSERT(expr);
+   expr->set_need_paren(true);
 }
 
 void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type)
