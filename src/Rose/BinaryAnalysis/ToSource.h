@@ -3,9 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>

@@ -2,7 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 using namespace Rose::Diagnostics;
 

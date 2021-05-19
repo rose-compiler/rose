@@ -1,7 +1,7 @@
 #include <rose.h>
 
 #include <AsmUnparser_compat.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
 

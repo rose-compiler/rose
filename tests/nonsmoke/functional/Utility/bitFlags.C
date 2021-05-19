@@ -1,4 +1,4 @@
-#include <BitFlags.h>
+#include <Rose/BitFlags.h>
 #include <Sawyer/Assert.h>
 
 enum GlobalFlag { G0=1, G1=2, G2=4, G3=8, G4=16, G5=32 };

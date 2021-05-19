@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_ConcreteExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_ConcreteExecutor_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/filesystem.hpp>
 #include <rose_isnan.h>

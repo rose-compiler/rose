@@ -15,7 +15,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <chrono>
 #include <Combinatorics.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 using namespace Sawyer::Message::Common;

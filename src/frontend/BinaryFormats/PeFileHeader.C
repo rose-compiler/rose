@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <boost/format.hpp>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we

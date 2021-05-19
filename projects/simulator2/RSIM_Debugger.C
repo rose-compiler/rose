@@ -5,7 +5,7 @@
 
 #include "RSIM_Debugger.h"
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>

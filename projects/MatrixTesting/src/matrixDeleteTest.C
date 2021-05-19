@@ -2,7 +2,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>

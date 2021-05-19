@@ -3,7 +3,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

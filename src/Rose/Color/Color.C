@@ -1,15 +1,15 @@
-#include <Color.h>
+#include <Rose/Color.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <cmath>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <cstdio>
 #include <ctype.h>
 #include <rose_isnan.h>
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 
 // Name space pollution cleanup
 #ifdef _MSC_VER

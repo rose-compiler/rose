@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <algorithm>
 #include <ostream>

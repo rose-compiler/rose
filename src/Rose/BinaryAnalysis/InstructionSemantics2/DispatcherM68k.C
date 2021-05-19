@@ -4,7 +4,7 @@
 
 #include "AsmUnparser_compat.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include "integerOps.h"

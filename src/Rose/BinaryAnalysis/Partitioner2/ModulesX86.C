@@ -3,9 +3,9 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
-#include <BitOps.h>
+#include <Rose/BitOps.h>
 #include <boost/format.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

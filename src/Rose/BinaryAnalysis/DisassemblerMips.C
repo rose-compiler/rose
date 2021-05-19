@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/DisassemblerMips.h>
 
 #include "integerOps.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
 namespace Rose {

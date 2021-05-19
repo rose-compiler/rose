@@ -7,14 +7,14 @@
 #include <RSIM_Private.h>
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
-#include <CommandLine.h>                                // ROSE command-line
+#include <Rose/CommandLine.h>
 #include <RSIM_Debugger.h>                              // Interactive debugger for the simulator
 #include <RSIM_ColdFire.h>                              // FreeScale ColdFire/m68k naked hardware simulator
 #include <RSIM_Linux32.h>                               // Operating system simulation for Linux-x86
 #include <RSIM_Linux64.h>                               // Operating system simulation for Linux-amd64
 #include <RSIM_Pentium4.h>                              // Intel Pentium4 naked hardware simulator
 #include <RSIM_Tools.h>                                 // Various simulation tools
-#include <Diagnostics.h>                                // ROSE diagnostics
+#include <Rose/Diagnostics.h>
 #include <Sawyer/CommandLine.h>                         // Command-line parsing. Sawyer is distributed with ROSE sources.
 #include <Sawyer/Message.h>                             // Diagnostic output streams
 

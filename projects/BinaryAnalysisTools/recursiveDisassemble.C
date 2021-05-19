@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>

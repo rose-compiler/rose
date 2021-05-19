@@ -1,7 +1,7 @@
 #define __STDC_FORMAT_MACROS
 
 // ROSE includes
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 #include <FileUtility.h>
 
 #include <rose_config.h>
@@ -214,6 +214,16 @@ bourneEscape(const std::string &s) {
 
     // No quoting or escaping necessary
     return s;
+}
+
+std::string
+yamlEscape(const std::string &s) {
+    std::string escaped = cEscape(s);
+    if (s.empty() || s != escaped) {
+        return "\"" + escaped + "\"";
+    } else {
+        return s;
+    }
 }
 
 // [Robb P Matzke 2016-06-15]: deprecated

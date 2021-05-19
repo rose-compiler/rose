@@ -2,7 +2,7 @@
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 #include <sstream>
 
 using namespace Rose;

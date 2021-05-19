@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <boost/foreach.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Config.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>

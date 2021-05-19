@@ -5,7 +5,7 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <rose_strtoull.h>
 #include <Sawyer/Stopwatch.h>
 #include <Wt/WHBoxLayout>

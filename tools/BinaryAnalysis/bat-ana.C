@@ -14,8 +14,8 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Stopwatch.h>
 

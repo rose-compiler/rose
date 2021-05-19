@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

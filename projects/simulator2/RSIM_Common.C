@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "integerOps.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <arpa/inet.h>
 #include <sys/vfs.h>
 #include <sys/wait.h>

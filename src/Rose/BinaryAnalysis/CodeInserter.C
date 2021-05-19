@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

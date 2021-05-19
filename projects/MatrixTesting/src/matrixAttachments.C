@@ -1,8 +1,8 @@
 #include <rose.h>
 
 #include <boost/foreach.hpp>
-#include <CommandLine.h>                                // from ROSE
-#include <FileSystem.h>                                 // from ROSE
+#include <Rose/CommandLine.h>
+#include <Rose/FileSystem.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <SqlDatabase.h>

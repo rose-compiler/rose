@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "AstAttributeMechanism.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include "roseInternal.h"
 #include <boost/foreach.hpp>

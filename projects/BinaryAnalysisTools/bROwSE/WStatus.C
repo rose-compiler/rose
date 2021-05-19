@@ -3,8 +3,8 @@
 
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <boost/algorithm/string/trim.hpp>
-#include <Color.h>                                      // ROSE
-#include <Diagnostics.h>                                // ROSE
+#include <Rose/Color.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>

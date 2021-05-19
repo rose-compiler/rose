@@ -5,12 +5,12 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/ProgressBar.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 #include <stringify.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 

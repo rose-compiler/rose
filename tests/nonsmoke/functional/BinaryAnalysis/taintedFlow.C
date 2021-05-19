@@ -72,8 +72,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include "CommandLine.h"
-#include "Diagnostics.h"
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include "WorkLists.h"

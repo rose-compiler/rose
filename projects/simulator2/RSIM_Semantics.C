@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/DisassemblerX86.h>
 #include <Rose/BinaryAnalysis/DisassemblerM68k.h>
 

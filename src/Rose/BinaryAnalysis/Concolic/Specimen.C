@@ -1,6 +1,7 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/io-utility.h>
 
@@ -78,6 +79,18 @@ Specimen::printableName(const Database::Ptr &db) {
     if (!name().empty())
         retval += " \"" + StringUtility::cEscape(name()) + "\"";
     return retval;
+}
+
+void
+Specimen::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix) {
+    ASSERT_not_null(db);
+
+    out <<prefix <<"specimen: " <<*db->id(sharedFromThis(), Update::NO) <<"\n";
+    prefix = std::string(prefix.size(), ' ');
+
+    if (!name().empty())
+        out <<prefix <<"name: " <<StringUtility::yamlEscape(name()) <<"\n";
+    out <<prefix <<"created: " <<timestamp() <<"\n";
 }
 
 std::string

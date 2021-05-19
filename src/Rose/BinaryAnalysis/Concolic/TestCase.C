@@ -1,8 +1,10 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <boost/lexical_cast.hpp>
 
@@ -47,6 +49,64 @@ TestCase::printableName(const Database::Ptr &db) {
     if (!name().empty())
         retval += " \"" + StringUtility::cEscape(name()) + "\"";
     return retval;
+}
+
+void
+TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix) {
+    ASSERT_not_null(db);
+    const TestCaseId tcid = db->id(sharedFromThis(), Update::NO);
+    ASSERT_require(tcid);
+
+    out <<prefix <<"testcase: " <<*tcid <<"\n";
+    prefix = std::string(prefix.size(), ' ');
+
+    if (!name().empty())
+        out <<prefix <<"name: " <<StringUtility::yamlEscape(name()) <<"\n";
+
+    out <<prefix <<"created:  " <<timestamp() <<"\n";
+    out <<prefix <<"specimen: " <<db->id(specimen(), Update::NO) <<" " <<StringUtility::yamlEscape(specimen()->name()) <<"\n";
+
+    //-------- Inputs ---------
+    out <<prefix <<"inputs:\n";
+
+    out <<prefix <<"  command-line:\n";
+    for (auto arg: args())
+        out <<prefix <<"    - " <<StringUtility::yamlEscape(arg) <<"\n";
+
+    if (!env().empty()) {
+        out <<prefix <<"  environment:\n";
+        for (const EnvValue &nameValue: env()) {
+            out <<prefix <<"    - " <<StringUtility::yamlEscape(nameValue.first)
+                <<": " <<StringUtility::yamlEscape(nameValue.second) <<"\n";
+        }
+    }
+
+    std::vector<ExecutionEventId> events = db->executionEvents(tcid);
+    if (!events.empty()) {
+        out <<prefix <<"  execution-events:\n";
+        for (ExecutionEventId eeid: events) {
+            ExecutionEvent::Ptr ee = db->object(eeid);
+            ee->toYaml(out, db, prefix + "    - ");
+        }
+    }
+
+    //-------- Concrete results ---------
+    out <<prefix <<"concrete-result:\n";
+    if (hasConcreteTest()) {
+        out <<prefix <<"  status:      ran\n"
+            <<prefix <<"  rank:        " <<*concreteRank() <<"\n"
+            <<prefix <<"  interesting: " <<(concreteIsInteresting() ? "true" : "false") <<"\n";
+    } else {
+        out <<prefix <<"  status:      not run yet\n";
+    }
+
+    //-------- Concolic results ---------
+    out <<prefix <<"concolic-result:\n";
+    if (hasConcolicTest()) {
+        out <<prefix <<"  status:      ran\n";
+    } else {
+        out <<prefix <<"  status:      not run yet\n";
+    }
 }
 
 std::string

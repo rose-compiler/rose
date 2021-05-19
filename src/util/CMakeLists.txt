@@ -56,12 +56,9 @@ add_subdirectory(support)
 ######## build main library ###########
 set(rose_util_src
   ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
-  Color.C
-  FileSystem.C
   LinearCongruentialGenerator.C
   rose_getline.C
   processSupport.C
-  Progress.C
   rose_getline.C
   rose_strtoull.C
 )
@@ -83,5 +80,5 @@ install(FILES
   setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
   Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_override.h rose_strtoull.h
-  roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h
+  roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h rose_pragma_message.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

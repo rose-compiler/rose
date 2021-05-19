@@ -12,8 +12,8 @@ static Sawyer::Message::Facility mlog;
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
-#include <Color.h>                                      // ROSE
-#include <Diagnostics.h>                                // ROSE
+#include <Rose/Color.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>

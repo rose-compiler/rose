@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include "dwarfSupport.h"
 

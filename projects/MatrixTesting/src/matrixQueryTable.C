@@ -4,7 +4,7 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>

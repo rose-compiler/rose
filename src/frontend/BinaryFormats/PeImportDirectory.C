@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.

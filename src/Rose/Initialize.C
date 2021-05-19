@@ -1,13 +1,13 @@
 #include <sage3basic.h>
 #include <rosePublicConfig.h>
 #include <rose_config.h>                                // needed for VERSION with cmake
-#include <initialize.h>
+#include <Rose/Initialize.h>
 
 #ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/Synchronization.h>
 #include <boost/lexical_cast.hpp>
 

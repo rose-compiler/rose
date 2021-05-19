@@ -6,7 +6,7 @@
 
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
-#include "FileSystem.h"
+#include <Rose/FileSystem.h>
 #include "x86InstructionProperties.h"
 
 #include <Sawyer/MappedBuffer.h>

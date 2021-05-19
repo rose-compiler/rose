@@ -5,7 +5,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;

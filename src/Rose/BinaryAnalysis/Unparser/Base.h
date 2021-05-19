@@ -7,14 +7,14 @@
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <BitFlags.h>
+#include <Rose/BitFlags.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
-#include <Progress.h>
+#include <Rose/Progress.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 
 namespace Rose {

@@ -1,6 +1,7 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 namespace Rose {
 namespace BinaryAnalysis {

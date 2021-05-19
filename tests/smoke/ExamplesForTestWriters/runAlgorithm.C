@@ -7,7 +7,7 @@ static const char *description =
 
 
 #include <rose.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose;

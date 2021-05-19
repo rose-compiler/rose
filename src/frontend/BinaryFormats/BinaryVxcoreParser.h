@@ -7,9 +7,9 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -11,10 +11,10 @@ static const char* description =
 #include <set>
 #include <fstream>
 
-#include "sage3basic.h"
+#include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include "CommandLine.h"
-#include "Diagnostics.h"
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

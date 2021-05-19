@@ -10,7 +10,7 @@ static const char *description =
     "lazily instantiated initial state plus the state at each control flow vertex of each function.";
 
 #include <rose.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>

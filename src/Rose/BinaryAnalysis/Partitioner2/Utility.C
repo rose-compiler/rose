@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "rose_strtoull.h"
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 

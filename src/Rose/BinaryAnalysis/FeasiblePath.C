@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Combinatorics.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
 #include <Rose/BinaryAnalysis/DisassemblerM68k.h>

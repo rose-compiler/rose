@@ -6,8 +6,8 @@ static const char *description =
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
 #include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

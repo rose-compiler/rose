@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>

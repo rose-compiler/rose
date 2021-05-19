@@ -1,6 +1,6 @@
 // Make sure diagnostics subsystem is working
 #include <rose.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

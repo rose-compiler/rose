@@ -45,7 +45,7 @@ namespace BinaryAnalysis {
 } // namespace
 #endif
 
-#include "Diagnostics.h"                                // Rose::Diagnostics
+#include <Rose/Diagnostics.h>
 #include <EditDistance/EditDistance.h>                  // Rose::EditDistance
 
 // DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.

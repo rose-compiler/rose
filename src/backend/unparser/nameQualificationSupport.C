@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "nameQualificationSupport.h"
 
 using namespace std;

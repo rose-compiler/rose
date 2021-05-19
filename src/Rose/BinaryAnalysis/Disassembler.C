@@ -6,7 +6,7 @@
 #include <Assembler.h>
 #include <AssemblerX86.h>
 #include <AsmUnparser_compat.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch64.h>

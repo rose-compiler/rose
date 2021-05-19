@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include <integerOps.h>

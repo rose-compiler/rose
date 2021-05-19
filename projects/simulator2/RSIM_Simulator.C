@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Simulator.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <sys/wait.h>
 

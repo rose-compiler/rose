@@ -11,7 +11,7 @@
 #include "cmdline.h"
 #include "keep_going.h"
 #include "FileUtility.h"
-#include "Diagnostics.h"                                // Rose::Diagnostics
+#include <Rose/Diagnostics.h>
 #include "Outliner.hh"
 
 #include <boost/foreach.hpp>

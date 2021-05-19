@@ -4,8 +4,8 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 

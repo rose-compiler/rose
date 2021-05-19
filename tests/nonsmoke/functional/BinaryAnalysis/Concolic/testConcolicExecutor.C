@@ -7,7 +7,7 @@ static const char *description =
     "To be written. This program is currently only for testing some of the concolic testing framework and is not useful "
     "to users at this time.";
 
-#include <CommandLine.h>                                // rose
+#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>

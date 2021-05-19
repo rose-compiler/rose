@@ -38,8 +38,7 @@ libroseSawyer_la_SOURCES =			\
 	Sawyer.C				\
 	SmallObject.C				\
 	Stopwatch.C				\
-	Synchronization.C			\
-	useHeaders.C
+	Synchronization.C
 
 sawyerincludedir = $(includedir)/rose/Sawyer
 sawyerinclude_HEADERS =				\

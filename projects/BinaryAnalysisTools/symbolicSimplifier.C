@@ -1,6 +1,6 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 

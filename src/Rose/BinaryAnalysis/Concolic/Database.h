@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_Database_H
 #define ROSE_BinaryAnalysis_Concolic_Database_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
@@ -44,8 +45,8 @@ private:
     Sawyer::Container::BiMap<SpecimenId, SpecimenPtr> specimens_;
     Sawyer::Container::BiMap<TestCaseId, TestCasePtr> testCases_;
     Sawyer::Container::BiMap<TestSuiteId, TestSuitePtr> testSuites_;
-    Sawyer::Container::BiMap<SystemCallId, SystemCallPtr> systemCalls_;
-    
+    Sawyer::Container::BiMap<ExecutionEventId, ExecutionEventPtr> executionEvents_;
+
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
 
 protected:
@@ -141,37 +142,34 @@ public:
     void eraseTestCases(SpecimenId);
 
     //------------------------------------------------------------------------------------------------------------------------
-    // System calls
+    // Execution events
     //------------------------------------------------------------------------------------------------------------------------
 
-    /** All system calls.
+    /** All execution events.
      *
-     *  If this database object has a current test suite, then the return value is limited to system calls used by that test
-     *  suite, otherwise all system calls are returned. */
-    std::vector<SystemCallId> systemCalls();
+     *  If this database object has a current test suite, then the return value is limited to execution events used by that
+     *  test suite, otherwise all execution events are returned. */
+    std::vector<ExecutionEventId> executionEvents();
 
-    /** All system calls for a particular test case. */
-    std::vector<SystemCallId> systemCalls(TestCaseId);
-    
-    /** Number of system call records for a test case.
+    /** All execution events for a particular test case. */
+    std::vector<ExecutionEventId> executionEvents(TestCaseId);
+
+    /** Number of execution events for a particular test case. */
+    size_t nExecutionEvents(TestCaseId);
+
+    /** Execution events at a specific location.
      *
-     *  Returns the number of system call records for the specified test case. */
-    size_t nSystemCalls(TestCaseId);
+     *  Returns the execution events for a specific location. All events for the primary key of the location are returned,
+     *  sorted by the secondary key. */
+    std::vector<ExecutionEventId> executionEvents(TestCaseId, uint64_t primaryKey);
 
-    /** A particular system call for a test suite.
+    /** Primary keys for the location events.
      *
-     *  The system call index must be less than the value returned by @ref nSystemCalls, or else an empty system call ID is
-     *  returned. */
-    SystemCallId systemCall(TestCaseId, size_t idx);
+     *  The return value is the vector for all the primary location key values for the specified test case. */
+    std::vector<uint64_t> executionEventKeyFrames(TestCaseId);
 
-    /** Erase all system calls associated with a test case. */
-    void eraseSystemCalls(TestCaseId);
-
-    /** Replace all system calls associated with a test case.
-     *
-     *  All existing calls are removed from the specified test case and the new system calls are inserted in their
-     *  place. Returns the new system call IDs in the database. */
-    std::vector<SystemCallId> systemCalls(TestCaseId, const std::vector<SystemCallPtr>&);
+    /** Erase all events for a test case. */
+    void eraseExecutionEvents(TestCaseId);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Overloaded methods for all objects.
@@ -186,7 +184,7 @@ public:
     TestSuitePtr object(TestSuiteId, Update::Flag update = Update::YES);
     TestCasePtr object(TestCaseId, Update::Flag update = Update::YES);
     SpecimenPtr object(SpecimenId, Update::Flag update = Update::YES);
-    SystemCallPtr object(SystemCallId, Update::Flag update = Update::YES);
+    ExecutionEventPtr object(ExecutionEventId, Update::Flag update = Update::YES);
     /** @} */
 
 #if ROSE_CONCOLIC_DB_VERSION == 1
@@ -208,7 +206,7 @@ public:
     TestSuiteId id(const TestSuitePtr&, Update::Flag update = Update::YES);
     TestCaseId id(const TestCasePtr&, Update::Flag update = Update::YES);
     SpecimenId id(const SpecimenPtr&, Update::Flag update = Update::YES);
-    SystemCallId id(const SystemCallPtr&, Update::Flag update = Update::YES);
+    ExecutionEventId id(const ExecutionEventPtr&, Update::Flag update = Update::YES);
     /** @} */
 
     /** Deletes an object from the database.
@@ -217,7 +215,7 @@ public:
     TestSuiteId erase(TestSuiteId);
     TestCaseId erase(TestCaseId);
     SpecimenId erase(SpecimenId);
-    SystemCallId erase(SystemCallId);
+    ExecutionEventId erase(ExecutionEventId);
     /** @} */
 
     /** Saves an object.

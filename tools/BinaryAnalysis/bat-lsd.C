@@ -3,8 +3,8 @@ static const char *description =
     "Given a BAT state for a binary specimen, list information about all of the static data blocks.";
 
 #include <rose.h>
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 

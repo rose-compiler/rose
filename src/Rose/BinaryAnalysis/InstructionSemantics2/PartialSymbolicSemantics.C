@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
 
-#include "CommandLine.h"
+#include <Rose/CommandLine.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

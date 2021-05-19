@@ -5,7 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include "integerOps.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 
 #include <iostream>
 #include <vector>

@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_TestCase_H
 #define ROSE_BinaryAnalysis_Concolic_TestCase_H
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
@@ -69,6 +70,9 @@ public:
      *  non-null database is specified and this test case exists in that database. */
     std::string printableName(const DatabasePtr &db = DatabasePtr());
 
+    /** Print as a YAML node. */
+    void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);
+
     /** Property: Database creation timestamp string.
      *
      *  Time stamp string describing when this object was created in the database, initialized the first time the object is
@@ -96,7 +100,7 @@ public:
 
     /** Command line arguments.
      *
-     *  The arguments exclude <code>argv[0]</code> and <code>argv[argc]</code> and are just the elements in between.
+     *  The arguments, including argv[0] (the program name) but not argv[argc] (the null pointer).
      *
      * @{ */
     std::vector<std::string> args() const;

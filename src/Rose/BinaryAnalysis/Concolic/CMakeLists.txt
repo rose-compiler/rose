@@ -2,12 +2,13 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   ConcolicExecutor.C
   ConcreteExecutor.C
   Database.C
+  ExecutionEvent.C
   ExecutionManager.C
   LinuxExecutor.C
   LinuxExitStatus.C
+  LinuxI386Executor.C
   LinuxTraceExecutor.C
   Specimen.C
-  SystemCall.C
   TestCase.C
   TestSuite.C
   Utility.C)
@@ -19,12 +20,13 @@ install(FILES
   ConcolicExecutor.h
   ConcreteExecutor.h
   Database.h
+  ExecutionEvent.h
   ExecutionManager.h
   LinuxExecutor.h
   LinuxExitStatus.h
+  LinuxI386Executor.h
   LinuxTraceExecutor.h
   Specimen.h
-  SystemCall.h
   TestCase.h
   TestSuite.h
 

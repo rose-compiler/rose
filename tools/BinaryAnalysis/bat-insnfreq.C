@@ -6,8 +6,8 @@ static const char *description =
     "with the number of times they occur.";
 
 #include <rose.h>
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 

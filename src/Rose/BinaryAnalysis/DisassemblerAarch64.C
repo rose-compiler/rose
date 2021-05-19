@@ -2,7 +2,7 @@
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <sage3basic.h>
-#include <BitOps.h>
+#include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h>

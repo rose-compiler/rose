@@ -8,7 +8,7 @@
 // the integer order of visit).
 
 #include <rose.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>

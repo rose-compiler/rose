@@ -1,5 +1,5 @@
 #include <sage3basic.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 #include <Combinatorics.h>
 

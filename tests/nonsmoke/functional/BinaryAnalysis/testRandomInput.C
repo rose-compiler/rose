@@ -7,8 +7,8 @@ static const char *description =
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <LinearCongruentialGenerator.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>

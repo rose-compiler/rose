@@ -2,13 +2,13 @@
 #include <rosePublicConfig.h>
 #include <ROSE_ABORT.h>
 
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include <string.h>
 #include <iostream>
 #include "commandline_processing.h"
 #include <vector>
 #include <algorithm>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <rose_paths.h>
 

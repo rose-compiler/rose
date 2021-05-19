@@ -1,7 +1,8 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_io_utility_H
 #define ROSE_BinaryAnalysis_Concolic_io_utility_H
-#include <Rose/BinaryAnalysis/Concolic.h>
+#include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#include <Rose/BinaryAnalysis/Concolic.h>
 
 //! Utility functions to access binary and text files.
 

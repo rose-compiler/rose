@@ -1,4 +1,4 @@
-#include <Progress.h>
+#include <Rose/Progress.h>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/foreach.hpp>

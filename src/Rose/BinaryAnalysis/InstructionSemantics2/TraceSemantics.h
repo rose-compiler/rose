@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {                      // documented elsewhere
