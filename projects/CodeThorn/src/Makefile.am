@@ -35,7 +35,7 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libcodethorn.la libltlthorn.la
+lib_LTLIBRARIES = libcodethorn.la libltlthorn.la libacuity.la
 
 ##############################################################
 # LIBRARY: CODETHORN (CORE)
@@ -75,6 +75,8 @@ CODETHORN_HEADER_FILES=\
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
+  ClassHierarchyAnalysis.h \
+  ClassHierarchyWriter.h \
   CodeThornLib.h \
   CommandLineOptions.h \
   ConstraintRepresentation.h \
@@ -152,6 +154,7 @@ CODETHORN_HEADER_FILES=\
   LTLRersMapping.h \
   DFSolver1.h \
   DFSolver2.h \
+  ObjectLayoutAnalysis.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
   PredefinedSemanticFunctions.h \
@@ -175,6 +178,7 @@ CODETHORN_HEADER_FILES=\
   RersCounterexample.h \
   RewriteStatistics.h \
   RewriteSystem.h \
+  RoseCompatibility.h \
   RWState.h \
   Solver5.h \
   Solver16.h \
@@ -209,6 +213,8 @@ CODETHORN_SOURCE_FILES=\
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
+  ClassHierarchyAnalysis.C \
+  ClassHierarchyWriter.C \
   CodeThornLib.C \
   CommandLineOptions.C \
   ConstraintRepresentation.C \
@@ -283,6 +289,7 @@ CODETHORN_SOURCE_FILES=\
   NumberIntervalLattice.C \
   DFSolver1.C \
   DFSolver2.C \
+  ObjectLayoutAnalysis.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
   PredefinedSemanticFunctions.C \
@@ -305,6 +312,7 @@ CODETHORN_SOURCE_FILES=\
   RersCounterexample.C \
   RewriteStatistics.C \
   RewriteSystem.C \
+  RoseCompatibility.C \
   RWState.C \
   Solver5.C \
   Solver16.C \
@@ -655,6 +663,18 @@ check-roseonlytools: check-flow-insensitive
 
 
 ##############################################################
+# TOOL: acuity
+##############################################################
+
+libacuity_la_DEPENDENCIES=libcodethorn.la
+
+libacuity_la_LDFLAGS = -version-info 0:0:0
+
+# library sources
+libacuity_la_SOURCES= \
+  plugins/acuity.C
+
+##############################################################
 # TOOL: ADDRESSTAKENANALYSIS (for testing only)
 ##############################################################
 
@@ -905,6 +925,10 @@ check-vis0:
 check-vis:
 	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
+.PHONY: check-acuity
+check-acuity: 
+	LD_PRELOAD=$(libdir)/libcodethorn.so $(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot -rose:plugin_arg_Acuity --dot_enc=simple_enc.dot -rose:plugin_arg_Acuity --txt_layout=simple_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/simple.cc 
+	LD_PRELOAD=$(libdir)/libcodethorn.so $(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot -rose:plugin_arg_Acuity --txt_layout=sage3_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/sage3.cc 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
