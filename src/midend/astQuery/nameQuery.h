@@ -101,20 +101,21 @@ namespace NameQuery{
 
   /**************************************************************************************************************
    * The function
-   *    std::pointer_to_unary_function<SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeOneParameter oneParam);
+   *    std::function<Rose_STL_Container<std::string>(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
    **************************************************************************************************************/
 
-  std::pointer_to_unary_function < SgNode *,
-    Rose_STL_Container<std::string> >getFunction (TypeOfQueryTypeOneParameter oneParam);
+  std::function<Rose_STL_Container<std::string>(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
 
   /**************************************************************************************************************
    * The function
-   * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
+   *    std::function<Rose_STL_Container<std::string>(SgNode *, std::string)>
+   *       getFunction(TypeOfQueryTypeTwoParameters twoParam);
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
    **************************************************************************************************************/
-  std::pointer_to_binary_function < SgNode *, std::string,
-    Rose_STL_Container<std::string> > getFunction (TypeOfQueryTypeTwoParameters twoParam);
+
+  std::function<Rose_STL_Container<std::string>(SgNode *, std::string)>
+     getFunction(TypeOfQueryTypeTwoParameters twoParam);
 
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeOneParamter the user specify.

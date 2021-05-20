@@ -167,20 +167,20 @@ namespace NodeQuery
 
        /**************************************************************************************************************
         * The function
-        *    std::pointer_to_unary_function<SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeOneParameter oneParam);
+        *    std::function<Rose_STL_Container<SgNode*>(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
         * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
         **************************************************************************************************************/
-  std::pointer_to_unary_function < SgNode *,
-  Rose_STL_Container<SgNode*> >getFunction (TypeOfQueryTypeOneParameter oneParam);
+
+  std::function<Rose_STL_Container<SgNode*>(SgNode *)> getFunction(TypeOfQueryTypeOneParameter oneParam);
 
        /**************************************************************************************************************
         * The function
-        * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
+        *    std::function<Rose_STL_Container<SgNode*>(SgNode *, SgNode *)>
+        *       getFunction(TypeOfQueryTypeTwoParameters twoParam);
         * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
         **************************************************************************************************************/
-  std::pointer_to_binary_function < SgNode *, SgNode *,
-    Rose_STL_Container<SgNode*> > getFunction (TypeOfQueryTypeTwoParameters twoParam);
 
+  std::function<Rose_STL_Container<SgNode*>(SgNode *, SgNode *)> getFunction(TypeOfQueryTypeTwoParameters twoParam);
 
 
   // Functions supporting the query of variants
