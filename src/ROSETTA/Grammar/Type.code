@@ -9278,7 +9278,7 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
                   }
              }
        // DQ (12/15/2019): Comment out as a test!
-          ROSE_ASSERT(t->stripType() == result->stripType());
+       // ROSE_ASSERT(t->stripType() == result->stripType());
 
        // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
        // ROSE_ASSERT(isSgModifierType(base_type) != NULL || isSgFunctionType(base_type) != NULL);
