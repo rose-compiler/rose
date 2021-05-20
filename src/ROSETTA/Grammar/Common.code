@@ -33,22 +33,32 @@ HEADER_START
      // ******************************************
 
      public:
+          /// \private
           static const unsigned pool_size; // 
+          /// \private
           static std::vector<unsigned char *> pools; // 
-
+          /// \private
           static $CLASSNAME * next_node; // 
 
+          /// \private
           static unsigned long initializeStorageClassArray($CLASSNAMEStorageClass *); // 
 
+          /// \private
           static void clearMemoryPool(); // 
 
+          /// \private
           static void extendMemoryPoolForFileIO(); // 
 
+          /// \private
           static $CLASSNAME * getPointerFromGlobalIndex(unsigned long); // 
+          /// \private
           static $CLASSNAME * getPointerFromGlobalIndex(AstSpecificDataManagingClass *, unsigned long); // 
 
+          /// \private
           static unsigned long getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long); // 
+          /// \private
           static void resetValidFreepointers(); // 
+          /// \private
           static unsigned long getNumberOfLastValidPointer(); // 
 
 
@@ -69,9 +79,6 @@ HEADER_START
                $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME));
              }
 
-       // DQ (6/7/2010): Change the return type to size_t to support larger number of IR nodes
-       // using values that overflow signed values of int.
-       // DQ (1/2/2006): Compute the amount of memory allocated for this type within the AST.
       /*! \brief Returns the total number of IR nodes of this type */
           static size_t numberOfNodes();
 
