@@ -4,9 +4,12 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
+
 #include <string>
 #include <vector>
 
@@ -36,6 +39,8 @@ private:
     Sawyer::Optional<size_t> concolicResult_;           // non-empty if concolically tested
     Sawyer::Optional<double> concreteRank_;             // rank after testing
     bool concreteIsInteresting_;                        // concrete results present and interesting?
+    TestCaseId parent_;                                 // test case from which this one was created, if any
+    std::vector<SymbolicExpr::Ptr> assertions_;         // assertions for the SMT solver
 
 protected:
     TestCase();
@@ -50,6 +55,15 @@ public:
 
     /** Allocating constructor. */
     static Ptr instance(const SpecimenPtr &specimen);
+
+    /** Property: Parent test case.
+     *
+     *  This is the test case from which this test case was created, if any.
+     *
+     * @{ */
+    TestCaseId parent() const;
+    void parent(TestCaseId);
+    /** @} */
 
     /** Property: Test case name.
      *
@@ -71,7 +85,7 @@ public:
     std::string printableName(const DatabasePtr &db = DatabasePtr());
 
     /** Print as a YAML node. */
-    void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);
+    void toYaml(std::ostream&, const DatabasePtr&, std::string prefix, ShowEvents, ShowAssertions);
 
     /** Property: Database creation timestamp string.
      *
@@ -163,6 +177,20 @@ public:
     }
     void executor(const std::string &x) {
         executor_ = x;
+    }
+    /** @} */
+
+    /** Property: SMT solver assertions.
+     *
+     *  @{ */
+    const std::vector<SymbolicExpr::Ptr>& assertions() const {
+        return assertions_;
+    }
+    std::vector<SymbolicExpr::Ptr>& assertions() {
+        return assertions_;
+    }
+    void assertions(const std::vector<SymbolicExpr::Ptr> &v) {
+        assertions_ = v;
     }
     /** @} */
 

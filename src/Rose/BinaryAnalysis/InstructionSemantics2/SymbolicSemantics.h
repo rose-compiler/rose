@@ -260,6 +260,12 @@ public:
         return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
     }
 
+    /** Instantiate a new symbolic value. */
+    static SValuePtr instance_symbolic(const SymbolicExpr::Ptr &value) {
+        ASSERT_not_null(value);
+        return SValuePtr(new SValue(value));
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:

@@ -302,15 +302,17 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\
+	Rose/BinaryAnalysis/Concolic/Architecture.h					\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/Database.h						\
 	Rose/BinaryAnalysis/Concolic/ExecutionEvent.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionManager.h					\
+	Rose/BinaryAnalysis/Concolic/InputVariables.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxI386Executor.h				\
+	Rose/BinaryAnalysis/Concolic/LinuxI386.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
 	Rose/BinaryAnalysis/Concolic/TestCase.h						\
