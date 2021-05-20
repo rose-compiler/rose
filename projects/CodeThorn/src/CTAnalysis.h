@@ -286,11 +286,6 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    //EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
-    //EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
 
     // temporary option
     bool optionStringLiteralsInState=false;
@@ -305,9 +300,6 @@ namespace CodeThorn {
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
-
-    bool isApproximatedBy(const EState* es1, const EState* es2);
-    EState combine(const EState* es1, const EState* es2);
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
@@ -372,14 +364,6 @@ namespace CodeThorn {
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
-
-    // determines whether lab is a function call label of a function
-    // call of the form 'x=f(...)' and returns the varible-id of the
-    // lhs, if a valid pointer is provided
-    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
-    // this function uses the respective function of ExprAnalyzer and
-    // extracts the result from the ExprAnalyzer data structure.
-    list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
 

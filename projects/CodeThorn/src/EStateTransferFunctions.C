@@ -58,14 +58,76 @@ namespace CodeThorn {
     return _analyzer;
   }
   
-  EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset) {
-    return getAnalyzer()->createEState(label,cs,pstate,cset);
+EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset) {
+  EState estate=createEStateInternal(label,pstate,cset);
+  estate.callString=cs;
+  estate.io.recordNone(); // create NONE not bot by default
+  return estate;
+}
+
+EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io) {
+  EState estate=createEStateInternal(label,pstate,cset);
+  estate.callString=cs;
+  estate.io=io;
+  return estate;
+}
+
+// does not use a context
+EState EStateTransferFunctions::createEStateInternal(Label label, PState pstate, ConstraintSet cset) {
+  // here is the best location to adapt the analysis results to certain global restrictions
+  if(_analyzer->isActiveGlobalTopify()) {
+#if 1
+    AbstractValueSet varSet=pstate.getVariableIds();
+    for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
+      if(_analyzer->variableValueMonitor.isHotVariable(_analyzer,*i)) {
+        //ROSE_ASSERT(false); // this branch is live
+        _analyzer->topifyVariable(pstate, cset, *i);
+      }
+    }
+#else
+    //pstate.topifyState();
+#endif
+    // set cset in general to empty cset, otherwise cset can grow again arbitrarily
+    ConstraintSet cset0;
+    cset=cset0;
+  }
+  const PState* newPStatePtr=_analyzer->processNewOrExisting(pstate);
+  const ConstraintSet* newConstraintSetPtr=_analyzer->processNewOrExisting(cset);
+  EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
+  estate.io.recordNone();
+  return estate;
+}
+
+  bool EStateTransferFunctions::isApproximatedBy(const EState* es1, const EState* es2) {
+    return es1->isApproximatedBy(es2);
   }
 
-  EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io) {
-    return getAnalyzer()->createEState(label,cs,pstate,cset,io);
+  EState EStateTransferFunctions::combine(const EState* es1, const EState* es2) {
+    ROSE_ASSERT(es1->label()==es2->label());
+    ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
+    if(es1->callString!=es2->callString) {
+    if(_analyzer->getOptionOutputWarnings()) {
+      SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
+    }
+  }
+  PState ps1=*es1->pstate();
+  PState ps2=*es2->pstate();
+
+  InputOutput io;
+  if(es1->io.isBot()) {
+    io=es2->io;
+  } else if(es2->io.isBot()) {
+    io=es1->io;
+  } else {
+    ROSE_ASSERT(es1->io==es2->io);
+    io=es1->io;
   }
 
+  return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
+}
+  
   std::list<EState> EStateTransferFunctions::elistify() {
     std::list<EState> resList;
     return resList;
@@ -625,11 +687,11 @@ namespace CodeThorn {
     Label lab=_analyzer->getLabeler()->getLabel(nextNodeToAnalyze1);
 
     VariableId varId;
-    bool isFunctionCallWithAssignmentFlag=_analyzer->isFunctionCallWithAssignment(lab,&varId);
+    bool isFunctionCallWithAssignmentFlag=isFunctionCallWithAssignment(lab,&varId);
 
     SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
     _analyzer->recordExternalFunctionCall(funCall);
-    _analyzer->evaluateFunctionCallArguments(edge,funCall,*estate,false);
+    evaluateFunctionCallArguments(edge,funCall,*estate,false);
 
     // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
     bool isExternalNonDetXFunction=false;
@@ -3153,7 +3215,7 @@ list<SingleEvalResultConstInt> EStateTransferFunctions::evalPreComputationOp(ESt
   writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),newValue);
+  res.init(createEState(estate.label(),cs,newPState,cset),newValue);
   return listify(res);
 }
 
@@ -3167,7 +3229,7 @@ list<SingleEvalResultConstInt> EStateTransferFunctions::evalPostComputationOp(ES
   writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
-  res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),oldValue);
+  res.init(createEState(estate.label(),cs,newPState,cset),oldValue);
   return listify(res);
 }
 
@@ -4073,6 +4135,41 @@ void EStateTransferFunctions::setReadWriteListener(ReadWriteListener* rwl) {
 
 ReadWriteListener* EStateTransferFunctions::getReadWriteListener() {
   return _readWriteListener;
+}
+
+  bool EStateTransferFunctions::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
+  //return _labeler->isFunctionCallWithAssignment(lab,varIdPtr);
+  SgNode* node=getLabeler()->getNode(lab);
+  if(getLabeler()->isFunctionCallLabel(lab)) {
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+    if(p.first) {
+      if(varIdPtr) {
+        *varIdPtr=getVariableIdMapping()->variableId(p.first);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+// wrapper function for reusing exprAnalyzer's function. This function
+// is only relevant for external functions (when the implementation
+// does not exist in input program and the semantics are available in
+// the analyzer (e.g. malloc, strlen, etc.))
+list<EState> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
+  CallString cs=currentEState.callString;
+  SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
+  list<SingleEvalResultConstInt> evalResultList=evalFunctionCallArguments(funCall, currentEState);
+  ROSE_ASSERT(evalResultList.size()>0);
+  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+  SingleEvalResultConstInt evalResult=*resultListIter;
+  if(evalResultList.size()>1) {
+    SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
+    exit(1);
+  }
+  PState newPState=*evalResult.estate.pstate();
+  ConstraintSet cset=*evalResult.estate.constraints();
+  return elistify(createEState(edge.target(),cs,newPState,cset));
 }
 
   

@@ -350,36 +350,6 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
   _estateTransferFunctions->setOptionOutputWarnings(flag);
 }
 
-bool CodeThorn::CTAnalysis::isApproximatedBy(const EState* es1, const EState* es2) {
-  return es1->isApproximatedBy(es2);
-}
-
-EState CodeThorn::CTAnalysis::combine(const EState* es1, const EState* es2) {
-  ROSE_ASSERT(es1->label()==es2->label());
-  ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
-  if(es1->callString!=es2->callString) {
-    if(getOptionOutputWarnings()) {
-      SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
-      SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
-      SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
-    }
-  }
-  PState ps1=*es1->pstate();
-  PState ps2=*es2->pstate();
-
-  InputOutput io;
-  if(es1->io.isBot()) {
-    io=es2->io;
-  } else if(es2->io.isBot()) {
-    io=es1->io;
-  } else {
-    ROSE_ASSERT(es1->io==es2->io);
-    io=es1->io;
-  }
-
-  return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
-}
-
 //size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
 //  return _summaryCSStateMapMap.size();
 //}
@@ -575,21 +545,6 @@ string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) 
   if(node->attributeExists("info"))
     textual=node->getAttribute("info")->toString()+":";
   return textual+SgNodeHelper::nodeToString(node);
-}
-
-bool CodeThorn::CTAnalysis::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
-  //return _labeler->isFunctionCallWithAssignment(lab,varIdPtr);
-  SgNode* node=getLabeler()->getNode(lab);
-  if(getLabeler()->isFunctionCallLabel(lab)) {
-    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
-    if(p.first) {
-      if(varIdPtr) {
-        *varIdPtr=getVariableIdMapping()->variableId(p.first);
-      }
-      return true;
-    }
-  }
-  return false;
 }
 
 void CodeThorn::CTAnalysis::writeWitnessToFile(string filename) {
@@ -973,53 +928,6 @@ void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, ConstraintSet& cset, 
   pstate.writeTopToMemoryLocation(varId);
 }
 
-// does not use a context
-EState CodeThorn::CTAnalysis::createEStateInternal(Label label, PState pstate, ConstraintSet cset) {
-  // here is the best location to adapt the analysis results to certain global restrictions
-  if(isActiveGlobalTopify()) {
-#if 1
-    AbstractValueSet varSet=pstate.getVariableIds();
-    for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
-      if(variableValueMonitor.isHotVariable(this,*i)) {
-        //ROSE_ASSERT(false); // this branch is live
-        topifyVariable(pstate, cset, *i);
-      }
-    }
-#else
-    //pstate.topifyState();
-#endif
-    // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0;
-    cset=cset0;
-  }
-  const PState* newPStatePtr=processNewOrExisting(pstate);
-  const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
-  EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
-  estate.io.recordNone();
-  return estate;
-}
-
-EState CodeThorn::CTAnalysis::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset) {
-  EState estate=createEStateInternal(label,pstate,cset);
-  estate.callString=cs;
-  estate.io.recordNone(); // create NONE not bot by default
-  return estate;
-}
-
-EState CodeThorn::CTAnalysis::createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io) {
-  EState estate=createEStateInternal(label,pstate,cset);
-  estate.callString=cs;
-  estate.io=io;
-  return estate;
-}
-
-/*
-EState CodeThorn::CTAnalysis::createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
-  EState estate=createEState(label,pstate,cset);
-  estate.io=io;
-  return estate;
-}
-*/
 
 bool CodeThorn::CTAnalysis::isStartLabel(Label label) {
   return getTransitionGraph()->getStartLabel()==label;
@@ -1213,27 +1121,6 @@ const ConstraintSet* CodeThorn::CTAnalysis::processNewOrExisting(ConstraintSet& 
 
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
   return estateSet.process(estate);
-}
-
-// wrapper function for reusing exprAnalyzer's function. This function
-// is only relevant for external functions (when the implementation
-// does not exist in input program and the semantics are available in
-// the analyzer (e.g. malloc, strlen, etc.))
-list<EState> CodeThorn::CTAnalysis::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
-  ROSE_ASSERT(_estateTransferFunctions);
-  CallString cs=currentEState.callString;
-  SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
-  list<SingleEvalResultConstInt> evalResultList=_estateTransferFunctions->evalFunctionCallArguments(funCall, currentEState);
-  ROSE_ASSERT(evalResultList.size()>0);
-  list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
-  SingleEvalResultConstInt evalResult=*resultListIter;
-  if(evalResultList.size()>1) {
-    SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
-    exit(1);
-  }
-  PState newPState=*evalResult.estate.pstate();
-  ConstraintSet cset=*evalResult.estate.constraints();
-  return _estateTransferFunctions->elistify(createEState(edge.target(),cs,newPState,cset));
 }
 
 LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {

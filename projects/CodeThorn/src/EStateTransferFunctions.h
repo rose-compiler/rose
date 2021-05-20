@@ -72,10 +72,13 @@ namespace CodeThorn {
     // obtained from analyzer
     VariableIdMappingExtended* getVariableIdMapping() override;
     
-    
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
-    static Sawyer::Message::Facility logger;
+    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
+    
+    bool isApproximatedBy(const EState* es1, const EState* es2);
+    EState combine(const EState* es1, const EState* es2);
+
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
@@ -108,6 +111,9 @@ namespace CodeThorn {
     //! this one result.
     static std::list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
+    // logger facility
+    static Sawyer::Message::Facility logger;
+
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
@@ -121,6 +127,14 @@ namespace CodeThorn {
     // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
     PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState);
+    // determines whether lab is a function call label of a function
+    // call of the form 'x=f(...)' and returns the varible-id of the
+    // lhs, if a valid pointer is provided
+    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
+    // this function uses the respective function of ExprAnalyzer and
+    // extracts the result from the ExprAnalyzer data structure.
+    std::list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
