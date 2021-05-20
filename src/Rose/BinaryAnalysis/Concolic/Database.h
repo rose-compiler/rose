@@ -7,6 +7,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
 #include <rose_strtoull.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Optional.h>
@@ -15,7 +16,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
-
 
 /** Database.
  *
@@ -163,6 +163,9 @@ public:
      *  sorted by the secondary key. */
     std::vector<ExecutionEventId> executionEvents(TestCaseId, uint64_t primaryKey);
 
+    /** Execution events from the specified event onward. */
+    std::vector<ExecutionEventId> executionEventsSince(TestCaseId, ExecutionEventId startingAt);
+
     /** Primary keys for the location events.
      *
      *  The return value is the vector for all the primary location key values for the specified test case. */
@@ -181,10 +184,10 @@ public:
      *  also updates the object with the current values from the database. If the ID is invalid then an exception is thrown.
      *
      * @{ */
-    TestSuitePtr object(TestSuiteId, Update::Flag update = Update::YES);
-    TestCasePtr object(TestCaseId, Update::Flag update = Update::YES);
-    SpecimenPtr object(SpecimenId, Update::Flag update = Update::YES);
-    ExecutionEventPtr object(ExecutionEventId, Update::Flag update = Update::YES);
+    TestSuitePtr object(TestSuiteId, Update update = Update::YES);
+    TestCasePtr object(TestCaseId, Update update = Update::YES);
+    SpecimenPtr object(SpecimenId, Update update = Update::YES);
+    ExecutionEventPtr object(ExecutionEventId, Update update = Update::YES);
     /** @} */
 
 #if ROSE_CONCOLIC_DB_VERSION == 1
@@ -203,10 +206,10 @@ public:
      *  is returned.
      *
      * @{ */
-    TestSuiteId id(const TestSuitePtr&, Update::Flag update = Update::YES);
-    TestCaseId id(const TestCasePtr&, Update::Flag update = Update::YES);
-    SpecimenId id(const SpecimenPtr&, Update::Flag update = Update::YES);
-    ExecutionEventId id(const ExecutionEventPtr&, Update::Flag update = Update::YES);
+    TestSuiteId id(const TestSuitePtr&, Update update = Update::YES);
+    TestCaseId id(const TestCasePtr&, Update update = Update::YES);
+    SpecimenId id(const SpecimenPtr&, Update update = Update::YES);
+    ExecutionEventId id(const ExecutionEventPtr&, Update update = Update::YES);
     /** @} */
 
     /** Deletes an object from the database.
@@ -242,7 +245,7 @@ public:
      *  This is just a shortcut for calling @ref object in a loop. */
     template<class Id>
     std::vector<typename Id::Pointer>
-    objects(const std::vector<Id> &ids, Update::Flag update = Update::YES) {
+    objects(const std::vector<Id> &ids, Update update = Update::YES) {
         std::vector<typename Id::Pointer> retval;
         for (auto id: ids)
             retval.push_back(object(id, update));
@@ -254,7 +257,7 @@ public:
      *  This is just a shortcut for calling @ref id in a loop. */
     template<class ObjectPointer>
     std::vector<typename ObjectTraits<ObjectPointer>::Id>
-    ids(const std::vector<ObjectPointer> &objects, Update::Flag update = Update::YES) {
+    ids(const std::vector<ObjectPointer> &objects, Update update = Update::YES) {
         std::vector<typename ObjectTraits<ObjectPointer>::Id> retval;
         for (auto object: objects)
             retval.push_back(id(object, update));
@@ -327,6 +330,31 @@ public:
     void eraseRba(SpecimenId);
 
     //------------------------------------------------------------------------------------------------------------------------
+    // Cached symbolic state.
+    //------------------------------------------------------------------------------------------------------------------------
+
+    /** Check whether a test case has a symbolic state.
+     *
+     *  Returns true if the indicated test case has an associated symbolic state, and false if it doesn't. */
+    bool symbolicStateExists(TestCaseId);
+
+    /** Save a symbolic state.
+     *
+     *  If the test case already has a symbolic state, then the old state is replaced by the specified state.  If the specified
+     *  state is a null pointer, then any existing state is removed from the database. */
+    void saveSymbolicState(TestCaseId, const InstructionSemantics2::BaseSemantics::StatePtr&);
+
+    /** Obtain the symbolic state from the database.
+     *
+     *  If the test case has no symbolic state then a null pointer is returned. */
+    InstructionSemantics2::BaseSemantics::StatePtr extractSymbolicState(TestCaseId);
+
+    /** Remove the symbolic state for a test case.
+     *
+     *  This is a no-op if the test case doesn't have a symbolic state. */
+    void eraseSymbolicState(TestCaseId);
+
+    //------------------------------------------------------------------------------------------------------------------------
     // Cached concrete execution results. This is large data. Each test case has zero or one associated concrete results.
     //------------------------------------------------------------------------------------------------------------------------
 
@@ -351,6 +379,16 @@ public:
      *  null pointer is returned. */
     std::unique_ptr<ConcreteExecutorResult> readConcreteResult(TestCaseId);
 
+   /** Returns @p n test cases without concrete results.
+    *
+    * Thread safety: thread safe
+    */
+   std::vector<TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
     /** Associate TestCase w/ TestSuite.
      *
      *  Normally a test case is associated with a test suite when the test case is created in the database by virtue of the
@@ -360,12 +398,6 @@ public:
      * Thread safety: thread safe
      */
    void assocTestCaseWithTestSuite(TestCaseId, TestSuiteId);
-
-   /** Returns @p n test cases without concrete results.
-    *
-    * Thread safety: thread safe
-    */
-   std::vector<TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
 
    /** Returns @p n test cases without concolic results.
     *
