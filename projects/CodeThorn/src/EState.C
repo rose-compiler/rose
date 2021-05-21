@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include "EState.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "AbstractValue.h"
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
@@ -447,5 +447,4 @@ void EState::setCallString(CallString cs) {
 CallString EState::getCallString() const {
   return callString;
 }
-
 

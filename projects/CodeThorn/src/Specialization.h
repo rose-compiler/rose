@@ -5,7 +5,7 @@
 #include "EState.h"
 #include "ArrayElementAccessData.h"
 #include "CTAnalysis.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "RewriteSystem.h"
 #include "ReadWriteData.h"
 #include "Visualizer.h"
@@ -116,7 +116,7 @@ class Specialization {
  private:
   static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
-  int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
+  int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
 
   // replaces each use of SgVarRefExp if the corresponding variableId in pstate is constant (with this constant)

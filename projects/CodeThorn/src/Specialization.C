@@ -150,7 +150,7 @@ VariableId Specialization::determineVariableIdToSpecialize(SgFunctionDefinition*
   return variableId;
 }
 
-int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
+int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, const EState* estate, SgNode* root) {
   typedef pair<SgExpression*,int> SubstitutionPair;
   typedef list<SubstitutionPair > SubstitutionList;
   SubstitutionList substitutionList;
@@ -240,7 +240,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
    ROSE_ASSERT(estate!=0);
 
    EStatePtrSet succSet=tg->succ(estate);
-   ExprAnalyzer* exprAnalyzer=ana->getExprAnalyzer();
+   EStateTransferFunctions* exprAnalyzer=ana->getEStateTransferFunctions();
    int numProcessedArrayUpdates=0;
    vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
 

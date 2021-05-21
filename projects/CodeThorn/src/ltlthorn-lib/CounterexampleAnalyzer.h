@@ -124,6 +124,8 @@ namespace CodeThorn {
     std::string ioErrTraceToString(list<pair<int, IoType> > trace);
     void writeDotGraphToDisk(std::string filename, Visualizer& visualizer);
 
+    CodeThorn::VariableId globalVarIdByName(std::string);
+    
     IOAnalyzer* _analyzer;
     stringstream* _csvOutput;
     int _maxCounterexamples;

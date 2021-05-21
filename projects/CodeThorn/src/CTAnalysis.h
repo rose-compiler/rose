@@ -26,7 +26,7 @@
 #include "CFAnalysis.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include "EState.h"
 #include "TransitionGraph.h"
 #include "TransitionGraphReducer.h"
@@ -92,7 +92,6 @@ namespace CodeThorn {
     friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
-    friend class ExprAnalyzer;
   public:
     static void initDiagnostics();
     CTAnalysis();
@@ -145,10 +144,6 @@ namespace CodeThorn {
     void setElementSize(VariableId variableId, SgType* elementType);
 
     int computeNumberOfElements(SgVariableDeclaration* decl);
-    // modifies PState with written initializers
-    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer, PState pState, EState currentEState);
-    // modifies PState with written initializers
-    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1, EState currentEState, Label targetLabel);
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
@@ -164,11 +159,8 @@ namespace CodeThorn {
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
 
-    //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    //void setCFAnalyzer(CFAnalysis* cf);
-    //CFAnalysis* getCFAnalyzer() const;
-
-    ExprAnalyzer* getExprAnalyzer();
+    // deprecated, only for backward compatibility
+    EStateTransferFunctions* getExprAnalyzer();
 
     // access  functions for computed information
     FunctionCallMapping* getFunctionCallMapping();
@@ -197,8 +189,6 @@ namespace CodeThorn {
 
     // used by the hybrid analyzer (state marshalling)
     void mapGlobalVarInsert(std::string name, int* addr);
-
-    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
 
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     // deprecated
@@ -266,8 +256,6 @@ namespace CodeThorn {
     void setStdFunctionSemantics(bool flag);
     void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
-    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
-    
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
@@ -284,21 +272,20 @@ namespace CodeThorn {
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
-    // only used temporarily for binary-binding prototype
-    std::map<std::string,VariableId> globalVarName2VarIdMapping;
-    std::vector<bool> binaryBindingAssert;
 
+    // only used temporarily for binary-binding prototype
+    std::vector<bool> binaryBindingAssert;
+    // only used in binary-prototype binding
+    VariableId globalVarIdByName(std::string varName);
+
+    CodeThorn::EStateTransferFunctions* getEStateTransferFunctions();
+    
     // functions related to abstractions during the analysis
     void eventGlobalTopifyTurnedOn();
     bool isActiveGlobalTopify();
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    //EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
-    //EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
 
     // temporary option
     bool optionStringLiteralsInState=false;
@@ -313,9 +300,6 @@ namespace CodeThorn {
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
-
-    bool isApproximatedBy(const EState* es1, const EState* es2);
-    EState combine(const EState* es1, const EState* es2);
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
@@ -381,36 +365,11 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    // determines whether lab is a function call label of a function
-    // call of the form 'x=f(...)' and returns the varible-id of the
-    // lhs, if a valid pointer is provided
-    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
-    // this function uses the respective function of ExprAnalyzer and
-    // extracts the result from the ExprAnalyzer data structure.
-    list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
-
-    // functions for handling callstring contexts
-    CallString transferFunctionCallContext(CallString cs, Label lab);
-    bool isFeasiblePathContext(CallString& cs,Label lab);
-
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
-    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
-    typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
-    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
-    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
-
-    // only implemented in CTAnalysis
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-
-    // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
-    // requires normalized AST
-    AbstractValue singleValevaluateExpression(SgExpression* expr,EState currentEState);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
@@ -448,8 +407,6 @@ namespace CodeThorn {
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
     
-    ExprAnalyzer exprAnalyzer;
-
     // abstract layer
     //FunctionCallMapping functionCallMapping;
     //FunctionCallMapping2 functionCallMapping2;

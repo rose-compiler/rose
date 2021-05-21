@@ -2,7 +2,7 @@
 #define CONSTANT_CONDITION_ANALYSIS_H 
 
 //#include "ReadWriteListener.h"
-#include "ExprAnalyzer.h"
+#include "EStateTransferFunctions.h"
 #include <map>
 #include "BoolLattice.h"
 

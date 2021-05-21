@@ -2,6 +2,7 @@
 #include "Solver5.h"
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
+#include "EStateTransferFunctions.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -144,7 +145,7 @@ void Solver5::run() {
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
                     const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
-                    if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
+                    if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
                       // later. It may be already used in the state
@@ -152,7 +153,7 @@ void Solver5::run() {
                       newEStatePtr=summaryEState; 
                     } else {
                       stringstream condss;
-                      EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       const EState* newEStatePtr2=pres.second;
