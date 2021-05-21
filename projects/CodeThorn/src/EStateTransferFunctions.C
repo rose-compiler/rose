@@ -4,7 +4,6 @@
 #include "AstUtility.h"
 #include "Miscellaneous2.h"
 
-#include "sage3basic.h"
 #include "CodeThornException.h"
 #include "CTAnalysis.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
