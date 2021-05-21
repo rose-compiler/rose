@@ -544,7 +544,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
-     NEW_TERMINAL_MACRO (AdaLengthClause, "AdaLengthClause", "ADA_LENGTH_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaEnumRepresentationClause,   "AdaEnumRepresentationClause",   "ADA_ENUM_REPRESENTATION_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaLengthClause,               "AdaLengthClause",               "ADA_LENGTH_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaComponentClause,            "AdaComponentClause",            "ADA_COMPONENT_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
 
@@ -566,7 +568,8 @@ Grammar::setUpStatements ()
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
-          AdaRecordRepresentationClause           | AdaLengthClause
+          AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
+          AdaEnumRepresentationClause
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -1767,6 +1770,14 @@ Grammar::setUpStatements ()
   // template argument lists inside of template declarations.  Related to concept of is_non_real setting.
      ClassDeclaration.setDataPrototype("bool","isRepresentingTemplateParameterInTemplateDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // PP (2/22/2021): To support declarations of Ada private types (aka forward declarations).
+  //                 In Ada, programmers can specify the base record as part of the public portion of
+  //                 a private type.
+  //                 e.g., type Manager is new Employee with private;
+     ClassDeclaration.setDataPrototype("SgBaseClass*","adaParentType","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (11/18/2013): Adding Java specific support
      ClassDeclaration.setDataPrototype("bool","java_annonomous","= false",
@@ -3106,17 +3117,21 @@ Grammar::setUpStatements ()
      AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaRenamingDecl.setDataPrototype ( "SgDeclarationStatement*", "renamedDecl", "= NULL",
+     AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaRenamingDecl.setDataPrototype ( "size_t", "renamedIndex", "= 0",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ PP switch from SgDeclaration* renamed to SgSymbol* renamed makes renamedIndex obsolete
+     //~ AdaRenamingDecl.setDataPrototype ( "size_t", "renamedIndex", "= 0",
+                                           //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setDataPrototype ( "SgClassType*", "recordType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaRecordRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
-                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaRecordRepresentationClause.setDataPrototype ( "SgBasicBlock*", "components", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+/*
+     \pp replaced list of SgAdaComponentClausePtrList with an SgBasicBlock, because we need to also store pragmas.
      AdaRecordRepresentationClause.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.editSubstitute( "LIST_DATA_TYPE", "SgAdaComponentClausePtrList" );
      AdaRecordRepresentationClause.editSubstitute( "LIST_NAME", "components" );
@@ -3125,13 +3140,33 @@ Grammar::setUpStatements ()
      AdaRecordRepresentationClause.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgAdaComponentClause*" );
      AdaRecordRepresentationClause.setDataPrototype("SgAdaComponentClausePtrList", "components", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+*/
+
+     AdaEnumRepresentationClause.setFunctionPrototype("HEADER_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaEnumRepresentationClause.setDataPrototype ( "SgEnumType*", "enumType", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaEnumRepresentationClause.setDataPrototype ( "SgExprListExp*", "components", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
      AdaLengthClause.setFunctionPrototype("HEADER_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
-     AdaLengthClause.setDataPrototype ( "SgTypeTraitBuiltinOperator*", "attribute", "= NULL",
-                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaLengthClause.setDataPrototype ( "SgAdaAttributeExp*", "attribute", "= NULL",
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaLengthClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
-                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
+  // PP (01/28/21): Making AdaComponentClause a declaration
+     AdaComponentClause.setFunctionPrototype ( "HEADER_ADA_COMPONENT_CLAUSE"     , "../Grammar/Statement.code");
+
+     AdaComponentClause.setDataPrototype("SgVarRefExp*", "component", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaComponentClause.setDataPrototype("SgExpression*", "offset", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaComponentClause.setDataPrototype("SgRangeExp*", "range", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
 
 #if USE_FORTRAN_IR_NODES
@@ -3315,6 +3350,8 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UseStatement.setDataPrototype ( "bool", "only_option", "= false",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UseStatement.setDataPrototype ( "std::string", "module_nature", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // UseStatement.setDataPrototype ( "SgExprListExp*", "rename_list", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UseStatement.setDataPrototype ( "SgRenamePairPtrList", "rename_list", "",
@@ -3437,9 +3474,9 @@ Grammar::setUpStatements ()
                                                     "control_kind", "= SgProcessControlStatement::e_unknown",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ProcessControlStatement.setDataPrototype     ( "SgExpression*", "code", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ProcessControlStatement.setDataPrototype     ( "SgExpression*", "quiet", "= NULL",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/14/2007): Added new data members to Fortran IR nodes.
      IOStatement.setFunctionPrototype ( "HEADER_IO_STATEMENT", "../Grammar/Statement.code" );
@@ -4257,6 +4294,8 @@ Grammar::setUpStatements ()
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaEnumRepresentationClause.setFunctionSource ( "SOURCE_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/Statement.code");
      AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
@@ -4452,6 +4491,9 @@ Grammar::setUpStatements ()
      // packages
      AdaPackageSpec.setFunctionPrototype ( "HEADER_ADA_PACKAGE_SPEC_STATEMENT", "../Grammar/Statement.code" );
      AdaPackageSpec.setDataPrototype ( "SgAdaPackageBody*", "body", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaPackageSpec.setDataPrototype ( "bool", "hasPrivate", "= false",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaPackageSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",

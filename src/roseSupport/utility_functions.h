@@ -232,6 +232,9 @@ namespace Rose
   // extern std::map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenSubsequenceMap;
      extern std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMaps;
 
+  // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the fild_id.
+     extern std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMapsBySourceFile;
+
   // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
   // extern std::vector<FrontierNode*> frontierNodes;
   // extern std::map<SgStatement*,FrontierNode*> frontierNodes;

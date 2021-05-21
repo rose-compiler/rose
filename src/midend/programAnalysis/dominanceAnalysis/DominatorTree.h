@@ -173,8 +173,7 @@ namespace DominatorTreesAndDominanceFrontiers
                         {
                                 if ( /* id >= 0 && */ id < idToNode.size())
                                         return idToNode[id];
-                                ROSE_ASSERT(false);
-                                return cfgRoot;
+                                ROSE_ABORT();
                         }
                         // ! for an CFG Node, return the corresponding id
                         int getID(VirtualCFG::FilteredCFGNode < CFGFilterFunction > node)

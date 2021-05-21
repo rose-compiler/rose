@@ -1,9 +1,9 @@
 //! [headers]
 #include <rose.h>
 
-#include <Diagnostics.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/GraphViz.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Sawyer/CommandLine.h>
 //! [headers]
 

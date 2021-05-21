@@ -141,7 +141,7 @@ FixupFortranReferences::visit ( SgNode* node )
                               default:
                                  {
                                    printf ("Error: default reached i = %d \n",i);
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
 #endif
@@ -154,7 +154,7 @@ FixupFortranReferences::visit ( SgNode* node )
                  else
                   {
                     printf ("The SgLabelSymbol should have been built (if only so that the numeric label value could be communicated via a SgNullStatement) \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 

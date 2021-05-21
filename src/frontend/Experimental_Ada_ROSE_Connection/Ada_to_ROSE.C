@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "rose_config.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
@@ -12,6 +12,9 @@
 #include "AdaExpression.h"
 #include "AdaStatement.h"
 #include "AdaType.h"
+
+#include "sageInterfaceAda.h"
+
 
 // turn on all GCC warnings after include files have been processed
 #pragma GCC diagnostic warning "-Wall"
@@ -51,14 +54,23 @@ namespace
 
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgInitializedName*> adaExcpsMap;
+
+  /// stores a mapping from string to builtin exception nodes
+  map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 } // anonymous namespace
 
-//~ map_t<int, SgDeclarationStatement*>& asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&      asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&      asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>& asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>& asisTypes() { return asisTypesMap; }
-map_t<AdaIdentifier, SgType*>&       adaTypes()  { return adaTypesMap;  }
+//~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
+map_t<int, SgInitializedName*>&              asisVars()  { return asisVarsMap;  }
+map_t<int, SgInitializedName*>&              asisExcps() { return asisExcpsMap; }
+map_t<int, SgDeclarationStatement*>&         asisDecls() { return asisDeclsMap; }
+map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; }
+map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
+map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
+
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
@@ -131,33 +143,97 @@ AstContext AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
+void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
+{
+  ROSE_ASSERT(n && orig);
+
+  n->unsetCompilerGenerated();
+  n->unsetTransformation();
+  n->set_physical_filename(orig->get_physical_filename());
+  n->set_filenameString(orig->get_filenameString());
+  n->set_line(orig->get_line());
+  n->set_col(orig->get_line());
+
+  n->setOutputInCodeGeneration();
+}
+
+template <class SageNode>
+void setFileInfo( SageNode& n,
+                  void (SageNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SageNode::*getter)() const,
+                  const std::string& filename,
+                  int line,
+                  int col
+                )
+{
+  if (Sg_File_Info* info = (n.*getter)())
+  {
+    info->unsetCompilerGenerated();
+    info->unsetTransformation();
+    info->set_physical_filename(filename);
+    info->set_filenameString(filename);
+    info->set_line(line);
+    info->set_physical_line(line);
+    info->set_col(col);
+
+    info->setOutputInCodeGeneration();
+    return;
+  }
+
+  (n.*setter)(&mkFileInfo(filename, line, col));
+}
+
+
+///
+
+
+namespace
+{
+  /// \private
+  template <class SageNode>
+  void attachSourceLocation_internal(SageNode& n, Element_Struct& elem, AstContext ctx)
+  {
+    const std::string&      unit = ctx.sourceFileName();
+    Source_Location_Struct& loc  = elem.Source_Location;
+
+    setFileInfo( n,
+                 &SageNode::set_startOfConstruct, &SageNode::get_startOfConstruct,
+                 unit, loc.First_Line, loc.First_Column );
+
+    setFileInfo( n,
+                 &SageNode::set_endOfConstruct,   &SageNode::get_endOfConstruct,
+                 unit, loc.Last_Line,  loc.Last_Column );
+  }
+}
+
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// \note to avoid useless instantiations, the template function has two
+///       front functions for Sage nodes with location information.
+/// \note If an expression has decayed to a located node, the operator position will not be set.
+/// \{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx)
 {
-  Source_Location_Struct& loc  = elem.Source_Location;
+  attachSourceLocation_internal(n, elem, ctx);
+}
+
+void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx)
+{
   const std::string&      unit = ctx.sourceFileName();
+  Source_Location_Struct& loc  = elem.Source_Location;
 
-  // \todo consider deleting existing source location information
-  // \note CR suggests to overwrite any information that is present
-  //~ delete n.get_file_info();
-  //~ delete n.get_startOfConstruct();
-  //~ delete n.get_endOfConstruct();
+  setFileInfo( n,
+               &SgExpression::set_operatorPosition, &SgExpression::get_operatorPosition,
+               unit, loc.First_Line, loc.First_Column );
 
-  n.set_file_info       (&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_startOfConstruct(&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_endOfConstruct  (&mkFileInfo(unit, loc.Last_Line,  loc.Last_Column));
+  attachSourceLocation(static_cast<SgLocatedNode&>(n), elem, ctx);
 }
 
 void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
 {
-  Source_Location_Struct& loc  = elem.Source_Location;
-  const std::string&      unit = ctx.sourceFileName();
-
-  //~ n.set_file_info       (&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_startOfConstruct(&mkFileInfo(unit, loc.First_Line, loc.First_Column));
-  n.set_endOfConstruct  (&mkFileInfo(unit, loc.Last_Line,  loc.Last_Column));
+  attachSourceLocation_internal(n, elem, ctx);
 }
+/// \}
 
 namespace
 {
@@ -173,6 +249,8 @@ namespace
     asisDecls().clear();
     asisTypes().clear();
     adaTypes().clear();
+    adaExcps().clear();
+    adaPkgs().clear();
   }
 
   //
@@ -188,14 +266,12 @@ namespace
     {
         case A_Declaration:             // Asis.Declarations
         {
-          logKind("A_Declaration");
           handleDeclaration(elem, ctx, isPrivate);
           break;
         }
 
       case A_Clause:                  // Asis.Clauses
         {
-          logKind("A_Clause");
           handleClause(elem, ctx);
           break;
         }
@@ -203,34 +279,30 @@ namespace
       case A_Defining_Name:           // Asis.Declarations
         {
           // handled by getName
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
-          ROSE_ASSERT(false);
-          break;
+
+          ROSE_ABORT();
         }
 
       case An_Expression:             // Asis.Expressions
         {
           // handled by getExpr
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case An_Exception_Handler:      // Asis.Statements
         {
           // handled by handleExceptionHandler
-          ROSE_ASSERT(false);
-          break;
+          ROSE_ABORT();
         }
 
       case A_Definition:              // Asis.Definitions
         {
-          logKind("A_Definition");
           handleDefinition(elem, ctx);
           break;
         }
@@ -491,198 +563,294 @@ namespace
     res += "_rose";
     return res;
   }
-}
+
+  struct UnitEntry
+  {
+    Unit_Struct*               unit;
+    std::vector<AdaIdentifier> dependencies;
+    bool                       marked;
+  };
+
+  struct UniqueUnitId
+  {
+    bool          isbody;
+    AdaIdentifier name;
+  };
+
+  bool startsWith(const std::string& s, const std::string& sub)
+  {
+    return (s.rfind(sub, 0) == 0);
+  }
+
+  // sort specifications before bodies
+  bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
+  {
+    // System inclusion is implied, even if it is not referenced.
+    //   Ordering it first is semantically consistent.
+    if ((startsWith(lhs.name, "SYSTEM")) && (!startsWith(rhs.name, "SYSTEM")))
+      return true;
+
+    if ((!startsWith(lhs.name, "SYSTEM")) && (startsWith(rhs.name, "SYSTEM")))
+      return false;
+
+    if ((lhs.isbody == false) && (rhs.isbody == true))
+      return true;
+
+    if (lhs.isbody != rhs.isbody)
+      return false;
+
+    return lhs.name < rhs.name;
+  }
+
+  struct DependencyExtractor
+  {
+    explicit
+    DependencyExtractor(std::vector<AdaIdentifier>& vec, AstContext ctx)
+    : deps(vec), astctx(ctx)
+    {}
+
+    void operator()(Element_Struct& elem)
+    {
+      ROSE_ASSERT(elem.Element_Kind == A_Clause);
+
+      Clause_Struct& clause = elem.The_Union.Clause;
+
+      if (clause.Clause_Kind != A_With_Clause)
+        return;
+
+      std::vector<AdaIdentifier>& res = deps;
+      AstContext                  ctx{astctx};
+
+      traverseIDs( idRange(clause.Clause_Names), elemMap(),
+                   [&res, &ctx](Element_Struct& el) -> void
+                   {
+                     ROSE_ASSERT (el.Element_Kind == An_Expression);
+                     NameData imported = getName(el, ctx);
+
+                     res.push_back(imported.fullName);
+                   }
+                 );
+    }
+
+    std::vector<AdaIdentifier>& deps;
+    AstContext                  astctx;
+  };
+
+
+  void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
+  {
+    ElemIdRange              range = idRange(unit.Context_Clause_Elements);
+
+    traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
+  }
+
+
+  void dfs( std::map<UniqueUnitId, UnitEntry>& m,
+            std::map<UniqueUnitId, UnitEntry>::value_type& el,
+            std::vector<Unit_Struct*>& res
+          )
+  {
+    if (el.second.marked) return;
+
+    el.second.marked = true;
+
+    for (const std::string& depname : el.second.dependencies)
+      dfs(m, *m.find(UniqueUnitId{false, depname}), res);
+
+    res.push_back(el.second.unit);
+  }
+
+  UniqueUnitId uniqueUnitName(Unit_Struct& unit)
+  {
+    const bool  isBody = (  (unit.Unit_Kind == A_Package_Body)
+                         || (unit.Unit_Kind == A_Function_Body)
+                         || (unit.Unit_Kind == A_Procedure_Body)
+                         );
+
+    return UniqueUnitId{isBody, AdaIdentifier{unit.Unit_Full_Name}};
+  }
+
+  std::vector<Unit_Struct*>
+  sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
+  {
+    using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
+    using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
+
+    DependencyMap deps;
+    IdEntryMap    idmap;
+
+    // build maps for all units
+    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    {
+      ROSE_ASSERT(unit);
+
+      UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
+
+      auto depres = deps.emplace( uniqueId,
+                                  UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
+                                );
+      ROSE_ASSERT(depres.second);
+
+      // map specifications to their name
+      auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
+      ROSE_ASSERT(idmres.second);
+    }
+
+    // link the units
+    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    {
+      IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
+      ROSE_ASSERT(uit != idmap.end());
+
+      DependencyMap::iterator pos = uit->second;
+      const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
+      IdEntryMap::iterator    idpos    = idmap.find(parentID);
+
+      if (idpos != idmap.end())
+      {
+        pos->second.dependencies.push_back(idpos->second->first.name);
+      }
+      else if (parentID > 0)
+      {
+        // parentID == 1.. is 1 used for the package standard??
+        logWarn() << "unknown unit dependency: "
+                  << pos->first.name << ' '
+                  << (pos->first.isbody ? "[body]" : "[spec]")
+                  << "#" << pos->second.unit->ID
+                  << " -> #" << parentID
+                  << std::endl;
+      }
+
+      addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
+    }
+
+    std::vector<Unit_Struct*> res;
+
+    // topo sort
+    for (DependencyMap::value_type& el : deps)
+      dfs(deps, el, res);
+
+  /*
+    // print all module dependencies
+    for (const DependencyMap::value_type& el : deps)
+    {
+      logWarn() << el.first << "\n  ";
+
+      for (const std::string& n : el.second.dependencies)
+        logWarn() << n << ", ";
+
+      logWarn() << std::endl << std::endl;
+    }
+  */
+
+    logTrace() << "\nTopologically sorted module processing order"
+               << std::endl;
+
+    for (const Unit_Struct* uptr : res)
+      logTrace() << uptr->Unit_Full_Name
+                 << "(" << uptr->ID << "), ";
+
+    logTrace() << std::endl;
+    return res;
+  }
+
+  struct InheritFileInfo : AstSimpleProcessing
+  {
+    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr || !n->isTransformation()) return;
+
+      SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
+      ROSE_ASSERT(parentNode && !parentNode->isTransformation());
+
+      updFileInfo(n->get_file_info(),        parentNode->get_file_info());
+      updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
+      updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
+
+      ROSE_ASSERT(!n->isTransformation());
+    }
+  };
+
+  /// Implements a quick check that the AST is properly constructed.
+  ///   While some issues, such as parent pointers will be fixed at the
+  ///   post processing stage, it may be good to point inconsistencies
+  ///   out anyway.
+  void inheritFileInfo(SgSourceFile* file)
+  {
+    InheritFileInfo fixer;
+
+    fixer.traverse(file, preorder);
+  }
+
+
+  struct AstSanityCheck : AstSimpleProcessing
+  {
+    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    {
+      SgLocatedNode* n = isSgLocatedNode(sageNode);
+
+      if (n == nullptr) return;
+
+      const bool hasParent    = (n->get_parent() != nullptr);
+      const bool hasFileInfo  = (n->get_file_info() != nullptr);
+      const bool hasStartInfo = (n->get_startOfConstruct() != nullptr);
+      const bool hasEndInfo   = (n->get_endOfConstruct() != nullptr);
+      const bool hasNoTransf  = (!n->isTransformation());
+      const bool hasNoCompgen = (!n->isCompilerGenerated());
+      const bool printOutput  = (!hasFileInfo || !hasStartInfo || !hasEndInfo || !hasNoTransf || !hasNoCompgen);
+
+      if (!hasParent)
+        logWarn() << typeid(*n).name() << ": get_parent is NULL" << std::endl;
+
+      if (!hasFileInfo)
+        logWarn() << typeid(*n).name() << ": get_file_info is NULL" << std::endl;
+
+      if (!hasStartInfo)
+        logWarn() << typeid(*n).name() << ": get_startOfConstruct is NULL" << std::endl;
+
+      if (!hasEndInfo)
+        logWarn() << typeid(*n).name() << ": get_endOfConstruct is NULL" << std::endl;
+
+      if (!hasNoTransf)
+        logWarn() << typeid(*n).name() << ": isTransformation is set" << std::endl;
+
+      if (!hasNoCompgen)
+        logWarn() << typeid(*n).name() << ": isCompilerGenerated is set" << std::endl;
+
+      if (hasParent && printOutput)
+        logWarn() << "        parent is " << typeid(*n->get_parent()).name()
+                  << std::endl;
+
+      if (!hasParent || printOutput)
+        logWarn() << "        unparsed: " << n->unparseToString()
+                  << std::endl;
+
+      //~ checkType(isSgExpression(n));
+      //~ checkType(isSgInitializedName(n));
+      //~ checkExpr(isSgAdaAttributeExp(n));
+    }
+  };
+
+
+  /// Implements a quick check that the AST is properly constructed.
+  ///   While some issues, such as parent pointers will be fixed at the
+  ///   post processing stage, it may be good to point inconsistencies
+  ///   out anyway.
+  void astSanityCheck(SgSourceFile* file)
+  {
+    AstSanityCheck checker;
+
+    checker.traverse(file, preorder);
+  }
+} // anonymous
 
 
 void ElemCreator::operator()(Element_Struct& elem)
 {
   handleElement(elem, ctx, privateElems);
 }
-
-
-
-struct UnitEntry
-{
-  Unit_Struct*               unit;
-  std::vector<AdaIdentifier> dependencies;
-  bool                       marked;
-};
-
-struct UniqueUnitId
-{
-  bool          isbody;
-  AdaIdentifier name;
-};
-
-// sort specifications before bodies
-bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
-{
-  // System inclusion is implied, even if it is not referenced.
-  //   Ordering it first is semantically consistent.
-  if ((lhs.name == "SYSTEM") && (rhs.name != "SYSTEM"))
-    return true;
-
-  if ((lhs.name != "SYSTEM") && (rhs.name == "SYSTEM"))
-    return false;
-
-  if ((lhs.isbody == false) && (rhs.isbody == true))
-    return true;
-
-  if (lhs.isbody != rhs.isbody)
-    return false;
-
-  return lhs.name < rhs.name;
-}
-
-struct DependencyExtractor
-{
-  explicit
-  DependencyExtractor(std::vector<AdaIdentifier>& vec, AstContext ctx)
-  : deps(vec), astctx(ctx)
-  {}
-
-  void operator()(Element_Struct& elem)
-  {
-    ROSE_ASSERT(elem.Element_Kind == A_Clause);
-
-    Clause_Struct& clause = elem.The_Union.Clause;
-
-    if (clause.Clause_Kind != A_With_Clause)
-      return;
-
-    std::vector<AdaIdentifier>& res = deps;
-    AstContext                  ctx{astctx};
-
-    traverseIDs( idRange(clause.Clause_Names), elemMap(),
-                 [&res, &ctx](Element_Struct& el) -> void
-                 {
-                   ROSE_ASSERT (el.Element_Kind == An_Expression);
-                   NameData imported = getName(el, ctx);
-
-                   res.push_back(imported.fullName);
-                 }
-               );
-  }
-
-  std::vector<AdaIdentifier>& deps;
-  AstContext                  astctx;
-};
-
-
-void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
-{
-  ElemIdRange              range = idRange(unit.Context_Clause_Elements);
-
-  traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
-}
-
-
-void dfs( std::map<UniqueUnitId, UnitEntry>& m,
-          std::map<UniqueUnitId, UnitEntry>::value_type& el,
-          std::vector<Unit_Struct*>& res
-        )
-{
-  if (el.second.marked) return;
-
-  el.second.marked = true;
-
-  for (const std::string& depname : el.second.dependencies)
-    dfs(m, *m.find(UniqueUnitId{false, depname}), res);
-
-  res.push_back(el.second.unit);
-}
-
-UniqueUnitId uniqueUnitName(Unit_Struct& unit)
-{
-  const bool  isBody = (  (unit.Unit_Kind == A_Package_Body)
-                       || (unit.Unit_Kind == A_Function_Body)
-                       || (unit.Unit_Kind == A_Procedure_Body)
-                       );
-
-  return UniqueUnitId{isBody, AdaIdentifier{unit.Unit_Full_Name}};
-}
-
-std::vector<Unit_Struct*>
-sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
-{
-  using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
-  using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
-
-  DependencyMap deps;
-  IdEntryMap    idmap;
-
-  // build maps for all units
-  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
-  {
-    ROSE_ASSERT(unit);
-
-    UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
-
-    auto depres = deps.emplace( uniqueId,
-                                UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
-                              );
-    ROSE_ASSERT(depres.second);
-
-    // map specifications to their name
-    auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
-    ROSE_ASSERT(idmres.second);
-  }
-
-  // link the units
-  for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
-  {
-    IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
-    ROSE_ASSERT(uit != idmap.end());
-
-    DependencyMap::iterator pos = uit->second;
-    const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
-    IdEntryMap::iterator    idpos    = idmap.find(parentID);
-
-    if (idpos != idmap.end())
-    {
-      pos->second.dependencies.push_back(idpos->second->first.name);
-    }
-    else if (parentID > 0)
-    {
-      logError() << "unknown unit dependency from "
-                 << pos->first.name << ' ' << pos->first.isbody
-                 << " to #" << parentID
-                 << std::endl;
-    }
-
-    addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
-  }
-
-  std::vector<Unit_Struct*> res;
-
-  // topo sort
-  for (DependencyMap::value_type& el : deps)
-    dfs(deps, el, res);
-
-/*
-  // print all module dependencies
-  for (const DependencyMap::value_type& el : deps)
-  {
-    logWarn() << el.first << "\n  ";
-
-    for (const std::string& n : el.second.dependencies)
-      logWarn() << n << ", ";
-
-    logWarn() << std::endl << std::endl;
-  }
-*/
-
-  logTrace() << "\nTopologically sorted module processing order"
-             << std::endl;
-
-  for (const Unit_Struct* uptr : res)
-    logTrace() << uptr->Unit_Full_Name << ", ";
-
-  logTrace() << std::endl;
-  return res;
-}
-
-
 
 void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
@@ -692,6 +860,9 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   Unit_Struct_List_Struct*  adaUnit  = headNodes.Units;
   SgGlobal&                 astScope = SG_DEREF(file->get_globalScope());
+
+  setSymbolTableCaseSensitivity(astScope);
+
   std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
   initializeAdaTypes(astScope);
@@ -701,6 +872,10 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   std::string astDotFile = astDotFileName(*file);
   logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
   generateDOT(&astScope, astDotFile);
+
+  logInfo() << "Checking AST post-production" << std::endl;
+  inheritFileInfo(file);
+  astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;

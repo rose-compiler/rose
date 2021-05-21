@@ -8,8 +8,8 @@ static const char *description =
 
 #include <rose.h>                                       // must be first ROSE include
 #include <Outliner.hh>                                  // from ROSE
-#include <CommandLine.h>                                // from ROSE
-#include <Diagnostics.h>                                // from ROSE
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <iostream>
 #include <vector>

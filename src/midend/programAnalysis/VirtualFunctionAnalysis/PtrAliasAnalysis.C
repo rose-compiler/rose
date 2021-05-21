@@ -84,7 +84,7 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
  bool PtrAliasAnalysis::runAndCheckIntraProcAnalysis(SgFunctionDeclaration* funcDecl) {
      if(intraAliases.count(funcDecl) == 0) {
          std::cerr << funcDecl->get_qualified_name().getString() << " not found in IntraProcAnalysis.\n";
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
      }
      return (((IntraProcAliasAnalysis *)(intraAliases[funcDecl]))->runCheck());
  }
@@ -126,7 +126,7 @@ void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunc
             SgFunctionDeclaration* func = (*iter).first;
             cout<<func<<"\n\t"<<func->unparseToString()<<endl;
           }
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
         SgGraphNode* graphNode = graphNodeToFunction.at(targetFunction);

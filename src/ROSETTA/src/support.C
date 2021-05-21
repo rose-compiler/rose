@@ -90,13 +90,6 @@ Grammar::setUpSupport ()
           BaseClassModifier       | StructureModifier      | TypeModifier       |
           DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
-     NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
-     NEW_TERMINAL_MACRO (AdaIndexConstraint, "AdaIndexConstraint", "AdaIndexConstraintTag");
-
-     NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
-          AdaRangeConstraint | AdaIndexConstraint,
-          "AdaTypeConstraint", "AdaTypeConstraintTag", false);
-
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
 #if 0
@@ -270,7 +263,7 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory                | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
-          TemplateParameterList | AdaTypeConstraint         | /* RenamePair                | InterfaceBody       |*/
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge                |
           GraphNodeList         | GraphEdgeList             | TypeTable                |
           NameGroup             | DimensionObject           | FormatItem               |
@@ -407,10 +400,6 @@ Grammar::setUpSupport ()
 
   // Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
      StructureModifier.setFunctionPrototype       ( "HEADER_STRUCTURE_MODIFIER"       , "../Grammar/Support.code");
-
-     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-     AdaIndexConstraint.setFunctionPrototype      ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
@@ -932,6 +921,12 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/11/2021): We need to to support the dynamic library feature (used by the code segregation tool, and likely future tools).
+  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the 
+  // computation of first and last statements of include file.
+     SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1038,6 +1033,14 @@ Grammar::setUpSupport ()
   // DQ (5/26/2020): Allow us to mark the SgIncludeFile as being the root (associated with the input sourde file).
      IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/9/2021): Save the first and last statement associated with the file (required to support the 
+  // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
+     IncludeFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     IncludeFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
   // (though this one is computed from the EDG/ROSE translation instead of from the CPP include directives).
@@ -1657,12 +1660,15 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/24/2021): Change this to be a static data member.
   // DQ (8/19/2019): Adding support to optimize the performance of the header file unarsing.
   // Specifically we want to limit the collection of comments and CPP dirctives to a set determined
   // as part of the unparsing, after we know what parts of the AST have been modified, but
   // immediiately before the unparsing of each file.
-     File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("static bool", "header_file_unparsing_optimization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
@@ -2559,21 +2565,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BaseClassModifier.setDataPrototype("SgAccessModifier", "accessModifier", "",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-/*
-     AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
-     AdaIndexConstraint.editSubstitute( "LIST_NAME", "ranges" );
-     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     AdaIndexConstraint.editSubstitute( "LIST_FUNCTION_NAME", "range" );
-     AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
-*/
-     AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // File_Info.setDataPrototype("char*","filename","= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -2983,10 +2974,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // Place declarations of friend output operators after the BaseClassModifier
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");
-     AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
-     AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
-     AdaIndexConstraint.setFunctionSource      ( "SOURCE_ADA_INDEX_CONSTRAINT"     , "../Grammar/Support.code");
-
      File_Info.setFunctionSource       ( "SOURCE_FILE_INFORMATION", "../Grammar/Support.code");
 
      Directory.setFunctionSource       ( "SOURCE_APPLICATION_DIRECTORY", "../Grammar/Support.code");

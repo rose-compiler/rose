@@ -10,7 +10,7 @@
 #include <istream>
 #include <list>
 #include <ostream>
-#include <RoseException.h>
+#include <Rose/Exception.h>
 #include <rose_override.h>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Synchronization.h>
@@ -179,6 +179,7 @@ public:
     void insert(const std::string &x) { append((const uint8_t*)x.c_str(), x.size()); }
     void insert(uint64_t x) { append((uint8_t*)&x, sizeof x); }
     void insert(const uint8_t *x, size_t size) { append(x, size); }
+    void insert(const std::vector<uint8_t> &v) { append(v.data(), v.size()); }
     void insert(std::istream &stream) {
         char buf[4096];                                 // multiple of 64
         while (stream.good()) {

@@ -12,6 +12,7 @@ namespace Ada_ROSE_Translation
 {
 
 /// initializes a hidden scope with built-in ada types
+/// \todo this should disappear as soon as the Standard package is included in Asis
 void initializeAdaTypes(SgGlobal& global);
 
 /// represents a (partially) converted type
@@ -60,11 +61,19 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx);
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx);
 
+/// looks up the record declaration associated with \ref defid
+SgClassDeclaration&
+getParentRecordDeclID(Element_ID defid, AstContext ctx);
+
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
 TypeData
-getTypeFoundation(Declaration_Struct& decl, AstContext ctx);
+getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
 
+/// returns the base of a referenced exception
+/// \result either an SgInitializedName or an SgAdaRenamingDecl
+std::pair<SgInitializedName*, SgAdaRenamingDecl*>
+getExceptionBase(Element_Struct& el, AstContext ctx);
 
 }
 

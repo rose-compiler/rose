@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 // **********************************************************************
 //
@@ -1124,3 +1126,4 @@ void propertyAnn::print(ostream & o, propertyValueAnn * prop, int depth) const
     print(o, *p, depth+2);
 }
 
+#endif

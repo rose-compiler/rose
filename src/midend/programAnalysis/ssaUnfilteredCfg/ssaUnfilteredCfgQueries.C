@@ -89,7 +89,7 @@ void SSA_UnfilteredCfg::printNodeDefTable(const NodeReachingDefTable& table)
                 defName = "PHI_FUNCTION";
                 break;
             default:
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
         }
 
         printf("(%d)-%s\n", varDefPair.second->getRenamingNumber(), defName.c_str());

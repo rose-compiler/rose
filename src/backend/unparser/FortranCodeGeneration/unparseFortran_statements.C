@@ -338,8 +338,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           default:
              {
                printf("FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No unparse function for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
    }
@@ -668,7 +667,7 @@ FortranCodeGeneration_locatedNode::unparseFormatStatement (SgStatement* stmt, Sg
                  else
                   {
                     printf ("Error: both get_data() and get_format_item_list() are NULL \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -747,7 +746,7 @@ unparseDimensionStatementForArrayVariable( SgPntrArrRefExp* arrayReference )
                default:
                   {
                     printf ("Default reached, variableScope = %p = %s \n",variableScope,variableScope->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -792,7 +791,7 @@ unparseDimensionStatementForArrayVariable( SgPntrArrRefExp* arrayReference )
              }
 #if 0
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
 
@@ -963,7 +962,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
           default:
              {
                printf ("Error: default reached %d \n",attributeSpecificationStatement->get_attribute_kind());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -989,7 +988,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                default:
                   {
                     printf ("Error: default reached attributeSpecificationStatement->get_intent() = %d \n",attributeSpecificationStatement->get_intent());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
 
@@ -1117,8 +1116,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                          case SgDataStatementValue::e_default:
                             {
                               printf ("Error: value_kind == e_unknown or e_default value_kind = %d \n",value_kind);
-                              ROSE_ASSERT(false);
-                              break;
+                              ROSE_ABORT();
                             }
 
                          case SgDataStatementValue::e_explict_list:
@@ -1151,7 +1149,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                          default:
                             {
                               printf ("Error: default reached value_kind = %d \n",value_kind);
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
 
@@ -1840,7 +1838,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
           default:
              {
                printf ("Error: value of interfaceStatement->get_generic_spec() = %d \n",interfaceStatement->get_generic_spec());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -2123,7 +2121,16 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
      ASSERT_not_null(useStmt);
 
      curprint("USE ");
+
+     // Pei-Hung (03/09/21) added unparsing for module nature (intrinsic or non_intrinsic)
+     std::string nature = useStmt->get_module_nature();
+     if (nature != "")
+        {
+          curprint(", " + nature + " :: ");
+        }
+   
      curprint(useStmt->get_name().str());
+
 
 #if 0
      SgExprListExp*       u_rename = useStmt->get_rename_list();
@@ -2994,7 +3001,7 @@ FortranCodeGeneration_locatedNode::unparseGotoStmt(SgStatement* stmt, SgUnparse_
                default:
                   {
                     printf ("default reached: fortranStatement = %p = %s \n",fortranStatement,fortranStatement->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -3053,8 +3060,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
              {
                cerr << "error: unparseProcessControlStatement() is unimplemented for enum value "
                     << kind << "\n";
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
         }
 
@@ -3121,13 +3127,13 @@ FortranCodeGeneration_locatedNode::unparseIOStmt(SgStatement* stmt, SgUnparse_In
           case SgIOStatement::e_inquire:
              {
                printf ("Error: unparseIOStmt, these cases have there own unparse function that should be called io_stmt->get_io_statement() = %d \n",io_stmt->get_io_statement());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
 
           default: 
              {
                printf ("Error: unparseIOStmt, default case in switch reached io_stmt->get_io_statement() = %d \n",io_stmt->get_io_statement());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 
@@ -4516,7 +4522,7 @@ void
 FortranCodeGeneration_locatedNode::printDeclModifier(SgDeclarationStatement* decl_stmt, SgUnparse_Info & info)
    {
      printf ("Access modifiers are handled differently for Fortran, this function printDeclModifier() should not be called! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // DQ (10/3/2008): This should not be called for Fortran code!
   // printAccessModifier(decl_stmt, info);
@@ -4613,7 +4619,7 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement* 
   // FIXME: this will look different for full-featured Fortran
 
      printf ("Access modifiers are handled differently for Fortran, this function printStorageModifier() should not be called! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
   // printf ("printStorageModifier not implemented for Fortran \n");
    }
@@ -5118,7 +5124,7 @@ FortranCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnpa
 
        // DQ (9/22/2004): I think this is an error!
           printf ("Error: Should be an error to not have a function body in the AST \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
   // DQ (8/19/2007): We can't unparse this hear, since we might have to output a label before it.
@@ -6100,8 +6106,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpEndDirectivePrefixAndName (SgS
     default:
       {
         cerr<<"error: unacceptable OpenMP directive type within unparseOmpDirectivePrefixAndName(): "<<stmt->class_name()<<endl;
-        ROSE_ASSERT(false);
-        break;
+        ROSE_ABORT();
       }
   } // end switch
   //  unp->u_sage->curprint_newline(); // prepare end clauses, they have to be on the same line
@@ -6124,7 +6129,7 @@ void FortranCodeGeneration_locatedNode::unparseOmpDoStatement     (SgStatement* 
   else
   {
     cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
   }
 
     // unparse the end directive and name 

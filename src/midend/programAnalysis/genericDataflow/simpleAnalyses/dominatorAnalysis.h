@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef DOMINATOR_ANALYSIS_H
 #define DOMINATOR_ANALYSIS_H
 
@@ -137,4 +140,5 @@ bool dominates(const DataflowNode& a, const DataflowNode& b, string indent="");
 // prints the Lattices set by the given LiveDeadVarsAnalysis 
 void printDominatorAnalysisStates(DominatorAnalysis* da, string indent="");
 
+#endif
 #endif

@@ -9,7 +9,7 @@
 #include <LoopUnroll.h>
 #include <CommandOptions.h>
 #include <AutoTuningInterface.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 //#define DEBUG 1
 
@@ -36,7 +36,7 @@ IsUniqueArray( AstInterface& fa, const AstNodePtr& array)
   if (prev != 0 &&  prev->IsUniqueArray(fa, array))
        return true;
   AstNodeType t;
-  if (!fa.IsVarRef(array, &t)) assert(0);
+  if (!fa.IsVarRef(array, &t)) ROSE_ABORT();
 
   return false;
 }

@@ -52,6 +52,22 @@ namespace Ada_ROSE_Translation
       AstContext ctx;
   };
 
+  /// call-back to complete a function/procedure/entry declarations
+  ///   by adding parameters to the scopes (after they have been created)
+  struct ParameterCompletion
+  {
+  ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
+    : range(paramrange), ctx(astctx)
+    {}
+
+    void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope);
+
+    private:
+      ElemIdRange range;
+      AstContext  ctx;
+      ParameterCompletion() = delete;
+  };
+
   /// converts an Asis clause and adds the new node to the current scope
   /// \todo currently only with clauses are handled
   void handleClause(Element_Struct& elem, AstContext ctx);
@@ -66,6 +82,11 @@ namespace Ada_ROSE_Translation
   ///   if no record was found, nullptr is returned
   SgDeclarationStatement*
   getDecl_opt(Expression_Struct& expr, AstContext ctx);
+
+  /// returns the NameData object for a name that is represented
+  /// as expression in Asis (e.g., identifier or selected)
+  NameData
+  getQualName(Element_Struct& elem, AstContext ctx);
 
   /// returns a NameData object for the element \ref el
   NameData

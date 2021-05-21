@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef BASE_CFG_ITERATOR
 #define BASE_CFG_ITERATOR
 
@@ -62,4 +65,5 @@ class back_dataflow : public back_iterator, public dataflow
 {
 };
 }
+#endif
 #endif

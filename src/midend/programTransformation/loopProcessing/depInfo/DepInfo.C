@@ -2,7 +2,8 @@
 
 #include <DepInfo.h>
 #include <sstream>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ABORT.h>
+#include <ROSE_ASSERT.h>
 
 class DepEDDTypeInfo : public DepInfoImpl
 {
@@ -92,7 +93,7 @@ std::string DepType2String(DepType t)
   case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";
   case DEPTYPE_TRANS: return  "TRANS_DEP;";
   case DEPTYPE_NONE : return  "TYPE_NONE";
-  default: assert(false);
+  default: ROSE_ABORT();
   }
 }
 
@@ -140,7 +141,7 @@ bool DepInfo:: operator *= ( const DepInfo &info2)
 {
   if (cols() == 0) return false;
   if (cols() != info2.rows()) {
-    std::cerr << "info1=" << toString() << "; info2=" << info2.toString() << "\n"; assert(false);
+    std::cerr << "info1=" << toString() << "; info2=" << info2.toString() << "\n"; ROSE_ABORT();
   }
   DepInfo info1(*this);
   int commLevel1 = info1.CommonLevel();

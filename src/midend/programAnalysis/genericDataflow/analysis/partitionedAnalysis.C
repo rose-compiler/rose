@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 // WE ASSUME THAT EACH CFG NODE CONTAINS ONLY ONE NODE STATE.
 // IN PARTICULAR, WE ASSUME THAT IF THERE IS AN ANALYSIS SPLIT
 // THE PARTITIONS WILL CORRESPOND TO SUCCEEDING CFG NODES, NOT 
@@ -546,11 +549,13 @@ void unionDFAnalysisStatePartitions::visit(const Function& func, const DataflowN
 // state - the function's NodeState
 bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, set<Function> calleesUpdated)
 {
-        ROSE_ASSERT(0);
+        ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreached
         bool joinPart=false, splitPart=false;
         IntraPartitionDataflowCheckpoint* outChkpt;
         //IntraPartitionDataflowCheckpoint* chkpt = NULL;
         return runAnalysisResume(func, fState, NULL, splitPart, joinPart, outChkpt);
+#endif
 }
 
 bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState, 
@@ -714,7 +719,7 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
                                                 dynamic_cast<InterProceduralDataflow*>(interAnalysis)->
                                                       transfer(calledFunc, n, *state, dfInfoBelow, &retState, true);
                                                 // NEED TO INCORPORATE INFORMATION ABOUT RETURN INTO DATAFLOW SOMEHOW
-                                                ROSE_ASSERT(0);
+                                                ROSE_ABORT();
                                         }
                                         else
                                         {
@@ -1087,3 +1092,5 @@ bool IntraPartitionFWDataflow::propagateFWStateToNextNode(
 
         return modified;
 }
+
+#endif

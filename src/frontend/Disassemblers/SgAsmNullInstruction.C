@@ -32,9 +32,9 @@ SgAsmNullInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&
     return false;
 }
 
-bool
-SgAsmNullInstruction::getBranchTarget(rose_addr_t*) {
-    return false;
+Sawyer::Optional<rose_addr_t>
+SgAsmNullInstruction::branchTarget() {
+    return Sawyer::Nothing();
 }
 
 Rose::BinaryAnalysis::AddressSet

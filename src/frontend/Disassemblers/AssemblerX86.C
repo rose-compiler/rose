@@ -6,7 +6,7 @@
 
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
-#include "FileSystem.h"
+#include <Rose/FileSystem.h>
 #include "x86InstructionProperties.h"
 
 #include <Sawyer/MappedBuffer.h>
@@ -103,26 +103,14 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmBinaryAddPreupdate: {
-            fprintf(f, "AddPreupdate {");
+        case V_SgAsmBinaryPreupdate: {
+            fprintf(f, "Preupdate {");
             printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmBinarySubtractPreupdate: {
-            fprintf(f, "SubtractPreupdate {");
-            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmBinaryAddPostupdate: {
-            fprintf(f, "AddPostupdate {");
-            printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
-            fprintf(f, "}");
-            break;
-        }
-        case V_SgAsmBinarySubtractPostupdate: {
-            fprintf(f, "SubtractPostupdate {");
+        case V_SgAsmBinaryPostupdate: {
+            fprintf(f, "Postupdate {");
             printSgAsmExpression(f, e, prefix, V_SgAsmBinaryExpression);
             fprintf(f, "}");
             break;
@@ -263,7 +251,7 @@ AssemblerX86::InsnDefn::to_str() const
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVC does not allow specification of contant 0xffffffffffLLU")
         printf ("ERROR: MSVC does not allow specification of contant 0xffffffffffLLU");
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
 #else
     ROSE_ASSERT(opcode <= 0xffffffffffLLU);
 #endif
@@ -428,8 +416,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
     SgAsmValueExpression                *ve  = isSgAsmValueExpression(expr);
     switch (od) {
         case od_none:
-            assert(false);
-            abort();
+            ROSE_ABORT();
 
         case od_0:
             return ve && SageInterface::getAsmConstant(ve)==0;

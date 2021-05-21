@@ -212,11 +212,24 @@ public:
         repo_->insert(reinterpret_cast<IntPtr>(this), value);
     }
 
+    /*implicit*/ MultiInstanceTls(const MultiInstanceTls &other) {
+        if (!repo_)
+            repo_ = new Repo;
+        repo_->insert(reinterpret_cast<IntPtr>(this), other.get());
+    }
+
     /** Assignment operator. */
     MultiInstanceTls& operator=(const T &value) {
         if (!repo_)
             repo_ = new Repo;
         repo_->insert(reinterpret_cast<IntPtr>(this), value);
+        return *this;
+    }
+
+    MultiInstanceTls& operator=(const MultiInstanceTls &other) {
+        if (!repo_)
+            repo_ = new Repo;
+        repo_->insert(reinterpret_cast<IntPtr>(this), other.get());
         return *this;
     }
 

@@ -9,7 +9,7 @@
 // PP(14/10/20) PRE->legacy::PRE #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
 #include "RoseAst.h" // using AST Iterator
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <AstConsistencyTests.h>
 
 
@@ -366,7 +366,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           } else if (arrowexp) {
             thisptr = arrowexp->get_lhs_operand();
           } else {
-            assert (false);
+            ROSE_ABORT ();
           }
         }
 

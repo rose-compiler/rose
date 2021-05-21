@@ -486,6 +486,7 @@ SgJovialForThenStatement
 SgJovialDefineDeclaration
 SgJovialDirectiveStatement
 SgJovialOverlayDeclaration
+SgJovialPresetPositionExp
 SgJovialTablePresetExp
 SgJovialTableStatement
 SgKeyDatumPair
@@ -973,7 +974,14 @@ SgAdaSelectAlternativeStmt
 SgAdaTerminateStmt
 SgAsmAarch32Instruction
 SgAsmAarch32Coprocessor
-//SgAdaDerivedType
 SgAdaLengthClause
 SgAsmBinaryConcat
 SgAsmByteOrder
+SgAdaDerivedType
+SgAdaAttributeExp
+SgAdaEnumRepresentationClause
+SgAsmBinaryPreupdate
+SgAsmBinaryPostupdate
+SgAdaOthersExp
+SgAdaRenamingSymbol
+SgAdaRenamingRefExp

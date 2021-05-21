@@ -2,17 +2,15 @@ add_library(roseDisassemblers OBJECT Assembler.C AssemblerX86.C
   AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C
   AssemblerX86Init4.C AssemblerX86Init5.C AssemblerX86Init6.C
   AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
-  AssemblerX86Init.C DisassemblerAarch32.C DisassemblerAarch64.C
-  Disassembler.C DisassemblerMips.C DisassemblerM68k.C
-  DisassemblerNull.C DisassemblerPowerpc.C DisassemblerX86.C
-  Registers.C RegisterDescriptor.C SgAsmAarch32Instruction.C
+  AssemblerX86Init.C
+  SgAsmAarch32Instruction.C
   SgAsmAarch64Instruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C
   SgAsmExpression.C SgAsmFloatValueExpression.C SgAsmFunction.C
   SgAsmInstruction.C SgAsmAarch32Instruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmNullInstruction.C
   SgAsmPowerpcInstruction.C SgAsmX86Instruction.C
-  x86InstructionProperties.C RegisterParts.C BinaryInstructionCache.C)
+  x86InstructionProperties.C)
 
 add_dependencies(roseDisassemblers rosetta_generated)
 
@@ -20,11 +18,6 @@ add_dependencies(roseDisassemblers rosetta_generated)
 
 install(
   FILES
-    Assembler.h AssemblerX86.h AssemblerX86Init.h Disassembler.h
-    DisassemblerAarch32.h DisassemblerAarch64.h DisassemblerM68k.h
-    DisassemblerMips.h DisassemblerNull.h DisassemblerPowerpc.h DisassemblerX86.h
-    InstructionEnumsM68k.h x86InstructionProperties.h
-    InstructionEnumsAarch64.h InstructionEnumsMips.h InstructionEnumsX86.h
-    Registers.h RegisterDescriptor.h InstructionEnumsPowerpc.h RegisterParts.h
-    BinaryInstructionCache.h InstructionEnumsAarch32.h
+    Assembler.h AssemblerX86.h AssemblerX86Init.h
+    x86InstructionProperties.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

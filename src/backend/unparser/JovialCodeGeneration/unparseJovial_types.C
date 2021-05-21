@@ -51,8 +51,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
         }
    }
 
@@ -73,7 +72,7 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
           case V_SgJovialBitType:   curprint("B");       break;
           default:
              std::cerr << "Unparse_Jovial::unparseTypeDesc for type " << type->class_name() << " case default reached \n";
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
         }
    }
 
@@ -263,6 +262,21 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
      if (dim_info != NULL)
         {
           unparseDimInfo(dim_info, info);
+        }
+
+  // OptStructureSpecifier
+     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel)
+        {
+          curprint("PARALLEL ");
+        }
+     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight)
+        {
+          curprint("T ");
+          if (table_type->get_bits_per_entry() > 0) {
+            std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
+            curprint(value);
+            curprint(" ");
+          }
         }
 
   // The base type will need to be unparsed (not just the base type name) if

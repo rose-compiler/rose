@@ -4,7 +4,7 @@
 
 #include <CommandOptions.h>
 #include <PtrAnal.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 using namespace std;
 
@@ -47,9 +47,9 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
    if (fa.IsVarRef(field, 0, &name)) {
        assert(name != "");
        return "d:" + name;
-    }
+   }
    std::cerr << "Not field name: " << AstInterface::AstToString(field) << "\n";
-    assert(false);
+   ROSE_ABORT();
 }
 
 static std::string
@@ -134,18 +134,18 @@ Get_VarName(AstInterface& fa, const AstNodePtr& rhs)
         VarRef cur = namemap[lhs1.get_ptr()];
         if (cur.name == "") {
            std::cerr << "does not have map for " << AstInterface::AstToString(lhs1) << " in " << AstInterface::AstToString(rhs) << "\n";
-           assert(0);
+           ROSE_ABORT();
         }
         namemap[rhs.get_ptr()] = cur;
         res = cur.name;
    }
    else  {
       std::cerr << "No name found for " << AstInterface::AstToString(rhs) << "\n";
-      assert(false);
+      ROSE_ABORT();
    }
    if (res == "") {
       std::cerr << "No name found for " << AstInterface::AstToString(rhs) << "\n";
-      assert(false);
+      ROSE_ABORT();
    }
    return res;
 }
@@ -323,7 +323,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
          }
          else {
             std::cerr << "can't handle " << AstInterface::AstToString(mod) << "\n";
-            assert(false); // other operations? to be handled later
+            ROSE_ABORT(); // other operations? to be handled later
          }
      }
      else if (fa.IsFunctionCall(mod)) {
@@ -334,7 +334,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
      }
      else {
        std::cerr << "cannot process " << AstInterface::AstToString(mod) << "\n";
-       assert(false); // other operations? to be handled later
+       ROSE_ABORT(); // other operations? to be handled later
     }
   }
 }
@@ -384,7 +384,7 @@ may_alias(AstInterface& fa, const AstNodePtr& _r1, const AstNodePtr& _r2)
   AstNodePtr r1 = fa.IsExpression(_r1);
   AstNodePtr r2 = fa.IsExpression(_r2);
   if (r1 == AST_NULL || r2 == AST_NULL)
-    assert(false);
+    ROSE_ABORT();
   std::string varname1 = Get_VarName(fa, r1), varname2 = Get_VarName(fa, r2);
   return may_alias(varname1, varname2);
 }
@@ -396,7 +396,7 @@ void PtrAnal:: operator()( AstInterface& fa, const AstNodePtr& funcdef)
   std::string fname;
   if (!fa.IsFunctionDefinition(funcdef, &fname, &params, &outpars, &body)) {
      std::cerr << "Error: analysis requires function definition as input instead of " << AstInterface::AstToString(funcdef) << std::endl;
-     assert(false);
+     ROSE_ABORT();
   }
   typedef std::pair<AstNodePtr,std::string>  RefRec;
   std::list<RefRec>  refs;

@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 
 #ifndef BDWY_SET_PROPERTY_H
 #define BDWY_SET_PROPERTY_H
@@ -417,4 +419,5 @@ private:
 #endif /* __FOO */
 };
 
+#endif
 #endif

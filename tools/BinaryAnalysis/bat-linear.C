@@ -6,10 +6,10 @@ static const char *description =
     "follow control flow graph edges (for that, use @man{bat-dis}{1} or @man{bat-dis-simple}{1}).";
 
 #include <rose.h>
-#include <BinaryUnparserBase.h>                         // rose
-#include <CommandLine.h>                                // rose
-#include <Partitioner2/Engine.h>                        // rose
-#include <TraceSemantics2.h>                            // rose
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 #include <batSupport.h>
 

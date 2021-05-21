@@ -2588,7 +2588,7 @@ class lexer
             default:
             {
                 // all other characters are rejected outside scan_number()
-                assert(false); // LCOV_EXCL_LINE
+                abort(); // LCOV_EXCL_LINE
             }
         }
 
@@ -16660,7 +16660,7 @@ class basic_json
                     default:
                     {
                         // if there exists a parent it cannot be primitive
-                        assert(false);  // LCOV_EXCL_LINE
+                        abort();  // LCOV_EXCL_LINE
                     }
                 }
             }

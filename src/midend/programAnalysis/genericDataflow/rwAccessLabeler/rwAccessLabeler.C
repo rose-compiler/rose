@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "sage3basic.h"
 #include "rwAccessLabeler.h"
 
@@ -353,3 +356,5 @@ string accessTypeToStr(accessType t)
 }
 
 }
+
+#endif

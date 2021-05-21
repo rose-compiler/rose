@@ -4,7 +4,7 @@
 
 #include "grammarString.h"
 #include "AstNodeClass.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 #include "FileUtility.h"
 #include <string>
 #include <sstream>
@@ -53,7 +53,7 @@ GrammarString::infoFieldsToString() const {
   case BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
   default:
         cerr<<"Error: unknown data access function type."<<endl;
-        ROSE_ASSERT(0);
+        ROSE_ABORT();
   }
 #endif
   ss<<","<<"constr="<<   getIsInConstructorParameterList();
@@ -805,7 +805,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
                          + "(); \n";
                break;
           default:
-               assert(false);
+               ROSE_ABORT();
         }
 
 #if 0
@@ -816,7 +816,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      if (variableNameStringTmp == "startOfConstruct")
         {
           printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 #endif
 
@@ -1698,7 +1698,7 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
         {
           printf ("ERROR: GrammarString::containerElementTypeString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return returnString;
@@ -2101,7 +2101,7 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
         {
           printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
           printf ("   --- typenameString = %s \n",typenameString.c_str());
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
         }
 
      return returnString;

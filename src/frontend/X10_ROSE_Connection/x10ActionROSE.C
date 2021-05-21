@@ -1949,7 +1949,7 @@ cout << "expr=" << expr << endl;
             }
             else { // this can't happen!?
                 // TODO: What if the class is a parameterized type?
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
         else if (is_static && isSgThisExp(receiver) && (! receiver -> attributeExists("class"))) { // A sgThisExp receiver in front of a static function?
@@ -2161,7 +2161,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv 
 
         default:
             printf ("Error: default reached in cactionBinaryExpressionEnd() operator_kind = %d \n", operator_kind);
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
     setX10SourcePosition((SgLocatedNode *) astX10ComponentStack.top(), env, x10Token);

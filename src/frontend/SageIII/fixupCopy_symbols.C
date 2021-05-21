@@ -623,7 +623,7 @@ SgBaseClass::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
        nrBaseClass->get_base_class_nonreal()->fixupCopy_symbols(nrBaseClass_copy->get_base_class_nonreal(),help);
      } else {
-       ROSE_ASSERT(false);
+       ROSE_ABORT();
      }
    }
 

@@ -1430,7 +1430,9 @@ EasyStorageMapEntry <std::string,AstAttribute*> :: rebuildDataStoredInEasyStorag
       std::string storedAttributeName = attributeName.rebuildDataStoredInEasyStorageClass();
       if ( regAttr.find ( storedAttributeName ) != regAttr.end() )
          {
+            assert(ret != NULL); // but how could ret be non-NULL?
             ret = (ret->*regAttr[ storedAttributeName ]) ();
+            assert(ret != NULL);
             ret->unpacked_data( attributeData.getSizeOfData(), attributeData.rebuildDataStoredInEasyStorageClass() );
          }
       else
@@ -1610,18 +1612,26 @@ void EasyStorage <AstAttributeMechanism*> :: readFromFile (std::istream& inputFi
    **      Implementations for EasyStorage <PreprocessingInfo*>                          **
    ****************************************************************************************
 */
-void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingInfo* info)
-   {
-  // JH (04/21/2006): Adding the storing of the Sg_File_Info pointer
-  // fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->getFile_Info());
+
+#define DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass 0
+
+void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingInfo* info) {
+#if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
+  printf ("EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass \n");
+#endif
+
      ROSE_ASSERT(info != NULL);
      ROSE_ASSERT(info->get_file_info() != NULL);
 
-  // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info() = %p \n",info->get_file_info());
-  // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info()->get_freepointer() = %p \n",info->get_file_info()->get_freepointer());
+#if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
+     printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info() = %p \n",info->get_file_info());
+     printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info()->get_freepointer() = %p \n",info->get_file_info()->get_freepointer());
+#endif
 
      fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->get_file_info());
-  // printf ("Saving fileInfoIndex = %d for %p \n",fileInfoIndex, info->get_file_info());
+#if DEBUG_EasyStorage_PreprocessingInfo_storeDataInEasyStorageClass
+     printf ("Saving fileInfoIndex = %d for %p \n",fileInfoIndex, info->get_file_info());
+#endif
 
   // get changeable pointer
      char* copy_ = info->packed();
@@ -1656,9 +1666,13 @@ void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingI
         }
    }
 
+#define DEBUG_EasyStorage_PreprocessingInfo_rebuildDataStoredInEasyStorageClass 0
 
-PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass() const
-   {
+PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass() const {
+#if DEBUG_EasyStorage_PreprocessingInfo_rebuildDataStoredInEasyStorageClass
+  printf ("EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass \n");
+#endif
+
      assert ( this != NULL );
      PreprocessingInfo* returnInfo  = NULL;
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -1671,9 +1685,6 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
         // that the memory pool will become corrupted resulting the a bad AST.
            returnInfo = new PreprocessingInfo();
            ROSE_ASSERT(returnInfo != NULL);
-        // JH (04/21/2006): Adding the storing of the Sg_File_Info pointer
-        // returnInfo->setFile_Info((Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex);
-        // printf ("Using fileInfoIndex = %" PRIuPTR " to get Sg_File_Info object \n",fileInfoIndex);
 
         // ROSE-1470
            Sg_File_Info * file_info = (Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex));
@@ -1682,11 +1693,9 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
            printf ("Check the file Info object just read... \n");
            printf ("returnInfo = %p \n",returnInfo);
         // We will be calling the unpacked() functions for attributes later, so at this point the string will be empty.
-           printf ("returnInfo->getString().size() = %" PRIuPTR " (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().size());
            printf ("returnInfo->getString() = %s (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().c_str());
            printf ("returnInfo->get_file_info() = %p \n",returnInfo->get_file_info());
            printf ("returnInfo->get_file_info()->get_freepointer() = %p \n",returnInfo->get_file_info()->get_freepointer());
-           printf ("returnInfo->get_file_info()->get_freepointer() = %" PRIuPTR " \n",(size_t)returnInfo->get_file_info()->get_freepointer());
 #endif
         // if there is any data in the pool at all
            if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
@@ -1699,6 +1708,14 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
                 memcpy(data_, Base::getBeginningOfDataBlock(), Base::getSizeOfData() * sizeof(char) );
                 returnInfo->unpacked( data_ );
               }
+#if 0
+           printf ("Check the file Info object after unpack... \n");
+           printf ("returnInfo = %p \n",returnInfo);
+        // We will be calling the unpacked() functions for attributes later, so at this point the string will be empty.
+           printf ("returnInfo->getString() = %s\n",returnInfo->getString().c_str());
+           printf ("returnInfo->get_file_info() = %p \n",returnInfo->get_file_info());
+           printf ("returnInfo->get_file_info()->get_freepointer() = %p \n",returnInfo->get_file_info()->get_freepointer());
+#endif
 
            ROSE_ASSERT(returnInfo != NULL);
         // returnInfo->display("Reconstructed in AST File I/O");
@@ -1985,6 +2002,7 @@ void EasyStorage <AttachedPreprocessingInfoType*>::displayEasyStorageData()
 /* special implementation for omitting compiler instantiation errors*/
 void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass(AttachedPreprocessingInfoType* data_)
    {
+//     printf ("EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass \n");
      if (data_ == NULL)
         {
           Base::sizeOfData = -1;
@@ -2049,6 +2067,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
 AttachedPreprocessingInfoType* 
 EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass() const
    {
+//      printf ("EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass \n");
       AttachedPreprocessingInfoType* data_ = NULL;
       if ( Base::getSizeOfData() != -1 )
          {
@@ -3457,7 +3476,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
        // local else
        // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
           printf ("Error: support for file IO on graph nodes not implemented! \n");
-          ROSE_ASSERT(false);
+          ROSE_ABORT();
 #endif
         }
    }
@@ -3493,7 +3512,7 @@ EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass()
      // local else
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
      return return_map;
    }
@@ -3542,7 +3561,7 @@ void EasyStorage <rose_graph_hash_multimap> ::storeDataInEasyStorageClass(const 
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3558,7 +3577,7 @@ EasyStorage <rose_graph_hash_multimap> :: rebuildDataStoredInEasyStorageClass() 
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 
      return return_map;
    }
@@ -3618,7 +3637,7 @@ EasyStorage <rose_undirected_graph_hash_multimap> ::storeDataInEasyStorageClass(
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 // Return by value (consistant with other functions in this file)
@@ -3634,9 +3653,7 @@ EasyStorage <rose_undirected_graph_hash_multimap> :: rebuildDataStoredInEasyStor
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3688,7 +3705,7 @@ void EasyStorage <rose_directed_graph_hash_multimap> ::storeDataInEasyStorageCla
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3704,9 +3721,7 @@ EasyStorage <rose_directed_graph_hash_multimap> :: rebuildDataStoredInEasyStorag
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3758,7 +3773,7 @@ void EasyStorage <rose_graph_node_edge_hash_multimap> ::storeDataInEasyStorageCl
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -3774,9 +3789,7 @@ EasyStorage <rose_graph_node_edge_hash_multimap> :: rebuildDataStoredInEasyStora
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -3882,7 +3895,7 @@ std::multimap<std::string,int> EasyStorage < std::multimap<std::string,int> > ::
                 data_[tempPair.first] = tempPair.second;
 #else
                 printf ("Error: not implemented support for std::multimap in AST File I/O \n");
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
 #endif
               }
          }
@@ -3931,7 +3944,7 @@ void EasyStorage <rose_graph_integer_node_hash_map> ::storeDataInEasyStorageClas
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_integer_node_hash_map
@@ -3946,9 +3959,7 @@ EasyStorage <rose_graph_integer_node_hash_map> :: rebuildDataStoredInEasyStorage
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4001,7 +4012,7 @@ void EasyStorage <rose_graph_integer_edge_hash_map> ::storeDataInEasyStorageClas
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -4017,9 +4028,7 @@ EasyStorage <rose_graph_integer_edge_hash_map> :: rebuildDataStoredInEasyStorage
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4072,7 +4081,7 @@ void EasyStorage <rose_graph_integer_edge_hash_multimap> ::storeDataInEasyStorag
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 
@@ -4088,9 +4097,7 @@ EasyStorage <rose_graph_integer_edge_hash_multimap> :: rebuildDataStoredInEasySt
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4240,7 +4247,7 @@ void EasyStorage <rose_graph_string_integer_hash_multimap> ::storeDataInEasyStor
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_string_integer_hash_multimap
@@ -4255,9 +4262,7 @@ EasyStorage <rose_graph_string_integer_hash_multimap> :: rebuildDataStoredInEasy
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 
@@ -4310,7 +4315,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> ::storeDataInEasySt
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
    }
 
 rose_graph_integerpair_edge_hash_multimap
@@ -4325,9 +4330,7 @@ EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: rebuildDataStoredInEa
 
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return return_map;
+     ROSE_ABORT();
    }
 
 

@@ -104,7 +104,7 @@ FixupNullPointersInAST::visit ( SgNode* node )
                  // DQ (3/23/2006): This only appears to be a problem because the 
                  // AST Copy mechanism had a bug, so trap this out for now while 
                  // we fix that bug more directly.
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
                break;
              }

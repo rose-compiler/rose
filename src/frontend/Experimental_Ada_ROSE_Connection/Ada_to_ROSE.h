@@ -10,7 +10,7 @@
 #include <utility>
 #include <sstream>
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include "sageGeneric.h"
 
 #include "a_nodes.h"
@@ -90,8 +90,19 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
-/// returns a mapping from string to builtin type nodes
+//
+// the following functions provide access to elements that are
+// defined with the standard package, which is currently not
+// provided by Asis.
+
+/// returns a mapping from string to standard type nodes
 map_t<AdaIdentifier, SgType*>& adaTypes();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+
+/// returns a mapping from string to builtin exception types
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
 
 //
@@ -174,10 +185,20 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
+/**
+    /// returns a new context with the element
+    AstContext element(Element_struct& el) const;
+
+    /// returns the current element and returns a new context
+    Element_struct& element() const;
+**/
+
   private:
     SgScopeStatement*    the_scope;
     LabelAndLoopManager* all_labels_loops;
     const std::string*   unit_file_name;
+    Element_Struct*      elem;
+
 };
 
 
@@ -200,8 +221,10 @@ struct ElemCreator
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
+/// \note If an expression has decayed to a located node, the operator position will not be set.
 /// @{
 void attachSourceLocation(SgLocatedNode& n, Element_Struct& elem, AstContext ctx);
+void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx);
 void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 /// @}
 
@@ -209,6 +232,40 @@ void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 /// \param kind a C-string naming the Asis kind
 /// \param primaryHandler true if this is the primary handler
 void logKind(const char* kind, bool primaryHandler = true);
+
+
+/// A range abstraction for a contiguous sequence
+template <class T>
+struct Range : std::pair<T, T>
+{
+  Range(T lhs, T rhs)
+  : std::pair<T, T>(lhs, rhs)
+  {}
+
+  bool empty() const { return this->first == this->second; }
+  int  size()  const { return this->second - this->first; }
+};
+
+/// A range of Asis Units
+struct UnitIdRange : Range<Unit_ID_Ptr>
+{
+  typedef Unit_Struct value_type;
+
+  UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
+  : Range<Unit_ID_Ptr>(lhs, rhs)
+  {}
+};
+
+/// A range of Asis Elements
+struct ElemIdRange : Range<Element_ID_Ptr>
+{
+  typedef Element_Struct value_type;
+
+  ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
+  : Range<Element_ID_Ptr>(lhs, rhs)
+  {}
+};
+
 
 /// non-tracing alternative
 //~ static inline
@@ -329,11 +386,14 @@ namespace
   template <class KeyT, class DclT, class ValT>
   inline
   void
-  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val)
+  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    if (m.find(key) != m.end()) return;
+    const bool nodeExists = (m.find(key) != m.end());
 
-    recordNode(m, key, val);
+    if (nodeExists && !replace)
+      return;
+
+    recordNode(m, key, val, nodeExists);
   }
 
   /// retrieves a node from map \ref m with key \ref key.
@@ -425,38 +485,6 @@ namespace
   {
     return SG_DEREF(retrieveAsOpt<ElemT>(map, key));
   }
-
-  /// A range abstraction for a contiguous sequence
-  template <class T>
-  struct Range : std::pair<T, T>
-  {
-    Range(T lhs, T rhs)
-    : std::pair<T, T>(lhs, rhs)
-    {}
-
-    bool empty() const { return this->first == this->second; }
-    int  size()  const { return this->second - this->first; }
-  };
-
-  /// A range of Asis Units
-  struct UnitIdRange : Range<Unit_ID_Ptr>
-  {
-    typedef Unit_Struct value_type;
-
-    UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
-    : Range<Unit_ID_Ptr>(lhs, rhs)
-    {}
-  };
-
-  /// A range of Asis Elements
-  struct ElemIdRange : Range<Element_ID_Ptr>
-  {
-    typedef Element_Struct value_type;
-
-    ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
-    : Range<Element_ID_Ptr>(lhs, rhs)
-    {}
-  };
 
   /// Type mapping for range element types
   template <class T>

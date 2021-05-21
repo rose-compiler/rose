@@ -36,7 +36,7 @@ protected:
                         "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
                 }
                 else
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
 
         }
 private:        

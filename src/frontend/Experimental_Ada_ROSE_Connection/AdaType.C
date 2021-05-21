@@ -43,7 +43,7 @@ namespace
       void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
 
-      void handle(SgTypeTraitBuiltinOperator& n)
+      void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx);
         set(&mkAttributeType(n));
@@ -56,15 +56,6 @@ namespace
 
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
-
-  SgInitializedName&
-  getException(Expression_Struct& ex, AstContext ctx)
-  {
-    ROSE_ASSERT(ex.Expression_Kind == An_Identifier);
-
-    logKind("An_Identifier");
-    return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
-  }
 
   SgNode&
   getExprType(Expression_Struct& typeEx, AstContext ctx)
@@ -203,7 +194,7 @@ namespace
   SgClassDefinition&
   getRecordBody(Record_Definition_Struct& rec, AstContext ctx)
   {
-    SgClassDefinition&        sgnode = SG_DEREF( sb::buildClassDefinition() );
+    SgClassDefinition&        sgnode     = mkRecordBody();
     ElemIdRange               components = idRange(rec.Record_Components);
     //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
@@ -215,6 +206,8 @@ namespace
     /* unused nodes:
          Record_Component_List Implicit_Components
     */
+
+    markCompilerGenerated(sgnode);
     return sgnode;
   }
 
@@ -229,7 +222,10 @@ namespace
     if (def.Definition_Kind == A_Null_Record_Definition)
     {
       logKind("A_Null_Record_Definition");
-      return SG_DEREF( sb::buildClassDefinition() );
+      SgClassDefinition&      sgdef = mkRecordBody();
+
+      attachSourceLocation(sgdef, elem, ctx);
+      return sgdef;
     }
 
     ROSE_ASSERT(def.Definition_Kind == A_Record_Definition);
@@ -257,19 +253,12 @@ namespace
     if (res == nullptr)
     {
       logError() << "getParentRecordDecl: " << typeid(*basenode).name() << std::endl;
+      ROSE_ABORT();
     }
 
     return SG_DEREF(res);
   }
 
-  SgClassDeclaration&
-  getParentRecordDeclID(Element_ID defid, AstContext ctx)
-  {
-    Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
-    ROSE_ASSERT(elem.Element_Kind == A_Definition);
-
-    return getParentRecordDecl(elem.The_Union.Definition, ctx);
-  }
 
   struct EnumElementCreator
   {
@@ -289,6 +278,9 @@ namespace
         NameData            name = singleName(decl, ctx);
         ROSE_ASSERT(name.ident == name.fullName);
 
+        // \todo name.ident could be a character literal, such as 'c'
+        //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+        //       SgInitializedName are created with the name 'c' instead of character constants.
         SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, nullptr);
 
         sgnode.set_scope(enumdcl.get_scope());
@@ -307,7 +299,7 @@ namespace
   };
 
   TypeData
-  getTypeFoundation(Definition_Struct& def, AstContext ctx)
+  getTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
     ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
 
@@ -330,8 +322,9 @@ namespace
              unused fields: (derivedTypeDef)
                 Declaration_List     Implicit_Inherited_Declarations;
           */
+          SgType& basetype = getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
 
-          res.n = &getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
+          res.n = &mkAdaDerivedType(basetype);
           break;
         }
 
@@ -344,8 +337,6 @@ namespace
           SgBaseClass&        parent = mkRecordParent(basecl);
 
           sg::linkParentChild(def, parent, &SgClassDefinition::append_inheritance);
-
-          //~ def.append_inheritance(&parent);
 
           /*
           Declaration_List     Implicit_Inherited_Declarations;
@@ -361,9 +352,11 @@ namespace
 
       case An_Enumeration_Type_Definition:         // 3.5.1(2)
         {
+          ROSE_ASSERT(name.size());
+
           logKind("An_Enumeration_Type_Definition");
 
-          SgEnumDeclaration& sgnode = mkEnumDecl("", ctx.scope());
+          SgEnumDeclaration& sgnode = mkEnumDecl(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
           traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
@@ -380,7 +373,7 @@ namespace
           SgAdaTypeConstraint& constraint = getConstraintID(typenode.Integer_Constraint, ctx);
           SgTypeInt&           superty    = SG_DEREF(sb::buildIntType());
 
-          res.n = &mkAdaSubtype(superty, constraint);
+          res.n = &mkAdaSubtype(superty, constraint, true);
           /* unused fields:
            */
           break;
@@ -417,10 +410,11 @@ namespace
 
           ElemIdRange                indicesAsis = idRange(typenode.Discrete_Subtype_Definitions);
           std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-          SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
+          SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, false /* constrained */);
+          ROSE_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break ;
@@ -432,10 +426,11 @@ namespace
 
           ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
           std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-          SgExprListExp&             indicesAst  = SG_DEREF(sb::buildExprListExp(indicesSeq));
+          SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, true /* unconstrained */);
+          ROSE_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break;
@@ -466,6 +461,87 @@ namespace
           break;
         }
 
+      case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
+        {
+          logKind("An_Access_Type_Definition");
+          Access_Type_Struct access_type = typenode.Access_Type;
+          auto access_type_kind = access_type.Access_Type_Kind;
+          bool isFuncAccess = false;
+
+          switch (access_type_kind) {
+          // variable access kinds
+          case A_Pool_Specific_Access_To_Variable:
+          case An_Access_To_Variable:
+          case An_Access_To_Constant:
+            {
+              SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
+              res.n = &mkAdaAccessType(&ato);
+              // handle cases for ALL or CONSTANT general access modifiers
+              switch (access_type_kind) {
+              case An_Access_To_Variable:
+                ((SgAdaAccessType*)res.n)->set_is_general_access(true);
+                break;
+              case An_Access_To_Constant:
+                ((SgAdaAccessType*)res.n)->set_is_constant(true);
+                break;
+              default:
+                break;
+              }
+
+              break;
+            }
+
+          // subprogram access kinds
+          case An_Access_To_Function:
+          case An_Access_To_Protected_Function:
+          case An_Access_To_Procedure:
+          case An_Access_To_Protected_Procedure:
+            {
+              logWarn() << "subprogram access type support incomplete" << std::endl;
+
+              if (access_type_kind == An_Access_To_Function ||
+                  access_type_kind == An_Access_To_Protected_Function) {
+                // these are functions, so we need to worry about return types
+                isFuncAccess = true;
+              }
+
+              if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
+                logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
+                /*
+                ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+
+                SgFunctionParameterList& lst   = mkFunctionParameterList();
+                SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+                ParameterCompletion{range,ctx}(lst, ctx);
+
+                ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
+                */
+              }
+
+              res.n = &mkAdaAccessType(NULL);
+              ((SgAdaAccessType*)res.n)->set_is_object_type(false);
+
+              if (isFuncAccess) {
+                SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
+                ((SgAdaAccessType*)res.n)->set_return_type(&rettype);
+              }
+
+              // if protected, set the flag
+              if (access_type_kind == An_Access_To_Protected_Procedure ||
+                  access_type_kind == An_Access_To_Protected_Function) {
+                ((SgAdaAccessType*)res.n)->set_is_protected(true);
+              }
+
+              break;
+            }
+          default:
+            logWarn() << "Unhandled access type kind." << std::endl;
+            res.n = sb::buildVoidType();
+          }
+
+          break;
+        }
+
       case Not_A_Type_Definition: /* break; */     // An unexpected element
       case A_Root_Type_Definition:                 // 3.5.4(14):  3.5.6(3)
       case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
@@ -473,7 +549,6 @@ namespace
       //  //|A2005 start
       case An_Interface_Type_Definition:           // 3.9.4      -> Interface_Kinds
       //  //|A2005 end
-      case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
       default:
         {
           logWarn() << "unhandled type kind " << typenode.Type_Kind << std::endl;
@@ -495,7 +570,7 @@ namespace
     {
       case A_Type_Definition:
         {
-          TypeData resdata = getTypeFoundation(def, ctx);
+          TypeData resdata = getTypeFoundation("", def, ctx);
 
           res = isSgType(resdata.n);
           ROSE_ASSERT(res);
@@ -553,7 +628,7 @@ namespace
   }
 
   SgTypedefDeclaration&
-  declareIntSubtype(const std::string& name, int lo, int hi, SgAdaPackageSpec& scope)
+  declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
   {
     SgTypeInt&            ty = SG_DEREF(sb::buildIntType());
     SgIntVal&             lb = SG_DEREF(sb::buildIntVal(lo));
@@ -566,7 +641,75 @@ namespace
     scope.append_statement(&sgnode);
     return sgnode;
   }
+
+  SgInitializedName&
+  declareException(const std::string& name, SgType& base, SgAdaPackageSpec& scope)
+  {
+    SgInitializedName&              sgnode = mkInitializedName(name, base, nullptr);
+    std::vector<SgInitializedName*> exdecl{ &sgnode };
+    SgVariableDeclaration&          exvar = mkExceptionDecl(exdecl, scope);
+
+    exvar.set_firstNondefiningDeclaration(&exvar);
+    scope.append_statement(&exvar);
+    return sgnode;
+  }
+
+  SgAdaPackageSpecDecl&
+  declarePackage(const std::string& name, SgAdaPackageSpec& scope)
+  {
+    SgAdaPackageSpecDecl& sgnode = mkAdaPackageSpecDecl(name, scope);
+    SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
+
+    scope.append_statement(&sgnode);
+    sgnode.set_scope(&scope);
+
+    markCompilerGenerated(pkgspec);
+    markCompilerGenerated(sgnode);
+    return sgnode;
+  }
 } // anonymous
+
+std::pair<SgInitializedName*, SgAdaRenamingDecl*>
+getExceptionBase(Element_Struct& el, AstContext ctx)
+{
+  ROSE_ASSERT(el.Element_Kind == An_Expression);
+
+  NameData        name = getQualName(el, ctx);
+  Element_Struct& elem = name.elem();
+
+  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  Expression_Struct& ex  = elem.The_Union.Expression;
+
+  //~ use this if package standard is included
+  //~ return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+
+  // first try: look up in user defined exceptions
+  if (SgInitializedName* ini = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
+    return std::make_pair(ini, nullptr);
+
+  // second try: look up in renamed declarations
+  if (SgDeclarationStatement* dcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
+  {
+    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(dcl));
+
+    return std::make_pair(nullptr, &rendcl);
+  }
+
+  // third try: look up in exceptions defined in standard
+  if (SgInitializedName* ini = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image}))
+    return std::make_pair(ini, nullptr);
+
+  // last resort: create a new initialized name representing the exception
+  ROSE_ASSERT(!FAIL_ON_ERROR);
+  logError() << "Unknown exception: " << ex.Name_Image << std::endl;
+
+  // \todo create an SgInitializedName if the exception was not found
+  SgInitializedName& init = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
+
+  init.set_scope(&ctx.scope());
+  return std::make_pair(&init, nullptr);
+}
+
 
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx)
@@ -634,7 +777,8 @@ getConstraintID(Element_ID el, AstContext ctx)
       res = &mkAdaRangeConstraint(mkRangeExp());
   }
 
-  return SG_DEREF(res);
+  attachSourceLocation(SG_DEREF(res), elem, ctx);
+  return *res;
 }
 
 
@@ -660,9 +804,18 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
   return getDefinitionType(elem.The_Union.Definition, ctx);
 }
 
+SgClassDeclaration&
+getParentRecordDeclID(Element_ID defid, AstContext ctx)
+{
+  Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
+  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+
+  return getParentRecordDecl(elem.The_Union.Definition, ctx);
+}
+
 
 TypeData
-getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
+getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
   ROSE_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
 
@@ -672,7 +825,7 @@ getTypeFoundation(Declaration_Struct& decl, AstContext ctx)
   Definition_Struct&      def = elem.The_Union.Definition;
   ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
 
-  return getTypeFoundation(def, ctx);
+  return getTypeFoundation(name, def, ctx);
 }
 
 void initializeAdaTypes(SgGlobal& global)
@@ -683,41 +836,67 @@ void initializeAdaTypes(SgGlobal& global)
 
   hiddenScope.set_parent(&global);
 
-  // \todo reconsider using a true Ada exception representation
-  adaTypes()["EXCEPTION"]         = sb::buildOpaqueType("Exception", &hiddenScope);
+  SgType&           exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &hiddenScope));
 
-  adaTypes()["INTEGER"]           = sb::buildIntType();
-  adaTypes()["CHARACTER"]         = sb::buildCharType();
-  adaTypes()["LONG_INTEGER"]      = sb::buildLongType(); // Long int
-  adaTypes()["LONG_LONG_INTEGER"] = sb::buildLongLongType(); // Long long int
+  // \todo reconsider using a true Ada exception representation
+  adaTypes()["EXCEPTION"]           = &exceptionType;
+
+  adaTypes()["INTEGER"]             = sb::buildIntType();
+  adaTypes()["CHARACTER"]           = sb::buildCharType();
+  adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
+  adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
+  adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
+  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, hiddenScope).get_type();
 
   // \todo items
-  adaTypes()["FLOAT"]             = sb::buildFloatType(); // Float is a subtype of Real
-  adaTypes()["LONG_LONG_FLOAT"]   = sb::buildLongDoubleType(); // Long long Double?
+  adaTypes()["FLOAT"]               = sb::buildFloatType();  // Float is a subtype of Real
+  adaTypes()["SHORT_FLOAT"]         = sb::buildFloatType();  // Float is a subtype of Real
+  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType(); // Float is a subtype of Real
+  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
 
   // \todo instead of ADAMAXINT a type attribute Integer'Last shall be set
-  adaTypes()["POSITIVE"]          = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
-  adaTypes()["NATURAL"]           = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
+  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
+  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
 
   //\todo reconsider modeling Boolean as an enumeration of True and False
-  adaTypes()["BOOLEAN"]           = sb::buildBoolType();
+  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
 
   // String is represented as Fortran-String with null
-  adaTypes()["STRING"]            = sb::buildStringType(sb::buildNullExpression());
+  adaTypes()["STRING"]              = sb::buildStringType(sb::buildNullExpression());
+
+  // Ada standard exceptions
+  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, hiddenScope);
+  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, hiddenScope);
+  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, hiddenScope);
+  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, hiddenScope);
+
+  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", hiddenScope);
+  adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
 
 
 
 void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 {
-  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  SgExpression* exceptExpr = nullptr;
 
-  Expression_Struct& asisexpr  = elem.The_Union.Expression;
-  SgInitializedName& exception = getException(asisexpr, ctx);
-  SgExpression&      exref     = mkExceptionRef(exception, ctx.scope());
-  SgType&            extype    = mkExceptionType(exref);
+  if (elem.Element_Kind == An_Expression)
+  {
+    auto              expair = getExceptionBase(elem, ctx);
+    SgScopeStatement& scope = ctx.scope();
 
-  lst.push_back(&extype);
+    exceptExpr = expair.first ? &mkExceptionRef(*expair.first, scope)
+                              : &mkAdaRenamingRefExp(SG_DEREF(expair.second))
+                              ;
+
+    attachSourceLocation(SG_DEREF(exceptExpr), elem, ctx);
+  }
+  else if (elem.Element_Kind == A_Definition)
+  {
+    exceptExpr = &getDefinitionExpr(elem, ctx);
+  }
+
+  lst.push_back(&mkExceptionType(SG_DEREF(exceptExpr)));
 }
 
 ExHandlerTypeCreator::operator SgType&() const

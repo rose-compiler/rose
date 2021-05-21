@@ -1,0 +1,52 @@
+with "asis";
+
+library project ASIS_Adapter is
+
+   for Library_Name use "asis_adapter";
+   for Library_Dir  use "./lib";
+   for Library_Kind use "dynamic";
+   
+   -- This is a "stand-alone library". See
+   -- https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html#library-projects
+   for Interfaces use 
+     (-- C interfaces:
+      "a_nodes.h",
+      "adapter_wrapper.h",
+      -- Ada interfaces:
+      "a_nodes.ads",
+      "a_nodes_h.ads",
+      "a_nodes_h-support.ads",
+      "asis_adapter.ads",
+      "asis_adapter-context.ads",
+      "asis_adapter-tool.ads",
+      "asis_adapter-unit.ads",
+      "dot.ads",
+      "indented_text.ads",
+      "adapter_wrapper_h.ads");
+--   for Library_Standalone use "encapsulated";
+   for Library_Auto_Init use "false";
+   
+   for Source_Dirs use
+     ("./source",
+      "./include");
+     
+   for Object_Dir use "./obj";
+
+   for Languages use ("Ada", "C");
+
+   package Compiler is
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+   end Compiler;
+
+   -- Linker switches are not taken into account in library projects
+   
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+   package Binder is
+      for Switches ("ada") use ("-E");
+   end Binder;
+
+end ASIS_Adapter;
+

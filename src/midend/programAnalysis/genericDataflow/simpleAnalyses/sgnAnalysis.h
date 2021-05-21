@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef SGN_ANALYSIS_H
 #define SGN_ANALYSIS_H
 
@@ -188,4 +191,5 @@ class SgnAnalysis : public IntraFWDataflow
 void printSgnAnalysisStates(SgnAnalysis* sa, string indent="");
 
 
+#endif
 #endif

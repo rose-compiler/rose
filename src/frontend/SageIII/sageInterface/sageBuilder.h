@@ -19,7 +19,7 @@
 
 #include "sageInterface.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 // forward declarations required for templated functions using those functions
 namespace SageInterface {
@@ -806,6 +806,30 @@ ROSE_DLL_API SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprList
 ROSE_DLL_API SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+
+//! Build member function calls
+/*! 
+ *Create a member function call
+ *  This function looks for the function symbol in the given className
+ *  The function should exist in the class
+ *  The class should be #included or present in the source file parsed by frontend
+ *   
+ * Parameters: 
+ *  className: template class name, e.g. vector
+ *  objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1; 
+ *  functionName: member function name: size
+ *  params: function parameter list
+ *  scope: the scope this function call expression will be inserted into.
+ * Credit to Peter's previous work at:  
+ * projects/MatlabTranslation/src/transformations/MatlabSimpleTransformer.cc
+ */
+ROSE_DLL_API SgFunctionCallExp* 
+buildMemberFunctionCall (std::string className, SgExpression *objectExpression, std::string functionName, SgExprListExp *params, SgScopeStatement *scope);
+  
+//! Build member function calls. objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1;
+ROSE_DLL_API SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
+                                          SgExprListExp*    params);
+
 SgTypeTraitBuiltinOperator*
 buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
 
@@ -1423,6 +1447,9 @@ ROSE_DLL_API SgJovialForThenStatement* buildJovialForThenStatement_nfi(SgExpress
 //! class declaration and definition (creating both the defining and nondefining declarations as required).
 ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& name, SgScopeStatement* scope=NULL);
 
+//! Build a Fortran module declaration.
+ROSE_DLL_API SgModuleStatement * buildModuleStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/);
+
 //! Build a Jovial table declaration statement
 ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name,
                                                                  SgClassDeclaration::class_types kind, SgScopeStatement* scope=NULL);
@@ -1607,6 +1634,12 @@ ROSE_DLL_API PreprocessingInfo* buildComment(SgLocatedNode* target, const std::s
 ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target,
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
+
+//! Build a dangling #include "x.h" header,  insertHeader() is needed to actually insert it
+ROSE_DLL_API PreprocessingInfo* buildHeader(const std::string& header_filename, 
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
+               bool isSystemHeader =false);
+
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode

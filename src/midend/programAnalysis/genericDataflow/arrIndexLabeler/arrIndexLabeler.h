@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ARR_INDEX_LABELER_H
 #define ARR_INDEX_LABELER_H
 
@@ -28,4 +31,5 @@ int getArrayDim(SgPntrArrRefExp* n);
 // returns the list of index expressionf in the given SgPntrArrRefExp
  std::list<SgExpression*>& getArrayIndexExprs(SgPntrArrRefExp* n);
 }
+#endif
 #endif

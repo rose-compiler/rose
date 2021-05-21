@@ -810,10 +810,10 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 //  has not yet been inserted. So it has no declaration associated with a symbol
 //  cout<<friend_proto->unparseToString()<<endl; 
 
-  if (enable_debug)
+  if (enable_debug) {
     ROSE_ASSERT(friend_proto != NULL);
     printf ("Exiting insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
-
+  }
 
   return friend_proto;
 }
@@ -1608,7 +1608,7 @@ Outliner::insert (SgFunctionDeclaration* func,
    }
 
 #if 0
-   printf ("In Outliner::insert(): Outliner::useNewFile = %s \n",Outliner::useNewFile == true ? "true" : "false");
+     printf ("In Outliner::insert(): Outliner::useNewFile = %s \n",Outliner::useNewFile == true ? "true" : "false");
 #endif
 
   // This is the outlined function prototype that is put into the separate file (when outlining is done to a separate file).
@@ -1643,25 +1643,41 @@ Outliner::insert (SgFunctionDeclaration* func,
           printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s \n",isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false");
         }
 #endif
+       // DQ (3/17/2021): Get the first statement of the scope.
+       // SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
+          bool includingCompilerGenerated = false;
+          SgStatement* firstStatement = SageInterface::getFirstStatement(scope,includingCompilerGenerated);
+          ROSE_ASSERT(firstStatement != NULL);
+          if (firstStatement != NULL)
+             {
+               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
 
+            // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
+            // whitespace will be unparsed from the AST, instead of the token stream.
+               firstStatement->set_containsTransformationToSurroundingWhitespace(true);
+             }
+#if 1
        // scope->append_declaration (outlinedFileFunctionPrototype);
           scope->prepend_declaration (outlinedFileFunctionPrototype);
-
+#else
+       // DQ (3/17/2021): Testing the insertion of the function prototype and the unparsing of comments and CPP directives around it.
+          printf ("Skipping the insertion of the outlinedFileFunctionPrototype at the top of the file \n");
+#endif
        // DQ (11/9/2019): When used in conjunction with header file unparsing we need to set the physical file id on entirety of the subtree being inserted.
           SageBuilder::fixupSourcePositionFileSpecification(outlinedFileFunctionPrototype,filenameFromID);
 
+       // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
+       // whitespace will be unparsed from the AST, instead of the token stream.
+          outlinedFileFunctionPrototype->set_containsTransformationToSurroundingWhitespace(true);
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
-
-
        // DQ (9/26/2019): Trying to trace down where there is a SgFunctionParameterList with parent not being set!
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_parameterList()->get_parent() != NULL);
 
        // DQ (9/26/2019): Trying to trace down where there is a SgFunctionParameterList with parent not being set!
           ROSE_ASSERT(func->get_parameterList()->get_parent() != NULL);
-
 #if 0
           printf ("After: Number of symbols in scope = %p symbol table = %d \n",scope,scope->get_symbol_table()->size());
           printf ("In Outliner::insert(): outlinedFileFunctionPrototype = %p name = %s \n",outlinedFileFunctionPrototype,outlinedFileFunctionPrototype->get_name().str());

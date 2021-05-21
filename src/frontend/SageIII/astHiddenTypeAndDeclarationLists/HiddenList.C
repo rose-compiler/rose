@@ -578,7 +578,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
 #else
 // tps (12/7/2009) This is currently not defined since it fails in Release mode
 #pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement: UsingDirectivesSet commented out right now.")
-ROSE_ASSERT(false);
+ROSE_ABORT();
 
 #endif
                         if(!AvailableHidden_Functions_Variables.empty() || !AvailableHidden_Types.empty() || !ElaboratingForcingHidden_Types.empty()  ) {
@@ -1413,7 +1413,7 @@ ROSE_ASSERT(false);
 #else
                                                         // tps (12/7/2009) This is currently not defines since it fails in Release mode
 #pragma message ("WARNING: HiddenList: InheritedAttributeSgScopeStatement4: UsingDirectivesSet commented out right now.")
- ROSE_ASSERT(false);
+ ROSE_ABORT();
 
 #endif
 

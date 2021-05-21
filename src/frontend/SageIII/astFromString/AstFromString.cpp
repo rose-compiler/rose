@@ -343,7 +343,7 @@ namespace AstFromString
         default:
           {
             cerr<<"error: unhandled symbol type in afs_match_identifier():"<<sym->class_name()<<endl;
-            assert(false);
+            ROSE_ABORT();
           }
       }
     }
@@ -531,7 +531,7 @@ namespace AstFromString
       else
       {
         printf("error. afs_match_unary_expression(): unimplemented unary operator type:\n");
-        assert(0);
+        ROSE_ABORT();
       }
 
       if (afs_match_cast_expression())
@@ -560,7 +560,7 @@ namespace AstFromString
             break;
           default:
             printf("afs_match_unary_expression(): unhandled unary operator type\n");
-            assert (0);
+            ROSE_ABORT ();
         }  
 
         result = true;
@@ -614,7 +614,7 @@ namespace AstFromString
     if (sq_list.size() ==0)
     {
       printf("error in AstFromString::decode_list(): empty list!\n");  
-      assert (0);
+      ROSE_ABORT ();
     }
     else if (sq_list.size() == 1)
     {
@@ -687,7 +687,7 @@ namespace AstFromString
         else
         {
           printf("Error: AstFromString::decode_list(), found 'long' without companying 'int' or 'double'\n"); 
-          assert (0);
+          ROSE_ABORT ();
         }
 
       } 
@@ -762,7 +762,7 @@ namespace AstFromString
             if (has_signed || has_unsigned)
             {
               cerr<<"Error: AstFromString::decode_list(), illegal use  of 'signed' with type: "<<c_parsed_node->class_name()<<endl;
-              assert (0);
+              ROSE_ABORT ();
             }
           }
       }
@@ -1162,7 +1162,7 @@ namespace AstFromString
         else
         {
           printf("error. afs_match_multiplicative_expression() illegal branch reached.\n");
-          assert (0);
+          ROSE_ABORT ();
         }
      // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      // result = true;
@@ -1259,7 +1259,7 @@ namespace AstFromString
         }
         else
         {
-          assert (0);
+          ROSE_ABORT ();
         }
         //result = true;
       }
@@ -1670,7 +1670,7 @@ namespace AstFromString
         }
         else
         {
-          assert (0);
+          ROSE_ABORT ();
         }
         //result = true;
       }
@@ -1766,7 +1766,7 @@ namespace AstFromString
         }
         else
         { // impossible branch
-          assert (0);
+          ROSE_ABORT ();
         }
         //result = true;
       }
@@ -1852,7 +1852,7 @@ namespace AstFromString
         }
         else
         {
-          assert (0);
+          ROSE_ABORT ();
         }
         //result = true;
       }
@@ -1995,7 +1995,7 @@ namespace AstFromString
               c_parsed_node = buildIorAssignOp(lhs, rhs);
               break;
             default:
-              assert (false);
+              ROSE_ABORT ();
           }  
           result = true;
         } 
@@ -2282,7 +2282,7 @@ postfix_operator
       else
       {
         printf("error. afs_match_postfix_expression() reaches impossible if-else-if branch.\n");
-        assert(0);
+        ROSE_ABORT();
       }    
 
       // try next round
@@ -2615,7 +2615,7 @@ postfix_operator
           else
           {
             //impossible branch reached.
-            assert (0);
+            ROSE_ABORT ();
           }
           assert (isSgLabelStatement(c_parsed_node)!=NULL);   
           assert (isSgLabelStatement(c_parsed_node)->get_statement()!=NULL);   
@@ -2712,7 +2712,7 @@ selection_statement
       if (! afs_match_statement())
       {
         printf("error. afs_match_selection_statement() expects statement after matching 'if' '(' expression ')'\n");
-        assert(0);
+        ROSE_ABORT();
       }
       SgStatement* true_stmt = isSgStatement(c_parsed_node);
       assert (true_stmt!=NULL);
@@ -2765,20 +2765,20 @@ iteration_statement
       if (!afs_match_expression())
       {
         printf("error. afs_match_iteration_statement() expects expression after matching 'do' statement 'while' '('\n");
-        assert (0);
+        ROSE_ABORT ();
       }
       SgExpression* exp = isSgExpression (c_parsed_node);
       assert (exp != NULL);
        if (!afs_match_char(')'))
       {
         printf("error. afs_match_iteration_statement() expects ')' after matching 'do' statement 'while' '(' expression ')' \n");
-        assert (0);
+        ROSE_ABORT ();
       }
  
       if (!afs_match_char(';'))
       {
         printf("error. afs_match_iteration_statement() expects ';' after matching 'do' statement 'while' '(' expression ')' \n");
-        assert (0);
+        ROSE_ABORT ();
       }
 
       c_parsed_node = buildDoWhileStmt (stmt, buildExprStatement(exp));
@@ -2793,7 +2793,7 @@ iteration_statement
       if (! afs_match_expression_statement() )
       {
          printf("error. afs_match_iteration_statement() expects 'expression_statement' after matching 'for' '(' expression_statement\n");
-         assert (0);
+         ROSE_ABORT ();
       }
       SgStatement* test_stmt = isSgStatement (c_parsed_node);
       SgExpression* incr_exp = NULL;
@@ -2802,7 +2802,7 @@ iteration_statement
       if (! (afs_match_char(')') && afs_match_statement()))
       {
          printf("error. afs_match_iteration_statement() expects ')' statement after matching 'for' '(' expression_statement expression_statement expression? \n");
-         assert (0);
+         ROSE_ABORT ();
       }
       SgStatement * body = isSgStatement(c_parsed_node);
       c_parsed_node = buildForStatement (init_stmt, test_stmt, incr_exp, body);
@@ -2980,8 +2980,7 @@ so we take a short cut to match init_declartor() instead of init_declarator_list
 
       if (!afs_match_additive_expression()) {
         c_char = old_char;
-        assert(false);
-        return false;
+        ROSE_ABORT();
       }
       SgExpression * expr = isSgExpression(c_parsed_node);
       assert(expr != NULL);

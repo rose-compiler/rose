@@ -34,7 +34,8 @@ set(CxxGrammarMetaProgram_SRCS
   buildAstFileIO.C
   buildStorageClasses.C
   buildConstructorsWithoutSourcePositionInformation.C
-  outputClassesAndFields.C)
+  outputClassesAndFields.C
+  StringUtility.C)
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES

@@ -7,12 +7,12 @@ static const char *description =
     "the execution with a previously saved trace and report differences.";
 
 #include <rose.h>
-#include <BinaryDebugger.h>                             // rose
-#include <CommandLine.h>                                // rose
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/CommandLine.h>
 #include <rose_getline.h>                               // rose
 #include <rose_strtoull.h>                              // rose
-#include <Partitioner2/Engine.h>                        // rose
-#include <Partitioner2/Partitioner.h>                   // rose
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
@@ -270,7 +270,7 @@ main(int argc, char *argv[]) {
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"tracing process...\n";
     auto trace = process->trace(filter);
-    mlog[INFO] <<"tracing process; took " <<timer <<" seconds\n";
+    mlog[INFO] <<"tracing process; took " <<timer <<"\n";
     mlog[INFO] <<"process " <<process->howTerminated() <<"\n";
     filter.finalCheck();
 

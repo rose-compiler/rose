@@ -769,7 +769,7 @@ createType(int typeCode)
           default:
           {   
                printf ("Default reached in createType: typeCode = %d \n",typeCode);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
           }
        }
 
@@ -822,7 +822,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
                default:
                   {
                     printf ("Error: default reached relOp = %s \n",name.c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -833,7 +833,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
              {
             // Not sure what these would be.
                printf ("2 character unary operators not implemented relOp = %s \n",name.c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
             else
              {
@@ -845,7 +845,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
                       else
                        {
                          printf ("Error: not sure what the operator is: %s \n",name.c_str());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
                  else
@@ -860,7 +860,7 @@ createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_opera
                            else
                             {
                               printf ("n != 1,2,4,5 character operators not implemented relOp = %s \n",name.c_str());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -920,7 +920,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                default:
                   {
                     printf ("Error: default reached relOp = %s \n",name.c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -931,7 +931,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
              {
             // This is likely the case of ">=", "<=", "/=", "=="
             // printf ("2 character operators not implemented relOp = %s \n",name.c_str());
-            // ROSE_ASSERT(false);
+            // ROSE_ABORT();
 
                if (name == "<=")
                   {
@@ -965,7 +965,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                                      else
                                       {
                                         printf ("2 character operator not implemented relOp = %s \n",name.c_str());
-                                        ROSE_ASSERT(false);
+                                        ROSE_ABORT();
                                       }
                                  }
                             }
@@ -1021,7 +1021,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                                                     else
                                                      {
                                                        printf ("4 character operator not implemented relOp = %s \n",name.c_str());
-                                                       ROSE_ASSERT(false);
+                                                       ROSE_ABORT();
                                                      }
                                                 }
                                            }
@@ -1049,7 +1049,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                                 else
                                  {
                                    printf ("n != 2,4,5 character operators not implemented relOp = %s \n",name.c_str());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -1066,7 +1066,7 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
                                 else
                                  {
                                    printf ("n != 2,4,5,6 character operators not implemented relOp = %s \n",name.c_str());
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -1962,7 +1962,7 @@ setStatementStringLabel(SgStatement* stmt, Token_t* label)
                default:
                   {
                     printf ("Error: set_string_label() not defined for this statement = %p = %s \n",stmt,stmt->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
              }
         }
@@ -2257,7 +2257,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
                astUnresolvedFunctionsList.push_front(functionDeclaration);
 #if 0
                printf ("Error: scope marked as implict none, so we must construct name = %s as a function (function reference expression) \n",variableName.str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
              }
             else
@@ -4203,16 +4203,14 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
         {
           case AttrSpec_none:
                printf ("Error: Unsupported option for astAttributeSpec = %d \n",astAttributeSpec);
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
 
           case AttrSpec_access:
              {
             // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
             // It should be filtered out so that will not see this case in this function.
                printf ("Error: Unsupported option for astAttributeSpec = %d \n",astAttributeSpec);
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
              }
 
           case AttrSpec_language_binding:
@@ -4264,7 +4262,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                   }
 #if 0
                printf ("Exiting after setting all the variables in a variable declaration as protected \n");
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
 #endif
                break;
              }
@@ -4298,7 +4296,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                     default:
                        {
                          printf ("Error: default reached in switch(astIntentSpecStack.front()) astIntentSpecStack.front() = %d \n",astIntentSpecStack.front());
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                   }
                astIntentSpecStack.pop_front();
@@ -4378,18 +4376,17 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // DQ (8/28/2010): Uncommented this out (problems here are likely due to another bug where the ComponentAttrSpec_len is not set properly.
             // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
+               ROSE_ABORT();
 
           case ComponentAttrSpec_contiguous:
-               printf ("Error: ComponentAttrSpec_contiguous used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
+            // Pei-Hung(03/26/2021) set storage modifier to contiguous attribute
+               variableDeclaration->get_declarationModifier().get_storageModifier().setContiguous();    
                break;
 
           default:
              {
                printf ("Error: default reached astAttributeSpec = %d \n",astAttributeSpec);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
    }
@@ -4823,7 +4820,7 @@ generateFunctionCall( Token_t* nameToken )
 #endif
 #if 0
      printf ("Exting after test! \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 
   // DQ (12/11/2010): If the name of this function is not found a function of this 
@@ -5256,7 +5253,7 @@ markDoLoopAsUsingEndDo()
      else
         {
            printf ("Error: do-loop, while-loop, or forall-loop should be at the top of the astScopeStack! currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-           ROSE_ASSERT(false);
+           ROSE_ABORT();
         }
    }
 
@@ -5384,7 +5381,7 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
                             {
                            // This branch should not be called now!  This function should not be used in initialization.
                               printf ("subscript evaluation used in type initialization \n");
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }
@@ -5520,7 +5517,7 @@ isPubliclyAccessible( SgSymbol* symbol )
              {
             // This case is not handled yet
                printf ("In isPubliclyAccessible(): Uknown symbol_basis = %p = %s \n",symbol_basis,symbol_basis->class_name().c_str());
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
        
@@ -6001,9 +5998,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from ISO_FORTRAN_ENV into the local scope \n");
 
           printf ("Sorry: ISO_FORTRAN_ENV intrinsic module not implemented yet. \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
      if (matchingName(name,"IEEE_EXCEPTIONS") == true)
@@ -6012,9 +6007,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from IEEE_EXCEPTIONS into the local scope \n");
 
           printf ("Sorry: IEEE_EXCEPTIONS intrinsic module not implemented yet. \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
      if (matchingName(name,"IEEE_ARITHMETIC") == true)
@@ -6023,9 +6016,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from IEEE_ARITHMETIC into the local scope \n");
 
           printf ("Sorry: IEEE_ARITHMETIC intrinsic module not implemented yet. \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
      if (matchingName(name,"IEEE_FEATURES") == true)
@@ -6034,9 +6025,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from IEEE_FEATURES into the local scope \n");
 
           printf ("Sorry: IEEE_FEATURES intrinsic module not implemented yet. \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
      if (matchingName(name,"OMP_LIB") == true)
@@ -6045,9 +6034,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from OMP_LIB into the local scope \n");
 
           printf ("Error: OMP_LIB intrinsic module not defined (non-standard intrinsic module). \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
      if (matchingName(name,"OMP_LIB_KINDS") == true)
@@ -6056,9 +6043,7 @@ buildIntrinsicModule ( const string & name )
           printf ("Insert types and variables from OMP_LIB_KINDS into the local scope \n");
 
           printf ("Error: OMP_LIB_KINDS intrinsic module not defined (non-standard intrinsic module). \n");
-          ROSE_ASSERT(false);
-
-          ROSE_ASSERT(moduleSymbol != NULL);
+          ROSE_ABORT();
         }
 
 #if 0

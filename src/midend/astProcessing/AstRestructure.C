@@ -20,7 +20,7 @@ AstRestructure::lock(SgNode* astNode) {
       cout << "Node: " << astNode->sage_class_name() << " locked." << endl;
     } else {
       cerr << "ERROR: attempted to re-lock node " << astNode->sage_class_name() << " @" << astNode << endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 }
 
@@ -40,7 +40,7 @@ AstRestructure::unlock(SgNode* astNode) {
       }
     } else {
       cerr << "ERROR: attempted to unlock non-locked node " << astNode->sage_class_name() << " @" << astNode << endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
     }
 }
 
