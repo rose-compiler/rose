@@ -3,8 +3,8 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
-#include "Diagnostics.h"
-#include "TraceSemantics2.h"
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <syscall.h>
@@ -43,7 +43,7 @@ RSIM_Thread::pop() {
     BaseSemantics::SValuePtr oldSp = operators()->readRegister(SP);
     BaseSemantics::SValuePtr dflt = operators()->undefined_(resultWidth);
     BaseSemantics::SValuePtr retval = operators()->readMemory(SS, oldSp, dflt, operators()->boolean_(true));
-    BaseSemantics::SValuePtr newSp = operators()->add(oldSp, operators()->number_(oldSp->get_width(), resultWidth/8));
+    BaseSemantics::SValuePtr newSp = operators()->add(oldSp, operators()->number_(oldSp->nBits(), resultWidth/8));
     operators()->writeRegister(SP, newSp);
     return retval;
 }
@@ -80,7 +80,7 @@ RSIM_Thread::id()
 
     char buf2[64];
     RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
-    uint64_t eip = operators()->readRegister(IP)->get_number();
+    uint64_t eip = operators()->readRegister(IP)->toUnsigned().get();
 
     int n = snprintf(buf2, sizeof(buf2), "0x%08" PRIx64"[%zu]: ", eip, operators()->nInsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
@@ -124,7 +124,7 @@ SgAsmInstruction *
 RSIM_Thread::current_insn()
 {
     RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
-    rose_addr_t ip = operators()->readRegister(IP)->get_number();
+    rose_addr_t ip = operators()->readRegister(IP)->toUnsigned().get();
     SgAsmInstruction *insn = get_process()->get_instruction(ip);
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
@@ -205,7 +205,7 @@ RSIM_Thread::syscall_arg(int idx)
         ASSERT_require((size_t)idx < get_process()->get_simulator()->syscallArgumentRegisters().size());
         reg = get_process()->get_simulator()->syscallArgumentRegisters()[idx];
     }
-    return operators()->readRegister(reg)->get_number();
+    return operators()->readRegister(reg)->toUnsigned().get();
 }
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
@@ -423,7 +423,7 @@ RSIM_Thread::sys_rt_sigreturn()
     /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
      * pretcode. Unlike the sigframe_32 stack frame, the rt_sigframe_32 stack frame's retcode does not pop the signal number
      * nor the other handler arguments, and why should it since we're about to restore the hardware context anyway. */
-    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
+    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->toUnsigned().get();
     uint32_t frame_va = sp - 4;
 
     RSIM_SignalHandling::rt_sigframe_32 frame;
@@ -445,7 +445,7 @@ RSIM_Thread::sys_rt_sigreturn()
 
     /* Restore hardware context */
     pt_regs_32 regs;
-    uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->get_number();
+    uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->toUnsigned().get();
     sighand.restore_sigcontext(frame.uc.uc_mcontext, eflags, &regs);
     init_regs(regs);
     return 0;
@@ -465,7 +465,7 @@ RSIM_Thread::sys_sigreturn()
 
     /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
      * pretcode, and the retcode popped the signo. */
-    uint32_t sp = operators()->readRegister(x86->REG_ESP)->get_number();
+    uint32_t sp = operators()->readRegister(x86->REG_ESP)->toUnsigned().get();
     uint32_t frame_va = sp - 8; 
 
     RSIM_SignalHandling::sigframe_32 frame;
@@ -489,7 +489,7 @@ RSIM_Thread::sys_sigreturn()
 
     /* Restore hardware context.  Restore only certain flags. */
     PtRegs regs;
-    uint32_t eflags = operators()->readRegister(x86->REG_EFLAGS)->get_number();
+    uint32_t eflags = operators()->readRegister(x86->REG_EFLAGS)->toUnsigned().get();
     sighand.restore_sigcontext(frame.sc, eflags, &regs);
     init_regs(regs);
     return 0;
@@ -647,8 +647,8 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
     }
 
     size_t wordWidth = IP.nBits();
-    rose_addr_t bp = operators()->readRegister(BP)->get_number();
-    rose_addr_t ip = operators()->readRegister(IP)->get_number();
+    rose_addr_t bp = operators()->readRegister(BP)->toUnsigned().get();
+    rose_addr_t ip = operators()->readRegister(IP)->toUnsigned().get();
 
     static const int maxStackFrames = 32;               // arbitrary
     for (int i=0; i<maxStackFrames; i++) {
@@ -672,7 +672,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
             /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
              * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
              * frames. */
-            rose_addr_t sp = operators()->readRegister(SP)->get_number();
+            rose_addr_t sp = operators()->readRegister(SP)->toUnsigned().get();
             if (32 == wordWidth) {
                 uint32_t tmp;
                 if (4!=process->mem_read(&tmp, sp, 4))
@@ -773,7 +773,7 @@ RSIM_Thread::main()
         report_progress_maybe();
         try {
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
-            uint64_t ip = operators()->readRegister(IP)->get_number();
+            uint64_t ip = operators()->readRegister(IP)->toUnsigned().get();
             if (ip == SIGHANDLER_RETURN) {
                 ASSERT_not_null(x86);
                 pop();
@@ -801,7 +801,7 @@ RSIM_Thread::main()
             do {
                 insn = current_insn();
                 cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
-            } while (insn->get_address()!=operators()->readRegister(IP)->get_number());
+            } while (insn->get_address()!=operators()->readRegister(IP)->toUnsigned().get());
 
             /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
@@ -906,33 +906,33 @@ RSIM_Thread::get_regs() const
     ASSERT_not_null(x86);
 
     // 32-bit registers (stored as 64-bit values)
-    regs.ip = operators()->readRegister(x86->REG_anyIP)->get_number();
-    regs.ax = operators()->readRegister(x86->REG_anyAX)->get_number();
-    regs.bx = operators()->readRegister(x86->REG_anyBX)->get_number();
-    regs.cx = operators()->readRegister(x86->REG_anyCX)->get_number();
-    regs.dx = operators()->readRegister(x86->REG_anyDX)->get_number();
-    regs.si = operators()->readRegister(x86->REG_anySI)->get_number();
-    regs.di = operators()->readRegister(x86->REG_anyDI)->get_number();
-    regs.bp = operators()->readRegister(x86->REG_anyBP)->get_number();
-    regs.sp = operators()->readRegister(x86->REG_anySP)->get_number();
-    regs.cs = operators()->readRegister(x86->REG_CS)->get_number();
-    regs.ds = operators()->readRegister(x86->REG_DS)->get_number();
-    regs.es = operators()->readRegister(x86->REG_ES)->get_number();
-    regs.fs = operators()->readRegister(x86->REG_FS)->get_number();
-    regs.gs = operators()->readRegister(x86->REG_GS)->get_number();
-    regs.ss = operators()->readRegister(x86->REG_SS)->get_number();
-    regs.flags = operators()->readRegister(x86->REG_anyFLAGS)->get_number();
+    regs.ip = operators()->readRegister(x86->REG_anyIP)->toUnsigned().get();
+    regs.ax = operators()->readRegister(x86->REG_anyAX)->toUnsigned().get();
+    regs.bx = operators()->readRegister(x86->REG_anyBX)->toUnsigned().get();
+    regs.cx = operators()->readRegister(x86->REG_anyCX)->toUnsigned().get();
+    regs.dx = operators()->readRegister(x86->REG_anyDX)->toUnsigned().get();
+    regs.si = operators()->readRegister(x86->REG_anySI)->toUnsigned().get();
+    regs.di = operators()->readRegister(x86->REG_anyDI)->toUnsigned().get();
+    regs.bp = operators()->readRegister(x86->REG_anyBP)->toUnsigned().get();
+    regs.sp = operators()->readRegister(x86->REG_anySP)->toUnsigned().get();
+    regs.cs = operators()->readRegister(x86->REG_CS)->toUnsigned().get();
+    regs.ds = operators()->readRegister(x86->REG_DS)->toUnsigned().get();
+    regs.es = operators()->readRegister(x86->REG_ES)->toUnsigned().get();
+    regs.fs = operators()->readRegister(x86->REG_FS)->toUnsigned().get();
+    regs.gs = operators()->readRegister(x86->REG_GS)->toUnsigned().get();
+    regs.ss = operators()->readRegister(x86->REG_SS)->toUnsigned().get();
+    regs.flags = operators()->readRegister(x86->REG_anyFLAGS)->toUnsigned().get();
 
     // additional 64-bit registers
     if (get_process()->wordSize() == 64) {
-        regs.r15 = operators()->readRegister(x86->REG_R15)->get_number();
-        regs.r14 = operators()->readRegister(x86->REG_R14)->get_number();
-        regs.r13 = operators()->readRegister(x86->REG_R13)->get_number();
-        regs.r12 = operators()->readRegister(x86->REG_R12)->get_number();
-        regs.r11 = operators()->readRegister(x86->REG_R11)->get_number();
-        regs.r10 = operators()->readRegister(x86->REG_R10)->get_number();
-        regs.r9 = operators()->readRegister(x86->REG_R9)->get_number();
-        regs.r8 = operators()->readRegister(x86->REG_R8)->get_number();
+        regs.r15 = operators()->readRegister(x86->REG_R15)->toUnsigned().get();
+        regs.r14 = operators()->readRegister(x86->REG_R14)->toUnsigned().get();
+        regs.r13 = operators()->readRegister(x86->REG_R13)->toUnsigned().get();
+        regs.r12 = operators()->readRegister(x86->REG_R12)->toUnsigned().get();
+        regs.r11 = operators()->readRegister(x86->REG_R11)->toUnsigned().get();
+        regs.r10 = operators()->readRegister(x86->REG_R10)->toUnsigned().get();
+        regs.r9 = operators()->readRegister(x86->REG_R9)->toUnsigned().get();
+        regs.r8 = operators()->readRegister(x86->REG_R8)->toUnsigned().get();
     }
 
     return regs;
@@ -1268,7 +1268,7 @@ int
 RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 {
     const RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
-    uint32_t sp = operators()->readRegister(SP)->get_number();
+    uint32_t sp = operators()->readRegister(SP)->toUnsigned().get();
     return sighand.sigaltstack(in, out, sp);
 }
 
@@ -1283,7 +1283,7 @@ RSIM_Thread::emulate_syscall()
     DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
     ASSERT_not_null(x86);
 
-    unsigned callno = operators()->readRegister(x86->REG_anyAX)->get_number();
+    unsigned callno = operators()->readRegister(x86->REG_anyAX)->toUnsigned().get();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
         RSIM_Simulator *sim = get_process()->get_simulator();

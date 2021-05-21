@@ -9,7 +9,7 @@
 #else
 #include <rose_config.h>
 #include "IntelPinSupport.h"
-
+#include <ROSE_ABORT.h>
 #include <stdio.h>
 #endif
 
@@ -62,13 +62,13 @@ process_dwarf(string file_name)
     (void) elf_version(EV_NONE);
     if (elf_version(EV_CURRENT) == EV_NONE) {
         (void) fprintf(stderr, "dwarfdump: libelf.a out of date.\n");
-        assert(false);
+        ROSE_ABORT();
     }
 
     f = open(file_name.c_str(), O_RDONLY);
     if (f == -1) {
         fprintf(stderr, "ERROR:  can't open %s \n",file_name.c_str());
-        assert(false);
+        ROSE_ABORT();
     }
 
     cmd = ELF_C_READ;
@@ -107,13 +107,13 @@ process_dwarf(string file_name)
           if (dres == DW_DLV_NO_ENTRY)
              {
                printf("No DWARF information present in %s\n", file_name.c_str());
-               assert(false);
+               ROSE_ABORT();
              }
 
           if (dres != DW_DLV_OK)
              {
                printf ("Dwarf error: dwarf_elf_init \n");
-               assert(false);
+               ROSE_ABORT();
              }
 
           cmd = elf_next(elf);

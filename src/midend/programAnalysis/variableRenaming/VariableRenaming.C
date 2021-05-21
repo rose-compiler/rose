@@ -901,7 +901,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         if (attrs.size() != 0)
         {
             cout << "Error: Found VarRef with children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         //We want to assign this node its unique name, as well as adding it to the defs.
@@ -919,7 +919,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         if (attrs.size() != 0)
         {
             cout << "Error: Found ThisExp with children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         return VariableRenaming::VarRefSynthAttr(thisExp);
@@ -930,7 +930,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         if (attrs.size() != 2)
         {
             cout << "Error: Found dot operator without exactly 2 children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         //We want to update the naming for the RHS child
@@ -1034,7 +1034,7 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         if (attrs.size() != 2)
         {
             cout << "Error: Found arrow operator without exactly 2 children." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
 
         //We want to update the naming for the RHS child
@@ -1797,7 +1797,7 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
             cout << "Error: Found variable with no firstDef point that is not a class or namespace member." << endl;
             cout << "Variable Scope: " << SageInterface::getScope(rootName[0])->class_name() << SageInterface::getScope(rootName[0]) << endl;
             cout << rootName[0]->get_name().str() << rootName[0] << "@" << rootName[0]->get_file_info()->get_line() << ":" << rootName[0]->get_file_info()->get_col() << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
     }
 
@@ -1999,13 +1999,13 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtNode(SgN
                 else
                 {
                     cout << "Error: Same def propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
             {
                 cout << "Error: Found propogated def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
     }
@@ -2048,13 +2048,13 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtNodeForN
                 else
                 {
                     cout << "Error: Same def propagated twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
             {
                 cout << "Error: Found propagated def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
     }
@@ -2091,7 +2091,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getUsesAtNode(SgNode* nod
                 else
                 {
                     cout << "Error: Same use propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
@@ -2153,7 +2153,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
                 else
                 {
                     cout << "Error: Same use propogated twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
@@ -2258,7 +2258,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* nod
                     printRenameTable(original);
                     cout << "Expanded ";
                     printRenameTable(expanded);
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
         }
@@ -2284,7 +2284,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getDefsAtNodeForName(SgNo
         else
         {
             cout << "Error: Same renaming present in original and expanded defs." << endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
         }
     }
 
@@ -2320,7 +2320,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsAtNode(SgN
                 else
                 {
                     cout << "Error: Same def originally defined twice on same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
@@ -2382,7 +2382,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getOriginalDefsAtNodeForN
                 else
                 {
                     cout << "Error: Same original Def twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
@@ -2438,13 +2438,13 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getExpandedDefsAtNode(SgN
                 else
                 {
                     cout << "Error: Same def expanded twice on same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
             {
                 cout << "Error: Found expanded def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
     }
@@ -2487,13 +2487,13 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getExpandedDefsAtNodeForN
                 else
                 {
                     cout << "Error: Same expanded def twice to same node." << endl;
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                 }
             }
             else
             {
                 cout << "Error: Found expanded def with no entry in rename table." << endl;
-                ROSE_ASSERT(false);
+                ROSE_ABORT();
             }
         }
     }
@@ -2536,7 +2536,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode*
                     else
                     {
                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
             }
@@ -2585,7 +2585,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree
                     else
                     {
                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
             }
@@ -2670,7 +2670,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd
                                 if (result[entry.first][tableEntry.first] != tableEntry.second)
                                 {
                                     cout << "Error: Same Renaming number has two different definition points." << endl;
-                                    ROSE_ASSERT(false);
+                                    ROSE_ABORT();
                                 }
                             }
                         }
@@ -2698,7 +2698,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunction
     if (lastEdges.size() == 0)
     {
         cout << "Error: No incoming edges to end of function definition." << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
     else if (lastEdges.size() == 1)
     {
@@ -2738,7 +2738,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunction
                             if (result[entry.first][tableEntry.first] != tableEntry.second)
                             {
                                 cout << "Error: Same Renaming number has two different definition points." << endl;
-                                ROSE_ASSERT(false);
+                                ROSE_ABORT();
                             }
                         }
                     }
@@ -2751,7 +2751,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunction
 
 // DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
    printf ("Exiting at a previously undefined function return location. \n");
-   ROSE_ASSERT(false);
+   ROSE_ABORT();
 
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
    return result;
@@ -2767,7 +2767,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
     if (lastEdges.size() == 0)
     {
         cout << "Error: No incoming edges to end of function definition." << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
     else if (lastEdges.size() == 1)
     {
@@ -2794,7 +2794,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
                     if (result[tableEntry.first] != tableEntry.second)
                     {
                         cout << "Error: Same Renaming number has two different definition points." << endl;
-                        ROSE_ASSERT(false);
+                        ROSE_ABORT();
                     }
                 }
             }
@@ -2805,7 +2805,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
 // DQ (12/10/2016): Added return statement, but because this was not specified, we want to make it an error to preserve the previous semantics.
    printf ("Exiting at a previously undefined function return location. \n");
-   ROSE_ASSERT(false);
+   ROSE_ABORT();
 
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
    return result;
@@ -2897,7 +2897,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatemen
                         if (result[entry.first][tableEntry.first] != tableEntry.second)
                         {
                             cout << "Error: Same Renaming number has two different definition points." << endl;
-                            ROSE_ASSERT(false);
+                            ROSE_ABORT();
                         }
                     }
                 }

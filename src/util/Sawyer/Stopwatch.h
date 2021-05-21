@@ -100,6 +100,9 @@ public:
      *
      *  Returns true if and only if the stopwatch is running. */
     bool isRunning() const { return running_; }
+
+    /** Convert a stopwatch to a human-readalbe string. */
+    std::string toString() const;
 };
 
 

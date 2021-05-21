@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <EditDistance/EditDistance.h>
 
 namespace Rose {

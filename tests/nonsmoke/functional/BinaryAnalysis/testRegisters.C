@@ -6,7 +6,7 @@
 int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
 #else
 
-#include "Registers.h"
+#include <Rose/BinaryAnalysis/Registers.h>
 
 using namespace Rose::BinaryAnalysis;
 

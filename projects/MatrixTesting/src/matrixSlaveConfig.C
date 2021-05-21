@@ -8,7 +8,7 @@ static const char *description =
 
 #include <rose.h>
 
-#include <CommandLine.h>                                // rose
+#include <Rose/CommandLine.h>
 #include <SqlDatabase.h>                                // rose
 
 #include <Sawyer/CommandLine.h>

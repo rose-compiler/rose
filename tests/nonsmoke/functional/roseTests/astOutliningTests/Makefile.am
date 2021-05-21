@@ -116,6 +116,7 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_52.cpp
 
 #This set of CPP files must contain main() to run
+# DQ (4/6/2021): Failing test (get_nextStatement() returns error).
 CXX4_TESTS_REQUIRED_TO_RUN=	\
 	ft_cfftz_omp.cpp
 

@@ -1,5 +1,5 @@
 #include "rose.h"
-#include "StringUtility.h"
+#include <Rose/StringUtility.h>
 
 #include <vector>
 

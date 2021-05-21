@@ -143,6 +143,8 @@ AstNodeClass::getBuildDefaultConstructor () const
      return buildDefaultConstructor;
    }
 
+#define DEBUG_double_delete 0
+
 // AJ ( 10/26/2004)
 // 
 string
@@ -169,18 +171,19 @@ AstNodeClass::buildDestructorBody ()
           if (!((*stringListIterator)->getToBeDeleted() == DEF_DELETE))
              continue;
 
-       // string tempString        = "\n     delete p_$DATA;\n     p_$DATA = NULL;\n";
-          string tempString        = "     delete p_$DATA;\n";
+          std::string tempString;
 
-       // DQ (9/5/2006): Handle case of "char*" to use "delete []"
-          string typeName     = (*stringListIterator)->getTypeNameString();
-          bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
-          if ( typeIsCharString )
-               tempString = "     delete [] p_$DATA;\n";
+          std::string typeName = (*stringListIterator)->getTypeNameString();
+          if ( typeName.find("char*") != string::npos && typeName.find("char**") == string::npos )
+               tempString = "[] ";
 
-          string variableNameString = (*stringListIterator)->getVariableNameString();
-
-          tempString = StringUtility::copyEdit (tempString,"$DATA",variableNameString);
+          if ( typeName.find("Sg") == 0 ) {
+            tempString  = "    if (p_$DATA && p_$DATA->get_freepointer() == AST_FileIO::IS_VALID_POINTER()) { delete " + tempString + "p_$DATA; }\n";
+#if DEBUG_double_delete
+            tempString += "    else if (p_$DATA) { ROSE_ASSERT(false); }";
+#endif
+          }
+          tempString = StringUtility::copyEdit(tempString, "$DATA", (*stringListIterator)->getVariableNameString());
 
           returnString += tempString;
         }
@@ -212,6 +215,12 @@ AstNodeClass::buildDestructorBody ()
         }
 
      ROSE_ASSERT (localExcludeList.size() == 0);
+
+   returnString = "  if (p_freepointer == AST_FileIO::IS_VALID_POINTER()) {\n" + returnString + "\n  }";
+#if DEBUG_double_delete
+   returnString = "ROSE_ASSERT(this);\n" + returnString + " else {\n    ROSE_ASSERT(false);\n  }";
+#endif
+   returnString += "\n";
 
   // printf ("In AstNodeClass::buildDestructorBody(): returnString = %s \n",returnString.c_str());
      return returnString;
@@ -264,7 +273,7 @@ AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum c
                     returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
                     break;
                default:
-                    assert(false);     
+                    ROSE_ABORT();
              }
        }
 
@@ -467,7 +476,7 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
                               default:
                                  {
                                    printf ("Default reached in AstNodeClass::buildCopyMemberFunctionSource \n");
-                                   ROSE_ASSERT(false);
+                                   ROSE_ABORT();
                                  }
                             }
                        }
@@ -889,7 +898,7 @@ AstNodeClass::buildDataAccessFunctions ( const GrammarString & inputMemberData)
                filename = "../Grammar/listMemberAccessFunctions.macro";
                break;
           default:
-               assert(false);
+               ROSE_ABORT();
         }
 
      string markerString = "DATA_ACCESS_FUNCTION";
@@ -2347,7 +2356,7 @@ AstNodeClass::typeEvaluationName ( TypeEvaluation x )
           default:
              {
                printf ("Default reached in switch: x = %d \n",(int)x);
-               ROSE_ASSERT(false);
+               ROSE_ABORT();
              }
         }
 

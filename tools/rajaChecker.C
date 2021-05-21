@@ -3,7 +3,7 @@
 //
 // Liao, 4/6/2017
 #include "rose.h"
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <iostream>
 #include "keep_going.h"
 #include <string>

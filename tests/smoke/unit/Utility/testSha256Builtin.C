@@ -3,7 +3,7 @@
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Interval.h>
 #include <Sawyer/Message.h>

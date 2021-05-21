@@ -8,10 +8,10 @@ static const char *description =
 
 #include <rose.h>
 #include <BinaryVxcoreParser.h>                         // rose
-#include <CommandLine.h>                                // rose
-#include <Partitioner2/Engine.h>                        // rose
-#include <Sawyer/Stopwatch.h>                           // rose
-#include <SRecord.h>                                    // rose
+#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Sawyer/Stopwatch.h>
+#include <Rose/BinaryAnalysis/SRecord.h>
 
 #include <batSupport.h>
 

@@ -10,9 +10,9 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux64.h"
-#include <BinaryDebugger.h>                             // rose
-#include <Diagnostics.h>                                // rose
-#include <FileSystem.h>                                 // rose
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/FileSystem.h>
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall

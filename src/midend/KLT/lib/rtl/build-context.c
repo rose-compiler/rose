@@ -70,8 +70,7 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
             param = loop_desc[loop_it].tile_desc[tile_it].param;
             break;
           case e_tile_dynamic:
-            assert(0);
-            break;
+            ROSE_ABORT();
           default:
             param = klt_user_get_tile_length(kernel, loop_desc[loop_it].tile_desc[tile_it].kind, loop_desc[loop_it].tile_desc[tile_it].param);
             assert(param > 0);

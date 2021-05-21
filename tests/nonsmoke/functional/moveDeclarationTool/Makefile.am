@@ -263,6 +263,17 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_167.C \
   inputmoveDeclarationToInnermostScope_test2015_168.C
 
+
+# DQ (4/10/2021): Failing tests (only for EDG 6.x).
+# The variable declaration is moved into the case statement instead of being put at the top of the switch body.
+#  inputmoveDeclarationToInnermostScope_test2015_93.C 
+
+# FIXED: DQ (4/7/2021): Failing tests
+#  inputmoveDeclarationToInnermostScope_test2015_07.C 
+#  inputmoveDeclarationToInnermostScope_test2015_11.C 
+#  inputmoveDeclarationToInnermostScope_test2015_14.C 
+#  inputmoveDeclarationToInnermostScope_test2015_19.C 
+
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
 # the -rose:merge_decl_assign option.
@@ -338,9 +349,9 @@ test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 # fix to support more general recognition of transforamtions of types).
 # test2014_12.C demonstrates the first issue.
 test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
-	@echo "********************************************************************************************************************************************************************"
+	@echo "***********************************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/moveDeclarationTool: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
-	@echo "********************************************************************************************************************************************************************"
+	@echo "***********************************************************************************************************************************************"
 
 # DQ (11/4/2015): Restrict testing of the token-based unparsing to later versions of GNU compilers (at least initially).
 # DQ (11/2/2015): Added token-based unparsing tests using the move-tool to the move_diff_check test rule.
@@ -398,9 +409,9 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/moveDeclarationTool: make check rule complete (terminated normally)"
-	@echo "*********************************************************************************************************"
+	@echo "****************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/moveDeclarationTool: make check rule complete (terminated normally) ******"
+	@echo "****************************************************************************************************************"
 
 clean-local:
 	rm -f *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)

@@ -13,7 +13,11 @@ class TokenStreamSequenceToNodeMapping_key
           SgNode* node;
           int lower_bound, upper_bound;
 
-          TokenStreamSequenceToNodeMapping_key(SgNode* n, int input_lower_bound, int input_upper_bound);
+       // DQ (4/21/2021): We need to include the SgSourceFile to allow header files to be supported.
+          SgSourceFile* sourceFile;
+
+       // TokenStreamSequenceToNodeMapping_key(SgNode* n, int input_lower_bound, int input_upper_bound);
+          TokenStreamSequenceToNodeMapping_key(SgSourceFile* sourceFile, SgNode* n, int input_lower_bound, int input_upper_bound);
           TokenStreamSequenceToNodeMapping_key(const TokenStreamSequenceToNodeMapping_key & X);
 
           bool operator==(const TokenStreamSequenceToNodeMapping_key & X) const;
@@ -84,14 +88,50 @@ class TokenStreamSequenceToNodeMapping
        // Constructor
           TokenStreamSequenceToNodeMapping( const TokenStreamSequenceToNodeMapping & X );
 
+       // DQ (4/21/2021): We need to make this dependent on the SgSourceFile so that we can support multiple files (e.g. header files).
        // Factory interval generator for new intervals (token sequences).
-          static TokenStreamSequenceToNodeMapping* createTokenInterval (SgNode* n, 
+       // static TokenStreamSequenceToNodeMapping* createTokenInterval (SgNode* n, 
+       //      int input_leading_whitespace_start, int input_leading_whitespace_end, 
+       //      int input_token_subsequence_start, int input_token_subsequence_end, 
+       //      int input_trailing_whitespace_start, int input_trailing_whitespace_end,
+       //      int input_else_whitespace_start,     int input_else_whitespace_end);
+          static TokenStreamSequenceToNodeMapping* createTokenInterval (SgSourceFile* sourceFile, SgNode* n, 
                int input_leading_whitespace_start, int input_leading_whitespace_end, 
                int input_token_subsequence_start, int input_token_subsequence_end, 
                int input_trailing_whitespace_start, int input_trailing_whitespace_end,
                int input_else_whitespace_start,     int input_else_whitespace_end);
 
           void display(std::string label) const;
+   };
+
+
+class Graph_TokenMappingTraversal : public AstSimpleProcessing
+   {
+     public:
+       // File for output for generated graph.
+          static std::ofstream file;
+
+       // The map is stored so that we can lookup the token subsequence information using the SgNode pointer as a key.
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap;
+
+       // The vector is stored so that we can build the list of nodes with edges (edges
+       // are missing the the token information, which might be better to support there).
+          std::vector<stream_element*> & tokenList;
+
+          Graph_TokenMappingTraversal(std::vector<stream_element*> & input_tokenList, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap);
+
+          void visit(SgNode* n);
+
+       // static void graph_ast_and_token_stream(SgSourceFile* file, vector<stream_element*> & tokenList);
+          static void graph_ast_and_token_stream(SgSourceFile* file, std::vector<stream_element*> & tokenList, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+
+          static void graph_ast_and_token_stream(SgSourceFile* file);
+          static void graph_ast_and_token_stream(std::string filename);
+
+       // Map the toke_id to a string.
+          static std::string getTokenIdString (int i);
+
+          static int* first_leading_whitespace_start;
    };
 
 
@@ -109,5 +149,9 @@ class TokenStreamSequenceToNodeMapping
 // token stream is only as the unexpanded macro).
 #include "detectMacroOrIncludeFileExpansions.h"
 #include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
+
+
+// DQ (1/7/2021): Adding function to header so that I can call it elsewhere for testing.
+std::vector<stream_element*> getTokenStream( SgSourceFile* file );
 
 #endif

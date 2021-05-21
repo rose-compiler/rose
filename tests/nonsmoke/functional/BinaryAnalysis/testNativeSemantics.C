@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <NativeSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
 
     while (true) {
-        rose_addr_t va = ops->peekRegister(IP, ops->undefined_(IP.nBits()))->get_number();
+        rose_addr_t va = ops->peekRegister(IP, ops->undefined_(IP.nBits()))->toUnsigned().get();
         //std::cerr <<Rose::StringUtility::addrToString(va) <<"\n";
         cpu->processInstruction(va);
     }

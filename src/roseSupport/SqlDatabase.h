@@ -1,9 +1,9 @@
 #ifndef ROSE_SqlDatabase_H
 #define ROSE_SqlDatabase_H
 
-#include "FormatRestorer.h"
-#include "RoseException.h"
-#include "StringUtility.h"
+#include <Rose/FormatRestorer.h>
+#include "Rose/Exception.h"
+#include <Rose/StringUtility.h>
 #include "rose_override.h"
 
 #include <boost/enable_shared_from_this.hpp>

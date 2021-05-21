@@ -10,14 +10,14 @@ static const char* description =
 #include <algorithm>
 #include <fstream>
 
-#include "sage3basic.h"
-#include "Sawyer/IntervalSet.h"
-#include "Sawyer/Interval.h"
-#include "BinaryDebugger.h"
-#include "Disassembler.h"
-#include "CommandLine.h"
-#include "Diagnostics.h"
-#include "Partitioner2/Engine.h"
+#include <sage3basic.h>
+#include <Sawyer/IntervalSet.h>
+#include <Sawyer/Interval.h>
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 
 

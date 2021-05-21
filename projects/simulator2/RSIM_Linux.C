@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux.h"
-#include "BinaryLoaderElf.h"
+#include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 
 #include <sys/mman.h>
 #include <sys/syscall.h>                                // SYS_xxx definitions
@@ -396,7 +396,7 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
     /* Allocate the stack */
     static const size_t stack_size = 0x00016000;
     RegisterDescriptor SP = thread->get_process()->disassembler()->stackPointerRegister();
-    rose_addr_t origSp = thread->operators()->readRegister(SP)->get_number();
+    rose_addr_t origSp = thread->operators()->readRegister(SP)->toUnsigned().get();
     rose_addr_t sp = origSp;
     rose_addr_t stack_addr = sp - stack_size;
     process->get_memory()->insert(AddressInterval::baseSize(stack_addr, stack_size),
@@ -975,7 +975,7 @@ RSIM_Linux::syscall_execve_body(RSIM_Thread *t, int callno)
 
     /* The real system call */
     int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
-    ROSE_ASSERT(-1==result);
+    ASSERT_always_require(-1==result);
     t->syscall_return(-errno);
 }
 
@@ -993,9 +993,9 @@ RSIM_Linux::syscall_exit_body(RSIM_Thread *t, int callno)
     if (t->clearChildTidVa()) {
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
         size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
+        ASSERT_always_require(n==sizeof zero);
         int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
+        ASSERT_always_require(nwoke>=0);
     }
 
     // Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as well). The
@@ -1029,9 +1029,9 @@ RSIM_Linux::syscall_exit_group_body(RSIM_Thread *t, int callno)
         //   done. (That is, wake a single process waiting on this futex.) Errors are ignored.
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
         size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
+        ASSERT_always_require(n==sizeof zero);
         int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
+        ASSERT_always_require(nwoke>=0);
     }
 
     t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";

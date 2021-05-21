@@ -7,11 +7,11 @@ static const char *description =
 
 
 #include <rose.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Partitioner.h>
-#include <StaticSemantics2.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h>
 #include <stringify.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

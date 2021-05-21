@@ -5,7 +5,7 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <rose_strtoull.h>
 #include <Sawyer/Stopwatch.h>
 #include <Wt/WHBoxLayout>
@@ -458,12 +458,12 @@ WHexDump::handleSearch() {
 
     // Report results
     if (found) {
-        info <<"; found at " <<StringUtility::addrToString(startVa) <<"; took " <<timer <<" seconds\n";
+        info <<"; found at " <<StringUtility::addrToString(startVa) <<"; took " <<timer <<"\n";
         wSearchNext_->setText("Next");
         wSearchResults_->setText("Found at " + StringUtility::addrToString(startVa));
         makeVisible(startVa);
     } else {
-        info <<"; not found; took " <<timer <<" seconds\n";
+        info <<"; not found; took " <<timer <<"\n";
         wSearchNext_->setText("Find");
         wSearchResults_->setText("Not found");
     }

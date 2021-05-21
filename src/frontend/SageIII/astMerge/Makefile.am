@@ -18,3 +18,4 @@ libastMerge_la_DEPENDENCIES = $(GENERATED_SOURCE)
 pkginclude_HEADERS = merge.h fixupTraversal.h link.h delete.h share.h load.h
 
 EXTRA_DIST = CMakeLists.txt
+

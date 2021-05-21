@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef AFFINE_INEQUALITY_H
 #define AFFINE_INEQUALITY_H
 
@@ -344,4 +347,5 @@ const std::set<varAffineInequality>& getAffineIneq(const DataflowNode& n);
 // Returns the set of inequalities known to be true at the given DataflowNode's descendants
 std::list<std::set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n);
 
+#endif
 #endif

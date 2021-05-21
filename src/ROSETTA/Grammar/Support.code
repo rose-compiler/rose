@@ -2062,31 +2062,6 @@ HEADER_BASECLASS_MODIFIER_START
 
 HEADER_BASECLASS_MODIFIER_END
 
-// *****************************************************
-// ************ Support for ADA Constraints ************
-// *****************************************************
-HEADER_ADA_TYPE_CONSTRAINT_START
-          SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
-          SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ASSERT_not_reachable("PP 2020-04-02"); return std::string(); };
-HEADER_ADA_TYPE_CONSTRAINT_END
-
-
-HEADER_ADA_RANGE_CONSTRAINT_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const $ROSE_OVERRIDE;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
-HEADER_ADA_RANGE_CONSTRAINT_END
-
-HEADER_ADA_INDEX_CONSTRAINT_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const $ROSE_OVERRIDE;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
-HEADER_ADA_INDEX_CONSTRAINT_END
 
 
 HEADER_ATTRIBUTE_SUPPORT_START
@@ -2352,22 +2327,6 @@ SgModifier::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
    }
 
 SOURCE_MODIFIER_END
-
-SOURCE_ADA_TYPE_CONSTRAINT_START
-
-SgAdaTypeConstraint::SgAdaTypeConstraint ( const SgAdaTypeConstraint & X )
-   : SgSupport()
-   {
-     /* see comment in SgModifier */
-   }
-
-SgAdaTypeConstraint&
-SgAdaTypeConstraint::operator= ( const SgAdaTypeConstraint& X )
-   {
-     return *this;
-   }
-
-SOURCE_ADA_TYPE_CONSTRAINT_END
 
 
 SOURCE_MODIFIER_NODES_START
@@ -3156,58 +3115,6 @@ void SgFunctionModifier::reset()
    }
 
 SOURCE_FUNCTION_MODIFIER_END
-
-SOURCE_ADA_RANGE_CONSTRAINT_START
-void SgAdaRangeConstraint::post_construction_initialization() {};
-
-std::string SgAdaRangeConstraint::displayString() const
-{
-  SgExpression* rng = get_range();
-
-  ROSE_ASSERT(rng);
-
-  std::stringstream buf;
-
-  buf << get_range()->unparseToString();
-  return buf.str();
-}
-
-void SgAdaRangeConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
-}
-
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c)
-{
-  return os << c.displayString();
-}
-
-SOURCE_ADA_RANGE_CONSTRAINT_END
-
-SOURCE_ADA_INDEX_CONSTRAINT_START
-void SgAdaIndexConstraint::post_construction_initialization() {};
-
-std::string SgAdaIndexConstraint::displayString() const
-{
-  // \todo \pp
-  return "SgAdaIndexConstraint";
-}
-
-void SgAdaIndexConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
-}
-
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c)
-{
-  return os << c.displayString();
-}
-
-SOURCE_ADA_INDEX_CONSTRAINT_END
 
 
 
@@ -6438,9 +6345,15 @@ public:
 
        // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
        // as a static member variable instead of non-static member variable.  See test2015_141.c
-       // for whare this is required.
+       // for where this is required.
           static void set_skip_unparse_asm_commands( bool b );
           static bool get_skip_unparse_asm_commands();
+
+       // DQ (4/24/2021): Added support for p_header_file_unparsing_optimization to be implemented
+       // as a static member variable instead of non-static member variable.  Part of header file 
+       // optimization support.
+          static void set_header_file_unparsing_optimization( bool b );
+          static bool get_header_file_unparsing_optimization();
 
 HEADER_APPLICATION_FILE_END
 
@@ -6512,9 +6425,11 @@ HEADER_APPLICATION_SOURCE_FILE_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (1/20/2021): Changed the API to use a pointer to a std::map<SgNode*,TokenStreamSequenceToNodeMapping*> instead of a reference.
        // DQ (10/28/2013): Abstract access to the new token subsequence map (currently for statements).
        // map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenStreamSequenceMap;
-          void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+       // void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+          void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMap);
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & get_tokenSubsequenceMap();
 
        // DQ (11/27/2013): Added support for definition of the token unparsing frontier in the AST.
@@ -7190,6 +7105,11 @@ HEADER_UNPARSE_INFO_START
             // Required to support multiple file handling, and its unparsing.
                b_useAlternativeDefiningDeclaration = 54, /*!< Skip the use of name qualification (used in generating strings of template instantiations) */
 
+            // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
+            // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
+            // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
+               b_usedInUparseToStringFunction = 55, /*!< Mark this use as being called from the unparseToString() functions (used in debugging) */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -7522,6 +7442,13 @@ HEADER_UNPARSE_INFO_START
           bool useAlternativeDefiningDeclaration() const;
           void set_useAlternativeDefiningDeclaration();
           void unset_useAlternativeDefiningDeclaration();
+
+       // DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
+       // regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
+       // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
+          bool usedInUparseToStringFunction() const;
+          void set_usedInUparseToStringFunction();
+          void unset_usedInUparseToStringFunction();
 
 
 #if 0
@@ -8238,6 +8165,13 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaTaskBodyDecl:
              {
                const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaRenamingDecl:
+             {
+               const SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(node);
                name = dcl->get_name();
                break;
              }
@@ -15888,6 +15822,9 @@ SOURCE_APPLICATION_FILE_START
 // DQ (5/23/2015): Add static data member declaration.
 bool SgFile::p_skip_unparse_asm_commands = false;
 
+// DQ (4/24/2021): Add static data member declaration.
+bool SgFile::p_header_file_unparsing_optimization = false;
+
 // std::string SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
 std::string
 SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
@@ -15989,8 +15926,9 @@ SgFile::getFileName () const
      return fileName;
    }
 
+// DQ (1/4/2021): I don't think we need this function prototype.
 // function prototype
-ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
+// ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
 
 // DQ (2/3/2004): Debugging segfault in use of il_header within ROSE
 // #include "sageCommonSourceHeader.h"
@@ -16025,7 +15963,7 @@ SgFile::SgFile ( const SgFile & X )
      ROSE_ASSERT(false);
    }
 
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 void
 SgFile::initialization()
@@ -16367,9 +16305,10 @@ SgFile::initialization()
      p_no_optimize_flag_for_frontend           = false;
      p_unparse_edg_normalized_method_ROSE_1392 = false;
 
+  // DQ (4/24/2021): Made p_header_file_unparsing_optimization a static data member.
   // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting
   // the number of header files for which we collect comments and CPP directives).
-     p_header_file_unparsing_optimization             = false;
+  // p_header_file_unparsing_optimization             = false;
      p_header_file_unparsing_optimization_source_file = false;
      p_header_file_unparsing_optimization_header_file = false;
 
@@ -17166,7 +17105,7 @@ X aggressive
 
 // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
 // as a static member variable instead of non-static member variable.  See test2015_141.c
-// for whare this is required.
+// for where this is required.
 bool
 SgFile::get_skip_unparse_asm_commands()
    {
@@ -17175,11 +17114,43 @@ SgFile::get_skip_unparse_asm_commands()
 
 // DQ (5/23/2015): Added support for p_skip_unparse_asm_commands to be implemented
 // as a static member variable instead of non-static member variable. See test2015_141.c
-// for whare this is required.
+// for where this is required.
 void
 SgFile::set_skip_unparse_asm_commands( bool b )
    {
      p_skip_unparse_asm_commands = b;
+   }
+
+
+// DQ (5/23/2015): Added support for p_header_file_unparsing_optimization to be implemented
+// as a static member variable instead of non-static member variable.
+bool
+SgFile::get_header_file_unparsing_optimization()
+   {
+#if 0
+     printf ("In SgFile::get_header_file_unparsing_optimization(): returning %s \n",p_header_file_unparsing_optimization ? "true" : "false");
+#endif
+     return p_header_file_unparsing_optimization;
+   }
+
+// DQ (5/23/2015): Added support for p_header_file_unparsing_optimization to be implemented
+// as a static member variable instead of non-static member variable.
+void
+SgFile::set_header_file_unparsing_optimization( bool b )
+   {
+#if 0
+     printf ("In SgFile::set_header_file_unparsing_optimization(): setting to %s \n",b ? "true" : "false");
+#endif
+#if 0
+  // DQ (4/28/2021): This is for debugging.
+     if (b == false)
+        {
+          printf ("In SgFile::set_header_file_unparsing_optimization(): exiting when setting to false \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     p_header_file_unparsing_optimization = b;
    }
 
 
@@ -17216,9 +17187,36 @@ SgSourceFile::SgSourceFile ()
    }
 #endif
 
+// DQ (1/20/2021): Changed the API to use a pointer to a std::map<SgNode*,TokenStreamSequenceToNodeMapping*> instead of a reference.
+// void SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap)
 void
-SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap)
+SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMap)
    {
+#if 1
+  // DQ (1/19/2021): This is a newer version of this function that only inserts the input map into
+  // a map container that is using the SgSourceFile instead of the file_id as a key (to the map).
+
+     if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(this) == Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
+        {
+#if 0
+          printf ("Adding a new object to the Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+          printf (" --- associated source file  = %p \n",this);
+          printf (" --- associated filename     = %s \n",this->getFileName().c_str());
+          printf (" --- associated global scope = %p \n",this->get_globalScope());
+#endif
+          Rose::tokenSubsequenceMapOfMapsBySourceFile.insert(std::pair<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >(this,tokenStreamSequenceMap));
+#if 0
+          printf ("DONE: Adding a new object to the Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+#endif
+        }
+       else
+        {
+          printf ("Error: entry for SgSourceFile = %p is already present in Rose::tokenSubsequenceMapOfMapsBySourceFile \n",this);
+          ROSE_ASSERT(false);
+        }
+#else
+  // DQ (1/19/2021): OLDER CODE
+
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
 
@@ -17228,8 +17226,18 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
 
-#if 0
-     mprintf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
+#if 1
+  // DQ (1/11/2021): Added support for debugging.
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+     printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
+     printf (" --- SgSourceFile: filename = %s \n",this->getFileName().c_str());
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+#endif
+
+#if 1
+  // DQ (1/12/2021): I think this function is never called (which might be an issue).
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator i = tokenStreamSequenceMap.begin();
@@ -17239,13 +17247,15 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           ROSE_ASSERT(i->second != NULL);
 
 #if 1
-       // DQ (6/3/2019): Testing (unparse heaaders active, but token-based unparsing inactive) with an alternative implementation.
+       // DQ (6/3/2019): Testing (unparse headers active, but token-based unparsing inactive) with an alternative implementation.
 
        // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
           if (tokenMap.find(i->first) != tokenMap.end())
              {
-               mprintf ("In SgSourceFile::set_tokenSubsequenceMap(): This is a redundant entry in the tokenMap (not inserted)  \n");
-
+#if 1
+            // DQ (1/11/2021): Added support for debugging.
+               printf ("In SgSourceFile::set_tokenSubsequenceMap(): This is a redundant entry in the tokenMap (not inserted)  \n");
+#endif
             // DQ (6/3/2019): comment this out, but don't include this map.
             // ROSE_ASSERT(false);
              }
@@ -17267,11 +17277,14 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           i++;
         }
 
-#if 0
-     mprintf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
+#if 1
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+     printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
+     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
-
+#endif
    }
+
 
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
@@ -17279,10 +17292,43 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
 SgSourceFile::get_tokenSubsequenceMap()
    {
+#if 1
+  // DQ (1/23/2021): Newer version, uses the "this" pointer as a key so that multiple SgSourceFile IR nodes
+  // can use the same file (reading the same filename).
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = NULL;
+
+     if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(this) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
+        {
+#if 0
+          printf ("In SgSourceFile::get_tokenSubsequenceMap(): Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile: (before) size = %zu \n",
+               Rose::tokenSubsequenceMapOfMapsBySourceFile.size());
+#endif
+          result = Rose::tokenSubsequenceMapOfMapsBySourceFile[this];
+#if 0
+          printf ("DONE: Accessing and existing std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object from Rose::tokenSubsequenceMapOfMapsBySourceFile \n");
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SgSourceFile::get_tokenSubsequenceMap(): NOTE: SgSourceFile = %p not found in Rose::tokenSubsequenceMapOfMapsBySourceFile (might be because it is not saved in the AST write) \n",this);
+#endif
+       // DQ (2/19/2021): Disable this as an error since the AST read (after the AST write) will not have this data structure.
+       // We are not trying to currently support the token-based unparsing after an AST write and AST read.
+       // DQ (1/30/2021): Added an assertion.
+       // ROSE_ASSERT(false);
+        }
+
+     return *result;
+
+#else
+  // DQ (1/23/2021): Older version.
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
 
-#if 0
-     mprintf ("$$$$$$$$$$$$$$$$$$$$ In SgSourceFile::get_tokenSubsequenceMap() $$$$$$$$$$$$$$$$$$$$$$ \n");
+#error "DEAD CODE!"
+
+#if 1
+     printf ("$$$$$$$$$$$$$$$$$$$$ In SgSourceFile::get_tokenSubsequenceMap() $$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
 
   // DQ (9/27/2018): To support multiple files with the token based unparsing, we need to have one map per file
@@ -17293,13 +17339,19 @@ SgSourceFile::get_tokenSubsequenceMap()
      ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
+  // DQ (1/11/2021): This is using the file_id instead of the filename, as a result it should be unique, I think.
+  // So this is a better solution than using the filename, since the filename is not unique when a file is read
+  // twice as in when buildSourceFile is called to build another copy fo the file which is edited (transformed)
+  // to become a dynamic library (as in the codeSegregation tool).
      int index = this->get_startOfConstruct()->get_file_id();
 
-#if 0
-     mprintf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d filename = %s \n",index,this->getFileName().c_str());
+#if 1
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d filename = %s \n",index,this->getFileName().c_str());
   // mprintf ("In SgSourceFile::get_tokenSubsequenceMap(): index = %d \n",index);
-     mprintf ("In SgSourceFile::get_tokenSubsequenceMap(): Rose::tokenSubsequenceMapOfMaps.size() = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): Rose::tokenSubsequenceMapOfMaps.size() = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
 #endif
+
+#error "DEAD CODE!"
 
      if (index < 0)
         {
@@ -17309,17 +17361,70 @@ SgSourceFile::get_tokenSubsequenceMap()
 
      if (Rose::tokenSubsequenceMapOfMaps.find(index) == Rose::tokenSubsequenceMapOfMaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#if 1
+          printf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (before) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
 #endif
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenSubsequenceMap = new std::map<SgNode*,TokenStreamSequenceToNodeMapping*>();
           ROSE_ASSERT(tokenSubsequenceMap != NULL);
 
           Rose::tokenSubsequenceMapOfMaps.insert(std::pair<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >(index,tokenSubsequenceMap));
-#if 0
-          mprintf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (after) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#if 1
+          printf ("Adding a new std::map<SgNode*,TokenStreamSequenceToNodeMapping*> object to the Rose::tokenSubsequenceMapOfMaps: (after) size = %zu \n",Rose::tokenSubsequenceMapOfMaps.size());
+#endif
+#if 1
+       // DQ (1/13/2021): I think the semantics of this function should be to return a tokenSubsequenceMap only if one already exists.
+       // To put make a tokenSubsequenceMap available the set_tokenSubsequenceMap() function must be called first.
+       // I think that this clear and simple semantics will make it easier to debug the current issues that are causing specific
+       // file_ids to be reused when the second file is build using the buildSourceFile() function.
+          printf ("Error: exiting in SgSourceFile::get_tokenSubsequenceMap(): NOT USED (call set_tokenSubsequenceMap() first): index = %d filename = %s \n",index,this->getFileName().c_str());
+          ROSE_ASSERT(false);
 #endif
         }
+       else
+        {
+       // DQ (1/11/2021): Debugging case there the token sequence from the second file (with the same name)
+       // might not be added to the Rose::tokenSubsequenceMapOfMaps data structure. Added this debugging code.
+
+       // DQ (1/12/2021): This can be the case when a file is copied (read a second time uisng the buildSourceFile() function).
+       // In this can we need to use a different file_id to insert the token sequence into the Rose::tokenSubsequenceMapOfMaps.
+       // But is it reasonable to get entry from the Rose::tokenSubsequenceMapOfMaps if is exists, so this should not be an error.
+
+          printf ("Note: In SgSourceFile::get_tokenSubsequenceMap(): ALREADY USED: index = %d filename = %s \n",index,this->getFileName().c_str());
+          printf (" --- Rose::tokenSubsequenceMapOfMaps[index = %d]->size() = %zu \n",index,Rose::tokenSubsequenceMapOfMaps[index]->size());
+
+          std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* >::iterator i = Rose::tokenSubsequenceMapOfMaps.begin();
+          while (i != Rose::tokenSubsequenceMapOfMaps.end())
+             {
+               printf (" --- i->first                                      = %d \n",i->first);
+               printf (" --- i->second (TokenStreamSequenceToNodeMapping*) = %p \n",i->second);
+
+               ROSE_ASSERT(i->second != NULL);
+               std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator j = i->second->begin();
+
+               while (j != i->second->end())
+                  {
+                    ROSE_ASSERT(j->first  != NULL);
+                    ROSE_ASSERT(j->second != NULL);
+
+                    printf (" --- --- j->first                                      = %p = %s \n",j->first,j->first->class_name().c_str());
+                    printf (" --- --- j->second (TokenStreamSequenceToNodeMapping*) = %p \n",j->second);
+                    j->second->display("In SgSourceFile::get_tokenSubsequenceMap()");
+
+                    j++;
+                  }
+
+               i++;
+             }
+
+       // DQ (1/12/2021): Adding debug information about whast file ids are available.
+          Sg_File_Info::display_static_data("In SgSourceFile::get_tokenSubsequenceMap()");
+#if 0
+          printf ("Error: exiting in SgSourceFile::get_tokenSubsequenceMap(): ALREADY USED: index = %d filename = %s \n",index,this->getFileName().c_str());
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#error "DEAD CODE!"
 
      ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps.find(index) != Rose::tokenSubsequenceMapOfMaps.end());
      ROSE_ASSERT(Rose::tokenSubsequenceMapOfMaps[index] != NULL);
@@ -17330,26 +17435,29 @@ SgSourceFile::get_tokenSubsequenceMap()
 
 #if 0
   // DQ (10/4/2018): Run a test each time this map is accessed: Output the tokenStreamSequenceMap:
-#if 0
-     mprintf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
+#if 1
+     printf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
 #endif
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator k = result->begin();
      while (k != result->end())
         {
-#if 0
-          mprintf ("k->first = %p = %s: \n",k->first,k->first->class_name().c_str());
+#if 1
+          printf ("k->first = %p = %s: \n",k->first,k->first->class_name().c_str());
 #endif
        // DQ (9/28/2018): Adding assertion.
           ROSE_ASSERT(k->second->node != NULL);
-#if 0
+#if 1
           k->second->display("token sequence");
 #endif
           k++;
         }
 #endif
 
+#error "DEAD CODE!"
+
      return *result;
+#endif
    }
 
 
@@ -20823,6 +20931,21 @@ SgUnparse_Info::set_useAlternativeDefiningDeclaration()
 void
 SgUnparse_Info::unset_useAlternativeDefiningDeclaration()
    { unsetBit(b_useAlternativeDefiningDeclaration); }
+
+// DQ (1/6/2021): Adding support to detect use of unparseToString() functionality.  This is required to avoid premature saving of state
+// regarding the static previouslyUnparsedTokenSubsequences which is required to support multiple statements (e.g. a variable declarations
+// with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
+bool
+SgUnparse_Info::usedInUparseToStringFunction() const
+   { return checkBit(b_usedInUparseToStringFunction); }
+
+void
+SgUnparse_Info::set_usedInUparseToStringFunction()
+   { setBit(b_usedInUparseToStringFunction); }
+
+void
+SgUnparse_Info::unset_usedInUparseToStringFunction()
+   { unsetBit(b_usedInUparseToStringFunction); }
 
 
 void

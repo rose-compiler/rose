@@ -3,7 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
@@ -15,9 +15,7 @@ using namespace Rose::Diagnostics;
 std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)
    {
      printf("Error: operator<< not implemented! \n");
-     ROSE_ASSERT(false);
-
-     return os;
+     ROSE_ABORT();
    }
    
 std::ostream & operator<<(std::ostream & os, const SgAsmNERelocEntry::iord_type & x)

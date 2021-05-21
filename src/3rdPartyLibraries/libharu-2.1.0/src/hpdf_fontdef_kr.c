@@ -618,7 +618,7 @@ static const HPDF_CID_Width Dotum_W_ARRAY[] = {
     {0xFFFF, 0}
 };
 
-
+#if 0 // [Robb Matzke 2021-03-17]: unused
 static const HPDF_CID_Width BatangChe_W_ARRAY[] = {
     {1, 500},
     {2, 500},
@@ -812,9 +812,9 @@ static const HPDF_CID_Width BatangChe_W_ARRAY[] = {
     {8188, 500},
     {0xFFFF, 0}
 };
+#endif
 
-
-
+#if 0 // [Robb Matzke 2021-03-17]: unused
 static const HPDF_CID_Width Batang_W_ARRAY[] = {
     {1, 333},
     {2, 416},
@@ -1210,7 +1210,7 @@ static const HPDF_CID_Width Batang_W_ARRAY[] = {
     {8188, 791},
     {0xFFFF, 0}
 };
-
+#endif
 
 /*---------------------------------------------------------------------------*/
 /*----- BatangChe Font ---------------------------------------------------------*/

@@ -14,7 +14,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 Midend_Analysis_SOURCE_PATH=$(top_srcdir)/src/midend/programAnalysis/arithmeticIntensity
 
-AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(Midend_Analysis_SOURCE_PATH) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src -I$(srcdir)/src/util #-I$(Midend_Analysis_SOURCE_PATH) #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
 
 #SUBDIRS = src . 
 
@@ -101,7 +101,7 @@ rose_rajaloop.cpp:./measureTool
 # test for code instrumentor---------------------
 #Generate the loop count info. file , using the translator's loop_counting mode
 instrumentor_lib.o: $(Midend_Analysis_SOURCE_PATH)/instrumentor_lib.c
-	gcc -c -o $@ $^
+	g++ -I$(top_srcdir)/src/util -c -o $@ $^
 instrumentor_lib.a: instrumentor_lib.o
 	ar r $@ $^
 bt-loop-count.log: codeInstrumentor

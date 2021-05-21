@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Adapter.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 #include <boost/thread.hpp>
 
 using namespace Rose::Diagnostics;

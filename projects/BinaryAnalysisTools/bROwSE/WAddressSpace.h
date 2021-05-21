@@ -1,7 +1,7 @@
 #ifndef bROwSE_WAddressSpace_H
 #define bROwSE_WAddressSpace_H
 
-#include <Color.h>
+#include <Rose/Color.h>
 #include <bROwSE/bROwSE.h>
 #include <Sawyer/IndexedList.h>
 #include <Sawyer/Optional.h>

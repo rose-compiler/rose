@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef CFGUTILS_H
 #define CFGUTILS_H
 
@@ -149,4 +152,5 @@ namespace cfgUtils
 
 }
 
+#endif
 #endif

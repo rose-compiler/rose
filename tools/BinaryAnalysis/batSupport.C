@@ -1,13 +1,13 @@
 // Library for all bat toolstState
 
 #include <rose.h>
-#include <BaseSemanticsState.h>                         // rose
-#include <BinaryUnparserBase.h>                         // rose
-#include <CommandLine.h>                                // rose
-#include <Partitioner2/Partitioner.h>                   // rose
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
-#include <StringUtility.h>                              // rose
+#include <Rose/StringUtility.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>
@@ -233,7 +233,7 @@ PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string
     out <<"      " <<title <<"\n";
     if (state) {
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        ");
         out <<(*state + fmt);
     } else {
@@ -480,7 +480,7 @@ YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &tit
         writeln(out, "      semantics:", title);
         writeln(out, "      state:");
         BS::Formatter fmt;
-        fmt.set_register_dictionary(regdict);
+        fmt.registerDictionary(regdict);
         fmt.set_line_prefix("        - ");
         out <<(*state + fmt);
     }

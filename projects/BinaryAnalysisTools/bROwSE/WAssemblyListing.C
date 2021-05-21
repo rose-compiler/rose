@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/WAssemblyListing.h>
 
-#include <BinaryControlFlow.h>                          // ROSE
+#include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <boost/algorithm/string/replace.hpp>
 #include <bROwSE/FunctionUtil.h>
 #include <Wt/WFont>

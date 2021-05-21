@@ -11,10 +11,10 @@ namespace Rose::builder {
 using namespace Fortran;
 
 // The Build functions need to be turned into a class (global variable used for now)
-//
-   SageTreeBuilder builder{};
+
+   SageTreeBuilder builder(SageTreeBuilder::e_language_fortran);
 // TODO: change this to a reference
-   parser::CookedSource* cooked_{nullptr};
+   parser::AllCookedSources* cooked_{nullptr};
 
 template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::Statement<T> &x, Order from)
 {
@@ -59,17 +59,17 @@ std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPar
 #endif
    }
 
-   const auto & use_stmts{std::get<1>(x.t)};
+   const auto & use_stmts{std::get<std::list<parser::Statement<common::Indirection<parser::UseStmt>>>>(x.t)};
    if (use_stmts.size() > 0) {
       return std::optional<SourcePosition>{BuildSourcePosition(use_stmts.front(), Order::begin)};
    }
 
-   const auto & import_stmts{std::get<2>(x.t)};
+   const auto & import_stmts{std::get<std::list<parser::Statement<common::Indirection<parser::ImportStmt>>>>(x.t)};
    if (import_stmts.size() > 0) {
       return std::optional<SourcePosition>{BuildSourcePosition(import_stmts.front(), Order::begin)};
    }
 
-   const auto & implicit_part_stmts{std::get<3>(x.t).v};
+   const auto & implicit_part_stmts{std::get<parser::ImplicitPart>(x.t).v};
    if (implicit_part_stmts.size() > 0) {
       std::cout << "... implicit_part_stmts list count is " << implicit_part_stmts.size() << "\n";
       //      const auto & implicit_part_stmt
@@ -89,10 +89,12 @@ std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPar
 }
 
 // Converts parsed program to ROSE Sage nodes
-void Build(const parser::Program &x, parser::CookedSource &cooked)
+void Build(const parser::Program &x, parser::AllCookedSources &cooked)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "\n";
-   std::cout << "Rose::builder::Build(Program) \n";
+   std::cout << "Rose::builder::Build(Program)\n";
+#endif
 
    SgScopeStatement* scope{nullptr};
 
@@ -106,15 +108,20 @@ void Build(const parser::Program &x, parser::CookedSource &cooked)
 template<typename T>
 void Build(const parser::ProgramUnit &x, T* scope)
 {
-   std::cout << "Rose::builder::Build(ProgramUnit) \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ProgramUnit)\n";
+#endif
 
-   Build(x.u, scope);
+   auto ProgramUnitVisitor = [&](const auto& y) { Build(y.value(), scope); };
+   std::visit(ProgramUnitVisitor, x.u);
 }
 
 template<typename T>
 void Build(const parser::MainProgram &x, T* scope)
 {
-   std::cout << "Rose::builder::Build(MainProgram) \n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(MainProgram)\n";
+#endif
 
    const auto & program_stmt{std::get<0>(x.t)};
 
@@ -124,7 +131,7 @@ void Build(const parser::MainProgram &x, T* scope)
 
    const auto & end_program_stmt{std::get<4>(x.t)};
 
-   std::list<std::string> labels{};
+   std::vector<std::string> labels{};
    std::optional<SourcePosition> srcPosBody{std::nullopt};
    std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(program_stmt, Order::begin)};
    SourcePosition srcPosEnd{BuildSourcePosition(end_program_stmt, Order::end)};
@@ -189,30 +196,230 @@ void Build(const parser::MainProgram &x, T* scope)
    builder.Leave(program_decl);
 }
 
+// Module
+
+template<typename T>
+void Build(const parser::Module &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Module)\n";
+#endif
+
+   // ModuleStmt - Name v;
+   std::string module_stmt_name;
+   Build(std::get<0>(x.t).statement.v, module_stmt_name);
+
+   //   SgModuleStatement* module_stmt = nullptr;
+   //   builder.Enter(module_stmt, module_stmt_name);
+
+   // SpecificationPart
+   SgScopeStatement* function_scope{nullptr};
+   Build(std::get<parser::SpecificationPart>(x.t), function_scope);
+
+   // std::optional<ModuleSubprogramPart>
+#if 0
+   if (auto & opt = std::get<2>(x.t)) {
+   }
+#endif
+
+   // EndModuleStmt - std::optional<Name> v;
+   if (auto & opt = std::get<3>(x.t).statement.v) {
+      std::string end_module_stmt_name;
+      Build(opt.value(), end_module_stmt_name);
+   }
+
+   //   builder.Leave(module_stmt);
+}
+
+template<typename T>
+void Build(const parser::FunctionSubprogram &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(FunctionSubprogram)\n";
+#endif
+
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   SgFunctionDeclaration* function_decl{nullptr};
+   SgType* return_type{nullptr};
+   LanguageTranslation::FunctionModifierList function_modifiers;
+   std::list<std::string> dummy_arg_name_list;
+   std::string name, result_name;
+   bool is_defining_decl = true;
+
+   // Traverse FunctionStmt to get dummy argument list, name of function, name of result, and return type if part of prefix
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, result_name, function_modifiers, return_type);
+
+   // Set bool for an undeclared result name so can fix it at the right time
+   bool undeclared_result_name = false;
+   if (!result_name.empty() && return_type) {
+      undeclared_result_name = true;
+   }
+
+   // Peek into the SpecificationPart to get the return type if don't already know it
+   if (!return_type) {
+      BuildFunctionReturnType(std::get<parser::SpecificationPart>(x.t), result_name, return_type);
+   }
+
+   // Enter SageTreeBuilder for SgFunctionParameterList
+   builder.Enter(param_list, param_scope, name, return_type, is_defining_decl);
+
+   // Traverse SpecificationPart
+   Build(std::get<parser::SpecificationPart>(x.t), param_scope);
+
+   // Need to create initialized name here for result, if result is not declared in SpecificationPart
+   if (undeclared_result_name) {
+      SageBuilderCpp17::fixUndeclaredResultName(result_name, param_scope, return_type);
+   }
+
+   // Traverse ExecutionPart
+   Build(std::get<parser::ExecutionPart>(x.t), param_scope);
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+   builder.Leave(param_list, param_scope, dummy_arg_name_list);
+
+   // Begin SageTreeBuilder for SgFunctionDeclaration
+   builder.Enter(function_decl, name, return_type, param_list, function_modifiers, is_defining_decl);
+
+   // EndFunctionStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+   if (auto & opt = std::get<4>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgFunctionDeclaration
+   builder.Leave(function_decl, param_scope, have_end_stmt, result_name);
+
+#if 0
+   // TODO: implement optional InternalSubprogramPart
+   // std::optional<InternalSubprogramPart>
+   if (auto & opt = std::get<3>(x.t)) {
+   }
+#endif
+}
+
+template<typename T>
+void Build(const parser::SubroutineSubprogram &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SubroutineSubprogram)\n";
+#endif
+
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   SgFunctionDeclaration* function_decl{nullptr};
+   LanguageTranslation::FunctionModifierList function_modifiers;
+   std::list<std::string> dummy_arg_name_list;
+   std::string name;
+   bool is_defining_decl = true;
+
+   // Traverse SubroutineStmt to get dummy argument list and name
+   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, function_modifiers);
+
+   // Enter SageTreeBuilder for SgFunctionParameterList
+   builder.Enter(param_list, param_scope, name, nullptr /* function_type */, is_defining_decl);
+
+   // Traverse SpecificationPart and ExecutionPart
+   Build(std::get<parser::SpecificationPart>(x.t), param_scope);
+   Build(std::get<parser::    ExecutionPart>(x.t), param_scope);
+
+   // Leave SageTreeBuilder for SgFunctionParameterList
+   builder.Leave(param_list, param_scope, dummy_arg_name_list);
+
+   // Begin SageTreeBuilder for SgFunctionDeclaration
+   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers, is_defining_decl);
+
+   // EndSubroutineStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+
+   if (auto & opt = std::get<4>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgFunctionDeclaration
+   builder.Leave(function_decl, param_scope, have_end_stmt);
+
+   // TODO: implement optional InternalSubprogramPart
+   // std::optional<InternalSubprogramPart>
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {
+   }
+#endif
+}
+
+template<typename T>
+void Build(const parser::Submodule &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Submodule)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::BlockData &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(BlockData)\n";
+#endif
+}
+
 template<typename T>
 void Build(const parser::SpecificationPart &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SpecificationPart)\n";
+#endif
 
-   const auto & implicit_part = std::get<3>(x.t);
+   const auto & implicit_part = std::get<parser::ImplicitPart>(x.t);
    Build(implicit_part, scope);
 
-   const auto & decl_construct = std::get<4>(x.t);
+   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
    Build(decl_construct, scope);
 
+}
+
+void BuildFunctionReturnType(const parser::SpecificationPart &x, std::string &result_name, SgType* &return_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SpecificationPart)\n";
+#endif
+
+   // Look for the variable declaration of the result to get the function return type
+
+   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
+
+   for (const auto &elem : decl_construct) {
+      const auto & spec_construct = std::get<parser::SpecificationConstruct>(elem.u);
+      const auto & type_decl_stmt = std::get<parser::Statement<common::Indirection<parser::TypeDeclarationStmt>>>(spec_construct.u).statement.value();
+      const auto & entity_decl = std::get<std::list<parser::EntityDecl>>(type_decl_stmt.t);
+
+      for (const auto &name : entity_decl) {
+         // Look for the result name
+         if (std::get<0>(name.t).ToString() == result_name) {
+            // When result name is found, get the return type
+            const auto & decl_type_spec = std::get<parser::DeclarationTypeSpec>(type_decl_stmt.t);
+            Build(decl_type_spec, return_type);
+         }
+      }
+   }
 }
 
 template<typename T>
 void Build(const parser::ExecutionPart &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExecutionPart)\n";
+#endif
+
    Build(x.v, scope);   // std::list<ExecutionPartConstruct>
 }
 
 template<typename T>
 void Build(const parser::ExecutionPartConstruct &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExecutionPartConstruct)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -227,7 +434,9 @@ void Build(const parser::ExecutionPartConstruct &x, T* scope)
 template<typename T>
 void Build(const parser::ExecutableConstruct &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExecutableConstruct)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -238,7 +447,8 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
                 { Build(y.statement.value(), scope); },
          // common:: Indirection - AssociateConstruct, BlockConstruct, CaseConstruct, ChangeTeamConstruct,
          // CriticalConstruct, DoConstruct, IfConstruct, SelectRankConstruct, SelectTypeConstruct,
-         // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OmpEndLoopDirective
+         // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OpenACCConstruct, OmpEndLoopDirective
+         // AccEndCombinedDirective
          [&] (const auto &y) { Build(y.value(), scope); },
       },
       x.u);
@@ -247,7 +457,9 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
 template<typename T>
 void Build(const parser::ActionStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ActionStmt)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -267,7 +479,9 @@ void Build(const parser::ActionStmt &x, T* scope)
 template<typename T>
 void Build(const parser::AssignmentStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssignmentStmt)\n";
+#endif
 
    SgExpression* lhs{nullptr};
    SgExpression* rhs{nullptr};
@@ -287,9 +501,126 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    builder.Leave(assign_stmt);
 }
 
+void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(FunctionStmt)\n";
+#endif
+
+   Build(std::get<0>(x.t), function_modifiers, type);   // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                       // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);        // std::list<Name>
+
+   if (auto & opt = std::get<3>(x.t)) {                 // std::optional<Suffix>
+      Build(opt.value(), result_name);
+   }
+}
+
+void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, LanguageTranslation::FunctionModifierList &function_modifiers)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SubroutineStmt)\n";
+#endif
+
+   SgType* type;
+
+   Build(std::get<0>(x.t), function_modifiers, type);    // std::list<PrefixSpec>
+   Build(std::get<1>(x.t), name);                        // Name
+   Build(std::get<2>(x.t), dummy_arg_name_list);         // std::list<DummyArg>
+
+#if 0
+   if (auto & opt = std::get<3>(x.t)) {                  // std::optional<LanguageBindingSpec>
+      Build(opt.value(), expr);
+   }
+#endif
+}
+
+void Build(const std::list<parser::PrefixSpec> &x, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+   for (const auto &elem : x) {
+      LanguageTranslation::FunctionModifier function_mod;
+
+      Build(elem, function_mod, type);
+
+      function_modifiers.push_back(function_mod);
+   }
+
+}
+
+void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::PrefixSpec::Elemental &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_elemental;
+            },
+         [&] (const parser::PrefixSpec::Impure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_impure;
+            },
+         [&] (const parser::PrefixSpec::Module &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_module;
+            },
+         [&] (const parser::PrefixSpec::Pure &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_pure;
+            },
+         [&] (const parser::PrefixSpec::Recursive &y)
+            {
+               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_recursive;
+            },
+         [&] (const parser::DeclarationTypeSpec &y)
+            {
+               Build(y, type);
+            },
+         [&] (const auto &y) { ; }   // Non_Recursive
+      },
+      x.u);
+}
+
+void Build(const parser::DummyArg &x, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DummyArg)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const Fortran::parser::Name &y) { name = y.ToString(); },
+         [&] (const Fortran::parser::Star &y) { ; },
+      },
+      x.u);
+}
+
+void Build(const parser::Suffix &x, std::string &result_name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Suffix)\n";
+#endif
+
+   if (x.resultName) {  // std::optional<Name>
+      Build(x.resultName.value(), result_name);
+   }
+
+   // TODO:
+   //  std::optional<LanguageBindingSpec> binding;
+}
+
 void Build(const parser::Variable &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Variable)\n";
+#endif
 
    // Designator, FunctionReference
    auto VariableVisitor = [&](const auto& y) { Build(y.value(), expr); };
@@ -298,7 +629,9 @@ void Build(const parser::Variable &x, SgExpression* &expr)
 
 void Build(const parser::Designator &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Designator)\n";
+#endif
 
    // DataRef, Substring
    auto DesignatorVisitor = [&](const auto& y) { Build(y, expr); };
@@ -307,56 +640,16 @@ void Build(const parser::Designator &x, SgExpression* &expr)
 
 void Build(const parser::DataRef &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DataRef)\n";
+#endif
 
    std::visit(
       common::visitors{
          [&] (const Fortran::parser::Name &y) {
             std::string name = std::get<0>(x.u).ToString();
-            std::cout << "The name of the DataRef is " << name << std::endl;
 
-            semantics::Symbol *symbol = y.symbol;
-
-            // create a varref
             expr = SageBuilderCpp17::buildVarRefExp_nfi(name);
-
-#if 0
-            if (symbol) {
-               const parser::CharBlock &srcName = symbol->name();
-               std::cout << "The symbol name is " << srcName.ToString() << "\n";
-
-               semantics::Attrs &attrs = symbol->attrs();
-               std::cout << "The attrs is " << &attrs << "\n";
-
-               const semantics::Scope &owner_scope = symbol->owner();
-               semantics::Scope *introduced_scope = symbol->scope();
-
-               const semantics::Symbol *owner_scope_symbol = owner_scope.symbol();
-
-               if (owner_scope_symbol) {
-                  std::string owner_scope_name = owner_scope_symbol->name().ToString();
-                  std::cout << "owner scope name is " << owner_scope_name << "\n";
-               }
-               else {
-                  std::cout << "no symbol for owner scope \n";
-               }
-
-               semantics::Scope::Kind owner_scope_kind = owner_scope.kind();
-               std::cout << "owner scope kind is " << semantics::Scope::EnumToString(owner_scope_kind) << "\n";
-
-               const semantics::Scope &owner_scope_parent = owner_scope.parent();
-               semantics::Scope::Kind owner_scope_parent_kind = owner_scope_parent.kind();
-               std::cout << "owner scope parent kind is " << semantics::Scope::EnumToString(owner_scope_parent_kind) << "\n";
-
-               if (introduced_scope) {
-                  semantics::Scope::Kind introduced_scope_kind = introduced_scope->kind();
-                  std::cout << "introduced scope kind is " << semantics::Scope::EnumToString(introduced_scope_kind) << "\n";
-               }
-               else {
-                  std::cout << "No scope was introduced by " << name << "()\n";
-               }
-            }
-#endif
           },
          // StructureComponent, ArrayElement, or CoindexedNamedObject
          [&] (const auto &y) { Build(y.value(), expr); },
@@ -366,125 +659,84 @@ void Build(const parser::DataRef &x, SgExpression* &expr)
 
 void Build(const parser::Substring &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Substring)\n";
+#endif
 }
 
 void Build(const parser::FunctionReference &x, SgExpression* &expr)
 {
-   //Call v;
-   //  Designator ConvertToArrayElementRef();
-   //  StructureConstructor ConvertToStructureConstructor(
-   //      const semantics::DerivedTypeSpec &);
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FunctionReference)\n";
+#endif
 
-   Build(x.v, expr); // Call
+   std::list<SgExpression*> arg_list;
+   std::string func_name;
 
-   //   const auto & arrRef = x.ConvertToArrayElementRef();
+   Build(x.v, arg_list, func_name); // Call
+
+   SgExprListExp* param_list = SageBuilderCpp17::buildExprListExp_nfi(arg_list);
+
+   // Begin SageTreeBuilder
+   SgFunctionCallExp* func_call;
+   builder.Enter(func_call, func_name, param_list);
+
+   // Use wrapper function because can't use inheritance of pointers until Rose accepts Cpp17
+   expr = SageBuilderCpp17::buildFunctionCallExp(func_call);
+
 }
 
-void Build(const parser::Call &x, SgExpression* &expr)
+void Build(const parser::Call &x, std::list<SgExpression*> &arg_list, std::string &name)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Call)\n";
+#endif
 
-   const parser::CharBlock source = x.source;
+   SgExpression* expr{nullptr};
 
-   SgExpression* proc_name{nullptr};
-   SgExpression* arg_list{nullptr};
-
-   Build(std::get<0>(x.t), proc_name);   // ProcedureDesignator
-   Build(std::get<1>(x.t), arg_list);    // std::list<ActualArgSpec>
+   Build(std::get<0>(x.t), expr, name);   // ProcedureDesignator
+   Build(std::get<1>(x.t), arg_list);     // std::list<ActualArgSpec>
 }
 
-void Build(const parser::ProcedureDesignator &x, SgExpression* &expr)
+void Build(const parser::ProcedureDesignator &x, SgExpression* &expr, std::string &name)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ProcedureDesignator)\n";
+#endif
 
    std::visit(
       common::visitors{
-         [&] (const parser::Name &y)
-         {
-            std::string name = y.ToString();
-            std::cout << "The ProcedureDesignator name is " << name << "\n";
-
-            semantics::Symbol *symbol = y.symbol;
-
-            const parser::CharBlock &srcName = symbol->name();
-            std::cout << "The symbol name is " << srcName.ToString() << "\n";
-
-            semantics::Attrs &attrs = symbol->attrs();
-            std::cout << "The attrs is " << &attrs << "\n";
-
-            const semantics::Scope &owner_scope = symbol->owner();
-            semantics::Scope *introduced_scope = symbol->scope();
-
-            const semantics::Symbol *owner_scope_symbol = owner_scope.symbol();
-
-            if (owner_scope_symbol) {
-               std::string owner_scope_name = owner_scope_symbol->name().ToString();
-               std::cout << "owner scope name is " << owner_scope_name << "\n";
-            }
-
-            semantics::Scope::Kind owner_scope_kind = owner_scope.kind();
-            std::cout << "owner scope kind is " << semantics::Scope::EnumToString(owner_scope_kind) << "\n";
-
-            const semantics::Scope &owner_scope_parent = owner_scope.parent();
-            semantics::Scope::Kind owner_scope_parent_kind = owner_scope_parent.kind();
-            std::cout << "owner scope parent kind is " << semantics::Scope::EnumToString(owner_scope_parent_kind) << "\n";
-
-            if (introduced_scope) {
-               semantics::Scope::Kind introduced_scope_kind = introduced_scope->kind();
-               std::cout << "introduced scope kind is " << semantics::Scope::EnumToString(introduced_scope_kind) << "\n";
-            }
-            else {
-               std::cout << "No scope was introduced by call: " << name << "()\n";
-            }
-
-            const semantics::Details &details = symbol->details();
-            std::cout << "details is " << &details << "\n";
-            const auto proc_details = std::get<semantics::ProcEntityDetails>(details);
-            const semantics::ProcInterface &proc_interface = proc_details.interface();
-            const semantics::Symbol *proc_interface_symbol = proc_interface.symbol();
-            const semantics::DeclTypeSpec *proc_interface_type = proc_interface.type();
-
-            if (proc_interface_symbol) {
-               std::cout << "details symbol name is " << proc_interface_symbol->name().ToString() << "\n";
-            }
-            else {
-               std::cout << "no symbol for proc interface\n";
-            }
-
-            if (proc_interface_type) {
-               std::cout << "proc interface type is " << proc_interface_type->category() << "\n";
-            }
-            else {
-               std::cout << "no type for proc interface\n";
-            }
-         },
-         [&] (const auto &y) { Build(y, expr); }   // ProcComponentRef
+         [&] (const parser::Name             &y) { name = y.ToString(); },
+         [&] (const parser::ProcComponentRef &y) { Build(y, expr);      }
       },
       x.u);
 }
 
 void Build(const parser::ProcComponentRef &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ProcComponentRef)\n";
+#endif
 }
 
 void Build(const parser::ActualArgSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ActualArgSpec)\n";
+#endif
 
    if (auto & opt = std::get<0>(x.t)) {    // std::optional<Keyword>
       Build(opt.value(), expr);
    }
 
-   Build(std::get<1>(x.t), expr);         // ActualArg
+   Build(std::get<1>(x.t), expr);          // ActualArg
 }
 
 void Build(const parser::ActualArg &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ActualArg)\n";
-   //  std::variant<common::Indirection<Expr>, AltReturnSpec, PercentRef, PercentVal>
+#endif
 
    std::visit(
       common::visitors{
@@ -496,17 +748,42 @@ void Build(const parser::ActualArg &x, SgExpression* &expr)
 
 void Build(const parser::Keyword &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Keyword)\n";
+#endif
 }
 
 void Build(const parser::Name &x, SgExpression* &expr)
 {
-   std::cout << "Rose::builder::Build(Name)\n";
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Name) - build SgVarRefExp\n";
+#endif
+
+   std::string name = x.ToString();
+   expr = SageBuilderCpp17::buildVarRefExp_nfi(name);
+}
+
+void Build(const parser::Name &x, std::string &name)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Name) - build std::string\n";
+#endif
+
+   name = x.ToString();
+}
+
+void Build(const parser::NamedConstant &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(NamedConstant)\n";
+#endif
 }
 
 void Build(const parser::Expr &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Expr)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -526,14 +803,16 @@ void Build(const parser::Expr &x, SgExpression* &expr)
 
 void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntrinsicBinary)\n";
+#endif
 }
 
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LiteralConstant)\n";
-
-   //   Build(std::get<1>(x.u), scope);
+#endif
 
    //  HollerithLiteralConstant, IntLiteralConstant, RealLiteralConstant, ComplexLiteralConstant,
    //  BOZLiteralConstant, CharLiteralConstant, LogicalLiteralConstant
@@ -542,81 +821,142 @@ void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 }
 
    // LiteralConstant
-template<typename T>
-void Build(const parser::HollerithLiteralConstant &x, T* &expr)
+void Build(const parser::HollerithLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(HollerithLiteralConstant)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::IntLiteralConstant &x, T* &expr)
+void Build(const parser::IntLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
+#endif
 
    expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }
 
-template<typename T>
-void Build(const parser::RealLiteralConstant &x, T* &expr)
+void Build(const parser::SignedIntLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SignedIntLiteralConstant)\n";
+#endif
+   // std::tuple<CharBlock, std::optional<KindParam>> t;
+
+   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
+}
+
+void Build(const parser::RealLiteralConstant &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(RealLiteralConstant)\n";
+#endif
+
+   expr = SageBuilderCpp17::buildFloatVal_nfi(x.real.source.ToString());
 }
 
-template<typename T>
-void Build(const parser::ComplexLiteralConstant &x, T* &expr)
+void Build(const parser::SignedRealLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(SignedRealLiteralConstant)\n";
+#endif
+   // std::tuple<std::optional<Sign>, RealLiteralConstant> t;
+
+   Build(std::get<1>(x.t), expr);
+}
+
+void Build(const parser::ComplexLiteralConstant &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ComplexLiteralConstant)\n";
+#endif
+   // std::tuple<ComplexPart, ComplexPart> t;
+
+   SgExpression * real_value = nullptr, * imaginary_value = nullptr;
+
+   Build(std::get<0>(x.t), real_value);
+   Build(std::get<1>(x.t), imaginary_value);
+
+   expr = SageBuilderCpp17::buildComplexVal_nfi(real_value, imaginary_value, "");
 }
 
-template<typename T>
-void Build(const parser::BOZLiteralConstant &x, T* &expr)
+void Build(const parser::BOZLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(BOZLiteralConstant)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::CharLiteralConstant &x, T* &expr)
+void Build(const parser::CharLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CharLiteralConstant)\n";
-   std::string literal = x.GetString();
-   std::cout << " The CHAR LITERAL CONSTANT is \"" << literal << "\"" << std::endl;
+#endif
+
+   expr = SageBuilderCpp17::buildStringVal_nfi(x.GetString());
 }
 
-template<typename T>
-void Build(const parser::LogicalLiteralConstant &x, T* &expr)
+void Build(const parser::LogicalLiteralConstant &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LogicalLiteralConstant)\n";
-   bool literal = std::get<0>(x.t);
-   std::cout << " The LOGICAL LITERAL CONSTANT is " << literal << std::endl;
+#endif
+
+   expr = SageBuilderCpp17::buildBoolValExp_nfi(std::get<0>(x.t));
+}
+
+void Build(const parser::ComplexPart &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComplexPart)\n";
+#endif
+
+   // std::variant<SignedIntLiteralConstant, SignedRealLiteralConstant, NamedConstant>
+   auto ComplexPartVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(ComplexPartVisitor, x.u);
 }
 
 template<typename T>
 void Build(const parser::InternalSubprogramPart &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(InternalSubprogramPart)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ImplicitPart &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitPart)\n";
+#endif
+
    Build(x.v, scope);   // std::list<ImplicitPartStmt>
 }
 
 template<typename T>
 void Build(const parser::ImplicitPartStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitPartStmt)\n";
+#endif
 
-   // Statement<common::Indirection<> - ImplicitStmt, ParameterStmt, OldParameterStmt, FormatStmt, EntryStmt
-   auto ImplicitPartStmtVisitor = [&] (const auto &y) { Build(y.statement.value(), scope); };
-   std::visit(ImplicitPartStmtVisitor, x.u);
+   std::visit(
+      common::visitors{
+         [&](const common::Indirection<parser::CompilerDirective> &y) { Build(y.value(), scope); },
+         // Statement<common::Indirection<> - ImplicitStmt, ParameterStmt, OldParameterStmt, FormatStmt, EntryStmt
+         [&](const auto &y) { Build(y.statement.value(), scope); },
+      },
+      x.u);
 }
 
 template<typename T>
 void Build(const parser::ImplicitStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitStmt)\n";
+#endif
 
    // std::list<ImplicitSpec>, std::list<ImplicitNoneNameSpec>
    auto SpecVisitor = [&](const auto& y) { Build(y, scope); };
@@ -626,19 +966,25 @@ void Build(const parser::ImplicitStmt &x, T* scope)
 template<typename T>
 void Build(const parser::ImplicitSpec &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitSpec)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ImplicitStmt::ImplicitNoneNameSpec &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitNoneNameSpec)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::DeclarationConstruct &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DeclarationConstruct)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -653,16 +999,19 @@ void Build(const parser::DeclarationConstruct &x, T* scope)
 template<typename T>
 void Build(const parser::SpecificationConstruct &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SpecificationConstruct)\n";
+#endif
 
    std::visit(
       common::visitors{
-         [&](const common::Indirection<parser::DerivedTypeDef> &y)             { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::EnumDef> &y)                    { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::InterfaceBlock> &y)             { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::StructureDef> &y)               { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::CompilerDirective> &y)          { Build(y.value(), scope); },
-         [&](const common::Indirection<parser::OpenMPDeclarativeConstruct> &y) { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::DerivedTypeDef> &y)              { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::EnumDef> &y)                     { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::InterfaceBlock> &y)              { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::StructureDef> &y)                { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::CompilerDirective> &y)           { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::OpenMPDeclarativeConstruct>  &y) { Build(y.value(), scope); },
+         [&](const common::Indirection<parser::OpenACCDeclarativeConstruct> &y) { Build(y.value(), scope); },
          [&](const parser::Statement<parser::OtherSpecificationStmt> &y)     { Build(y.statement, scope); },
          // Statement<common::Indirection<>> - GenericStmt, ParameterStmt,
          // OldParameterStmt, ProcedureDeclarationStmt, TypeDeclarationStmt
@@ -674,26 +1023,29 @@ void Build(const parser::SpecificationConstruct &x, T* scope)
 template<typename T>
 void Build(const parser::TypeDeclarationStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(TypeDeclarationStmt)\n";
+#endif
 
    SgVariableDeclaration* var_decl = nullptr;
-   SgType* type = nullptr;
-   SgExpression* init_expr = nullptr;
+   SgType * type = nullptr, * base_type = nullptr;
+   SgExpression* init = nullptr;
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   std::list<EntityDeclTuple> init_info;
 
-   // need name and type
-   std::string name{};
+   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
+   Build(std::get<1>(x.t), modifier_enum_list);           // std::list<AttrSpec>
+   Build(std::get<2>(x.t), init_info, base_type);         // std::list<EntityDecl>
 
-   Build(std::get<0>(x.t), type);        // DeclarationTypeSpec
-   Build(std::get<1>(x.t), scope);       // std::list<AttrSpec>
-   Build(std::get<2>(x.t), name);        // std::list<EntityDecl>
-
-   builder.Enter(var_decl, name, type, init_expr);
-   builder.Leave(var_decl);
+   builder.Enter(var_decl, base_type, init_info);
+   builder.Leave(var_decl, modifier_enum_list);
 }
 
 void Build(const parser::DeclarationTypeSpec &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DeclarationTypeSpec)\n";
+#endif
 
    // IntrinsicTypeSpec, Type, TypeStar, Class, ClassStar, Record
    auto DeclTypeSpecVisitor = [&] (const auto &y) { Build(y, type); };
@@ -702,55 +1054,138 @@ void Build(const parser::DeclarationTypeSpec &x, SgType* &type)
 
 void Build(const parser::DeclarationTypeSpec::Type&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Type)\n";
+#endif
+
    Build(x.derived, type);   // DerivedTypeSpec
 }
 
 void Build(const parser::DeclarationTypeSpec::TypeStar&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(TypeStar)\n";
+#endif
 }
 
 void Build(const parser::DeclarationTypeSpec::Class&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Class)\n";
+#endif
+
    Build(x.derived, type);   // DerivedTypeSpec
 }
 
 void Build(const parser::DeclarationTypeSpec::ClassStar&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ClassStar)\n";
+#endif
 }
 
 void Build(const parser::DeclarationTypeSpec::Record&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Record)\n";
+#endif
 }
 
 void Build(const parser::DerivedTypeSpec&x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DerivedTypeSpec)\n";
+#endif
 
    //   std::tuple<Name, std::list<TypeParamSpec>> t;
    std::string name = std::get<parser::Name>(x.t).ToString();
    std::cout << "DerivedTypeSpec name is " << name << "\n";
 }
 
-template<typename T>
-void Build(const parser::AttrSpec &x, T* scope)
+void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
 {
-   //  std::variant<AccessSpec, Allocatable, Asynchronous, CoarraySpec, Contiguous,
-   //      ArraySpec, External, IntentSpec, Intrinsic, LanguageBindingSpec, Optional,
-   //      Parameter, Pointer, Protected, Save, Target, Value, Volatile>
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AttrSpec)\n";
+#endif
 
-   auto AttrSpecVisitor = [&] (const auto &y) { Build(y, scope); };
-   std::visit(AttrSpecVisitor, x.u);
+   std::visit(
+      common::visitors{
+         [&] (const parser::CoarraySpec  &y) { ; },
+         [&] (const parser::ArraySpec    &y) { ; },
+         [&] (const parser::Parameter    &y) { ; },
+         [&] (const parser::Allocatable  &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
+            },
+         [&] (const parser::Asynchronous &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_asynchronous;
+            },
+         [&] (const parser::Contiguous &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous;
+            },
+         [&] (const parser::External &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_external;
+            },
+         [&] (const parser::Intrinsic &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intrinsic;
+            },
+         [&] (const parser::Optional &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_optional;
+            },
+         [&] (const parser::Pointer &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_pointer;
+            },
+         [&] (const parser::Protected &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_protected;
+            },
+         [&] (const parser::Save &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_save;
+            },
+         [&] (const parser::Target &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_target;
+            },
+         [&] (const parser::Value &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_param_binding_value;
+            },
+         [&] (const parser::Volatile &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_volatile;
+            },
+         // AccessSpec, IntentSpec, LanguageBindingSpec
+         [&] (const auto &y) { Build(y, modifier_enum); },
+      },
+      x.u);
+}
+
+void Build(const parser::KindSelector &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(KindSelector)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ScalarIntConstantExpr  &y) { Build(y.thing.thing, expr); },
+         [&] (const parser::KindSelector::StarSize &y) { ; },
+      },
+      x.u);
 }
 
 void Build(const parser::IntrinsicTypeSpec &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntrinsicTypeSpec)\n";
+#endif
 
    // IntegerTypeSpec, Real, DoublePrecision, Complex, Character, Logical, DoubleComplex
    auto TypeVisitor = [&](const auto& y) { Build(y, type); };
@@ -759,68 +1194,168 @@ void Build(const parser::IntrinsicTypeSpec &x, SgType* &type)
 
 void Build(const parser::IntegerTypeSpec &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntegerTypeSpec)\n";
+#endif
 
-   type = SageBuilderCpp17::buildIntType();
+   if (auto & kind = x.v) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildIntType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildIntType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Real)\n";
-   std::cout << "TYPE IS : Real\n";
+#endif
+
+   if (auto & kind = x.kind) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildFloatType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildFloatType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DoublePrecision)\n";
-   std::cout << "TYPE IS : DoublePrecision\n";
+#endif
+
+   type = SageBuilderCpp17::buildDoubleType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::Complex &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Complex)\n";
-   std::cout << "TYPE IS : Complex\n";
+#endif
+
+   SgType* base_type = SageBuilderCpp17::buildIntType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
 void Build(const parser::IntrinsicTypeSpec::Character &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Character)\n";
-   std::cout << "TYPE IS : Character\n";
+#endif
+
+   SgExpression* expr = nullptr;
+
+   if (auto & opt = x.selector) {    // std::optional<CharSelector> selector
+      Build(opt.value(), expr);
+      type = SageBuilderCpp17::buildStringType(expr);
+   } else {
+      type = SageBuilderCpp17::buildCharType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::Logical &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Logical)\n";
-   std::cout << "TYPE IS : Logical\n";
+#endif
+
+   if (auto & kind = x.kind) {   // std::optional<KindSelector>
+      SgExpression* kind_expr = nullptr;
+      Build(kind.value(), kind_expr);
+      type = SageBuilderCpp17::buildBoolType(kind_expr);
+   } else {
+      type = SageBuilderCpp17::buildBoolType();
+   }
 }
 
 void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DoubleComplex)\n";
-   std::cout << "TYPE IS : DoubleComplex\n";
+#endif
+
+   SgType* base_type = SageBuilderCpp17::buildDoubleType();
+   type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
-void Build(const std::list<Fortran::parser::EntityDecl> &x, std::string &name)
+void Build(const parser::CharSelector &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CharSelector)\n";
+#endif
+
+   // std::variant<LengthSelector, LengthAndKind> u;
+   auto CharSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(CharSelectorVisitor, x.u);
+}
+
+void Build(const parser::LengthSelector &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(LengthSelector)\n";
+#endif
+
+   //  std::variant<TypeParamValue, CharLength> u;
+   auto LengthSelectorVisitor = [&](const auto& y) { Build(y, expr); };
+   std::visit(LengthSelectorVisitor, x.u);
+}
+
+void Build(const parser::CharSelector::LengthAndKind &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(LengthAndKind)\n";
+#endif
+
+   //    std::optional<TypeParamValue> length;
+   //    ScalarIntConstantExpr kind;
+}
+
+void Build(const parser::TypeParamValue &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(TypeParamVale)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::ScalarIntExpr &y)  { Build(y, expr); },
+         [&] (const auto &y)                                 { ; },  // Star, Deferred
+      },
+      x.u);
+}
+void Build(const std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDeclTuple> &entity_decls, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
+#endif
 
    for (const auto &elem : x) {
-      Build(elem, name);
+      EntityDeclTuple entity_decl;
+      std::string name;
+      SgType* type = nullptr;
+      SgExpression* init = nullptr;
+
+      Build(elem, name, init, type, base_type);
+      entity_decl = std::make_tuple(name, type, init);
+      entity_decls.push_back(entity_decl);
    }
 }
 
-void Build(const parser::EntityDecl &x, std::string &name)
+void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
 {
-   //  std::tuple<ObjectName, std::optional<ArraySpec>, std::optional<CoarraySpec>,
-   //      std::optional<CharLength>, std::optional<Initialization>>
-
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EntityDecl)\n";
+#endif
+
    name = std::get<0>(x.t).ToString();
-   std::cout << "The object name is: " << name << std::endl;
 
    SgScopeStatement *scope = nullptr;
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
-      Build(opt.value(), scope);
+      Build(opt.value(), type, base_type);
    }
 
    if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
@@ -828,51 +1363,83 @@ void Build(const parser::EntityDecl &x, std::string &name)
    }
 
    if (auto & opt = std::get<3>(x.t)) {    // CharLength
-      Build(opt.value(), scope);
+      //      Build(opt.value(), scope);
    }
 
    if (auto & opt = std::get<4>(x.t)) {    // Initialization
-      Build(opt.value(), scope);
+      Build(opt.value(), init);
    }
 }
 
    // EntityDecl
-template<typename T>
-void Build(const parser::ArraySpec &x, T* scope)
+void Build(const parser::ArraySpec &x, SgType* &type, SgType* base_type)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArraySpec)\n";
+#endif
 
    SgExpression* expr = nullptr;
+   std::list<SgExpression*> expr_list;
 
-   // std::list<ExplicitShapeSpec>, std::list<AssumedShapeSpec>, DeferredShapeSpecList,
-   // AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
-   auto ArraySpecVisitor = [&](const auto& y) { Build(y, expr); };
-   std::visit(ArraySpecVisitor, x.u);
+   std::visit(
+      common::visitors{
+         [&] (const std::list<parser::ExplicitShapeSpec> &y)
+            {
+               Build(y, expr_list);
+               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
+            },
+         // std::list<AssumedShapeSpec>, DeferredShapeSpecList,
+         // AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
+         [&] (const auto &y)
+            {
+               Build(y, expr);
+            }
+      },
+      x.u);
 }
 
 template<typename T>
 void Build(const parser::CoarraySpec &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CoarraySpec)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::CharLength &x, T* scope)
+void Build(const parser::CharLength &x, SgExpression* &)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CharLength)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::Initialization &x, T* scope)
+void Build(const parser::Initialization &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Initialization)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const std::list<common::Indirection<parser::DataStmtValue>> &y)
+            {
+               for (const auto &elem : y) {
+                  Build(elem.value(), expr);
+               }
+            },
+         [&] (const parser::ConstantExpr &y) { Build(y, expr); },
+         [&] (const auto &y)                               { ; }    // NullInit, InitialDataTarget
+      },
+      x.u);
 }
 
    // ArraySpec
 
 void Build(const parser::ExplicitShapeSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExplicitShapeSpec)\n";
+#endif
 
    if (auto & specExpr1 = std::get<0>(x.t)) {
       Build(specExpr1.value(), expr);      // 1st SpecificationExpr (optional)
@@ -883,39 +1450,53 @@ void Build(const parser::ExplicitShapeSpec &x, SgExpression* &expr)
 
 void Build(const parser::AssumedShapeSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssumedShapeSpec)\n";
+#endif
 }
 
 void Build(const parser::DeferredShapeSpecList &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DeferredShapeSpecList)\n";
+#endif
 }
 
 void Build(const parser::AssumedSizeSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssumedSizeSpec)\n";
+#endif
 }
 
 void Build(const parser::ImpliedShapeSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImpliedShapeSpec)\n";
+#endif
 }
 
 void Build(const parser::AssumedRankSpec &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssumedRankSpec)\n";
+#endif
 }
 
 void Build(const parser::SpecificationExpr &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SpecificationExpr)\n";
+#endif
 
    Build(x.v, expr);  // Scalar<IntExpr>
 }
 
 void Build(const parser::Scalar<parser::IntExpr> &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Scalar<IntExpr>)\n";
+#endif
 
    // Scalar<Integer<std::optional::Expr>>
    Build(x.thing.thing.value(), expr);  // Expr
@@ -923,7 +1504,9 @@ void Build(const parser::Scalar<parser::IntExpr> &x, SgExpression* &expr)
 
 void Build(const parser::Scalar<parser::LogicalExpr>&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Scalar<LogicalExpr>)\n";
+#endif
 
    // Scalar<Integer<std::optional::Expr>>
    Build(x.thing.thing.value(), expr);  // Expr
@@ -931,7 +1514,9 @@ void Build(const parser::Scalar<parser::LogicalExpr>&x, SgExpression* &expr)
 
 void Build(const parser::ConstantExpr &x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ConstantExpr)\n";
+#endif
 
    // Constant<common::Indirection<Expr>>
    Build(x.thing.value(), expr);  // Expr
@@ -942,209 +1527,327 @@ void Build(const parser::ConstantExpr &x, SgExpression* &expr)
 template<typename T>
 void Build(const parser::DataStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DataStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::FormatStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FormatStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::EntryStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EntryStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::StmtFunctionStmt &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StmtFunctionStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ErrorRecovery &x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ErrorRecovery)\n";
+#endif
+}
+
+   // DataStmt
+void Build(const parser::DataStmtValue &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DataStmtValue)\n";
+#endif
+
+   // std::tuple<std::optional<DataStmtRepeat>, DataStmtConstant> t;
+   Build(std::get<parser::DataStmtConstant>(x.t), expr);
+}
+
+void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DataStmtConstant)\n";
+#endif
+
+   //     std::variant<LiteralConstant, SignedIntLiteralConstant,
+   //      SignedRealLiteralConstant, SignedComplexLiteralConstant, NullInit,
+   //      common::Indirection<Designator>, StructureConstructor>  u;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Scalar<parser::LiteralConstant> &y) { Build(y.thing, expr); },
+         [&] (const auto &y) { ; }
+      },
+      x.u);
 }
 
    // ActionStmt
 template<typename T>
 void Build(const parser::ContinueStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ContinueStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::FailImageStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FailImageStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::AllocateStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AllocateStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::BackspaceStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(BackspaceStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::CallStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CallStmt)\n";
+#endif
+
+   std::list<SgExpression*> arg_list;
+   std::string name;
+
+   // Get argument list and build rose node from it
+   Build(x.v, arg_list, name);  // Call
+   SgExprListExp* param_list = SageBuilderCpp17::buildExprListExp_nfi(arg_list);
+
+   // Begin SageTreeBuilder
+   SgExprStatement* call_stmt{nullptr};
+   builder.Enter(call_stmt, name, param_list, "" /* abort_phrase */);
+
+   // Finish SageTreeBuilder
+   builder.Leave(call_stmt);
 }
 
 template<typename T>
 void Build(const parser::CloseStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CloseStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::CycleStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CycleStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::DeallocateStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DeallocateStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::EndfileStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EndfileStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::EventPostStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EventPostStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::EventWaitStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EventWaitStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ExitStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ExitStmt)\n";
+#endif
+   // std::optional<Name> v;
+
+   // TODO: exit with a name
+   SgProcessControlStatement* exit_stmt{nullptr};
+   builder.Enter(exit_stmt, "exit", boost::none, boost::none);
+   builder.Leave(exit_stmt);
 }
 
 template<typename T>
 void Build(const parser::FlushStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FlustStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::FormTeamStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FormTeamStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::GotoStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(GotoStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::IfStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfStmt)\n";
-   //  std::tuple<ScalarLogicalExpr, UnlabeledStatement<ActionStmt>> t;
+#endif
 
    SgExpression* expr = nullptr;
 
-   Build(std::get<0>(x.t), expr);
-   Build(std::get<1>(x.t).statement, scope);
+   Build(std::get<0>(x.t), expr);            // ScalarLogicalExpr
+   Build(std::get<1>(x.t).statement, scope); // UnlabeledStatement<ActionStmt>
 
 }
 
 template<typename T>
 void Build(const parser::InquireStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(InquireStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::LockStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LockStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::NullifyStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(NullifyStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::OpenStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OpenStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::PointerAssignmentStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PointerAssignmentStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::PrintStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PrintStmt)\n";
+#endif
 
-   Build(std::get<0>(x.t), scope);   // Format
-   Build(std::get<1>(x.t), scope);   // OutputItem
+   std::list<SgExpression*> output_item_list;
+
+   SgExpression* format = nullptr;
+
+   Build(std::get<0>(x.t), format);           // Format
+   Build(std::get<1>(x.t), output_item_list); // std::list<OutputItem>
+
+   SgPrintStatement* print_stmt = nullptr;
+
+   builder.Enter(print_stmt, format, output_item_list);
+   builder.Leave(print_stmt);
 }
 
-template<typename T>
-void Build(const parser::Format&x, T* scope)
+void Build(const parser::Format&x, SgExpression* &format)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Format)\n";
+#endif
 
-   //   auto FormatVisitor = [&] (const auto &y) { Build(y, scope); };
-   //   std::visit(FormatVisitor, x.u);   // DefaultCharExpr, Label, Star
+   auto FormatVisitor = [&] (const auto &y) { Build(y, format); };
+   std::visit(FormatVisitor, x.u);   // DefaultCharExpr, Label, Star
 }
 
-template<typename T>
-void Build(const parser::DefaultCharExpr&x, T* scope)
+void Build(const parser::DefaultCharExpr&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DefaultCharExpr)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::Label&x, T* scope)
+void Build(const parser::Label&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Label)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::Star&x, T* scope)
+void Build(const parser::Star&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Star)\n";
+#endif
+
+   expr = SageBuilderCpp17::buildAsteriskShapeExp_nfi();
 }
 
-template<typename T>
-void Build(const parser::OutputItem&x, T* scope)
+void Build(const parser::OutputItem&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OutputItem)\n";
+#endif
 
-   SgExpression* expr = nullptr;
+   expr = nullptr;
 
    std::visit(
       common::visitors{
@@ -1157,198 +1860,380 @@ void Build(const parser::OutputItem&x, T* scope)
 template<typename T>
 void Build(const parser::OutputImpliedDo&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OutputImpliedDo)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ReadStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ReadStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ReturnStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ReturnStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::RewindStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(RewindStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::StopStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StopStmt)\n";
+#endif
+   //  std::tuple<Kind, std::optional<StopCode>, std::optional<ScalarLogicalExpr>> t;
+
+   SgProcessControlStatement* stop_stmt{nullptr};
+   SgExpression* stop_code{nullptr};
+   boost::optional<SgExpression*> boost_code{boost::none};
+   std::string kind = parser::StopStmt::EnumToString(std::get<0>(x.t));
+
+   // edit strings to match builder function
+   if (kind == "Stop") {
+      kind = "stop";
+   } else if (kind == "ErrorStop") {
+      kind = "error_stop";
+   }
+
+   if (auto & opt = std::get<1>(x.t)) {
+      Build(opt.value().v.thing, stop_code);
+      boost_code = stop_code;
+   }
+
+   builder.Enter(stop_stmt, kind, boost_code);
 }
 
 template<typename T>
 void Build(const parser::SyncAllStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SyncAllStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::SyncImagesStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SyncImagesStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::SyncMemoryStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SyncMemoryStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::SyncTeamStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SyncTeamStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::UnlockStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(UnlockStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::WaitStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(WaitStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::WhereStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(WhereStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::WriteStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(WriteStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ComputedGotoStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ComputedGotoStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ForallStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ForallStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ArithmeticIfStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArithmeticIfStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::AssignStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssignStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::AssignedGotoStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssignedGotoStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::PauseStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PauseStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::NamelistStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(NamelistStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ParameterStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ParameterStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::OldParameterStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OldParameterStmt)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::CommonStmt&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonStmt)\n";
+#endif
+
+   // Flang::parser::CommonStmt -> SgCommonBlock in ROSE
+
+   std::list<SgCommonBlockObject*> common_block_object_list;
+   Build(x.blocks, common_block_object_list);   // std::list<Block> blocks;
+
+   SgCommonBlock* common_block = nullptr;
+   builder.Enter(common_block, common_block_object_list);
+   builder.Leave(common_block);
+}
+
+void Build(const parser::CommonStmt::Block&x, SgCommonBlockObject* &common_block_object)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonStmt::Block)\n";
+#endif
+
+   // Flang::parser::CommonStmt::Block -> SgCommonBlockObject in ROSE
+
+   // Get name of CommonStmt::Block
+   std::string name;
+   if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
+      Build(opt.value(), name);
+      std::cout << "The name of the CommonStmt::Block is " << name << "\n";
+   }
+
+   // Build std::list of variable references built from names in Flang::Parser::CommonBlockObject
+   std::list<SgExpression*> var_ref_list;
+   Build(std::get<1>(x.t), var_ref_list);
+
+   // Build SgExprListExp from std::list of variable references
+   SgExprListExp* sg_list = SageBuilderCpp17::buildExprListExp_nfi(var_ref_list);
+
+   // Build ROSE SgCommonBlockObject from name of CommonStmt::Block and sg_list of variable references
+   common_block_object = SageBuilderCpp17::buildCommonBlockObject(name, sg_list);
+}
+
+void Build(const parser::CommonBlockObject&x, SgExpression* &var_ref)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(CommonBlockObject)\n";
+#endif
+
+   // Flang::parser::CommonBlockObject -> an SgExpression in the SgExprListExp member of SgCommonBlockObject in ROSE
+
+   parser::Name name = std::get<parser::Name>(x.t);
+   std::cout << "The name of the CommonBlockObject is " << name.ToString() << "\n";
+
+   Build(name, var_ref);
+
+#if 0
+   if (auto & opt = std::get<1>(x.t)) {   // std::optional<ArraySpec>
+   }
+#endif
 }
 
    // Expr
 template<typename T>
 void Build(const parser::CharLiteralConstantSubstring&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CharLiteralConstantSubstring)\n";
+#endif
 }
 
-template<typename T>
-void Build(const parser::ArrayConstructor&x, T* &expr)
+void Build(const parser::ArrayConstructor&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArrayConstructor)\n";
+#endif
+
+   Build(x.v, expr);
+}
+
+void Build(const parser::AcSpec&x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(AcSpec)\n";
+#endif
+
+   std::list<SgExpression*> acvalue_list;
+
+#if 0
+   if (auto & opt = x.type)) {   // std::optional<TypeSpec>
+   }
+#endif
+
+   Build(x.values, acvalue_list);   // std::list<AcValue> values;
+   SgExprListExp* initializers = SageBuilderCpp17::buildExprListExp_nfi(acvalue_list);
+   expr = SageBuilderCpp17::buildAggregateInitializer_nfi(initializers);
+}
+
+void Build(const parser::AcValue&x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(AcValue)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&](const common::Indirection<parser::Expr>  &y) { Build(y.value(), expr); },
+         [&](const auto &y) { ; },   // Triplet, common::Indirection<AcImpliedDo>
+
+      },
+      x.u);
 }
 
 template<typename T>
 void Build(const parser::StructureConstructor&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StructureConstructor)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::Parentheses&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Parentheses)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::UnaryPlus&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(UnaryPlus)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::Negate&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Negate)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::NOT&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(NOT)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::PercentLoc&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PercentLoc)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::DefinedUnary&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DefinedUnary)\n";
+#endif
 }
 
 void Build(const parser::Expr::Power&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Power)\n";
+#endif
 }
 
 void Build(const parser::Expr::Multiply&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Multiply)\n";
+#endif
 
    SgExpression * lhs = nullptr, * rhs = nullptr;
    traverseBinaryExprs(x, lhs, rhs);
@@ -1358,7 +2243,9 @@ void Build(const parser::Expr::Multiply&x, SgExpression* &expr)
 
 void Build(const parser::Expr::Divide&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Divide)\n";
+#endif
 
    SgExpression * lhs = nullptr, * rhs = nullptr;
    traverseBinaryExprs(x, lhs, rhs);
@@ -1369,7 +2256,9 @@ void Build(const parser::Expr::Divide&x, SgExpression* &expr)
 template<typename T>
 void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::traverseBinaryExprs\n";
+#endif
 
    Build(std::get<0>(x.t).value(), lhs); // lhs Expr
    Build(std::get<1>(x.t).value(), rhs); // rhs Expr
@@ -1377,7 +2266,9 @@ void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs)
 
 void Build(const parser::Expr::Add&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Add)\n";
+#endif
 
    SgExpression * lhs = nullptr, * rhs = nullptr;
    traverseBinaryExprs(x, lhs, rhs);
@@ -1387,7 +2278,9 @@ void Build(const parser::Expr::Add&x, SgExpression* &expr)
 
 void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Subtract)\n";
+#endif
 
    SgExpression * lhs = nullptr, * rhs = nullptr;
    traverseBinaryExprs(x, lhs, rhs);
@@ -1395,106 +2288,191 @@ void Build(const parser::Expr::Subtract&x, SgExpression* &expr)
    expr = SageBuilderCpp17::buildSubtractOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::Concat&x, T* &expr)
+void Build(const parser::Expr::Concat&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Concat)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildConcatenationOp_nfi(lhs, rhs);
+
 }
 
-template<typename T>
-void Build(const parser::Expr::LT&x, T* &expr)
+void Build(const parser::Expr::LT&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LT)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::LE&x, T* &expr)
+void Build(const parser::Expr::LE&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LE)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildLessOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQ&x, T* &expr)
+void Build(const parser::Expr::EQ&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EQ)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NE&x, T* &expr)
+void Build(const parser::Expr::NE&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(NE)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GE&x, T* &expr)
+void Build(const parser::Expr::GE&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(GE)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterOrEqualOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::GT&x, T* &expr)
+void Build(const parser::Expr::GT&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(GT)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildGreaterThanOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::AND&x, T* &expr)
+void Build(const parser::Expr::AND&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AND)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildAndOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::OR&x, T* &expr)
+void Build(const parser::Expr::OR&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OR)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildOrOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::EQV&x, T* &expr)
+void Build(const parser::Expr::EQV&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EQV)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildEqualityOp_nfi(lhs, rhs);
 }
 
-template<typename T>
-void Build(const parser::Expr::NEQV&x, T* &expr)
+void Build(const parser::Expr::NEQV&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(NEQV)\n";
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+   traverseBinaryExprs(x, lhs, rhs);
+
+   expr = SageBuilderCpp17::buildNotEqualOp_nfi(lhs, rhs);
 }
 
 template<typename T>
 void Build(const parser::Expr::DefinedBinary&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DefinedBinary)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::Expr::ComplexConstructor&x, T* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ComplexConstructor)\n";
+#endif
 }
 
 void Build(const parser::StructureComponent&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StructureComponent)\n";
+#endif
 }
 
 void Build(const parser::ArrayElement&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArrayElement)\n";
-   Build(x.base, expr);        // DataRef
-   Build(x.subscripts, expr);  // std::list<SectionSubscript>
+#endif
+
+   SgExpression * lhs = nullptr, * rhs = nullptr;
+
+   Build(x.base, lhs);        // DataRef
+   Build(x.subscripts, rhs);  // std::list<SectionSubscript>
+
+   expr = SageBuilderCpp17::buildPntrArrRefExp_nfi(lhs, rhs);
 }
 
 void Build(const parser::CoindexedNamedObject&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CoindexedNamedObject)\n";
+#endif
+
    Build(x.base, expr);          // DataRef
    Build(x.imageSelector, expr); // ImageSelector
 }
 
 void Build(const parser::ImageSelector&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImageSelector)\n";
+#endif
 
    Build(std::get<0>(x.t), expr);  // std::list<Cosubscript> - Cosubscript = Scalar<IntExpr>
    Build(std::get<1>(x.t), expr);  // std::list<ImageSelectorSpec>
@@ -1502,7 +2480,9 @@ void Build(const parser::ImageSelector&x, SgExpression* &expr)
 
 void Build(const parser::ImageSelectorSpec&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImageSelectorSpec)\n";
+#endif
 
    // Stat, TeamValue, Team_Number
    //   auto ImageSelectorSpecVisitor = [&] (const auto &y) { Build(y, expr); };
@@ -1511,7 +2491,9 @@ void Build(const parser::ImageSelectorSpec&x, SgExpression* &expr)
 
 void Build(const parser::SectionSubscript&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SectionSubscript)\n";
+#endif
 
    std::visit(
       common::visitors{
@@ -1523,74 +2505,38 @@ void Build(const parser::SectionSubscript&x, SgExpression* &expr)
 
 void Build(const parser::SubscriptTriplet&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SubscriptTriplet)\n";
+#endif
 }
 
    // ExecutableConstruct
 template<typename T>
 void Build(const parser::AssociateConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssociateConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::BlockConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(BlockConstruct)\n";
-   //   std::tuple<Statement<BlockStmt>, BlockSpecificationPart, Block,
-   //      Statement<EndBlockStmt>>
+#endif
 
-   const parser::BlockStmt &block_stmt = std::get<0>(x.t).statement;
-   //   std::optional<Name> v
-   const parser::Name block_name = block_stmt.v.value();
+   // std::tuple<Statement<BlockStmt>, BlockSpecificationPart, Block, Statement<EndBlockStmt>>
 
-   std::cout << "block name is " << block_name.ToString() << "\n";
-
-   semantics::Symbol *symbol = block_name.symbol;
-
-   if (symbol) {
-      const parser::CharBlock &srcName = symbol->name();
-      std::cout << "The symbol name is " << srcName.ToString() << "\n";
-
-      semantics::Attrs &attrs = symbol->attrs();
-      std::cout << "The attrs is " << &attrs << "\n";
-
-      const semantics::Scope &owner_scope = symbol->owner();
-      semantics::Scope *introduced_scope = symbol->scope();
-
-      const semantics::Symbol *owner_scope_symbol = owner_scope.symbol();
-
-      if (owner_scope_symbol) {
-         std::string owner_scope_name = owner_scope_symbol->name().ToString();
-         std::cout << "owner scope name is " << owner_scope_name << "\n";
-      }
-
-      semantics::Scope::Kind owner_scope_kind = owner_scope.kind();
-      std::cout << "owner scope kind is " << semantics::Scope::EnumToString(owner_scope_kind) << "\n";
-
-      const semantics::Scope &owner_scope_parent = owner_scope.parent();
-      semantics::Scope::Kind owner_scope_parent_kind = owner_scope_parent.kind();
-      std::cout << "owner scope parent kind is " << semantics::Scope::EnumToString(owner_scope_parent_kind) << "\n";
-
-      if (introduced_scope) {
-         semantics::Scope::Kind introduced_scope_kind = introduced_scope->kind();
-         std::cout << "introduced scope kind is " << semantics::Scope::EnumToString(introduced_scope_kind) << "\n";
-      }
-      else {
-         std::cout << "No scope was introduced by " << block_name.ToString() << "()\n";
-      }
-   }
-
-   const auto &block = std::get<2>(x.t);
-   std::cout << "The block is of type: " << typeid(block).name() << "\n";
-
-   Build(block, scope);
+   Build(std::get<2>(x.t), scope);   // Block
 }
 
 template<typename T>
 void Build(const parser::CaseConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CaseConstruct)\n";
+#endif
 
 // Statements in the CaseConstruct
    const parser::SelectCaseStmt &select_case_stmt = std::get<0>(x.t).statement;
@@ -1618,7 +2564,10 @@ void Build(const parser::CaseConstruct&x, T* scope)
 
 void Build(const parser::CaseConstruct::Case&x, SgStatement* &stmt)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Case)\n";
+#endif
+
    // std::tuple<Statement<CaseStmt>, Block> t;
 
    SgStatement*                  block_stmt{nullptr};
@@ -1652,44 +2601,37 @@ void Build(const parser::CaseConstruct::Case&x, SgStatement* &stmt)
 
 void Build(const parser::CaseStmt&x, std::list<SgExpression*> &case_list)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CaseStmt)\n";
-   //  std::tuple<CaseSelector, std::optional<Name>> t;
+#endif
 
+   //  std::tuple<CaseSelector, std::optional<Name>> t;
    Build(std::get<0>(x.t), case_list);
 }
 
 void Build(const parser::CaseSelector&x, std::list<SgExpression*> &case_list)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CaseSelector)\n";
-   //  std::variant<std::list<CaseValueRange>, Default> u;
+#endif
 
    std::visit(
       common::visitors{
          [&] (const parser::Default &y) { ; },
-         [&] (const auto &y) { Build(y, case_list); }, // CaseValueRange
+         [&] (const auto &y) { Build(y, case_list); }, // std::list<CaseValueRange>
       },
       x.u);
 }
 
-void Build(const std::list<parser::CaseValueRange> &x, std::list<SgExpression*> &case_list)
-{
-   std::cout << "Rose::builder::Build(std::list) for CaseValueRange \n";
-
-   for (const auto &elem : x) {
-      SgExpression* case_expr = nullptr;
-      Build(elem, case_expr);
-      case_list.push_back(case_expr);
-   }
-}
-
 void Build(const parser::CaseValueRange&x, SgExpression* &expr)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CaseValueRange)\n";
-   //  std::variant<CaseValue, Range> u;
+#endif
 
    std::visit(
       common::visitors{
-         [&] (const parser::CaseValue &y) { Build(y.thing, expr); },  // using CaseValue = Scalar<ConstantExpr>;
+         [&] (const parser::CaseValue &y) { Build(y.thing, expr); },  // using CaseValue = Scalar<ConstantExpr>
          [&] (const parser::CaseValueRange::Range &y) { Build(y, expr); },
       },
       x.u);
@@ -1697,22 +2639,23 @@ void Build(const parser::CaseValueRange&x, SgExpression* &expr)
 
 void Build(const parser::CaseValueRange::Range&x, SgExpression* &range)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Range)\n";
-   //    std::optional<CaseValue> lower, upper;
+#endif
 
+   SgExpression * lower = nullptr, * upper = nullptr;
    auto & lower_expr = x.lower;
    auto & upper_expr = x.upper;
 
-   SgExpression * lower = nullptr, * upper = nullptr;
-
    if (lower_expr) {
-      Build(lower_expr->thing, lower);
+      Build(lower_expr->thing, lower);   // CaseValue = Scalar<ConstantExpr>
+
    } else {
       lower = SageBuilderCpp17::buildNullExpression_nfi();
    }
 
    if (upper_expr) {
-      Build(upper_expr->thing, upper);
+      Build(upper_expr->thing, upper);   // CaseValue = Scalar<ConstantExpr>
    } else {
       upper = SageBuilderCpp17::buildNullExpression_nfi();
    }
@@ -1724,248 +2667,539 @@ void Build(const parser::CaseValueRange::Range&x, SgExpression* &range)
 template<typename T>
 void Build(const parser::ChangeTeamConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ChangeTeamConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::CriticalConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CriticalConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::LabelDoStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LabelDoStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::EndDoStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EndDoStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::DoConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DoConstruct)\n";
+#endif
+
+   //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
+   //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
+
+   SgStatement* block_stmt{nullptr};
+   SgWhileStmt* while_stmt{nullptr};
+   SgExpression* condition{nullptr};
+
+   // Traverse NonLabelDoStmt to get the loop condition
+   Build(std::get<0>(x.t).statement, condition);
+
+   // Enter SageTreeBuilder if is DoWhile
+   if (x.IsDoWhile()) {
+      builder.Enter(while_stmt, condition);
+   }
+
+   // Traverse the body
+   Build(std::get<1>(x.t), block_stmt);
+
+   // Leave SageTreeBuilder
+   if (x.IsDoWhile()) {
+      builder.Leave(while_stmt, true /* has_end_do_stmt */);
+   }
 }
 
 template<typename T>
 void Build(const parser::IfConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfConstruct)\n";
+#endif
+   //   std::tuple<Statement<IfThenStmt>, Block, std::list<ElseIfBlock>,
+   //      std::optional<ElseBlock>, Statement<EndIfStmt>>
+}
+
+template<typename T>
+void Build(const parser::IfThenStmt&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(IfThenStmt)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseBlock&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ElseBlock)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::IfConstruct::ElseIfBlock&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ElseIfBlock)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::SelectRankConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SelectRankConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::SelectTypeConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SelectTypeConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::WhereConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(WhereConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ForallConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ForallConstruct)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::CompilerDirective&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CompilerDirective)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::OpenMPConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OpenMPConstruct)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::OpenACCConstruct&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(OpenACConstruct)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::AccEndCombinedDirective&x, T* scope)
+{
+   std::cout << "Rose::builder::Build(AccEndCombinedDirective)\n";
 }
 
 template<typename T>
 void Build(const parser::OmpEndLoopDirective&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OmpEndLoopDirective)\n";
+#endif
+}
+
+// DoConstruct
+void Build(const parser::NonLabelDoStmt&x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
+#endif
+
+#if 0
+   if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
+      Build(opt.value(), expr);
+   }
+#endif
+
+   if (auto & opt = std::get<1>(x.t)) {   // std::optional<LoopControl>
+      Build(opt.value(), expr);
+   }
+}
+
+void Build(const parser::LoopControl&x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(LoopControl)\n";
+#endif
+
+   //  std::variant<Bounds, ScalarLogicalExpr, Concurrent> u;
+   //  using Bounds = LoopBounds<ScalarName, ScalarExpr>;
+   // struct LoopBounds { VAR name;  BOUND lower, upper;  std::optional<BOUND> step; }
+
+   std::string name;
+   SgExpression * lower_bound = nullptr, * upper_bound = nullptr;
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::LoopControl::Bounds &y)
+            {
+#if 0
+               name = y.name.thing.ToString();
+               std::cout << "the name in the loop control is " << name << "\n";
+
+               Build(y.lower.thing.value(), lower_bound);
+               Build(y.upper.thing.value(), upper_bound);
+#endif
+            },
+         [&] (const parser::LoopControl::Concurrent &y) { ; },
+         [&] (const auto &y) { Build(y, expr); }, // ScalarLogicalExpr
+      },
+      x.u);
 }
 
    // SpecificationConstruct
 template<typename T>
 void Build(const parser::DerivedTypeDef&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DerivedTypeDef)\n";
-
-#if 0
-   std::tuple<Statement<DerivedTypeStmt>,
-              std::list<Statement<TypeParamDefStmt>>,
-              std::list<Statement<PrivateOrSequence>>,
-              std::list<Statement<ComponentDefStmt>>,
-              std::optional<TypeBoundProcedurePart>,
-              Statement<EndTypeStmt>>
-      t;
 #endif
 
-   const auto & stmt    {std::get<0>(x.t)};
-   const auto & end_stmt{std::get<5>(x.t)};
+   // std::tuple<Statement<DerivedTypeStmt>, std::list<Statement<TypeParamDefStmt>>,
+   //     std::list<Statement<PrivateOrSequence>>, std::list<Statement<ComponentDefStmt>>,
+   //     std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>> t;
 
-   std::string type_name{std::get<1>(stmt.statement.t).ToString()};
+   std::string type_name{};
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, type_name, modifier_enum_list);
 
+   // Begin SageTreeBuilder for SgDerivedTypeStatement
    SgDerivedTypeStatement* derived_type_stmt{nullptr};
-// TODO
-#if FORTRAN
    builder.Enter(derived_type_stmt, type_name);
 
+   // Traverse body of type-def
+   std::list<SgStatement*> stmt_list;
+   Build(std::get<3>(x.t), stmt_list);
+
+   // EndTypeStmt - std::optional<Name> v;
+   bool have_end_stmt = false;
+   if (auto & opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
+      have_end_stmt = true;
+   }
+
+   // Leave SageTreeBuilder for SgDerivedTypeStatement
    builder.Leave(derived_type_stmt);
+}
+
+void Build(const parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DerivedTypeStmt)\n";
 #endif
+   // std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
+
+   Build(std::get<0>(x.t), modifier_enum_list);  // std::list<TypeAttrSpec>
+   name = std::get<1>(x.t).ToString();           // Name
+}
+
+void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &stmt)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(Statement<ComponentDefStmt>)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::DataComponentDefStmt &y) { Build(y, stmt); },
+         [&] (const auto &y) { ; } // ProcComponentDefStmt, ErrorRecovery
+      },
+      x.statement.u);
+}
+
+void Build(const parser::DataComponentDefStmt&x, SgStatement* &stmt)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(DataComponentDefStmt)\n";
+#endif
+
+   SgVariableDeclaration* var_decl = nullptr;
+   SgType * type = nullptr, * base_type = nullptr;
+   SgExpression* init = nullptr;
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
+   std::list<EntityDeclTuple> init_info;
+
+   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
+   Build(std::get<1>(x.t), modifier_enum_list);           // std::list<ComponentAttrSpec>
+   Build(std::get<2>(x.t), init_info, base_type);         // std::list<ComponentDecl>
+
+   builder.Enter(var_decl, base_type, init_info);
+   builder.Leave(var_decl, modifier_enum_list);
+}
+
+void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(TypeAttrSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::Abstract              &y) { ; },
+         [&] (const parser::AccessSpec            &y) { Build(y, modifier_enum); },
+         [&] (const parser::TypeAttrSpec::BindC   &y) { ; },
+         [&] (const parser::TypeAttrSpec::Extends &y) { ; },
+      },
+      x.u);
+}
+
+void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentAttrSpec)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const parser::CoarraySpec        &y) { ; },
+         [&] (const parser::ComponentArraySpec &y) { ; },
+         [&] (const parser::ErrorRecovery      &y) { ; },
+         [&] (const parser::AccessSpec         &y) { Build(y, modifier_enum); },
+         [&] (const parser::Allocatable &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
+            },
+         [&] (const parser::Contiguous &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous;
+            },
+         [&] (const parser::Pointer &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_pointer;
+            },
+      },
+      x.u);
+}
+
+void Build(const std::list<Fortran::parser::ComponentDecl> &x, std::list<EntityDeclTuple> &component_decls, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list) for ComponentDecl\n";
+#endif
+
+   for (const auto &elem : x) {
+      EntityDeclTuple component_decl;
+      std::string name;
+      SgType* type = nullptr;
+      SgExpression* init = nullptr;
+
+      Build(elem, name, init, type, base_type);
+      component_decl = std::make_tuple(name, type, init);
+      component_decls.push_back(component_decl);
+   }
+}
+
+void Build(const parser::ComponentDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentDecl)\n";
+#endif
+
+   name = std::get<parser::Name>(x.t).ToString();
+
+   SgScopeStatement *scope = nullptr;
+   if (auto & opt = std::get<1>(x.t)) {    // ComponentArraySpec
+      Build(opt.value(), type, base_type);
+   }
+
+   if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
+      Build(opt.value(), scope);
+   }
+
+   if (auto & opt = std::get<3>(x.t)) {    // CharLength
+      //      Build(opt.value(), scope);
+   }
+
+   if (auto & opt = std::get<4>(x.t)) {    // Initialization
+      Build(opt.value(), init);
+   }
+}
+
+void Build(const parser::ComponentArraySpec &x, SgType* &type, SgType* base_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ComponentArraySpec)\n";
+#endif
+
+   std::list<SgExpression*> expr_list;
+
+   std::visit(
+      common::visitors{
+         [&] (const std::list<parser::ExplicitShapeSpec> &y)
+            {
+               Build(y, expr_list);
+               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
+            },
+         [&] (const parser::DeferredShapeSpecList &y)
+            {
+               ;
+            }
+      },
+      x.u);
 }
 
 template<typename T>
 void Build(const parser::EnumDef&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(EnumDef)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::InterfaceBlock&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(InterfaceBlock)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::StructureDef&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StructureDef)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::OtherSpecificationStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OtherSpecificationStmt)\n";
+#endif
+
+   std::visit(
+      common::visitors{
+         [&] (const common::Indirection<parser::  CommonStmt> &y) { Build(y.value(), scope); },
+         [&] (const common::Indirection<parser::NamelistStmt> &y) { Build(y.value(), scope); },
+         // common::Indirection -
+         // AccessStmt, AllocatableStmt, AsynchronousStmt, BindStmt, CodimensionStmt, ContiguousStmt,
+         // DimensionStmt, ExternalStmt, IntentStmt, IntrinsicStmt, OptionalStmt, PointerStmt, ProtectedStmt,
+         // SaveStmt, TargetStmt, ValueStmt, VolatileStmt, CommonStmt, EquivalenceStmt, BasedPointerStmt
+         [&] (const auto &y) { ; },
+      },
+      x.u);
+
 }
 
 template<typename T>
 void Build(const parser::GenericStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(GenericStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::ProcedureDeclarationStmt&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ProcedureDeclarationStmt)\n";
+#endif
 }
 
 template<typename T>
 void Build(const parser::OpenMPDeclarativeConstruct&x, T* scope)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(OpenMPDeclarativeConstruct)\n";
+#endif
+}
+
+template<typename T>
+void Build(const parser::OpenACCDeclarativeConstruct&x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(OpenACCDeclarativeConstruct)\n";
+#endif
 }
 
    // AttrSpec
-template<typename T>
-void Build(const parser::AccessSpec &x, T* scope)
+void Build(const parser::AccessSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
 {
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AccessSpec)\n";
+#endif
+
+   switch(x.v)
+    {
+      case parser::AccessSpec::Kind::Public:
+         {
+            modifier_enum = LanguageTranslation::ExpressionKind::e_access_modifier_public;
+            break;
+         }
+      case parser::AccessSpec::Kind::Private:
+         {
+            modifier_enum = LanguageTranslation::ExpressionKind::e_access_modifier_private;
+            break;
+         }
+    }
 }
 
-template<typename T>
-void Build(const parser::Allocatable &x, T* scope)
+void Build(const parser::IntentSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
 {
-   std::cout << "Rose::builder::Build(Allocatable)\n";
-}
-
-template<typename T>
-void Build(const parser::Asynchronous &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Asynchronous)\n";
-}
-
-template<typename T>
-void Build(const parser::Contiguous &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Contiguous)\n";
-}
-
-template<typename T>
-void Build(const parser::External &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(External)\n";
-}
-
-template<typename T>
-void Build(const parser::IntentSpec &x, T* scope)
-{
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntentSpec)\n";
+#endif
+
+   switch(x.v)
+    {
+      case parser::IntentSpec::Intent::In:
+         {
+            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_in;
+            break;
+         }
+      case parser::IntentSpec::Intent::Out:
+         {
+            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_out;
+            break;
+         }
+      case parser::IntentSpec::Intent::InOut:
+         {
+            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout;
+            break;
+         }
+    }
 }
 
-template<typename T>
-void Build(const parser::Intrinsic &x, T* scope)
+void Build(const parser::LanguageBindingSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
 {
-   std::cout << "Rose::builder::Build(Intrinsic)\n";
-}
-
-template<typename T>
-void Build(const parser::LanguageBindingSpec &x, T* scope)
-{
+#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LanguageBindingSpec)\n";
-}
-
-template<typename T>
-void Build(const parser::Optional &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Optional)\n";
-}
-
-template<typename T>
-void Build(const parser::Parameter &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Parameter)\n";
-}
-
-template<typename T>
-void Build(const parser::Pointer &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Pointer)\n";
-}
-
-template<typename T>
-void Build(const parser::Protected &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Protected)\n";
-}
-
-template<typename T>
-void Build(const parser::Save &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Save)\n";
-}
-
-template<typename T>
-void Build(const parser::Target &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Target)\n";
-}
-
-template<typename T>
-void Build(const parser::Value &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Value)\n";
-}
-
-template<typename T>
-void Build(const parser::Volatile &x, T* scope)
-{
-   std::cout << "Rose::builder::Build(Volatile)\n";
+#endif
 }
 
 } // namespace Rose::builder

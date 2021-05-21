@@ -3,7 +3,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 #include <Combinatorics.h>
-#include <MemoryMap.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <iostream>
 
 using namespace Rose;

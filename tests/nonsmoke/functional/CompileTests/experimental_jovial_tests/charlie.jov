@@ -1,0 +1,7 @@
+START
+!COMPOOL('BETA');
+DEF PROC main;
+  BEGIN
+    STOP YY(1);
+  END
+TERM

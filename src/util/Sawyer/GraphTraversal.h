@@ -531,6 +531,8 @@ public:
                 break;
         }
         ASSERT_not_reachable("invalid state");
+        // A return value is required for all control paths
+        return graph_.vertices().end();
     }
 
     /** Edge to which traversal is pointing.

@@ -4,8 +4,15 @@ package Complex is
   
   i, zero : constant Complex; 
 
-  function "+" (lhs, rhs : in Complex) return Complex;
+  -- arithmetic plus operator on complex values 
+  function "+" ( lhs,                -- left hand side
+                 rhs : in Complex    -- right hand side
+               ) return Complex;     -- returns a Compelx
+
+  -- extracts imaginary component
   function Imag(val : in Complex) return Float;
+
+  -- extracts real component
   function Real(val : in Complex) return Float;
 
 private

@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <BinaryConcolic.h>
+#include <Rose/BinaryAnalysis/Concolic.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Sawyer/CommandLine.h>
@@ -243,14 +243,12 @@ void addTestToSuite( concolic::Database::Ptr db,
  */
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
-  typedef std::auto_ptr<concolic::ConcreteExecutorResult> ExecutionResult;
-
   concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance(db);
   concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);
 
   assert(testcase.getRawPointer());
   std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
-  ExecutionResult            result(exec->execute(testcase));
+  exec->execute(testcase);
 }
 
 /** Functor to run a new testcase.

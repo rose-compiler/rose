@@ -2,8 +2,8 @@
 #define bROwSE_WFunctionCfg_H
 
 #include <bROwSE/bROwSE.h>
-#include <Partitioner2/BasicBlock.h>
-#include <Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Wt/WContainerWidget>
 #include <Wt/WImage>
 #include <Wt/WRectArea>

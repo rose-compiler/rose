@@ -203,21 +203,23 @@ set(ROSE_FLAGS -rose:verbose 0 -rose:detect_dangling_pointers 2
 
 function(fortran_test input_file)
   add_test(
-    NAME ${input_file}_translation
+    NAME FORTRANTEST_${input_file}_translation
     COMMAND testTranslator ${ROSE_FLAGS} ${FORTRAN_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file})
+  set_tests_properties(FORTRANTEST_${input_file}_translation
+    PROPERTIES LABELS FORTRANTEST)
   add_test(
-    NAME ${input_file}_graph_generation
+    NAME FORTRANTEST_${input_file}_graph_generation
     COMMAND testGraphGeneration ${ROSE_FLAGS} ${FORTRAN_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file})
   add_test(
-    NAME ${input_file}_token_generation
+    NAME FORTRANTEST_${input_file}_token_generation
     COMMAND testTokenGeneration ${ROSE_FLAGS} ${FORTRAN_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file})
-  set_tests_properties(${input_file}_graph_generation
-    PROPERTIES DEPENDS ${input_file}_translation)
-  set_tests_properties(${input_file}_token_generation
-    PROPERTIES DEPENDS ${input_file}_graph_generation)
+  set_tests_properties(FORTRANTEST_${input_file}_graph_generation
+    PROPERTIES DEPENDS FORTRANTEST_${input_file}_translation LABELS FORTRANTEST)
+  set_tests_properties(FORTRANTEST_${input_file}_token_generation
+    PROPERTIES DEPENDS FORTRANTEST_${input_file}_graph_generation LABELS FORTRANTEST)
 endfunction()
 
 set(FORTRAN_FLAGS -rose:f77)

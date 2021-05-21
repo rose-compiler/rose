@@ -1,6 +1,6 @@
 // Tests use ROSE's public API
 #include "rose.h"
-#include "FileSystem.h"
+#include <Rose/FileSystem.h>
 
 // DQ (3/4/2010): Include this so that we can use the CXX_IS_ROSE_AST_FILE_IO macro
 #include "rose_config.h"
@@ -236,7 +236,7 @@ int main ( int argc, char * argv[] )
         string output = "output" + lexical_cast<string>(i);
         output = "output" + lexical_cast<string>(i) + ".txt";
         MergeAstFiles(fileNames, output, i);
-        cout << i << " : " << t <<" seconds" << endl;
+        cout << i << " : " << t << endl;
     }
 
     return 0;

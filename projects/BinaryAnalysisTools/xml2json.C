@@ -4,8 +4,8 @@ static const char *description =
     "by the ROSE binary analysis state serialization.";
 
 #include <rose.h>                                       // Must be first ROSE include file
-#include <CommandLine.h>
-#include <Diagnostics.h>                                // ROSE
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

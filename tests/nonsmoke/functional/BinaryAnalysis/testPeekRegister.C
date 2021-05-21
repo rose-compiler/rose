@@ -1,6 +1,6 @@
 #include <rose.h>
-#include <RegisterStateGeneric.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <sstream>
 
 using namespace Rose;
@@ -31,9 +31,9 @@ main() {
     RegisterDescriptor byte0 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 0, 8);
     SValuePtr zeroByte = ops->number_(8, 0);
     SValuePtr read = registers->peekRegister(byte0, zeroByte, ops.get());
-    ASSERT_always_require(read->get_width() == 8);
-    ASSERT_always_require(read->is_number());
-    ASSERT_always_require2(read->get_number() == 10, StringUtility::numberToString(read->get_number()));
+    ASSERT_always_require(read->nBits() == 8);
+    ASSERT_always_require(read->isConcrete());
+    ASSERT_always_require2(read->toUnsigned().get() == 10, StringUtility::numberToString(read->toUnsigned().get()));
 
     // The state should be the same as before
     std::ostringstream ss2;

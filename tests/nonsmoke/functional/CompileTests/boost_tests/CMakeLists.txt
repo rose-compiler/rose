@@ -14,5 +14,5 @@ if(EDG_VERSION STREQUAL "4.3")
 endif()
 
 foreach(file_to_test ${files_to_test})
-  compile_test(${file_to_test})
+  compile_test(${file_to_test} BOOSTTEST)
 endforeach()

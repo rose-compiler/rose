@@ -1,4 +1,0 @@
-include_rules
-
-run $(librose_compile) BinaryLoader.C BinaryLoaderElf.C BinaryLoaderElfObj.C BinaryLoaderPe.C
-run $(public_header) BinaryLoader.h BinaryLoaderElf.h BinaryLoaderElfObj.h BinaryLoaderPe.h

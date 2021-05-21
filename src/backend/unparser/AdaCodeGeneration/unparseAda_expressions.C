@@ -24,19 +24,36 @@
 
 namespace
 {
+  SgVariableSymbol& symOf(const SgVarRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
+  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
   SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
   }
 
-  SgName nameOf(const SgVarRefExp& var_ref)
+  SgName nameOf(const SgVarRefExp& n)
   {
-    return nameOf(SG_DEREF(var_ref.get_symbol()));
+    return nameOf(symOf(n));
   }
 
-  SgName nameOf(const SgFunctionRefExp& fun_ref)
+  SgName nameOf(const SgFunctionRefExp& n)
   {
-    return nameOf(SG_DEREF(fun_ref.get_symbol()));
+    return nameOf(symOf(n));
+  }
+
+  SgInitializedName& declOf(const SgVarRefExp& n)
+  {
+    SgVariableSymbol& sy = symOf(n);
+
+    return SG_DEREF(sy.get_declaration());
   }
 
   std::string
@@ -103,8 +120,12 @@ namespace
       operator_symbols[V_SgNotOp] =            "not";
       operator_symbols[V_SgAbsOp] =            "abs";
       operator_symbols[V_SgRemOp] =            "rem";
-      // not really in Ada (when clause separator)
-      operator_symbols[V_SgCommaOpExp] =       "|";
+
+      // not really in Ada
+      operator_symbols[V_SgCommaOpExp] =       "|";    // clause separator
+      operator_symbols[V_SgPlusPlusOp] =       "loop"; // loop direction indicator
+      operator_symbols[V_SgMinusMinusOp] =     "reverse loop"; // loop direction indicator
+
       // not an operator in Ada
       operator_symbols[V_SgMembershipOp] =     "in";
       operator_symbols[V_SgNonMembershipOp] =  "not in";
@@ -114,9 +135,8 @@ namespace
 
     if (pos == operator_symbols.end())
     {
-      std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
-
-      return "<OP>";
+      //~ std::cerr << "unknown operator: " << typeid(n).name() << std::endl;
+      return typeid(n).name();
     }
 
     return pos->second;
@@ -129,12 +149,12 @@ namespace
     {}
 
     std::string
-    scopeQual(SgExpression& local, SgScopeStatement& remote);
+    scopeQual(SgScopeStatement& remote);
 
     std::string
-    scopeQual(SgExpression& local, SgScopeStatement* remote)
+    scopeQual(SgScopeStatement* remote)
     {
-      return scopeQual(local, SG_DEREF(remote));
+      return scopeQual(SG_DEREF(remote));
     }
 
     void prn(const std::string& s)
@@ -157,7 +177,7 @@ namespace
     }
     */
 
-    void handle(SgVoidVal&)
+    void handle(SgAdaOthersExp&)
     {
       prn("others");
     }
@@ -193,6 +213,12 @@ namespace
       expr(rhs);
     }
 
+    void handle(SgPointerDerefExp& n)
+    {
+      SgExpression* target = n.get_operand();
+      expr(target);
+      prn(".all");
+    }
 
     void handle(SgRangeExp& n)
     {
@@ -215,37 +241,50 @@ namespace
     }
 
     // unparse expression attributes
-    void handle(SgTypeTraitBuiltinOperator& n)
+    void handle(SgAdaAttributeExp& n)
     {
-      SgNodePtrList& args = n.get_args();
-      ROSE_ASSERT(args.size() == 2);
-
-      expr(isSgExpression(args.front()));
+      expr(n.get_object());
       prn("'");
-      prn(n.get_name());
+      prn(n.get_attribute());
 
-      SgExprListExp& attrargs = SG_DEREF(isSgExprListExp(args.back()));
-      arglst_opt(attrargs);
+      arglst_opt(SG_DEREF(n.get_args()));
     }
 
     void handle(SgCastExp& n)
     {
-      type(n.get_type(), n);
-      prn("(");
+      const bool typequal = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+
+      // only type qualifications have expression lists as arguments
+      //~ ROSE_ASSERT(typequal ^ (!isSgExprListExp(n.get_operand())));
+
+      type(n.get_type());
+      prn(typequal ? "'" : "(");
       expr(n.get_operand());
-      prn(")");
+      if (!typequal) prn(")");
     }
 
     void handle(SgTypeExpression& n)
     {
-      type(n.get_type(), n);
+      type(n.get_type());
     }
 
     void handle(SgStringVal& n)
     {
-      prn("\"");
-      prn(n.get_value());
-      prn("\"");
+      std::stringstream buf;
+
+      buf << n.get_stringDelimiter();
+
+      for (char c : n.get_value())
+      {
+        buf << c;
+
+        if (c == n.get_stringDelimiter())
+          buf << c;
+      }
+
+      buf << n.get_stringDelimiter();
+
+      prn(buf.str());
     }
 
 
@@ -264,8 +303,22 @@ namespace
 
     void handle(SgVarRefExp& n)
     {
-      // \todo scope qualify if needed
+      if (ctxRequiresScopeQualification)
+      {
+        SgInitializedName& init = declOf(n);
+
+        prn(scopeQual(init.get_scope()));
+      }
+
       prn(nameOf(n));
+    }
+
+    void handle(SgAdaRenamingRefExp& n)
+    {
+      SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
+
+      prn(scopeQual(dcl.get_scope()));
+      prn(dcl.get_name());
     }
 
     void handle(SgAggregateInitializer& n)
@@ -277,7 +330,7 @@ namespace
 
     void handle(SgDesignatedInitializer& n)
     {
-      exprlst(SG_DEREF(n.get_designatorList()));
+      exprlst(SG_DEREF(n.get_designatorList()), "| ");
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -285,6 +338,13 @@ namespace
     void handle(SgAssignInitializer& n)
     {
       expr(n.get_operand());
+    }
+
+    void handle(SgConstructorInitializer& n)
+    {
+      //~ prn("(");
+      exprlst(SG_DEREF(n.get_args()));
+      //~ prn(")");
     }
 
     void handle(SgNullExpression& n)
@@ -298,7 +358,7 @@ namespace
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
 
       if (ctxRequiresScopeQualification)
-        prn(scopeQual(n, fundcl.get_scope()));
+        prn(scopeQual(fundcl.get_scope()));
 
       prn(nameOf(n));
     }
@@ -307,12 +367,22 @@ namespace
     {
       SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
 
-      prn(scopeQual(n, tskdcl.get_scope()));
+      prn(scopeQual(tskdcl.get_scope()));
       prn(tskdcl.get_name());
     }
 
+    void handle(SgNewExp& n)
+    {
+      SgConstructorInitializer* init = n.get_constructor_args();
+
+      prn("new");
+      type(n.get_specified_type());
+
+      if (init) { prn("'"); expr(init); }
+    }
+
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-    void exprlst(SgExprListExp& exp);
+    void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -320,9 +390,9 @@ namespace
       expr(exp);
     }
 
-    void type(SgType* t, SgExpression& ctx)
+    void type(SgType* t)
     {
-      unparser.unparseType(t, sg::ancestor<SgScopeStatement>(&ctx), info);
+      unparser.unparseType(t, info);
     }
 
     Unparse_Ada&    unparser;
@@ -392,7 +462,7 @@ namespace
     if (!isprefix) prn(operator_sym(n));
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
@@ -402,7 +472,7 @@ namespace
 
     for (size_t i = 1; i < lst.size(); ++i)
     {
-      prn(", ");
+      prn(sep);
       expr(lst[i]);
     }
   }
@@ -417,9 +487,12 @@ namespace
   }
 
   std::string
-  AdaExprUnparser::scopeQual(SgExpression& local, SgScopeStatement& remote)
+  AdaExprUnparser::scopeQual(SgScopeStatement& remote)
   {
-    return unparser.computeScopeQual(sg::ancestor<SgScopeStatement>(local), remote);
+    SgScopeStatement* current = info.get_current_scope();
+
+    return current ? unparser.computeScopeQual(*current, remote)
+                   : "<missing-scope>"; // <-- this used iff invoked from unparseToString..
   }
 
 }
@@ -449,7 +522,9 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
 {
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
+  const bool withScopeQual = info.get_current_scope() != NULL;
+
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, withScopeQual}, expr);
 }
 
 
@@ -458,3 +533,9 @@ void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
 }
 
+void Unparse_Ada::setInitialScope(SgUnparse_Info& info, SgExpression* n)
+{
+  SgScopeStatement* scope = sg::ancestor<SgScopeStatement>(n);
+
+  info.set_current_scope(scope);
+}

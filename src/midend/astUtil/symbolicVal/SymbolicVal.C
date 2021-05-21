@@ -3,7 +3,8 @@
 #include "SymbolicMultiply.h"
 #include "SymbolicPlus.h"
 #include "SymbolicSelect.h"
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ABORT.h>
+#include <ROSE_ASSERT.h>
 
 #include <list>
 #include <stdio.h>
@@ -196,7 +197,7 @@ std::string RelToString( CompareRel r)
   case REL_GE: return ">=";
   case REL_UNKNOWN: return "?";
   default:
-    assert(false);
+    ROSE_ABORT();
   }
 }
 
@@ -233,7 +234,7 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
      return fa.CreateBinaryOP( AstInterface::BOP_GE,
                                val1.CodeGen(fa), val2.CodeGen(fa));
   default:
-     assert(false);
+     ROSE_ABORT();
   }
 }
 
@@ -340,7 +341,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
      default:
      {
          cerr<<"Error in SymbolicValGenerator::GetSymbolicVal(): unhandled type of binary operator "<< AstInterface::toString(opr) <<endl;
-        assert(false);
+        ROSE_ABORT();
      }
      }
   }
@@ -365,7 +366,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         return new SymbolicFunction( opr, "++", v);
     default:
        std::cerr << "Cannot handle " << AstInterface::AstToString(exp) << ":" << opr << "\n";
-       assert(false);
+       ROSE_ABORT();
      }
   }
   else if (fa.IsFunctionCall(exp, &s1, &l) || fa.IsArrayAccess(exp, &s1, &l)) {

@@ -13,10 +13,10 @@ static const char *description =
 
 #include <rose.h>
 #include <batSupport.h>
-#include <BinaryBestMapAddress.h>                       // rose
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
-#include <Partitioner2/Engine.h>                        // rose
+#include <Rose/BinaryAnalysis/BestMapAddress.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Stopwatch.h>
 
 #include <boost/filesystem.hpp>
@@ -132,7 +132,7 @@ public:
             bool modified = false;
             for (size_t i=0; i<succs.size(); ++i) {
                 BOOST_FOREACH (const SValueSValue &rewrite, rewrites_) {
-                    if (succs[i].expr()->must_equal(rewrite.first)) {
+                    if (succs[i].expr()->mustEqual(rewrite.first)) {
                         succs[i] = P2::BasicBlock::Successor(rewrite.second, succs[i].type(), succs[i].confidence());
                         modified = true;
                         break;

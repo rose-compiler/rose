@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #ifndef ROSE_GENERIC_DATAFLOW_COMMON_H
 #define ROSE_GENERIC_DATAFLOW_COMMON_H
 
@@ -58,4 +61,5 @@ typedef std::list<quad>                          quadlist;
 typedef std::map<quad, quadpair>                 m_quad2quadpair;
 typedef std::map<quad, bool>                     m_quad2bool;
 
+#endif
 #endif

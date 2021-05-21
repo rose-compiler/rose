@@ -1,18 +1,16 @@
 #include <rose.h>
 
 #include <boost/filesystem.hpp>
-#include <Disassembler.h>
-#include <MemoryMap.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
-
-static const rose_addr_t startingVa = 0;
 
 static void
 showUsageAndExit(int exitValue, const boost::filesystem::path arg0) {
@@ -22,20 +20,29 @@ showUsageAndExit(int exitValue, const boost::filesystem::path arg0) {
     exit(exitValue);
 }
 
+// The first argument is an optional starting address of the form "=N" where N is a hexadecimal value without the leading "0x"
+// and the bytes are hexidecimal without the leading "0x".
 static MemoryMap::Ptr
-parseBytes(int argc, char *argv[]) {
+parseBytes(size_t nWords, char *words[]) {
+    rose_addr_t va = 0;
     std::vector<uint8_t> bytes;
-    for (int i = 1; i < argc; ++i) {
-        uint8_t byte = rose_strtoull(argv[i], NULL, 16);
+    bytes.reserve(nWords);
+    size_t i = 0;
+    if (nWords > 0 && words[0] && '=' == words[0][0]) {
+        va = rose_strtoull(words[0]+1, nullptr, 16);
+        ++i;
+    }
+    for (/*void*/; i < nWords; ++i) {
+        uint8_t byte = rose_strtoull(words[i], nullptr, 16);
         bytes.push_back(byte);
     }
     std::reverse(bytes.begin(), bytes.end());
 
     auto map = MemoryMap::instance();
-    map->insert(AddressInterval::baseSize(startingVa, bytes.size()),
+    map->insert(AddressInterval::baseSize(va, bytes.size()),
                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(bytes.size()),
-                                   0, MemoryMap::READ_EXECUTE, "data"));
-    map->at(startingVa).write(bytes);
+                                   0, MemoryMap::READ_EXECUTE, "instructions"));
+    map->at(va).write(bytes);
     return map;
 }
 
@@ -47,7 +54,7 @@ main(int argc, char *argv[]) {
     if (argc < 3)
         showUsageAndExit(1, argv[0]);
     std::string isa = argv[1];
-    MemoryMap::Ptr memory = parseBytes(argc-1, argv+1);
+    MemoryMap::Ptr memory = parseBytes(argc-2, argv+2); // exclude program name and ISA name
 
     // Create the decoder and semantics
     P2::Engine engine;

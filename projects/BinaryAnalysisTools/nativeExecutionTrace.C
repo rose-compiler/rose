@@ -3,11 +3,11 @@ static const char *description =
     "Runs the specimen in a debugger and prints each instruction that is executed.";
 
 #include <rose.h>
-#include <BinaryDebugger.h>                             // rose
-#include <CommandLine.h>                                // rose
-#include <Diagnostics.h>                                // rose
-#include <Partitioner2/Engine.h>                        // rose
-#include <Partitioner2/InstructionProvider.h>           // rose
+#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 
 #include <boost/filesystem.hpp>
 #include <Sawyer/CommandLine.h>

@@ -295,13 +295,11 @@ CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit
     // FIXME: Unimplemented.
     case ALTERNATE_PROC_ENTRY:
       cout << "FIXME: ALTERNATE_PROC_ENTRY not yet implemented" << endl;
-      assert (0);
-      return ALTERNATE_PROC_ENTRY;
+      ROSE_ABORT ();
     default:
-      assert (0);
+      ROSE_ABORT ();
     }
-    assert (0); // eraxxon: eliminate compiler warnings about missing return 
-    return (NONE);
+    ROSE_ABORT (); // eraxxon: eliminate compiler warnings about missing return
 }
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -761,8 +759,7 @@ CFG::build_CFG_unconditional_jump_i (CFG::Node* prev_node, StmtHandle stmt)
   // Just add this to the list of indirect jumps, which will have their
   // edges added later.
   cout << "FIXME: UNCONDITIONAL_JUMP_I not yet implemented" << endl;
-  assert(0);
-  return UNCONDITIONAL_JUMP_I;
+  ROSE_ABORT();
 }
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -1510,7 +1507,7 @@ CFG::createBasicCFG()
             Node* nodeTmp = getLabelBlock(label);
             connect(node, nodeTmp, FALLTHROUGH_EDGE);
           } else {
-            assert(0);
+            ROSE_ABORT();
           }
         } // if (si)
       } // if (countdown == 0)

@@ -24,7 +24,7 @@ addPrototypesForTemplateInstantiations( SgNode* node )
 
 #if 0
      printf ("Exiting as a test after CollectTemplateInstantiationsMarkedForOutput traversal \n");
-     ROSE_ASSERT(false);
+     ROSE_ABORT();
 #endif
 #if 1
      AddPrototypesForTemplateInstantiations declarationFixupTraversal (definingTemplateInstantiationSet);

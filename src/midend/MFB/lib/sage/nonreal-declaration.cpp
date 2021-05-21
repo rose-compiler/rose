@@ -115,17 +115,17 @@ Sage<SgNonrealDecl>::object_desc_t::object_desc_t(
 
 template <>
 Sage<SgNonrealDecl>::build_result_t Driver<Sage>::build<SgNonrealDecl>(const Sage<SgNonrealDecl>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 Sage<SgNonrealDecl>::build_scopes_t Driver<Sage>::getBuildScopes<SgNonrealDecl>(const Sage<SgNonrealDecl>::object_desc_t & desc) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 template <>
 void Driver<Sage>::createForwardDeclaration<SgNonrealDecl>(Sage<SgNonrealDecl>::symbol_t symbol, size_t target_file_id) {
-  ROSE_ASSERT(false);
+  ROSE_ABORT();
 }
 
 }

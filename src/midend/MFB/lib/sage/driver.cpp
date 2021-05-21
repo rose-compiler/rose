@@ -123,7 +123,7 @@ size_t Driver<Sage>::add(SgSourceFile * file) {
 size_t Driver<Sage>::add(const boost::filesystem::path & path) {
   if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
     std::cerr << "[Error] (Driver<Sage>::add) Cannot find: " << path << std::endl;
-    assert(false);
+    ROSE_ABORT();
   }
 
   std::map<boost::filesystem::path, size_t>::const_iterator it_file_id = path_to_id_map.find(path);
@@ -285,7 +285,7 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, size_t fi
     SgInitializedName * init_name = isSgInitializedName(var_sym->get_symbol_basis());
     assert(init_name != NULL);
 
-    assert(false); // TODO
+    ROSE_ABORT(); // TODO
   }
   else
     decl_to_add = isSgDeclarationStatement(parent->get_symbol_basis());

@@ -3,8 +3,8 @@
 //   * function call vertices do not have an edge directly to the fall through instruction
 //   * function return vertices point to the fall through instruction of all of their known call sites
 #include "sage3basic.h"
-#include "BinaryControlFlow.h"
-#include "BinaryAnalysisUtils.h"
+#include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Utils.h>
 
 int main(int argc, char *argv[])
 {

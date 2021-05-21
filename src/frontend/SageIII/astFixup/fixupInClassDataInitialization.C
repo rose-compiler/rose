@@ -202,7 +202,7 @@ FixupInClassDataInitialization::visit (SgNode* node)
                          default:
                             {
                               printf ("Error default reached parentOfProblemExpression = %s \n",parentOfProblemExpression->sage_class_name());
-                              ROSE_ASSERT(false);
+                              ROSE_ABORT();
                             }
                        }
                   }

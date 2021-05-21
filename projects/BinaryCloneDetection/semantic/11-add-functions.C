@@ -3,8 +3,8 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "DwarfLineMapper.h"
-#include "BinaryFunctionCall.h"
-#include "BinaryReturnValueUsed.h"
+#include <Rose/BinaryAnalysis/FunctionCall.h>
+#include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 #include "rose.h"
 
 #include "vectorCompression.h"

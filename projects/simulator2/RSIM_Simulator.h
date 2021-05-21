@@ -10,7 +10,7 @@
 #include "RSIM_Thread.h"
 #include "RSIM_Tools.h"
 
-#include <BinaryLoader.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 
 #include <signal.h>
 

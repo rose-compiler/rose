@@ -1,7 +1,7 @@
 #include <FileUtility.h>
 
 // Other ROSE includes
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 #include <FileUtility.h>
 
 #include <rose_config.h>
@@ -42,7 +42,7 @@ findfile(std::string patternString, std::string pathString) {
          printf ("Error: MSVS implementation of findfile required (not implemented) \n");
 #define __builtin_constant_p(exp) (0)
          // tps: todo Windows: have not hit this assert yet.
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
 #else
      DIR* dir;                        /* pointer to the scanned directory. */
      struct dirent* entry;      /* pointer to one directory entry.   */

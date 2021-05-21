@@ -5,4 +5,6 @@ package body Package_With_Body is
       null;
    end Procedure_To_Require_Body;
 
+begin
+  null;
 end Package_With_Body;

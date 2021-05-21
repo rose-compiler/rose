@@ -29,7 +29,7 @@ private:
 class SageIRUseDefIterator: public IRUseDefIterator {
 public:
   SageIRUseDefIterator (SgStatementPtrList *n, int uses_or_defs);
-  SageIRUseDefIterator () { assert (0); }
+  SageIRUseDefIterator () { ROSE_ABORT (); }
   ~SageIRUseDefIterator () { }
 
   LeafHandle Current () { return 0; }
@@ -42,7 +42,7 @@ private:
 class SageIRCallsiteParamIterator: public IRCallsiteParamIterator {
 public:
   SageIRCallsiteParamIterator(SgExpressionPtrList & lst);
-  SageIRCallsiteParamIterator() { assert(0); }
+  SageIRCallsiteParamIterator() { ROSE_ABORT(); }
   ~SageIRCallsiteParamIterator() { }
 
   ExprHandle Current();   // Returns the current item.

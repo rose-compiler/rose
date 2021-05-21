@@ -1995,6 +1995,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2020_79.C \
    test2020_80.C \
    test2020_82.C \
+   test2020_83.C \
+   test2021_01.C \
+   test2021_02.C \
+   test2021_03.C \
+   test2021_04.C \
+   test2021_05.C \
+   test2021_06.C \
+   test2021_07.C \
+   test2021_08.C \
+   test2021_09.C \
+   test2021_10.C \
+   test2021_11.C \
+   test2021_12.C \
+   test2021_13.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
@@ -2713,7 +2727,13 @@ TEST_TRANSLATOR=../../testTranslator
 
 LANG_FLAGS =
 
-ROSE_FLAGS = -std=c++
+# NP 4/23/21 C++14 flag is needed in order to parse the boost headers which use C++14.
+if USING_INTEL_COMPILER
+   ROSE_FLAGS = -std=c++14
+else
+   ROSE_FLAGS = -std=c++
+endif
+
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif

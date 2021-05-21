@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <RoseException.h>
+#include <Rose/Exception.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

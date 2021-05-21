@@ -2,7 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = \
 	dot_asis_tests \
-  compile_tests
+  compile_tests \
+  sageInterfaceAda_tests \
+  literalParser_tests
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
@@ -103,6 +105,15 @@ check-test-number:
 clean-local:
 	rm -rf ./rose-ada-output ./obj
 	rm -f *.dot
+
+.PHONY: print-tests
+print-tests:
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+	@echo "$(ADA_TESTS)"
+else
+	@echo "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not set"
+endif
+
 
 .PHONY: check-local
 check-local:

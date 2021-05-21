@@ -1,8 +1,8 @@
 // Adds functions to the database.
 #include "rose.h"
 #include "DwarfLineMapper.h"
-#include "BinaryFunctionCall.h"
-#include "BinaryLoader.h"
+#include <Rose/BinaryAnalysis/FunctionCall.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include "Partitioner.h"
 #include "CloneDetectionLib.h"
 

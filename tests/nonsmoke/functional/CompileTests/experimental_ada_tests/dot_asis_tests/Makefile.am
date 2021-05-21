@@ -1,12 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-ADA_MAIN=$(top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main
+ADA_MAIN=$(top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main
 DOT_OPTPUT=$(top_builddir)/tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests
 
-$(ADA_MAIN)/obj/run_asis_tool_2:
-	cd $(ADA_MAIN); $(MAKE) run_asis_tool_2
+$(ADA_MAIN)/obj/run_parser_adapter:
+	cd $(ADA_MAIN); $(MAKE) run_parser_adapter
 
-RUN_ASIS_TOOL=$(ADA_MAIN)/obj/run_asis_tool_2
+RUN_ASIS_TOOL=$(ADA_MAIN)/obj/run_parser_adapter
 GNAT_HOME=$(shell dirname $(shell dirname $(shell which gprbuild)))
 
 include $(srcdir)/../AdaTest.mk

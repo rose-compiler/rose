@@ -67,17 +67,18 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     #--------------------------------------------------------------------------------
     if test -n "$support_binaries_frontend" -o -n "$verbose"; then
         ROSE_SUMMARY_HEADING([Binary analysis support])
+	echo "    Capstone          (ARM decoding) ${ROSE_HAVE_CAPSTONE:-none}"
+	echo "    Dlib          (graph algorithms) ${DLIB_PREFIX:-none}"
+	echo "    DWARF     (ELF format debugging) ${ROSE_HAVE_LIBDWARF:-none}"
+	echo "    ELF       (only needed by DWARF) ${ROSE_HAVE_LIBELF:-none}"
 	echo "    i386 support                     ${CFLAGS32:-none}"
-	echo "    libcapstone                      ${ROSE_HAVE_CAPSTONE:-none}"
-	echo "    libdwarf                         ${ROSE_HAVE_LIBDWARF:-none}"
-	echo "    libelf                           ${ROSE_HAVE_LIBELF:-none}"
-	echo "    libmagic                         ${ROSE_HAVE_LIBMAGIC:-none}"
-	echo "    readline                         ${LIBREADLINE_LIBRARY_PATH:-none}"
-	echo "    SQLite3                          ${SQLITE3_VERSION:-none}"
-	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX:-none}"
-	echo "    yices executable                 ${ROSE_YICES:-none}"
+	echo "    magic      (file identification) ${ROSE_HAVE_LIBMAGIC:-none}"
+	echo "    readline     (interactive input) ${LIBREADLINE_LIBRARY_PATH:-none}"
+	echo "    SQLite3     (database in a file) ${SQLITE3_VERSION:-none}"
+	echo "    YAML-cpp         (configuration) ${ROSE_YAML_PREFIX:-none}"
+	echo "    yices executable    (SMT solver) ${ROSE_YICES:-none}"
 	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"
-	echo "    z3 version                       ${Z3_VERSION:-unknown}"
+	echo "    z3 version          (SMT solver) ${Z3_VERSION:-unknown}"
 	echo "    z3 executable                    ${Z3:-none}"
 	echo "    z3 library                       ${Z3_LIBRARY_PATH:-none}"
     fi

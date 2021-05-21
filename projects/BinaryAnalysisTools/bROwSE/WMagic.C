@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/WMagic.h>
 
-#include <BinaryMagic.h>                                // ROSE
+#include <Rose/BinaryAnalysis/MagicNumber.h>
 #include <bROwSE/FunctionUtil.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>

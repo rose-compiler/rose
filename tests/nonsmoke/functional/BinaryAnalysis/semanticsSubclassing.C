@@ -7,9 +7,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include "rose.h"
-#include "SymbolicSemantics2.h"
-#include <BinarySmtSolver.h>
-#include <CommandLine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/CommandLine.h>
 
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -157,13 +157,13 @@ public:
         // SymbolicSemantics::SValue, but in fact we might be using a subclass thereof.  The error won't be detected until
         // someone tries to use a SymbolicSemantics::SValue subtype, and they might not even notice until this type error
         // propagates to enough SValue instances.
-        return SymbolicSemantics::SValue::number_(a->get_width(), 0);
+        return SymbolicSemantics::SValue::number_(a->nBits(), 0);
 
         // This is the correct way. It invokes the virtual constructor from the prototypical value.
-        return protoval()->number_(a->get_width(), 0);
+        return protoval()->number_(a->nBits(), 0);
 
         // This is also correct since all values are (or at least should be) the same type as the protoval.
-        return a->number_(a->get_width(), 0);
+        return a->number_(a->nBits(), 0);
     }
 #endif
 
@@ -176,7 +176,7 @@ public:
 // Test that everything works like we expect.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "TestSemantics2.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
 
 int main()
 {

@@ -3,7 +3,7 @@ static const char *purpose = "purpose-text";
 static const char *description = "description-text";
 
 #include <rose.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <Sawyer/CommandLine.h>
 
 bool opt1 = false;

@@ -1,7 +1,7 @@
 #ifndef PathFinder_PathFinder_H
 #define PathFinder_PathFinder_H
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <Sawyer/Map.h>
 
 namespace PathFinder {

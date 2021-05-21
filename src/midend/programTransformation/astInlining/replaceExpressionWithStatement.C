@@ -194,6 +194,7 @@ void myStatementInsert ( SgStatement* target, SgStatement* newstmt, bool before,
             else
              {
                assert (!"Bad parent type");
+               abort();
              }
         }
 

@@ -41,7 +41,7 @@ void ai_runtime_terminate()
     }
   }
   else
-    assert (0);
+    ROSE_ABORT ();
   fclose (o_file);
   // terminate the monitoring
   free (_loop_counters);

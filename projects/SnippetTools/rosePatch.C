@@ -1,7 +1,7 @@
 #include <rose.h>
 
-#include <CommandLine.h>
-#include <FileSystem.h>
+#include <Rose/CommandLine.h>
+#include <Rose/FileSystem.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <string>

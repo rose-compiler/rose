@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <SourceLocation.h>
+#include <Rose/SourceLocation.h>
 
 using namespace Rose;
 

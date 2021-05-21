@@ -860,7 +860,7 @@ JNIEXPORT void JNICALL cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstr
         cout << "Found class declaration in scope "
              << outerScope -> class_name()
              << endl;
-        ROSE_ASSERT(false);
+        ROSE_ABORT();
     }
 
     if (SgProject::get_verbose() > 0)

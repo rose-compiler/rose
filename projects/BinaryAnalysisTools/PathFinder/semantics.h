@@ -2,8 +2,8 @@
 #define PathFinder_Semantics_H
 
 #include <PathFinder/PathFinder.h>
-#include <SymbolicSemantics2.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 namespace PathFinder {
 

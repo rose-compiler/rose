@@ -5,12 +5,12 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include "SymbolicSemantics2.h"
-#include "PartialSymbolicSemantics2.h"
-#include "CommandLine.h"
-#include "DispatcherX86.h"
-#include "Disassembler.h"
-#include "Diagnostics.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 #include "x86InstructionProperties.h"
 
 using namespace Rose;                                   // temporary until this lives in "rose"
@@ -81,7 +81,8 @@ SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &in
 
     // Quick method based only on the kind of instruction
     if (x86_call==last->get_kind() || x86_farcall==last->get_kind()) {
-        last->getBranchTarget(target);
+        if (target)
+            last->branchTarget().assignTo(*target);
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
@@ -131,10 +132,9 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
         SValuePtr eip = SValue::promote(ops->peekRegister(dispatcher->REG_anyIP));
-        if (eip->is_number()) {
-            rose_addr_t target_va = eip->get_number();
-            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(target_va, NULL));
-            if (!target_func || target_va!=target_func->get_entry_va())
+        if (auto target_va = eip->toUnsigned()) {
+            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*target_va, NULL));
+            if (!target_func || *target_va != target_func->get_entry_va())
                 return false;
         }
 
@@ -143,16 +143,15 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         SValuePtr esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         SValuePtr stack_delta = SValue::promote(ops->add(esp, ops->negate(orig_esp)));
         SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, spWidth-1, spWidth));
-        if (stack_delta_sign->is_number() && 0==stack_delta_sign->get_number())
+        if (stack_delta_sign->isFalse())
             return false;
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
         const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth)));
-        if (top->is_number()) {
-            rose_addr_t va = top->get_number();
-            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
+        if (auto va = top->toUnsigned()) {
+            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*va, NULL));
             if (!return_func || return_func!=func) {
                 return false;
             }
@@ -162,10 +161,10 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
 
         // Since EIP might point to a function entry address and since the top of the stack contains a pointer to an
         // instruction in this function, we assume that this is a function call.
-        if (target && eip->is_number())
-            *target = eip->get_number();
-        if (return_va && top->is_number())
-            *return_va = top->get_number();
+        if (target)
+            eip->toUnsigned().assignTo(*target);
+        if (return_va)
+            top->toUnsigned().assignTo(*return_va);
         return true;
     }
 
@@ -198,14 +197,13 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, ops->peekRegister(SP),
                                                         ops->protoval()->undefined_(ipWidth)));
-        if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
+        if (top->toUnsigned().orElse(0) == last->get_address() + last->get_size()) {
             if (target) {
                 SValuePtr eip = SValue::promote(ops->peekRegister(dispatcher->REG_anyIP));
-                if (eip->is_number())
-                    *target = eip->get_number();
+                eip->toUnsigned().assignTo(*target);
             }
             if (return_va)
-                *return_va = top->get_number();
+                top->toUnsigned().assignTo(*return_va);
             return true;
         }
     }
@@ -247,17 +245,15 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
         case x86_call:
         case x86_farcall:
         case x86_jmp:
-        case x86_farjmp: {
+        case x86_farjmp:
             /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
              * fall-through address. */
-            rose_addr_t va;
-            if (getBranchTarget(&va)) {
-                retval.insert(va);
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+                retval.insert(*va);
             } else {
                 complete = false;
             }
             break;
-        }
 
         case x86_ja:
         case x86_jae:
@@ -280,17 +276,15 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
         case x86_js:
         case x86_loop:
         case x86_loopnz:
-        case x86_loopz: {
+        case x86_loopz:
             /* Conditional branches to operand-specified address */
-            rose_addr_t va;
-            if (getBranchTarget(&va)) {
-                retval.insert(va);
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+                retval.insert(*va);
             } else {
                 complete = false;
             }
             retval.insert(get_address() + get_size());
             break;
-        }
 
         case x86_int:                                   // assumes interrupts return
         case x86_int1:
@@ -333,8 +327,8 @@ SgAsmX86Instruction::getSuccessors(bool &complete) {
     return retval;
 }
 
-bool
-SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
+Sawyer::Optional<rose_addr_t>
+SgAsmX86Instruction::branchTarget() {
     // Treats far destinations as "unknown"
     switch (get_kind()) {
         case x86_call:
@@ -361,19 +355,15 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
         case x86_js:
         case x86_loop:
         case x86_loopnz:
-        case x86_loopz: {
-            const SgAsmExpressionPtrList &args = get_operandList()->get_operands();
-            if (args.size()!=1)
-                return false;
-            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[0]);
-            if (!ival)
-                return false;
-            if (target)
-                *target = ival->get_absoluteValue();
-            return true;
-        }
+        case x86_loopz:
+            if (nOperands() == 1) {
+                if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operand(0)))
+                    return ival->get_absoluteValue();
+            }
+            return Sawyer::Nothing();
+
         default:
-            return false; // do not modify *target
+            return Sawyer::Nothing();
     }
 }
 
@@ -425,9 +415,9 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
                 SAWYER_MESG(debug) <<"  state after " <<insn->toString() <<"\n" <<*ops;
             }
             BaseSemantics::SValuePtr ip = ops->peekRegister(IP);
-            if (ip->is_number()) {
+            if (auto ipval = ip->toUnsigned()) {
                 successors.clear();
-                successors.insert(ip->get_number());
+                successors.insert(*ipval);
                 complete = true;
             }
         } catch(const BaseSemantics::Exception &e) {

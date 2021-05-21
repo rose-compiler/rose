@@ -1047,7 +1047,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeSpec(ATerm term, SgUn
       }
       else {
          std::cerr << "...TODO... found DerivedTypeSpec name " << name << " : need to implement TypeParamSpecList \n";
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
          return ATfalse;
       }
 
@@ -1062,7 +1062,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeSpec(ATerm term, SgUn
 
    if (type == NULL) {
       std::cerr << "...TODO... implement DerivedTypeSpec" << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
    }
 
    return ATtrue;
@@ -1385,7 +1385,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       }
       else {
          std::cout << "TODO: TypeParamNameList not implemented \n";
-         ROSE_ASSERT(0);
+         ROSE_ABORT();
       }
 
       // traverse components adding to struct_scope
@@ -1395,7 +1395,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       if (traverse_DataComponentDefStmtList(t_components, component_decl_list)) {
          // Added components
       }
-      else ROSE_ASSERT(0); // Not completely implemented so fail locally for now
+      else ROSE_ABORT(); // Not completely implemented so fail locally for now
 
       // TODO:
       // t_param
@@ -3517,7 +3517,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_CaseValueRange(ATerm term, SgUnt
       *case_value_range = range;
    }
    else {
-      ROSE_ASSERT(0);
+      ROSE_ABORT();
    }
    ROSE_ASSERT(*case_value_range);
 

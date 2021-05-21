@@ -1,8 +1,8 @@
 #include <rose.h>
 
-#include <BinaryToSource.h>
-#include <Diagnostics.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/ToSource.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose::Diagnostics;

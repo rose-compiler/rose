@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Simulator.h"
-#include "Diagnostics.h"
+#include <Rose/Diagnostics.h>
 
 #include <sys/wait.h>
 
@@ -533,7 +533,7 @@ RSIM_Simulator::deactivate()
         for (int i=1; i<=_NSIG; i++) {
             if (signal_installed[i]>0) {
                 int status = sigaction(i, signal_restore+i, NULL);
-                ROSE_ASSERT(status>=0);
+                ASSERT_always_require(status>=0);
             }
         }
         active_sim = NULL;

@@ -5,10 +5,10 @@
 
 #include "RSIM_Debugger.h"
 
-#include <Diagnostics.h>
+#include <Rose/Diagnostics.h>
 #include <rose_strtoull.h>
-#include <BaseSemantics2.h>
-#include <Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <stringify.h>
 
@@ -353,7 +353,7 @@ public:
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
-            rose_addr_t simRegValue = thread->operators()->readRegister(reg)->get_number();
+            rose_addr_t simRegValue = thread->operators()->readRegister(reg)->toUnsigned().get();
             if (gdbRegValue != simRegValue) {
                 out_ <<"*** MISMATCH for \"" <<StringUtility::cEscape(regname) <<"\""
                      <<" gdb=" <<StringUtility::toHex2(gdbRegValue, reg.nBits())

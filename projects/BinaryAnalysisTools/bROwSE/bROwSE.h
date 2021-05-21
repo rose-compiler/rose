@@ -1,10 +1,10 @@
 #ifndef bROwSE_H
 #define bROwSE_H
 
-#include <Color.h>                                      // ROSE
-#include <Diagnostics.h>                                // ROSE
-#include <Partitioner2/Engine.h>                        // ROSE
-#include <Partitioner2/Partitioner.h>                   // ROSE
+#include <Rose/Color.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Wt/WApplication>
 #include <Wt/WColor>
 

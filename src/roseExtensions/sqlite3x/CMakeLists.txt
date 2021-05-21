@@ -1,5 +1,5 @@
 if(SQLITE3_FOUND_LIB)
-  add_library(RoseSQLite3xDatabase
+  add_library(RoseSQLite3xDatabase STATIC
     sqlite3x_command.C sqlite3x_exception.C sqlite3x_transaction.C
     sqlite3x_connection.C sqlite3x_reader.C)
 

@@ -937,18 +937,18 @@ ATbool ATermToSageFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgTyp
       type = SageBuilder::buildFloatType();
    }
    else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
       //type = UntypedBuilder::buildType(SgType::e_float);
    }
    else if (ATmatch(t_type, "CHARACTER()")) {
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
 #ifdef UNTYPED
    // No length parameter given so build a char type
       type = UntypedBuilder::buildType(SgType::e_char);
 #endif
    }
    else if (ATmatch(t_type, "COMPLEX()")) {
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
 #ifdef UNTYPED
       type = UntypedBuilder::buildType(SgType::e_complex);
 #endif
@@ -957,7 +957,7 @@ ATbool ATermToSageFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgTyp
       type = SageBuilder::buildBoolType();
    }
    else if (ATmatch(t_type, "DOUBLECOMPLEX()")) {
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
       //type = UntypedBuilder::buildType(SgType::e_float);
    }
 
@@ -969,8 +969,8 @@ ATbool ATermToSageFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgTyp
 // Only type declarations with a kind parameter or length parameters left
 // ----------------------------------------------------------------------
 
-   ROSE_ASSERT(false);
-
+   ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreachable
 #ifdef UNTYPED
    if (ATmatch(t_type, "INTEGER(<term>)", &t_kind)) {
       type = UntypedBuilder::buildType(SgType::e_int);
@@ -986,7 +986,6 @@ ATbool ATermToSageFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgTyp
       type = UntypedBuilder::buildType(SgType::e_bool);
    }
 #endif
-
 // Check for a type-kind parameter
    if (type != NULL) {
       SgExpression* kind;
@@ -1014,6 +1013,7 @@ ATbool ATermToSageFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgTyp
    }
 
   return ATtrue;
+#endif
 }
 
 //========================================================================================
@@ -1059,8 +1059,7 @@ ATbool ATermToSageFortranTraversal::traverse_DerivedTypeSpec(ATerm term, SgType*
       }
       else {
          std::cerr << "...TODO... found DerivedTypeSpec name " << name << " : need to implement TypeParamSpecList \n";
-         ROSE_ASSERT(false);
-         return ATfalse;
+         ROSE_ABORT();
       }
 
 #ifdef UNTYPED
@@ -1076,7 +1075,7 @@ ATbool ATermToSageFortranTraversal::traverse_DerivedTypeSpec(ATerm term, SgType*
 
    if (type == NULL) {
       std::cerr << "...TODO... implement DerivedTypeSpec" << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
    }
 
    return ATtrue;
@@ -1260,7 +1259,7 @@ ATbool ATermToSageFortranTraversal::traverse_Operator(ATerm term, SgExpression* 
          //       case LT::e_operator_not_eqv:          expr = SB::buildNotEqualOp_nfi(lhs,rhs);       break;
        default: {
          std::cerr << "ERROR: binary operator enum not found \n";
-         ROSE_ASSERT(false);
+         ROSE_ABORT();
        }
      }
    ROSE_ASSERT(expr);
@@ -1409,7 +1408,7 @@ ATbool ATermToSageFortranTraversal::traverse_DerivedTypeDef(ATerm term)
       }
       else {
          std::cout << "TODO: TypeParamNameList not implemented \n";
-         ROSE_ASSERT(0);
+         ROSE_ABORT();
       }
 
 #if UNTYPED
@@ -1420,7 +1419,7 @@ ATbool ATermToSageFortranTraversal::traverse_DerivedTypeDef(ATerm term)
       if (traverse_DataComponentDefStmtList(t_components)) {
          // Added components
       }
-      else ROSE_ASSERT(0); // Not completely implemented so fail locally for now
+      else ROSE_ABORT(); // Not completely implemented so fail locally for now
 
       // TODO:
       // t_param
@@ -3673,7 +3672,7 @@ ATbool ATermToSageFortranTraversal::traverse_CaseValueRange(ATerm term, SgExpres
 #endif
    }
    else {
-      ROSE_ASSERT(0);
+      ROSE_ABORT();
    }
    ROSE_ASSERT(case_value_range);
 
@@ -5953,7 +5952,8 @@ ATbool ATermToSageFortranTraversal::traverse_ImportStmt(ATerm term)
          //matched OptLabel
       } else return ATfalse;
 
-      ROSE_ASSERT(false);
+      ROSE_ABORT();
+#if 0 // [Robb Matzke 2021-03-24]: unreachable
       name_list = new SgUntypedNameList();
       setSourcePosition(name_list, t_name_list);
 
@@ -5963,6 +5963,7 @@ ATbool ATermToSageFortranTraversal::traverse_ImportStmt(ATerm term)
       if (traverse_eos(t_eos, eos)) {
          //matched EOS
       } else return ATfalse;
+#endif
    }
    else return ATfalse;
 

@@ -4,12 +4,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <BaseSemanticsRegisterState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <Diagnostics.h>
-#include <MemoryMap.h>
-#include <StringUtility.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/StringUtility.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

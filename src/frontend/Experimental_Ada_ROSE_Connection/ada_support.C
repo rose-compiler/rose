@@ -21,10 +21,10 @@
 
 // #include <stdio.h>
 #include "a_nodes.h"
-#include "tool_2_wrapper.h"
+#include "adapter_wrapper.h"
 
-// extern "C" void dot_asisinit (void);
-// extern "C" void dot_asisfinal (void);
+// extern "C" void asis_adapterinit (void);
+// extern "C" void asis_adapterfinal (void);
 
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
@@ -35,9 +35,12 @@ namespace Ada_ROSE_Translation
 
   struct Settings
   {
-    bool processPredefinedUnits = false;
-    bool processImplementationUnits = false;
+    bool processPredefinedUnits = true;
+    bool processImplementationUnits = true;
     bool asisDebug = false;
+    bool logTrace  = false;
+    bool logInfo   = false;
+    bool logWarn   = false;
   };
 
 }
@@ -58,7 +61,6 @@ int main(int argc, char** argv)
      int status = 0;
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
-     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
 
      Ada_ROSE_Translation::Settings settings;
 
@@ -85,22 +87,49 @@ int main(int argc, char** argv)
            .intrinsicValue(true, settings.asisDebug)
            .doc("Sets Asis debug flag"));
 
+     ada2Rose.insert(scl::Switch("warn")
+           .intrinsicValue(true, settings.logWarn)
+           .doc("Enables warning messages"));
+
+     ada2Rose.insert(scl::Switch("trace")
+           .intrinsicValue(true, settings.logTrace)
+           .doc("Enables tracing messages"));
+
+     ada2Rose.insert(scl::Switch("info")
+           .intrinsicValue(true, settings.logInfo)
+           .doc("Enables info messages"));
+
      p.with(ada2Rose).parse(args).apply();
 
-  // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
-     const char *gnat_home   = std::getenv("GNAT_HOME");
+     std::string warninglevels = "none, error, fatal";
+     Sawyer::Message::Facilities logctrl;
 
-     if (!gnat_home) gnat_home = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
+     logctrl.insert(mlog);
+     //~ logctrl.control("none, error, warn, fatal");
 
-     //~ std::cerr << "Settings: processPredefinedUnits = " << settings.processPredefinedUnits
-               //~ << ", processImplementationUnits = " << settings.processImplementationUnits
-               //~ << ", asisDebug = " << settings.asisDebug
-               //~ << std::endl;
+     if (settings.logWarn)  warninglevels += ", warn";
+     if (settings.logTrace) warninglevels += ", trace";
+     if (settings.logInfo)  warninglevels += ", info";
+
+     logctrl.control(warninglevels);
+
+     mprintf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
+
+     const char* gnat_home = std::getenv("GNAT_HOME");
+
+     if (!gnat_home)
+     {
+       mlog[Sawyer::Message::FATAL] << "Environment variable GNAT_HOME is not set.\n"
+                                    << "  Aborting ROSE.."
+                                    << std::endl;
+
+       return 1;
+     }
+
      mprintf ("BEGIN.\n");
 
      Nodes_Struct head_nodes;
 
-#if 1
      {
        typedef boostfs::path::string_type string_type;
 
@@ -132,15 +161,15 @@ int main(int argc, char** argv)
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
-       dot_asisinit();
+       asis_adapterinit();
 
-    // PP (11/5/20): Use Charles' new tool_2_wrapper_with_flags function
+    // PP (11/5/20): Use Charles' new adapter_wrapper_with_flags function
        mprintf( "calling Asis: src:%s gnat:%s outdir:%s pdunit:%d implunit:%d dbg:%d\n",
                 cstring_SrcFile, gnat_home, cstring_GnatOutputDir,
                 settings.processPredefinedUnits, settings.processImplementationUnits, settings.asisDebug
               );
 
-       head_nodes = tool_2_wrapper_with_flags( cstring_SrcFile,
+       head_nodes = adapter_wrapper_with_flags( cstring_SrcFile,
                                                const_cast<char*>(gnat_home),
                                                cstring_GnatOutputDir,
                                                settings.processPredefinedUnits,
@@ -149,21 +178,20 @@ int main(int argc, char** argv)
                                              );
 
        if (head_nodes.Elements == NULL) {
-          mprintf ("tool_2_wrapper_with_flags returned NO elements.\n");
+          mprintf ("adapter_wrapper_with_flags returned NO elements.\n");
           status = 1;
        } else {
-          mprintf ("tool_2_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
+          mprintf ("adapter_wrapper_with_flags returned %i elements.\n", head_nodes.Elements->Next_Count + 1);
        }
 
        boostfs::current_path(currentDir);
      }
-#endif
 
      mprintf ("END.\n");
 
      Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
 
-     dot_asisfinal();
+     asis_adapterfinal();
      mprintf ("Leaving ada_main(): status = %d \n", status);
      return status;
    }

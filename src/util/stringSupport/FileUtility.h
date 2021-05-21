@@ -3,7 +3,7 @@
 
 #include "commandline_processing.h"
 
-#include <StringUtility.h>
+#include <Rose/StringUtility.h>
 
 namespace Rose {
 

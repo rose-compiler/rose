@@ -5,10 +5,10 @@ static const char *description =
     "specified. Standard input is supported only on those systems where it's opened in binary mode, such as Linux.";
 
 #include <rose.h>
-#include <CommandLine.h>                                        // rose
-#include <Diagnostics.h>                                        // rose
-#include <Partitioner2/Engine.h>                                // rose
-#include <Partitioner2/Partitioner.h>                           // rose
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <SqlDatabase.h>                                        // rose
 
 #include <batSupport.h>

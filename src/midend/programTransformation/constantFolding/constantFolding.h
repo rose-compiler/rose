@@ -266,7 +266,7 @@ T calculate_string_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
     default:
       {
         std::cerr<<"warning: calculate_string_t - unacceptable operator type:"<<binaryOperator->class_name()<<std::endl;
-        ROSE_ASSERT(false); 
+        ROSE_ABORT();
       }
   } // end switch
   return foldedValue;

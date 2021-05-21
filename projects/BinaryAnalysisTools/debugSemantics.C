@@ -2,23 +2,23 @@
 
 #include <rose.h>
 
-#include <BinaryNoOperation.h>
-#include <BinarySerialIo.h>
-#include <BinaryYicesSolver.h>
-#include <BinaryZ3Solver.h>
-#include <CommandLine.h>
-#include <ConcreteSemantics2.h>
-#include <Diagnostics.h>
-#include <Disassembler.h>
-#include <DispatcherX86.h>
-#include <IntervalSemantics2.h>
-#include <MemoryCellList.h>
-#include <NullSemantics2.h>
-#include <PartialSymbolicSemantics2.h>
-#include <Partitioner2/Engine.h>
-#include <SymbolicSemantics2.h>
-#include <TestSemantics2.h>
-#include <TraceSemantics2.h>
+#include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
+#include <Rose/BinaryAnalysis/YicesSolver.h>
+#include <Rose/BinaryAnalysis/Z3Solver.h>
+#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics
@@ -596,7 +596,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
             if (regState) {
                 RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
                 BaseSemantics::SValuePtr sp = ops->readRegister(SP);
-                unsigned magic = sp->is_number() ? sp->get_number() : 0;
+                unsigned magic = sp->toUnsigned().orElse(0);
                 unsigned settings = (magic & 0xfffffffc) == 0x137017c0 ? (magic & 3) : 3;
                 regState->accessModifiesExistingLocations(settings & 1);
                 regState->accessCreatesLocations(settings & 2);

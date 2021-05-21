@@ -1,8 +1,8 @@
 // Tests that DataBlock ownership rules work correctly
 #include <rose.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Exception.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 using namespace Rose;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

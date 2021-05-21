@@ -4,9 +4,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include "BinaryNoOperation.h"
-#include "Diagnostics.h"
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h>
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;
@@ -118,9 +119,22 @@ SgAsmInstruction::isLastInBlock()
     return false;
 }
 
+// This would normally be pure virtual, but ROSETTA-generated classes can't handle such basic C++.
+Sawyer::Optional<rose_addr_t>
+SgAsmInstruction::branchTarget() {
+    ASSERT_not_reachable("you forgot to implement this in a subclass"); // runtime error is the best we can do with ROSETTA
+}
+
+// FIXME[Robb Matzke 2021-03-02]: deprecated
 bool
 SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
-    return false;
+    if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
+        if (target)
+            *target = *va;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool

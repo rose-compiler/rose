@@ -25,30 +25,30 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define YICES_LIB 1
 #define YICES_EXE 2
 
-#include "DispatcherX86.h"
-#include "TestSemantics2.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
-    #include "BinarySmtSolver.h"
+    #include <Rose/BinaryAnalysis/SmtSolver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() { return Rose::BinaryAnalysis::SmtSolverPtr(); }
 #elif SMT_SOLVER == YICES_LIB
-    #include "BinaryYicesSolver.h"
+    #include <Rose/BinaryAnalysis/YicesSolver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
         return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == YICES_EXE
-    #include "BinaryYicesSolver.h"
+    #include <Rose/BinaryAnalysis/YicesSolver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
         return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #elif SMT_SOLVER == Z3_LIB
-    #include "BinaryZ3Solver.h"
+    #include <Rose/BinaryAnalysis/Z3Solver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
         return Rose::BinaryAnalysis::Z3Solver::instance(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == Z3_EXE
-    #include "BinaryZ3Solver.h"
+    #include <Rose/BinaryAnalysis/Z3Solver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
         return Rose::BinaryAnalysis::Z3Solver::instance(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
@@ -58,7 +58,7 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 const Rose::BinaryAnalysis::RegisterDictionary *regdict = Rose::BinaryAnalysis::RegisterDictionary::dictionary_pentium4();
 
-#include "TraceSemantics2.h"
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 // defaults for command-line switches
 static bool do_trace = false;
@@ -68,7 +68,7 @@ static bool do_usedef = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#   include "NullSemantics2.h"
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
         TestSemantics<
@@ -80,7 +80,7 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
-#   include "PartialSymbolicSemantics2.h"
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
@@ -93,7 +93,7 @@ static bool do_usedef = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#   include "SymbolicSemantics2.h"
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
         retval->computingDefiners(do_usedef ? SymbolicSemantics::TRACK_ALL_DEFINERS : SymbolicSemantics::TRACK_NO_DEFINERS);
@@ -106,7 +106,7 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
-#   include "IntervalSemantics2.h"
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
         TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
@@ -118,10 +118,10 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
-#   include "MultiSemantics2.h"
-#   include "PartialSymbolicSemantics2.h"
-#   include "SymbolicSemantics2.h"
-#   include "IntervalSemantics2.h"
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
         PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instance(regdict);
@@ -225,9 +225,9 @@ analyze_interp(SgAsmInterpretation *interp)
 
             /* Get next instruction of this block */
             BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
-            if (!ip->is_number())
+            if (!ip->isConcrete())
                 break;
-            rose_addr_t next_addr = ip->get_number();
+            rose_addr_t next_addr = ip->toUnsigned().get();
             si = insns.find(next_addr);
             if (si==insns.end()) break;
             insn = si->second;
@@ -239,7 +239,7 @@ analyze_interp(SgAsmInterpretation *interp)
         if (do_test_subst) {
             SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
             BaseSemantics::SValuePtr newvar = operators->undefined_(32);
-            newvar->set_comment("frame_pointer");
+            newvar->comment("frame_pointer");
             SymbolicSemantics::SValuePtr to =
                 SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
             std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";

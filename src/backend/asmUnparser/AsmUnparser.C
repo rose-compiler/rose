@@ -4,7 +4,7 @@
 #include "AsmUnparser.h"
 
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
-#include "Disassembler.h"
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -297,38 +297,6 @@ AsmUnparser::line_prefix() const
     return buf;
 }
 
-std::string
-AsmUnparser::invalid_register(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *regdict)
-{
-    using namespace StringUtility;
-    Stream warn(mlog[WARN]);
-
-    std::string regstr = numberToString(reg.majorNumber()) + "." + numberToString(reg.minorNumber()) + "." +
-                         numberToString(reg.offset()) + "." + numberToString(reg.nBits());
-    if (insn) {
-        warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
-    } else {
-        warn <<"invalid register reference " <<regstr <<"\n";
-    }
-
-    static bool wasDescribed = false;
-    if (!wasDescribed) {
-        warn <<"  This warning is caused by instructions using registers that don't have names in the\n"
-             <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
-             <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
-             <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
-             <<"  chooses a dictionary based on the architecture specified in the file header. For example,\n"
-             <<"  this warning may be caused by a file whose header specifies i386 but the instructions in\n"
-             <<"  the file are for the amd64 architecture.  The assembly listing will indicate unnamed\n"
-             <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
-             <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
-             <<"  register, and \"d\" is the number of significant bits.\n";
-        if (regdict!=NULL)
-            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
-        wasDescribed = true;
-    }
-    return "BAD_REGISTER(" + regstr + ")";
-}
 
 
 

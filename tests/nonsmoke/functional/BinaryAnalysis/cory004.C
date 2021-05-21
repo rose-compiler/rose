@@ -5,8 +5,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <DispatcherX86.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -31,7 +31,7 @@ public:
 
     void myclear() {
         DispatcherX86Ptr dispatcher = RoseDispatcherX86::instance();
-        dispatcher->set_register_dictionary(regdict);
+        dispatcher->registerDictionary(regdict);
         initialize_nonoverlapping(dispatcher->get_usual_registers(), false);
     }
 };

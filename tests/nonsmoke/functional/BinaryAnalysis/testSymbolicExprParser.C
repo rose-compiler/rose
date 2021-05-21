@@ -5,7 +5,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <BinarySymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 
 using namespace Rose::BinaryAnalysis;
 

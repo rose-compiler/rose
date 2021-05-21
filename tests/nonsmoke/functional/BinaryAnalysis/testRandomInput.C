@@ -6,17 +6,17 @@ static const char *description =
 
 #include <rose.h>
 
-#include <BinaryUnparserBase.h>
-#include <CommandLine.h>
-#include <Diagnostics.h>
-#include <Disassembler.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 #include <LinearCongruentialGenerator.h>
-#include <MemoryMap.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/CommandLine.h>
-#include <SymbolicSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

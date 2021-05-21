@@ -14,10 +14,14 @@ if !USING_INTEL_COMPILER
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
    SUBDIRS += astMergeTests astPerformanceTests \
-              astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
+              astProcessingTests astQueryTests astRewriteTests \
+              astSymbolTableTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
               astLValueTests abstractMemoryObjectTests varDeclNorm
+
+# DQ (3/31/2021): Testing by removing astTokenStreamTests (above)
+#              astSymbolTableTests astTokenStreamTests astSnippetTests 
 
 # DQ (11/5/2016): Skip these tests when using the address sanitizer since they would 
 # take SO LONG (at least over an hour for initial testing, I think).

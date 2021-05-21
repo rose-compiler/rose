@@ -4,10 +4,10 @@
 #include <rose_config.h>
 
 
-#include <BinaryDebugger.h>
+#include <Rose/BinaryAnalysis/Debugger.h>
 #include <Combinatorics.h>
-#include <CommandLine.h>
-#include <Partitioner2/Engine.h>
+#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -284,7 +284,7 @@ main(int argc, char *argv[]) {
         }
     }
     engine.loadSpecimens(specimenNames);
-    info <<"; completed in " <<loadTimer <<" seconds\n";
+    info <<"; completed in " <<loadTimer <<"\n";
 
     // Disassemble, partition, and get list of functions.  No need to create an AST.
     info <<"performing disassemble and partition";
@@ -295,7 +295,7 @@ main(int argc, char *argv[]) {
         partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
-    info <<"; completed in " <<partitionTimer <<" seconds.\n";
+    info <<"; completed in " <<partitionTimer <<"\n";
     info <<"found " <<plural(functions.size(), "functions") <<"\n";
 
     // Consider only functions that have names

@@ -227,7 +227,7 @@ ClangToDotTranslator::Traverse(clang::Decl * decl)
             break;
         default:
             std::cerr << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << std::endl;
-            ROSE_ASSERT(false);
+            ROSE_ABORT();
     }
 
   // DQ (11/27/2020): Added debugging support.

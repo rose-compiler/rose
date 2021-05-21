@@ -4,9 +4,9 @@
 #include <boost/thread.hpp>
 #include <bROwSE/WBusy.h>
 #include <bROwSE/WMemoryMap.h>
-#include <Disassembler.h>                               // ROSE
-#include <Partitioner2/Modules.h>                       // ROSE
-#include <Partitioner2/ModulesPe.h>                     // ROSE
+#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
 #include <rose_strtoull.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Stopwatch.h>
@@ -320,7 +320,7 @@ WPartitioner::parseSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"parse ELF/PE containers");
     ctx_.engine.parseContainers(ctx_.specimenNames);
-    info <<"; took " <<timer <<" seconds.\n";
+    info <<"; took " <<timer <<"\n";
 
     // Offer interpretations (if there are any), but default to the one chosen by the engine
     wInterpretation_->clear();
@@ -379,7 +379,7 @@ WPartitioner::loadSpecimen() {
     }
 
     ctx_.engine.loadSpecimens(ctx_.specimenNames);
-    info <<"; took " <<timer <<" seconds\n";
+    info <<"; took " <<timer <<"\n";
     specimenLoaded_.emit(true);
     return true;
 }
@@ -440,7 +440,7 @@ public:
             Sawyer::Stopwatch timer;
             BOOST_FOREACH (const std::string &configName, ctx_->settings.configurationNames)
                 ctx_->partitioner.configuration().loadFromFile(configName);
-            info <<"; took " <<timer <<" seconds\n";
+            info <<"; took " <<timer <<"\n";
         }
 
         // Disassemble and partition

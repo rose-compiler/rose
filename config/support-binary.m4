@@ -58,7 +58,7 @@ dnl  ===========================================================================
 
 dnl The libmagic library allows us to check for magic numbers in memory without having to copy the memory
 dnl out to a temporary file and run the Unix file(1) command on it, which is way, way slower when we have
-dnl to test for lots of magic numbers.  Used by src/midend/binaryAnalyses/BinaryMagic.h. [2015-01]
+dnl to test for lots of magic numbers.  Used by src/Rose/BinaryAnalyses/Magic.h. [2015-01]
 ROSE_SUPPORT_LIBMAGIC
 
 

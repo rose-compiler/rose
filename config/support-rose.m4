@@ -962,6 +962,21 @@ AC_ARG_WITH(wave-default, [  --with-wave-default     Use Wave as the default pre
             [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
 
+AC_ARG_WITH(alloc-memset, [  --with-alloc-memset     Memory pool protection (memory is set on memory pool operation): 0 -> none, 1 -> command-line (NIY), 2 -> zeroed new/delete, 3 -> aggressive (diff. value for each mempool operation)],
+            [AC_DEFINE_UNQUOTED([ROSE_ALLOC_MEMSET], $with_alloc_memset, [With memset on mempool operations])],
+            [AC_DEFINE([ROSE_ALLOC_MEMSET], 0, [Without memset on mempool operations])]
+            )
+
+AC_ARG_WITH(pedantic-alloc, [  --with-pedantic-alloc   Enables pedantic assertions in Memory Pool: 0 -> none, 1 -> enabled ],
+            [AC_DEFINE_UNQUOTED([ROSE_PEDANTIC_ALLOC], $with_pedantic_alloc, [With pedantic allocation check])],
+            [AC_DEFINE([ROSE_PEDANTIC_ALLOC], 0, [Without pedantic allocation check])]
+            )
+
+AC_ARG_WITH(alloc-trace, [  --with-alloc-trace     Memory pool allocation tracing (tiny reproducers only): 0 -> none, 1 -> command-line (NIY), 2 -> enabled],
+            [AC_DEFINE_UNQUOTED([ROSE_ALLOC_TRACE], $with_alloc_trace, [With tracing of memory pool operation])],
+            [AC_DEFINE([ROSE_ALLOC_TRACE], 0, [Without tracing of memory pool operation])]
+            )
+
 # Add --disable-binary-analysis-tests flag to turn off tests that sometimes
 # sometimes break.
 # Pei-Hung (10/24/2016) use only ROSE_BUILD_BINARY_ANALYSIS_SUPPORT to control binary analysis tests
@@ -2206,11 +2221,22 @@ src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
+src/Rose/Makefile
+src/Rose/BinaryAnalysis/Makefile
+src/Rose/BinaryAnalysis/Concolic/Makefile
+src/Rose/BinaryAnalysis/InstructionSemantics2/Makefile
+src/Rose/BinaryAnalysis/ModelChecker/Makefile
+src/Rose/BinaryAnalysis/Partitioner2/Makefile
+src/Rose/BinaryAnalysis/Unparser/Makefile
+src/Rose/Color/Makefile
+src/Rose/CommandLine/Makefile
+src/Rose/Diagnostics/Makefile
+src/Rose/FileSystem/Makefile
+src/Rose/StringUtility/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
 src/frontend/BinaryFormats/Makefile
-src/frontend/BinaryLoader/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/DLX/Makefile
@@ -2224,16 +2250,15 @@ src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
-src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/Makefile
-src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/Makefile
-src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/ada_main/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/parser/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
-src/frontend/Partitioner2/Makefile
 src/frontend/PythonFrontend/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/Makefile
@@ -2386,6 +2411,8 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/dot_asis_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/sageInterfaceAda_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/literalParser_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
@@ -2439,6 +2466,8 @@ tests/nonsmoke/functional/CompilerOptionsTests/testGnuOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testHeaderFileOutput/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testOutputFileOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testNostdincOption/Makefile
+tests/nonsmoke/functional/CompilerOptionsTests/testAnsiOption/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/testWave/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/nonsmoke/functional/Makefile
@@ -2542,6 +2571,7 @@ tools/BinaryAnalysis/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/featureVector/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

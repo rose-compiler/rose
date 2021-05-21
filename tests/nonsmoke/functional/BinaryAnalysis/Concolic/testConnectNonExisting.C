@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <BinaryConcolic.h>
+#include <Rose/BinaryAnalysis/Concolic.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/process/search_path.hpp>

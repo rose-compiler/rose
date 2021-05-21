@@ -4,13 +4,13 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 #include "libraryIdentification.h"
 
-#include <BinaryDemangler.h>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/GraphViz.h>
-#include <Partitioner2/ModulesM68k.h>
-#include <Partitioner2/ModulesPe.h>
-#include <Partitioner2/Modules.h>
-#include <Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/Demangler.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 using namespace std;
 using namespace Rose;

@@ -1,6 +1,6 @@
 #include <rose.h>
-#include <BinarySymbolicExpr.h>
-#include <BinaryZ3Solver.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Sawyer/Stopwatch.h>
 
 using namespace Rose::BinaryAnalysis;
@@ -24,7 +24,7 @@ int main() {
     std::cerr <<"building expression with high degree of common subexpressions...\n";
     Sawyer::Stopwatch timer;
     SymbolicExpr::Ptr e1 = highSharing(30);
-    std::cerr <<"  time to build expression:    " <<timer <<" seconds\n";
+    std::cerr <<"  time to build expression:    " <<timer <<"\n";
     std::cerr <<"  logical size of expression:  " <<e1->nNodes() <<" nodes\n";
     std::cerr <<"  physical size of expression: " <<e1->nNodesUnique() <<" nodes\n";
     std::cerr <<"  number of variables:         " <<e1->getVariables().size() <<"\n";
@@ -36,7 +36,7 @@ int main() {
     size_t nextId = 100;
     timer.restart();
     SymbolicExpr::Ptr e2 = e1->renameVariables(index /*in,out*/, nextId /*in,out*/);
-    std::cerr <<"  time to rename variables:    " <<timer <<" seconds\n";
+    std::cerr <<"  time to rename variables:    " <<timer <<"\n";
     std::cerr <<"  logical size of expression:  " <<e2->nNodes() <<" nodes\n";
     std::cerr <<"  physical size of expression: " <<e2->nNodesUnique() <<" nodes\n";
     std::cerr <<"  number of variables:         " <<e2->getVariables().size() <<"\n";
@@ -48,7 +48,7 @@ int main() {
     SymbolicExpr::Ptr newVar = SymbolicExpr::makeIntegerVariable(oldVar->nBits());
     timer.restart();
     SymbolicExpr::Ptr e3 = e1->substitute(oldVar, newVar);
-    std::cerr <<"  time to substitute:          " <<timer <<" seconds\n";
+    std::cerr <<"  time to substitute:          " <<timer <<"\n";
     std::cerr <<"  old variable:                " <<*oldVar <<"\n";
     std::cerr <<"  new variable:                " <<*newVar <<"\n";
     std::cerr <<"  logical size of expression:  " <<e3->nNodes() <<" nodes\n";
@@ -62,7 +62,7 @@ int main() {
     substitutions.insert(std::make_pair(oldVar, newVar)); 
     timer.restart();
     SymbolicExpr::Ptr e4 = e1->substituteMultiple(substitutions);
-    std::cerr <<"  time to substitute:          " <<timer <<" seconds\n";
+    std::cerr <<"  time to substitute:          " <<timer <<"\n";
     std::cerr <<"  old variable:                " <<*oldVar <<"\n";
     std::cerr <<"  new variable:                " <<*newVar <<"\n";
     std::cerr <<"  logical size of expression:  " <<e4->nNodes() <<" nodes\n";

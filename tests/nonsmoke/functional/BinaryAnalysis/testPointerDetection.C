@@ -7,10 +7,10 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 
-#include <BinaryPointerDetection.h>
+#include <Rose/BinaryAnalysis/PointerDetection.h>
 #include <boost/foreach.hpp>
-#include <Partitioner2/Engine.h>
-#include <Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_strtoull.h>
 #include <Sawyer/CommandLine.h>
 #include <string>

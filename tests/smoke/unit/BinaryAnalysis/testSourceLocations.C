@@ -1,8 +1,8 @@
 // Tests Rose::BinaryAnalysis::SourceLocations (at least the part other than parsing ELF files).
 
 #include <rose.h>
-#include <BinarySourceLocations.h>
-#include <SourceLocation.h>
+#include <Rose/BinaryAnalysis/SourceLocations.h>
+#include <Rose/SourceLocation.h>
 #include <sstream>
 
 using namespace Rose;

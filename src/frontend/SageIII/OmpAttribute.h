@@ -479,9 +479,13 @@ namespace OmpSupport
           isUserDefined = true;
           if (mNode != NULL )
           {
+#if 0 // [Robb Matzke 2021-03-28]: causes unused variable warning every time this header is included
             SgLocatedNode * lnode = isSgLocatedNode (mNode);
             ROSE_ASSERT (lnode != NULL);
             //ROSE_ASSERT (lnode->get_file_info()->get_filename()!=std::string("transformation"));
+#else // fixed version
+            ROSE_ASSERT(isSgLocatedNode(mNode));
+#endif
           }
           // Liao 2/12/2010, we allow build empty attribute as a replacement of a default constructor.
           // This is used by autoParallization to tentatively create an instance and later fill data fields.

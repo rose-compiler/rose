@@ -7,11 +7,37 @@ int main(int argc, char* argv[])
      ROSE_ASSERT(argc > 1);
 
      SgProject* project = frontend(argc,argv);
-    
+
+     SgProject::set_unparseHeaderFilesDebug(0);
+
+#if 0
+     printf ("Setting unparseHeaderFilesDebug: value = %d \n",SgProject::get_unparseHeaderFilesDebug());
+#endif
+
   // AstTests::runAllTests(project);
 
+#if 0
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+#endif
+
+#if 1
      UnparseHeadersTransformVisitor transformVisitor;
      transformVisitor.traverse(project, preorder);
+#else
+     printf ("SKIPPING THE TRANSFORMATIONS \n");
+#endif
+
+#if 0
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+     printf ("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT \n");
+#endif
 
 #if 0
   // Output an optional graph of the AST (just the tree, when active)

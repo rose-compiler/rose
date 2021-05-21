@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
+
 #include "saveDotAnalysis.h"
 
 
@@ -27,3 +30,5 @@ void saveCFGsToDots()
         UnstructuredPassInterAnalysis upia_sda(sda);
         upia_sda.runAnalysis();
 }
+
+#endif

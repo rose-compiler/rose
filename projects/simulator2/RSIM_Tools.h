@@ -2,7 +2,7 @@
 #define ROSE_RSIM_Tools_H
 
 #include "stringify.h"          // Needed by the MemoryAccessWatcher tool
-#include <Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -333,7 +333,7 @@ public:
                  * bytes. */
                 bool bp_not_pushed = false;
                 Rose::BinaryAnalysis::RegisterDescriptor REG_SP = args.thread->get_process()->disassembler()->stackPointerRegister();
-                uint64_t sp = args.thread->operators()->readRegister(REG_SP)->get_number();
+                uint64_t sp = args.thread->operators()->readRegister(REG_SP)->toUnsigned().get();
                 uint64_t top = 0;
                 bool isTopValid = false;
                 SgAsmX86Instruction *call_insn = NULL;

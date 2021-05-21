@@ -8,7 +8,7 @@
 // the integer order of visit).
 
 #include <rose.h>
-#include <CommandLine.h>
+#include <Rose/CommandLine.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>
@@ -87,7 +87,7 @@ main(int argc, char** argv)
          // This method simply prints the edits as a side effect and doesn't return anything useful.
          Sawyer::Stopwatch tedLocalTimer;
          tree_edit_distance (project->get_fileList()[0],project->get_fileList()[1]);
-         std::cout <<"local implementation of tree edit distance took " <<tedLocalTimer <<" seconds\n";
+         std::cout <<"local implementation of tree edit distance took " <<tedLocalTimer <<"\n";
      }
 
      // This stuff uses the new edit distance analysis in librose
@@ -96,7 +96,7 @@ main(int argc, char** argv)
      Sawyer::Stopwatch tedRoseTimer;
      analysis.compute(project->get_fileList()[0], project->get_fileList()[1],  // the subtrees to compare
                       project->get_fileList()[0], project->get_fileList()[1]); // their file restrictions
-     std::cout <<"librose implementation of tree edit distance took " <<tedRoseTimer <<" seconds\n";
+     std::cout <<"librose implementation of tree edit distance took " <<tedRoseTimer <<"\n";
      EditDistance::TreeEditDistance::Edits edits = analysis.edits();
      std::cout <<"  Nodes in source tree: " <<analysis.sourceTreeNodes().size() <<"\n"
                <<"  Nodes in target tree: " <<analysis.targetTreeNodes().size() <<"\n"
@@ -108,5 +108,5 @@ main(int argc, char** argv)
          std::cout <<"    " <<edit <<"\n";
      std::ofstream graphViz("output-rose.dot");
      analysis.emitGraphViz(graphViz);
-     std::cout <<"librose implementation of tree edit distance + output took " <<tedRoseTimer <<" seconds\n";
+     std::cout <<"librose implementation of tree edit distance + output took " <<tedRoseTimer <<"\n";
    }

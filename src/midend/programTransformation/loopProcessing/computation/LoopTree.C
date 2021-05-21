@@ -8,7 +8,7 @@
 #include <CommandOptions.h>
 #include <LoopTransformInterface.h>
 #include <SymbolicBound.h>
-#include "RoseAsserts.h" /* JFR: Added 17Jun2020 */
+#include <ROSE_ASSERT.h>
 
 bool LoopTreeLoopNode :: SelfRemove()
 {
@@ -197,16 +197,21 @@ AstNodePtr LoopTreeNode :: CodeGen() const
   AstInterface& fa = LoopTransformInterface::getAstInterface();
   AstNodePtr result = AST_NULL;
   switch (ChildCount()) {
-   case 0: result = fa.CreateBlock(); break;
-   case 1:
-     result = FirstChild()->CodeGen();
-     break;
-   default:
-     result = fa.CreateBlock();
-     for (LoopTreeNode *child = FirstChild(); child != 0;
-          child = child->NextSibling()) {
-         fa.BlockAppendStmt(result, child->CodeGen());
-     }
+   case 0:  result = fa.CreateBlock();
+            break;
+   case 1:  {
+               LoopTreeNode* child = FirstChild();
+               assert(child != NULL);
+               result = child->CodeGen();
+            }
+            break;
+   default: {
+               result = fa.CreateBlock();
+               for (LoopTreeNode *child = FirstChild(); child != 0; child = child->NextSibling()) {
+                  fa.BlockAppendStmt(result, child->CodeGen());
+               }
+            }
+            break;
   }
   result = CodeGen(result);
   UpdateCodeGen(result);

@@ -52,17 +52,19 @@ set(TESTCODE_INCLUDES -I${CMAKE_SOURCE_DIR}/src/frontend/SageIII)
 
 foreach(file_to_test ${TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME OMPTEST_${file_to_test}
     COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c
             ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(OMPTEST_${file_to_test} PROPERTIES LABELS OMPTEST)
 endforeach()
 
 foreach(file_to_test ${OMP_ACC_TESTCODES})
   add_test(
-    NAME ${file_to_test}
+    NAME OMPACCTEST_${file_to_test}
     COMMAND parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep
                      --edg:no_warnings -w -rose:verbose 0 --edg:restrict
                      -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_test})
+  set_tests_properties(OMPACCTEST_${file_to_test} PROPERTIES LABELS OMPACCTEST)
 endforeach()
 
 
@@ -70,13 +72,15 @@ endforeach()
 # Test for a bug which happens when more than two source files show in the command line
 # the translator should now be able to avoid duplicated processing of pragma statements
 add_test(
-  NAME bonds-2
+  NAME OMPTEST_bonds-2
   COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
           -c ${CMAKE_CURRENT_SOURCE_DIR}/atoms-2.c
           ${CMAKE_CURRENT_SOURCE_DIR}/bonds-2.c)
+  set_tests_properties(OMPTEST_bonds-2 PROPERTIES LABELS OMPTEST)
 
 add_test(
   NAME macroIds
   COMMAND parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
           -rose:collectAllCommentsAndDirectives
           ${CMAKE_CURRENT_SOURCE_DIR}/macroIds.c)
+  set_tests_properties(macroIds PROPERTIES LABELS OMPTEST)
