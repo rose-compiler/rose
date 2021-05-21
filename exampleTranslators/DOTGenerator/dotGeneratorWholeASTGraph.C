@@ -8,6 +8,9 @@ int main( int argc, char* argv[] ) {
   ROSE_INITIALIZE;
   std::vector<std::string> argvList(argv, argv + argc);
 
+  // -DSKIP_ROSE_BUILTIN_DECLARATIONS needs to be added
+  argvList.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
+
   SgProject* project = frontend(argvList);
   ROSE_ASSERT (project != NULL);
 
