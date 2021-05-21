@@ -6,21 +6,31 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
-FORTRAN_TESTCODES =       \
-  binary_expressions.f90  \
-  case_1.f90              \
-  common_1.f90            \
-  common_2.f90            \
-  dowhile.f90             \
-  function_2.f90          \
-  function_3.f90          \
-  function_4.f90          \
-  print1.f90              \
-  subroutine_1.f90        \
-  tiny.f90                \
-  type_decls_1.f90        \
-  type_decls_2.f90        \
-  type_decls_3.f90        \
+FORTRAN_TESTCODES =               \
+  binary_expressions.f90          \
+  case_1.f90                      \
+  common_1.f90                    \
+  common_2.f90                    \
+  dowhile.f90                     \
+  function_2.f90                  \
+  function_3.f90                  \
+  function_4.f90                  \
+  ifstmt1.f90                     \
+  ifstmt2.f90                     \
+  ifstmt3.f90                     \
+  ifstmt4.f90                     \
+  ifstmt5.f90                     \
+  implicit_none.f90               \
+  implicit_none_external.f90      \
+  implicit_none_external_type.f90 \
+  implicit_none_type.f90          \
+  negative_values.f90             \
+  print1.f90                      \
+  subroutine_1.f90                \
+  tiny.f90                        \
+  type_decls_1.f90                \
+  type_decls_2.f90                \
+  type_decls_3.f90                \
   type_def_1.f90
 
 

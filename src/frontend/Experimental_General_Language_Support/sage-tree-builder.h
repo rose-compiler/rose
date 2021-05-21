@@ -13,6 +13,7 @@ class SgCaseOptionStmt;
 class SgCastExp;
 class SgCommonBlock;
 class SgCommonBlockObject;
+class SgContainsStatement;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -31,6 +32,7 @@ class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
 class SgLocatedNode;
+class SgModuleStatement;
 class SgNamedType;
 class SgNamespaceDeclarationStatement;
 class SgPntrArrRefExp;
@@ -46,6 +48,7 @@ class SgSwitchStatement;
 class SgType;
 class SgTypedefDeclaration;
 class SgVariableDeclaration;
+class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
 
@@ -153,7 +156,7 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
-   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*);
+   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
    void Leave(SgIfStmt*);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
@@ -180,12 +183,17 @@ public:
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
    void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
-#ifdef CPP_ELEVEN
    void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
-#else
-   void Enter(SgImplicitStatement* &);
-#endif
    void Leave(SgImplicitStatement*);
+
+   void Enter(SgModuleStatement* &, const std::string &);
+   void Leave(SgModuleStatement*);
+
+   void Enter(SgUseStatement* &, const std::string &, const std::string &);
+   void Leave(SgUseStatement*);
+
+   void Enter(SgContainsStatement* &);
+   void Leave(SgContainsStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 
@@ -284,6 +292,11 @@ namespace SageBuilderCpp17 {
    SgType* buildStringType(SgExpression* stringLengthExpression);
    SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list);
 
+// SgBasicBlock
+   SgBasicBlock* buildBasicBlock_nfi();
+   void pushScopeStack(SgBasicBlock* stmt);
+   void popScopeStack();
+
 // Operators
    SgExpression*  buildAddOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildAndOp_nfi(SgExpression* lhs, SgExpression* rhs);
@@ -297,6 +310,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildMultiplyOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildNotEqualOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildOrOp_nfi(SgExpression* lhs, SgExpression* rhs);
+   SgExpression*  buildMinusOp_nfi(SgExpression* i, bool is_prefix = true);
 
 // Expressions
    SgExpression*  buildBoolValExp_nfi(bool value);
@@ -322,7 +336,9 @@ namespace SageBuilderCpp17 {
                                                         SgExprListExp* params=nullptr, SgScopeStatement* scope=nullptr);
 
 // Non builder helper functions
-   void  fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
+   void set_false_body(SgIfStmt* &if_stmt, SgBasicBlock* false_body);
+   void set_need_paren(SgExpression* &expr);
+   void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* scope, SgType* result_type);
 
 
 } // namespace SageBuilderCpp17
