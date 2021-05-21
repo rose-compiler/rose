@@ -665,7 +665,7 @@ check-roseonlytools: check-flow-insensitive
 ##############################################################
 
 libacuity_la_DEPENDENCIES=libcodethorn.la
-
+libacuity_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn 
 libacuity_la_LDFLAGS = -version-info 0:0:0
 
 # library sources
@@ -925,8 +925,8 @@ check-vis:
 
 .PHONY: check-acuity
 check-acuity: 
-	LD_PRELOAD=$(libdir)/libcodethorn.so $(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot -rose:plugin_arg_Acuity --dot_enc=simple_enc.dot -rose:plugin_arg_Acuity --txt_layout=simple_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/simple.cc 
-	LD_PRELOAD=$(libdir)/libcodethorn.so $(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot -rose:plugin_arg_Acuity --txt_layout=sage3_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/sage3.cc 
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot -rose:plugin_arg_Acuity --dot_enc=simple_enc.dot -rose:plugin_arg_Acuity --txt_layout=simple_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/simple.cc 
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot -rose:plugin_arg_Acuity --txt_layout=sage3_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/sage3.cc 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
