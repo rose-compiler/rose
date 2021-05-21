@@ -67,6 +67,8 @@ namespace CodeThorn {
     void setAnalyzer(CodeThorn::CTAnalysis* analyzer);
     CTAnalysis* getAnalyzer();
 
+    AbstractValue::Operator SgNodeToAbstractValueOperator(SgNode* node);
+    
     // obtained from analyzer
     CTIOLabeler* getLabeler() override;
     // obtained from analyzer

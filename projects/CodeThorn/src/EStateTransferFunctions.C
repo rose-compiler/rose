@@ -11,6 +11,7 @@
 #include "CodeThornLib.h"
 #include "PredefinedSemanticFunctions.h"
 #include "AstTerm.h"
+#include <map>
 
 using namespace std;
 using namespace CodeThorn;
@@ -20,6 +21,13 @@ Sawyer::Message::Facility CodeThorn::EStateTransferFunctions::logger;
 
 namespace CodeThorn {
 
+  AbstractValue::Operator EStateTransferFunctions::SgNodeToAbstractValueOperator(SgNode* node) {
+    VariantT variant=node->variantT();
+    std::map<VariantT,AbstractValue::Operator> mapping={};
+    return mapping[variant];
+
+  }
+  
   EStateTransferFunctions::EStateTransferFunctions () {
     initDiagnostics();
     initViolatingLocations();
