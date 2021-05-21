@@ -1312,13 +1312,13 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
         {
           curprint("IMPLICIT NONE");
 
-	  switch(implicitStatement->get_implicit_spec())
-	    {
+          switch(implicitStatement->get_implicit_spec())
+            {
               case SgImplicitStatement::e_none_external:          curprint(" (EXTERNAL)");       break;
               case SgImplicitStatement::e_none_type:              curprint(" (TYPE)");           break;
               case SgImplicitStatement::e_none_external_and_type: curprint(" (EXTERNAL, TYPE)"); break;
               default: break;
-	    }
+            }
         }
        else
         {
