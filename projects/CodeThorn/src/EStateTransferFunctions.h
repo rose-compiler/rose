@@ -74,14 +74,49 @@ namespace CodeThorn {
     // obtained from analyzer
     VariableIdMappingExtended* getVariableIdMapping() override;
 
+    enum TransferFunctionCode
+      {
+       Unknown, // for internal error detection only
+       FunctionCall,
+       FunctionCallLocalEdge,
+       FunctionCallExternal,
+       FunctionCallReturn,
+       FunctionEntry,
+       FunctionExit,
+       ReturnStmt,
+       FailedAssert,
+       AsmStmt,
+       ExprStmt,
+       GnuExtensionStmtExpr,
+       Identity,
+       VariableDeclaration,
+       CaseOptionStmt,
+       DefaultOptionStmt,
+       Assign,
+       IncDec,
+       ForkFunction,
+       ForkFunctionWithExternalTargetFunction,
+      };
+    
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
     EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);
-
+    std::string transerFunctionCodeToString(TransferFunctionCode tfCode);
+    
+    /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
+       ultimately this function can be used to operate on its own IR */
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+
+    // determines transfer function code based on ICFG and AST patterns
+    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, const EState* estate);
+    // calls transfer function based on TransferFunctionCode. No additional tests are performed.
+    std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
+    void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
+
+  protected:
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
@@ -89,24 +124,26 @@ namespace CodeThorn {
     std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
     std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
     std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
+    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
+    std::list<EState> transferIdentity(Edge edge, const EState* estate);
+    std::list<EState> transferFailedAssert(Edge edge, const EState* estate);
 
     std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
     std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
 
     std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    std::list<EState> transferIdentity(Edge edge, const EState* estate);
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
     std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-
+    
     // special case, called from transferFunctionCall
     std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
     std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
 
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
+  public:
     static std::list<EState> elistify();
     static std::list<EState> elistify(EState res);
     //! This function turn a single result into a one-elment list with
@@ -119,7 +156,7 @@ namespace CodeThorn {
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
-    MemoryUpdateList  evalAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+    MemoryUpdateList  evalAssignOpMemUpdates(SgAssignOp* assignOp, Edge edge, const EState* estate);
 
     // functions for handling callstring contexts
     CallString transferFunctionCallContext(CallString cs, Label lab);
@@ -454,7 +491,6 @@ namespace CodeThorn {
     enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
-
   };
 }
 

@@ -214,7 +214,7 @@ struct CodeThornOptions : public CodeThorn::Options {
     int astTraversalCSVMode=1;
     bool printTypeSizeMapping=false;
     std::string typeSizeMappingCSVFileName;
-
+    bool printTransferFunctionInfo=false;
   } info;
 
   bool getInterProceduralFlag();

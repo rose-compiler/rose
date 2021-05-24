@@ -12,6 +12,7 @@
 #include "PredefinedSemanticFunctions.h"
 #include "AstTerm.h"
 #include <map>
+#include <iomanip>
 
 using namespace std;
 using namespace CodeThorn;
@@ -1079,7 +1080,7 @@ namespace CodeThorn {
 
   std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
     SAWYER_MESG(logger[TRACE]) << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
-    auto pList=evalAssignOp(nextNodeToAnalyze2, edge, estate);
+    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate);
     std::list<EState> estateList;
     for (auto p : pList) {
       EState estate=p.first;
@@ -1099,6 +1100,11 @@ namespace CodeThorn {
     return estateList;
   }
 
+
+  list<EState> EStateTransferFunctions::transferFailedAssert(Edge edge, const EState* estate) {
+    return elistify(_analyzer->createFailedAssertEState(*estate,edge.target()));
+  }
+  
   list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
     EState currentEState=*estate;
     CallString cs=estate->callString;
@@ -1212,7 +1218,7 @@ namespace CodeThorn {
 	      //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
 	      Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
 	      //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
-	      CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOp(assignOp,dummyEdge,&currentEState);
+	      CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,dummyEdge,&currentEState);
 	      std::list<EState> estateList;
 	      ROSE_ASSERT(memUpdList.size()==1);
 	      auto memUpd=*memUpdList.begin();
@@ -1665,7 +1671,7 @@ namespace CodeThorn {
   }
 
   CodeThorn::EStateTransferFunctions::MemoryUpdateList
-  CodeThorn::EStateTransferFunctions::evalAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
+  CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
     MemoryUpdateList memoryUpdateList;
     CallString cs=estatePtr->callString;
     EState currentEState=*estatePtr;
@@ -1885,69 +1891,132 @@ namespace CodeThorn {
     return cs.getLength()==0||cs.isLastLabel(lab);
   }
 
+  std::string EStateTransferFunctions::transerFunctionCodeToString(TransferFunctionCode tfCode) {
+    static std::map<TransferFunctionCode,string> tfCodeInfo=
+      {
+       {Unknown,"unknown"},
+       {FunctionCall,"FunctionCall"},
+       {FunctionCallLocalEdge,"FunctionCallLocalEdge"},
+       {FunctionCallExternal,"FunctionCallExternal"},
+       {FunctionCallReturn,"FunctionCallReturn"},
+       {FunctionEntry,"FunctionEntry"},
+       {FunctionExit,"FunctionExit"},
+       {ReturnStmt,"ReturnStmt"},
+       {FailedAssert,"FailedAssert"},
+       {AsmStmt,"AsmStmt"},
+       {ExprStmt,"ExprStmt"},
+       {GnuExtensionStmtExpr,"GnuExtensionStmtExpr"},
+       {Identity,"Identity"},
+       {VariableDeclaration,"VariableDeclaration"},
+       {CaseOptionStmt,"CaseOptionStmt"},
+       {DefaultOptionStmt,"DefaultOptionStmt"},
+       {Assign,"Assign"},
+       {IncDec,"IncDec"},
+       {ForkFunction,"ForkFunction"},
+       {ForkFunctionWithExternalTargetFunction,"ForkFunctionWithExternalTargetFunction"},
+      };
+    ROSE_ASSERT(tfCode<tfCodeInfo.size());
+    return tfCodeInfo[tfCode];
+  }
+
+  void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
+    cout<<"transfer: L"<<estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": "<<node->unparseToString()<<endl;
+  }
+
+  list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      printTransferFunctionInfo(tfCode,node,edge,estate);
+    }
+    switch(tfCode) {
+    case FunctionCall: return transferFunctionCall(edge,estate);
+    case FunctionCallLocalEdge: return transferFunctionCallLocalEdge(edge,estate);
+    case FunctionCallExternal: return transferFunctionCallExternal(edge,estate);
+    case FunctionCallReturn: return transferFunctionCallReturn(edge,estate);
+    case FunctionEntry: return transferFunctionEntry(edge,estate);
+    case FunctionExit: return transferFunctionExit(edge,estate);
+    case ReturnStmt: return transferReturnStmt(edge,estate);
+    case AsmStmt: return transferAsmStmt(edge,estate);
+    case FailedAssert: return transferFailedAssert(edge,estate);
+    case ExprStmt: return transferExprStmt(node,edge,estate);
+    case GnuExtensionStmtExpr: return transferGnuExtensionStmtExpr(node,edge,estate);
+    case Identity: return transferIdentity(edge,estate);
+    case VariableDeclaration: return transferVariableDeclaration(isSgVariableDeclaration(node),edge,estate);
+    case CaseOptionStmt: return transferCaseOptionStmt(isSgCaseOptionStmt(node),edge,estate);
+    case DefaultOptionStmt: return transferDefaultOptionStmt(isSgDefaultOptionStmt(node),edge,estate);
+    case Assign: return transferAssignOp(isSgAssignOp(node),edge,estate);
+    case IncDec: return transferIncDecOp(node,edge,estate);
+    case ForkFunction: return transferForkFunction(edge,estate,isSgFunctionCallExp(node));
+    case ForkFunctionWithExternalTargetFunction: return transferForkFunctionWithExternalTargetFunction(edge,estate,isSgFunctionCallExp(node));
+    default:
+      return transferIdentity(edge,estate);
+    }
+    //unreachable
+  }
+
   list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, const EState* estate) {
+    pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
+    EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
+    SgNode* nextNodeToAnalyze=tfCodeNodePair.second;
+    return transferEdgeEStateDispatch(tfCode,nextNodeToAnalyze,edge,estate);
+  }
+
+  std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, const EState* estate) {
     ROSE_ASSERT(edge.source()==estate->label());
-    //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
     EState currentEState=*estate;
     PState currentPState=*currentEState.pstate();
     ConstraintSet cset=*currentEState.constraints();
-    // 1. we handle the edge as outgoing edge
+    // handle the edge as outgoing edge
     ROSE_ASSERT(_analyzer->getCFAnalyzer());
-    SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
-    ROSE_ASSERT(nextNodeToAnalyze1);
+    SgNode* nextNodeToAnalyze=_analyzer->getCFAnalyzer()->getNode(edge.source());
+    ROSE_ASSERT(nextNodeToAnalyze);
+    TransferFunctionCode tfCode=TransferFunctionCode::Unknown;
     if(edge.isType(EDGE_LOCAL)) {
-      return transferFunctionCallLocalEdge(edge,estate);
-      //return transferFunctionCallLocalEdge(edge,estate);
-    } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
+      tfCode=TransferFunctionCode::FunctionCallLocalEdge;
+    } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze)) {
       // handle assert(0)
-      return elistify(_analyzer->createFailedAssertEState(currentEState,edge.target()));
-    } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-      return transferFunctionCall(edge,estate);
-    } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+      tfCode=TransferFunctionCode::FailedAssert;
+    } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::FunctionCall;
+    } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
       // \todo the && condition excludes constructor calls
       if(ReadWriteListener* listener=getReadWriteListener()) {
 	listener->functionCallExternal(edge,estate);
       }
-      return transferFunctionCallExternal(edge,estate);
-    } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
+      tfCode=TransferFunctionCode::FunctionCallExternal;
+    } else if(isSgReturnStmt(nextNodeToAnalyze) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze)) {
       // "return x;": add $return=eval() [but not for "return f();"]
-      return transferReturnStmt(edge,estate);
-    } else if(isSgAsmStmt(nextNodeToAnalyze1)) {
-      return transferAsmStmt(edge,estate);
+      tfCode=TransferFunctionCode::ReturnStmt;
+    } else if(isSgAsmStmt(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::AsmStmt;
     } else if(getLabeler()->isFunctionEntryLabel(edge.source())) {
-      return transferFunctionEntry(edge,estate);
+      tfCode=TransferFunctionCode::FunctionEntry;
     } else if(getLabeler()->isFunctionExitLabel(edge.source())) {
-      return transferFunctionExit(edge,estate);
+      tfCode=TransferFunctionCode::FunctionExit;
     } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
-      return transferFunctionCallReturn(edge,estate);
-    } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(nextNodeToAnalyze1)) {
-      return transferCaseOptionStmt(caseStmt,edge,estate);
-    } else if(SgDefaultOptionStmt* caseStmt=isSgDefaultOptionStmt(nextNodeToAnalyze1)) {
-      return transferDefaultOptionStmt(caseStmt,edge,estate);
-    } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
-      return transferVariableDeclaration(decl,edge,estate);
-    } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
-      return transferExprStmt(nextNodeToAnalyze1, edge, estate);
-    } else if(isSgStatementExpression(nextNodeToAnalyze1)) {
+      tfCode=TransferFunctionCode::FunctionCallReturn;
+    } else if(isSgCaseOptionStmt(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::CaseOptionStmt;
+    } else if(isSgDefaultOptionStmt(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::DefaultOptionStmt;
+    } else if(isSgVariableDeclaration(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::VariableDeclaration;
+    } else if(isSgExprStatement(nextNodeToAnalyze) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze)) {
+      tfCode=TransferFunctionCode::ExprStmt;      
+    } else if(isSgStatementExpression(nextNodeToAnalyze)) {
       // GNU extension
-      return transferGnuExtensionStmtExpr(nextNodeToAnalyze1, edge, estate);
-    } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+      tfCode=TransferFunctionCode::GnuExtensionStmtExpr;      
+    } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
       // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
-      //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
+      //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze->unparseToString()<<endl;
       // this case cannot happen for normalized code
-      SAWYER_MESG(logger[ERROR])<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
+      SAWYER_MESG(logger[ERROR])<<"Function call detected not represented in ICFG. Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
       exit(1);
-      //bool useConstraints=false
-      //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
     } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
-      // nothing to analyze, just create new estate (from same State) with target label of edge
-      // can be same state if edge is a backedge to same cfg node
-      EState newEState=currentEState;
-      newEState.setLabel(edge.target());
-      return elistify(newEState);
+      tfCode=TransferFunctionCode::Identity;
     }
+    return std::make_pair(tfCode,nextNodeToAnalyze);
   }
 
   // ExprAnalyzer functions
@@ -2146,7 +2215,6 @@ namespace CodeThorn {
       exit(1);
     }
     // unreachable
-    ROSE_ASSERT(false);
   }
 
   bool EStateTransferFunctions::isLValueOp(SgNode* node) {
