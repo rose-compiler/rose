@@ -374,7 +374,58 @@ AbstractValue AbstractValue::operatorNot() {
   return tmp;
 }
 
-AbstractValue AbstractValue::operatorOr(AbstractValue other) {
+// the following wrapper functions can be eliminated if all called functions are rewritten for 2 parameters
+AbstractValue AbstractValue::operatorOr(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorOr(v2);
+}
+AbstractValue AbstractValue::operatorAnd(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorAnd(v2);
+}
+AbstractValue AbstractValue::operatorEq(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorEq(v2);
+}
+AbstractValue AbstractValue::operatorNotEq(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorNotEq(v2);
+}
+AbstractValue AbstractValue::operatorLess(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorLess(v2);
+}
+AbstractValue AbstractValue::operatorLessOrEq(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorLessOrEq(v2);
+}
+AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorMoreOrEq(v2);
+}
+AbstractValue AbstractValue::operatorMore(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorMore(v2);
+}
+AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorBitwiseAnd(v2);
+}
+AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorBitwiseOr(v2);
+}
+AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorBitwiseXor(v2);
+}
+AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorBitwiseShiftLeft(v2);
+}
+AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue& v1, AbstractValue& v2) {
+  return v1.operatorBitwiseShiftRight(v2);
+}
+
+AbstractValue AbstractValue::operatorBitwiseComplement(AbstractValue& v1) {
+  return v1.operatorBitwiseComplement();
+}
+AbstractValue AbstractValue::operatorNot(AbstractValue& v1) {
+  return v1.operatorNot();
+}
+AbstractValue AbstractValue::operatorUnaryMinus(AbstractValue& v1) {
+  return v1.operatorUnaryMinus();
+}
+
+AbstractValue AbstractValue::operatorOr(AbstractValue other) const {
   AbstractValue tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -402,7 +453,7 @@ AbstractValue AbstractValue::operatorOr(AbstractValue other) {
   throw CodeThorn::Exception("Error: AbstractValue operation|| failed.");
 }
 
-AbstractValue AbstractValue::operatorAnd(AbstractValue other) {
+AbstractValue AbstractValue::operatorAnd(AbstractValue other) const {
   AbstractValue tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -1315,6 +1366,39 @@ void AbstractValue::deallocateExtension() {
   if(avs)
     delete avs;
 }
+
+AbstractValue AbstractValue::applyOperator(AbstractValue::Operator op, AbstractValue& v1, AbstractValue& v2) {
+  switch(op) {
+  case AbstractValue::Operator::Add: return operatorAdd(v1,v2);
+  case AbstractValue::Operator::Sub: return operatorSub(v1,v2);
+  case AbstractValue::Operator::Mul: return operatorMul(v1,v2);
+  case AbstractValue::Operator::Div: return operatorDiv(v1,v2);
+  case AbstractValue::Operator::Mod: return operatorMod(v1,v2);
+  case AbstractValue::Operator::Or: return operatorOr(v1,v2);
+  case AbstractValue::Operator::And: return operatorAnd(v1,v2);
+  case AbstractValue::Operator::Eq: return operatorEq(v1,v2);
+  case AbstractValue::Operator::NotEq: return operatorNotEq(v1,v2);
+  case AbstractValue::Operator::Less: return operatorLess(v1,v2);
+  case AbstractValue::Operator::LessOrEq: return operatorLessOrEq(v1,v2);
+  case AbstractValue::Operator::MoreOrEq: return operatorMoreOrEq(v1,v2);
+  case AbstractValue::Operator::More: return operatorMore(v1,v2);
+  case AbstractValue::Operator::BitwiseAnd: return operatorBitwiseAnd(v1,v2);
+  case AbstractValue::Operator::BitwiseOr: return operatorBitwiseOr(v1,v2);
+  case AbstractValue::Operator::BitwiseXor: return operatorBitwiseXor(v1,v2);
+  case AbstractValue::Operator::BitwiseShiftLeft: return operatorBitwiseShiftLeft(v1,v2);
+  case AbstractValue::Operator::BitwiseShiftRight: return operatorBitwiseShiftRight(v1,v2);
+
+    // operators with wrong arity explicitely listed
+  case AbstractValue::Operator::BitwiseComplement:
+  case AbstractValue::Operator::UnaryMinus:
+  case AbstractValue::Operator::Not:
+    throw CodeThorn::Exception("Error: AbstractValue::operator arity error.");
+
+    // intentionally no 'default'
+  };
+  ROSE_ASSERT(false); // unreachable
+}
+
 
 bool AbstractValueSet::isEqual(AbstractValueSet& other) const {
   if(this->size()==other.size()) {

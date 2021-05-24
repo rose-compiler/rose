@@ -104,10 +104,40 @@ class AbstractValue {
   // deprecated
   size_t getPtrSetSize() const;
   size_t getAVSetSize() const;
+  enum Operator { UnaryMinus, Not, BitwiseComplement, Add, Sub, Mul, Div, Mod, Or, And, Eq, NotEq, Less, LessOrEq, More, MoreOrEq, BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseShiftLeft, BitwiseShiftRight};
+
+  static AbstractValue applyOperator(AbstractValue::Operator op, AbstractValue& v1, AbstractValue& v2);
+
+  static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorSub(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorMul(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorMod(AbstractValue& a,AbstractValue& b);
+
+  static AbstractValue operatorOr(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorAnd(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorEq(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorNotEq(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorLess(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorLessOrEq(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorMoreOrEq(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorMore(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorBitwiseAnd(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorBitwiseOr(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorBitwiseXor(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorBitwiseShiftLeft(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorBitwiseShiftRight(AbstractValue& a,AbstractValue& b);
+
+  static AbstractValue operatorNot(AbstractValue& a);
+  static AbstractValue operatorUnaryMinus(AbstractValue& a);
+  static AbstractValue operatorBitwiseComplement(AbstractValue& a);
+
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
-  AbstractValue operatorOr(AbstractValue other);
-  AbstractValue operatorAnd(AbstractValue other);
+  AbstractValue operatorBitwiseComplement() const;
+
+  AbstractValue operatorOr(AbstractValue other) const;
+  AbstractValue operatorAnd(AbstractValue other) const;
   AbstractValue operatorEq(AbstractValue other) const;
   AbstractValue operatorNotEq(AbstractValue other) const;
   AbstractValue operatorLess(AbstractValue other) const;
@@ -118,16 +148,9 @@ class AbstractValue {
   AbstractValue operatorBitwiseAnd(AbstractValue other) const;
   AbstractValue operatorBitwiseOr(AbstractValue other) const;
   AbstractValue operatorBitwiseXor(AbstractValue other) const;
-  AbstractValue operatorBitwiseComplement() const;
 
   AbstractValue operatorBitwiseShiftLeft(AbstractValue other) const;
   AbstractValue operatorBitwiseShiftRight(AbstractValue other) const;
-
-  static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b);
-  static AbstractValue operatorSub(AbstractValue& a,AbstractValue& b);
-  static AbstractValue operatorMul(AbstractValue& a,AbstractValue& b);
-  static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
-  static AbstractValue operatorMod(AbstractValue& a,AbstractValue& b);
 
   static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);

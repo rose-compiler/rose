@@ -67,6 +67,8 @@ namespace CodeThorn {
     void setAnalyzer(CodeThorn::CTAnalysis* analyzer);
     CTAnalysis* getAnalyzer();
 
+    AbstractValue::Operator sgNodeToAbstractValueOperator(SgNode* node);
+    
     // obtained from analyzer
     CTIOLabeler* getLabeler() override;
     // obtained from analyzer
@@ -262,6 +264,11 @@ namespace CodeThorn {
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     ReadWriteListener* _readWriteListener=nullptr;
     
+    // general evaluation function for abstract value operators
+    std::list<SingleEvalResultConstInt> evalOp(SgNode* node,
+					       SingleEvalResultConstInt lhsResult,
+					       SingleEvalResultConstInt rhsResult,
+					       EState estate, EvalMode mode);
     // evaluation functions
     std::list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
     std::list<SingleEvalResultConstInt> evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
