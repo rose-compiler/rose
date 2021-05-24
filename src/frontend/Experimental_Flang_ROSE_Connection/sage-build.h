@@ -8,6 +8,7 @@
 #include "flang/Semantics/scope.h"
 #include <iostream>
 #include <typeinfo>
+#include <boost/optional.hpp>
 
 #include "../Experimental_General_Language_Support/general_language_translation.h"
 
@@ -21,6 +22,7 @@ class SgExprListExp;
 class SgFunctionParameterList;
 class SgScopeStatement;
 class SgStatement;
+class SgIfStmt;
 class SgType;
 
 #define PRINT_FLANG_TRAVERSAL 0
@@ -39,6 +41,10 @@ template<typename T> void Build(const Fortran::parser::    FunctionSubprogram &x
 template<typename T> void Build(const Fortran::parser::  SubroutineSubprogram &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             Submodule &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             BlockData &x, T* scope);
+
+void Build(const           Fortran::parser::ModuleSubprogramPart &x);
+void Build(const std::list<Fortran::parser::ModuleSubprogram>    &x);
+void Build(const           Fortran::parser::ModuleSubprogram     &x);
 
 template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
 void BuildFunctionReturnType   (const Fortran::parser::     SpecificationPart &x, std::string &, SgType* &);
@@ -85,13 +91,18 @@ void Build(const Fortran::parser::      CharLiteralConstant &x, SgExpression* &e
 void Build(const Fortran::parser::   LogicalLiteralConstant &x, SgExpression* &expr);
 
 void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
+void Build(const std::list<Fortran::parser::Statement<Fortran::common::Indirection<Fortran::parser::UseStmt>>> &x);
+void Build(const Fortran::parser::UseStmt &x);
 
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::      ImplicitPartStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitStmt &x, T* scope);
-template<typename T> void Build(const Fortran::parser::          ImplicitSpec &x, T* scope);
-template<typename T> void Build(const Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec &x, T* scope);
+void Build(const std::list<Fortran::parser::ImplicitSpec> &x, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list);
+void Build(const Fortran::parser::ImplicitSpec &x, SgType* &type, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
+void Build(const std::list<Fortran::parser::LetterSpec> &x, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
+void Build(const Fortran::parser::LetterSpec &x, std::tuple<char, boost::optional<char>> &letter_spec);
+void Build(const std::list<Fortran::parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type);
 template<typename T> void Build(const Fortran::parser::  DeclarationConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::SpecificationConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   TypeDeclarationStmt &x, T* scope);
@@ -291,9 +302,9 @@ void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
 void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
 
 // IfConstruct
-template<typename T> void Build(const Fortran::parser::              IfThenStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, T* scope);
-template<typename T> void Build(const Fortran::parser::IfConstruct::ElseIfBlock&x, T* scope);
+void Build(const Fortran::parser::              IfThenStmt&x, SgExpression* &expr);
+void Build(const Fortran::parser::IfConstruct::  ElseBlock&x, SgBasicBlock* &false_body);
+void Build(const std::list<Fortran::parser::IfConstruct::ElseIfBlock> &x, SgBasicBlock* &else_if_block, SgIfStmt* &else_if_stmt);
 
 // SpecificationConstruct
 template<typename T> void Build(const Fortran::parser::             DerivedTypeDef&x, T* scope);

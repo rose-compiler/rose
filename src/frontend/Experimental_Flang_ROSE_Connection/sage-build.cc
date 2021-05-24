@@ -209,18 +209,17 @@ void Build(const parser::Module &x, T* scope)
    std::string module_stmt_name;
    Build(std::get<0>(x.t).statement.v, module_stmt_name);
 
-   //   SgModuleStatement* module_stmt = nullptr;
-   //   builder.Enter(module_stmt, module_stmt_name);
+   SgModuleStatement* module_stmt = nullptr;
+   builder.Enter(module_stmt, module_stmt_name);
 
    // SpecificationPart
-   SgScopeStatement* function_scope{nullptr};
-   Build(std::get<parser::SpecificationPart>(x.t), function_scope);
+   SgScopeStatement* module_scope{nullptr};
+   Build(std::get<parser::SpecificationPart>(x.t), module_scope);
 
    // std::optional<ModuleSubprogramPart>
-#if 0
    if (auto & opt = std::get<2>(x.t)) {
+     Build(opt.value());
    }
-#endif
 
    // EndModuleStmt - std::optional<Name> v;
    if (auto & opt = std::get<3>(x.t).statement.v) {
@@ -228,7 +227,50 @@ void Build(const parser::Module &x, T* scope)
       Build(opt.value(), end_module_stmt_name);
    }
 
-   //   builder.Leave(module_stmt);
+   builder.Leave(module_stmt);
+}
+
+void Build(const parser::ModuleSubprogramPart &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ModuleSubprogramPart)\n";
+#endif
+
+   // build ContainsStmt
+   SgContainsStatement* contains_stmt{nullptr};
+   builder.Enter(contains_stmt);
+   builder.Leave(contains_stmt);
+
+   // Traverse the list of ModuleSubprograms
+   Build(std::get<std::list<parser::ModuleSubprogram>>(x.t));
+}
+
+void Build(const std::list<parser::ModuleSubprogram> &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ModuleSubprogram>)\n";
+#endif
+
+   for (auto & subprogram : x) {
+     Build(subprogram);
+   }
+}
+
+void Build(const parser::ModuleSubprogram &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ModuleSubprogram)\n";
+#endif
+
+   SgScopeStatement* scope{nullptr};
+
+   std::visit(
+      common::visitors{
+         [&] (const common::Indirection<parser::SeparateModuleSubprogram> &y) { ; },
+         // common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>
+         [&] (const auto &y) { Build(y.value(), scope); },
+      },
+      x.u);
 }
 
 template<typename T>
@@ -370,12 +412,9 @@ void Build(const parser::SpecificationPart &x, T* scope)
    std::cout << "Rose::builder::Build(SpecificationPart)\n";
 #endif
 
-   const auto & implicit_part = std::get<parser::ImplicitPart>(x.t);
-   Build(implicit_part, scope);
-
-   const auto & decl_construct = std::get<std::list<parser::DeclarationConstruct>>(x.t);
-   Build(decl_construct, scope);
-
+   Build(std::get<std::list<parser::Statement<common::Indirection<parser::UseStmt>>>>(x.t)); // traverse list of UseStmts
+   Build(std::get<parser::ImplicitPart>(x.t), scope);                                        // traverse ImplicitPart
+   Build(std::get<std::list<parser::DeclarationConstruct>>(x.t), scope);                     // traverse list of DeclarationConstructs
 }
 
 void BuildFunctionReturnType(const parser::SpecificationPart &x, std::string &result_name, SgType* &return_type)
@@ -917,6 +956,39 @@ void Build(const parser::ComplexPart &x, SgExpression* &expr)
    std::visit(ComplexPartVisitor, x.u);
 }
 
+void Build(const std::list<parser::Statement<common::Indirection<parser::UseStmt>>> &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<UseStmt>)\n";
+#endif
+
+   for (auto &use_stmt: x) {
+      Build(use_stmt.statement.value());
+   }
+}
+
+void Build(const parser::UseStmt &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(UseStmt)\n";
+#endif
+
+   std::string module_nature= "";
+   if (auto & opt = x.nature) {
+      module_nature = parser::UseStmt::EnumToString(opt.value());
+   }
+
+   std::string module_name;
+   Build(x.moduleName, module_name);
+
+   // TODO
+   // std::variant<std::list<Rename>, std::list<Only>> u;
+
+   SgUseStatement* use_stmt{nullptr};
+   builder.Enter(use_stmt, module_name, module_nature);
+   builder.Leave(use_stmt);
+}
+
 template<typename T>
 void Build(const parser::InternalSubprogramPart &x, T* scope)
 {
@@ -958,25 +1030,122 @@ void Build(const parser::ImplicitStmt &x, T* scope)
    std::cout << "Rose::builder::Build(ImplicitStmt)\n";
 #endif
 
-   // std::list<ImplicitSpec>, std::list<ImplicitNoneNameSpec>
-   auto SpecVisitor = [&](const auto& y) { Build(y, scope); };
-   std::visit(SpecVisitor, x.u);
+   SgImplicitStatement* implicit_stmt = nullptr;
+
+   std::visit(
+      common::visitors{
+         [&](const std::list<parser::ImplicitSpec> &y)
+            {
+              std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> implicit_spec_list;
+
+              // Traverse ImplicitSpecList
+              Build(y, implicit_spec_list);
+
+              // Begin SageTreeBuilder
+              builder.Enter(implicit_stmt, implicit_spec_list);
+
+              // Leave SageTreeBuilder
+              builder.Leave(implicit_stmt);
+            },
+         [&](const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &y)
+            {
+              bool is_external = false, is_type = false;
+              Build(y, is_external, is_type);
+
+              // Begin SageTreeBuilder for SgImplicitStatement with implicit-none
+              builder.Enter(implicit_stmt, is_external, is_type);
+
+              // Leave SageTreeBuilder
+              builder.Leave(implicit_stmt);
+            },
+      },
+      x.u);
 }
 
-template<typename T>
-void Build(const parser::ImplicitSpec &x, T* scope)
+void Build(const std::list<parser::ImplicitSpec> &x, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ImplicitSpec>)\n";
+#endif
+
+   for (const auto &elem : x) {
+      std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>> implicit_spec;
+      SgType* type;
+      std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
+
+      // Get type and list of LetterSpec
+      Build(elem, type, letter_spec_list);
+
+      // Make tuple from type and list of LetterSpec, add tuple to ImplicitSpecList
+      implicit_spec = std::make_tuple(type, letter_spec_list);
+      implicit_spec_list.push_back(implicit_spec);
+   }
+}
+
+void Build(const parser::ImplicitSpec &x, SgType* &type, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImplicitSpec)\n";
 #endif
+   // std::tuple<DeclarationTypeSpec, std::list<LetterSpec>> t;
+
+   Build(std::get<0>(x.t), type);             // DeclarationTypeSpec
+   Build(std::get<1>(x.t), letter_spec_list); // LetterSpecList
 }
 
-template<typename T>
-void Build(const parser::ImplicitStmt::ImplicitNoneNameSpec &x, T* scope)
+void Build(const std::list<parser::LetterSpec> &x, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ImplicitNoneNameSpec)\n";
+   std::cout << "Rose::builder::Build(std::list<LetterSpec>)\n";
 #endif
+
+   for (const auto &elem : x) {
+      std::tuple<char, boost::optional<char>> letter_spec;
+
+      // Get LetterSpec tuple
+      Build(elem, letter_spec);
+
+      // Add LetterSpec tuple to list of LetterSpec
+      letter_spec_list.push_back(letter_spec);
+   }
+}
+
+void Build(const parser::LetterSpec &x, std::tuple<char, boost::optional<char>> &letter_spec)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(LetterSpec)\n";
+#endif
+   // std::tuple<Location, std::optional<Location>> t;
+   // using Location = const char *;
+
+   char first;
+   boost::optional<char> second;
+
+   first = std::get<0>(x.t)[0];
+
+   if (auto & opt = std::get<1>(x.t)) {
+      second = opt.value()[0];
+   } else {
+      second = boost::none;
+   }
+
+   letter_spec = std::make_tuple(first, second);
+}
+
+void Build(const std::list<parser::ImplicitStmt::ImplicitNoneNameSpec> &x, bool &is_external, bool &is_type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(std::list<ImplicitNoneNameSpec>)\n";
+#endif
+
+   for (auto y: x) {
+      if (parser::ImplicitStmt::EnumToString(y) == "External") {
+         is_external = true;
+      }
+      if (parser::ImplicitStmt::EnumToString(y) == "Type") {
+         is_type = true;
+      }
+   }
 }
 
 template<typename T>
@@ -1740,12 +1909,29 @@ void Build(const parser::IfStmt&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfStmt)\n";
 #endif
+   //  std::tuple<ScalarLogicalExpr, UnlabeledStatement<ActionStmt>> t;
 
-   SgExpression* expr = nullptr;
+   SgIfStmt*         if_stmt{nullptr};
+   SgExpression* conditional{nullptr};
 
-   Build(std::get<0>(x.t), expr);            // ScalarLogicalExpr
-   Build(std::get<1>(x.t).statement, scope); // UnlabeledStatement<ActionStmt>
+   // Traverse conditional expr
+   Build(std::get<0>(x.t), conditional);
 
+   // Build true body and push scope
+   SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
+   SageBuilderCpp17::pushScopeStack(true_body);
+
+   // Traverse true body statement
+   Build(std::get<1>(x.t).statement, scope);
+
+   // Pop true body scope
+   SageBuilderCpp17::popScopeStack();
+
+   // Enter SageTreeBuilder
+   builder.Enter(if_stmt, conditional, true_body, nullptr /* false_body */);
+
+   // Leave SageTreeBuilder
+   builder.Leave(if_stmt);
 }
 
 template<typename T>
@@ -2180,6 +2366,9 @@ void Build(const parser::Expr::Parentheses&x, T* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Parentheses)\n";
 #endif
+
+   Build(x.v.value(), expr); // common::Indirection<Expr>
+   SageBuilderCpp17::set_need_paren(expr);
 }
 
 template<typename T>
@@ -2196,6 +2385,10 @@ void Build(const parser::Expr::Negate&x, T* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(Negate)\n";
 #endif
+
+   SgExpression* val;
+   Build(x.v.value(), val); // common::Indirection<Expr>
+   expr = SageBuilderCpp17::buildMinusOp_nfi(val);
 }
 
 template<typename T>
@@ -2733,32 +2926,126 @@ void Build(const parser::IfConstruct&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfConstruct)\n";
 #endif
-   //   std::tuple<Statement<IfThenStmt>, Block, std::list<ElseIfBlock>,
-   //      std::optional<ElseBlock>, Statement<EndIfStmt>>
+
+   // Traverse IfThenStmt
+   SgExpression* ifthen_expr{nullptr};
+   Build(std::get<0>(x.t).statement, ifthen_expr);
+
+   // True body
+   SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
+   SageBuilderCpp17::pushScopeStack(true_body); // Push true body scope
+   Build(std::get<1>(x.t), scope);              // Traverse Block
+   SageBuilderCpp17::popScopeStack();           // Pop  true body scope
+
+   // Else ifs
+   SgIfStmt* else_if_stmts{nullptr};
+   SgBasicBlock* else_if_block{nullptr};
+   // If there is a list of else if clauses, after the following call, else_if_block will be the block with an SgIfStmt
+   // that represents the first else clause, this SgBasicBlock will be used as the false body for the main SgIfStmt
+   // and else_if_stmts will be an SgIfStmt that represents the last else if clause. If there is an else clause,
+   // this SgIfStmt will get its false_body set to be the else clause
+   Build(std::get<2>(x.t), else_if_block, else_if_stmts);   // Traverse list of else if clauses
+
+   // Optional Else
+   SgBasicBlock* false_body{nullptr};
+   if (auto & else_block = std::get<3>(x.t)) {
+      Build(else_block.value(), false_body); // Traverse optional ElseBlock
+
+      if (else_if_stmts) {
+         // add false_body to the else if stmt
+         SageBuilderCpp17::set_false_body(else_if_stmts, false_body);
+      }
+   }
+
+   // EndIfStmt - std::optional<Name> v;
+   bool have_end_stmt_name = false;
+   if (auto & opt = std::get<parser::Statement<parser::EndIfStmt>>(x.t).statement.v) {
+      have_end_stmt_name = true;
+   }
+
+   if (else_if_stmts) {
+      // block with first else_if_stmt becomes false body for main SgIfStmt
+      false_body = else_if_block;
+   }
+
+   // Enter SageTreeBuilder
+   SgIfStmt* if_stmt{nullptr};
+   builder.Enter(if_stmt, ifthen_expr, true_body, false_body, true /* is_ifthen */, true /* has_end_stmt */);
+
+   // Leave SageTreeBuilder
+   builder.Leave(if_stmt);
 }
 
-template<typename T>
-void Build(const parser::IfThenStmt&x, T* scope)
+void Build(const parser::IfThenStmt&x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfThenStmt)\n";
 #endif
+   // std::tuple<std::optional<Name>, ScalarLogicalExpr> t;
+
+   Build(std::get<1>(x.t), expr); // ScalarLogicalExpr
 }
 
-template<typename T>
-void Build(const parser::IfConstruct::ElseBlock&x, T* scope)
+void Build(const parser::IfConstruct::ElseBlock&x, SgBasicBlock* &false_body)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ElseBlock)\n";
 #endif
+   // std::tuple<Statement<ElseStmt>, Block> t;
+
+   // Build false body and push scope
+   false_body = SageBuilderCpp17::buildBasicBlock_nfi();
+   SageBuilderCpp17::pushScopeStack(false_body);
+
+   // Traverse Block
+   SgScopeStatement* scope{nullptr};
+   Build(std::get<1>(x.t), scope);
+
+   // Pop false body scope
+   SageBuilderCpp17::popScopeStack();
 }
 
-template<typename T>
-void Build(const parser::IfConstruct::ElseIfBlock&x, T* scope)
+void Build(const std::list<parser::IfConstruct::ElseIfBlock> &x, SgBasicBlock* &else_if_block, SgIfStmt* &else_if_stmt)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ElseIfBlock)\n";
+   std::cout << "Rose::builder::Build(std::list<ElseIfBlock>)\n";
 #endif
+
+   bool first_pass = true;
+
+   for (auto & else_if_clause : x) {
+      SgBasicBlock* new_block = SageBuilderCpp17::buildBasicBlock_nfi();
+      SageBuilderCpp17::pushScopeStack(new_block); // Push else if block
+
+      SgExpression* conditional{nullptr};
+      Build(std::get<0>(std::get<0>(else_if_clause.t).statement.t), conditional);
+
+      // Build true body and push scope
+      SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
+      SageBuilderCpp17::pushScopeStack(true_body);
+      // Traverse true body statement
+      SgScopeStatement* scope{nullptr};
+      Build(std::get<1>(else_if_clause.t), scope);
+      // Pop true body scope
+      SageBuilderCpp17::popScopeStack();
+
+      // Enter SageTreeBuilder
+      SgIfStmt* new_if_stmt{nullptr};
+      builder.Enter(new_if_stmt, conditional, true_body, nullptr /* false_body */, true /* is_ifthen */, false /* has_end_stmt */, true /* is_else_if */);
+      // Leave SageTreeBuilder
+      builder.Leave(new_if_stmt);
+
+      SageBuilderCpp17::popScopeStack();               // Pop else if block
+
+      if (first_pass) {
+         else_if_stmt = new_if_stmt;
+         else_if_block = new_block;
+         first_pass = false;
+      } else {
+         SageBuilderCpp17::set_false_body(else_if_stmt, new_block);
+         else_if_stmt = new_if_stmt;
+      }
+   }
 }
 
 template<typename T>

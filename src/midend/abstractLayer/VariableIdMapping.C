@@ -158,7 +158,7 @@ void VariableIdMapping::toStream(ostream& os) {
     VariableId varId=variableIdFromCode(i);
     os<<i
       <<","<<varId.toString(this)
-      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
+      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
       <<","<<getVariableIdInfo(varId).variableScopeToString()
       <<","<<getVariableIdInfo(varId).aggregateTypeToString()
@@ -232,7 +232,7 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
           <<endl;
   }
   // edges: stmt/expr->sym
-  
+
   RoseAst ast(astRoot);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(*i)) {
@@ -248,7 +248,7 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
       SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initname);
       if(sym)
         generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
-#else          
+#else
       if(initname->get_name()=="") {
         cerr<<"WARNING: SgInitializedName::get_name()==\"\" .. skipping."<<endl;
       } else {
@@ -368,8 +368,8 @@ void VariableIdMapping::setVolatileFlag(VariableId variableId, bool flag) {
 }
 
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
-  if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
-    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) { 
+  if(SgDeclarationStatement* declStmt=initName->get_declaration ()) {
+    if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) {
       // check if the expression for the size of the bitfield exists
       if(varDecl->get_bitfield()) {
         // the variable declaration is a bitfield. Check whether it has a name
@@ -420,7 +420,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project, int max
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
           // Register new symbol as normal variable symbol:
-          // ensure it's a "valid" symbol 
+          // ensure it's a "valid" symbol
           if(sym->get_symbol_basis()!=0) {
             registerNewSymbol(sym);
             // Remember that this symbol was already registered:
@@ -512,7 +512,7 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   if(!arrSize) {
     arrayDimensions.clear();
     arrSize = getArrayDimensionsFromInitializer(
-                                                isSgAggregateInitializer(SageInterface::convertRefToInitializedName(arrVar)->get_initializer()), 
+                                                isSgAggregateInitializer(SageInterface::convertRefToInitializedName(arrVar)->get_initializer()),
                                                 &arrayDimensions);
   }
   if(!arrSize)
@@ -556,7 +556,7 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
 }
 
 // deprecated (use createAndRegisterVariableId instead)
-VariableId  
+VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
       i!=temporaryVariableIdMapping.end();
@@ -641,7 +641,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
         mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
       }
     }
-    
+
     VariableId newVarId=variableId(sym);
     setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
@@ -752,7 +752,7 @@ VariableIdMapping::VariableIdInfo* VariableIdMapping::getVariableIdInfoPtr(Varia
 void VariableIdMapping::setVariableIdInfo(VariableId vid, VariableIdInfo vif) {
   mappingVarIdToInfo[vid]=vif;
 }
-  
+
 std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
   switch(aggregateType) {
   case AT_UNKNOWN:
@@ -866,7 +866,8 @@ bool VariableIdMapping::isStringLiteralAddress(VariableId stringVarId) {
 }
 
 bool VariableIdMapping::isFunctionParameter(VariableId varId) {
-  return getVariableIdInfoPtr(varId)->variableScope==VS_MEMBER;
+  //~ return getVariableIdInfoPtr(varId)->variableScope==VS_MEMBER;
+  return getVariableIdInfoPtr(varId)->variableScope==VS_FUNPARAM;
 }
 
 bool VariableIdMapping::isFunctionParameter(SgSymbol* sym) {
