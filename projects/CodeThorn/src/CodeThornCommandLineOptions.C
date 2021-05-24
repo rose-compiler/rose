@@ -10,7 +10,7 @@
 // required for checking of: HAVE_SPOT, HAVE_Z3
 #include "rose_config.h"
 
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;

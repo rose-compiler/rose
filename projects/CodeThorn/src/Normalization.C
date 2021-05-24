@@ -13,7 +13,7 @@
 #include "AstFixup.h"
 #include "astPostProcessing.h"
 
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 #include "sageGeneric.h"
 
 // required for rewriteCompoundAssignmentStatementsInAst

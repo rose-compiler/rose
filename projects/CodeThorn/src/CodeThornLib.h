@@ -1,7 +1,7 @@
 #ifndef CODETHORN_LIB_H
 #define CODETHORN_LIB_H
 
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 #include "Normalization.h"
 #include "IOAnalyzer.h"
 #include "TimingCollector.h"

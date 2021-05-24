@@ -5,7 +5,7 @@
 #include "Normalization.h"
 #include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CodeThornCommandLineOptions.h"
@@ -72,7 +72,6 @@ using namespace std;
 using namespace CodeThorn;
 using namespace boost;
 
-#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 #include <execinfo.h>

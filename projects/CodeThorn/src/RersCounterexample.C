@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "RersCounterexample.h"
 #include "EState.h"
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 
 using namespace CodeThorn;
 using namespace std;

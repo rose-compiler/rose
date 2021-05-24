@@ -60,7 +60,7 @@ using namespace std;
 using namespace CodeThorn;
 using namespace boost;
 
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;
 
 // required for createSolver function

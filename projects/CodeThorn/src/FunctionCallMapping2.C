@@ -1,5 +1,5 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 #include "sageGeneric.h"
 
 #include "FunctionIdMapping.h"

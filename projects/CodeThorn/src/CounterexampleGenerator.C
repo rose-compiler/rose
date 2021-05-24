@@ -3,7 +3,7 @@
 #include "RersCounterexample.h"
 #include "SvcompWitness.h"
 #include "CTAnalysis.h"
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 
 #include <unordered_map>
 #include <unordered_set>
