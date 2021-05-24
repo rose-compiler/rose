@@ -1920,7 +1920,17 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
-    cout<<"transfer: L"<<estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": "<<node->unparseToString()<<endl;
+    cout<<"transfer: L"<<estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
+    if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
+      cout<<SgNodeHelper::getFunctionName(node);
+    } else {
+      cout<<node->unparseToString();
+    }
+    cout<<endl;
+  }
+
+  void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
+    cout<<"          "<<"      evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]"<<endl;
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
@@ -2312,7 +2322,9 @@ namespace CodeThorn {
   
   list<SingleEvalResultConstInt> EStateTransferFunctions::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
     ROSE_ASSERT(estate.pstate()); // ensure state exists
-    SAWYER_MESG(logger[TRACE])<<"evaluateExpression:"<<"eval mode:"<<mode<<" at: "<<node->class_name()<<": "<<node->unparseToString()<<endl;
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      printEvaluateExpressionInfo(node,estate,mode);
+    }
     
   
     // initialize with default values from argument(s)

@@ -97,7 +97,9 @@ namespace CodeThorn {
        ForkFunction,
        ForkFunctionWithExternalTargetFunction,
       };
-    
+
+    enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
+
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
     EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
     EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
@@ -115,6 +117,7 @@ namespace CodeThorn {
     // calls transfer function based on TransferFunctionCode. No additional tests are performed.
     std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
     void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
+    void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
 
   protected:
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
@@ -191,8 +194,8 @@ namespace CodeThorn {
     std::map<std::string,VariableId> globalVarName2VarIdMapping;
 
     // integrated ExprAnalyzer
-      public:
-    enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
+  public:
+
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
     std::list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate);
