@@ -106,14 +106,15 @@ namespace CodeThorn {
     EState combine(const EState* es1, const EState* es2);
     std::string transerFunctionCodeToString(TransferFunctionCode tfCode);
     
-    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
-    // deprecated
-    std::list<EState> transferEdgeEStateOld(Edge edge, const EState* estate); 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */
-    std::list<EState> transferEdgeEStateNew(Edge edge, const EState* estate);
+    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+
+    // determines transfer function code based on ICFG and AST patterns
+    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, const EState* estate);
     // calls transfer function based on TransferFunctionCode. No additional tests are performed.
     std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
+    void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
 
   protected:
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
@@ -489,8 +490,6 @@ namespace CodeThorn {
     enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
-    bool _verbose=false; // prints transfer functions
-
   };
 }
 
