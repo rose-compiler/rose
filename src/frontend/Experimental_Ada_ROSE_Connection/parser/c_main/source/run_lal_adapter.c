@@ -14,7 +14,7 @@ int main (int argc, char *argv[])
   char *output_dir_name  = argv[3];
   bool process_predefined_units = false;
   bool process_implementation_units = false;
-  bool debug = false;
+  bool debug = true;
   Nodes_Struct nodes;
 
   printf ("%s:  BEGIN.\n", prefix);
