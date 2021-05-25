@@ -466,14 +466,15 @@ then
           # echo "Passed test for GNU version 10.x: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 
           # ls $system_headers_directory/../hdrs5
+            [ ! -e $system_headers_directory/../hdrs5 ] && mkdir -p $system_headers_directory/../hdrs5
             [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for compare to $system_headers_directory" >&2
-            mv "$system_headers_directory/../hdrs5/compare" "$system_headers_directory/../hdrs5/compare_original"
+            [ -e "$system_headers_directory/../hdrs5/compare" ] && mv "$system_headers_directory/../hdrs5/compare" "$system_headers_directory/../hdrs5/compare_original"
             cp "$roseHome/config/rose_specific_compare" "$system_headers_directory/../hdrs5/compare"
             [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for coroutine to $system_headers_directory" >&2
-            mv "$system_headers_directory/../hdrs5/coroutine" "$system_headers_directory/../hdrs5/coroutine_original"
+            [ -e "$system_headers_directory/../hdrs5/coroutine" ] && mv "$system_headers_directory/../hdrs5/coroutine" "$system_headers_directory/../hdrs5/coroutine_original"
             cp "$roseHome/config/rose_specific_coroutine" "$system_headers_directory/../hdrs5/coroutine"
             [ -n "$VERBOSE" ] && echo "We are handling C++ compiler specific details, so copy the ROSE specific fix for tuple to $system_headers_directory" >&2
-            mv "$system_headers_directory/../hdrs5/tuple" "$system_headers_directory/../hdrs5/tuple_original"
+            [ -e "$system_headers_directory/../hdrs5/tuple" ] && mv "$system_headers_directory/../hdrs5/tuple" "$system_headers_directory/../hdrs5/tuple_original"
             cp "$roseHome/config/rose_specific_tuple" "$system_headers_directory/../hdrs5/tuple"
 
           # echo "After copying rose_specific header files:"
