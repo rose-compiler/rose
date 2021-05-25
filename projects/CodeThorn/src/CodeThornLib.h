@@ -5,6 +5,7 @@
 #include "Normalization.h"
 #include "IOAnalyzer.h"
 #include "TimingCollector.h"
+#include "AbstractValue.h"
 
 namespace CodeThorn {
 
@@ -12,6 +13,7 @@ namespace CodeThorn {
   extern Sawyer::Message::Facility logger;
   void turnOffRoseWarnings();
   void configureRose();
+  AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
   void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * argv[]);
   void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector);
   void optionallySetRersMapping(CodeThornOptions ctOpt,LTLOptions ltlOptions,IOAnalyzer* analyzer);

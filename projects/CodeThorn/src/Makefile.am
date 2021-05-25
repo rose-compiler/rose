@@ -748,7 +748,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-test check-normalization check-omp-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization unit-test check-omp-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 

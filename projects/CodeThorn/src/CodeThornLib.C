@@ -45,6 +45,7 @@
 #include "Evaluator.h" // CppConstExprEvaluator
 #include "CtxCallStrings.h" // for setting call string options
 #include "AnalysisReporting.h"
+#include "CTAnalysis.h"
 
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
@@ -153,6 +154,22 @@ namespace CodeThorn {
     signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
   }
 
+  AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
+    CTAnalysis* analyzer=new CTAnalysis();
+    EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
+    exprAnalyzer->setAnalyzer(analyzer);
+    VariableIdMappingExtended* vid=new VariableIdMappingExtended();
+    VariableIdMappingExtended* oldVID=AbstractValue::_variableIdMapping;
+    AbstractValue::setVariableIdMapping(vid);
+    AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
+    AbstractValue::_variableIdMapping=oldVID;
+    delete vid;
+    delete exprAnalyzer;
+    delete analyzer;
+    return aVal;
+  }
+
+  
   void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
@@ -165,9 +182,11 @@ namespace CodeThorn {
       }
       normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
-    EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
-    VariableIdMappingExtended* vid=new VariableIdMappingExtended();
-    AbstractValue::setVariableIdMapping(vid);
+    //CTAnalysis* analyzer=new CTAnalysis();
+    //EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
+    //exprAnalyzer->setAnalyzer(analyzer);
+    //VariableIdMappingExtended* vid=new VariableIdMappingExtended();
+    //AbstractValue::setVariableIdMapping(vid);
     RoseAst ast(sageProject);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       // match on expr stmts and test the expression
@@ -187,13 +206,11 @@ namespace CodeThorn {
       }
       if(expr) {
 	cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
-	AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
+	//AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
+	AbstractValue aVal=evaluateExpressionWithEmptyState(expr);
 	cout<<" => result value: "<<aVal.toString()<<" "<<endl;
       }
     }
-    AbstractValue::setVariableIdMapping(nullptr);
-    delete vid;
-    delete exprAnalyzer;
   }
 
   void optionallyRunExprEvalTestAndExit(CodeThornOptions& ctOpt,int argc, char * argv[]) {

@@ -10,7 +10,7 @@
 // required for Parse::* functions
 #include "Miscellaneous2.h"
 
-#include "Diagnostics.h"
+#include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;
 
 using namespace CodeThorn;
