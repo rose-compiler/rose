@@ -98,6 +98,15 @@ namespace CodeThorn {
 	SgExpression* eroot=v;
 	while(SgExpression* p=isSgExpression(eroot->get_parent()))
 	  eroot=p;
+	SgInitializedName* initName=varSym->get_declaration();
+	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
+	if(decl && isMemberVariableDeclaration(decl)) {
+	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
+	    cout<<"Found class of unregistered symbol:"<<cdef->get_qualified_name () <<endl;
+	    //registerClassMembers(cdef->get_type());
+	  }
+	}
+	// decl->get_type();xxx
 	cout<<" : "<<eroot->unparseToString();
 	cout<<" : symbol(s) with same name:";
 	for(auto vPair : mappingSymToVarId) {
@@ -191,14 +200,21 @@ namespace CodeThorn {
 	if(SgClassType* memberClassType=isSgClassType(type)) {
 	  typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
 	  setTypeSize(type,typeSize);
+	  setNumberOfElements(varId,classMembers[type].size());
+	  setTotalSize(varId,typeSize);
 	  getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
 	} else if(SgArrayType* arrayType=isSgArrayType(type)) {
 	  typeSize=determineTypeSize(type);
 	  setTypeSize(type,typeSize);
+	  setNumberOfElements(varId,determineNumberOfArrayElements(arrayType));
+	  setTotalSize(varId,typeSize);
 	  getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
 	} else {
 	  // only built-in scalar types
 	  typeSize=determineTypeSize(type);
+	  setTotalSize(varId,typeSize);
+	  setNumberOfElements(varId,1);
+	  setElementSize(varId,typeSize);
 	  getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
 	}
 	if(typeSize!=unknownSizeValue()) {
@@ -470,6 +486,8 @@ namespace CodeThorn {
     registerClassMembersNew();
     //dumpTypeSizes();
     //return;
+
+#if 0
     RoseAst ast(project);
     int ct=0;
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -487,6 +505,15 @@ namespace CodeThorn {
 	ct++;
       }
     }
+#else
+    int ct=0;
+    for(auto classDef:_memPoolTraversal.classDefinitions) {
+      SgClassDeclaration* classDecl=classDef->get_declaration();
+      SgClassType* classType=classDecl->get_type();
+      //registerClassMembers(classType, 0);
+      ct++;
+    }
+#endif
 
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     int numVarDecls=0;
@@ -748,10 +775,11 @@ void VariableIdMappingExtended::toStream(ostream& os) {
 void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* type, int32_t nestingLevel) {
   ROSE_ASSERT(nestingLevel>0);
   ROSE_ASSERT(type);
-  string nestingLevelIndent=std::string(nestingLevel, '@');
-  nestingLevelIndent="     "+nestingLevelIndent;
+  string nestingLevelIndent1="     ";
+  string nestingLevelIndent2=std::string(nestingLevel, '@');
+  string nestingLevelIndent=nestingLevelIndent1+nestingLevelIndent2;
   for(auto mvarId : classMembers[type]) {
-    os<<nestingLevelIndent<<setw(2)<<varIdInfoToString(mvarId);
+    os<<nestingLevelIndent<<setw(3)<<getOffset(mvarId)<<":"<<varIdInfoToString(mvarId);
     os<<endl;
     if(mappingVarIdToInfo[mvarId].aggregateType==AT_STRUCT) {
       os<<nestingLevelIndent<<"Data members "<<"("<<classMembers[getType(mvarId)].size()<<"):"<<endl;

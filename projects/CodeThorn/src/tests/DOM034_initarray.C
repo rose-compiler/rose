@@ -11,7 +11,7 @@ int main() {
   char dest[50] = ""; // bo: s06 1001, s07 91, s08 273, s09 91
   printf("dest[0]:%d\n",dest[0]); // terminating 0
   printf("dest[1]:%d\n",dest[1]); // default init
-
+  int initarray[]={1,2,3};
   const char* cdata;
   cdata="Good"; // np: 51, uninitvar: 70 (not allowed in ISO C++)
   printf("cdata[0]:%d\n",cdata[0]);

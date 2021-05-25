@@ -1168,43 +1168,16 @@ namespace CodeThorn {
     Label label=currentEState.label();
 
     const SgInitializedNamePtrList& initNameList=decl->get_variables();
-    SgNode* initName0;
     if(initNameList.size()>1) {
       SAWYER_MESG(logger[ERROR])<<"Error: variable declaration contains more than one variable. Normalization required."<<endl;
       SAWYER_MESG(logger[ERROR])<<"Error: "<<decl->unparseToString()<<endl;
-
       exit(1);
-    } else {
-      //SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-      ROSE_ASSERT(initNameList.size()==1);
-      initName0=*initNameList.begin();
-    }
+    } 
+    ROSE_ASSERT(initNameList.size()==1);
+    SgNode* initName0=*initNameList.begin();
     if(initName0!=nullptr) {
       if(SgInitializedName* initName=isSgInitializedName(initName0)) {
 	VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
-	// not possible to support yet. getIntValue must succeed on declarations.
-	/*
-	  if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
-	  // DEAD CODE
-	  PState newPState=*currentEState.pstate();
-	  newPState.reserveMemoryLocation(initDeclVarId);
-	  ConstraintSet cset=*currentEState.constraints();
-	  InputOutput io;
-	  io.recordNone();
-	  return createEState(targetLabel,cs,newPState,cset);
-	  }
-	*/
-	// deactivated 05/20/2020
-	//      if(getVariableIdMapping()->isOfArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
-        // in case of a constant array the array (and its members) are not added to the state.
-        // they are considered to be determined from the initializer without representing them
-        // in the state
-        // logger[DEBUG] <<"not adding array to PState."<<endl;
-	//  PState newPState=*currentEState.pstate();
-	//  ConstraintSet cset=*currentEState.constraints();
-	//  return createEState(targetLabel,cs,newPState,cset);
-	//}
-
 	ConstraintSet cset=*currentEState.constraints();
 	SgInitializer* initializer=initName->get_initializer();
 	if(initializer) {

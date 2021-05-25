@@ -77,13 +77,16 @@ namespace CodeThorn {
 	  classTypes.insert(ctype);
 	} else if(SgArrayType* ctype=isSgArrayType(node)) {
 	  arrayTypes.insert(ctype);
-	} else {
+	} else if(SgType* type=isSgType(node)) {
 	  builtInTypes.insert(ctype);
+	} else if(SgClassDefinition* cdef=isSgClassDefinition(node)) {
+	  classDefinitions.insert(cdef);
 	}
       }
       std::unordered_set<SgClassType*> classTypes; // class, struct, union
       std::unordered_set<SgArrayType*> arrayTypes; // any dimension
-      std::unordered_set<SgArrayType*> builtInTypes; // all other pointers
+      std::unordered_set<SgType*> builtInTypes; // all other types
+      std::unordered_set<SgClassDefinition*> classDefinitions; // all other pointers
 
       void dumpClassTypes() {
 	int i=0;
