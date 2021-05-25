@@ -906,6 +906,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         setTotalSize(newVariableId,getNumberOfElements(newVariableId)*elementSize);
         setOffset(newVariableId,unknownSizeValue());
         getVariableIdInfoPtr(newVariableId)->aggregateType=AT_STRING_LITERAL;
+	getVariableIdInfoPtr(newVariableId)->variableScope=VariableIdMapping::VariableScope::VS_GLOBAL;
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
       } else {
