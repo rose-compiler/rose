@@ -13,14 +13,8 @@ package body Lal_Adapter is
    -----------
    -- PRIVATE:
    -----------
-   function To_Quoted_String (Item : in Wide_String) return String is
-      ('"' & To_String (Item) & '"');
-
-   -----------
-   -- PRIVATE:
-   -----------
-   function To_Wide_String (Item : in String) return Wide_String
-     renames Ach.To_Wide_String;
+   function To_Quoted_String (Item : in String) return String is
+      ('"' & Item & '"');
 
    -----------
    -- PRIVATE:

@@ -6,7 +6,6 @@ with Indented_Text;
 
 private with Ada.Exceptions;
 private with Ada.Text_IO;
-private with Ada.Wide_Text_IO;
 private with Interfaces.C.Extensions;
 private with Interfaces.C.Strings;
 
@@ -41,34 +40,19 @@ private
    package AEX renames Ada.Exceptions;
    package ASU renames Ada.Strings.Unbounded;
    package ATI renames Ada.Text_IO;
-   package AWTI renames Ada.Wide_Text_IO;
    package IC renames Interfaces.C;
    package ICE renames Interfaces.C.Extensions;
    package ICS renames Interfaces.C.Strings;
    package anhS renames a_nodes_h.Support;
 
-   function To_String (Item : in Wide_String) return String;
-   function To_Quoted_String (Item : in Wide_String) return String;
-   function "+"(Item : in Wide_String) return String renames To_String;
+   function To_Quoted_String (Item : in String) return String;
 
-   function To_Wide_String (Item : in String) return Wide_String;
-   function "+"(Item : in String) return Wide_String renames To_Wide_String;
-
-   function To_Chars_Ptr (Item : in Wide_String)
-                          return Interfaces.C.Strings.chars_ptr;
    function To_Chars_Ptr (Item : in String)
                           return Interfaces.C.Strings.chars_ptr
      renames Interfaces.C.Strings.New_String;
 
    procedure Put      (Item : in String) renames ATI.Put;
    procedure Put_Line (Item : in String) renames ATI.Put_Line;
-   procedure Put_Wide      (Item : in Wide_String) renames AWTI.Put;
-   procedure Put_Line_Wide (Item : in Wide_String) renames AWTI.Put_Line;
-
-   procedure Trace_Put      (Message : in Wide_String) renames
-     Indented_Text.Trace_Put;
-   procedure Trace_Put_Line (Message : in Wide_String) renames
-     Indented_Text.Trace_Put_Line;
 
    -- Returns the image minus the leading space:
    function Spaceless_Image (Item : in Natural) return String;
