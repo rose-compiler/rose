@@ -110,6 +110,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
+  dynamic_array.adb                    \
   empty_private.ads                    \
   entry_call.adb                       \
   entry_declaration.ads                \
@@ -127,10 +128,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   multidimensional_array.ads           \
   nested_package.ads                   \
   opaque.ads                           \
+  ordinary_type_declaration_range_constraint.ads    \
   package_renaming_declaration.ads     \
   package_with_body.adb                \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  qualified_expression.adb             \
   ranges.adb                           \
   real_typedecl.ads                    \
   representation_clause.ads            \
@@ -141,6 +144,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
+  signed_integer_type_definition.ads   \
   std_ascii_user.adb                   \
   sub_derived_types.ads                \
   task_type_declaration.ads            \
@@ -163,23 +167,19 @@ ROSE_PASSING_ADA_TESTS :=                           \
 
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
-  access_to_object.ads                              \
   access_to_subprogram.ads                          \
+  access_to_object.ads                              \
   discriminant.adb                                  \
   discriminant_constraint.ads                       \
   discriminant_specification.ads                    \
-  dynamic_array.adb                                 \
   extension_aggregate.adb                           \
   fixed_point_definition.ads                        \
   function_instantiation.adb                        \
   generic_function_declaration.ads                  \
   generic_package_declaration.ads                   \
-  ordinary_type_declaration_range_constraint.ads    \
   package_instantiation.adb                         \
   procedure_instantiation.adb                       \
   protected_type_declaration.ads                    \
-  qualified_expression.adb                          \
-  signed_integer_type_definition.ads                \
   single_protected_declaration.ads                  \
   test.adb                                          \
   object_renaming_declaration.adb                   \
