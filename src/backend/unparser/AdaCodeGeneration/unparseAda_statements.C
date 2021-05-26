@@ -1224,6 +1224,34 @@ namespace
     unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
   }
 
+  namespace
+  {
+    // returns true for basic blocks that have been introduced to store
+    //   statement sequences in Ada, but are not true Ada scopes.
+    struct AdaStmtSequence : sg::DispatchHandler<bool>
+    {
+      void handle(SgNode&)                          { /* default: false */ }
+      void handle(SgTryStmt&)                       { res = true; }
+      void handle(SgIfStmt&)                        { res = true; }
+      void handle(SgWhileStmt&)                     { res = true; }
+      void handle(SgForStatement&)                  { res = true; }
+      void handle(SgAdaLoopStmt&)                   { res = true; }
+      void handle(SgSwitchStatement&)               { res = true; }
+      void handle(SgCaseOptionStmt&)                { res = true; }
+      void handle(SgCatchOptionStmt&)               { res = true; }
+      void handle(SgDefaultOptionStmt&)             { res = true; }
+      void handle(SgAdaSelectStmt&)                 { res = true; }
+      void handle(SgAdaSelectAlternativeStmt&)      { res = true; }
+      void handle(SgAdaAcceptStmt&)                 { res = true; }
+      void handle(SgAdaRecordRepresentationClause&) { res = true; }
+    };
+
+    bool adaStmtSequence(SgBasicBlock& n)
+    {
+      return sg::dispatch(AdaStmtSequence{}, n.get_parent());
+    }
+  }
+
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
@@ -1236,11 +1264,11 @@ namespace
       prn("declare\n");
 
     const std::string label = n.get_string_label();
-    const bool        requiresBeginEnd = (  functionbody
-                                         || (aa != dcllimit)
-                                         || label.size()
-                                         );
-
+    const bool        requiresBeginEnd    = !adaStmtSequence(n);
+                                            //~ (  functionbody
+                                            //~ || (aa != dcllimit)
+                                            //~ || label.size()
+                                            //~ );
     list(aa, dcllimit);
 
     if (requiresBeginEnd)
