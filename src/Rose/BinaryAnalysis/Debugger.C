@@ -222,7 +222,7 @@ freeStringList(char **list) {
     for (char **entryPtr = list; entryPtr && *entryPtr; ++entryPtr)
         delete[] *entryPtr;
     delete[] list;
-    return NULL;
+    return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -230,7 +230,7 @@ freeStringList(char **list) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static long
-sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
+sendCommand(__ptrace_request request, int child, void *addr = nullptr, void *data = nullptr) {
     ASSERT_require2(child, "must be attached to a subordinate process");
     errno = 0;
     long result = ptrace(request, child, addr, data);
@@ -472,7 +472,7 @@ Debugger::isTerminated() {
 void
 Debugger::waitForChild() {
     ASSERT_require2(child_, "must be attached to a subordinate process");
-    if (-1 == waitpid(child_, &wstat_, 0))
+    if (-1 == waitpid(child_, &wstat_, __WALL))
         throw std::runtime_error("Rose::BinaryAnalysis::Debugger::waitForChild failed: "
                                  + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
@@ -544,7 +544,7 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
             static const int minFd = 3;
             if (DIR *dir = opendir("/proc/self/fd")) {
                 while (const struct dirent *entry = readdir(dir)) {
-                    char *rest = NULL;
+                    char *rest = nullptr;
                     errno = 0;
                     int fd = strtol(entry->d_name, &rest, 10);
                     if (0 == errno && '\0' == *rest && rest != entry->d_name && fd >= minFd)
@@ -662,6 +662,36 @@ Debugger::singleStep() {
     sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
     waitForChild();
 }
+
+void
+Debugger::stepIntoSyscall() {
+    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    waitForChild();
+}
+
+#if 0 // [Robb Matzke 2021-05-26]: doesn't seem to work on Linux 5.4: always says PTRACE_SYSCALL_INFO_NONE
+Sawyer::Optional<Debugger::SyscallEntry>
+Debugger::syscallEntryInfo() {
+    __ptrace_syscall_info info;
+    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    if (PTRACE_SYSCALL_INFO_ENTRY == info.op) {
+        return SyscallEntry(info.entry.nr, info.entry.args);
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+
+Sawyer::Optional<Debugger::SyscallExit>
+Debugger::syscallExitInfo() {
+    __ptrace_syscall_info info;
+    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    if (PTRACE_SYSCALL_INFO_EXIT == info.op) {
+        return SyscallExit(info.exit.rval, info.exit.is_error);
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+#endif
 
 size_t
 Debugger::kernelWordSize() {
@@ -801,7 +831,7 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
 
     struct Resources {
         uint8_t *buffer;
-        Resources(): buffer(NULL) {}
+        Resources(): buffer(nullptr) {}
         ~Resources() {
             delete[] buffer;
         }
