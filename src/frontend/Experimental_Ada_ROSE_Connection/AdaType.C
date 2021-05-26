@@ -144,8 +144,22 @@ namespace
 
     switch (access.Access_Definition_Kind)
     {
-      case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
       case An_Anonymous_Access_To_Constant:            // [...] access constant subtype_mark
+      case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
+        {
+          const bool isConstant = access.Access_Definition_Kind == An_Anonymous_Access_To_Constant;
+          logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
+
+          SgType& ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+
+          res = &mkAdaAccessType(&ty);
+
+          /** unused fields:
+                 bool                         Has_Null_Exclusion;
+           */
+          break;
+        }
+
       case An_Anonymous_Access_To_Procedure:           // access procedure
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
       case An_Anonymous_Access_To_Function:            // access function
@@ -153,7 +167,7 @@ namespace
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
         logWarn() << "ak? " << access.Access_Definition_Kind << std::endl;
-        res = sb::buildPointerType(sb::buildVoidType());
+        res = &mkAdaAccessType(sb::buildVoidType());
         ROSE_ASSERT(!FAIL_ON_ERROR);
     }
 

@@ -252,15 +252,17 @@ namespace
 
     void handle(SgCastExp& n)
     {
-      const bool typequal = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
-
-      // only type qualifications have expression lists as arguments
-      //~ ROSE_ASSERT(typequal ^ (!isSgExprListExp(n.get_operand())));
+      const bool    qualexpr = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+      SgExpression& operand  = SG_DEREF(n.get_operand());
+      const bool    hasparen = operand.get_need_paren() || isSgAggregateInitializer(&operand);
 
       type(n.get_type());
-      prn(typequal ? "'" : "(");
+      if (qualexpr) prn("'");
+
+      // requires paren even if the expr has not set them
+      if (!hasparen) prn("(");
       expr(n.get_operand());
-      if (!typequal) prn(")");
+      if (!hasparen) prn(")");
     }
 
     void handle(SgTypeExpression& n)
@@ -342,6 +344,9 @@ namespace
 
     void handle(SgConstructorInitializer& n)
     {
+      ROSE_ASSERT(n.get_need_paren());
+      // n has get_need_paren set and thus they are printed by expr(...)
+
       //~ prn("(");
       exprlst(SG_DEREF(n.get_args()));
       //~ prn(")");
