@@ -103,8 +103,7 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ();
-	    //registerClassMembers(cdef->get_type());
+	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef);
 	  } else {
 	    cout<<": could not find class of unregistered symbol!";
 	  }
