@@ -98,20 +98,14 @@ namespace CodeThorn {
 	SgExpression* eroot=v;
 	while(SgExpression* p=isSgExpression(eroot->get_parent()))
 	  eroot=p;
+	cout<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(eroot)<<":"<<eroot->unparseToString();
 	SgInitializedName* initName=varSym->get_declaration();
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<"Found class of unregistered symbol:"<<cdef->get_qualified_name () <<endl;
-	    //registerClassMembers(cdef->get_type());
-	  }
-	}
-	// decl->get_type();xxx
-	cout<<" : "<<eroot->unparseToString();
-	cout<<" : symbol(s) with same name:";
-	for(auto vPair : mappingSymToVarId) {
-	  if(vPair.first->get_name() == varSym->get_name()) {
-	    cout<<vPair.first<<" ";
+	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef);
+	  } else {
+	    cout<<": could not find class of unregistered symbol!";
 	  }
 	}
 	cout<<endl;
