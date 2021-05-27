@@ -1070,7 +1070,6 @@ PreprocessingInfo::set_file_info( Sg_File_Info* info )
      ROSE_ASSERT(this != NULL);
 
      file_info = info;
-     ROSE_ASSERT(file_info != NULL);
    }
 
 // DQ (8/26/2020): include directive have a filename imbedded inside, and we need to
