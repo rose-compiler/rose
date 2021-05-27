@@ -303,6 +303,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
     // declarations
   case V_SgPragmaDeclaration:
+  case V_SgFunctionDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
