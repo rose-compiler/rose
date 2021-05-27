@@ -168,7 +168,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       ROSE_ASSERT(exp);
       SgVarRefExp* varRefExp=isSgVarRefExp(exp);
       if(varRefExp) {
-        cout<<"FP INDIRECT"<<endl;
+        //cout<<"FP INDIRECT"<<endl;
         // function pointer call
         //cout<<"DEBUG: FUNCTION POINTER CALL : determineFunctionCallInfo: "<<fc->unparseToString()<<endl;
         SgType* type=varRefExp->get_type();

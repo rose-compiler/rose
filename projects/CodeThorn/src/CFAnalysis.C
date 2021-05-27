@@ -406,9 +406,6 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
   ROSE_ASSERT(labeler->numberOfAssociatedLabels(node));
   switch (node->variantT()) {
-  case V_SgFunctionDeclaration:
-    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
-    exit(1);
   case V_SgTryStmt: // PP (09/04/20)
   case V_SgNullStatement:
   case V_SgLabelStatement:
@@ -422,6 +419,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
       return labeler->getLabel(node);
 
   case V_SgPragmaDeclaration:
+  case V_SgFunctionDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
@@ -549,12 +547,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   }
 
   switch (node->variantT()) {
-  // function declarations inside basic block
-  case V_SgFunctionDeclaration:
-    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
-    exit(1);
-    //finalSet.insert(labeler->getLabel(node));
-    //return finalSet;
   case V_SgFunctionDefinition: {
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     return finalLabels(body);
@@ -585,6 +577,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
     // declarations
   case V_SgPragmaDeclaration:
+  case V_SgFunctionDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
@@ -1301,11 +1294,12 @@ Flow CFAnalysis::flow(SgNode* n) {
   case V_SgBreakStmt:
   case V_SgInitializedName:
   case V_SgNullStatement:
-  case V_SgPragmaDeclaration:
   case V_SgExprStatement:
     return edgeSet;
 
     // declarations
+  case V_SgPragmaDeclaration:
+  case V_SgFunctionDeclaration:
   case V_SgVariableDeclaration:
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
