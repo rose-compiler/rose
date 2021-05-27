@@ -55,16 +55,13 @@ namespace Sawyer {                                      // documented elsewhere
  *    ASSERT_forbid2(users.empty(), "search must have yielded at least one user");
  *
  *    // Plain, old-fashioned assert.
- *    ASSERT_require(this!=NULL)
+ *    ASSERT_require(pointer != NULL)
  *
  *    // A better way to write the same thing.
- *    ASSERT_not_null(this)
+ *    ASSERT_not_null(pointer)
  *
  *    // An even better way to write the same thing.
- *    ASSERT_not_null2(this, "'this' cannot be null in an object method");
- *
- *    // The best way to write the same thing.
- *    ASSERT_this();
+ *    ASSERT_not_null2(pointer, "foo has failed to obtain a valid bar");
  *  @endcode
  *
  *  The following macros do not start with "ASSERT_" because they are widely recognized by IDEs. They are aso not disabled
@@ -143,12 +140,7 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
-#define ASSERT_always_this()                                                                                                   \
-    (this ?                                                                                                                    \
-        static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("assertion failed",                                                                               \
-                             "required: this!=NULL", "'this' cannot be null in an object method",                              \
-                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+#define ASSERT_always_this() /*void*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The non-"always" macros might change behavior based on whether SAWYER_NDEBUG is defined.
@@ -176,7 +168,7 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 #define ASSERT_not_null2(expr, note)    ASSERT_always_not_null2(expr, note)
 #define ASSERT_not_reachable(note)      ASSERT_always_not_reachable(note)
 #define ASSERT_not_implemented(note)    ASSERT_always_not_implemented(note)
-#define ASSERT_this()                   ASSERT_always_this()
+#define ASSERT_this()                   /*void*/
 
 #endif
 
