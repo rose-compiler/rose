@@ -47,6 +47,8 @@ package body A_Nodes is
          raise Usage_Error with Module_Name &
            ": Tried to push second Element with ID => " & ID'Image;
       else
+         -- TODO: Remove when no longer needed for debug:
+         --  Ada.Text_IO.Put_Line ("a_nodes.Check_Element_Node:  ID => " & ID'Image);
          This.Element_IDs.Insert (ID);
          if ID > This.Highest_Element_ID then
             This.Highest_Element_ID := ID;

@@ -663,15 +663,86 @@ package body Lal_Adapter.Unit is
       Kind_File_Name_Line_Col_Range : constant String :=
         The_Compilation_Unit.Image;
 
+       procedure Start_Output is
+           Default_Node  : Dot.Node_Stmt.Class; -- Initialized
+           Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+        begin
+           --  Log ("Processing " & To_String (Unit_Full_Name) & " " &
+           --         To_String (To_Wide_String (Unit_Class)));
+
+              -- Set defaults:
+           This.A_Unit := a_nodes_h.Support.Default_Unit_Struct;
+                    This.Outputs.Text.End_Line;
+           -- Unit ID comes out on next line via Add_Unit_ID:
+           This.Outputs.Text.Put_Indented_Line (String'("BEGIN "));
+           This.Outputs.Text.Indent;
+           This.Dot_Node := Default_Node;
+           This.Dot_Label := Default_Label;
+
+           -- Get ID:
+           --  This.Unit_ID := Get_Unit_ID (Unit);
+           --  This.Dot_Node.Node_ID.ID :=
+           --    To_Dot_ID_Type (This.Unit_ID, Unit_ID_Kind);
+
+--           -- Want these at the top:
+--           Add_Unit_Id;
+--           Add_Unit_Kind;
+--
+--           -- Common items, in Lal order:
+--           Add_Unit_Class;
+--           Add_Unit_Origin;
+--           if not Lal.Compilation_Units.Is_Nil (Unit) then
+--              Add_Enclosing_Context;
+--              Add_Enclosing_Container;
+--           end if;
+--           Add_Unit_Full_Name;
+--           Add_Unique_Name;
+--           Add_Exists;
+--           Add_Can_Be_Main_Program;
+--           Add_Is_Body_Required;
+--           Add_Text_Name;
+--           Add_Text_Form;
+--           Add_Object_Name;
+--           Add_Object_Form;
+--           Add_Compilation_Command_Line_Options;
+--           Add_Debug_Image;
+--           Add_Unit_Declaration;
+--           Add_Context_Clause_Elements;
+--           -- TODO: later
+--  --           Add_Compilation_Pragmas;
+--           Add_Is_Standard;
+        end Start_Output;
+
+        procedure Finish_Output is
+        begin
+           This.Dot_Node.Add_Label (This.Dot_Label);
+
+           This.Outputs.Graph.Append_Stmt
+             (new Dot.Node_Stmt.Class'(This.Dot_Node));
+
+           --  This.Outputs.A_Nodes.Push (This.A_Unit);
+
+           This.Outputs.Text.End_Line;
+           This.Outputs.Text.Dedent;
+           --  This.Outputs.Text.Put_Indented_Line
+           --    (String'("END " & To_String (this.Unit_ID)));
+        end Finish_Output;
+
    begin -- Process_Wanted_Compilation_Unit
       Log (File_Name_First_Line_Col);
       Log ("Dependencies:");
       for Dependency of Dependencies Loop
          Log (Text.Image (Dependency.Full_Sloc_Image));
       end loop;
+           Start_Output;
       -- Calls Process_Node, which may raise one of our exceptions:
       Traverse_Visit_Status := The_Compilation_Unit.Traverse (Process_Node'Access);
       Log ("Traverse_Visit_Status => " & Traverse_Visit_Status'Img);
+        Finish_Output;
+        Log ("Not_Implemented count: " &
+               This.Outputs.A_Nodes.Get_Not_Implemented'Image);
+   --       Log ("DONE Processing " & To_String (Unit_Full_Name) & " " &
+   --              To_String (To_Wide_String (Unit_Class)));
    exception
       when X : others =>
          -- Just log the unit name and reraise for more logging higher up:

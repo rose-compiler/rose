@@ -45,6 +45,9 @@ private
    package ICS renames Interfaces.C.Strings;
    package anhS renames a_nodes_h.Support;
 
+   function To_String (Item : in Wide_String) return String;
+   function To_String (Item : in Wide_Wide_String) return String;
+
    function To_Quoted_String (Item : in String) return String;
 
    function To_Chars_Ptr (Item : in String)
@@ -70,6 +73,13 @@ private
       return Dot.ID_Type;
 
    -- String:
+   -- Add <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in     Output_Accesses_Record;
+      Value     : in     String);
+
+   -- String:
    -- Add <Name> => <Value> to the label, and print it if trace is on:
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
@@ -78,20 +88,13 @@ private
       Value     : in     String);
 
    -- Boolean:
+   -- If Value is True, then:
    -- Add <Name> => <Value> to the label, and print it if trace is on:
-   -- ONLY acts if Value = True:
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
       Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     Boolean);
-
-   -- String:
-   -- Add <Value> to the label, and print it if trace is on:
-   procedure Add_To_Dot_Label
-     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in     Output_Accesses_Record;
-      Value     : in     String);
 
    -- Unit_ID or Element_ID:
    -- Add an edge node to the the dot graph:
