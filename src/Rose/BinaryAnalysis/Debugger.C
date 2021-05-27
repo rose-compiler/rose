@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/DisassemblerX86.h>
 #include <integerOps.h>
 #include <Rose/BinaryAnalysis/Registers.h>
+#include <rose_pragma_message.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem.hpp>
@@ -457,10 +458,9 @@ Debugger::init() {
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_7,         0, 32),   98); // 10
     //                                                                                          108
 
-# elif defined(_MSC_VER)
-#   pragma message("unable to read subordinate process registers on this platform")
-# else
-#   warning("unable to read subordinate process registers on this platform")
+#else
+    ROSE_PRAGMA_MESSAGE("subordinate process registers not supported on this platform");
+    throw std::runtime_error("subordinate process registers not supported on this platform");
 #endif
 }
 
@@ -471,12 +471,17 @@ Debugger::isTerminated() {
 
 void
 Debugger::waitForChild() {
+#ifdef __linux__
     ASSERT_require2(child_, "must be attached to a subordinate process");
     if (-1 == waitpid(child_, &wstat_, __WALL))
         throw std::runtime_error("Rose::BinaryAnalysis::Debugger::waitForChild failed: "
                                  + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
     regsPageStatus_ = REGPAGE_NONE;
+#else
+    ROSE_PRAGMA_MESSAGE("waitForChild is not supported on this platform");
+    throw std::runtime_error("waitForChild is not supported on this platform");
+#endif
 }
 
 std::string
@@ -807,10 +812,8 @@ Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVec
         for (size_t i = 0; i < nUserBytes; ++i)
             regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
         sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_.data());
-#elif defined(_MSC_VER)
-        #pragma message("unable to save FP registers on this platform")
 #else
-        #warning "unable to save FP registers on this platform"
+        ROSE_PRAGMA_MESSAGE("unable to save FP registers on this platform")
 #endif
     } else {
         throw std::runtime_error("register is not available");
@@ -910,12 +913,8 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
     }
     return totalRead;
 #else
-# ifdef _MSC_VER
-#  pragma message("reading from subordinate memory is not implemented")
-# else
-#  warning "reading from subordinate memory is not implemented"
-# endif
-    throw std::runtime_error("cannot read subordinate memory (not implemented)");
+    ROSE_PRAGMA_MESSAGE("reading from subordinate memory is not supported on this platform");
+    throw std::runtime_error("reading from subordinate memory is not supported on this platform");
 #endif
 }
 
@@ -960,13 +959,9 @@ Debugger::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
     }
     return totalWritten;
 #else
-# ifdef _MSC_VER
-#   pragma message("writing to subordinate memory is not implemented")
-# else
-#   warning "writing to subordinate memory is not implemented"
-# endif
+    ROSE_PRAGMA_MESSAGE("writing to subordinate memory is not supported on this platform");
+    throw std::runtime_error("writing to subordinate memory is not supported on this platform");
 #endif
-    throw std::runtime_error("cannot write to subordinate memory (not implemented)");
 }
 
 std::string
@@ -1190,16 +1185,7 @@ Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags
     std::vector<uint8_t> savedName(fileName.string().size() + 1);
     readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
     writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
-
-#if __cplusplus >= 201103L
     int retval = remoteSystemCall(5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
-#else
-    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
-    std::vector<uint64_t> x(1, *nameVa);
-    x.push_back(flags);
-    x.push_back(mode);
-    int retval = remoteSystemCall(5 /*open*/, x);
-#endif
 
     // Restore saved memory
     writeMemory(*nameVa, savedName.size(), savedName.data());
@@ -1208,12 +1194,7 @@ Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags
 
 int
 Debugger::remoteCloseFile(unsigned fd) {
-#if __cplusplus >= 201103L
     return remoteSystemCall(6 /*close*/, std::vector<uint64_t>{fd});
-#else
-    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
-    return remoteSystemCall(6 /*close*/, std::vector<uint64_t>(1, fd));
-#endif
 }
 
 rose_addr_t
@@ -1223,18 +1204,7 @@ Debugger::remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flag
     int fd = remoteOpenFile(fileName, O_RDONLY, 0);
     if (fd < 0)
         return fd;
-#if __cplusplus >= 201103L
     int retval = remoteSystemCall(90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
-#else
-    // FIXME[Robb Matzke 2020-08-31]: delete this when Jenkins is no longer running C++03
-    std::vector<uint64_t> x(1, va);
-    x.push_back(nBytes);
-    x.push_back(prot);
-    x.push_back(flags);
-    x.push_back((unsigned)fd);
-    x.push_back(offset);
-    int retval = remoteSystemCall(90 /*mmap*/, x);
-#endif
     remoteCloseFile(fd);
     return retval;
 }
