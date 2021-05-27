@@ -8,6 +8,56 @@ package body Lal_Adapter.Node is
    package Slocs renames Langkit_Support.Slocs;
    package Text renames Langkit_Support.Text;
 
+   -----------------------------------------------------------------------------
+   -- Element_ID support
+
+   -- Unlike ASIS Elements, libadalang Nodes have no unique ID as far as I can tell.
+   -- Until we can come up with something better, we will just use an incrementing
+   -- counter.  THIS GIVES A DIFFERENT ANSWER EVERY TIME Get_Element_ID IS CALLED.
+   -- This is good to keep all nodes from having the same ID, but it is bad for
+   -- determinining if two nodes are the same.
+   -- TODO: Implement by storing and hashing Nodes?
+   Last_Node_ID : Natural := anhS.Empty_ID;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function Get_Element_ID
+     (Node : in LAL.Ada_Node'Class)
+      return Element_ID is
+   begin
+      if LAL.Is_Null (Node) then
+         return No_Element_ID;
+      else
+         Last_Node_ID := Last_Node_ID + 1;
+         return (Node_ID => Last_Node_ID,
+                 Kind    => Node.Kind);
+      end if;
+   end Get_Element_ID;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function To_Element_ID
+     (This : in Element_ID)
+      return a_nodes_h.Element_ID
+   is
+      Result : Integer;
+   begin
+      Result := Integer (This.Node_ID) * 1000 +
+        LALCO.Ada_Node_Kind_Type'Pos(This.Kind);
+      return a_nodes_h.Element_ID (Result);
+   end To_Element_ID;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function Get_Element_ID
+     (Element : in LAL.Ada_Node'Class)
+      return a_nodes_h.Element_ID
+   is
+      (To_Element_ID (Get_Element_ID (Element)));
+
    ------------
    -- EXPORTED:
    ------------
@@ -17,6 +67,8 @@ package body Lal_Adapter.Node is
    is
      (To_String (This, Element_ID_Kind));
 
+   -- END Element_ID support
+   -----------------------------------------------------------------------------
    ----------------------
    -- EXPORTED (private):
    ----------------------
@@ -108,9 +160,7 @@ package body Lal_Adapter.Node is
    procedure Process_Ada_Stmt
      (This    : in out Class;
       --  Node    : in     LAL.Stmt'Class;
-      Node    : in     LAL.Ada_Node'Class;
-      --  Options : in     Options_Record;
-      Outputs : in     Output_Accesses_Record)
+      Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Ada_Stmt";
@@ -121,8 +171,6 @@ package body Lal_Adapter.Node is
       Kind             : constant LALCO.Ada_Stmt := Node.Kind;
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Stmt
-      This.Outputs := Outputs;
-
       case Kind is
          when Ada_Accept_Stmt =>
             This.Add_Not_Implemented;
@@ -196,32 +244,124 @@ package body Lal_Adapter.Node is
          raise Internal_Error;
    end Process_Ada_Stmt;
 
-   ------------
-   -- Exported:
-   ------------
-   procedure Process
+   -- Do_Pre_Child_Processing and Do_Post_Child_Processing below are preserved
+   -- from Asis_Adapter for familiarity.
+   --
+   -- Asis_Adapter.Unit.Process indirectly calls Asis_Adapter.Element.
+   -- Process_Element_Tree, which calls an instance of generic
+   -- Asis.Iterator.Traverse_Element, instantiated with
+   -- Do_Pre_Child_Processing and Do_Post_Child_Processing.
+   --
+   -- Lal_Adapter.Unit.Process indirectly calls LAL.Compilation_Unit.Traverse
+   -- with a pointer that indrectly calls Lal_Adapter.Node.Process, which calls
+   -- Do_Pre_Child_Processing and Do_Post_Child_Processing.
+
+   procedure Do_Pre_Child_Processing
      (This    : in out Class;
-      Node    : in     LAL.Ada_Node'Class;
-      --  Options : in     Options_Record;
-      Outputs : in     Output_Accesses_Record)
+      Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process";
+      Module_Name : constant String := Parent_Name & ".Do_Pre_Child_Processing";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+      Result : a_nodes_h.Element_Struct renames This.A_Element;
 
       Sloc_Range_Image : constant string := Slocs.Image (Node.Sloc_Range);
       Kind             : constant LALCO.Ada_Node_Kind_Type := Node.Kind;
       Kind_Image       : constant String := LALCO.Ada_Node_Kind_Type'Image (Kind);
       Kind_Name        : constant String := Node.Kind_Name;
       Debug_Text       : constant String := Node.Debug_Text;
+
+      procedure Add_Element_ID is begin
+         -- ID is in the Dot node twice (once in the Label and once in
+         -- Node_ID), but not in the a_node twice.
+         This.Add_To_Dot_Label (To_String (This.Element_IDs.First_Element));
+         Result.id := This.Element_IDs.First_Element;
+      end;
+
+      procedure Add_Node_Kind is begin
+         This.Add_To_Dot_Label ("Node_Kind", Kind_Image);
+         -- TODO: Result.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
+      end;
+
+      procedure Add_Source_Location is
+         Unit       : constant LAL.Analysis_Unit := Node.Unit;
+         File_Name  : constant String := Unit.Get_Filename;
+         Sloc_Range : constant Slocs.Source_Location_Range := Node.Sloc_Range;
+         Image      : constant String := To_String (Node.Full_Sloc_Image);
+      begin
+         This.Add_To_Dot_Label ("Source", Image);
+         Result.Source_Location :=
+           (Unit_Name    => To_Chars_Ptr (File_Name),
+            First_Line   => Interfaces.C.int (Sloc_Range.Start_Line),
+            First_Column => Interfaces.C.int (Sloc_Range.Start_Column),
+            Last_Line    => Interfaces.C.int (Sloc_Range.End_Line),
+            Last_Column  => Interfaces.C.int (Sloc_Range.End_Column));
+      end;
+
+      procedure Add_Enclosing_Element is
+         Value : constant a_nodes_h.Element_ID :=
+           --  Get_Element_ID (Node.P_Semantic_Parent);
+           Get_Element_ID (Node.Parent);
+      begin
+         --              State.Add_Dot_Edge (From  => Enclosing_Element_Id,
+         --                              To    => State.Element_Id,
+         --                              Label => "Child");
+         This.Add_To_Dot_Label ("Enclosing_Element", Value);
+         Result.Enclosing_Element_Id := Value;
+      end;
+
+      procedure Start_Output is
+         Default_Node  : Dot.Node_Stmt.Class; -- Initialized
+         Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+         --  Parent_Name : constant String := Module_Name;
+         --  Module_Name : constant String := Parent_Name & ".Start_Output";
+         --  package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+      begin -- Start_Output
+         -- Set defaults:
+         Result := a_nodes_h.Support.Default_Element_Struct;
+         This.Outputs.Text.End_Line;
+         -- Element ID comes out on next line via Add_Element_ID:
+         This.Outputs.Text.Put_Indented_Line (String'("BEGIN "));
+         This.Outputs.Text.Indent;
+         This.Dot_Node := Default_Node;
+         This.Dot_Label := Default_Label;
+
+         -- Get ID:
+         This.Element_IDs.Prepend (Get_Element_ID (Node));
+         This.Dot_Node.Node_ID.ID :=
+           To_Dot_ID_Type (This.Element_IDs.First_Element, Element_ID_Kind);
+
+         -- Result.Debug_Image := Debug_Image;
+         -- Put_Debug;
+         Add_Element_ID;
+         Add_Node_Kind;
+         Add_Enclosing_Element;
+         Add_Source_Location;
+      end Start_Output;
+
+      procedure Finish_Output is
+      --     Parent_Name : constant String := Module_Name;
+      --     Module_Name : constant String := Parent_Name & ".Finish_Output";
+      --     package Logging is new Generic_Logging (Module_Name); use Logging;
+      --     Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+      begin
+         This.Dot_Node.Add_Label (This.Dot_Label);
+         This.Outputs.Graph.Append_Stmt
+           (new Dot.Node_Stmt.Class'(This.Dot_Node));
+         -- Depends on unique node ids:
+         This.Outputs.A_Nodes.Push (Result);
+      end Finish_Output;
+
       use LALCO; -- For subtype names in case stmt
       --  use type LALCO.Ada_Node_Kind_Type; -- For "="
-   begin -- Process
-      This.Outputs := Outputs;
+   begin -- Do_Pre_Child_Processing
       --  Log ("Line" & Start_Line_Image & ": " & Kind_Image  & ": " & Debug_Text);
       --  if Node.Kind /= LALCO.Ada_Compilation_Unit then
       Log ("Kind enum: " & Kind_Image & "; Kind name: " & Kind_Name & " at " & Sloc_Range_Image);
+      Start_Output;
       --  Log (LAL.Image(Node));
       --  if Kind in LALCO.Ada_Stmt then
       --     Log ("Statement");
@@ -240,7 +380,7 @@ package body Lal_Adapter.Node is
          when Ada_Stmt'First .. Ada_Stmt'Last =>
             --  Log ("Tag: " & Ada.Tags.Expanded_Name (Node'Tag));
             --  This.Process_Ada_Stmt (LAL.Stmt'Class (Node), Outputs);
-            This.Process_Ada_Stmt (Node, Outputs);
+            This.Process_Ada_Stmt (Node);
          -- 17 included kinds:
          when Ada_Type_Def'First .. Ada_Type_Def'Last =>
             This.Add_Not_Implemented;
@@ -369,6 +509,7 @@ package body Lal_Adapter.Node is
          when Ada_With_Private'First .. Ada_With_Private'Last =>
             This.Add_Not_Implemented;
       end case;
+      Finish_Output;
       --  end if;
    exception
       when X : External_Error | Internal_Error | Usage_Error =>
@@ -377,6 +518,46 @@ package body Lal_Adapter.Node is
          Log_Exception (X);
          Log ("No handler for this exception.  Raising Internal_Error");
          raise Internal_Error;
+   end Do_Pre_Child_Processing;
+
+   procedure Do_Post_Child_Processing
+     (This : in out Class) is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Do_Post_Child_Processing";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+   --     Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+   begin -- Do_Post_Child_Processing
+      This.Outputs.Text.End_Line;
+      This.Outputs.Text.Dedent;
+      This.Outputs.Text.Put_Indented_Line
+        (String'("END " & To_String (This.Element_IDs.First_Element)));
+      This.Element_IDs.Delete_First;
+   exception
+      when X : External_Error | Internal_Error | Usage_Error =>
+         raise;
+      when X: others =>
+         Log_Exception (X);
+         Log ("No handler for this exception.  Raising Internal_Error");
+         raise Internal_Error;
+   end Do_Post_Child_Processing;
+
+   ------------
+   -- Exported:
+   ------------
+   procedure Process
+     (This    : in out Class;
+      Node    : in     LAL.Ada_Node'Class;
+      --  Options : in     Options_Record;
+      Outputs : in     Output_Accesses_Record)
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+      --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+   begin
+      This.Outputs := Outputs;
+      Do_Pre_Child_Processing (This, Node);
+      Do_Post_Child_Processing (This);
    end Process;
 
 end Lal_Adapter.Node;

@@ -1,14 +1,20 @@
-with Ada.Characters.Handling;
+with Ada.Characters.Conversions;
 
 package body Lal_Adapter is
 
-   package Ach renames Ada.Characters.Handling;
+   package Acc renames Ada.Characters.Conversions;
 
    -----------
    -- PRIVATE:
    -----------
    function To_String (Item : in Wide_String) return String is
-     (Ach.To_String (Item, Substitute => ' '));
+     (Acc.To_String (Item, Substitute => ' '));
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function To_String (Item : in Wide_Wide_String) return String is
+     (Acc.To_String (Item, Substitute => ' '));
 
    -----------
    -- PRIVATE:
@@ -45,7 +51,7 @@ package body Lal_Adapter is
             when Unit_ID_Kind =>
                return "Unit_" & Item;
             when Element_ID_Kind =>
-               return "Element_" & Item;
+               return "LAL_Node_" & Item;
          end case;
       end Add_Prefix_To;
 
@@ -78,6 +84,18 @@ package body Lal_Adapter is
    procedure Add_To_Dot_Label
      (Dot_Label : in out Dot.HTML_Like_Labels.Class;
       Outputs   : in     Output_Accesses_Record;
+      Value     : in     String) is
+   begin
+      Dot_Label.Add_3_Col_Cell(Value);
+      Outputs.Text.Put_Indented_Line (Value);
+   end;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in     Output_Accesses_Record;
       Name      : in     String;
       Value     : in     String) is
    begin
@@ -102,18 +120,6 @@ package body Lal_Adapter is
             Outputs.Text.Put_Indented_Line (Name & " => " & Value_String);
          end;
       end if;
-   end;
-
-   ------------
-   -- EXPORTED:
-   ------------
-   procedure Add_To_Dot_Label
-     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in     Output_Accesses_Record;
-      Value     : in     String) is
-   begin
-      Dot_Label.Add_3_Col_Cell(Value);
-      Outputs.Text.Put_Indented_Line (Value);
    end;
 
    ------------
