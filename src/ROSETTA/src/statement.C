@@ -3124,7 +3124,7 @@ Grammar::setUpStatements ()
                                            //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
-     AdaRecordRepresentationClause.setDataPrototype ( "SgClassType*", "recordType", "= NULL",
+     AdaRecordRepresentationClause.setDataPrototype ( "SgType*", "recordType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaRecordRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -3143,7 +3143,7 @@ Grammar::setUpStatements ()
 */
 
      AdaEnumRepresentationClause.setFunctionPrototype("HEADER_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
-     AdaEnumRepresentationClause.setDataPrototype ( "SgEnumType*", "enumType", "= NULL",
+     AdaEnumRepresentationClause.setDataPrototype ( "SgType*", "enumType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaEnumRepresentationClause.setDataPrototype ( "SgExprListExp*", "components", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

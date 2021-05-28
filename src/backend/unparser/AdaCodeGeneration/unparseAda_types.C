@@ -61,6 +61,7 @@ namespace
     void handle(SgTypeLongDouble&) { prn(" Long_Long_Float"); }
     void handle(SgTypeString&)     { prn(" String"); }
     void handle(SgTypeLong&)       { prn(" Long_Integer"); }
+    void handle(SgTypeShort&)      { prn(" Short_Integer"); }
     void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
     void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
 

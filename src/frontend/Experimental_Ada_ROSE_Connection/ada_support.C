@@ -9,7 +9,8 @@
 #include "sage3basic.h"
 #include "rose_config.h"
 
-#include "CommandLine.h"
+#include "cmdline.h"
+#include "Rose/CommandLine.h"
 #include "Sawyer/CommandLine.h"
 
 
@@ -29,20 +30,31 @@
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
 
+
+// minimal declarations from Ada_to_ROSE.h
 namespace Ada_ROSE_Translation
 {
   Sawyer::Message::Facility mlog;
 
-  struct Settings
-  {
-    bool processPredefinedUnits = true;
-    bool processImplementationUnits = true;
-    bool asisDebug = false;
-    bool logTrace  = false;
-    bool logInfo   = false;
-    bool logWarn   = false;
-  };
+  /// initialize translation settins
+  void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
+}
 
+namespace
+{
+  bool eq( const Rose::Cmdline::Ada::CmdlineSettings& lhs,
+           const Rose::Cmdline::Ada::CmdlineSettings& rhs
+         )
+  {
+    return (  lhs.processPredefinedUnits == rhs.processPredefinedUnits
+           && lhs.processImplementationUnits == rhs.processImplementationUnits
+           && lhs.failhardAdb == rhs.failhardAdb
+           && lhs.asisDebug == rhs.asisDebug
+           && lhs.logWarn == rhs.logWarn
+           && lhs.logInfo == rhs.logInfo
+           && lhs.logTrace == rhs.logTrace
+           );
+  }
 }
 
 
@@ -62,7 +74,8 @@ int main(int argc, char** argv)
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
-     Ada_ROSE_Translation::Settings settings;
+     Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
+     Rose::Cmdline::Ada::CmdlineSettings settingscpy = settings;
 
      scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
 
@@ -100,6 +113,9 @@ int main(int argc, char** argv)
            .doc("Enables info messages"));
 
      p.with(ada2Rose).parse(args).apply();
+
+     if (!eq(settings, settingscpy))
+       mprintf("--asis: options HAVE BEEN DEPRECATED and have been replaced by -rose:ada: options!\n");
 
      std::string warninglevels = "none, error, fatal";
      Sawyer::Message::Facilities logctrl;
@@ -170,12 +186,12 @@ int main(int argc, char** argv)
               );
 
        head_nodes = adapter_wrapper_with_flags( cstring_SrcFile,
-                                               const_cast<char*>(gnat_home),
-                                               cstring_GnatOutputDir,
-                                               settings.processPredefinedUnits,
-                                               settings.processImplementationUnits,
-                                               settings.asisDebug
-                                             );
+                                                const_cast<char*>(gnat_home),
+                                                cstring_GnatOutputDir,
+                                                settings.processPredefinedUnits,
+                                                settings.processImplementationUnits,
+                                                settings.asisDebug
+                                              );
 
        if (head_nodes.Elements == NULL) {
           mprintf ("adapter_wrapper_with_flags returned NO elements.\n");
@@ -189,7 +205,16 @@ int main(int argc, char** argv)
 
      mprintf ("END.\n");
 
-     Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
+     try
+     {
+       Ada_ROSE_Translation::initialize(settings);
+       Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
+     }
+     catch (const std::runtime_error& e)
+     {
+       mprintf ("%s\n", e.what());
+       status = 1;
+     }
 
      asis_adapterfinal();
      mprintf ("Leaving ada_main(): status = %d \n", status);

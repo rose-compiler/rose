@@ -1,8 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
-# ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
-ROSE_FLAGS    ?= -rose:skipfinalCompileStep --asis:process_predefined_units --asis:process_implementation_units
+# ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+ROSE_FLAGS    ?= -rose:skipfinalCompileStep -rose:ada:fail_hard_adb
 
 
 # ROSE_COMPILER ?= $(abs_top_builddir)/src/rose-compiler
