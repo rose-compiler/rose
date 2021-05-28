@@ -186,6 +186,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-575.jov                  \
  rose-issue-rc-578.jov                  \
  rose-issue-rc-581.jov                  \
+ rose-issue-rc-596.jov                  \
  rose-issue-rc-638a.jov                 \
  rose-issue-rc-642.jov                  \
  rose-issue-rc-646.jov                  \
@@ -330,6 +331,7 @@ COMPOOL_TESTCODES = \
  rc410.pre.cpl                          \
  rc503.cpl                              \
  rc515.cpl                              \
+ rc596.cpl                              \
  rc616a.cpl                             \
  rc687b.cpl                             \
  rc715b.cpl                             \
